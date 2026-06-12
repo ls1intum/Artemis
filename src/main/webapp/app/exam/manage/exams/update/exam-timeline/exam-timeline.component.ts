@@ -7,6 +7,9 @@ import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
+const MAX_WORKING_TIME_IN_MINUTES = 43200 as const; // 30 days
+const MAX_WORKING_TIME_IN_SECONDS = 3600 as const;
+
 @Component({
     selector: 'jhi-exam-timeline',
     imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective],
@@ -77,4 +80,6 @@ export class ExamTimelineComponent {
         const examType = this.examType();
         return !isTestExamType(examType) || examType === ExamType.SIMULATION;
     });
+    protected readonly MAX_WORKING_TIME_IN_MINUTES = MAX_WORKING_TIME_IN_MINUTES;
+    protected readonly MAX_WORKING_TIME_IN_SECONDS = MAX_WORKING_TIME_IN_SECONDS;
 }
