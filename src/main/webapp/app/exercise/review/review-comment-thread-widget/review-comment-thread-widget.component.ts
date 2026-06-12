@@ -34,6 +34,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import {
+    ADAPT_DIALOG_BREAKPOINTS,
     adaptFinding,
     adaptFindingText,
     combineAdaptFeedback,
@@ -291,6 +292,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
                 closable: true,
                 closeOnEscape: true,
                 width: '40vw',
+                breakpoints: ADAPT_DIALOG_BREAKPOINTS,
                 data: { findings: [adaptFinding(issueContent, this.getThreadLocationLabel(this.thread()))] },
             }) ?? undefined;
         this.adaptDialogRef?.onClose.pipe(takeUntil(this.destroyed$)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {

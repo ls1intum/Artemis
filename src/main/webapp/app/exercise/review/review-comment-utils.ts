@@ -5,6 +5,12 @@ import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, Inl
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
+ * Responsive width breakpoints for the adapt-exercise dialog's PrimeNG DynamicDialog. The base width is a narrow 40vw on wide screens, but a fixed 40vw is unreadably narrow on
+ * smaller viewports, so the dialog widens toward near-full-width as the viewport shrinks. Shared by every open() call site so the dialog sizes consistently wherever it is launched.
+ */
+export const ADAPT_DIALOG_BREAKPOINTS: Record<string, string> = { '1280px': '55vw', '960px': '75vw', '640px': '94vw' };
+
+/**
  * Sorts comments by creation timestamp and then by id for deterministic ordering.
  *
  * @param comments The comments to sort.

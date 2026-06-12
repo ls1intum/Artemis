@@ -57,7 +57,7 @@ import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } f
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindings, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
+import { ADAPT_DIALOG_BREAKPOINTS, combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindings, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -581,6 +581,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 closable: true,
                 closeOnEscape: true,
                 width: '40vw',
+                breakpoints: ADAPT_DIALOG_BREAKPOINTS,
                 // No findingText: the dialog renders its finding-free variant with required instructions.
                 data: {},
             }) ?? undefined;
@@ -614,6 +615,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 closable: true,
                 closeOnEscape: true,
                 width: '40vw',
+                breakpoints: ADAPT_DIALOG_BREAKPOINTS,
                 // The findings are shown read-only as structured cards (severity/category/location/description); the instructor's typed instructions are optional and sent in addition. The
                 // flattened findingsText drives the agent prompt below — the dialog display and the prompt are built from the same source so they never drift.
                 data: { findings: selectedThreadsFindings(selectedThreads, this.translateService) },
