@@ -56,7 +56,6 @@ public class IrisResponseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        // TODO
-        return "";
+        return "/courses/" + courseId + "/iris?sessionId=" + sessionId;
     }
 }
