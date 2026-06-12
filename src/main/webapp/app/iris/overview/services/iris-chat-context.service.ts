@@ -47,11 +47,18 @@ export class IrisChatContextService {
         this._pending.set(ctx);
     }
 
-    /** Promote staged pending to committed. No-op when nothing is pending. */
-    commitPending(): void {
-        const pending = this._pending();
-        if (pending) {
-            this._committed.set(pending);
+    /**
+     * Commit the context that was actually sent with a message, once the server confirms it.
+     *
+     * Takes the sent context explicitly rather than re-reading {@link pending} so a newer override
+     * staged while the request was in flight does not get committed in its place: committed is set
+     * to what the server persisted, and the newer pending is preserved (applied on the next
+     * sendMessage). Pending is only cleared when it still matches the sent context — i.e. nothing
+     * newer was staged.
+     */
+    commitSentContext(sent: SessionContext): void {
+        this._committed.set(sent);
+        if (sameSessionContext(this._pending(), sent)) {
             this._pending.set(undefined);
         }
     }

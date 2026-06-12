@@ -277,7 +277,7 @@ export class IrisChatService implements OnDestroy {
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 if (this.stateGeneration !== generation) return;
                 if (pendingContext) {
-                    this.contextService.commitPending();
+                    this.contextService.commitSentContext(pendingContext);
                     // Reflect the committed context in the sidebar entry immediately — without this,
                     // the related-entity icon/tooltip would stay stale until the next loadChatSessions().
                     const sessionId = this.sessionId;
