@@ -20,7 +20,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
+import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -126,7 +126,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 // test exam only feature automatic assessment
                 if (isTestExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
-                    this.setDefaultTestExamPracticeStartDate(exam);
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
                 }
@@ -170,29 +169,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.componentActive = false;
     }
 
-    /**
-     * Sets the exam working time in minutes.
-     * @param minutes
-     */
-    set workingTimeInMinutes(minutes: number) {
-        this.exam.workingTime = minutes * 60;
-    }
-
-    /**
-     * Returns the exam working time in minutes.
-     */
-    get workingTimeInMinutes(): number {
-        return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
-    }
-
-    /**
-     * Returns the exam working time in minutes, rounded to one decimal place.
-     * Used for display purposes.
-     */
-    get workingTimeInMinutesRounded(): number {
-        return Math.round(this.workingTimeInMinutes * 10) / 10;
-    }
-
     get oldWorkingTime(): number | undefined {
         return normalWorkingTime(this.originalStartDate, this.originalEndDate);
     }
@@ -218,93 +194,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
     }
 
-    /**
-     * Updates the working time based on the start and end dates for real exams and simulation-only test exams.
-     */
-    updateExamWorkingTime() {
-        if (!this.usesExamWindowWorkingTime) return;
-
-        this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
-    }
-
     onExamModeChange() {
         if (isTestExam(this.exam)) {
-            // Preserve the rounded value
             this.exam.examWithAttendanceCheck = false;
             if (this.exam.examType === ExamType.REAL) {
                 this.exam.examType = ExamType.PRACTICE;
             }
-            this.setDefaultTestExamPracticeStartDate(this.exam);
-            if (this.usesExamWindowWorkingTime) {
-                this.updateExamWorkingTime();
-            } else {
-                this.roundWorkingTime();
-            }
         } else {
             this.exam.examType = ExamType.REAL;
-            // Otherwise, the working time should depend on the dates as usual
-            this.updateExamWorkingTime();
         }
-    }
-
-    onTestExamTypeChange() {
-        this.setDefaultTestExamPracticeStartDate(this.exam);
-        if (this.usesExamWindowWorkingTime) {
-            this.updateExamWorkingTime();
-        } else {
-            this.roundWorkingTime();
-        }
-    }
-
-    private setDefaultTestExamPracticeStartDate(exam: Exam) {
-        if (exam.examType !== ExamType.SIMULATION_AND_PRACTICE || exam.testExamPracticeStartDate) {
-            return;
-        }
-        exam.testExamPracticeStartDate = this.getTestExamSimulationEndDate(exam);
-    }
-
-    private getTestExamSimulationEndDate(exam = this.exam): dayjs.Dayjs | undefined {
-        if (!exam?.startDate || exam.workingTime === undefined) {
-            return undefined;
-        }
-        return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
-    }
-
-    get usesExamWindowWorkingTime(): boolean {
-        return !isTestExam(this.exam) || this.exam.examType === ExamType.SIMULATION;
     }
 
     get isExamTypeReadonly(): boolean {
         return this.exam?.id !== undefined;
-    }
-
-    /**
-     * Rounds the working time of the exam in minutes such that it only has one decimal place.
-     */
-    roundWorkingTime() {
-        this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
-    }
-
-    /**
-     * Checks if the exam visibility date is set too early relative to the exam start date.
-     * If the visibility date is more than 4 hours (240 minutes) before the start date.
-     * it indicates that the visibility date is set too early.
-     *
-     * @returns {boolean} true if the visibility date is more than 4 hours before the start date, false otherwise.
-     */
-    get checkExamVisibilityTime(): boolean {
-        if (!this.isVisibleDateSet || !this.isStartDateSet) {
-            return false;
-        }
-
-        const visibleDate = dayjs(this.exam.visibleDate);
-        const startDate = dayjs(this.exam.startDate);
-
-        // Calculate the difference in minutes
-        const differenceInMinutes = startDate.diff(visibleDate, 'minute');
-
-        // Check if the difference is more than 4 hours (240 minutes)
-        return differenceInMinutes > 240;
     }
 
     /**
@@ -456,24 +358,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
     }
 
-    /**
-     * Returns a boolean indicating whether the exam's visible date is set.
-     *
-     * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
-     */
-    get isVisibleDateSet(): boolean {
-        return !!this.exam.visibleDate;
-    }
-
-    /**
-     * Checks if the visible date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the visible date is valid, `false` otherwise.
-     */
-    get isValidVisibleDateValue(): boolean {
-        return dayjs(this.exam.visibleDate).isValid();
-    }
-
     get isValidNumberOfCorrectionRounds(): boolean {
         if (isTestExam(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
@@ -485,130 +369,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     get isValidMaxPoints(): boolean {
         return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0 && this.exam?.examMaxPoints <= 9999;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's grace period is valid.
-     * The grace period is valid if it's not set, or if it's between 0 and 3600 seconds.
-     *
-     * @returns {boolean} `true` if the exam's grace period is valid, `false` otherwise.
-     */
-    get isValidGracePeriod(): boolean {
-        if (this.exam.gracePeriod === undefined || this.exam.gracePeriod === null) {
-            return true;
-        }
-        return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
-    }
-
-    get isValidTestExamPracticeStartDate(): boolean {
-        if (!isTestExam(this.exam) || this.exam.examType !== ExamType.SIMULATION_AND_PRACTICE) {
-            return true;
-        }
-        const simulationEndDate = this.getTestExamSimulationEndDate();
-        return (
-            !!simulationEndDate &&
-            !!this.exam.testExamPracticeStartDate &&
-            dayjs(this.exam.testExamPracticeStartDate).isValid() &&
-            dayjs(this.exam.testExamPracticeStartDate).isSameOrAfter(simulationEndDate)
-        );
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's start date is set.
-     *
-     * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
-     */
-    get isStartDateSet(): boolean {
-        return !!this.exam.startDate;
-    }
-
-    /**
-     * Checks if the start date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the start date is valid, `false` otherwise.
-     */
-    get isValidStartDateValue(): boolean {
-        return dayjs(this.exam.startDate).isValid();
-    }
-
-    /**
-     * Validates the given StartDate.
-     * For real exams, the visibleDate has to be strictly prior the startDate.
-     * For test exams, the visibleDate has to be prior or equal to the startDate.
-     */
-    get isValidStartDate(): boolean {
-        if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
-            if (isTestExam(this.exam)) {
-                return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
-            } else {
-                return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's end date is set.
-     *
-     * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
-     */
-    get isEndDateSet(): boolean {
-        return !!this.exam.endDate;
-    }
-
-    /**
-     * Checks if the end date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the end date is valid, `false` otherwise.
-     */
-    get isValidEndDateValue(): boolean {
-        return dayjs(this.exam.endDate).isValid();
-    }
-
-    /**
-     * Validates the EndDate inputted by the user.
-     */
-    get isValidEndDate(): boolean {
-        if (this.isStartDateSet && this.isValidStartDateValue) {
-            return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
-        }
-        return true;
-    }
-
-    /**
-     * Maximum working time in seconds (30 days).
-     */
-    readonly maxWorkingTimeSeconds = 2592000;
-
-    /**
-     * Validates the WorkingTime.
-     * For practice test exams and combined simulation/practice test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
-     * and must not exceed 30 days (2592000 seconds).
-     * For real exams and simulation-only test exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
-     * and must not exceed 30 days (2592000 seconds).
-     */
-    get validateWorkingTime(): boolean {
-        if (!this.usesExamWindowWorkingTime) {
-            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
-                return false;
-            }
-            // Check 30-day limit
-            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
-                return false;
-            }
-            if (this.exam.startDate && this.exam.endDate) {
-                return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            }
-            return false;
-        }
-        if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
-            // Check 30-day limit for real exams as well
-            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
-                return false;
-            }
-            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-        }
-        return false;
     }
 
     get isValidPublishResultsDate(): boolean {

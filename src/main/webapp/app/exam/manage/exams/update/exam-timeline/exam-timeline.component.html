@@ -15,6 +15,7 @@
                 [useGrouping]="false"
                 [min]="0"
                 [max]="maxWorkingTimeInMinutes()"
+                [maxFractionDigits]="3"
                 suffix=" min"
             />
         </div>
@@ -23,7 +24,16 @@
                 <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                 <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
             </div>
-            <p-input-number inputId="gracePeriod" [(ngModel)]="gracePeriod" [showButtons]="true" [useGrouping]="false" [min]="0" [max]="max_grace_period_in_seconds" suffix=" s" />
+            <p-input-number
+                inputId="gracePeriod"
+                [(ngModel)]="gracePeriod"
+                [showButtons]="true"
+                [useGrouping]="false"
+                [min]="0"
+                [max]="max_grace_period_in_seconds"
+                suffix=" s"
+                [maxFractionDigits]="0"
+            />
         </div>
     </div>
 </div>
