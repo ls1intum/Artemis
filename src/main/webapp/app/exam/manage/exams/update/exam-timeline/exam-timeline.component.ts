@@ -17,11 +17,11 @@ export class ExamTimelineComponent {
 
     readonly visibleFrom = model.required<Dayjs | undefined>();
     readonly startOfWorkingTime = model.required<Dayjs | undefined>();
-    readonly endOfSimulationTime = computed(() => (this.examType() === 'SIMULATION_AND_PRACTICE' ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'minutes') : undefined));
+    readonly endOfSimulationTime = computed(() => (this.examType() === 'SIMULATION_AND_PRACTICE' ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined));
     readonly startOfPracticeTime = model.required<Dayjs | undefined>();
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
 
-    workingTime = model.required<number | undefined>(); // minutes
+    workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
     readonly timelineItems = computed(() => {
