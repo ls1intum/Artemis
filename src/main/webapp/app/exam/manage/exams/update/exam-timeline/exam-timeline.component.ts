@@ -119,7 +119,7 @@ export class ExamTimelineComponent {
         return workingTime > 0 && (!startOfWorkingTime || !endOfWorkingTime || workingTime <= endOfWorkingTime.diff(startOfWorkingTime, 'second'));
     });
 
-    private readonly isGracePeriodValid = computed(() => {
+    readonly isGracePeriodValid = computed(() => {
         const gracePeriod = this.gracePeriod();
         return gracePeriod === undefined || (gracePeriod >= 0 && gracePeriod <= this.max_grace_period_in_seconds);
     });

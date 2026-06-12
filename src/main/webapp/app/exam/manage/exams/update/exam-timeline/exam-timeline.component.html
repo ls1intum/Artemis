@@ -16,8 +16,13 @@
                 [min]="0"
                 [max]="maxWorkingTimeInMinutes()"
                 [maxFractionDigits]="3"
-                suffix=" min"
+                [invalid]="!isWorkingTimeValid()"
             />
+            @if (!isWorkingTimeValid()) {
+                <p-message severity="error" size="small" variant="simple">
+                    <span jhiTranslate="artemisApp.examManagement.workingTimeInvalid"></span>
+                </p-message>
+            }
         </div>
         <div class="d-flex flex-column">
             <div>
@@ -31,9 +36,14 @@
                 [useGrouping]="false"
                 [min]="0"
                 [max]="max_grace_period_in_seconds"
-                suffix=" s"
                 [maxFractionDigits]="0"
+                [invalid]="!isGracePeriodValid()"
             />
+            @if (!isGracePeriodValid()) {
+                <p-message severity="error" size="small" variant="simple">
+                    <span jhiTranslate="artemisApp.examManagement.gracePeriodInvalid"></span>
+                </p-message>
+            }
         </div>
     </div>
 </div>

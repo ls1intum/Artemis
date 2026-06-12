@@ -55,6 +55,8 @@ describe('ExamTimelineComponent', () => {
         fixture.detectChanges();
     };
 
+    const hasTranslationMessage = (translationKey: string) => !!fixture.nativeElement.querySelector(`[jhitranslate="${translationKey}"]`);
+
     it('should calculate the working time for real exams correctly', () => {
         component.endOfWorkingTime.set(dayjs().add(2, 'hours'));
         fixture.detectChanges();
@@ -182,6 +184,19 @@ describe('ExamTimelineComponent', () => {
         expect(latestValidity).toBe(false);
     });
 
+    it('should always show the working time validation message when working time is invalid', () => {
+        const start = dayjs();
+        setInputs({ examType: ExamType.PRACTICE, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
+        fixture.detectChanges();
+
+        expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(true);
+
+        component.workingTime.set(3600);
+        fixture.detectChanges();
+
+        expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(false);
+    });
+
     it('validates the working time for simulation test exams like real exams', () => {
         setInputs({ examType: ExamType.SIMULATION, workingTime: undefined, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
         markTimeline({ valid: false, empty: true });
@@ -275,6 +290,18 @@ describe('ExamTimelineComponent', () => {
         setInputs({ gracePeriod: -1 });
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(false);
+    });
+
+    it('should always show the grace period validation message when grace period is invalid', () => {
+        setInputs({ gracePeriod: -1 });
+        fixture.detectChanges();
+
+        expect(hasTranslationMessage('artemisApp.examManagement.gracePeriodInvalid')).toBe(true);
+
+        component.gracePeriod.set(180);
+        fixture.detectChanges();
+
+        expect(hasTranslationMessage('artemisApp.examManagement.gracePeriodInvalid')).toBe(false);
     });
 
     it('should clamp the maximum working time for practice exams', () => {
