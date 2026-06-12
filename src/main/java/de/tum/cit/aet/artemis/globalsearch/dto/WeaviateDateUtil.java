@@ -10,8 +10,8 @@ import java.util.Set;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Normalizes date values read back from Weaviate to a consistent ISO 8601 format
- * ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}, always three fractional digits).
+ * Normalizes date values read back from Weaviate and formats dates written to Weaviate,
+ * using a consistent ISO 8601 format ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}, always three fractional digits).
  * <p>
  * Weaviate may return DATE properties as {@link OffsetDateTime}, {@link ZonedDateTime},
  * or {@link String} depending on the client version. This utility normalizes them all
@@ -38,7 +38,9 @@ public final class WeaviateDateUtil {
      * omit the seconds for exact-minute times (e.g. {@code 2026-04-23T11:00Z}), which Weaviate
      * rejects with HTTP 422. This formatter always emits seconds and milliseconds.
      *
-     * @param date the date to format (must not be {@code null})
+     * @param date the date to format (must not be {@code null} and must support date, time, and offset
+     *                 fields, e.g. {@link OffsetDateTime} or {@link ZonedDateTime} — an {@link java.time.Instant}
+     *                 would throw, as it has no date fields or offset)
      * @return the RFC3339 representation accepted by Weaviate
      */
     public static String format(TemporalAccessor date) {
