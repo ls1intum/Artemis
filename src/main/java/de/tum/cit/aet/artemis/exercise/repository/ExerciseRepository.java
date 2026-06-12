@@ -632,20 +632,30 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestion modules not null and due date.
+     * Finds all exercises where grading feedback suggestions (Athena) are enabled via the course config and due date is after the given date.
      *
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.dueDate > :dueDate
+                AND (
+                    (e.course IS NOT NULL AND e.course.athenaConfig IS NOT NULL AND e.course.athenaConfig.gradingFeedbackEnabled = true)
+                    OR (e.exerciseGroup IS NOT NULL AND e.exerciseGroup.exam.course.athenaConfig IS NOT NULL
+                        AND e.exerciseGroup.exam.course.athenaConfig.gradingFeedbackEnabled = true)
+                )
+            """)
+    Set<Exercise> findAllWithGradingFeedbackEnabledAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
 
     /**
-     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     * Find all exercises where Athena grading feedback is enabled and due date is in the future.
      *
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
+        return findAllWithGradingFeedbackEnabledAndDueDateIsAfter(ZonedDateTime.now());
     }
 
     /**

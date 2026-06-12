@@ -40,6 +40,9 @@
 
     <!-- Remove allow_feedback_requests from exercise -->
     <changeSet id="20260611120000-4" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_feedback_requests"/>
+        </preConditions>
         <dropColumn tableName="exercise" columnName="allow_feedback_requests"/>
     </changeSet>
 
