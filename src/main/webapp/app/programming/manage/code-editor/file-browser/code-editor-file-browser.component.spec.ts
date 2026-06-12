@@ -663,7 +663,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(setupTreeviewSpy).toHaveBeenCalledOnce();
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [filePath]: FileType.FILE });
+        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [filePath]: FileType.FILE, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
     });
@@ -714,7 +714,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(setupTreeviewSpy).toHaveBeenCalledOnce();
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [filePath]: FileType.FOLDER });
+        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [filePath]: FileType.FOLDER, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
     });
@@ -953,7 +953,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
-        expect(comp.repositoryFiles()).toEqual(repositoryFiles);
+        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
@@ -988,7 +988,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
-        expect(comp.repositoryFiles()).toEqual(repositoryFiles);
+        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
@@ -1047,7 +1047,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
-        expect(comp.repositoryFiles()).toEqual(repositoryFiles);
+        expect(comp.repositoryFiles()).toEqual({ ...repositoryFiles, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
 
         // When renaming failed, the input should not be closed, because the user probably still wants to rename
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -94,19 +94,25 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     CommitState = CommitState;
     FileType = FileType;
     constructor() {
+        // The handlers below read AND write repositoryFiles/filesTreeViewItem. They must run
+        // untracked: a tracked read of a signal the handler itself replaces (always with a fresh
+        // object) re-triggers the effect and spins forever. Only the explicitly read inputs are
+        // intended triggers. (Found via vitest workers pinned at 100% CPU in this exact cycle.)
+
         // React to participation() signal changes
         effect(() => {
             const p = this.participation();
             if (p !== undefined) {
-                this.initializeRepositoryFiles();
+                untracked(() => this.initializeRepositoryFiles());
             }
         });
 
         // React to showEditorInstructions and isProblemStatementVisible signal changes
         effect(() => {
             this.showEditorInstructions();
+            this.isProblemStatementVisible();
             if (this.participation()) {
-                this.handleProblemStatementVisibility();
+                untracked(() => this.handleProblemStatementVisibility());
             }
         });
 
@@ -119,10 +125,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                 (this.previousEditorState !== undefined && this.previousEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN);
 
             if (shouldInitialize) {
-                this.initializeComponent();
+                untracked(() => this.initializeComponent());
             } else if (selectedFile && selectedFile !== this.previousSelectedFile) {
                 this.renamingFile.set(undefined);
-                this.setupTreeview();
+                untracked(() => this.setupTreeview());
             }
 
             this.previousCommitState = commitState;
@@ -221,13 +227,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             this.repositoryFiles.set({});
         }
 
-        // Add Problem Statement as a first-class file type
+        // Add Problem Statement as a first-class file type. Only write when the entry is missing —
+        // re-publishing an unchanged map would emit a fresh object reference on every call, and a
+        // real repository file occupying the identifier must not be clobbered.
         if (this.isProblemStatementVisible() && this.showEditorInstructions()) {
-            const existing = this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER];
-            if (!existing || existing === FileType.PROBLEM_STATEMENT) {
+            if (!this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]) {
                 this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
             }
-        } else {
+        } else if (PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles()) {
             // Ensure Problem Statement is removed when in repository view mode
             this.repositoryFiles.update((files) => {
                 const updated = { ...files };
@@ -261,16 +268,19 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             this.repositoryFiles.set({});
         }
 
+        // Only write when the entry actually changes — see initializeRepositoryFiles.
         if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
-            this.repositoryFiles.update((files) => {
-                const updated = { ...files };
-                delete updated[PROBLEM_STATEMENT_IDENTIFIER];
-                return updated;
-            });
+            if (PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles()) {
+                this.repositoryFiles.update((files) => {
+                    const updated = { ...files };
+                    delete updated[PROBLEM_STATEMENT_IDENTIFIER];
+                    return updated;
+                });
+            }
             if (this.isProblemStatementSelected()) {
                 this.selectedFileChange.emit(undefined);
             }
-        } else {
+        } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] !== FileType.PROBLEM_STATEMENT) {
             this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
         }
 
