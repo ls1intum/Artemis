@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.participation;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
@@ -829,7 +826,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -888,7 +884,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
 
@@ -926,9 +921,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textAthenaConfig.setAutoFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
-
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
@@ -979,7 +971,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         teamExercise = exerciseRepository.save(teamExercise);
 
         var team = createTeamForExercise(student1, teamExercise);
@@ -1027,7 +1018,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, teamExercise);
         teamExercise = exerciseRepository.save(teamExercise);
 
@@ -1069,9 +1059,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingAthenaConfig.setAutoFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
-
-        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
-        this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
 
@@ -1120,7 +1107,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
-        teamExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
         teamExercise = exerciseRepository.save(teamExercise);
 
         var team = createTeamForExercise(student1, teamExercise);
@@ -1162,7 +1148,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         this.programmingExercise = exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
@@ -1198,10 +1183,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textAthenaConfig.setAutoFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
-
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-
-        this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
 
@@ -1240,9 +1221,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingAthenaConfig.setAutoFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
-
-        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
-        this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("modeling");
 
@@ -1969,7 +1947,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenTextFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
-        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        setupAthenaForExercise(textExercise);
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(textExercise);
 
@@ -1989,7 +1967,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenModelingFeedbackRequestedAfterDueDateWithPracticeParticipation_thenSucceed() throws Exception {
-        setupAthenaForExercise(modelingExercise, "module_modeling_test");
+        setupAthenaForExercise(modelingExercise);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(modelingExercise);
 
@@ -2081,15 +2059,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 HttpStatus.BAD_REQUEST, "feedbackRequest.unsupportedExerciseType");
     }
 
-    private void setupAthenaForExercise(Exercise exercise, String feedbackModule) {
+    private void setupAthenaForExercise(Exercise exercise) {
         var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
         var exerciseAthenaConfig = new CourseAthenaConfig();
         exerciseAthenaConfig.setCourse(exerciseCourse);
         exerciseAthenaConfig.setAutoFeedbackEnabled(true);
         exerciseCourse.setAthenaConfig(exerciseAthenaConfig);
         courseRepository.save(exerciseCourse);
-        exercise.setFeedbackSuggestionModule(feedbackModule);
-        exerciseRepository.save(exercise);
     }
 
     @Test
