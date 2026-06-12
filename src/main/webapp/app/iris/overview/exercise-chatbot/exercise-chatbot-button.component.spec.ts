@@ -122,7 +122,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         // Prevent openChat's auto-triggered HTTP calls from interfering with individual tests.
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(chatHttpServiceMock, 'createSession').mockReturnValue(EMPTY);
+        vi.spyOn(chatHttpServiceMock, 'createCourseSession').mockReturnValue(EMPTY);
         vi.spyOn(chatHttpServiceMock, 'getChatSessionById').mockReturnValue(EMPTY);
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValue(of());
 

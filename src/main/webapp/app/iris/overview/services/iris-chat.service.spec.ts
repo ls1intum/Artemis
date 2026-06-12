@@ -179,7 +179,7 @@ describe('IrisChatService', () => {
     it('should load existing messages on session creation', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
+        vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(2)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.openChat(ChatServiceMode.COURSE, id);
         await waitForSessionId();
