@@ -240,11 +240,11 @@
             },
             "athenaConfig": {
                 "gradingFeedbackEnabled": {
-                    "label": "Athena-Bewertungsfeedback aktivieren",
+                    "label": "Bewertungsfeedback-Vorschläge aktiviert",
                     "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für alle Aufgabentypen vor."
                 },
                 "autoFeedbackEnabled": {
-                    "label": "Vorläufige Feedbackanfragen von Studierenden erlauben",
+                    "label": "Formatives Feedback-Anfragen aktiviert",
                     "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
                 }
             },

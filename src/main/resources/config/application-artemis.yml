@@ -84,7 +84,6 @@ artemis:
   athena:
     url: http://localhost:5100
     secret: abcdef12345
-    restricted-modules: module_text_llm,module_programming_llm
     modules:
       text: module_text_llm
       programming: module_programming_llm

@@ -240,11 +240,11 @@
             },
             "athenaConfig": {
                 "gradingFeedbackEnabled": {
-                    "label": "Enable Athena Grading Feedback",
+                    "label": "Grading Feedback Suggestions Enabled",
                     "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for all exercise types."
                 },
                 "autoFeedbackEnabled": {
-                    "label": "Allow Student Preliminary Feedback Requests",
+                    "label": "Formative Feedback Requests Enabled",
                     "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date."
                 }
             },
