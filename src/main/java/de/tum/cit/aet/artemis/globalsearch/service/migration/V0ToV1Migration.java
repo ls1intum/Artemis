@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.service.migration;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -221,8 +225,8 @@ public class V0ToV1Migration implements WeaviateMigration {
         for (String prop : DIRECT_MAPPINGS) {
             Object value = oldProps.get(prop);
             if (value != null) {
-                if (DATE_PROPERTIES.contains(prop) && value instanceof String dateStr) {
-                    value = normalizeRfc3339Date(dateStr);
+                if (DATE_PROPERTIES.contains(prop)) {
+                    value = normalizeRfc3339Date(value);
                 }
                 newProps.put(prop, value);
             }
@@ -237,19 +241,28 @@ public class V0ToV1Migration implements WeaviateMigration {
     }
 
     /**
-     * Ensures a date string has the seconds component required by RFC3339.
-     * Weaviate rejects dates like {@code 2026-04-24T20:25Z} — this method
-     * normalizes them to {@code 2026-04-24T20:25:00Z}.
+     * Ensures a date value is an RFC3339 string with the seconds component required by Weaviate.
+     * <p>
+     * The Weaviate client may return DATE-typed properties as {@link OffsetDateTime} or {@link ZonedDateTime}
+     * instead of {@link String}. Passing such objects through unchanged makes the client serialize them via
+     * {@code toString()}, which omits zero seconds (e.g. {@code 2026-04-24T20:25Z}) and is rejected by Weaviate
+     * with HTTP 422. String values may carry the same defect from the legacy v0 indexing code.
      *
-     * @param dateStr the date string from the legacy collection
+     * @param value the date value from the legacy collection
      * @return the normalized RFC3339 date string
      */
-    static String normalizeRfc3339Date(String dateStr) {
-        Matcher matcher = MISSING_SECONDS.matcher(dateStr);
-        if (matcher.find()) {
-            return matcher.replaceFirst("$1:00$2");
+    static Object normalizeRfc3339Date(Object value) {
+        if (value instanceof OffsetDateTime || value instanceof ZonedDateTime) {
+            return WeaviateDateUtil.format((TemporalAccessor) value);
         }
-        return dateStr;
+        if (value instanceof String dateStr) {
+            Matcher matcher = MISSING_SECONDS.matcher(dateStr);
+            if (matcher.find()) {
+                return matcher.replaceFirst("$1:00$2");
+            }
+            return dateStr;
+        }
+        return value;
     }
 
 }

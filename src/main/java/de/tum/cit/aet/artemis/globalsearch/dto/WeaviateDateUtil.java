@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +30,19 @@ public final class WeaviateDateUtil {
             SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE);
 
     private WeaviateDateUtil() {
+    }
+
+    /**
+     * Formats a date for writing to Weaviate. Weaviate requires full RFC3339 including the seconds
+     * component; formatters like {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} (or {@code toString()})
+     * omit the seconds for exact-minute times (e.g. {@code 2026-04-23T11:00Z}), which Weaviate
+     * rejects with HTTP 422. This formatter always emits seconds and milliseconds.
+     *
+     * @param date the date to format (must not be {@code null})
+     * @return the RFC3339 representation accepted by Weaviate
+     */
+    public static String format(TemporalAccessor date) {
+        return FORMAT.format(date);
     }
 
     /**
