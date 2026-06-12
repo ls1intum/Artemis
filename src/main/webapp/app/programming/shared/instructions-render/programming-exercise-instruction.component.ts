@@ -7,6 +7,7 @@ import {
     OnDestroy,
     OnInit,
     ViewContainerRef,
+    afterNextRender,
     createComponent,
     effect,
     inject,
@@ -418,21 +419,27 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     /**
      * Schedules the injection of dynamic content (UML diagrams, task components) into the DOM.
-     * Uses setTimeout to ensure the DOM has been updated before injection.
+     * Uses afterNextRender so the injection runs only after the render pass triggered by the
+     * renderedMarkdown signal write has put the markdown into the DOM. A setTimeout(0) is NOT
+     * sufficient under zoneless: its ordering against the change-detection scheduler is undefined,
+     * so the callbacks could query for the task/UML container elements before they exist.
      * @param onlyLastCallback If true, only invokes the last callback (for diff mode where only current UML matters)
      */
     private scheduleContentInjection(onlyLastCallback: boolean): void {
-        setTimeout(() => {
-            if (onlyLastCallback) {
-                const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
-                if (lastCallback) {
-                    lastCallback();
+        afterNextRender(
+            () => {
+                if (onlyLastCallback) {
+                    const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
+                    if (lastCallback) {
+                        lastCallback();
+                    }
+                } else {
+                    this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
                 }
-            } else {
-                this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
-            }
-            this.injectTasksIntoDocument();
-        }, 0);
+                this.injectTasksIntoDocument();
+            },
+            { injector: this.injector },
+        );
     }
 
     addStylesForTables(markdownWithoutTasks: string): string | undefined {
@@ -491,6 +498,11 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 this.createTaskComponent(taskHtmlContainer, taskName, testIds);
             }
         });
+        // Genuinely-unavoidable synchronous detectChanges: these task components live in markdown
+        // HTML injected via [innerHTML], outside any template tree. appRef.attachView() registers
+        // them for FUTURE app ticks but does NOT schedule an initial change-detection pass, and
+        // under zoneless nothing else does — without this, the step wizard never renders.
+        this.taskComponentRefs.forEach((ref) => ref.changeDetectorRef.detectChanges());
     };
 
     private createTaskComponent(taskHtmlContainer: Element, taskName: string, testIds: number[]) {
