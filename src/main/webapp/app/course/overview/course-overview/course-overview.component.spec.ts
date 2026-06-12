@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
@@ -34,6 +34,7 @@ import { CourseExercisesComponent } from 'app/course/overview/course-exercises/c
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -525,6 +526,46 @@ describe('CourseOverviewComponent', () => {
 
         expect(subscribeStub).toHaveBeenCalledOnce();
         expect(refreshSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should fetch the course exactly once when navigating into the course', async () => {
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should re-check access for the target child route after loading the course and redirect when it is not accessible', async () => {
+        // Deep link into the lectures tab of a course without lectures: nothing is stored yet,
+        // so the guard allows the activation optimistically and the container must redirect after the load.
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: undefined } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
+    it('should not redirect after loading the course when the target child route is accessible', async () => {
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: [new Lecture()] } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the course when navigating to a different course in place', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.courseId()).toBe(999);
+        expect(findOneForDashboardStub).toHaveBeenCalledTimes(2);
+        expect(findOneForDashboardStub).toHaveBeenLastCalledWith(999);
     });
 
     it('should have visible exams', () => {

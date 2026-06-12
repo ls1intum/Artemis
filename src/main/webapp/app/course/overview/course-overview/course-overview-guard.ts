@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, catchError, forkJoin, from, of, switchMap } from 'rxjs';
+import { Observable, catchError, from, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -16,7 +15,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 })
 export class CourseOverviewGuard implements CanActivate {
     private courseStorageService = inject(CourseStorageService);
-    private courseManagementService = inject(CourseManagementService);
     private accountService = inject(AccountService);
     private router = inject(Router);
     private serverDateService = inject(ArtemisServerDateService);
@@ -40,20 +38,14 @@ export class CourseOverviewGuard implements CanActivate {
         // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to today's Iris-or-exercises behavior.
         const user$: Observable<User | undefined> =
             path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
-        //we need to load the course from the server to check if the user has access to the requested route. The course in the cache might not be sufficient (e.g. misses exams or lectures)
-        return forkJoin({
-            courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),
-            user: user$,
-        }).pipe(
-            switchMap(({ courseRes, user }) => {
-                if (courseRes.body) {
-                    // Store course in cache
-                    this.courseStorageService.updateCourse(courseRes.body);
-                }
-                // Flatten the result to return Observable<boolean> directly
-                return this.handleReturn(this.courseStorageService.getCourse(courseIdNumber), path, user);
-            }),
-        );
+        const course = this.courseStorageService.getCourse(courseIdNumber);
+        // On the first navigation into a course nothing is stored yet. The guard deliberately does NOT issue the
+        // expensive for-dashboard call: it allows the activation, the course container fetches the course exactly
+        // once afterwards (which stores it for all later guard activations) and re-checks access for the target route.
+        if (!course) {
+            return of(true);
+        }
+        return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));
     }
 
     handleReturn = (course?: Course, type?: string, user?: User): Observable<boolean> => {

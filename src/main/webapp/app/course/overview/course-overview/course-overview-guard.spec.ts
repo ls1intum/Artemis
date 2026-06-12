@@ -2,12 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
-import { of } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -39,8 +38,6 @@ describe('CourseOverviewGuard', () => {
 
     const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], numberOfAcceptedFaqs: 3 } as Course;
 
-    const responseFakeCourse = { body: mockCourse } as HttpResponse<Course>;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
@@ -67,15 +64,41 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBe(false);
         });
 
-        it('should return true if course is fetched from server', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
-            let resultValue = false;
+        it('should allow activation without fetching when the course is not yet loaded (first navigation into the course)', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard');
+            let resultValue = false;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            // The course container performs the (expensive) for-dashboard call once after activation and re-checks access afterwards
+            expect(resultValue).toBe(true);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should decide from the stored course without fetching when the course is already loaded', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard');
+            let resultValue = false;
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
             expect(resultValue).toBe(true);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should deny and redirect based on the stored course', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            let resultValue = true;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
     });
 
@@ -255,7 +278,6 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
             const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -276,7 +298,6 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -292,7 +313,6 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('network error'));
             const navigateSpy = vi.spyOn(router, 'navigate');
 

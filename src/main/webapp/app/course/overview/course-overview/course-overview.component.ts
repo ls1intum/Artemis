@@ -2,6 +2,9 @@ import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@an
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -71,6 +74,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
+    private accountService = inject(AccountService);
+    private courseOverviewGuard = inject(CourseOverviewGuard);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -124,7 +129,13 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
+            const previousCourseId = this.courseId();
             this.courseId.set(id);
+            // In-place navigation to a different course (without destroying this container) must reload the course
+            if (previousCourseId && previousCourseId !== id) {
+                this.loadCourseSubscription?.unsubscribe();
+                this.loadCourseSubscription = this.loadCourse().subscribe();
+            }
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
                 if (settingInfo) {
@@ -227,13 +238,18 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and competencies
+     * Fetches the course from the server including all exercises, lectures, exams and competencies.
+     * This is the only place that issues the (expensive) for-dashboard call when navigating into a course;
+     * the {@link CourseOverviewGuard} reuses the stored result instead of fetching itself.
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
         const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
+                    // The guard skips the access check when no course is stored yet (first navigation into the course);
+                    // re-check the target child route now that the course is loaded
+                    this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
                 }
 
@@ -489,6 +505,21 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 }
             });
         }
+    }
+
+    /**
+     * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
+     * This complements the {@link CourseOverviewGuard}, which cannot decide on the first navigation into a course
+     * because it deliberately does not load the course itself.
+     */
+    private checkChildRouteAccess(course: Course): void {
+        const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
+        if (!childPath || !(Object.values(CourseOverviewRoutePath) as string[]).includes(childPath)) {
+            return;
+        }
+        // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
+        const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
+        this.courseOverviewGuard.handleReturn(course, childPath, user);
     }
 
     /** Navigate to a new Course */
