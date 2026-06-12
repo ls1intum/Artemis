@@ -54,13 +54,13 @@
     .iris-sidebar__header {
         display: flex;
         align-items: flex-start;
-        justify-content: space-between;
         gap: 0.75rem;
         padding: 0.25rem 0.25rem 0.5rem 0.25rem;
         flex-shrink: 0;
     }
 
     .iris-sidebar__close-button {
+        margin-left: auto;
         display: flex;
         align-items: center;
         justify-content: center;
