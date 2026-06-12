@@ -44,6 +44,7 @@ spring:
       chat: openai
     openai:
       api-key: <openai-api-key>
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
       chat:
         model: gpt-5-mini # Or another (reasonably capable) model
         temperature: 1.0 # Required to be 1.0 for gpt-5
@@ -69,7 +70,8 @@ spring:
     openai:
       api-key: <azure-openai-api-key>
       base-url: https://<your-resource-name>.openai.azure.com
-      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs
+      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
       chat:
         deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
         temperature: 1.0 # Required to be 1.0 for gpt-5
