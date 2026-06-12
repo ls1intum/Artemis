@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -55,6 +57,12 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 public class IrisMessageResource {
 
     private static final Set<String> MCQ_TYPES = Set.of("mcq", "mcq-set");
+
+    /**
+     * HTTP header through which a client identifies itself (e.g. {@code ios}). It is forwarded with the user message so
+     * the Iris response can decide whether to send a push notification (currently only for the iOS app).
+     */
+    private static final String CLIENT_HEADER = "X-Artemis-Client";
 
     private final IrisSessionRepository irisSessionRepository;
 
@@ -107,7 +115,8 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO,
+            @RequestHeader(value = CLIENT_HEADER, required = false) String clientOrigin) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -119,6 +128,8 @@ public class IrisMessageResource {
         List<IrisMessageContent> contentEntities = contentList.stream().map(IrisMessageContentDTO::toEntity).toList();
         message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
+        // Persist the originating client so the asynchronous Iris response can decide whether to send a push notification.
+        message.setSenderOrigin(IrisMessageClientOrigin.fromHeader(clientOrigin));
 
         IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
@@ -161,7 +172,8 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId,
+            @RequestHeader(value = CLIENT_HEADER, required = false) String clientOrigin) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -175,6 +187,9 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
+        // Update the originating client of the resent message so the Iris response reflects the client that triggered it.
+        message.setSenderOrigin(IrisMessageClientOrigin.fromHeader(clientOrigin));
+        irisMessageRepository.save(message);
         irisSessionService.requestMessageFromIris(session);
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -177,7 +178,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
-            notifyUserOfIrisResponse(session, savedMessage);
+            // Resolve the client the triggering user message came from (persisted on that message) to decide on a push notification.
+            IrisMessageClientOrigin clientOrigin = job.userMessageId() == null ? null
+                    : irisMessageRepository.findById(job.userMessageId()).map(IrisMessage::getSenderOrigin).orElse(null);
+            notifyUserOfIrisResponse(session, savedMessage, clientOrigin);
         }
         else {
             savedMessage = null;
@@ -234,10 +238,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * Subclasses with course and user context may override this to react to a finished answer (e.g. to
      * notify the user when the chat is not open anywhere). Default: no-op.
      *
-     * @param session the chat session the message belongs to
-     * @param message the assistant message that was sent
+     * @param session      the chat session the message belongs to
+     * @param message      the assistant message that was sent
+     * @param clientOrigin the client the triggering user message came from, or {@code null} if event-triggered (no user message)
      */
-    protected void notifyUserOfIrisResponse(S session, IrisMessage message) {
+    protected void notifyUserOfIrisResponse(S session, IrisMessage message, IrisMessageClientOrigin clientOrigin) {
         // no-op by default
     }
 

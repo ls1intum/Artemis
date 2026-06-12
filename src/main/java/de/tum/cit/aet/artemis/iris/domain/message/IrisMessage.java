@@ -55,6 +55,15 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
+    /**
+     * The client a user message was sent from, or {@code null} for non-user messages (only set for user messages).
+     * Used to decide whether the (asynchronous) Iris response should be delivered as a push notification.
+     */
+    @Nullable
+    @Column(name = "sender_origin")
+    @Enumerated(EnumType.STRING)
+    private IrisMessageClientOrigin senderOrigin;
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -102,6 +111,15 @@ public class IrisMessage extends DomainObject {
 
     public void setSender(IrisMessageSender sender) {
         this.sender = sender;
+    }
+
+    @Nullable
+    public IrisMessageClientOrigin getSenderOrigin() {
+        return senderOrigin;
+    }
+
+    public void setSenderOrigin(@Nullable IrisMessageClientOrigin senderOrigin) {
+        this.senderOrigin = senderOrigin;
     }
 
     public List<IrisMessageContent> getContent() {

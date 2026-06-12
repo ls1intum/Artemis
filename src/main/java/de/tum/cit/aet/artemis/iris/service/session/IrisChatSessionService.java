@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -161,11 +162,18 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     /**
      * After an Iris answer is persisted and pushed over the websocket, notify the user if the chat is
-     * not open live anywhere (app backgrounded/closed, or the chat closed in the web client). This is
-     * origin-agnostic: it fires regardless of which client sent the original message.
+     * not open live anywhere (app backgrounded/closed, or the chat closed in the web client).
+     * <p>
+     * The push notification is only sent when the triggering user message originated from the iOS app
+     * ({@link IrisMessageClientOrigin#IOS}). Messages sent from other clients (e.g. the web client) or
+     * event-triggered Iris responses (which have no client origin) never produce a push notification.
      */
     @Override
-    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message) {
+    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message, IrisMessageClientOrigin clientOrigin) {
+        if (clientOrigin != IrisMessageClientOrigin.IOS) {
+            // The triggering message did not come from the iOS app — do not send a push notification.
+            return;
+        }
         try {
             var user = userRepository.findByIdElseThrow(session.getUserId());
             if (irisSessionPresenceService.isSessionOpenAnywhere(user.getLogin(), session.getId())) {
