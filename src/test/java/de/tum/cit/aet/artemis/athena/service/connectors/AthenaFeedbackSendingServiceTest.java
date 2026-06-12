@@ -239,14 +239,14 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.getCourse().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
 
         asyncExceptionLogAppender.list.clear();
 
-        programmingExercise.getCourse().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
