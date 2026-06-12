@@ -39,10 +39,12 @@ export class CourseOverviewGuard implements CanActivate {
         const user$: Observable<User | undefined> =
             path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
         const course = this.courseStorageService.getCourse(courseIdNumber);
-        // On the first navigation into a course nothing is stored yet. The guard deliberately does NOT issue the
-        // expensive for-dashboard call: it allows the activation, the course container fetches the course exactly
-        // once afterwards (which stores it for all later guard activations) and re-checks access for the target route.
-        if (!course) {
+        // On the first navigation into a course, either nothing is stored yet or only the slim course from the
+        // course list (which e.g. always has empty exams and would produce wrong access decisions). The guard
+        // deliberately does NOT issue the expensive for-dashboard call: it allows the activation, the course
+        // container fetches the full course exactly once afterwards (which stores it for all later guard
+        // activations) and re-checks access for the target route.
+        if (!course || !this.courseStorageService.isCourseFullyLoaded(courseIdNumber)) {
             return of(true);
         }
         return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));

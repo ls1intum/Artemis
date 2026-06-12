@@ -187,7 +187,7 @@ describe('CourseOverviewComponent', () => {
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
-            snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
+            snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
 
@@ -548,6 +548,16 @@ describe('CourseOverviewComponent', () => {
     it('should not redirect after loading the course when the target child route is accessible', async () => {
         (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: [new Lecture()] } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not redirect after loading the course for child routes that the guard does not protect', async () => {
+        // settings/statistics/calendar are CourseOverviewRoutePath members without an access rule; they must never be redirected
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         await component.ngOnInit();

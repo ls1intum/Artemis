@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS, CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -514,7 +514,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     private checkChildRouteAccess(course: Course): void {
         const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
-        if (!childPath || !(Object.values(CourseOverviewRoutePath) as string[]).includes(childPath)) {
+        // Only re-check routes that the CourseOverviewGuard actually protects: other child routes
+        // (e.g. settings, statistics, calendar) have no access rule and must not be redirected
+        if (!childPath || !COURSE_OVERVIEW_GUARDED_ROUTE_PATHS.has(childPath)) {
             return;
         }
         // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
