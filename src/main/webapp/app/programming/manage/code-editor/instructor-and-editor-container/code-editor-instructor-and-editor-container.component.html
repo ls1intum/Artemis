@@ -255,7 +255,7 @@
                              when idle, auto-starts from the create flow's router state, and reattaches to an active run via /status. -->
                         @if (hyperionEnabled && exercise.isAtLeastEditor && exercise.id) {
                             <jhi-hyperion-exercise-generation
-                                class="ms-1"
+                                class="ms-2"
                                 [compact]="true"
                                 [exerciseId]="exercise.id"
                                 [autoStart]="autoStartGeneration()"
