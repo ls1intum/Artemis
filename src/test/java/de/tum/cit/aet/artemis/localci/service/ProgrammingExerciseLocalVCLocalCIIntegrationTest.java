@@ -522,7 +522,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         // Explicitly set the field to null to trigger computation on the server
         exerciseToBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        exerciseToBeImported.setAllowFeedbackRequests(true);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
