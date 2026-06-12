@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -1019,13 +1020,21 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @Nested
     class ContextAwareness {
 
+        private Long unitId;
+
+        @BeforeEach
+        void setupLectureUnit() {
+            LectureUnit unit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+            unitId = unit.getId();
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void sendMessageWithVideoContext_forwardsContextToPyris() throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var videoContext = new IrisVideoContextDTO(123L, 45.5);
+            var videoContext = new IrisVideoContextDTO(unitId, 45.5);
             var requestDto = buildRequestWithContext(messageToSend, List.of(videoContext));
 
             mockChatResponse(dto -> {
@@ -1033,7 +1042,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 assertThat(dto.context()).hasSize(1);
                 assertThat(dto.context().get(0)).isInstanceOf(IrisVideoContextDTO.class);
                 var forwardedContext = (IrisVideoContextDTO) dto.context().get(0);
-                assertThat(forwardedContext.lectureUnitId()).isEqualTo(123L);
+                assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
                 assertThat(forwardedContext.timestamp()).isEqualTo(45.5);
                 assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
                 pipelineDone.set(true);
@@ -1049,7 +1058,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var slidesContext = new IrisSlidesContextDTO(456L, 7);
+            var slidesContext = new IrisSlidesContextDTO(unitId, 7);
             var requestDto = buildRequestWithContext(messageToSend, List.of(slidesContext));
 
             mockChatResponse(dto -> {
@@ -1057,7 +1066,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 assertThat(dto.context()).hasSize(1);
                 assertThat(dto.context().get(0)).isInstanceOf(IrisSlidesContextDTO.class);
                 var forwardedContext = (IrisSlidesContextDTO) dto.context().get(0);
-                assertThat(forwardedContext.lectureUnitId()).isEqualTo(456L);
+                assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
                 assertThat(forwardedContext.page()).isEqualTo(7);
                 assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
                 pipelineDone.set(true);
@@ -1073,7 +1082,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var fullscreenContext = new IrisFullscreenContextDTO(789L);
+            var fullscreenContext = new IrisFullscreenContextDTO(unitId);
             var requestDto = buildRequestWithContext(messageToSend, List.of(fullscreenContext));
 
             mockChatResponse(dto -> {
@@ -1083,7 +1092,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 assertThat(dto.context().get(0)).isInstanceOf(IrisFullscreenContextDTO.class);
 
                 // AND lectureUnitId should be extracted for RAG filtering
-                assertThat(dto.lectureUnitId()).isEqualTo(789L);
+                assertThat(dto.lectureUnitId()).isEqualTo(unitId);
 
                 assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
                 pipelineDone.set(true);
@@ -1099,8 +1108,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var videoContext = new IrisVideoContextDTO(123L, 10.0);
-            var slidesContext = new IrisSlidesContextDTO(123L, 3);
+            var videoContext = new IrisVideoContextDTO(unitId, 10.0);
+            var slidesContext = new IrisSlidesContextDTO(unitId, 3);
             var requestDto = buildRequestWithContext(messageToSend, List.of(videoContext, slidesContext));
 
             mockChatResponse(dto -> {
@@ -1151,8 +1160,30 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void sendMessageWithContextAndUncommittedFiles_forwardsBoth() throws Exception {
-            // This test verifies context feature doesn't break uncommitted files support
+        void sendMessageWithForeignLectureUnitId_contextDropped() throws Exception {
+            // A context referencing a lectureUnitId that does not belong to the session's lecture must be dropped.
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            long foreignUnitId = Long.MAX_VALUE;
+            var fullscreenContext = new IrisFullscreenContextDTO(foreignUnitId);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(fullscreenContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithUncommittedFiles_lectureForeignContextIgnored() throws Exception {
+            // Lecture context sent from a programming session must be stripped before forwarding to Pyris.
             ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, ProgrammingLanguage.JAVA, "ProgContext", "PROGCTX", null);
             activateIrisFor(exercise);
 
@@ -1167,13 +1198,11 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), uncommittedFiles, List.of(fullscreenContext));
 
             mockChatResponse(dto -> {
-                // Both context and uncommitted files should be forwarded
-                assertThat(dto.context()).isNotNull();
-                assertThat(dto.context()).hasSize(1);
-                assertThat(dto.context().get(0)).isInstanceOf(IrisFullscreenContextDTO.class);
-                assertThat(dto.lectureUnitId()).isEqualTo(999L);
+                // Lecture context must be dropped for non-LECTURE_CHAT sessions
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
 
-                // Uncommitted files forwarded via programmingExerciseSubmission.repository
+                // Uncommitted files are still forwarded via programmingExerciseSubmission.repository
                 if (dto.programmingExerciseSubmission() != null && dto.programmingExerciseSubmission().repository() != null) {
                     assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
                 }

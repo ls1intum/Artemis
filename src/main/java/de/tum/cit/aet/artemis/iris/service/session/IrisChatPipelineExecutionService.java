@@ -6,6 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -28,6 +30,8 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -171,6 +175,9 @@ public class IrisChatPipelineExecutionService {
         PyrisLectureDTO lectureDto = null;
         PyrisSubmissionDTO progSubmission = null;
         String textSubmission = null;
+        Long lectureUnitId = null;
+        // Lecture context (video/slides/fullscreen) is only valid for LECTURE_CHAT; other modes receive no context.
+        List<IrisMessageContextDTO> safeContext = List.of();
 
         switch (chatMode) {
             case PROGRAMMING_EXERCISE_CHAT -> {
@@ -201,6 +208,16 @@ public class IrisChatPipelineExecutionService {
                     return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
                 }).toList();
                 lectureDto = new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lectureUnits);
+
+                // Only forward context whose lectureUnitId belongs to this session's lecture.
+                Set<Long> validUnitIds = lectureUnits.stream().map(PyrisLectureUnitDTO::lectureUnitId).collect(Collectors.toSet());
+                safeContext = context.stream().filter(ctx -> switch (ctx) {
+                    case IrisVideoContextDTO v -> validUnitIds.contains(v.lectureUnitId());
+                    case IrisSlidesContextDTO s -> validUnitIds.contains(s.lectureUnitId());
+                    case IrisFullscreenContextDTO f -> validUnitIds.contains(f.lectureUnitId());
+                }).toList();
+                lectureUnitId = safeContext.stream().filter(IrisFullscreenContextDTO.class::isInstance).map(IrisFullscreenContextDTO.class::cast)
+                        .map(IrisFullscreenContextDTO::lectureUnitId).findFirst().orElse(null);
             }
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
@@ -208,12 +225,8 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
-        // Extract lectureUnitId from fullscreen context if present (for RAG filtering)
-        Long lectureUnitId = context.stream().filter(IrisFullscreenContextDTO.class::isInstance).map(IrisFullscreenContextDTO.class::cast)
-                .map(IrisFullscreenContextDTO::lectureUnitId).findFirst().orElse(null);
-
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, context.isEmpty() ? null : context);
+                courseDto, programmingExercise, textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, safeContext.isEmpty() ? null : safeContext);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
