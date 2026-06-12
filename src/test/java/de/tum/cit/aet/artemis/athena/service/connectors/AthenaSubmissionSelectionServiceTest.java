@@ -160,7 +160,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        textExercise.getCourse().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -168,7 +168,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testProgrammingSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        programmingExercise.getCourse().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
