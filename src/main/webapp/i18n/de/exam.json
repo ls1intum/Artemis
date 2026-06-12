@@ -564,7 +564,6 @@
                 "simulationEndDate": "Ende der Simulationszeit",
                 "practiceStartDate": "Beginn der Übungszeit",
                 "practiceStartDateTooltip": "Datum und Uhrzeit, ab wann wiederholbare Übungsversuche nach der Simulationsphase verfügbar sind.",
-                "practiceStartDateInvalid": "Der Beginn der Übungsphase muss zum oder nach Ende der Simulationsphase liegen.",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"

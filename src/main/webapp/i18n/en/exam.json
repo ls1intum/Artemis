@@ -564,7 +564,6 @@
                 "simulationEndDate": "End of the simulation time",
                 "practiceStartDate": "Start of practice time",
                 "practiceStartDateTooltip": "The date and time when repeatable practice attempts become available after the simulation phase.",
-                "practiceStartDateInvalid": "The start of the practice window must be set at or after the simulation phase ends.",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
