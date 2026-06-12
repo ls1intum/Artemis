@@ -123,6 +123,6 @@ export class CourseExerciseGroupDetailComponent {
     }
 
     protected exerciseLink(exercise: Exercise): string {
-        return `/courses/${this.courseId}/exercises/experimental/${exercise.id}`;
+        return `/courses/${this.courseId}/exercises/${exercise.id}`;
     }
 }

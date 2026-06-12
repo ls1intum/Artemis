@@ -43,7 +43,7 @@ function emptyAccordionGroups(): AccordionGroups {
  * Experimental student exercise overview. Reuses the real exercise sidebar unchanged (search, filter,
  * date/week grouping all preserved). Exercises belonging to the same course-level group are nested under
  * a single group header card (via the sidebar's optional {@link SidebarCardElement.groupedItems}).
- * Dev-only; reachable at /courses/:courseId/exercises/experimental.
+ * Reachable at /courses/:courseId/exercises.
  */
 @Component({
     selector: 'jhi-course-exercises-experimental',
@@ -170,7 +170,7 @@ export class CourseExercisesExperimentalComponent {
             groupHeaderStyle: 'card',
             groupConnected: true,
             groupClickable: 'group',
-            routerLink: `/courses/${this.courseId()}/exercises/experimental/group/${group.id}`,
+            routerLink: `/courses/${this.courseId()}/exercises/group/${group.id}`,
             groupedItems: members.map((member) => this.courseOverviewService.mapExerciseToSidebarCardElement(member)),
         };
     }

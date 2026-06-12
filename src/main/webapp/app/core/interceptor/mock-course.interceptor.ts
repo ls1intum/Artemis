@@ -109,10 +109,10 @@ const COMPETENCY_CONTRIBUTIONS = /^api\/atlas\/exercises\/(\d+)\/contributions$/
 const GROUP_CHANNEL = /^\/?api\/communication\/courses\/\d+\/exercises\/\d+\/channel$/;
 const GROUP_MESSAGES = /^\/?api\/communication\/courses\/\d+\/messages$/;
 
-// The /original and /experimental exercise views (both the instructor management view and the
-// student overview) are backed by mock data. The default /exercises route hits the real backend.
-// The competency-management instructor page and the student /competencies tab are also mocked.
-const VERSIONED_VIEW = /\/exercises\/(?:original|experimental)(?:[/?#]|$)|\/competency-management(?:[/?#]|$)|\/competencies(?:[/?#]|$)/;
+// The student exercise overview (/courses/:id/exercises), the instructor exercise-management
+// views, the competency-management instructor page, and the student /competencies tab are all
+// backed by mock data in dev mode.
+const VERSIONED_VIEW = /\/courses\/\d+\/exercises(?:[/?#]|$)|\/competency-management(?:[/?#]|$)|\/competencies(?:[/?#]|$)/;
 
 // Competency endpoints used by both the instructor management page and the student overview/detail.
 const COURSE_COMPETENCIES_LIST = /^api\/atlas\/courses\/\d+\/course-competencies$/;
