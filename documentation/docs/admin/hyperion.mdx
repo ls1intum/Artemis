@@ -73,7 +73,7 @@ spring:
       microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
       timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
       chat:
-        deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
+        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
         temperature: 1.0 # Required to be 1.0 for gpt-5
     # Retry/response handling tuning for AI providers
     retry:
