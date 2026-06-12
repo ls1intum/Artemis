@@ -1,5 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
@@ -16,6 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -24,12 +24,12 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
     private eventManager = inject(EventManager);
 
     readonly SCORE_PATTERN = SCORE_PATTERN;
 
-    @Input() exercise: Exercise;
+    readonly exercise = input.required<Exercise>();
 
     student: User = new User();
     result: Result;
@@ -61,7 +61,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * Close modal window.
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 
     /**
@@ -73,7 +73,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
+        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise(), this.student, this.result));
     }
 
     /**
@@ -92,7 +92,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * @param { HttpResponse<Result> } result - Result of successful http request
      */
     onSaveSuccess(result: HttpResponse<Result>) {
-        this.activeModal.close(result.body);
+        this.dialogRef.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }

@@ -250,7 +250,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const pdfDocument = await PDFDocument.load(arrayBuffer);
             const pageCount = pdfDocument.getPageCount();
 
-            const loadingTask = PDFJS.getDocument(fileUrl);
+            const loadingTask = PDFJS.getDocument({ url: fileUrl });
             const pdfJsDocument = await loadingTask.promise;
 
             this.sourcePDFs.update((sources) => {

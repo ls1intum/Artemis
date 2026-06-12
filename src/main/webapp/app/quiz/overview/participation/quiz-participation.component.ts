@@ -1,9 +1,8 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, combineLatest, map, of, take } from 'rxjs';
+import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -22,7 +21,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -30,7 +29,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { onError } from 'app/foundation/util/global.utils';
+import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular';
@@ -47,6 +46,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -82,7 +82,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -101,6 +101,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     quizHeader = viewChild<ElementRef>('quizHeader');
     stepWizard = viewChild<ElementRef>('stepWizard');
+    private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
 
     private routeAndDataSubscription: Subscription;
 
@@ -136,6 +137,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly inputCourseId = input<number>();
     readonly inputMode = input<string>();
     readonly quizStartedEvent = output<void>();
+    readonly quizSubmittedEvent = output<QuizSubmission>();
+    readonly practiceParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
+    private lastEmittedLiveQuizStatus: LiveQuizParticipationStatus | undefined;
 
     private readonly _isSubmitDisabled = signal(true);
     private readonly _submitTitleKey = signal('entity.action.submit');
@@ -143,6 +149,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+
+    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
+    readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -184,6 +193,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
                 this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
             }
+        });
+        effect((onCleanup) => {
+            // Center the overlays over the quiz by publishing its horizontal center. A ResizeObserver re-measures
+            // whenever the quiz changes size (window resize, sidebar toggle, ...); its first callback covers the initial layout.
+            const root = this.quizRoot()?.nativeElement;
+            if (!root) {
+                return;
+            }
+            const observer = new ResizeObserver(() => {
+                const rect = root.getBoundingClientRect();
+                root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
+                root.style.setProperty('--quiz-overlay-max-width', `${rect.width}px`);
+                root.style.setProperty('--quiz-overlay-display', rect.width === 0 ? 'none' : 'block');
+            });
+            observer.observe(root);
+            onCleanup(() => observer.disconnect());
         });
     }
 
@@ -692,6 +717,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (this.submission.results?.length && this.submission.results[0].score !== undefined && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
                 this.showResult(this.submission.results[0]);
+                this.emitLiveQuizResult(participation);
             }
         } else {
             this.submission = new QuizSubmission();
@@ -759,7 +785,20 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.transferInformationToQuizExercise(quizExercise);
                 this.applySubmission();
                 this.showResult(this.submission.results[0]);
+                this.syncSubmitState();
+                this.emitLiveQuizResult(participation);
             }
+        }
+    }
+
+    /**
+     * Surfaces the result-bearing participation to the surrounding exercise page (live mode only) so the exercise
+     * header reflects the graded result (status badge + achieved points) as soon as the result arrives, without a
+     * page refresh. The full participation is emitted.
+     */
+    private emitLiveQuizResult(participation: StudentParticipation): void {
+        if (this.mode === 'live' && participation?.submissions?.some((submission) => submission.results?.length)) {
+            this.liveQuizResultParticipation.emit(participation);
         }
     }
 
@@ -844,6 +883,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
+            this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
     }
 
@@ -989,6 +1029,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.updateSubmissionTime();
                             this.applySubmission();
                             this.syncSubmitState();
+                            // Notify the surrounding exercise page so the participation status badge
+                            // ("Submitted, waiting for due date") updates without requiring a page refresh.
+                            this.quizSubmittedEvent.emit(this.submission);
                             if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
                                 this.alertService.success('artemisApp.quizExercise.submitSuccess');
                             }
@@ -1009,10 +1052,23 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.syncSubmitState();
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
-        this.transferInformationToQuizExercise(quizExercise);
+        const participation = this.submission.participation as StudentParticipation | undefined;
+        const quizExercise = participation?.exercise as QuizExercise | undefined;
+        if (quizExercise) {
+            this.transferInformationToQuizExercise(quizExercise);
+        }
         this.applySubmission();
         this.showResult(result);
+
+        if (this.mode === 'practice' && participation) {
+            // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
+            // shows the practice score immediately, without requiring a page refresh. The result payload omits the
+            // practice flag, so set it explicitly and link the result to the submission for the badge to render it.
+            participation.testRun = true;
+            this.submission.results = [result];
+            participation.submissions = [this.submission];
+            this.practiceParticipationChanged.emit(participation);
+        }
     }
 
     /**
@@ -1140,8 +1196,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @returns `true` if the submission should be considered submitted in the UI;
      *          `false` otherwise.
      */
-    private computeShouldTreatAsSubmittedForUi(): boolean {
-        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+    private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
+        const hasSavedOrAnswered = hasAnyAnswer || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 
@@ -1151,10 +1207,73 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * on a button inside this component.
      */
     syncSubmitState(): void {
-        const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
+        // hasAnyAnswer() materializes the three answer maps; compute it once per tick and share it with both consumers.
+        const hasAnyAnswer = this.hasAnyAnswer();
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
         const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
+        this.emitLiveQuizStatus(submittedForUi);
+        this.updateLiveHeaderInfo(hasAnyAnswer);
+    }
+
+    /**
+     * Emits the display-only live quiz status to the surrounding exercise page (only when it changes), so the
+     * participation status badge reflects the actual in-quiz progress without a page refresh. While the quiz shows
+     * results, or outside live mode, no override is emitted so the badge falls back to its result/data-driven logic.
+     */
+    private emitLiveQuizStatus(submittedForUi: boolean): void {
+        let status: LiveQuizParticipationStatus | undefined;
+        // Only report once the quiz has actually loaded. Before that, waitingForQuizStart still holds its default
+        // (false) and would briefly report PARTICIPATING, flashing the wrong badge when opening/switching quizzes.
+        if (this.mode === 'live' && this.quizExercise && !this.showingResult) {
+            if (submittedForUi) {
+                status = LiveQuizParticipationStatus.SUBMITTED;
+            } else if (this.quizExercise.quizEnded) {
+                status = LiveQuizParticipationStatus.MISSED;
+            } else if (!this.waitingForQuizStart) {
+                status = LiveQuizParticipationStatus.PARTICIPATING;
+            } else {
+                status = LiveQuizParticipationStatus.NOT_STARTED;
+            }
+        }
+        if (status !== this.lastEmittedLiveQuizStatus) {
+            this.lastEmittedLiveQuizStatus = status;
+            this.liveQuizStatusChange.emit(status);
+        }
+    }
+
+    /** Recomputes the live header info (remaining time / results-available date) for the exercise header; runs on every UI tick via {@link syncSubmitState} and when results are shown. */
+    private updateLiveHeaderInfo(hasAnyAnswer: boolean): void {
+        if (!this.quizExercise || (this.mode !== 'live' && this.mode !== 'practice')) {
+            this._liveHeaderInfo.set(undefined);
+            return;
+        }
+
+        const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
+        if (!this.showingResult) {
+            if (!this.waitingForQuizStart && !this.submission.submitted && !!this.endDate && this.remainingTimeSeconds >= 0) {
+                info.showRemainingTime = true;
+                info.remainingTimeText = this.remainingTimeText;
+                info.remainingTimeColor = this.remainingTimeColor();
+            } else if (this.quizExercise.dueDate && ((!this.quizExercise.quizEnded && this.submission.submitted) || (this.remainingTimeSeconds < 0 && hasAnyAnswer))) {
+                info.showResultsAvailable = true;
+                info.resultsAvailableDate = this.quizExercise.dueDate;
+            }
+        }
+        this._liveHeaderInfo.set(info);
+    }
+
+    /** Maps the remaining seconds to a bootstrap text color (warning / critical thresholds); undefined for the default color. */
+    private remainingTimeColor(): string | undefined {
+        const duration = this.quizExercise.duration ?? 0;
+        if (this.remainingTimeSeconds < 60 || this.remainingTimeSeconds < duration / 4) {
+            return 'danger';
+        }
+        if (this.remainingTimeSeconds < 120 || this.remainingTimeSeconds < duration / 2) {
+            return 'warning';
+        }
+        return undefined;
     }
 }

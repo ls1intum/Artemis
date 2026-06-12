@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -11,6 +11,10 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+interface ProgrammingExerciseResetDialogData {
+    programmingExercise: ProgrammingExercise;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
     templateUrl: './programming-exercise-reset-dialog.component.html',
@@ -21,11 +25,12 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
 
     programmingExerciseResetOptions: ProgrammingExerciseResetOptions;
     isLoading = false;
@@ -58,10 +63,10 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     }
 
     /**
-     * Closes the active modal dialog and dismisses it with a 'cancel' reason
+     * Closes the dialog and dismisses it with a 'cancel' reason
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 
     /**
@@ -82,11 +87,11 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         });
     }
     /**
-     * Handles the reset response by showing a success message, dismissing the active modal dialog, and resetting the resetInProgress flag.
+     * Handles the reset response by showing a success message, closing the dialog, and resetting the resetInProgress flag.
      */
     handleResetResponse = () => {
         this.alertService.success('artemisApp.programmingExercise.reset.successMessage');
-        this.activeModal.dismiss(true);
+        this.dialogRef.close(true);
         this.resetInProgress = false;
     };
 

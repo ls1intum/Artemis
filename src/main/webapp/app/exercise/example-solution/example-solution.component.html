@@ -1,8 +1,8 @@
-@if (exercise) {
+@if (exercise; as exercise) {
     <div>
-        @if (displayHeader) {
-            <jhi-header-exercise-page-with-details [exercise]="exercise!" [course]="exercise?.exerciseGroup?.exam?.course">
-                <span pagetitle>{{ exercise?.exerciseGroup ? exercise.exerciseGroup!.title : exercise!.title }}</span>
+        @if (displayHeader()) {
+            <jhi-header-exercise-page-with-details [exercise]="exercise" [course]="exercise.exerciseGroup?.exam?.course">
+                <span pagetitle>{{ exercise.exerciseGroup ? exercise.exerciseGroup.title : exercise.title }}</span>
             </jhi-header-exercise-page-with-details>
         }
         <div class="row">
@@ -13,7 +13,7 @@
                         <h3 jhiTranslate="artemisApp.exercise.problemStatement"></h3>
                         <p
                             [innerHTML]="
-                                exercise?.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
+                                exercise.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
                             "
                         ></p>
                     </div>

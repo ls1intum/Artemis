@@ -18,14 +18,32 @@ export class ExerciseTeamsPage {
 
     /**
      * Clicks the "Create team" button and waits for the dialog to be fully rendered, with
-     * both typeahead inputs visible. The owner-search typeahead now uses debounceTime(200)
-     * on its text$ stream (matching team-student-search), so race-prone first-keystroke
-     * timing is handled at the component layer instead of by waiting on a host-property
-     * attribute here.
+     * both typeahead inputs visible.
+     *
+     * The dialog is opened by jhi-team-update-button via PrimeNG's DialogService directly inside the
+     * button's (onClick) handler (a synchronous `dialogService.open(...)`). Under heavy parallel load the
+     * button is occasionally clicked before Angular has wired that output binding, so the first click
+     * no-ops and no dialog ever appears — the source of this test's flakiness. Retry the click until the
+     * dialog becomes visible.
      */
     async createTeam() {
-        await this.page.locator('button', { hasText: 'Create team' }).click();
-        await this.page.getByRole('dialog').waitFor({ state: 'visible', timeout: 30_000 });
+        const createButton = this.page.locator('button', { hasText: 'Create team' });
+        const dialog = this.page.getByRole('dialog');
+        await expect(createButton).toBeEnabled({ timeout: 30_000 });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (await dialog.isVisible()) {
+                break;
+            }
+            await createButton.click();
+            try {
+                await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+                break;
+            } catch {
+                if (attempt === 2) {
+                    throw new Error('Team creation dialog did not open after multiple "Create team" clicks');
+                }
+            }
+        }
         await this.page.locator('#owner-search-input').waitFor({ state: 'visible', timeout: 30_000 });
         await this.page.locator('#student-search-input').waitFor({ state: 'visible', timeout: 30_000 });
     }

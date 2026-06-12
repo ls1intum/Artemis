@@ -3,7 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import dayjs, { Dayjs } from 'dayjs';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, newBrowserPage, waitForExamBuildAndTestAfterDueDate } from '../../support/utils';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/assessment/ModelingExerciseAssessmentEditor';
@@ -34,8 +34,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
 
     test.beforeAll('Create exam with all exercise types', async ({ browser }) => {
         test.setTimeout(300_000); // Creating 4 exercise groups with programming builds
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         await Commands.login(page, admin);
         const examAPIRequests = new ExamAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
@@ -64,6 +63,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         exercises['programming'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
             submission: cPartiallySuccessfulSubmission,
             programmingLanguage: ProgrammingLanguage.C,
+            skipBuildResultCheck: true,
         });
         exercises['quiz'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
         exercises['modeling'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
@@ -78,8 +78,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
 
     test.beforeAll('Participate in exam', async ({ browser }) => {
         test.setTimeout(300_000); // Programming exercise submission waits for build result
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         await Commands.login(page, admin);
         const examNavigation = new ExamNavigationBar(page);
         const examStartEnd = new ExamStartEndPage(page);
@@ -115,8 +114,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
 
     test.beforeAll('Assess all submissions', async ({ browser }) => {
         test.setTimeout(300_000); // Assessment involves multiple dashboard loads with retries
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         // Wait for exam end + grace period (10s) so submissions are available for assessment.
         // Add extra buffer (5s) to account for clock drift and server processing time.
         const graceEnd = examEndDate.add(10, 'seconds');
@@ -124,6 +122,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
             const timeToWait = graceEnd.diff(dayjs(), 'ms') + 5000;
             await page.waitForTimeout(timeToWait);
         }
+        await waitForExamBuildAndTestAfterDueDate(exam, page);
 
         const examAssessment = new ExamAssessmentPage(page);
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
@@ -215,8 +214,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     });
 
     test.afterAll('Delete exam', async ({ browser }) => {
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         await Commands.login(page, admin);
         const examAPIRequests = new ExamAPIRequests(page);
         await examAPIRequests.deleteExam(exam);
