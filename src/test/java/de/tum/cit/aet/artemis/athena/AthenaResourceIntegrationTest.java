@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.athena;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_MODELING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
@@ -34,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -45,7 +43,6 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -60,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -97,12 +93,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
-    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -220,45 +210,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAvailableTextModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
-        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
-
-        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.OK, String.class);
-        assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_TEXT_TEST, ATHENA_RESTRICTED_MODULE_TEXT_TEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAvailableProgrammingModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
-        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
-
-        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/programming-exercises/available-modules", HttpStatus.OK, String.class);
-        assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_PROGRAMMING_TEST, ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAvailableModelingModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
-        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
-
-        athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);
-        assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_MODELING_TEST, ATHENA_RESTRICTED_MODULE_MODELING_TEST);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAvailableTextModulesAccessForbidden() throws Exception {
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -288,9 +239,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessText() throws Exception {
-        // Enable Athena for the exercise
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
@@ -301,9 +256,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
         List<Feedback> response = request.getList(
@@ -315,9 +274,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
-        // Enable Athena for the exercise
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
-        modelingExerciseRepository.save(modelingExercise);
+        // Enable Athena grading feedback at course level
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
         List<Feedback> response = request.getList(
@@ -394,9 +357,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         result = resultRepository.save(result);
         feedbackRepository.save(feedback);
 
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         result.setSubmission(null); // avoid sending the submission to the server, keep the payload small
         Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class,
@@ -410,9 +377,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ParameterizedTest
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -448,9 +419,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     void testStudentRepositoryExportEndpoint() throws Exception {
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
+        // Enable Athena grading feedback at course level
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         // Create a programming student participation with a submission and result
         var studentLogin = TEST_PREFIX + "student1";
@@ -500,7 +475,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
     void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
         final var authHeaders = getAuthHeaders(athenaSecret);
 
@@ -513,10 +488,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     void testRepositoryExportEndpointsFailWithWrongAuthentication(String urlSuffix) throws Exception {
         final var authHeaders = getAuthHeaders(athenaSecret + "-wrong");
 
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
-
         // Expect status 403 because the Authorization header is wrong
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
     }
@@ -525,10 +496,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ValueSource(strings = { "repository/user", "repository/auxiliary" })
     void testRepositoryExportEndpointsFailWithInvalidRepositoryType(String urlSuffix) throws Exception {
         final var authHeaders = getAuthHeaders(athenaSecret);
-
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.NOT_FOUND, Result.class, authHeaders);
     }
