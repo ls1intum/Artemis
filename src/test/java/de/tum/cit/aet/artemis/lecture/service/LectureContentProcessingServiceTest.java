@@ -133,6 +133,7 @@ class LectureContentProcessingServiceTest {
         void shouldNotProcessUnitWithNoContent() {
             testUnit.setVideoSource(null);
             testUnit.setAttachment(null);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             service.triggerProcessing(testUnit);
 
@@ -734,6 +735,35 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getStartedAt()).isNull();
             assertThat(testState.getAttachmentVersion()).isNull();
             verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldCleanUpWhenLastProcessableContentIsRemoved() {
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+            testState.setId(46L);
+            testState.setVideoSourceHash("old-video-hash");
+            testState.setAttachmentVersion(4);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            LectureTranscription existingTranscription = new LectureTranscription();
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.triggerProcessing(testUnit);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testState.getVideoSourceHash()).isNull();
+            assertThat(testState.getAttachmentVersion()).isNull();
+            assertThat(testState.getIngestionJobToken()).isNull();
+            assertThat(testState.getStartedAt()).isNull();
+            assertThat(testState.getRetryEligibleAt()).isNull();
+            assertThat(testState.getErrorKey()).isNull();
+            verify(transcriptionRepository).delete(existingTranscription);
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+            verify(processingStateRepository).save(testState);
+            verify(processingStateRepository, never()).countByPhaseIn(any());
         }
 
         @Test
