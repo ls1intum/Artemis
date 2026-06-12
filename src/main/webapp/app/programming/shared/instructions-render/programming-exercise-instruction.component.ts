@@ -87,7 +87,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private testCasesSubscription?: Subscription;
 
     protected isInitial = true;
-    protected isLoading: boolean;
+    // Backs the template's root @if. Must be a signal: it is flipped inside async subscribe
+    // callbacks, and while the loading branch is shown no other tracked signal is live in the
+    // template — a plain field write would never schedule the render that swaps the branches.
+    protected readonly isLoading = signal(false);
     latestResultValue?: Result;
     // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
@@ -219,8 +222,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 }),
                 switchMap((participationHasChanged: boolean) => {
                     const currentExercise = this.exercise();
-                    if (!this.isLoading && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
-                        this.isLoading = true;
+                    if (!this.isLoading() && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
+                        this.isLoading.set(true);
                         return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
                                 this.problemStatement = problemStatement?.trim() || undefined;
@@ -233,7 +236,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                             tap(() => {
                                 this.updateMarkdown();
                                 this.isInitial = false;
-                                this.isLoading = false;
+                                this.isLoading.set(false);
                             }),
                         );
                     } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {

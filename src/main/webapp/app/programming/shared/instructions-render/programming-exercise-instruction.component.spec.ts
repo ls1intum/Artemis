@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ApplicationRef, DebugElement, VERSION } from '@angular/core';
+import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -66,7 +66,7 @@ type InstructionInternals = Omit<
     lastSeenProblemStatement: string | undefined;
     lastRenderedProblemStatement: string | undefined;
     isInitial: boolean;
-    isLoading: boolean;
+    isLoading: WritableSignal<boolean>;
     tasks: TaskArray;
     setupMarkdownSubscriptions: () => void;
 };
@@ -220,7 +220,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -232,7 +232,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
@@ -322,7 +322,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -333,7 +333,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
