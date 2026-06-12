@@ -261,6 +261,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isEditFieldDisplayedRecord().projectType).toBe(false);
             expect(comp.isEditFieldDisplayedRecord().points).toBe(false);
             expect(comp.isEditFieldDisplayedRecord().timeline).toBe(false);
+            // SCA is the one extra optional toggle (gated to SCA-capable languages by the language section); a real instructor decision that also steers generation.
+            expect(comp.isEditFieldDisplayedRecord().enableStaticCodeAnalysis).toBe(true);
             // AI mode is ephemeral: only simple/advanced are written to localStorage.
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).not.toBe('ai');
         });

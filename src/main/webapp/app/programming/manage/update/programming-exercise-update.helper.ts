@@ -79,7 +79,9 @@ export const IS_DISPLAYED_IN_AI_MODE: Record<ProgrammingExerciseInputField, bool
     projectType: false,
     withExemplaryDependency: false,
     packageName: false,
-    enableStaticCodeAnalysis: false,
+    // Static code analysis is the one hidden field that is BOTH a real instructor decision (grade code style/quality?) AND a real generation lever (the agent must then emit lint-clean
+    // code + an SCA config). Surface it as a single optional toggle, default OFF; the language section already gates it to SCA-capable languages via staticCodeAnalysisAllowed.
+    enableStaticCodeAnalysis: true,
     sequentialTestRuns: false,
     customizeBuildScript: false,
     // Version Control section
