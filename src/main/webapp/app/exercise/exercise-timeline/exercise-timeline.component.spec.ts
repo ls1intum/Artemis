@@ -1,7 +1,7 @@
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { vi } from 'vitest';
 
 import { ExerciseTimelineComponent, TimelineItem } from './exercise-timeline.component';
@@ -42,25 +42,19 @@ describe('ExerciseTimeline', () => {
             kind: 'optional',
             labelStringKey: 'release',
             internalDate: releaseDate.toDate(),
-            isBeforePreviousDate: false,
-            isInputRequiredButUndefined: false,
-            tooltip: undefined,
+            violationKey: undefined,
         });
         expect(internalTimelineItems[1]).toMatchObject({
             kind: 'required',
             labelStringKey: 'due',
             internalDate: dueDate.toDate(),
-            isBeforePreviousDate: true,
-            isInputRequiredButUndefined: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            violationKey: 'artemisApp.exercise.timelineDateOrderTooltip',
         });
         expect(internalTimelineItems[2]).toMatchObject({
             kind: 'required',
             labelStringKey: 'assessment',
             internalDate: undefined,
-            isBeforePreviousDate: false,
-            isInputRequiredButUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineDateRequiredTooltip',
+            violationKey: 'artemisApp.exercise.timelineDateRequiredTooltip',
         });
     });
 
@@ -78,11 +72,11 @@ describe('ExerciseTimeline', () => {
         expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
         expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false });
 
-        timelineItems[1].date.set(undefined);
+        (timelineItems[1].date as WritableSignal<Dayjs | undefined>).set(undefined);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
+        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: false });
     });
 
     it('should require another timeline item only when the dependent date is set', () => {
@@ -96,18 +90,16 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: false,
-            tooltip: undefined,
+            violationKey: undefined,
         });
         expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
 
         assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
+            violationKey: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
         });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
     });
 
     it('should update timeline item date', () => {

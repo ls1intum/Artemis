@@ -168,19 +168,19 @@ describe('CourseExamsComponent', () => {
 
     it('exam should be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(visibleRealExam1)).toBe(true);
+        expect(component['isVisible'](visibleRealExam1)).toBe(true);
     });
 
     it('exam should not be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(notVisibleRealExam)).toBe(false);
+        expect(component['isVisible'](notVisibleRealExam)).toBe(false);
     });
 
     it('should correctly return StudentExams by id in reverse order', () => {
         componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];
         expect(
-            component.getStudentExamForExamIdOrderedByIdReverse([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted], 11),
+            component['getStudentExamForExamIdOrderedByIdReverse']([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted], 11),
         ).toEqual(resultArray);
     });
 
@@ -229,7 +229,7 @@ describe('CourseExamsComponent', () => {
         ];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest([], testExams, new Map());
+        const groupedExams = component['groupExamsByRealOrTestOrAttempt']([], testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(0);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -249,7 +249,7 @@ describe('CourseExamsComponent', () => {
         const realExams: Exam[] = [{ id: 1, title: 'Real Exam 1' } as Exam, { id: 2, title: 'Real Exam 2' } as Exam, { id: 3, title: 'Real Exam 3' } as Exam];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest(realExams, testExams, new Map());
+        const groupedExams = component['groupExamsByRealOrTestOrAttempt'](realExams, testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(3);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -269,7 +269,7 @@ describe('CourseExamsComponent', () => {
             { id: 3, title: 'Exam 3', startDate: dayjs().subtract(20, 'minutes') } as Exam,
         ];
 
-        const sortedExams = exams.sort((a, b) => component.sortExamsByStartDate(a, b));
+        const sortedExams = exams.sort((a, b) => component['sortExamsByStartDate'](a, b));
 
         expect(sortedExams[0].id).toBe(2);
         expect(sortedExams[1].id).toBe(3);
@@ -290,6 +290,6 @@ describe('CourseExamsComponent', () => {
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
 
-        expect(component.buildSidebarData()).toBeUndefined();
+        expect(component['buildSidebarData']()).toBeUndefined();
     });
 });

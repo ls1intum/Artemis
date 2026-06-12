@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TestExamParticipationMessageService', () => {
@@ -74,7 +74,7 @@ describe('TestExamParticipationMessageService', () => {
         expect(message.translateValues).toEqual({ date: practiceStartDate.format(ArtemisDatePipe.format()) });
     });
 
-    it('should show when the practice phase opens', () => {
+    it('should fall back to no further attempts for an unknown simulation and practice error', () => {
         const now = dayjs();
         vi.spyOn(serverDateService, 'now').mockReturnValue(now);
         const exam = new Exam();
@@ -87,11 +87,11 @@ describe('TestExamParticipationMessageService', () => {
 
         const message = service.getMessage(exam, 'unknown');
 
-        expect(message.translationKey).toBe('artemisApp.examParticipation.testExamPracticeOpens');
-        expect(message.translateValues).toEqual({ date: practiceStartDate.format(ArtemisDatePipe.format()) });
+        expect(message.translationKey).toBe('artemisApp.examParticipation.noFurtherAttempts');
+        expect(message.translateValues).toEqual({});
     });
 
-    it('should show that the test exam has concluded after the simulation phase', () => {
+    it('should fall back to no further attempts for an unknown simulation error', () => {
         const now = dayjs();
         vi.spyOn(serverDateService, 'now').mockReturnValue(now);
         const exam = new Exam();
@@ -102,7 +102,7 @@ describe('TestExamParticipationMessageService', () => {
 
         const message = service.getMessage(exam, 'unknown');
 
-        expect(message.translationKey).toBe('artemisApp.examParticipation.testExamConcluded');
+        expect(message.translationKey).toBe('artemisApp.examParticipation.noFurtherAttempts');
         expect(message.translateValues).toEqual({});
     });
 
