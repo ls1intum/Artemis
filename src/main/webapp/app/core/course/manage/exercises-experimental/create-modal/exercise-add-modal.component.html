@@ -7,16 +7,14 @@
     [style]="{ width: '680px', maxWidth: '95vw' }"
     [draggable]="false"
 >
-    @if (mode() === 'unified') {
-        <div class="tab-bar mb-3">
-            <button class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('create')">Create</button>
-            <button class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('import')">Import</button>
-            <button class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('export')">Export</button>
-        </div>
-    }
+    <div class="tab-bar mb-3">
+        <button class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('create')">Create</button>
+        <button class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('import')">Import</button>
+        <button class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('export')">Export</button>
+    </div>
 
     <!-- ── Create tab ── -->
-    @if (mode() === 'create' || (mode() === 'unified' && activeTab() === 'create')) {
+    @if (activeTab() === 'create') {
         <p class="text-muted small mb-3">Select an exercise type. You can customise all details in the next step.</p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards; track card.type) {
@@ -47,7 +45,7 @@
     }
 
     <!-- ── Import tab ── -->
-    @if (mode() === 'import' || (mode() === 'unified' && activeTab() === 'import')) {
+    @if (activeTab() === 'import') {
         @if (importSelectedType() === null) {
             <p class="text-muted small mb-3">Select what you want to import.</p>
             <div class="exercise-grid">
@@ -129,7 +127,7 @@
     }
 
     <!-- ── Export tab ── -->
-    @if (mode() === 'export' || (mode() === 'unified' && activeTab() === 'export')) {
+    @if (activeTab() === 'export') {
         <p class="text-muted small mb-2">Quiz exercises can be exported as JSON for backup or sharing. Select the exercises to export.</p>
         <div class="d-flex align-items-center gap-2 mb-2">
             <p-checkbox [binary]="true" [ngModel]="exportSelectAll()" (ngModelChange)="toggleExportSelectAll($event)" inputId="export-select-all" />

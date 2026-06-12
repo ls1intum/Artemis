@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -134,6 +134,15 @@ export class ExerciseAddModalComponent {
 
     readonly activeTab = signal<'create' | 'import' | 'export'>('create');
     readonly importSelectedType = signal<string | null>(null);
+
+    constructor() {
+        effect(() => {
+            const m = this.mode();
+            if (m === 'create' || m === 'import' || m === 'export') {
+                this.setActiveTab(m);
+            }
+        });
+    }
     readonly importSelectedIds = signal<Set<number>>(new Set());
     readonly importGroupSelectedIds = signal<Set<number>>(new Set());
     readonly exportSelectedIds = signal<Set<number>>(new Set());
@@ -146,18 +155,7 @@ export class ExerciseAddModalComponent {
     private readonly router = inject(Router);
 
     get dialogHeader(): string {
-        switch (this.mode()) {
-            case 'create':
-                return 'Create Exercise';
-            case 'import':
-                return 'Import';
-            case 'export':
-                return 'Export';
-            case 'unified':
-                return 'Manage Exercises';
-            default:
-                return 'Manage Exercises';
-        }
+        return 'Manage Exercises';
     }
 
     close(): void {

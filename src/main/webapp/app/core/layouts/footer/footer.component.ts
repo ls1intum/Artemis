@@ -2,13 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
-    imports: [TranslateDirective, RouterLink],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class FooterComponent implements OnInit {
     private profileService = inject(ProfileService);

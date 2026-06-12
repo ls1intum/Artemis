@@ -3,7 +3,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { createIntroToJavaCourse } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
@@ -11,10 +10,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
@@ -24,9 +19,6 @@ describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
     let fixture: ComponentFixture<CourseManagementExercisesComponent>;
 
-    let profileService: ProfileService;
-    let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
-
     const course = createIntroToJavaCourse();
     const parentRoute = {
         data: of({ course }),
@@ -35,15 +27,14 @@ describe('Course Management Exercises Component', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseManagementExercisesComponent, CourseTitleBarActionsDirective],
+            imports: [CourseManagementExercisesComponent],
             providers: [
-                MockProvider(CourseManagementService),
+                MockProvider(DialogService, MockDialogService),
                 {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
                 { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -52,28 +43,27 @@ describe('Course Management Exercises Component', () => {
 
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
         comp = fixture.componentInstance;
-
-        profileService = TestBed.inject(ProfileService);
-        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should get course on onInit', () => {
+    it('should set course on init', () => {
         comp.ngOnInit();
         expect(comp.course()).toBe(course);
     });
 
-    it('should open search bar on toggle search', () => {
-        fixture.detectChanges();
-        comp.toggleSearch();
-        fixture.changeDetectorRef.detectChanges();
-        const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
+    it('should populate buckets on init', () => {
+        comp.ngOnInit();
+        expect(comp.buckets().length).toBeGreaterThan(0);
+    });
 
-        expect(comp.showSearch()).toBe(true);
-        expect(searchBar).not.toBeNull();
+    it('should filter exercises on search', () => {
+        comp.ngOnInit();
+        const initialCount = comp.buckets().reduce((sum, b) => sum + b.exercises.length, 0);
+        comp.onSearchChange('zzz_nomatch_zzz');
+        const filteredCount = comp.buckets().reduce((sum, b) => sum + b.exercises.length, 0);
+        expect(filteredCount).toBeLessThan(initialCount);
     });
 });

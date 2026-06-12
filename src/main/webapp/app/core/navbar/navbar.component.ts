@@ -4,7 +4,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -54,6 +54,7 @@ import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/compo
         NgbDropdownMenu,
         RouterLink,
         ActiveMenuDirective,
+        NgbTooltip,
         JhiConnectionWarningComponent,
         LoadingNotificationComponent,
         NgTemplateOutlet,
