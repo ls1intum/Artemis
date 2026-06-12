@@ -691,6 +691,19 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipation> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
+    /**
+     * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
+     * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
+     * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
+     * Must be called after the (individual) due date by a user with at least instructor rights.
+     */
+    async triggerInstructorBuildForAll(exerciseId: number) {
+        const response = await this.page.request.post(`api/programming/programming-exercises/${exerciseId}/trigger-instructor-build-all`);
+        if (!response.ok()) {
+            throw new Error(`Failed to trigger instructor build for exercise ${exerciseId}: ${response.status()}`);
+        }
+    }
+
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
         const pageResponse = await this.page.request.get(
             `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,

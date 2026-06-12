@@ -70,12 +70,22 @@ export function getExamEndDateWithGrace(exam: Exam) {
 }
 
 export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
-    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
-    if (afterDueDate.isAfter(dayjs())) {
-        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
-        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
-        await page.waitForTimeout(timeToWait);
+    // For exam programming exercises the score-producing build "test" phase runs only AFTER_DUE_DATE, which
+    // the server schedules at dueDate + 15 min (the intended default; see
+    // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
+    // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
+    // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
+    // the score immediately. This is a no-op when the exam has no programming exercise. The page must be
+    // authenticated as instructor or admin (the trigger endpoint enforces it).
+    const examAPIRequests = new ExamAPIRequests(page);
+    const exerciseAPIRequests = new ExerciseAPIRequests(page);
+    const exerciseGroups = await examAPIRequests.getExerciseGroups(exam);
+    const programmingExercise = exerciseGroups.flatMap((group) => group.exercises ?? []).find((exercise) => (exercise.type as string) === ExerciseType.PROGRAMMING);
+    if (!programmingExercise?.id) {
+        return;
     }
+    await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
 }
 
 /**
