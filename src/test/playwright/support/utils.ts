@@ -75,8 +75,10 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
     // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
     // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
-    // the score immediately. This is a no-op when the exam has no programming exercise. The page must be
-    // authenticated as instructor or admin (the trigger endpoint enforces it).
+    // the score immediately. This is a no-op when the exam has no programming exercise. We authenticate as
+    // admin first so the helper works regardless of the caller's current auth state (some callers, e.g. the
+    // ExamResults "Assess all submissions" beforeAll, invoke it on a fresh page before logging in).
+    await Commands.login(page, admin);
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const exerciseGroups = await examAPIRequests.getExerciseGroups(exam);
