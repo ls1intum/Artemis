@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 // Simple mock to avoid ng-mocks issues with signal-based viewChild
 @Component({
@@ -27,7 +27,7 @@ describe('CourseChatbotComponent', () => {
 
     const createChatServiceMock = () => ({
         setCourseId: vi.fn<(courseId: number | undefined) => void>(),
-        resumeOrCreateCourseChat: vi.fn<(courseId: number) => void>(),
+        openChat: vi.fn<(mode: ChatServiceMode, entityId: number) => void>(),
     });
 
     beforeEach(async () => {
@@ -57,18 +57,18 @@ describe('CourseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call resumeOrCreateCourseChat when courseId changes', async () => {
+    it('should call openChat with course mode when courseId changes', async () => {
         fixture.componentRef.setInput('courseId', 2);
         await fixture.whenStable();
 
-        expect(chatService.resumeOrCreateCourseChat).toHaveBeenCalledWith(2);
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
     });
 
-    it('should not call resumeOrCreateCourseChat when courseId is undefined', async () => {
+    it('should not call openChat when courseId is undefined', async () => {
         fixture.componentRef.setInput('courseId', undefined);
         await fixture.whenStable();
 
-        expect(chatService.resumeOrCreateCourseChat).not.toHaveBeenCalled();
+        expect(chatService.openChat).not.toHaveBeenCalled();
     });
 
     it('should return early in toggleChatHistory when baseChatbot is not available', () => {

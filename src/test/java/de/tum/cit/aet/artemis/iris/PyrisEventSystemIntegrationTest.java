@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
@@ -219,6 +221,33 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq(irisSession), eq(Optional.of("build_failed")), any()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildFailedFallsBackToCourseSessionAndAppliesExerciseContext() {
+        // No exercise chat session exists yet, so the event handler falls back to a fresh empty course session and
+        // layers the exercise context on via applyContextChange before running the pipeline. The session handed to
+        // the pipeline therefore ends up in PROGRAMMING_EXERCISE_CHAT mode pointing at the exercise.
+        Result result = createFailingSubmission(studentParticipation);
+        irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+
+        var event = new NewResultEvent(result);
+        pyrisEventService.trigger(event);
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        ArgumentCaptor<IrisChatSession> sessionCaptor = ArgumentCaptor.forClass(IrisChatSession.class);
+        await().atMost(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any()));
+
+        IrisChatSession usedSession = sessionCaptor.getValue();
+        assertThat(usedSession.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        assertThat(usedSession.getEntityId()).isEqualTo(exercise.getId());
     }
 
     @Test

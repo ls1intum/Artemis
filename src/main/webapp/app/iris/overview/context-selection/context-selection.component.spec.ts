@@ -220,24 +220,45 @@ describe('ContextSelectionComponent', () => {
             component.onSelectionChange('UNKNOWN_MODE:999');
             expect(chatServiceMock.stagePendingContext).not.toHaveBeenCalled();
         });
+
+        it('should emit contextChanged when a valid option is selected (drives the onboarding flow)', () => {
+            const emitSpy = vi.spyOn(component.contextChanged, 'emit');
+
+            component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not emit contextChanged for an unknown value', () => {
+            const emitSpy = vi.spyOn(component.contextChanged, 'emit');
+
+            component.onSelectionChange('UNKNOWN_MODE:999');
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('onChipRemove', () => {
         it('should stage the COURSE context as pending when a chip is removed and a courseId is available', () => {
+            const emitSpy = vi.spyOn(component.contextChanged, 'emit');
+
             component.onChipRemove();
 
             expect(chatServiceMock.stagePendingContext).toHaveBeenCalledWith(ChatServiceMode.COURSE, courseId);
+            expect(emitSpy).toHaveBeenCalledOnce();
         });
 
-        it('should not stage a pending context when courseId is undefined', () => {
+        it('should not stage a pending context nor emit contextChanged when courseId is undefined', () => {
             chatServiceMock.getCourseId.mockReturnValue(undefined);
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
             chatServiceMock.stagePendingContext.mockClear();
+            const emitSpy = vi.spyOn(component.contextChanged, 'emit');
 
             component.onChipRemove();
 
             expect(chatServiceMock.stagePendingContext).not.toHaveBeenCalled();
+            expect(emitSpy).not.toHaveBeenCalled();
         });
     });
 });

@@ -123,7 +123,7 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
+        const resumeSpy = vi.spyOn(chatService, 'openTutorSuggestionChat').mockReturnValue(undefined);
         const getFeatureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
         const getActiveStatusSpy = vi.spyOn(irisStatusService, 'getActiveStatus');
         fixture.detectChanges();
@@ -136,7 +136,7 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         const getCourseSettingsSpy = vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         const profileServiceMock = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
+        const resumeSpy = vi.spyOn(chatService, 'openTutorSuggestionChat').mockReturnValue(undefined);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         fixture.detectChanges();
@@ -152,7 +152,7 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
-        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
+        const resumeSpy = vi.spyOn(chatService, 'openTutorSuggestionChat').mockReturnValue(undefined);
 
         // Mirrors the in-flight state where the optimistic post DTO has no id yet.
         componentRef.setInput('post', { id: undefined } as any);

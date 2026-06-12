@@ -212,7 +212,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const stub = vi.spyOn(chatService, 'sendMessage');
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         // when
         component.onSend();
@@ -239,7 +239,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const stub = vi.spyOn(chatService, 'resendMessage');
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         // when
         component.resendMessage(createdMessage);
@@ -263,7 +263,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const message = mockServerMessage;
         const stub = vi.spyOn(chatService, 'rateMessage');
-        chatService.resumeOrCreateCourseChat(id);
+        chatService.openChat(ChatServiceMode.COURSE, id);
 
         // when
         component.rateMessage(message, true);
@@ -289,7 +289,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         // when
         component.onSend();
@@ -307,7 +307,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         vi.spyOn(httpService, 'createMessage');
 
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         component.onSend();
 
@@ -327,7 +327,7 @@ describe('IrisBaseChatbotComponent', () => {
         const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         await fixture.whenStable();
 
         // isolate scroll triggered by onSend from scrolls caused by session switch / effects
@@ -353,7 +353,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         await fixture.whenStable();
 
         // when – send, then simulate an intermediate (not-yet-at-bottom) scroll reading
@@ -381,7 +381,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         await fixture.whenStable();
 
         component.onSend();
@@ -409,7 +409,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         component.newMessageTextContent.set(content);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         await fixture.whenStable();
 
         const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
@@ -458,7 +458,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set('Hello');
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         await fixture.whenStable();
 
         // when – send pins to the bottom, then an error arrives without any stage starting
@@ -479,7 +479,7 @@ describe('IrisBaseChatbotComponent', () => {
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
         component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         component.ngAfterViewInit();
         fixture.detectChanges();
@@ -515,7 +515,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         // when
         component.ngAfterViewInit();
@@ -549,7 +549,7 @@ describe('IrisBaseChatbotComponent', () => {
             return rafQueue.length;
         });
 
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
 
         // when
         component.ngAfterViewInit();
@@ -606,7 +606,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // when – initial messages load
         component.isScrolledToBottom.set(true);
-        chatService.resumeOrCreateCourseChat(123);
+        chatService.openChat(ChatServiceMode.COURSE, 123);
         component.ngAfterViewInit();
         await fixture.whenStable();
 
@@ -878,7 +878,7 @@ describe('IrisBaseChatbotComponent', () => {
             const startFreshChatSpy = vi.spyOn(chatService, 'startFreshChat').mockReturnValueOnce();
             const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-            chatService.resumeOrCreateCourseChat(123);
+            chatService.openChat(ChatServiceMode.COURSE, 123);
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -975,16 +975,18 @@ describe('IrisBaseChatbotComponent', () => {
             expect(stagePendingSpy).not.toHaveBeenCalled();
         });
 
-        it('should re-stage the lecture/exercise page context after starting a fresh chat', () => {
+        it('should delegate to startFreshChat without staging the page context itself', () => {
             const startFreshChatSpy = vi.spyOn(chatService, 'startFreshChat').mockReturnValue();
             const stagePendingSpy = vi.spyOn(chatService, 'stagePendingContext').mockReturnValue();
             // Seed a page context as a lecture/exercise page would have done.
-            chatService['_pageContext'].set({ mode: ChatServiceMode.LECTURE, entityId: 7, entityName: 'Intro Lecture' });
+            chatService['contextService']['_page'].set({ mode: ChatServiceMode.LECTURE, entityId: 7, entityName: 'Intro Lecture' });
 
             component.openNewSession();
 
+            // startFreshChat re-applies the page context internally once the new session loads, so the
+            // component must not stage it directly (doing so would make the chip blink).
             expect(startFreshChatSpy).toHaveBeenCalledOnce();
-            expect(stagePendingSpy).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 7, 'Intro Lecture');
+            expect(stagePendingSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -1236,7 +1238,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('Related entity button', () => {
         it('should display correct related entity button when lecture session selected', async () => {
             // Mock the service observables before component creation
-            chatService['_committedContext'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1255,7 +1257,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should display correct related entity button when programming exercise session selected', async () => {
             // Mock the service observables before component creation
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 99 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 99 });
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1273,7 +1275,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should display correct related entity button when text exercise session selected', async () => {
-            chatService['_committedContext'].set({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 77 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 77 });
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1509,7 +1511,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         beforeEach(() => {
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
@@ -1572,7 +1574,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.componentRef.setInput('layout', 'widget');
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
@@ -1646,7 +1648,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not render session title trigger in empty embedded mode without related sessions', () => {
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -1662,7 +1664,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should render session title trigger in empty embedded mode with related sessions', () => {
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, embeddedPastSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -1678,7 +1680,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not render session title trigger when only unrelated past sessions exist in embedded mode', () => {
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([embeddedSession, unrelatedSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -1711,7 +1713,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it.each(['widget', 'embedded'] as const)('should not render session title trigger after switching to course context without past course sessions (%s layout)', (layout) => {
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -1729,7 +1731,7 @@ describe('IrisBaseChatbotComponent', () => {
             'should render session title trigger after switching to course context when a past course session exists (%s layout)',
             (layout) => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession, pastCourseSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -1745,7 +1747,7 @@ describe('IrisBaseChatbotComponent', () => {
         );
 
         it('should return an empty activeSuggestionChips list when currentChatMode is undefined', () => {
-            chatService['_committedContext'].set(undefined);
+            chatService['contextService']['_committed'].set(undefined);
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -1767,7 +1769,7 @@ describe('IrisBaseChatbotComponent', () => {
             } as IrisUserMessage;
 
             vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([freshCourseSession]));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 7 });
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(30));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage]));
 
@@ -2135,7 +2137,7 @@ describe('IrisBaseChatbotComponent', () => {
         beforeEach(() => {
             statusMock.getActiveStatus.mockReturnValue(of({}));
             statusMock.currentRatelimitInfo.mockReturnValue(of({}));
-            chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -2185,7 +2187,7 @@ describe('IrisBaseChatbotComponent', () => {
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-            chatService.resumeOrCreateCourseChat(456);
+            chatService.openChat(ChatServiceMode.COURSE, 456);
             fixture.detectChanges();
 
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
@@ -2274,7 +2276,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         const recreateFixtureForMode = (mode: ChatServiceMode) => {
-            chatService['_committedContext'].set({ mode, entityId: 1 });
+            chatService['contextService']['_committed'].set({ mode, entityId: 1 });
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -2327,7 +2329,7 @@ describe('IrisBaseChatbotComponent', () => {
         describe('exercise mode', () => {
             beforeEach(() => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -2423,7 +2425,7 @@ describe('IrisBaseChatbotComponent', () => {
         describe('exercise mode with existing messages', () => {
             beforeEach(() => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
 
@@ -2455,7 +2457,7 @@ describe('IrisBaseChatbotComponent', () => {
         describe('lecture mode', () => {
             beforeEach(() => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -2487,7 +2489,7 @@ describe('IrisBaseChatbotComponent', () => {
         describe('lecture mode with existing messages', () => {
             beforeEach(() => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([lectureSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 55 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(20));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage]));
 
@@ -2504,7 +2506,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         describe('course mode (no cycling)', () => {
             beforeEach(() => {
-                chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
@@ -2530,7 +2532,7 @@ describe('IrisBaseChatbotComponent', () => {
         describe('ghost text', () => {
             beforeEach(() => {
                 vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession]));
-                chatService['_committedContext'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 });
                 vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
                 vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
 
@@ -2627,7 +2629,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             it('should not show ghost text on course screen', () => {
                 // Recreate with course mode
-                chatService['_committedContext'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
+                chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 1 });
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 component = fixture.componentInstance;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
