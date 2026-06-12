@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +26,7 @@ import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -79,9 +77,6 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
-    @Autowired
-    private ExerciseTestRepository exerciseRepository;
-
     private Course course;
 
     private User student;
@@ -100,6 +95,14 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         for (Exercise exercise : studentExam.getExercises()) {
             exercise.setStudentParticipations(new HashSet<>());
         }
+    }
+
+    private void enableAthenaForCourse() {
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
     }
 
     private TextExercise addTextExerciseToExam(Exam exam) {
@@ -165,8 +168,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
             TextExercise textExercise = addTextExerciseToExam(testExam);
-            textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-            exerciseRepository.save(textExercise);
+            enableAthenaForCourse();
 
             athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
@@ -200,8 +202,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam = examRepository.save(testExam);
             testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
             ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
-            modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
-            exerciseRepository.save(modelingExercise);
+            enableAthenaForCourse();
 
             athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
 
@@ -237,8 +238,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
             ModelingExercise modelingExercise = (ModelingExercise) testExam.getExerciseGroups().get(1).getExercises().iterator().next();
-            modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
-            exerciseRepository.save(modelingExercise);
+            enableAthenaForCourse();
 
             athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
 
@@ -446,8 +446,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, false);
 
             TextExercise textExercise = (TextExercise) testExam.getExerciseGroups().getFirst().getExercises().iterator().next();
-            textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-            exerciseRepository.save(textExercise);
+            enableAthenaForCourse();
 
             athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
