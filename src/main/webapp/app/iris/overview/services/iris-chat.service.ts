@@ -621,13 +621,13 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    private getCourseSessionOrCreate(): Observable<IrisSession> {
+    private createCourseSession(): Observable<IrisSession> {
         const courseId = this.getCourseId();
         if (!courseId) {
             throw new Error('Course ID not set');
         }
 
-        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(ChatServiceMode.COURSE, courseId).pipe(
+        return this.irisChatHttpService.createCourseSession(courseId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
@@ -671,7 +671,7 @@ export class IrisChatService implements OnDestroy {
      * bypasses LLM-consent gating in {@link start} via {@link modeRequiresLLMAcceptance}.
      */
     public openTutorSuggestionChat(postId: number): void {
-        const ctx = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: postId };
+        const ctx: SessionContext = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: postId };
         if (sameSessionContext(ctx, this.contextService.page())) return;
         this.contextService.setPageContext(ctx);
         this.closeAndStart();
@@ -684,7 +684,7 @@ export class IrisChatService implements OnDestroy {
      * and the page context is staged as pending (see {@link IrisChatContextService.adoptServerContext}).
      */
     public openChat(mode: ChatServiceMode, entityId: number): void {
-        const ctx = { mode, entityId };
+        const ctx: SessionContext = { mode: mode, entityId: entityId };
         if (sameSessionContext(ctx, this.contextService.page())) return;
         this.contextService.setPageContext(ctx);
         this.closeAndStart();
@@ -714,7 +714,7 @@ export class IrisChatService implements OnDestroy {
         if (!isFreshCourseSession && courseId) {
             this.close();
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCourseSessionOrCreate().subscribe({
+            this.sessionLoadingSubscription = this.createCourseSession().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
             });
