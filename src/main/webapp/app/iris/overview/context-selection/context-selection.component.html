@@ -43,7 +43,7 @@
     </span>
 
     @if (activeChip(); as chip) {
-        <p-chip [removable]="true" (onRemove)="onChipRemove()" styleClass="iris-context-chip">
+        <p-chip [removable]="!disabled()" (onRemove)="onChipRemove()" styleClass="iris-context-chip">
             <fa-icon [icon]="chip.faIcon" />
             <span class="ms-1 iris-context-chip-label" [pTooltip]="chip.label" tooltipPosition="bottom" tooltipStyleClass="iris-context-tooltip iris-context-tooltip-spaced">{{
                 chip.label
