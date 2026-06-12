@@ -79,6 +79,13 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Possibly dead files (no build phase reads them; remove if abandoned): ").append(renderNames(possiblyDeadFiles)).append('\n');
         }
 
+        // Surface the prose-hygiene reason verbatim (it is not reflected by any structured line above) so the agent cleans the student-facing statement before it submits.
+        for (String reason : blockingReasons) {
+            if (reason.contains("leaks grader internals")) {
+                builder.append(reason).append('\n');
+            }
+        }
+
         if (wouldBeAccepted) {
             builder.append("VERDICT: would be ACCEPTED.");
         }

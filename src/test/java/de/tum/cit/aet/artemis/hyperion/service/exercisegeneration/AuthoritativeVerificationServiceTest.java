@@ -297,6 +297,50 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.testCount()).isEqualTo(5);
     }
 
+    @Test
+    void shouldRejectWhenStudentProseLeaksGraderMechanics() {
+        // An otherwise-valid exercise (solution passes, template fails, tasks bind) must still be REJECTED when the student-facing statement explains how the exercise is rigged —
+        // accepted exercises were shipping "raise NotImplementedError in the template file to make the tests fail" into student prose, which the oracle was previously blind to.
+        String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
+        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
+    }
+
+    @Test
+    void shouldRejectWhenStudentProseLeaksRawTestNameMechanics() {
+        String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nYour method name must match the exact test name reported by the test runner.";
+        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
+    }
+
+    @Test
+    void shouldRejectWhenProseLeaksABareTaskMarker() {
+        // A bare "[tasks]" marker (not a [task][Title](names) binding) leaks into the prose; the lookahead leaves the real binding alone but flags the stray marker.
+        String leaky = "## [tasks]\n" + PROBLEM_STATEMENT_WITH_TASK;
+        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("bare [task]"));
+    }
+
+    @Test
+    void shouldNotFlagBenignTestWordingAsAProseLeak() {
+        // The gate is high-precision: ordinary student-facing wording that mentions testing must NOT trip it.
+        String clean = PROBLEM_STATEMENT_WITH_TASK + "\nYour implementation is tested against several edge cases, including empty and single-element inputs.";
+        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
+        assertThat(result.accepted()).isTrue();
+    }
+
+    @Test
+    void shouldSurfaceProseLeakToTheInLoopSelfCheck() {
+        // The same gate runs in the agent's in-loop self-check, so the agent is told to clean the prose before it ever submits.
+        String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nRaise NotImplementedError to make the tests fail.";
+        AgentVerifyReport report = selfCheck(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
+        assertThat(report.wouldBeAccepted()).isFalse();
+        assertThat(report.toObservation()).contains("leaks grader internals");
+    }
+
     /**
      * Regression for the task-binding parser: a JVM/Ares (or Rust/Kotlin) test identifier is reported WITH parentheses — {@code testBubbleSort()} — and the agent is instructed to
      * copy the verbatim test name into the {@code [task]} binding. The paren-aware capture plus the {@code ()}-stripping normalisation must resolve the paren form against the
