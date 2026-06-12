@@ -162,8 +162,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.lastAutoSeededTitle = derivedTitle;
             this.programmingExercise.title = derivedTitle;
             this.programmingExercise.shortName = this.deriveShortName(derivedTitle);
-            this.calculateFormStatusSections();
         }
+        // Always recompute: the AI status bar's Problem section tracks brief presence, so it must update on every keystroke, not only when the title re-seeds.
+        this.calculateFormStatusSections();
     }
 
     /**
@@ -789,6 +790,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     calculateFormStatusSections() {
+        if (this.isAiMode()) {
+            // The lean AI page shows only the Language and Problem sections; General/Mode/Grading are auto-generated or defaulted and are not rendered, so the status bar must not list
+            // them (a red ✗ on a section the instructor cannot see is confusing). Problem readiness tracks the "Your Requirements" brief — the actual input the instructor provides — not
+            // the (intentionally blank-until-generated) problem statement.
+            const briefPresent = !!this.currentBrief().trim();
+            this.formStatusSections.set([
+                {
+                    // In AI mode the only language concern is whether the chosen language can be generated — package name/IDE are auto-handled. Mirror the footer's gate (a red ✗ here means
+                    // the Generate action is blocked for the same reason) rather than the rendered-form-control validity, which would red-✗ a perfectly generation-ready language.
+                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+                    valid: this.generationLanguageSupported(),
+                },
+                {
+                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+                    valid: briefPresent,
+                    empty: !briefPresent,
+                },
+            ]);
+            return;
+        }
         const updatedFormStatusSections = [
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
