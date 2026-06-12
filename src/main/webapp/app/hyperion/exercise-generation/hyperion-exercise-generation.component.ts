@@ -238,6 +238,8 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private autoStartHandled = false;
     private elapsedTimer?: ReturnType<typeof setInterval>;
     private terminalFocusHandled = false;
+    /** One-shot: ensures the terminal outcome re-opens the compact popover once even if it was dismissed mid-run, so the verdict is always surfaced. Re-armed per run. */
+    private terminalOpenHandled = false;
 
     constructor() {
         // On a terminal outcome, move focus once to the next action (the now-removed Cancel button would otherwise drop focus to <body>, stranding keyboard/SR users).
@@ -256,15 +258,30 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             if (!this.compact() || this.autoOpenHandled || !this.hasActiveOrRecentRun()) {
                 return;
             }
-            const chip = this.genChip()?.nativeElement;
-            const popover = this.genPopover();
-            if (chip && popover) {
-                this.autoOpenHandled = true;
-                // Pass NO event: PrimeNG's Popover.show(event, target) calls event.stopPropagation() whenever both are truthy, so a synthetic event object (which has no such method)
-                // throws. With an undefined event the guard short-circuits and the overlay still anchors to the target (this.target = target || ...).
-                popover.show(undefined as unknown as Event, chip);
-            }
+            this.autoOpenHandled = true;
+            this.openCompactPopover();
         });
+
+        // Compact mode: re-open the popover ONCE on the terminal outcome, even if the instructor dismissed it mid-run. Otherwise the verdict (accept/reject, gates, file list, or an
+        // ERROR/CANCELLED/PARTIAL result) renders into a closed overlay and is never seen or announced. Separate one-shot from autoOpenHandled so a mid-run dismiss cannot suppress the
+        // final outcome; reattach()/reset() re-arm it for the next run.
+        afterRenderEffect(() => {
+            if (!this.compact() || this.terminalOpenHandled || !this.finalEvent()) {
+                return;
+            }
+            this.terminalOpenHandled = true;
+            this.openCompactPopover();
+        });
+    }
+
+    /** Opens the compact-mode popover anchored to the chip. Passes NO event: PrimeNG's Popover.show(event, target) calls event.stopPropagation() when both are truthy, so a synthetic
+     * event (which has no such method) would throw; with an undefined event the guard short-circuits and the overlay still anchors to the target. */
+    private openCompactPopover(): void {
+        const chip = this.genChip()?.nativeElement;
+        const popover = this.genPopover();
+        if (chip && popover) {
+            popover.show(undefined as unknown as Event, chip);
+        }
     }
 
     ngOnInit(): void {
@@ -295,6 +312,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                             this.finalEvent.set(undefined);
                             this.terminalFocusHandled = false;
                             this.autoOpenHandled = false;
+                            this.terminalOpenHandled = false;
                             this.running.set(true);
                             this.startTimer();
                             this.subscribeToJob(status.jobId);
@@ -452,8 +470,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.finalEvent.set(undefined);
         this.retryGuidance.set('');
         this.terminalFocusHandled = false;
-        // Re-arm the one-shot auto-open so the popover opens again for this fresh run (a retry or a second run in the same mounted card).
+        // Re-arm the one-shot auto-open and terminal-open so the popover opens again for this fresh run (a retry or a second run in the same mounted card) and surfaces its outcome.
         this.autoOpenHandled = false;
+        this.terminalOpenHandled = false;
     }
 
     private startTimer(): void {

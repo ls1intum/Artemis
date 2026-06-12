@@ -9,7 +9,7 @@
     </p>
 
     @if (!isFreeMode) {
-        <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"></label>
+        <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel" [translateValues]="{ count: findings.length }"></label>
         <div class="review-adapt-exercise-dialog__findings-list">
             @for (finding of findings; track $index) {
                 <div class="review-adapt-exercise-dialog__finding-card">
@@ -22,10 +22,22 @@
                     </div>
                     <div class="review-adapt-exercise-dialog__finding-description">{{ finding.description }}</div>
                     @if (finding.suggestedFix; as fix) {
-                        <div class="review-adapt-exercise-dialog__finding-fix">
-                            <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
-                            <pre class="review-adapt-exercise-dialog__finding-fix-code">{{ fix.replacementCode || fix.expectedCode }}</pre>
-                        </div>
+                        @if (fix.replacementCode) {
+                            <!-- A replacement: show the current code → the suggested code as a compact before→after so the instructor can see what actually changes. -->
+                            <div class="review-adapt-exercise-dialog__finding-fix">
+                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                                @if (fix.expectedCode) {
+                                    <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                                }
+                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--added">{{ fix.replacementCode }}</pre>
+                            </div>
+                        } @else if (fix.expectedCode) {
+                            <!-- A pure deletion: render the code to remove under a "Remove" label (NOT "Suggested fix"), so we never show the deleted code as if it were the fix. -->
+                            <div class="review-adapt-exercise-dialog__finding-fix">
+                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
+                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                            </div>
+                        }
                     }
                 </div>
             }

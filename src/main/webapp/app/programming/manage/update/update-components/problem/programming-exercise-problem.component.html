@@ -42,7 +42,14 @@
                 } @else {
                     <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
                 }
-                <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.draftPlanToReview"></span>
+                <span
+                    pButtonLabel
+                    [jhiTranslate]="
+                        shouldShowGenerateButton()
+                            ? 'artemisApp.programmingExercise.problemStatement.draftPlanToReview'
+                            : 'artemisApp.programmingExercise.problemStatement.redraftPlan'
+                    "
+                ></span>
             </button>
             <button pButton type="button" id="cancel-generation" severity="secondary" outlined size="small" (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
                 <fa-icon pButtonIcon [icon]="faBan" />

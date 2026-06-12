@@ -17,7 +17,14 @@
                         (onChange)="onModeChange($event.value)"
                         [disabled]="!areAuxiliaryRepositoriesValid()"
                         size="small"
-                    />
+                    >
+                        <ng-template #item let-option>
+                            @if (option.icon) {
+                                <fa-icon [icon]="option.icon" class="me-1" />
+                            }
+                            <span>{{ option.label }}</span>
+                        </ng-template>
+                    </p-selectButton>
                 </div>
                 <jhi-help-icon [text]="'artemisApp.programmingExercise.home.aiModeTooltip'" />
             </div>

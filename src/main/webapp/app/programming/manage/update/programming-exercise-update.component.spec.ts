@@ -55,7 +55,6 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { ConfirmationService } from 'primeng/api';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -244,10 +243,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
 
         it('entering AI mode blanks the problem statement and uses the lean AI field set; AI mode is never persisted to localStorage', () => {
+            // An edited/leftover statement that differs from the loaded readme triggers the discard guard; accept it.
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
             comp.programmingExercise.problemStatement = '# A leftover readme sample';
 
             comp.setEditMode('ai');
 
+            expect(confirmSpy).toHaveBeenCalledOnce();
             expect(comp.isAiMode()).toBe(true);
             expect(comp.isSimpleMode()).toBe(true); // AI reuses the simple layout machinery
             expect(comp.programmingExercise.problemStatement).toBe('');
@@ -256,6 +258,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isEditFieldDisplayedRecord().projectType).toBe(true);
             // AI mode is ephemeral: only simple/advanced are written to localStorage.
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).not.toBe('ai');
+        });
+
+        it('guards against silently discarding an edited problem statement: on cancel it stays in the current mode', () => {
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+            comp.programmingExercise.problemStatement = '# A hand-edited statement the instructor would lose';
+
+            comp.setEditMode('ai');
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            expect(comp.isAiMode()).toBe(false); // cancelled — mode unchanged
+            expect(comp.programmingExercise.problemStatement).toBe('# A hand-edited statement the instructor would lose'); // not wiped
         });
 
         it('persists the manual preference when leaving AI mode for a manual mode', () => {
@@ -526,9 +539,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
-            // The component declares ConfirmationService in its own providers; accept immediately so saveExerciseWithAi runs.
-            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-            vi.spyOn(confirmationService, 'confirm').mockImplementation((opts: any) => (opts.accept?.(), confirmationService));
+            // saveWithAi goes straight through the pre-update modal check (no confirmation dialog); stub it to invoke its callback directly.
             vi.spyOn(comp, 'saveWithModalCheck' as any).mockImplementation((fn: any) => fn());
             const router = TestBed.inject(Router) as unknown as MockRouter;
 
@@ -625,33 +636,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
-    describe('saveWithAi confirmation (R5)', () => {
-        // The component declares ConfirmationService in its own `providers`, so resolve it from the component injector (not the root TestBed).
-        const getConfirmationService = (): ConfirmationService => fixture.debugElement.injector.get(ConfirmationService);
-
-        it('asks for confirmation and does not save until the user accepts', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.course = course;
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = true;
-
-            const confirmSpy = vi.spyOn(getConfirmationService(), 'confirm').mockReturnValue(getConfirmationService());
-            const saveAiSpy = vi.spyOn(comp, 'saveExerciseWithAi');
-
-            comp.saveWithAi();
-
-            // The dialog is requested with the from-scratch confirmation strings, and nothing has been saved yet (reject is the default — no accept invoked).
-            expect(confirmSpy).toHaveBeenCalledOnce();
-            const options = confirmSpy.mock.calls[0][0];
-            expect(options.header).toBe('artemisApp.programmingExercise.generateExercise.confirmTitle');
-            expect(options.message).toBe('artemisApp.programmingExercise.generateExercise.confirmMessage');
-            expect(options.acceptButtonProps?.label).toBe('artemisApp.programmingExercise.generateExercise.confirmAccept');
-            expect(options.rejectButtonProps?.label).toBe('artemisApp.programmingExercise.generateExercise.confirmReject');
-            expect(saveAiSpy).not.toHaveBeenCalled();
-        });
-
-        it('proceeds to save through the modal check when the user accepts', () => {
+    describe('saveWithAi (no confirmation dialog)', () => {
+        it('starts the from-scratch generation directly — the explicit, self-describing footer action needs no extra confirmation', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
             entity.course = course;
@@ -663,20 +649,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
             vi.spyOn(comp, 'getInvalidReasons').mockReturnValue([]);
-
-            // Capture the accept callback so the test can simulate the user confirming.
-            const confirmSpy = vi.spyOn(getConfirmationService(), 'confirm').mockReturnValue(getConfirmationService());
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
-            comp.saveWithAi();
+            comp.saveWithAi('Implement a bounded stack');
 
-            const accept = confirmSpy.mock.calls[0][0].accept!;
-            // Nothing happens before the user accepts.
-            expect(setupSpy).not.toHaveBeenCalled();
-
-            accept();
-
-            // On accept the from-scratch generation runs with empty repositories (the second arg is emptyRepositories=true).
+            // No confirmation step: the from-scratch generation runs immediately with empty repositories (emptyRepositories=true).
             expect(setupSpy).toHaveBeenCalledWith(entity, true);
         });
     });
@@ -766,7 +743,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.showGenerateWithAi()).toBe(true);
         });
 
-        it('should load the supported set from the server on init when hyperion is enabled and toggle the loading flag (S1)', () => {
+        it('should load the supported set from the server on init when hyperion is enabled (S1)', () => {
             const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
             const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
@@ -775,11 +752,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(getSupported).toHaveBeenCalledOnce();
             expect(comp.supportedGenerationLanguages()).toEqual(SERVER_SUPPORTED);
-            // Loading flag cleared after the synchronous `of(...)` emission.
-            expect(comp.generationLanguagesLoading()).toBe(false);
         });
 
-        it('should keep the set empty (fail-closed) and clear loading when the server call errors (S5)', () => {
+        it('should keep the set empty (fail-closed) when the server call errors (S5)', () => {
             const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
             vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(throwError(() => new Error('boom')));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
@@ -787,10 +762,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.ngOnInit();
 
             expect(comp.supportedGenerationLanguages()).toEqual([]);
-            expect(comp.generationLanguagesLoading()).toBe(false);
         });
 
-        it('should leave the loading flag false and never call the server when hyperion is disabled', () => {
+        it('should never call the server when hyperion is disabled', () => {
             const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
             const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
@@ -798,7 +772,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.ngOnInit();
 
             expect(getSupported).not.toHaveBeenCalled();
-            expect(comp.generationLanguagesLoading()).toBe(false);
         });
     });
 

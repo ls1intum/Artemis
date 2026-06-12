@@ -63,8 +63,6 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { AUTO_START_EXERCISE_GENERATION_PROMPT, AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
@@ -87,9 +85,8 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
-        ConfirmDialogModule,
     ],
-    providers: [ConfirmationService, BuildPhasesTemplateService],
+    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -111,7 +108,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
     private readonly hyperionExerciseGenerationService = inject(HyperionExerciseGenerationService);
-    private readonly confirmationService = inject(ConfirmationService);
     private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
@@ -147,6 +143,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
         const previous = this.editMode();
+        if (previous === mode) {
+            return;
+        }
+        // Switching into/out of AI mode wipes (on enter) or reloads (on leave) the problem statement. If that statement is something the instructor would not want to lose silently — a
+        // hand-edited statement, or a reviewed "Draft a plan" output that differs from the language readme — confirm first. Only guards AI transitions on the create path (no persisted
+        // data); the legacy simple↔advanced toggle is unaffected. We compare content (not hasUnsavedChanges, which the creation-config getter re-clobbers each change-detection cycle).
+        const crossesAiOnCreate = (mode === 'ai' || previous === 'ai') && this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing);
+        if (crossesAiOnCreate && this.statementHasUnsavedManualEdits() && !window.confirm(this.translateService.instant(this.translationBasePath + 'unsavedChangesModeSwitch'))) {
+            return; // keep the current mode; nothing is discarded
+        }
         this.editMode.set(mode);
         if (mode === 'ai') {
             // Entering AI mode: the agent authors the problem statement from the brief, so clear any readme/sample left over from manual mode — otherwise a from-scratch run would treat
@@ -368,10 +374,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // Server-driven: whether the selected language is one whose generated exercise the differential oracle can verify. Fails closed (false) while the supported set
     // has not loaded or if the call errored, so the action stays disabled until we positively know the language is supported.
     generationLanguageSupported = computed(() => this.isGenerationSupportedLanguage(this.programmingExerciseLanguageForAi()));
-
-    // True only while the server's generation-supported language set is in flight (Hyperion enabled). The problem component renders a skeleton in place of the
-    // entire-exercise action while this is true, so the user does not briefly see a wrongly-disabled "unsupported language" state before the set arrives.
-    generationLanguagesLoading = signal<boolean>(false);
 
     private isGenerationSupportedLanguage(language: ProgrammingLanguage | undefined): boolean {
         return language !== undefined && this.supportedGenerationLanguages().includes(language);
@@ -698,18 +700,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.hyperionEnabled) {
-            // Load the server's generation-supported language set once; on error the set stays empty so the entire-exercise action fails closed (stays disabled).
-            // While the call is in flight the problem component shows a skeleton instead of a wrongly-disabled action; both callbacks clear the loading flag.
-            this.generationLanguagesLoading.set(true);
+            // Load the server's generation-supported language set once; on error the set stays empty so the entire-exercise action fails closed (the footer's language gate stays disabled
+            // with its explanatory tooltip until the set positively confirms the selected language).
             this.hyperionExerciseGenerationService.getSupportedLanguages().subscribe({
-                next: (languages) => {
-                    this.supportedGenerationLanguages.set(languages);
-                    this.generationLanguagesLoading.set(false);
-                },
-                error: () => {
-                    this.supportedGenerationLanguages.set([]);
-                    this.generationLanguagesLoading.set(false);
-                },
+                next: (languages) => this.supportedGenerationLanguages.set(languages),
+                error: () => this.supportedGenerationLanguages.set([]),
             });
         }
         this.defineSupportedProgrammingLanguages();
@@ -910,21 +905,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Confirms, then saves the programming exercise with AI preparation.
+     * Saves the programming exercise with AI preparation.
      *
-     * From-scratch generation is consequential: it persists the exercise with empty repositories, navigates away from the wizard, runs for several minutes,
-     * and spends generation credits. We therefore gate it behind an explicit confirmation (R5). On reject nothing happens; on accept we proceed through the
-     * usual pre-update modal check before kicking off the generation.
+     * From-scratch generation is consequential (it persists the exercise with empty repositories, leaves the wizard, runs for several minutes), but the action is explicit and
+     * self-describing: the footer button reads "Generate entire exercise", the run streams its progress, and it can be cancelled — so we do not interrupt with an extra confirmation
+     * dialog. We still run the usual pre-update modal check (which only surfaces when there is something genuinely worth confirming) before kicking off the generation.
      */
     saveWithAi(brief = '') {
         this.aiGenerationBrief = brief.trim();
-        this.confirmationService.confirm({
-            header: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmTitle'),
-            message: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmMessage'),
-            acceptButtonProps: { label: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmAccept') },
-            rejectButtonProps: { label: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmReject'), severity: 'secondary', outlined: true },
-            accept: () => this.saveWithModalCheck(() => this.saveExerciseWithAi()),
-        });
+        this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 
     private saveWithModalCheck(
@@ -1266,13 +1255,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
+                this.lastLoadedTemplate = file;
                 this.problemStatementLoaded = true;
             },
             error: () => {
                 this.programmingExercise.problemStatement = '';
+                this.lastLoadedTemplate = '';
                 this.problemStatementLoaded = true;
             },
         });
+    }
+
+    /** The most recently loaded language readme, kept so {@link statementHasUnsavedManualEdits} can tell an instructor-authored/AI-drafted statement apart from the untouched starter. */
+    private lastLoadedTemplate = '';
+
+    /** True when the current problem statement holds content the instructor would not want silently discarded on an AI-mode switch: non-empty and not byte-equal to the loaded readme. */
+    private statementHasUnsavedManualEdits(): boolean {
+        const statement = this.programmingExercise.problemStatement ?? '';
+        return statement.trim().length > 0 && statement !== this.lastLoadedTemplate;
     }
 
     /**

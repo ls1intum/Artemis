@@ -21,12 +21,15 @@
 
     // The review comments to address, rendered as one card per finding (severity tag + category + location, description, optional suggested fix) — the same visual language as the
     // editor's review-comment threads, instead of a single raw text blob.
+    // Scrolls within the dialog so a large number of review comments stays readable without pushing the instructions field and actions off-screen. The cap is viewport-relative so it
+    // uses the space available on tall screens and stays bounded on short ones; a little right padding keeps the scrollbar off the cards.
     &__findings-list {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        max-height: 16rem;
+        max-height: min(45vh, 26rem);
         overflow-y: auto;
+        padding-right: 0.25rem;
     }
 
     &__finding-card {
@@ -69,6 +72,18 @@
             font-size: 0.8rem;
             white-space: pre-wrap;
             word-break: break-word;
+
+            // before→after affordance: the current code to remove is tinted red, the suggested replacement green — matching the editor's diff language so a pure deletion is never
+            // mistaken for the fix.
+            &--removed {
+                background-color: var(--bs-danger-bg-subtle);
+                border-left: 3px solid var(--bs-danger-border-subtle);
+            }
+
+            &--added {
+                background-color: var(--bs-success-bg-subtle);
+                border-left: 3px solid var(--bs-success-border-subtle);
+            }
         }
     }
 

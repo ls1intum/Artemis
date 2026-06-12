@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -97,12 +98,12 @@ export class FormFooterComponent {
         return undefined;
     });
 
-    /** The 3-way mode selector options (labels translated up front; the footer is not re-rendered on a mid-form language switch). */
-    get modeOptions(): { label: string; value: FormEditMode }[] {
+    /** The 3-way mode selector options (labels translated up front; the footer is not re-rendered on a mid-form language switch). The AI option carries the Artemis Intelligence glyph. */
+    get modeOptions(): { label: string; value: FormEditMode; icon?: IconDefinition }[] {
         return [
             { label: this.translateService.instant('artemisApp.programmingExercise.editMode.simple'), value: 'simple' },
             { label: this.translateService.instant('artemisApp.programmingExercise.editMode.advanced'), value: 'advanced' },
-            { label: this.translateService.instant('artemisApp.programmingExercise.editMode.ai'), value: 'ai' },
+            { label: this.translateService.instant('artemisApp.programmingExercise.editMode.ai'), value: 'ai', icon: facArtemisIntelligence },
         ];
     }
 

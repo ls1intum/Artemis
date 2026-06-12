@@ -138,6 +138,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     handleProblemStatementAction(): void {
+        if (this.isAiMode()) {
+            // In the lean AI create mode this button always (re)drafts the plan from the brief. It must NOT fall through to the editor's refine/diff flow: refine clears userPrompt while the
+            // parent's footer brief tracks briefChange, so the visible textarea and the "Generate entire exercise" brief would silently diverge. Re-drafting keeps the brief and overwrites
+            // the previewed plan, which is exactly what re-clicking "Re-draft plan" should do.
+            this.aiOps.generateProblemStatement(this.programmingExercise(), this.editableInstructions());
+            return;
+        }
         this.aiOps.handleProblemStatementAction(this.programmingExercise(), this.editableInstructions());
     }
 

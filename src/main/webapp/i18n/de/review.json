@@ -74,9 +74,10 @@
                 "started": "Anpassung gestartet.",
                 "alreadyRunning": "Für diese Aufgabe läuft bereits eine Anpassung.",
                 "startError": "Die Anpassung konnte nicht gestartet werden. Bitte versuche es erneut.",
-                "findingsListLabel": "Zu berücksichtigende Review-Kommentare",
+                "findingsListLabel": "Zu berücksichtigende Review-Kommentare ({{ count }})",
                 "freeHelp": "Es gibt keine offenen Review-Kommentare. Beschreibe die gewünschte Änderung.",
-                "suggestedFixLabel": "Lösungsvorschlag"
+                "suggestedFixLabel": "Lösungsvorschlag",
+                "suggestedFixRemoveLabel": "Lösungsvorschlag: entfernen"
             },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }
