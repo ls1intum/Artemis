@@ -43,7 +43,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -66,7 +65,6 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 type ContainerInternalsOverrides = {
     athenaService: AthenaService;
     dialogService: DialogService;
-    submission?: ProgrammingSubmission;
     loadFeedbackSuggestions: () => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
 };
@@ -85,13 +83,16 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
-    comp.unreferencedFeedback.push({
-        type: FeedbackType.MANUAL_UNREFERENCED,
-        detailText: 'unreferenced feedback',
-        credits: pointsAwarded,
-    });
+    comp.unreferencedFeedback.update((feedbacks) => [
+        ...feedbacks,
+        {
+            type: FeedbackType.MANUAL_UNREFERENCED,
+            detailText: 'unreferenced feedback',
+            credits: pointsAwarded,
+        },
+    ]);
     comp.validateFeedback();
-    expect(comp.manualResult?.score).toEqual(scoreExpected);
+    expect(comp.manualResult()?.score).toEqual(scoreExpected);
 }
 
 describe('CodeEditorTutorAssessmentContainerComponent', () => {
@@ -322,7 +323,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         result.hasComplaint = false;
         comp.ngOnInit();
         await flushMicrotasks();
-        expect(comp.isAssessor).toBe(false);
+        expect(comp.isAssessor()).toBe(false);
         addFeedbackAndValidateScore(comp, 0, 0);
         await comp.submit();
         fixture.changeDetectorRef.detectChanges();
@@ -332,7 +333,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getIdentityStub).toHaveBeenCalled();
         expect(discardPendingSubmissionsWithConfirmationStub).toHaveBeenCalled();
         expect(updateAfterNewAssessment).toHaveBeenCalledOnce();
-        expect(comp.isAssessor).toBe(true);
+        expect(comp.isAssessor()).toBe(true);
     });
 
     it('should be able to override directly after submitting', () => {
@@ -341,21 +342,21 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.isAtLeastInstructor = true;
         exercise.dueDate = dayjs();
-        comp.exercise = exercise;
-        comp.isAssessor = true;
-        comp.participation = participation;
-        comp.manualResult = result;
+        comp.exercise.set(exercise);
+        comp.isAssessor.set(true);
+        comp.participation.set(participation);
+        comp.manualResult.set(result);
         comp.submit();
         expect(comp.canOverride).toBe(true);
     });
 
     it('should show unreferenced feedback suggestions', () => {
-        comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
-        expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
+        comp.feedbackSuggestions.set([{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }]);
+        expect(comp.unreferencedFeedbackSuggestions()).toHaveLength(1);
     });
 
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
-        comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
+        comp.unreferencedFeedback.set([{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }]);
         comp.referencedFeedback = [
             {
                 text: 'referenced test',
@@ -379,9 +380,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 },
             ] as Feedback[]),
         );
-        internals(comp).submission = { id: undefined } as ProgrammingSubmission; // Needed for loadFeedbackSuggestions
+        comp.submission.set({ id: undefined } as ProgrammingSubmission); // Needed for loadFeedbackSuggestions
         await internals(comp).loadFeedbackSuggestions();
-        expect(comp.feedbackSuggestions).toStrictEqual([
+        expect(comp.feedbackSuggestions()).toStrictEqual([
             {
                 text: 'FeedbackSuggestion:suggestion to pass',
                 detailText: 'some detail',
@@ -399,13 +400,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getIdentityStub).toHaveBeenCalledOnce();
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
-        expect(comp.isAssessor).toBe(true);
-        expect(comp.complaint).not.toBeNull();
+        expect(comp.isAssessor()).toBe(true);
+        expect(comp.complaint()).not.toBeNull();
         fixture.changeDetectorRef.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).not.toBeNull();
-        expect(comp.complaint).not.toBeNull();
+        expect(comp.complaint()).not.toBeNull();
     });
 
     it('should lock a new submission', () => {
@@ -427,7 +428,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getIdentityStub).toHaveBeenCalledOnce();
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
-        expect(comp.complaint).toBeUndefined();
+        expect(comp.complaint()).toBeUndefined();
         fixture.changeDetectorRef.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
@@ -438,11 +439,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
 
-        comp.exercise.maxPoints = 10;
-        comp.exercise.bonusPoints = 10;
-        comp.automaticFeedback = [];
+        comp.exercise().maxPoints = 10;
+        comp.exercise().bonusPoints = 10;
+        comp.automaticFeedback.set([]);
         comp.referencedFeedback = [];
-        comp.unreferencedFeedback = [];
+        comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
         addFeedbackAndValidateScore(comp, 1, 0);
@@ -457,11 +458,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
 
-        comp.exercise.maxPoints = 10;
-        comp.exercise.bonusPoints = 0;
-        comp.automaticFeedback = [];
+        comp.exercise().maxPoints = 10;
+        comp.exercise().bonusPoints = 0;
+        comp.automaticFeedback.set([]);
         comp.referencedFeedback = [];
-        comp.unreferencedFeedback = [];
+        comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
         addFeedbackAndValidateScore(comp, 1, 0);
@@ -474,11 +475,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
 
-        comp.exercise.maxPoints = 10;
-        comp.exercise.bonusPoints = 0;
-        comp.automaticFeedback = [];
+        comp.exercise().maxPoints = 10;
+        comp.exercise().bonusPoints = 0;
+        comp.automaticFeedback.set([]);
         comp.referencedFeedback = [];
-        comp.unreferencedFeedback = [];
+        comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
         addFeedbackAndValidateScore(comp, 1, 0);
@@ -491,11 +492,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
 
-        comp.exercise.maxPoints = 10;
-        comp.exercise.bonusPoints = 0;
-        comp.automaticFeedback = [];
+        comp.exercise().maxPoints = 10;
+        comp.exercise().bonusPoints = 0;
+        comp.automaticFeedback.set([]);
         comp.referencedFeedback = [];
-        comp.unreferencedFeedback = [];
+        comp.unreferencedFeedback.set([]);
         addFeedbackAndValidateScore(comp, 0, 0);
         addFeedbackAndValidateScore(comp, -1, 0);
         addFeedbackAndValidateScore(comp, 1, 0);
@@ -511,20 +512,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         await flushMicrotasks();
 
         // Should calculate the score
-        expect(comp.submission?.results?.[0].score).toBeDefined();
+        expect(comp.submission()?.results?.[0].score).toBeDefined();
     });
 
     it('should save and submit manual result', async () => {
         comp.ngOnInit();
         await flushMicrotasks();
-        comp.automaticFeedback = [
+        comp.automaticFeedback.set([
             {
                 type: FeedbackType.AUTOMATIC,
                 testCase: { testName: 'testCase1' },
                 detailText: 'testCase1 failed',
                 credits: 0,
             },
-        ];
+        ]);
         comp.referencedFeedback = [
             {
                 type: FeedbackType.MANUAL,
@@ -534,33 +535,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 reference: 'file:1_line:1',
             },
         ];
-        comp.unreferencedFeedback = [
+        comp.unreferencedFeedback.set([
             {
                 type: FeedbackType.MANUAL_UNREFERENCED,
                 detailText: 'unreferenced feedback',
                 credits: 1,
             },
-        ];
+        ]);
         comp.validateFeedback();
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks).toHaveLength(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(comp.manualResult()?.feedbacks).toHaveLength(3);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
         expect(alertElement).not.toBeNull();
 
         // Reset feedbacks
-        comp.manualResult!.feedbacks! = [];
+        comp.manualResult()!.feedbacks = [];
         comp.validateFeedback();
         await comp.submit();
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks).toHaveLength(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(comp.manualResult()?.feedbacks).toHaveLength(3);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
+        expect(comp.manualResult()?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
         expect(alertElementSubmit).not.toBeNull();
     });
 
@@ -574,7 +575,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.cancel();
 
         expect(confirmSpy).toHaveBeenCalledOnce();
-        expect(comp.cancelBusy).toBe(false);
+        expect(comp.cancelBusy()).toBe(false);
         expect(navigateBackStub).toHaveBeenCalledOnce();
         expect(cancelBackStub).toHaveBeenCalledOnce();
     });
@@ -604,14 +605,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should show a message if no more unassessed submissions are present', () => {
-        comp.exercise = exercise;
+        comp.exercise.set(exercise);
         comp.ngOnInit();
 
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
         comp.nextSubmission();
 
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
-        expect(comp.submission).toBeUndefined();
+        expect(comp.submission()).toBeUndefined();
     });
 
     it.each([undefined, 'genericErrorKey', 'complaintLock'])('should update assessment after complaint, errorKeyFromServer=%s', async (errorKeyFromServer: string | undefined) => {
@@ -642,13 +643,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
-        const validateSpy = vi.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+        const validateSpy = vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
 
         comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
         expect(validateSpy).toHaveBeenCalledOnce();
         expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
-        expect(comp.manualResult!.score).toBe(errorKeyFromServer ? 0 : 100);
+        expect(comp.manualResult()!.score).toBe(errorKeyFromServer ? 0 : 100);
         expect(onSuccessCalled).toBe(!errorKeyFromServer);
         expect(onErrorCalled).toBe(!!errorKeyFromServer);
         if (!errorKeyFromServer) {
@@ -669,12 +670,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // The editor state holds the up-to-date feedbacks the tutor just edited...
         comp.referencedFeedback = [{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback];
-        comp.unreferencedFeedback = [{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
-        comp.automaticFeedback = [{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback];
+        comp.unreferencedFeedback.set([{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback]);
+        comp.automaticFeedback.set([{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback]);
         // ...while the manual result still carries a stale feedback list that must NOT be the one sent to the server.
-        comp.manualResult!.feedbacks = [{ detailText: 'STALE', credits: 99, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+        comp.manualResult()!.feedbacks = [{ detailText: 'STALE', credits: 99, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
 
-        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
         const assessmentAfterComplaint: AssessmentAfterComplaint = {
             complaintResponse: new ComplaintResponse(),
             onSuccess: () => {},
@@ -700,7 +701,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         ];
 
         await internals(comp).onSubmissionReceived('123', submission);
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.assessmentsAreValid()).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
@@ -715,7 +716,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         ];
         await internals(comp).onSubmissionReceived('123', submission);
         comp.save();
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.assessmentsAreValid()).toBe(true);
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {
@@ -729,7 +730,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
 
-        const validateSpy = vi.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = false));
+        const validateSpy = vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(false));
 
         comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(validateSpy).toHaveBeenCalledOnce();
@@ -823,11 +824,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     ])(
         'should get confirmation if complaint is accepted without higher score',
         (totalScoreBeforeAssessment: number, assessmentAfterComplaint: AssessmentAfterComplaint, newFeedback: Feedback[], needsConfirmation: boolean) => {
-            comp.exercise = { maxPoints: 2 } as Exercise;
+            comp.exercise.set({ maxPoints: 2 } as ProgrammingExercise);
             comp.totalScoreBeforeAssessment = totalScoreBeforeAssessment;
             comp.referencedFeedback = [];
-            comp.automaticFeedback = [];
-            comp.unreferencedFeedback = newFeedback;
+            comp.automaticFeedback.set([]);
+            comp.unreferencedFeedback.set(newFeedback);
             vi.spyOn(window, 'confirm').mockReturnValue(false);
 
             comp.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint);
@@ -860,69 +861,69 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const feedbackSuggestion1 = { id: 1, credits: 1 };
         const feedbackSuggestion2 = { id: 2, credits: 2 };
         const feedbackSuggestion3 = { id: 3, credits: 3 };
-        comp.feedbackSuggestions = [feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3];
+        comp.feedbackSuggestions.set([feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3]);
         comp.removeSuggestion(feedbackSuggestion2);
-        expect(comp.feedbackSuggestions).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
+        expect(comp.feedbackSuggestions()).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
     });
 
     it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
         const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef); // Confirm dismissal
-        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).toHaveBeenCalled();
         // Dismissal should clear all feedback suggestions
-        expect(comp.feedbackSuggestions).toHaveLength(0);
+        expect(comp.feedbackSuggestions()).toHaveLength(0);
     });
 
     it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
         const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(false) } as DynamicDialogRef); // Cancel suggestion dismissal
-        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).toHaveBeenCalled();
         // Cancelling should keep everything intact
-        expect(comp.feedbackSuggestions).not.toHaveLength(0);
+        expect(comp.feedbackSuggestions()).not.toHaveLength(0);
     });
 
     it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
         const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open');
-        comp.feedbackSuggestions = [];
+        comp.feedbackSuggestions.set([]);
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).not.toHaveBeenCalled();
     });
 
     it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
-        comp['automaticFeedback'] = [{ type: FeedbackType.AUTOMATIC, credits: 1 }];
-        expect(comp.hasAutomaticFeedback).toBe(true);
+        comp.automaticFeedback.set([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
+        expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
     it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
-        comp['automaticFeedback'] = [];
-        expect(comp.hasAutomaticFeedback).toBe(false);
+        comp.automaticFeedback.set([]);
+        expect(comp.hasAutomaticFeedback()).toBe(false);
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise;
-        expect(comp.isFeedbackSuggestionsEnabled).toBe(true);
+        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+        expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
     it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise;
-        expect(comp.isFeedbackSuggestionsEnabled).toBe(false);
+        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+        expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {
         const subject = new Subject<Feedback[]>();
         vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
-        comp['submission'] = { id: 42 } as ProgrammingSubmission;
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
 
         const loadPromise = comp['loadFeedbackSuggestions']();
-        expect(comp.loadingFeedbackSuggestions).toBe(true);
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
 
         subject.next([]);
         subject.complete();
         await loadPromise;
 
-        expect(comp.loadingFeedbackSuggestions).toBe(false);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
     it('should render the feedback suggestions banner when submission is set', async () => {
