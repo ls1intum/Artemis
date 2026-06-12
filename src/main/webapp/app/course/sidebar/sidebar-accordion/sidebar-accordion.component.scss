@@ -146,9 +146,7 @@ hr {
 // mirroring how exercises are marked with a difficulty stripe (same 5px left border, recoloured to the
 // purple used for variant generation in the instructor view). jhiSidebarCard renders the header card as a
 // sibling of the (empty) header anchor, so it is the only medium card that is a *direct* child of the
-// connected group; the nested variant cards keep their own difficulty stripes. The `.border-module`
-// qualifier keeps the selector more specific than the card's own `.border-module:hover` rule, so the
-// purple stays put on hover (just like a difficulty stripe does).
-:host ::ng-deep .sidebar-group--connected > jhi-medium-sidebar-card .border-start.border-module {
+// connected group; the nested variant cards keep their own difficulty stripes.
+:host ::ng-deep .sidebar-group--connected > jhi-medium-sidebar-card .border-start.border-secondary {
     border-left-color: var(--bs-purple, #6f42c1) !important;
 }
