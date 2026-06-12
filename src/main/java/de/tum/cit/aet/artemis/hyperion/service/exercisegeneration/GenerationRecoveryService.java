@@ -172,9 +172,11 @@ public class GenerationRecoveryService {
     static List<ConsistencyIssueDTO> specFidelityFindings(SpecFidelityReport report) {
         List<ConsistencyIssueDTO> findings = new ArrayList<>();
         for (SpecFidelityReport.Finding finding : report.findings()) {
-            String title = finding.kind() == SpecFidelityReport.Kind.MECHANICS_LEAK
-                    ? "Grader-mechanics phrasing in the student-facing problem statement: \"" + finding.requirement() + "\""
-                    : "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
+            String title = switch (finding.kind()) {
+                case MECHANICS_LEAK -> "Grader-mechanics phrasing in the student-facing problem statement: \"" + finding.requirement() + "\"";
+                case MISSING_WORKED_EXAMPLE -> "Error/edge behaviour without a concrete worked example: \"" + finding.requirement() + "\"";
+                case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
+            };
             findings.add(finding(Severity.MEDIUM, title, finding.detail()));
         }
         return findings;

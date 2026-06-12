@@ -61,11 +61,23 @@ class SpecFidelityCriticServiceTest {
     /** A fully-covered brief (the model returns an empty uncovered list) produces no findings. */
     @Test
     void fullyCoveredBrief_flagsNothing() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[]}"));
+        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
 
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("test_cjk", "test_emoji", "test_combining", "test_cafe"));
 
         assertThat(report.hasFindings()).isFalse();
+    }
+
+    /** An error/edge behaviour described only in prose (no concrete fenced example) is reported as a MISSING_WORKED_EXAMPLE finding. */
+    @Test
+    void missingWorkedExample_isFlagged() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[{\"behaviour\":\"pop on empty throws\",\"reason\":\"only a prose 'would throw' sentence, no fenced trace\"}]}"));
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Implement a stack; pop on an empty stack must throw.", List.of("test_pop_empty_throws"));
+
+        assertThat(report.findings()).hasSize(1).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE);
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("pop on empty throws");
     }
 
     /**

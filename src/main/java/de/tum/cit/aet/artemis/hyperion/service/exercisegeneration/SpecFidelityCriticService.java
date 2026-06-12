@@ -65,24 +65,34 @@ public class SpecFidelityCriticService {
 
     private static final String CRITIC_SYSTEM_PROMPT = """
             You are a meticulous QA reviewer for programming-exercise test suites. You are given an instructor's BRIEF (what the exercise must require), the produced PROBLEM \
-            STATEMENT, and the exact list of TEST NAMES that were written. Your ONE job: list the concrete, checkable requirements and edge cases that the brief (or problem \
-            statement) explicitly names but that NO test appears to cover.
+            STATEMENT, and the exact list of TEST NAMES that were written. You produce TWO kinds of finding.
 
+            (1) UNCOVERED requirements: the concrete, checkable requirements and edge cases that the brief (or problem statement) explicitly names but that NO test appears to cover. \
             Count as a requirement only something concrete and assertable that the brief actually states, e.g.: a named input class to handle ("CJK characters", "emoji", \
             "empty input", "negative numbers"), a stated invariant ("must not modify the input"), a specific exception/error contract ("throws invalid_argument on zero capacity", \
             "returns -1 when not found"), or a specific numeric/ordering guarantee. Do NOT invent requirements the brief does not state, and do NOT restate the happy path as a \
             requirement. Judge coverage generously from the test NAMES and the problem statement: if a plausibly-named test exists for a requirement, treat it as covered. Only \
             flag a requirement when there is clearly no corresponding test.
 
+            (2) MISSING worked examples: a hand-authored exercise pins every error/edge behaviour to a CONCRETE, fenced call->result worked-example trace in the problem statement \
+            (e.g. a fenced block with `pop() on empty -> throws IllegalStateException`, `reverse("123") # raises TypeError`, `rotate(non-square) -> IllegalArgumentException`), NOT a \
+            prose "would throw" / "must throw" sentence. For EACH error or edge behaviour the problem statement names (a thrown exception, a boundary like empty/1x1/min/max, a \
+            rejected input), check the statement for a concrete fenced example illustrating it. List the ones that have NO concrete fenced example trace. An inline prose sentence \
+            does NOT count as an example.
+
             Respond with ONLY a JSON object, no prose, of the exact form:
-            {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}]}
-            If every stated requirement is covered, respond with {"uncovered": []}.""";
+            {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}], \
+            "missingExamples": [{"behaviour": "<the error/edge behaviour>", "reason": "<which concrete fenced example is missing>"}]}
+            If everything is covered and every error/edge behaviour has a concrete fenced example, respond with {"uncovered": [], "missingExamples": []}.""";
 
     /** The structured shape the coverage pass parses the model JSON into. */
-    private record UncoveredResponse(@Nullable List<UncoveredItem> uncovered) {
+    private record CriticResponse(@Nullable List<UncoveredItem> uncovered, @Nullable List<ExampleGapItem> missingExamples) {
     }
 
     private record UncoveredItem(@Nullable String requirement, @Nullable String reason) {
+    }
+
+    private record ExampleGapItem(@Nullable String behaviour, @Nullable String reason) {
     }
 
     /**
@@ -162,7 +172,7 @@ public class SpecFidelityCriticService {
             if (text == null || text.isBlank()) {
                 return List.of();
             }
-            return parseUncovered(text);
+            return parseCritique(text);
         }
         catch (RuntimeException e) {
             // Graceful skip: a critic failure must never fail the run. The differential oracle's verdict is unaffected.
@@ -174,38 +184,57 @@ public class SpecFidelityCriticService {
     private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         return "INSTRUCTOR BRIEF:\n" + brief + "\n\nPRODUCED PROBLEM STATEMENT:\n" + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip())
-                + "\n\nTEST NAMES (" + testNames.size() + "):\n" + tests + "\n\nList the brief's concrete requirements/edge-cases that no test covers, as the specified JSON.";
+                + "\n\nTEST NAMES (" + testNames.size() + "):\n" + tests
+                + "\n\nList (1) the brief's concrete requirements/edge-cases that no test covers and (2) the error/edge behaviours that have no concrete fenced example, as the "
+                + "specified JSON.";
     }
 
     /**
-     * Parses the model's JSON coverage response defensively. Tolerates surrounding prose / code fences, ignores entries missing a requirement, truncates an over-long requirement,
-     * and caps the count. Any structural surprise yields no findings rather than an exception.
+     * Parses the model's JSON critic response defensively. Tolerates surrounding prose / code fences, ignores entries missing their text, truncates over-long text, and caps the
+     * total count across all finding kinds. Any structural surprise yields no findings rather than an exception.
      */
-    private List<SpecFidelityReport.Finding> parseUncovered(String text) {
-        UncoveredResponse parsed;
+    private List<SpecFidelityReport.Finding> parseCritique(String text) {
+        CriticResponse parsed;
         try {
-            parsed = objectMapper.readValue(extractJsonPayload(text), UncoveredResponse.class);
+            parsed = objectMapper.readValue(extractJsonPayload(text), CriticResponse.class);
         }
         catch (Exception e) {
             log.debug("Spec-fidelity critic JSON did not parse ({}); treating as no findings.", e.getMessage());
             return List.of();
         }
-        if (parsed == null || parsed.uncovered() == null) {
+        if (parsed == null) {
             return List.of();
         }
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
-        for (UncoveredItem item : parsed.uncovered()) {
-            if (findings.size() >= MAX_COVERAGE_FINDINGS) {
-                break;
+        if (parsed.uncovered() != null) {
+            for (UncoveredItem item : parsed.uncovered()) {
+                if (findings.size() >= MAX_COVERAGE_FINDINGS) {
+                    break;
+                }
+                if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                    continue;
+                }
+                String requirement = truncate(item.requirement().strip());
+                String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "The brief names this requirement but no test appears to cover it.";
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement,
+                        "The brief names this requirement/edge-case but no test appears to cover it: " + reason
+                                + " Add a test that asserts it (an untested promise lets a wrong solution pass)."));
             }
-            if (item == null || item.requirement() == null || item.requirement().isBlank()) {
-                continue;
+        }
+        if (parsed.missingExamples() != null) {
+            for (ExampleGapItem item : parsed.missingExamples()) {
+                if (findings.size() >= MAX_COVERAGE_FINDINGS) {
+                    break;
+                }
+                if (item == null || item.behaviour() == null || item.behaviour().isBlank()) {
+                    continue;
+                }
+                String behaviour = truncate(item.behaviour().strip());
+                String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "no concrete fenced example illustrates it.";
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, behaviour,
+                        "This error/edge behaviour has no concrete fenced worked-example trace in the problem statement: " + reason
+                                + " Add a fenced call->result example next to the [task] it illustrates (a prose \"would throw\" sentence is not enough)."));
             }
-            String requirement = truncate(item.requirement().strip());
-            String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "The brief names this requirement but no test appears to cover it.";
-            findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement,
-                    "The brief names this requirement/edge-case but no test appears to cover it: " + reason
-                            + " Add a test that asserts it (an untested promise lets a wrong solution pass)."));
         }
         return findings;
     }
@@ -247,12 +276,12 @@ public class SpecFidelityCriticService {
                 "\n\nAdditionally, a spec-fidelity review of your exercise found these gaps against the instructor's brief (these did NOT cause rejection, but fixing them makes the "
                         + "exercise match the brief):");
         for (SpecFidelityReport.Finding finding : report.findings()) {
-            if (finding.kind() == SpecFidelityReport.Kind.MECHANICS_LEAK) {
-                builder.append("\n- The problem statement contains grader-mechanics phrasing that students should not see (\"").append(finding.requirement())
+            switch (finding.kind()) {
+                case MECHANICS_LEAK -> builder.append("\n- The problem statement contains grader-mechanics phrasing that students should not see (\"").append(finding.requirement())
                         .append("\"). Remove it from the student-facing problem statement.");
-            }
-            else {
-                builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
+                case MISSING_WORKED_EXAMPLE -> builder.append("\n- This error/edge behaviour has no concrete fenced worked-example trace: \"").append(finding.requirement())
+                        .append("\". Add a fenced call->result example next to the [task] it illustrates (a prose \"would throw\" sentence is not enough).");
+                default -> builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
             }
         }
         return builder.toString();

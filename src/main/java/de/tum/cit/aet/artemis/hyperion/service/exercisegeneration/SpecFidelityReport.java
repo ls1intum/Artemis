@@ -22,7 +22,11 @@ public record SpecFidelityReport(List<Finding> findings) {
         /** A concrete requirement / edge-case the brief names (e.g. "CJK", "throws on zero capacity") that NO test references. */
         UNCOVERED_REQUIREMENT,
         /** A grader-mechanics phrase ("make the tests fail", "NotImplementedError in the template") that leaked into the student-facing problem statement. */
-        MECHANICS_LEAK
+        MECHANICS_LEAK,
+        /**
+         * A [task] that names an error/edge behaviour but whose statement gives no CONCRETE fenced call→result worked-example trace for it (a hand-authored exercise always does).
+         */
+        MISSING_WORKED_EXAMPLE
     }
 
     /**
