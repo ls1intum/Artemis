@@ -1,16 +1,16 @@
 <div class="d-flex flex-column flex-md-row gap-3 gap-lg-5">
-    <jhi-exercise-timeline [timelineItems]="timelineItems()" [showInvalidBeforeTouched]="true" />
+    <jhi-exercise-timeline [timelineItems]="timelineItems()" [showInvalidBeforeTouched]="true" (timelineStatusChange)="timelineStatus.set($event)" />
     <div class="d-flex flex-column gap-2 align-items-start">
         <div class="d-flex flex-column">
             <div>
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                <jhi-help-icon [text]="usesExamWindowWorkingTime() ? 'artemisApp.examManagement.workingTimeTooltip' : 'artemisApp.examManagement.testExam.workingTimeTooltip'" />
+                <jhi-help-icon [text]="noWorkingTimeNeeded() ? 'artemisApp.examManagement.workingTimeTooltip' : 'artemisApp.examManagement.testExam.workingTimeTooltip'" />
             </div>
             <p-input-number
                 inputId="workingTimeInMinutes"
                 (ngModelChange)="workingTime.set($event * 60)"
                 [ngModel]="(workingTime() ?? 0) / 60"
-                [disabled]="usesExamWindowWorkingTime()"
+                [disabled]="noWorkingTimeNeeded()"
                 [showButtons]="true"
                 [useGrouping]="false"
                 [min]="0"

@@ -1,6 +1,6 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { ExamType, isTestExamType } from 'app/exam/shared/entities/exam.model';
-import { ExerciseTimelineComponent, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 import { InputNumber } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
@@ -26,9 +26,18 @@ export class ExamTimelineComponent {
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
 
     readonly workingTime = model.required<number | undefined>(); // seconds
-    readonly gracePeriod = model.required<number | undefined>(); // seconds
+    gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly isExamTimelineValid = computed(() => true);
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: false, empty: false });
+    readonly isWorkingTimeValid = computed(() => this.noWorkingTimeNeeded() || (this.workingTime() ?? 0) > 0);
+    private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid());
+    readonly examTimelineStatusChange = output<boolean>();
+
+    constructor() {
+        effect(() => {
+            this.examTimelineStatusChange.emit(this.isExamTimelineValid());
+        });
+    }
 
     readonly timelineItems = computed(() => {
         const examType = this.examType();
@@ -79,7 +88,7 @@ export class ExamTimelineComponent {
         return items;
     });
 
-    readonly usesExamWindowWorkingTime = computed(() => {
+    readonly noWorkingTimeNeeded = computed(() => {
         const examType = this.examType();
         return !isTestExamType(examType) || examType === ExamType.SIMULATION;
     });
