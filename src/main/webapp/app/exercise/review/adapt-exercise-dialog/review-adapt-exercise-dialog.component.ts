@@ -37,8 +37,17 @@ export class ReviewAdaptExerciseDialogComponent {
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
-    /** The structured review-comment findings to address (rendered read-only as cards); empty in the finding-free "free adapt" mode (no open review comments). */
-    readonly findings: AdaptFinding[] = (this.dialogConfig.data as ReviewAdaptExerciseDialogData).findings ?? [];
+    /** Severity order so the most important findings surface first when there are many to triage. */
+    private static readonly SEVERITY_ORDER: Record<string, number> = {
+        [ConsistencyIssue.SeverityEnum.High]: 0,
+        [ConsistencyIssue.SeverityEnum.Medium]: 1,
+        [ConsistencyIssue.SeverityEnum.Low]: 2,
+    };
+
+    /** The structured review-comment findings to address (rendered read-only as cards, highest severity first); empty in the finding-free "free adapt" mode (no open review comments). */
+    readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData).findings ?? [])].sort(
+        (a, b) => (ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[a.severity] ?? 3) - (ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[b.severity] ?? 3),
+    );
     /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */
     readonly isFreeMode = this.findings.length === 0;
     readonly instructions = signal('');

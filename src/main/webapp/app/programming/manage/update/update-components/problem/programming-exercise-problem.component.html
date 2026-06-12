@@ -56,6 +56,12 @@
                 <span pButtonLabel jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+        <!-- Once a plan has been drafted into the editor below, make the (otherwise invisible) coupling explicit: the reviewed plan becomes the spec the build must match. -->
+        @if (!shouldShowGenerateButton()) {
+            <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
+                <small jhiTranslate="artemisApp.programmingExercise.problemStatement.planBecomesSpecHint"></small>
+            </p-message>
+        }
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">

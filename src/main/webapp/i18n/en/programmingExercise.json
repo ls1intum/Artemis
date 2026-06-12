@@ -306,6 +306,7 @@
                 "aiModeHint": "Describe the exercise you want. When you click \"Generate entire exercise\", Artemis Intelligence writes the problem statement, builds the repositories, and verifies the exercise — then drops you into the editor. Optionally draft a plan first to review and adapt it before the full build.",
                 "draftPlanToReview": "Draft a plan to review",
                 "redraftPlan": "Re-draft plan",
+                "planBecomesSpecHint": "This reviewed plan becomes the specification the generated solution, template and tests must match. Edit it below until it captures exactly what you want, then generate.",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
                 "generationError": "Failed to generate problem statement. Please try again.",
