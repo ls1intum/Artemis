@@ -111,7 +111,20 @@
         <div class="status-step-content">
             <div class="text-center mb-1">
                 <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h6>
-                <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
+                @if (isSimulationAndPracticeExam(exam())) {
+                    <div>
+                        <b>
+                            {{ 'artemisApp.examStatus.conduction.testExam.simulationPhase' | artemisTranslate }}: {{ exam().startDate | artemisDate }} -
+                            {{ testExamSimulationEndDate(exam()) | artemisDate }}
+                        </b>
+                        <b>
+                            {{ 'artemisApp.examStatus.conduction.testExam.practicePhase' | artemisTranslate }}: {{ exam().testExamPracticeStartDate | artemisDate }} -
+                            {{ exam().endDate | artemisDate }}
+                        </b>
+                    </div>
+                } @else {
+                    <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
+                }
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState === examConductionStateEnum.ERROR) {

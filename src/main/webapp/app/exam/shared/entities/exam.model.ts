@@ -20,6 +20,17 @@ export function isTestExamType(examType?: ExamType): boolean {
     return examType !== undefined && examType !== ExamType.REAL;
 }
 
+export function isSimulationAndPracticeExam(exam?: { examType?: ExamType }): boolean {
+    return exam?.examType === ExamType.SIMULATION_AND_PRACTICE;
+}
+
+export function testExamSimulationEndDate(exam?: { examType?: ExamType; startDate?: dayjs.Dayjs; workingTime?: number }): dayjs.Dayjs | undefined {
+    if (!isSimulationAndPracticeExam(exam) || !exam?.startDate || exam.workingTime === undefined) {
+        return undefined;
+    }
+    return exam.startDate.add(exam.workingTime, 'seconds');
+}
+
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isSimulationAndPracticeExam, isTestExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -27,6 +27,7 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { DateDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -122,6 +123,34 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     getExamDetailSections() {
         const exam = this.exam;
+        const isTestExamValue = isTestExam(exam);
+
+        const conductionDateDetails: DateDetail[] = [];
+        conductionDateDetails.push({
+            type: DetailType.Date,
+            title: isTestExamValue ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.exam.startDate',
+            data: { date: exam.startDate },
+        });
+        if (isSimulationAndPracticeExam(exam)) {
+            conductionDateDetails.push(
+                {
+                    type: DetailType.Date,
+                    title: 'artemisApp.examManagement.testExam.simulationEndDate',
+                    data: { date: testExamSimulationEndDate(exam) },
+                },
+                {
+                    type: DetailType.Date,
+                    title: 'artemisApp.examManagement.testExam.practiceStartDate',
+                    data: { date: exam.testExamPracticeStartDate },
+                },
+            );
+        }
+        conductionDateDetails.push({
+            type: DetailType.Date,
+            title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate',
+            data: { date: exam.endDate },
+        });
+
         this.examDetailSections = [
             {
                 headline: 'artemisApp.exam.detail.sections.general',
@@ -131,8 +160,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Text, title: 'artemisApp.examManagement.examiner', data: { text: exam.examiner } },
                     { type: DetailType.Text, title: 'artemisApp.examManagement.moduleNumber', data: { text: exam.moduleNumber } },
                     { type: DetailType.Date, title: 'artemisApp.examManagement.visibleDate', data: { date: exam.visibleDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exam.startDate', data: { date: exam.startDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exam.endDate', data: { date: exam.endDate } },
+                    ...conductionDateDetails,
                     { type: DetailType.Date, title: 'artemisApp.exam.publishResultsDate', data: { date: exam.publishResultsDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewStart', data: { date: exam.examStudentReviewStart } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewEnd', data: { date: exam.examStudentReviewEnd } },

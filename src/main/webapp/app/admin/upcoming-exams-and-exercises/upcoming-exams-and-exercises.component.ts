@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
@@ -19,7 +19,12 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
-    styles: ['.table {table-layout: fixed}'],
+    styles: [
+        '.upcoming-exercises-table { table-layout: fixed; }',
+        '.upcoming-exams-table { table-layout: auto; min-width: 1100px; }',
+        '.upcoming-exams-table .mode-column { min-width: 12rem; width: 14rem; }',
+        '.upcoming-exams-table .date-column { min-width: 11rem; width: 12rem; }',
+    ],
     imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective, ExamModeBadgeComponent],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
@@ -37,6 +42,9 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
 
     /** Get the tooltip for an exercise type */
     protected readonly getIconTooltip = getIconTooltip;
+
+    protected readonly isSimulationAndPracticeExam = isSimulationAndPracticeExam;
+    protected readonly testExamSimulationEndDate = testExamSimulationEndDate;
 
     ngOnInit(): void {
         this.exerciseService.getUpcomingExercises().subscribe((res: ExerciseEntityArrayResponseType) => {

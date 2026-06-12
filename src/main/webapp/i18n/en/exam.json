@@ -772,7 +772,9 @@
                     "introduction": "This page gives an overview over the various steps when creating a test exam.",
                     "detailsHintForTestExams": "For test exams, the following applies",
                     "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
-                    "instantResults": "The results are automatically published once a student submits the exam"
+                    "instantResults": "The results are automatically published once a student submits the exam",
+                    "simulationPlannedFromTo": "The simulation phase is planned from {{ from }} to {{ to }}",
+                    "practicePlannedFromTo": "The practice phase is planned from {{ from }} to {{ to }}"
                 },
                 "tableItem": {
                     "register": "Register students for the exam",
@@ -974,6 +976,8 @@
                     "numberOfStudents": "Number of students",
                     "startedExams": "Started Test Exams",
                     "submittedExams": "Submitted Test Exams",
+                    "simulationPhase": "Simulation",
+                    "practicePhase": "Practice",
                     "conductionSuspended": "Students cannot start a Test Exam!"
                 }
             },
