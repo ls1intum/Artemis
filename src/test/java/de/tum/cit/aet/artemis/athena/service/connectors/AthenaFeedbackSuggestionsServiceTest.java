@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
@@ -32,6 +29,8 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -78,8 +77,13 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
+        var course = new Course();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setCourse(course);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
         StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
         textParticipation.setId(1L);
@@ -90,7 +94,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setCourse(course);
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
         StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
@@ -103,7 +107,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         modelingExercise = new ModelingExercise();
         modelingExercise.setId(5L);
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
+        modelingExercise.setCourse(course);
         modelingSubmission = new ModelingSubmission();
         modelingSubmission.setId(6L);
         StudentParticipation modelingParticipation = new StudentParticipation().exercise(modelingExercise);
@@ -143,8 +147,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testTextFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
-        textExercise.setFeedbackSuggestionModule(null);
+    void testTextFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
+        textExercise.getCourse().setAthenaConfig(null);
 
         List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
 
@@ -152,8 +156,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testProgrammingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
-        programmingExercise.setFeedbackSuggestionModule(null);
+    void testProgrammingFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
+        programmingExercise.getCourse().setAthenaConfig(null);
 
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
 
@@ -161,8 +165,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testModelingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
-        modelingExercise.setFeedbackSuggestionModule(null);
+    void testModelingFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
+        modelingExercise.getCourse().setAthenaConfig(null);
 
         List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, null);
 
