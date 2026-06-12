@@ -520,6 +520,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * already authorized the course — e.g. {@link #getCurrentSessionOrCreateIfNotExists} and the
      * {@code find…OrCourseFallback} helpers — invoke that private core directly to avoid a redundant
      * authorize/entity-load round trip.
+     *
+     * @param courseId the id of the course to create or retrieve the empty session for
+     * @param user     the user requesting the session
+     * @return the existing reusable empty course chat session for today, or a newly created one
      */
     public IrisChatSession findOrCreateEmptySession(long courseId, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
