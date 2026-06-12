@@ -25,7 +25,7 @@ public final class WeaviateDateUtil {
     /**
      * All property keys in the {@link SearchableEntitySchema} that use the Weaviate DATE type.
      */
-    private static final Set<String> DATE_PROPERTY_KEYS = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
+    public static final Set<String> DATE_PROPERTY_KEYS = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
             SearchableEntitySchema.Properties.END_DATE, SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.VISIBLE_DATE,
             SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE);
 

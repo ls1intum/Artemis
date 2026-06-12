@@ -56,10 +56,10 @@ public class V0ToV1Migration implements WeaviateMigration {
 
     /**
      * Date properties that may need RFC3339 normalization during migration.
+     * Reuses the canonical set from {@link WeaviateDateUtil} so that newly added date properties
+     * are automatically covered without maintaining a separate list.
      */
-    private static final Set<String> DATE_PROPERTIES = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
-            SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE,
-            SearchableEntitySchema.Properties.EXAM_END_DATE);
+    private static final Set<String> DATE_PROPERTIES = WeaviateDateUtil.DATE_PROPERTY_KEYS;
 
     /**
      * Properties that kept the same name between the v0 {@code Exercises} and v1
