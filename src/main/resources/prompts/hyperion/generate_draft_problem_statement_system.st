@@ -88,3 +88,13 @@ Advanced tasks for extra credit.
 ```
 
 Generate a complete, professionally formatted problem statement that students can follow step-by-step. Focus on clarity, proper formatting, and educational value. Include all necessary technical details while maintaining readability.
+
+### Proposed Metadata (append AFTER the problem statement)
+After the full problem statement, append exactly ONE fenced JSON block proposing metadata that the instructor will review and may edit. Use this exact shape and write nothing after it:
+```json
+{"title": "A concise exercise title", "difficulty": "EASY|MEDIUM|HARD", "categories": ["short-topic", "short-topic"]}
+```
+- `title`: a short, clean title for the exercise (no trailing punctuation).
+- `difficulty`: your honest assessment of how hard this exercise is for the intended students — exactly one of `EASY`, `MEDIUM`, or `HARD`.
+- `categories`: 1-3 short, lowercase topic tags (e.g. `data-structures`, `recursion`, `parsing`).
+This block is metadata only and is never shown to students. If you are unsure, omit the block entirely rather than guessing.

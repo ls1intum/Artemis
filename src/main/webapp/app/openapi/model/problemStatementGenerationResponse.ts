@@ -10,12 +10,32 @@
 
 
 /**
- * Response containing generated problem statement
+ * Response containing the generated problem statement and the metadata the draft proposes for instructor review
  */
-export interface ProblemStatementGenerationResponse { 
+export interface ProblemStatementGenerationResponse {
     /**
      * Draft problem statement text
      */
     draftProblemStatement?: string;
+    /**
+     * Proposed exercise title
+     */
+    suggestedTitle?: string;
+    /**
+     * Proposed difficulty (EASY, MEDIUM or HARD)
+     */
+    suggestedDifficulty?: ProblemStatementGenerationResponse.SuggestedDifficultyEnum;
+    /**
+     * Proposed topic categories (raw, to be snapped to the course taxonomy on the client)
+     */
+    suggestedCategories?: Array<string>;
+}
+export namespace ProblemStatementGenerationResponse {
+    export const SuggestedDifficultyEnum = {
+        Easy: 'EASY',
+        Medium: 'MEDIUM',
+        Hard: 'HARD'
+    } as const;
+    export type SuggestedDifficultyEnum = typeof SuggestedDifficultyEnum[keyof typeof SuggestedDifficultyEnum];
 }
 
