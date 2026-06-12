@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -26,6 +24,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.openai.errors.InternalServerException;
+import com.openai.errors.OpenAIException;
+import com.openai.errors.OpenAIIoException;
+import com.openai.errors.OpenAIRetryableException;
+import com.openai.errors.RateLimitException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -353,10 +356,10 @@ public abstract class HyperionCodeGenerationService {
             storeTokenUsage(user, exercise, courseId, prompt, chatResponse);
             return response;
         }
-        catch (TransientAiException e) {
+        catch (OpenAIIoException | OpenAIRetryableException | RateLimitException | InternalServerException e) {
             throw new NetworkingException("Temporary AI service issue. Please retry.", e);
         }
-        catch (NonTransientAiException e) {
+        catch (OpenAIException e) {
             throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
         }
         catch (IllegalArgumentException e) {
