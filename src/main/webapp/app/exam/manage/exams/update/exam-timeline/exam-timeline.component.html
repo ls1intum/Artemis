@@ -1,6 +1,5 @@
 <div class="d-flex flex-column flex-md-row gap-3 gap-lg-5">
     <jhi-exercise-timeline [timelineItems]="timelineItems()" [showInvalidBeforeTouched]="true" />
-
     <div class="d-flex flex-column gap-2 align-items-start">
         <div class="d-flex flex-column">
             <div>
@@ -15,7 +14,7 @@
                 [showButtons]="true"
                 [useGrouping]="false"
                 [min]="0"
-                [max]="MAX_WORKING_TIME_IN_MINUTES"
+                [max]="max_working_time_in_minutes"
                 suffix=" min"
             />
         </div>
@@ -24,7 +23,12 @@
                 <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                 <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
             </div>
-            <p-input-number inputId="gracePeriod" [(ngModel)]="gracePeriod" [showButtons]="true" [useGrouping]="false" [min]="0" [max]="MAX_WORKING_TIME_IN_SECONDS" suffix=" s" />
+            <p-input-number inputId="gracePeriod" [(ngModel)]="gracePeriod" [showButtons]="true" [useGrouping]="false" [min]="0" [max]="max_grace_period_in_seconds" suffix=" s" />
         </div>
     </div>
 </div>
+@if (showVisibleFromWarning()) {
+    <p-message class="mt-3" icon="pi pi-exclamation-triangle" size="small" severity="warn">
+        <span jhiTranslate="entity.visibleDateWarningError"></span>
+    </p-message>
+}

@@ -6,16 +6,17 @@ import { InputNumber } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-
-const MAX_WORKING_TIME_IN_MINUTES = 43200 as const; // 30 days
-const MAX_WORKING_TIME_IN_SECONDS = 3600 as const;
+import { Message } from 'primeng/message';
 
 @Component({
     selector: 'jhi-exam-timeline',
-    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective],
+    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message],
     templateUrl: './exam-timeline.component.html',
 })
 export class ExamTimelineComponent {
+    readonly max_working_time_in_minutes = 43200 as const;
+    readonly max_grace_period_in_seconds = 3600 as const;
+
     readonly examType = input.required<ExamType>();
 
     readonly visibleFrom = model.required<Dayjs | undefined>();
@@ -24,8 +25,10 @@ export class ExamTimelineComponent {
     readonly startOfPracticeTime = model.required<Dayjs | undefined>();
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
 
-    workingTime = model.required<number | undefined>(); // seconds
-    gracePeriod = model.required<number | undefined>(); // seconds
+    readonly workingTime = model.required<number | undefined>(); // seconds
+    readonly gracePeriod = model.required<number | undefined>(); // seconds
+
+    readonly isExamTimelineValid = computed(() => true);
 
     readonly timelineItems = computed(() => {
         const examType = this.examType();
@@ -80,6 +83,19 @@ export class ExamTimelineComponent {
         const examType = this.examType();
         return !isTestExamType(examType) || examType === ExamType.SIMULATION;
     });
-    protected readonly MAX_WORKING_TIME_IN_MINUTES = MAX_WORKING_TIME_IN_MINUTES;
-    protected readonly MAX_WORKING_TIME_IN_SECONDS = MAX_WORKING_TIME_IN_SECONDS;
+
+    readonly showVisibleFromWarning = computed(() => {
+        const visibleFrom = this.visibleFrom();
+        const startOfWorkingTime = this.startOfWorkingTime();
+
+        if (!visibleFrom || !startOfWorkingTime) {
+            return false;
+        }
+
+        // Calculate the difference in minutes
+        const differenceInMinutes = startOfWorkingTime.diff(visibleFrom, 'minute');
+
+        // Check if the difference is more than 4 hours (240 minutes)
+        return differenceInMinutes > 240;
+    });
 }
