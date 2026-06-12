@@ -251,18 +251,17 @@ public class V0ToV1Migration implements WeaviateMigration {
      * @param value the date value from the legacy collection
      * @return the normalized RFC3339 date string
      */
-    static Object normalizeRfc3339Date(Object value) {
+    static String normalizeRfc3339Date(Object value) {
         if (value instanceof OffsetDateTime || value instanceof ZonedDateTime) {
             return WeaviateDateUtil.format((TemporalAccessor) value);
         }
-        if (value instanceof String dateStr) {
-            Matcher matcher = MISSING_SECONDS.matcher(dateStr);
-            if (matcher.find()) {
-                return matcher.replaceFirst("$1:00$2");
-            }
-            return dateStr;
+        // Strings from the legacy v0 indexing code (and, defensively, any other type) get the missing-seconds repair
+        String dateStr = value.toString();
+        Matcher matcher = MISSING_SECONDS.matcher(dateStr);
+        if (matcher.find()) {
+            return matcher.replaceFirst("$1:00$2");
         }
-        return value;
+        return dateStr;
     }
 
 }
