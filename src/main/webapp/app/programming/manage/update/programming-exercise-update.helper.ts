@@ -52,49 +52,52 @@ export enum ProgrammingExerciseInputField {
 }
 
 /**
- * The lean field set shown on the AI-assisted create flow. It mirrors the simple layout but HIDES the problem statement (the agent authors it from the instructor's "Your Requirements"
- * brief) and SHOWS the short name + project type (both are structural — the scaffold the agent builds on). The instructor keeps the policy fields the agent cannot infer (points, dates,
- * difficulty, categories). Everything advanced stays hidden. The footer's "Generate entire exercise" action replaces Save in this mode (see programming-exercise-update.component).
+ * The radically lean field set for the AI-assisted create flow: the instructor makes only the two decisions the agent genuinely cannot — the programming LANGUAGE (which fixes the
+ * harness the agent builds against) and the "Your Requirements" brief (the problem-statement surface, where the agent authors the exercise). EVERYTHING else is auto-generated. The
+ * title is auto-seeded from the brief and then reconciled server-side from the generated problem statement's H1, so it never appears on the page; short name, package name and points
+ * are seeded with valid values in AI mode (see {@code setEditMode}/{@code seedAiModeDefaults}); project type, bonus points and included-in-score fall back to their model defaults;
+ * difficulty, categories and the whole release/due/assessment timeline are OMITTED — they are not needed to create a (yet-unreleased) exercise and are set on the exercise details
+ * after the verified exercise exists, or in Advanced mode for instructors who want them up front. The footer's "Generate entire exercise" action replaces Save (see the update
+ * component). Net read of the page: pick a language, describe the exercise, generate.
  */
 export const IS_DISPLAYED_IN_AI_MODE: Record<ProgrammingExerciseInputField, boolean> = {
-    // General section — title (also the channel name) is the one field the agent never produces; short name is needed to scaffold the repositories.
-    title: true,
+    // General section — title is auto-seeded from the brief (and refined server-side from the generated H1), short name is auto-derived; both hidden. Categories are deferred.
+    title: false,
     channelName: false,
-    shortName: true,
+    shortName: false,
     editRepositoriesCheckoutPath: false,
     addAuxiliaryRepository: false,
-    categories: true,
-    // Mode section — difficulty is instructor policy and stays manual for now (the agent does not emit it yet).
-    difficulty: true,
+    categories: false,
+    // Mode section — difficulty is omitted (the agent does not consume it; showing it asks the instructor to grade unseen content).
+    difficulty: false,
     participationMode: false,
     allowOfflineIde: false,
     allowOnlineCodeEditor: false,
     allowOnlineIde: false,
-    // Language section — the agent builds against a concrete harness, so language + project type + package are confirmed up front; SCA / sequential runs / build script stay off.
+    // Language section — only the language is the instructor's decision; project type and package name are seeded/defaulted per language and hidden.
     programmingLanguage: true,
-    projectType: true,
+    projectType: false,
     withExemplaryDependency: false,
-    packageName: true,
+    packageName: false,
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
     customizeBuildScript: false,
     // Version Control section
     allowBranching: false,
-    // Problem section — the statement editor stays visible so the instructor can review/adapt the AI-drafted "plan" before the full build; it starts empty (the brief drives a
-    // from-scratch run, or "Draft a plan to review" populates it).
+    // Problem section — the "Your Requirements" brief + statement editor is the heart of the page; the agent authors the statement (or "Draft a plan to review" previews it).
     problemStatement: true,
     linkedCompetencies: false,
-    // Grading section — points, included-in-score and the timeline/dates are instructor policy and stay; everything else is advanced.
-    includeExerciseInCourseScoreCalculation: true,
-    points: true,
-    bonusPoints: true,
+    // Grading section — all omitted: points/included-in-score/bonus are defaulted and disclosed; the timeline/dates are set later, before releasing.
+    includeExerciseInCourseScoreCalculation: false,
+    points: false,
+    bonusPoints: false,
     submissionPolicy: false,
-    timeline: true,
-    releaseDate: true,
+    timeline: false,
+    releaseDate: false,
     startDate: false,
-    dueDate: true,
+    dueDate: false,
     runTestsAfterDueDate: false,
-    assessmentDueDate: true,
+    assessmentDueDate: false,
     exampleSolutionPublicationDate: false,
     complaintOnAutomaticAssessment: false,
     manualFeedbackRequests: false,

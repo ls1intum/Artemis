@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -454,5 +455,53 @@ class GenerationPersistenceServiceTest {
         String clean = "# Stack\nImplement push and pop.";
         assertThat(GenerationPersistenceService.normalizeTypography(clean)).isEqualTo(clean);
         assertThat(GenerationPersistenceService.normalizeTypography(null)).isNull();
+    }
+
+    @Test
+    void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
+        // The lean AI create page ships a brief-derived placeholder title; on acceptance the persist reconciles it from the generated statement's first H1.
+        assertThat(GenerationPersistenceService.extractTitleFromH1("# Roman Numerals\n\nConvert integers 1..3999.")).isEqualTo("Roman Numerals");
+        // Leading blank lines and trailing heading whitespace are tolerated.
+        assertThat(GenerationPersistenceService.extractTitleFromH1("\n\n#   Balanced BST   \n## Tasks")).isEqualTo("Balanced BST");
+        // A level-2 heading is NOT a title; with no H1 the placeholder is kept (null).
+        assertThat(GenerationPersistenceService.extractTitleFromH1("## Subsection only\nbody")).isNull();
+        assertThat(GenerationPersistenceService.extractTitleFromH1("No heading at all")).isNull();
+        // A hash with no following space (e.g. a tag) is not an ATX heading.
+        assertThat(GenerationPersistenceService.extractTitleFromH1("#NotAHeading")).isNull();
+        // An over-long heading is capped so it can never break the title column.
+        String longHeading = "# " + "x".repeat(400);
+        assertThat(GenerationPersistenceService.extractTitleFromH1(longHeading)).hasSize(255);
+    }
+
+    @Test
+    void persist_fromScratchGeneration_reconcilesTitleFromGeneratedH1() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // From-scratch: the statement was blank before this run (the AI page persisted empty repositories), so the placeholder title is replaced by the agent's own H1.
+        when(exercise.getProblemStatement()).thenReturn("");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Roman Numerals\n\nConvert 1..3999.");
+
+        service.persist(exercise, user, outcome);
+
+        // The title is set BEFORE updateProblemStatement (which saves the whole entity), so the clean title persists in the same write.
+        InOrder order = Mockito.inOrder(exercise, creationUpdateService);
+        order.verify(exercise).setTitle("Roman Numerals");
+        order.verify(creationUpdateService).updateProblemStatement(eq(exercise), eq("# Roman Numerals\n\nConvert 1..3999."), isNull());
+    }
+
+    @Test
+    void persist_adaptGeneration_keepsTheInstructorTitle_neverReconcilesFromH1() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // Adapt: the statement already existed, so the instructor's title is authoritative and must not be overwritten by the (possibly re-titled) generated H1.
+        when(exercise.getProblemStatement()).thenReturn("# Old Title\n\nold body");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Brand New Heading\n\nnew body");
+
+        service.persist(exercise, user, outcome);
+
+        verify(exercise, never()).setTitle(any());
+        verify(creationUpdateService).updateProblemStatement(eq(exercise), eq("# Brand New Heading\n\nnew body"), isNull());
     }
 }

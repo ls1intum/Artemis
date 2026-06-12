@@ -11,7 +11,7 @@
                 "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten.",
-                "aiModeTooltip": "Im KI-Modus beschreibst du die gewünschte Aufgabe in eigenen Worten. Lege die erforderliche Konfiguration fest (Kurzname, Sprache, Punkte, Termine) und lasse Artemis Intelligence die Problemstellung schreiben, die Repositorys aufbauen und die Aufgabe für dich verifizieren. Du kannst vorab einen Plan entwerfen und prüfen."
+                "aiModeTooltip": "Im KI-Modus beschreibst du die gewünschte Aufgabe in eigenen Worten. Wähle einfach die Programmiersprache und beschreibe, was du möchtest — Artemis Intelligence schreibt die Problemstellung, baut die Repositorys und verifiziert die Aufgabe für dich. Titel, Punkte und Bezeichner werden mit sinnvollen Standardwerten gefüllt, die du danach anpassen kannst. Du kannst vorab einen Plan entwerfen und prüfen."
             },
             "editMode": {
                 "simple": "Einfach",
@@ -304,6 +304,7 @@
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "aiModeHint": "Beschreibe die gewünschte Aufgabe. Wenn du auf „Gesamte Aufgabe generieren“ klickst, schreibt Artemis Intelligence die Problemstellung, baut die Repositorys und verifiziert die Aufgabe — und bringt dich anschließend in den Editor. Optional kannst du zuerst einen Plan entwerfen, um ihn vor dem vollständigen Build zu prüfen und anzupassen.",
+                "aiDefaultsNote": "Nur die Sprache und deine Beschreibung werden benötigt. Artemis startet die Aufgabe mit sinnvollen Standardwerten — 10 Punkte, in die Kurswertung einbezogen und ein Titel aus der generierten Aufgabenstellung — die du anschließend im Editor ändern kannst. Veröffentlichungs- und Abgabetermine bleiben ungesetzt, bis du die Aufgabe veröffentlichst.",
                 "draftPlanToReview": "Plan zum Prüfen entwerfen",
                 "redraftPlan": "Plan neu entwerfen",
                 "planBecomesSpecHint": "Dieser geprüfte Plan wird zur Spezifikation, die die generierte Musterlösung, Vorlage und Tests erfüllen müssen. Bearbeite ihn unten, bis er genau das erfasst, was du möchtest, und generiere dann.",

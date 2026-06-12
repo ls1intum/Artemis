@@ -26,6 +26,10 @@
             </div>
         </div>
         <small class="text-color-secondary d-block mb-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.aiModeHint"></small>
+        <!-- Make the auto-generated/defaulted configuration explicit so the lean page is never a black box: points, score inclusion, title and the deferred dates. -->
+        <p-message severity="secondary" styleClass="w-100 mb-3" [closable]="false">
+            <small jhiTranslate="artemisApp.programmingExercise.problemStatement.aiDefaultsNote"></small>
+        </p-message>
         <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
             <button
                 pButton

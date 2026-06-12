@@ -67,6 +67,9 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
+/** The points an AI-created exercise is seeded with (hidden on the lean AI page, disclosed in the "defaults applied" note, and editable on the exercise details afterwards). */
+export const AI_MODE_DEFAULT_POINTS = 10;
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -140,6 +143,46 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
     /** The instructor's "Your Requirements" brief, surfaced from the problem child so the footer's "Generate entire exercise" action can thread it into the run. */
     currentBrief = signal<string>('');
+    /** The last title this component auto-derived from the brief; lets {@link onAiBriefChange} keep the (hidden) title in sync with the brief without clobbering anything else. */
+    private lastAutoSeededTitle = '';
+
+    /**
+     * Threads the "Your Requirements" brief from the problem child to the footer action AND keeps the hidden title/short name seeded from it, so the lean AI page needs no title field:
+     * the persisted exercise carries a readable brief-derived placeholder during the ~3-minute run, and the server replaces it with the generated problem statement's H1 on acceptance.
+     */
+    onAiBriefChange(brief: string): void {
+        this.currentBrief.set(brief);
+        if (!this.isAiMode()) {
+            return;
+        }
+        const derivedTitle = this.deriveTitleFromBrief(brief);
+        // Only re-seed while the title is still our own placeholder (or empty) — never overwrite a title set elsewhere (e.g. switched in from Advanced).
+        const currentTitle = this.programmingExercise.title ?? '';
+        if (currentTitle === '' || currentTitle === this.lastAutoSeededTitle) {
+            this.lastAutoSeededTitle = derivedTitle;
+            this.programmingExercise.title = derivedTitle;
+            this.programmingExercise.shortName = this.deriveShortName(derivedTitle);
+            this.calculateFormStatusSections();
+        }
+    }
+
+    /**
+     * A readable placeholder title from the brief, used only during the ~3-minute run before the server reconciles the real title from the generated H1. Takes the first non-empty line;
+     * if it has a colon (e.g. "Stack data structure: support push/pop") keeps the part before it; strips a leading imperative lead-in ("Implement a …", "Build the …"); caps at a
+     * sentence length on a word boundary; upper-cases the first letter. Best-effort — it never has to be perfect, only sensible.
+     */
+    private deriveTitleFromBrief(brief: string): string {
+        const firstLine =
+            (brief ?? '')
+                .split('\n')
+                .find((line) => line.trim().length > 0)
+                ?.trim() ?? '';
+        const beforeColon = firstLine.includes(':') ? firstLine.slice(0, firstLine.indexOf(':')).trim() : firstLine;
+        const withoutLeadIn = beforeColon.replace(/^(create|implement|build|write|design|make|develop)\s+(an?|the)\s+/i, '').trim();
+        const candidate = withoutLeadIn.length >= 3 ? withoutLeadIn : beforeColon;
+        const capped = candidate.length > 80 ? candidate.slice(0, 80).replace(/\s+\S*$/, '') : candidate;
+        return capped.charAt(0).toUpperCase() + capped.slice(1);
+    }
 
     setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
         const previous = this.editMode();
@@ -159,6 +202,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             // it as the spec. The statement editor is hidden in AI mode anyway; "Draft a plan to review" re-populates it when the instructor wants a reviewable plan first.
             this.programmingExercise.problemStatement = '';
             this.problemStatementLoaded = true;
+            // The lean AI page hides short name, package name and points; seed valid defaults for them so the form is valid and "Generate entire exercise" enables with no extra input.
+            this.seedAiModeDefaults();
             this.rerenderSubject.next();
         } else {
             // Only the durable manual preference is persisted; AI mode is a one-shot create intent and is never written to localStorage.
@@ -1154,6 +1199,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // In AI mode the package name is hidden and seeded; the valid pattern differs per language, so re-seed the new language's default (overwriting the old one, which would now
+        // fail validation) — otherwise the hidden field silently blocks the one "Generate entire exercise" button on a language switch.
+        if (this.isAiMode()) {
+            this.programmingExercise.packageName = this.defaultPackageNameFor(language);
+            this.seedAiModeDefaults();
+        }
         return language;
     }
 
@@ -1276,6 +1327,48 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private statementHasUnsavedManualEdits(): boolean {
         const statement = this.programmingExercise.problemStatement ?? '';
         return statement.trim().length > 0 && statement !== this.lastLoadedTemplate;
+    }
+
+    /**
+     * Seeds the hidden-but-required fields so the lean AI create form is valid without the instructor touching them: a points default, a language-valid package name (only for the
+     * languages whose harness requires one), and a derived short name. Only fills a field that is still empty/unset, so a value the instructor set in Advanced before switching, or a
+     * re-seed on a language change, is never clobbered. The title, when set, drives the short name; the server reconciles the final title from the generated problem statement's H1.
+     */
+    private seedAiModeDefaults(): void {
+        if (this.programmingExercise.maxPoints === undefined) {
+            this.programmingExercise.maxPoints = AI_MODE_DEFAULT_POINTS;
+        }
+        const packageDefault = this.defaultPackageNameFor(this.programmingExercise.programmingLanguage);
+        if (packageDefault && !this.programmingExercise.packageName?.trim()) {
+            this.programmingExercise.packageName = packageDefault;
+        }
+        if (!this.programmingExercise.shortName?.trim()) {
+            this.programmingExercise.shortName = this.deriveShortName(this.programmingExercise.title);
+        }
+    }
+
+    /** A language-valid default package name for the languages whose build harness requires one; {@code undefined} for languages that need none (Python, JS/TS, C++, C#, R, Rust, …). */
+    private defaultPackageNameFor(language: ProgrammingLanguage | undefined): string | undefined {
+        switch (language) {
+            case ProgrammingLanguage.JAVA:
+            case ProgrammingLanguage.KOTLIN:
+                return 'de.tum.in.ase';
+            case ProgrammingLanguage.SWIFT:
+                return 'Exercise';
+            case ProgrammingLanguage.GO:
+            case ProgrammingLanguage.DART:
+                return 'exercise';
+            default:
+                return undefined;
+        }
+    }
+
+    /** A valid, unique-ish short name (starts with a letter, alphanumeric, ≥3 chars): slugged from the title for readability when present, else a neutral prefix, plus a short suffix. */
+    private deriveShortName(title: string | undefined): string {
+        const slug = (title ?? '').replace(/[^a-zA-Z0-9]/g, '');
+        const base = /^[a-zA-Z]/.test(slug) ? slug.slice(0, 12) : 'ai' + slug.slice(0, 10);
+        const suffix = (Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/g, '').slice(-4);
+        return (base.length >= 1 ? base : 'ai') + suffix;
     }
 
     /**

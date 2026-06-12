@@ -9,7 +9,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
+import { AI_MODE_DEFAULT_POINTS, LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -253,9 +253,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isAiMode()).toBe(true);
             expect(comp.isSimpleMode()).toBe(true); // AI reuses the simple layout machinery
             expect(comp.programmingExercise.problemStatement).toBe('');
-            // The lean AI map hides the problem statement editor section's advanced siblings but shows the short name (structural).
-            expect(comp.isEditFieldDisplayedRecord().shortName).toBe(true);
-            expect(comp.isEditFieldDisplayedRecord().projectType).toBe(true);
+            // The radically lean AI map shows ONLY the language and the problem-statement brief; everything else is auto-generated/defaulted and hidden.
+            expect(comp.isEditFieldDisplayedRecord().programmingLanguage).toBe(true);
+            expect(comp.isEditFieldDisplayedRecord().problemStatement).toBe(true);
+            expect(comp.isEditFieldDisplayedRecord().shortName).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().projectType).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().points).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().timeline).toBe(false);
             // AI mode is ephemeral: only simple/advanced are written to localStorage.
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).not.toBe('ai');
         });
@@ -291,6 +295,58 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             expect(comp.isAiMode()).toBe(false);
             expect(comp.editMode()).toBe('simple');
+        });
+
+        it('seeds the hidden required fields with valid defaults when entering AI mode', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.packageName = undefined;
+            comp.programmingExercise.shortName = undefined;
+
+            comp.setEditMode('ai');
+
+            // Points default so the persist gate is satisfied without asking the instructor to grade unseen content.
+            expect(comp.programmingExercise.maxPoints).toBe(AI_MODE_DEFAULT_POINTS);
+            // A Java/Kotlin package is required to persist; seed the house default.
+            expect(comp.programmingExercise.packageName).toBe('de.tum.in.ase');
+            // Short name is auto-derived and must satisfy the ^[a-zA-Z][a-zA-Z0-9]* pattern.
+            expect(comp.programmingExercise.shortName).toMatch(/^[a-zA-Z][a-zA-Z0-9]*$/);
+            expect(comp.programmingExercise.shortName!.length).toBeGreaterThanOrEqual(3);
+        });
+
+        it('derives the title and short name from the brief until the instructor edits the title', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = undefined;
+
+            comp.onAiBriefChange('Implement a Roman numeral converter that handles 1..3999');
+
+            expect(comp.programmingExercise.title).toBe('Roman numeral converter that handles 1..3999'.slice(0, 80));
+            const autoShortName = comp.programmingExercise.shortName;
+            expect(autoShortName).toMatch(/^[a-zA-Z][a-zA-Z0-9]*$/);
+
+            // A second brief keystroke keeps re-deriving while the title is still the auto-seeded value.
+            comp.onAiBriefChange('Build a balanced binary search tree');
+            expect(comp.programmingExercise.title).toBe('Balanced binary search tree');
+
+            // Once the instructor hand-edits the title, the brief stops overwriting it.
+            comp.programmingExercise.title = 'My exact title';
+            comp.onAiBriefChange('Some completely different brief text');
+            expect(comp.programmingExercise.title).toBe('My exact title');
+        });
+
+        it('re-defaults the package name when the language changes in AI mode', () => {
+            vi.spyOn(window, 'confirm').mockReturnValue(true); // language change may prompt on unsaved changes
+            comp.setEditMode('ai');
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.packageName).toBe('de.tum.in.ase');
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.PYTHON);
+            // Python has no package concept — clear it so a stale Java package can never block the persist.
+            expect(comp.programmingExercise.packageName).toBeUndefined();
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.GO);
+            expect(comp.programmingExercise.packageName).toBe('exercise');
         });
     });
 

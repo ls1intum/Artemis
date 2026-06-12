@@ -246,6 +246,18 @@ public class GenerationPersistenceService {
         // accessibility-sensitive document is plain ASCII regardless of model compliance.
         String producedProblemStatement = normalizeTypography(outcome.producedProblemStatement());
         if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
+            // From-scratch generation only (the statement was blank before this run): the lean AI create page persists a verbose brief-derived placeholder title; reconcile it to
+            // the
+            // agent's own H1 heading so the course list, editor tab and exercise read with a clean title (e.g. "Roman Numerals") instead of the requirements lead-in. An adapt run
+            // (the
+            // statement already existed) keeps the instructor's title untouched. updateProblemStatement saves the whole entity, so setting the title here persists it in the same
+            // write.
+            if (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank()) {
+                String generatedTitle = extractTitleFromH1(producedProblemStatement);
+                if (generatedTitle != null && !generatedTitle.equals(exercise.getTitle())) {
+                    exercise.setTitle(generatedTitle);
+                }
+            }
             try {
                 creationUpdateService.updateProblemStatement(exercise, producedProblemStatement, null);
             }
@@ -386,6 +398,9 @@ public class GenerationPersistenceService {
         }
     }
 
+    /** The exercise title column length; an H1 reconciled from a generated statement is capped to this so an unusually long heading can never break the persist. */
+    private static final int MAX_TITLE_LENGTH = 255;
+
     private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
@@ -465,5 +480,28 @@ public class GenerationPersistenceService {
             return null;
         }
         return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ');
+    }
+
+    /**
+     * Extracts the title from the first level-1 ATX heading ({@code # Title}) of a generated problem statement, used to reconcile a from-scratch AI exercise's placeholder title
+     * with
+     * the agent's own heading. A {@code ## } (level-2) heading does not match. Returns {@code null} when there is no leading H1 (then the placeholder title is kept). The result is
+     * trimmed and capped at the exercise-title column length so an unusually long heading can never break the save.
+     *
+     * @param problemStatement the produced problem statement (must not be {@code null})
+     * @return the H1 title, or {@code null} when the statement has no level-1 heading
+     */
+    static String extractTitleFromH1(String problemStatement) {
+        for (String line : problemStatement.split("\n", -1)) {
+            String trimmed = line.strip();
+            if (trimmed.startsWith("# ")) {
+                String title = trimmed.substring(2).strip();
+                if (title.isEmpty()) {
+                    return null;
+                }
+                return title.length() > MAX_TITLE_LENGTH ? title.substring(0, MAX_TITLE_LENGTH).strip() : title;
+            }
+        }
+        return null;
     }
 }
