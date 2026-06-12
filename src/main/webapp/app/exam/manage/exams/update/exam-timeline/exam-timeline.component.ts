@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
-import { examWorkingTime } from 'app/exam/overview/exam.utils';
+import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 
 @Component({
     selector: 'jhi-exam-timeline',
@@ -37,9 +37,7 @@ export class ExamTimelineComponent {
         });
 
         effect(() => {
-            this.workingTime.update((workingTime) =>
-                this.noWorkingTimeNeeded() ? (examWorkingTime({ startDate: this.startOfWorkingTime(), endDate: this.endOfWorkingTime() }) ?? 0) : workingTime,
-            );
+            this.workingTime.update((workingTime) => (this.noWorkingTimeNeeded() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
         });
     }
 
