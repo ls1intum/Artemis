@@ -177,7 +177,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
-            onAssistantMessageSent(session, savedMessage);
+            notifyUserOfIrisResponse(session, savedMessage);
         }
         else {
             savedMessage = null;
@@ -237,7 +237,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @param session the chat session the message belongs to
      * @param message the assistant message that was sent
      */
-    protected void onAssistantMessageSent(S session, IrisMessage message) {
+    protected void notifyUserOfIrisResponse(S session, IrisMessage message) {
         // no-op by default
     }
 

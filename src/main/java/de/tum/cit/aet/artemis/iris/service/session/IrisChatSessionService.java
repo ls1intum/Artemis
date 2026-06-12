@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -87,10 +88,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private static final int MESSAGE_PREVIEW_MAX_LENGTH = 200;
 
-    private static final String MESSAGE_PREVIEW_ELLIPSIS = "…";
-
-    private static final String MESSAGE_PREVIEW_FALLBACK = "Iris has answered your message";
-
     private static final Parser MESSAGE_PREVIEW_PARSER = Parser.builder().build();
 
     private static final TextContentRenderer MESSAGE_PREVIEW_RENDERER = TextContentRenderer.builder().lineBreakRendering(LineBreakRendering.STRIP).build();
@@ -168,7 +165,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * origin-agnostic: it fires regardless of which client sent the original message.
      */
     @Override
-    protected void onAssistantMessageSent(IrisChatSession session, IrisMessage message) {
+    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message) {
         try {
             var user = userRepository.findByIdElseThrow(session.getUserId());
             if (irisSessionPresenceService.isSessionOpenAnywhere(user.getLogin(), session.getId())) {
@@ -176,7 +173,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 return;
             }
             var course = courseRepository.findByIdElseThrow(session.getCourseId());
-            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), buildPreview(message), session.getTitle());
+            String preview = buildPreview(message, localizedMessagePreviewFallback(user.getLangKey()));
+            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), preview, session.getTitle());
             courseNotificationService.sendCourseNotification(notification, List.of(user));
         }
         catch (Exception e) {
@@ -194,21 +192,33 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * and list markup while keeping the readable text), collapsed to a single line and truncated to
      * {@link #MESSAGE_PREVIEW_MAX_LENGTH} characters. Non-text contents (e.g. JSON tool calls) are skipped.
      *
-     * @param message the assistant message to preview
-     * @return a single-line, length-bounded plain-text preview, or a generic fallback if the message has no text
+     * @param message  the assistant message to preview
+     * @param fallback the localized text returned if the message has no renderable text content
+     * @return a single-line, length-bounded plain-text preview, or the given fallback if the message has no text
      */
-    private static String buildPreview(IrisMessage message) {
+    private static String buildPreview(IrisMessage message, String fallback) {
         String markdown = message.getContent().stream().filter(IrisTextMessageContent.class::isInstance).map(IrisMessageContent::getContentAsString).filter(Objects::nonNull)
                 .collect(Collectors.joining(" ")).strip();
         if (markdown.isBlank()) {
-            return MESSAGE_PREVIEW_FALLBACK;
+            return fallback;
         }
         Node document = MESSAGE_PREVIEW_PARSER.parse(markdown);
         String plainText = MESSAGE_PREVIEW_RENDERER.render(document).replaceAll("\\s+", " ").strip();
         if (plainText.isBlank()) {
-            return MESSAGE_PREVIEW_FALLBACK;
+            return fallback;
         }
-        return StringUtils.abbreviate(plainText, MESSAGE_PREVIEW_ELLIPSIS, MESSAGE_PREVIEW_MAX_LENGTH);
+        return StringUtils.abbreviate(plainText, "…", MESSAGE_PREVIEW_MAX_LENGTH);
+    }
+
+    /**
+     * Resolves the localized fallback preview text shown when an assistant message has no renderable text content.
+     *
+     * @param langKey the user's language key (falls back to English if null or blank)
+     * @return the localized fallback preview text
+     */
+    private String localizedMessagePreviewFallback(String langKey) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.notification.messagePreviewFallback", null, "Iris has answered your message", locale);
     }
 
     /**
