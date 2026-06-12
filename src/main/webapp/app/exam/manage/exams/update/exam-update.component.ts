@@ -99,6 +99,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const value = this.confirmEntityNameValue();
         return !value || !this.exam?.title || value !== this.exam.title;
     });
+    readonly examTimelineValid = signal(false);
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
@@ -307,21 +308,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Returns the maximum working time in minutes for test exams.
-     */
-    get maxWorkingTimeInMinutes(): number {
-        if (!isTestExam(this.exam)) return 0;
-
-        if (this.exam.startDate && this.exam.endDate) {
-            // This considers decimal places as well.
-            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
-        } else {
-            // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-            return this.isImport ? this.workingTimeInMinutes : 0;
-        }
-    }
-
-    /**
      * Saves the exam. If the dates have changed and the exam is ongoing, a confirmation modal is shown to the user.
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
@@ -441,26 +427,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid =
-            this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate && this.isValidVisibleDateValue;
+        const examConductionValid = this.examTimelineValid();
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
-        const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
-        const examValidGracePeriod = this.isValidGracePeriod;
-        const examValidTestExamPracticeStartDate = this.isValidTestExamPracticeStartDate;
         return (
-            examConductionDatesValid &&
+            examConductionValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
-            examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
-            examValidNumberOfExercises &&
-            examValidGracePeriod &&
-            examValidTestExamPracticeStartDate
+            examValidNumberOfExercises
         );
     }
 
@@ -630,16 +609,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
         return false;
-    }
-
-    /**
-     * Returns true if the working time exceeds the maximum allowed limit of 30 days.
-     */
-    get isWorkingTimeTooHigh(): boolean {
-        if (this.exam.workingTime === undefined || this.exam.workingTime === null) {
-            return false;
-        }
-        return this.exam.workingTime > this.maxWorkingTimeSeconds;
     }
 
     get isValidPublishResultsDate(): boolean {

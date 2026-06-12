@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
+import { examWorkingTime } from 'app/exam/overview/exam.utils';
 
 @Component({
     selector: 'jhi-exam-timeline',
@@ -28,14 +29,17 @@ export class ExamTimelineComponent {
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: false, empty: false });
-    readonly isWorkingTimeValid = computed(() => this.noWorkingTimeNeeded() || (this.workingTime() ?? 0) > 0);
-    private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid());
     readonly examTimelineStatusChange = output<boolean>();
 
     constructor() {
         effect(() => {
             this.examTimelineStatusChange.emit(this.isExamTimelineValid());
+        });
+
+        effect(() => {
+            this.workingTime.update((workingTime) =>
+                this.noWorkingTimeNeeded() ? (examWorkingTime({ startDate: this.startOfWorkingTime(), endDate: this.endOfWorkingTime() }) ?? 0) : workingTime,
+            );
         });
     }
 
@@ -92,6 +96,37 @@ export class ExamTimelineComponent {
         const examType = this.examType();
         return !isTestExamType(examType) || examType === ExamType.SIMULATION;
     });
+
+    readonly maxWorkingTimeInMinutes = computed(() => {
+        const startOfWorkingTime = this.startOfWorkingTime();
+        const endOfWorkingTime = this.endOfWorkingTime();
+        if (this.noWorkingTimeNeeded() || !startOfWorkingTime || !endOfWorkingTime) {
+            return this.max_working_time_in_minutes;
+        }
+        return Math.max(0, Math.min(this.max_working_time_in_minutes, endOfWorkingTime.diff(startOfWorkingTime, 'minute', true)));
+    });
+
+    readonly isWorkingTimeValid = computed(() => {
+        const workingTime = this.workingTime() ?? 0;
+        if (workingTime > this.maxWorkingTimeInMinutes() * 60) {
+            return false;
+        }
+        if (this.noWorkingTimeNeeded()) {
+            return true;
+        }
+        const startOfWorkingTime = this.startOfWorkingTime();
+        const endOfWorkingTime = this.endOfWorkingTime();
+        return workingTime > 0 && (!startOfWorkingTime || !endOfWorkingTime || workingTime <= endOfWorkingTime.diff(startOfWorkingTime, 'second'));
+    });
+
+    private readonly isGracePeriodValid = computed(() => {
+        const gracePeriod = this.gracePeriod();
+        return gracePeriod === undefined || (gracePeriod >= 0 && gracePeriod <= this.max_grace_period_in_seconds);
+    });
+
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: false, empty: false });
+
+    private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid() && this.isGracePeriodValid());
 
     readonly showVisibleFromWarning = computed(() => {
         const visibleFrom = this.visibleFrom();
