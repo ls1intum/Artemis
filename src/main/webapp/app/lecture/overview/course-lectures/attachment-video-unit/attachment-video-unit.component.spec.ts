@@ -25,6 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -785,6 +786,28 @@ describe('AttachmentVideoUnitComponent', () => {
             component['onPdfCurrentPageChange'](2);
 
             expect(seekTo).toHaveBeenCalledWith(9, false);
+        });
+
+        it('maps PDF pages correctly when a hidden slide is removed from the student PDF', () => {
+            // Slide 2 is hidden → student PDF has 2 pages: slide 1 (PDF p.1) and slide 3 (PDF p.2)
+            component.lectureUnit().slides = [{ id: 1, slideNumber: 1 } as Slide, { id: 2, slideNumber: 2, hidden: new Date() } as Slide, { id: 3, slideNumber: 3 } as Slide];
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            // Video shows slide with display number 9 (= original slide 3 → PDF page 2, not 3)
+            component['onVideoSlideNumberChange'](9);
+
+            expect(goToPage).toHaveBeenCalledWith(2);
         });
 
         it('openFullscreen: returns immediately when no fullscreen content is available', () => {

@@ -624,14 +624,32 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         const distinctDisplayedPageNumbers = new Set<number>();
-        for (const [index, displayedPageNumber] of displayedPageNumbers.entries()) {
-            if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
-                return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
-            }
 
-            distinctDisplayedPageNumbers.add(displayedPageNumber);
-            displayedPageNumberToPdfPage.set(displayedPageNumber, index + 1);
-            pdfPageToDisplayedPageNumber.set(index + 1, displayedPageNumber);
+        // Use visible slides to determine PDF page order when slide metadata is available.
+        // Hidden slides are removed from the student PDF, so pdfIndex+1 must be computed
+        // from the visible-slides list, not from the raw displayPageNumbers array index.
+        const visibleSlides = (this.lectureUnit().slides ?? []).filter((s) => s.slideNumber !== undefined && !s.hidden).sort((a, b) => a.slideNumber! - b.slideNumber!);
+
+        if (visibleSlides.length > 0) {
+            for (const [pdfIndex, slide] of visibleSlides.entries()) {
+                const displayedPageNumber = displayedPageNumbers[slide.slideNumber! - 1];
+                if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
+                    return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+                }
+                distinctDisplayedPageNumbers.add(displayedPageNumber);
+                displayedPageNumberToPdfPage.set(displayedPageNumber, pdfIndex + 1);
+                pdfPageToDisplayedPageNumber.set(pdfIndex + 1, displayedPageNumber);
+            }
+        } else {
+            // Fallback: no slide metadata available, assume all slides are visible
+            for (const [index, displayedPageNumber] of displayedPageNumbers.entries()) {
+                if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
+                    return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+                }
+                distinctDisplayedPageNumbers.add(displayedPageNumber);
+                displayedPageNumberToPdfPage.set(displayedPageNumber, index + 1);
+                pdfPageToDisplayedPageNumber.set(index + 1, displayedPageNumber);
+            }
         }
 
         let hasTranscriptSlideNumber = false;
