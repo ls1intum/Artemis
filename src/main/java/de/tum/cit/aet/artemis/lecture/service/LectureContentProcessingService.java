@@ -129,8 +129,10 @@ public class LectureContentProcessingService {
 
         boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
         boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+        Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
 
         if (!hasVideo && !hasPdf) {
+            existingState.ifPresent(state -> cleanupRemovedProcessableContent(unit, state));
             log.debug("Unit {} has no video or PDF to process", unit.getId());
             return false;
         }
@@ -144,8 +146,6 @@ public class LectureContentProcessingService {
         if (stateToDelete.isPresent()) {
             processingStateRepository.delete(stateToDelete.get());
         }
-
-        Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
 
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
@@ -333,6 +333,31 @@ public class LectureContentProcessingService {
         }
 
         return false;
+    }
+
+    private void cleanupRemovedProcessableContent(AttachmentVideoUnit unit, LectureUnitProcessingState state) {
+        boolean previousVideoKnown = state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank();
+        boolean previousAttachmentKnown = state.getAttachmentVersion() != null;
+        if (!previousVideoKnown && !previousAttachmentKnown) {
+            return;
+        }
+
+        log.info("Processable content removed for unit {}, cleaning up existing Pyris content and processing state", unit.getId());
+        if (previousVideoKnown) {
+            processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
+        }
+        cleanupForReprocessing(unit);
+
+        state.resetRetryCount();
+        state.setPhase(ProcessingPhase.DONE);
+        state.setStartedAt(null);
+        state.setIngestionJobToken(null);
+        state.setRetryEligibleAt(null);
+        state.setErrorKey(null);
+        state.setVideoSourceHash(null);
+        state.setAttachmentVersion(null);
+        state.setLastUpdated(ZonedDateTime.now());
+        processingStateRepository.save(state);
     }
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit) {
