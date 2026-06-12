@@ -318,7 +318,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         const segments = this.transcriptSegments();
         const index = segments.findIndex((s) => currentTime >= s.startTime - margin && currentTime <= s.endTime + margin);
 
-        if (index !== -1 && index !== this.currentSegmentIndex()) {
+        if (index === -1) {
+            if (this.currentSegmentIndex() !== -1) {
+                this.currentSegmentIndex.set(-1);
+                this.updateActiveSlideNumber(undefined);
+            }
+            return;
+        }
+
+        if (index !== this.currentSegmentIndex()) {
             this.currentSegmentIndex.set(index);
             this.updateActiveSlideNumber(segments[index].slideNumber);
 

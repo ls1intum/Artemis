@@ -220,18 +220,32 @@ describe('VideoPlayerComponent', () => {
         expect(getIndex()).toBe(-1);
     });
 
-    it('updateCurrentSegment: within margin updates; far outside does not clear back to -1', async () => {
-        const segments: TranscriptSegment[] = [{ startTime: 5, endTime: 10, text: 'edge' }];
+    it('updateCurrentSegment: within margin updates; moving outside clears index and slide number', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 5, endTime: 10, text: 'edge', slideNumber: 3 }];
         setInputs('https://cdn.example.com/m.m3u8', segments);
         await render();
 
         // Within margin (10.2 <= 10 + 0.3)
         component.updateCurrentSegment(10.2);
         expect(getIndex()).toBe(0);
+        expect(component.getCurrentSlideNumber()).toBe(3);
 
-        // Far outside -> index remains last valid (component does not set -1)
+        // Far outside all segments — index and slide number must be cleared
         component.updateCurrentSegment(99);
-        expect(getIndex()).toBe(0);
+        expect(getIndex()).toBe(-1);
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
+    });
+
+    it('getCurrentSlideNumber returns undefined after playback leaves all transcript segments', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 15, text: 'Slide 5', slideNumber: 5 }];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        component.updateCurrentSegment(12); // inside segment
+        expect(component.getCurrentSlideNumber()).toBe(5);
+
+        component.updateCurrentSegment(50); // gap after last segment
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
     });
 
     it('seekTo sets current time and plays', async () => {
