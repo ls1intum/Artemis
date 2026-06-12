@@ -175,6 +175,7 @@ public class GenerationRecoveryService {
             String title = switch (finding.kind()) {
                 case MECHANICS_LEAK -> "Grader-mechanics phrasing in the student-facing problem statement: \"" + finding.requirement() + "\"";
                 case MISSING_WORKED_EXAMPLE -> "Error/edge behaviour without a concrete worked example: \"" + finding.requirement() + "\"";
+                case INVENTED_REQUIREMENT -> "Requirement not asked for by the brief (confirm or remove): \"" + finding.requirement() + "\"";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
             };
             findings.add(finding(Severity.MEDIUM, title, finding.detail()));

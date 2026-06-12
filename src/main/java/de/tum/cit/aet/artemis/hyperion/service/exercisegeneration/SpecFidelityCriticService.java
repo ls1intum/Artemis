@@ -80,13 +80,21 @@ public class SpecFidelityCriticService {
             rejected input), check the statement for a concrete fenced example illustrating it. List the ones that have NO concrete fenced example trace. An inline prose sentence \
             does NOT count as an example.
 
+            (3) INVENTED requirements (scope drift): the produced PROBLEM STATEMENT must implement the BRIEF, not silently expand or narrow it. List each concrete, graded-looking \
+            requirement or constraint the PROBLEM STATEMENT imposes that the BRIEF never asked for (e.g. the brief says "rotate a matrix" but the statement also requires O(1) extra \
+            space, or forbids using the standard library, or pins an exact exception type the brief left open). Be CONSERVATIVE: only list a requirement that is clearly absent from \
+            the brief and that a student would be graded on; do NOT list reasonable elaborations, naming, or the happy path. These are flagged for the instructor to confirm, not \
+            errors.
+
             Respond with ONLY a JSON object, no prose, of the exact form:
             {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}], \
-            "missingExamples": [{"behaviour": "<the error/edge behaviour>", "reason": "<which concrete fenced example is missing>"}]}
-            If everything is covered and every error/edge behaviour has a concrete fenced example, respond with {"uncovered": [], "missingExamples": []}.""";
+            "missingExamples": [{"behaviour": "<the error/edge behaviour>", "reason": "<which concrete fenced example is missing>"}], \
+            "invented": [{"requirement": "<the requirement the statement adds>", "reason": "<why it is not in the brief>"}]}
+            If everything is covered, every error/edge behaviour has a concrete fenced example, and the statement adds nothing beyond the brief, respond with \
+            {"uncovered": [], "missingExamples": [], "invented": []}.""";
 
     /** The structured shape the coverage pass parses the model JSON into. */
-    private record CriticResponse(@Nullable List<UncoveredItem> uncovered, @Nullable List<ExampleGapItem> missingExamples) {
+    private record CriticResponse(@Nullable List<UncoveredItem> uncovered, @Nullable List<ExampleGapItem> missingExamples, @Nullable List<UncoveredItem> invented) {
     }
 
     private record UncoveredItem(@Nullable String requirement, @Nullable String reason) {
@@ -236,6 +244,21 @@ public class SpecFidelityCriticService {
                                 + " Add a fenced call->result example next to the [task] it illustrates (a prose \"would throw\" sentence is not enough)."));
             }
         }
+        if (parsed.invented() != null) {
+            for (UncoveredItem item : parsed.invented()) {
+                if (findings.size() >= MAX_COVERAGE_FINDINGS) {
+                    break;
+                }
+                if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                    continue;
+                }
+                String requirement = truncate(item.requirement().strip());
+                String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "the brief does not state it.";
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.INVENTED_REQUIREMENT, requirement,
+                        "The problem statement imposes a graded requirement the instructor's brief did not ask for: " + reason
+                                + " Confirm this is intended; if not, relax the statement (and the tests) to match the brief."));
+            }
+        }
         return findings;
     }
 
@@ -281,6 +304,8 @@ public class SpecFidelityCriticService {
                         .append("\"). Remove it from the student-facing problem statement.");
                 case MISSING_WORKED_EXAMPLE -> builder.append("\n- This error/edge behaviour has no concrete fenced worked-example trace: \"").append(finding.requirement())
                         .append("\". Add a fenced call->result example next to the [task] it illustrates (a prose \"would throw\" sentence is not enough).");
+                case INVENTED_REQUIREMENT -> builder.append("\n- The problem statement adds a graded requirement the brief did not ask for: \"").append(finding.requirement())
+                        .append("\". Remove it (and any test enforcing it) unless the brief implies it, so the exercise matches the brief.");
                 default -> builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
             }
         }

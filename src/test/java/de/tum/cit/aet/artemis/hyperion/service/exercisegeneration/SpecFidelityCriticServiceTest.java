@@ -80,6 +80,18 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("pop on empty throws");
     }
 
+    /** A requirement the produced statement imposes that the brief never asked for is reported as an INVENTED_REQUIREMENT (scope-drift) finding. */
+    @Test
+    void inventedRequirementNotInBrief_isFlagged() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[{\"requirement\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}"));
+
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Rotate the matrix; your solution must use O(1) extra space.", List.of("test_rotate"));
+
+        assertThat(report.findings()).hasSize(1).allMatch(finding -> finding.kind() == SpecFidelityReport.Kind.INVENTED_REQUIREMENT);
+        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("O(1) extra space");
+    }
+
     /**
      * A grader-mechanics phrase in the problem statement ("make the tests fail" / "NotImplementedError in the template") is flagged WITHOUT any model call — the leak check is a
      * deterministic regex pass, so it fires even when the model returns nothing.

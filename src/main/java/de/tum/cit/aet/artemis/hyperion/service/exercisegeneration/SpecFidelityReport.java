@@ -26,7 +26,9 @@ public record SpecFidelityReport(List<Finding> findings) {
         /**
          * A [task] that names an error/edge behaviour but whose statement gives no CONCRETE fenced call→result worked-example trace for it (a hand-authored exercise always does).
          */
-        MISSING_WORKED_EXAMPLE
+        MISSING_WORKED_EXAMPLE,
+        /** A requirement/constraint the produced problem statement imposes that the instructor's brief never asked for (scope drift the instructor should confirm). */
+        INVENTED_REQUIREMENT
     }
 
     /**
