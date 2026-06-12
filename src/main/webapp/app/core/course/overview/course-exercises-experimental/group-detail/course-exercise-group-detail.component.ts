@@ -4,58 +4,33 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faComments, faLayerGroup, faPaperPlane, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faLayerGroup, faPaperPlane, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Checkbox } from 'primeng/checkbox';
-import { Tag } from 'primeng/tag';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
-import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { Course } from 'app/course/shared/entities/course.model';
-import { StudentExerciseDevSettingsService } from '../dev-settings/student-exercise-dev-settings.service';
 import { GroupHandInSelectionService } from '../group-hand-in-selection.service';
 
-type TagSeverity = 'success' | 'warn' | 'danger' | 'secondary';
-
 /**
- * Detail page for a course-level exercise group, shown in the experimental student view's right pane
- * when a clickable group is opened. Explains how exercise groups work and lets the student pick which
- * of the group's exercises should count towards their score (read-only group facts otherwise).
- * Dev-only mock — nothing here is persisted.
+ * Detail page for an exercise with several variants, shown in the experimental student view's right
+ * pane. Explains that the exercise has multiple variants and lets the student pick which variants
+ * should count towards their score (read-only facts otherwise). Dev-only mock — nothing is persisted.
  */
 @Component({
     selector: 'jhi-course-exercise-group-detail',
     templateUrl: './course-exercise-group-detail.component.html',
     styleUrls: ['./course-exercise-group-detail.component.scss'],
-    imports: [
-        FormsModule,
-        RouterLink,
-        NgTemplateOutlet,
-        SlicePipe,
-        FaIconComponent,
-        Checkbox,
-        Tag,
-        ResizablePanelsComponent,
-        PanelDirective,
-        DiscussionSectionComponent,
-        CompetencyContributionComponent,
-        ExerciseActionButtonComponent,
-        ArtemisDatePipe,
-    ],
+    imports: [FormsModule, RouterLink, NgTemplateOutlet, SlicePipe, FaIconComponent, Checkbox, ExerciseActionButtonComponent, ArtemisDatePipe],
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly mockService = inject(ExerciseManagementMockService);
-    private readonly devSettings = inject(StudentExerciseDevSettingsService);
     private readonly selectionService = inject(GroupHandInSelectionService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faLayerGroup = faLayerGroup;
-    protected readonly faComments = faComments;
     protected readonly faCheck = faCheck;
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -64,37 +39,9 @@ export class CourseExerciseGroupDetailComponent {
 
     protected readonly group = signal<CourseExerciseGroup | undefined>(undefined);
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
-    protected readonly firstExercise = computed<Exercise | undefined>(() => this.exercises()[0]);
-    // The discussion component derives its course/channel from the exercise; attach the course so the mock
-    // channel + messages load (the group itself has no exercise, so we use the first variant as the anchor).
-    protected readonly discussionExercise = computed<Exercise | undefined>(() => {
-        const exercise = this.firstExercise();
-        return exercise ? (Object.assign({}, exercise, { course: { id: this.courseId } as Course }) as Exercise) : undefined;
-    });
 
-    // The 'tiles' click action renders the selectable exercises as the real sidebar cards.
-    protected readonly useTiles = computed(() => this.devSettings.groupClickAction() === 'tiles');
-    // The 'exercise page' click action mimics the exercise detail layout (header + resizable split with communication).
-    protected readonly useExercisePage = computed(() => this.devSettings.groupClickAction() === 'exercise-page');
-    // Whether the selectable tiles are arranged as a wrapping flex grid, several per row (dev setting).
-    protected readonly useFlexTile = computed(() => this.devSettings.multiselectTileLayout() === 'flex');
-    // How many lines of problem-statement preview the multiselect tiles/rows show (0 = hidden; dev setting).
-    protected readonly tilePreviewLines = computed(() => {
-        switch (this.devSettings.multiselectTileStyle()) {
-            case 'three-lines':
-                return 3;
-            case 'two-lines':
-                return 2;
-            case 'one-line':
-                return 1;
-            default:
-                return 0;
-        }
-    });
-    // End index for the problem-statement excerpt, scaled with the line count so a 3-line preview actually
-    // has enough text to fill three lines (a fixed cap made 2- and 3-line look identical). The CSS line
-    // clamp still does the final trimming; this only guarantees enough characters are available.
-    protected readonly previewSliceEnd = computed(() => 3 + this.tilePreviewLines() * 200);
+    // Problem-statement preview is fixed at 2 lines; slice end guarantees enough characters.
+    protected readonly previewSliceEnd = 403;
 
     // How many of the group's exercises count towards the score (read-only); caps the selection.
     protected readonly countTowardsScore = computed(() => handInLimitFor(this.group()));
@@ -177,22 +124,5 @@ export class CourseExerciseGroupDetailComponent {
 
     protected exerciseLink(exercise: Exercise): string {
         return `/courses/${this.courseId}/exercises/experimental/${exercise.id}`;
-    }
-
-    protected difficultySeverity(difficulty?: DifficultyLevel): TagSeverity {
-        switch (difficulty) {
-            case DifficultyLevel.EASY:
-                return 'success';
-            case DifficultyLevel.MEDIUM:
-                return 'warn';
-            case DifficultyLevel.HARD:
-                return 'danger';
-            default:
-                return 'secondary';
-        }
-    }
-
-    protected difficultyLabel(difficulty?: DifficultyLevel): string {
-        return difficulty ? difficulty.charAt(0) + difficulty.slice(1).toLowerCase() : '';
     }
 }

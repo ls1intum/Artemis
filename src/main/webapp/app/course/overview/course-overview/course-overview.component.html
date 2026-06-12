@@ -63,11 +63,7 @@
                                 (onPresetSelected)="presetSelected($event)"
                             />
                         }
-                        @if (studentExerciseDevSettings.active()) {
-                            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="studentExerciseDevSettings.settingsVisible.set(true)" title="Dev Settings">
-                                <fa-icon [icon]="faGear" />
-                            </button>
-                        } @else if (course()!.id) {
+                        @if (course()!.id) {
                             <jhi-course-notification-overview [courseId]="course()!.id!" />
                         }
                     </jhi-course-title-bar>

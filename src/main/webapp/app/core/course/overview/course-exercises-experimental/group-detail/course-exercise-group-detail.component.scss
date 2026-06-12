@@ -4,51 +4,21 @@
     height: 100%;
 }
 
-.exercise-group-detail {
-    // Fill the whole detail pane with the white module surface, like the exercise view.
-    min-height: 100%;
-}
-
-// Exercise-page variant: fills the pane like the exercise detail view (header + resizable split).
+// Fills the pane like the exercise detail view (header + scrollable selection).
 .exercise-page {
     height: 100%;
 }
 
-// In the left panel the selection scrolls while the related competencies stay pinned to the bottom.
+// The selection scrolls while the related competencies stay pinned to the bottom.
 .group-panel-scroll {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
 }
 
-.group-panel-competencies {
-    flex-shrink: 0;
-
-    // Drop the contribution component's own bottom margin so only a slight padding (the panel's) remains.
-    ::ng-deep jhi-competency-contribution > div {
-        margin-bottom: 0 !important;
-    }
-}
-
 // Header information boxes fit their text, like the real exercise header (jhi-information-box .mw-content).
 .info-box {
     max-width: fit-content;
-}
-
-.exercise-option {
-    background-color: var(--module-bg);
-    transition:
-        border-color 0.15s ease-in-out,
-        background-color 0.15s ease-in-out;
-
-    &--selected {
-        border-color: var(--bs-primary) !important;
-        background-color: var(--bs-primary-bg-subtle);
-    }
-}
-
-.min-width-0 {
-    min-width: 0;
 }
 
 // Multiselect tile: the select checkbox sits inside the tile on the left, with room to its right before
@@ -69,7 +39,12 @@
 // the exercise-variant generation preview).
 .multiselect-tile {
     overflow: hidden;
+    position: relative;
     background-color: var(--module-bg);
+    border: 1px solid var(--bs-border-color);
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
     transition:
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out;
@@ -95,6 +70,11 @@
         background-color: var(--bs-danger);
     }
 
+    // Darken (don't underline) on hover, like the exercise sidebar cards. Selected tiles keep their accent.
+    &:not(&--selected):hover {
+        background-color: var(--link-item-bg);
+    }
+
     &--selected {
         border-color: var(--bs-primary) !important;
         background-color: var(--bs-primary-bg-subtle);
@@ -106,23 +86,22 @@
         padding: 0.4rem 0.6rem 0.4rem 3rem;
         color: inherit;
         text-decoration: none;
+
+        &:hover {
+            text-decoration: none;
+        }
+    }
+
+    // global.scss's `a:not(.btn):not(.tab-link):hover { text-decoration: underline !important }` has
+    // specificity (0,3,1) — one element type plus three pseudo-class/class selectors. The nested selector
+    // here compiles to `.multiselect-tile[_ng] a.multiselect-tile__link[_ng]:hover`, giving (0,5,1), which
+    // beats the global rule even when both carry !important.
+    a.multiselect-tile__link:hover {
+        text-decoration: none !important;
     }
 }
 
-// Flexbox tile arrangement (dev setting): instead of stacking the selectable tiles in a single column,
-// lay them out as a wrapping flex row so several tiles sit side by side and reflow with the available
-// width. Tiles grow to fill the row, so the last/lone tile in a row stretches.
-.tiles-container--flex {
-    flex-wrap: wrap;
-
-    .multiselect-tile {
-        flex: 1 1 16rem;
-        min-width: 0;
-    }
-}
-
-// Problem-statement excerpt as an indented quote (multiselect tiles and rows), like the
-// exercise-variant generation preview. Clamped to two lines.
+// Problem-statement excerpt as an indented quote. Fixed at two lines.
 .ps-quote {
     margin: 0.4rem 0 0;
     padding-left: 0.6rem;
@@ -134,12 +113,4 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.ps-quote--1-line {
-    -webkit-line-clamp: 1;
-}
-
-.ps-quote--3-lines {
-    -webkit-line-clamp: 3;
 }
