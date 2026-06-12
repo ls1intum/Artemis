@@ -131,6 +131,28 @@ describe('ExamTimelineComponent', () => {
             'artemisApp.examManagement.testExam.practiceStartDate',
             'artemisApp.examManagement.testExam.endDate',
         ]);
+
+        component.workingTime.set(7200);
+        fixture.detectChanges();
+
+        expect(component.endOfSimulationTime()?.isSame(start.add(2, 'hours'))).toBe(true);
+    });
+
+    it('should use the correct timeline labels for real and test exams', () => {
+        expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
+            'artemisApp.examManagement.visibleDate',
+            'artemisApp.examManagement.startDate',
+            'artemisApp.examManagement.endDate',
+        ]);
+
+        setInputs({ examType: ExamType.PRACTICE });
+        fixture.detectChanges();
+
+        expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
+            'artemisApp.examManagement.visibleDate',
+            'artemisApp.examManagement.testExam.startDate',
+            'artemisApp.examManagement.testExam.endDate',
+        ]);
     });
 
     it('validates the working time for practice test exams correctly', () => {
@@ -226,6 +248,18 @@ describe('ExamTimelineComponent', () => {
         expect(component.showVisibleFromWarning()).toBe(true);
     });
 
+    it('should not show the visible date warning when either date is missing', () => {
+        setInputs({ visibleFrom: dayjs(), startOfWorkingTime: undefined });
+        fixture.detectChanges();
+
+        expect(component.showVisibleFromWarning()).toBe(false);
+
+        setInputs({ visibleFrom: undefined, startOfWorkingTime: dayjs() });
+        fixture.detectChanges();
+
+        expect(component.showVisibleFromWarning()).toBe(false);
+    });
+
     it('should correctly validate grace period with upper limit of 3600 seconds', () => {
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(true);
@@ -237,6 +271,29 @@ describe('ExamTimelineComponent', () => {
         setInputs({ gracePeriod: 3601 });
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(false);
+
+        setInputs({ gracePeriod: -1 });
+        markTimeline({ valid: true, empty: false });
+        expect(latestValidity).toBe(false);
+    });
+
+    it('should clamp the maximum working time for practice exams', () => {
+        setInputs({ examType: ExamType.PRACTICE, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
+        fixture.detectChanges();
+        expect(component.maxWorkingTimeInMinutes()).toBe(43200);
+
+        const start = dayjs();
+        setInputs({ startOfWorkingTime: start, endOfWorkingTime: start.subtract(1, 'hour') });
+        fixture.detectChanges();
+        expect(component.maxWorkingTimeInMinutes()).toBe(0);
+
+        setInputs({ endOfWorkingTime: start.add(2, 'hours') });
+        fixture.detectChanges();
+        expect(component.maxWorkingTimeInMinutes()).toBe(120);
+
+        setInputs({ endOfWorkingTime: start.add(40, 'days') });
+        fixture.detectChanges();
+        expect(component.maxWorkingTimeInMinutes()).toBe(43200);
     });
 
     it('should correctly validate working time with upper limit of 30 days', () => {
