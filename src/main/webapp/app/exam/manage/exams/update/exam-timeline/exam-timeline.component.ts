@@ -8,6 +8,8 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-timeline',
@@ -22,7 +24,6 @@ export class ExamTimelineComponent {
 
     readonly visibleFrom = model.required<Dayjs | undefined>();
     readonly startOfWorkingTime = model.required<Dayjs | undefined>();
-    readonly endOfSimulationTime = computed(() => (this.examType() === 'SIMULATION_AND_PRACTICE' ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined));
     readonly startOfPracticeTime = model.required<Dayjs | undefined>();
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
 
@@ -41,6 +42,11 @@ export class ExamTimelineComponent {
         });
     }
 
+    private readonly endOfSimulationTime = computed(() =>
+        this.examType() === 'SIMULATION_AND_PRACTICE' ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined,
+    );
+    readonly debouncedEndOfSimulationTime = toSignal(toObservable(this.endOfSimulationTime).pipe(debounceTime(300)));
+
     readonly timelineItems = computed(() => {
         const examType = this.examType();
         const isTestExam = isTestExamType(examType);
@@ -51,7 +57,7 @@ export class ExamTimelineComponent {
                       {
                           kind: 'derived',
                           labelStringKey: 'artemisApp.examManagement.testExam.simulationEndDate',
-                          date: this.endOfSimulationTime,
+                          date: this.debouncedEndOfSimulationTime,
                           mustBeStrictlyAfterPrevious: true,
                       },
                       {
