@@ -9,6 +9,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "course_athena_config")
 public class CourseAthenaConfig {
@@ -17,6 +19,7 @@ public class CourseAthenaConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "course_id", nullable = false, unique = true)
     private Course course;
