@@ -15,6 +15,7 @@
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             [athenaEnabled]="athenaEnabled"
+            [quizLiveHeaderInfo]="splitPanel()?.quizLiveHeaderInfo()"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
         />

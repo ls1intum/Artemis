@@ -773,6 +773,72 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Completes an already-open forward dialog: selects the destination conversation by name and sends.
+     * @param destinationName - The name of the destination channel/conversation to forward to.
+     * @param extraContent - Optional additional message content to include with the forward.
+     */
+    private async completeForwardDialog(destinationName: string, extraContent?: string) {
+        const dialog = this.page.locator('jhi-forward-message-dialog');
+        await dialog.locator('input.tag-input').fill(destinationName);
+        // the dialog selects on (mousedown) so the option is chosen before the input blur closes the dropdown
+        const option = dialog.locator('.autocomplete-dropdown .list-group-item-action', { hasText: destinationName }).first();
+        await option.waitFor({ state: 'visible', timeout: 5000 });
+        await option.dispatchEvent('mousedown');
+        if (extraContent) {
+            await setMonacoEditorContent(this.page, 'jhi-forward-message-dialog jhi-markdown-editor-monaco', extraContent);
+        }
+        // forwarding first creates the container post, then the forwarded-message link(s)
+        const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
+        await dialog.locator('.modal-footer button.btn-primary').click();
+        await forwardResponse;
+        await dialog.waitFor({ state: 'hidden', timeout: 10000 });
+    }
+
+    /**
+     * Forwards a message to a destination channel and waits until the forward is persisted.
+     * @param messageId - The ID of the message to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardMessageToChannel(messageId: number, destinationName: string, extraContent?: string) {
+        await this.forwardMessage(messageId);
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Forwards a thread reply (answer post) to a destination channel.
+     * @param parentMessageId - The ID of the message whose thread contains the reply.
+     * @param replyId - The ID of the reply to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardReplyToChannel(parentMessageId: number, replyId: number, destinationName: string, extraContent?: string) {
+        await this.openThreadForMessage(parentMessageId);
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+        await replyLocator.locator('.dropdown-menu.show .forward').click();
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Asserts that a forwarded-message preview containing the given source content is visible in the open conversation.
+     * @param expectedSourceContent - The content of the original (forwarded) posting.
+     */
+    async checkForwardedPreview(expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        await expect(forwarded.first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
      * Pins or unpins a message via the context menu.
      * @param messageId - The ID of the message to pin/unpin.
      */
