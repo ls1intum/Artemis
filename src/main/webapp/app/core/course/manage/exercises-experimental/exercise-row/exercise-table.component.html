@@ -15,10 +15,10 @@
             @if (!showGroupSelector()) {
                 <th class="sort-col" (click)="sortBy('difficulty')">Difficulty <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" /></th>
             }
-            <th>Categories</th>
             @if (showGroupSelector()) {
                 <th>Group</th>
             }
+            <th>Categories</th>
             <th class="text-end col-actions">Actions</th>
         </tr>
     </ng-template>
@@ -103,13 +103,6 @@
                     }
                 </td>
             }
-            <td>
-                @if (exercise.categories && exercise.categories.length > 0) {
-                    <jhi-exercise-categories [exercise]="exercise" />
-                } @else {
-                    <span class="text-muted fst-italic small">none</span>
-                }
-            </td>
             @if (showGroupSelector()) {
                 <td>
                     <p-select
@@ -119,10 +112,17 @@
                         optionLabel="label"
                         optionValue="value"
                         size="small"
-                        [style]="{ 'min-width': '8rem' }"
+                        styleClass="col-group-select"
                     />
                 </td>
             }
+            <td>
+                @if (exercise.categories && exercise.categories.length > 0) {
+                    <jhi-exercise-categories [exercise]="exercise" />
+                } @else {
+                    <span class="text-muted fst-italic small">none</span>
+                }
+            </td>
             <td class="col-actions">
                 <jhi-exercise-actions [exercise]="exercise" [courseId]="courseId()" (exerciseUpdated)="exerciseUpdated.emit($event)" />
             </td>

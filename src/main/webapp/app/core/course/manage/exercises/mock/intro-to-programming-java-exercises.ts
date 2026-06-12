@@ -121,7 +121,7 @@ const LOOPS_ROBOTS = progVariant(1003, 'Loops: Driving Warehouse Robots', 'LOOPR
 
 // Topic: Arrays and ArrayLists
 const ARRAYS_CARS = progVariant(1011, 'Arrays: Parking-Lot Inventory', 'ARRC', 4, 15, DifficultyLevel.EASY, 7);
-const ARRAYS_PLANES = progVariant(1012, 'Arrays: Seat Maps for an Airline', 'ARRP', 4, 15, DifficultyLevel.MEDIUM, 10);
+const ARRAYS_PLANES = Object.assign(progVariant(1012, 'Arrays: Seat Maps for an Airline', 'ARRP', 4, 15, DifficultyLevel.MEDIUM, 10), { difficulty: undefined });
 
 // Topic: Methods and Recursion
 const RECURSION_PLANES = progVariant(1021, 'Recursion: Flight-Connection Search', 'RECP', 5, 15, DifficultyLevel.MEDIUM, 10);
@@ -134,7 +134,6 @@ function text(id: number, title: string, shortName: string, week: number, points
     Object.assign(ex, base(id, title, shortName, week, 10));
     ex.maxPoints = points;
     ex.bonusPoints = 0;
-    ex.difficulty = DifficultyLevel.EASY;
     ex.assessmentType = AssessmentType.MANUAL;
     ex.categories = [cat('Writing', '#fd7e14')];
     return ex;
@@ -176,7 +175,6 @@ function fileUpload(id: number, title: string, shortName: string, week: number, 
     Object.assign(ex, base(id, title, shortName, week, 14));
     ex.maxPoints = points;
     ex.bonusPoints = 0;
-    ex.difficulty = DifficultyLevel.EASY;
     ex.assessmentType = AssessmentType.MANUAL;
     ex.filePattern = 'pdf';
     ex.categories = [cat('Worksheet', '#adb5bd')];
@@ -289,8 +287,8 @@ export const INTRO_JAVA_QUIZ_EXERCISES: QuizExercise[] = [
     // Varied statuses and modes to test lifecycle management UI
     quiz(401, 'Quiz: Java Basics', 'QB1', 2, 10, QuizMode.SYNCHRONIZED, QuizStatus.INVISIBLE),
     Object.assign(quiz(402, 'Quiz: OOP Concepts', 'QB2', 8, 10, QuizMode.BATCHED, QuizStatus.ACTIVE), { quizStarted: true }),
-    quiz(403, 'Quiz: Collections and Generics', 'QB3', 12, 10, QuizMode.SYNCHRONIZED, QuizStatus.VISIBLE),
-    quiz(404, 'Quiz: Algorithms Recap', 'QB4', 10, 5, QuizMode.INDIVIDUAL, QuizStatus.VISIBLE),
+    Object.assign(quiz(403, 'Quiz: Collections and Generics', 'QB3', 12, 10, QuizMode.SYNCHRONIZED, QuizStatus.VISIBLE), { difficulty: undefined }),
+    Object.assign(quiz(404, 'Quiz: Algorithms Recap', 'QB4', 10, 5, QuizMode.INDIVIDUAL, QuizStatus.VISIBLE), { difficulty: undefined }),
 ];
 
 const fileUploadNotIncluded = (id: number, title: string, shortName: string, week: number, points: number): FileUploadExercise => {

@@ -12,6 +12,8 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { GroupHandInSelectionService } from './group-hand-in-selection.service';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
     future: true,
@@ -55,11 +57,14 @@ export class CourseExercisesExperimentalComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly mockService = inject(ExerciseManagementMockService);
+    private readonly mockDataService = inject(MockDataService);
     private readonly courseOverviewService = inject(CourseOverviewService);
+    private readonly courseManagementService = inject(CourseManagementService);
     private readonly selectionService = inject(GroupHandInSelectionService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly _exerciseSelected = signal(false);
+    private readonly _exercises = signal<Exercise[]>([]);
     readonly exerciseSelected = computed(() => this._exerciseSelected());
 
     readonly courseId = signal(0);
@@ -72,6 +77,14 @@ export class CourseExercisesExperimentalComponent {
 
     constructor() {
         this.courseId.set(Number(this.route.parent?.snapshot.params.courseId));
+        if (this.mockDataService.enabled()) {
+            this._exercises.set(this.mockService.getExercises());
+        } else {
+            this.courseManagementService
+                .findOneForDashboard(this.courseId())
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({ next: (response) => this._exercises.set(response.body?.exercises ?? []) });
+        }
         this.updateSelection();
         this.router.events
             .pipe(
@@ -90,7 +103,7 @@ export class CourseExercisesExperimentalComponent {
     }
 
     private buildSidebarData(): SidebarData {
-        const exercises = this.mockService.getExercises();
+        const exercises = this._exercises();
 
         // Exercises in the same course-level group are nested under a single group header card.
         const grouped = this.buildGroupedData(exercises);
@@ -110,7 +123,7 @@ export class CourseExercisesExperimentalComponent {
      */
     private buildGroupedData(exercises: Exercise[]): Pick<SidebarData, 'groupedData' | 'ungroupedData'> {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
-        for (const group of this.mockService.getGroups()) {
+        for (const group of this.mockDataService.enabled() ? this.mockService.getGroups() : []) {
             for (const member of group.exercises ?? []) {
                 if (member.id !== undefined) {
                     groupByExerciseId.set(member.id, group);

@@ -1,5 +1,17 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
+        @if (isDevMode) {
+            <button
+                id="mock-data-toggle"
+                class="btn btn-sm"
+                [class.btn-warning]="mockDataService.enabled()"
+                [class.btn-outline-secondary]="!mockDataService.enabled()"
+                (click)="toggleMockData()"
+                title="Toggle mock data (dev only)"
+            >
+                Mock
+            </button>
+        }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div

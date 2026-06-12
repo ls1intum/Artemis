@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpEvent, HttpHandler, HttpHeaders, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { getMockGroupChannel, getMockGroupPosts } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-communication';
 import {
     INTRO_JAVA_ALL_EXERCISES,
@@ -109,11 +110,6 @@ const COMPETENCY_CONTRIBUTIONS = /^api\/atlas\/exercises\/(\d+)\/contributions$/
 const GROUP_CHANNEL = /^\/?api\/communication\/courses\/\d+\/exercises\/\d+\/channel$/;
 const GROUP_MESSAGES = /^\/?api\/communication\/courses\/\d+\/messages$/;
 
-// The student exercise overview (/courses/:id/exercises), the instructor exercise-management
-// views, the competency-management instructor page, and the student /competencies tab are all
-// backed by mock data in dev mode.
-const VERSIONED_VIEW = /\/courses\/\d+\/exercises(?:[/?#]|$)|\/competency-management(?:[/?#]|$)|\/competencies(?:[/?#]|$)/;
-
 // Competency endpoints used by both the instructor management page and the student overview/detail.
 const COURSE_COMPETENCIES_LIST = /^api\/atlas\/courses\/\d+\/course-competencies$/;
 const COURSE_COMPETENCIES_PROGRESS = /^api\/atlas\/courses\/\d+\/course-competencies\/course-progress$/;
@@ -137,16 +133,10 @@ function mockCourseRef(courseId: number | undefined): { id?: number; title: stri
 @Injectable()
 export class MockCourseInterceptor implements HttpInterceptor {
     private readonly router = inject(Router);
+    private readonly mockDataService = inject(MockDataService);
 
     intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-        if (!isDevMode() || req.method !== 'GET') {
-            return next.handle(req);
-        }
-        // During resolver execution, router.url still reflects the previous page; use the
-        // destination URL from the in-progress navigation so the interceptor activates on
-        // direct access to versioned detail routes (not just from the list view).
-        const activeUrl = this.router.getCurrentNavigation()?.extractedUrl?.toString() ?? this.router.url;
-        if (!VERSIONED_VIEW.test(activeUrl)) {
+        if (!isDevMode() || req.method !== 'GET' || !this.mockDataService.enabled()) {
             return next.handle(req);
         }
 

@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -15,6 +16,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ALL_MOCK_COMPETENCIES } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
@@ -119,17 +121,29 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     private readonly route = inject(ActivatedRoute);
     private readonly mockService = inject(ExerciseManagementMockService);
+    private readonly mockDataService = inject(MockDataService);
+    private readonly courseManagementService = inject(CourseManagementService);
 
     ngOnInit(): void {
         this.route.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
             }
+            if (this.mockDataService.enabled()) {
+                this.exercises.set(this.mockService.getExercises());
+                this.groups.set(this.mockService.getGroups());
+                this.buildBuckets();
+            } else if (course?.id) {
+                this.courseManagementService.findWithExercises(course.id).subscribe({
+                    next: (response) => {
+                        this.exercises.set(response.body?.exercises ?? []);
+                        this.buildBuckets();
+                    },
+                });
+            } else {
+                this.buildBuckets();
+            }
         });
-
-        this.exercises.set(this.mockService.getExercises());
-        this.groups.set(this.mockService.getGroups());
-        this.buildBuckets();
     }
 
     onViewChange(view: View): void {

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, isDevMode } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -38,6 +38,7 @@ import { SystemNotificationComponent } from 'app/core/notification/system-notifi
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -83,6 +84,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
+    protected readonly mockDataService = inject(MockDataService);
+    protected readonly isDevMode = isDevMode();
+
+    toggleMockData(): void {
+        this.mockDataService.toggle();
+        window.location.reload();
+    }
 
     protected readonly faBars = faBars;
     protected readonly faThLarge = faThLarge;
