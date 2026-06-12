@@ -168,7 +168,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })

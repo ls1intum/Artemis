@@ -31,6 +31,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -790,6 +791,16 @@ public class Course extends DomainObject {
 
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
         this.athenaConfig = athenaConfig;
+    }
+
+    @JsonProperty("athenaGradingFeedbackEnabled")
+    public boolean isAthenaGradingFeedbackEnabled() {
+        return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
+    }
+
+    @JsonProperty("athenaAutoFeedbackEnabled")
+    public boolean isAthenaAutoFeedbackEnabled() {
+        return athenaConfig != null && athenaConfig.isAutoFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {
