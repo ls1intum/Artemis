@@ -134,7 +134,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             // In-place navigation to a different course (without destroying this container) must reload the course
             if (previousCourseId && previousCourseId !== id) {
                 this.loadCourseSubscription?.unsubscribe();
-                this.loadCourseSubscription = this.loadCourse().subscribe();
+                this.loadCourseSubscription = this.loadCourse().subscribe({
+                    next: () => this.sidebarItems.set(this.getSidebarItems()),
+                });
             }
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
@@ -521,7 +523,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
         const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
-        this.courseOverviewGuard.handleReturn(course, childPath, user);
+        // handleReturn navigates away synchronously when access is denied; subscribe to make the consumption explicit
+        this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
     }
 
     /** Navigate to a new Course */

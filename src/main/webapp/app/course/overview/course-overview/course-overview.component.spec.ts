@@ -571,11 +571,13 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
+        const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
         paramsSubject.next({ courseId: 999 });
 
         expect(component.courseId()).toBe(999);
         expect(findOneForDashboardStub).toHaveBeenCalledTimes(2);
         expect(findOneForDashboardStub).toHaveBeenLastCalledWith(999);
+        expect(getSidebarItemsSpy).toHaveBeenCalled();
     });
 
     it('should have visible exams', () => {
