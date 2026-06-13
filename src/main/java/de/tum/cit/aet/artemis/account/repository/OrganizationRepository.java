@@ -72,6 +72,24 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
     String getOrganizationTitle(@Param("organizationId") Long organizationId);
 
     /**
+     * Returns the subset of the given user IDs that are members of the given organization.
+     * Uses the owning-side join ({@link User#getOrganizations()}) because {@link Organization}
+     * has no inverse-side {@code users} collection.
+     *
+     * @param organizationId the organization to check membership against
+     * @param userIds        the user IDs to check; must not be empty
+     * @return the subset of {@code userIds} that belong to the organization
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+                JOIN u.organizations o
+            WHERE o.id = :organizationId
+                AND u.id IN :userIds
+            """)
+    Set<Long> findMemberUserIdsByOrganizationIdAndUserIds(@Param("organizationId") long organizationId, @Param("userIds") List<Long> userIds);
+
+    /**
      * Returns the number of users per organization for a batch of organization IDs.
      * Each element is a two-element {@code Object[]} where {@code [0]} is the organization id and {@code [1]} is the user count.
      *
