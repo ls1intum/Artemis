@@ -263,16 +263,18 @@
                             </div>
                         }
 
-                        <!-- Subsection: Competencies (course mode only) -->
+                        <!-- Subsection: Competencies (course mode only, hidden when course has none) -->
                         @if (!isExamMode) {
-                            <div class="subsection-divider"></div>
-                            <div class="subsection-header subsection-header--competencies">
-                                <div class="subsection-header-icon">
-                                    <fa-icon [icon]="faGraduationCap" />
+                            <div [hidden]="courseCompetenciesCount() === 0">
+                                <div class="subsection-divider"></div>
+                                <div class="subsection-header subsection-header--competencies">
+                                    <div class="subsection-header-icon">
+                                        <fa-icon [icon]="faGraduationCap" />
+                                    </div>
+                                    <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.competencies"></span>
                                 </div>
-                                <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.competencies"></span>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" [hidden]="courseCompetenciesCount() === 0">
                                 <jhi-competency-selection-primeng
                                     id="competencies"
                                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
@@ -281,6 +283,7 @@
                                     [(ngModel)]="quizExercise.competencyLinks"
                                     (ngModelChange)="cacheValidation()"
                                     name="competencyLinks"
+                                    (availableCount)="courseCompetenciesCount.set($event)"
                                 />
                             </div>
                         }

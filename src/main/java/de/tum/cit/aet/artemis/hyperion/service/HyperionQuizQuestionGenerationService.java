@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +21,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -55,6 +59,10 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final String PROMPT_REFINE_QUIZ_QUESTION_USER = "/prompts/hyperion/refine_quiz_question_user.st";
 
+    private static final String GENERATION_PIPELINE_ID = "HYPERION_QUIZ_QUESTION_GENERATION";
+
+    private static final String REFINEMENT_PIPELINE_ID = "HYPERION_QUIZ_QUESTION_REFINEMENT";
+
     private static final int MAX_QUESTION_TEXT_LENGTH = 10_000;
 
     private static final int MAX_QUESTION_TITLE_LENGTH = 500;
@@ -68,11 +76,17 @@ public class HyperionQuizQuestionGenerationService {
 
     private final HyperionCompetencyContextService competencyGraphService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     public HyperionQuizQuestionGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
-            HyperionCompetencyContextService competencyGraphService) {
+            HyperionCompetencyContextService competencyGraphService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.competencyGraphService = competencyGraphService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -105,14 +119,21 @@ public class HyperionQuizQuestionGenerationService {
             userPrompt = buildFreeTopicPrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
         }
 
+        ChatResponse chatResponse;
         GeneratedQuestionsOutput generatedQuestions;
         try {
-            generatedQuestions = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(outputConverter);
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
+            String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+            generatedQuestions = outputConverter.convert(responseText);
         }
         catch (Exception e) {
             log.error("Failed to generate quiz questions for course [{}]", course.getId(), e);
             throw new InternalServerErrorAlertException("Failed to generate quiz questions", "QuizQuestionGeneration", "QuizQuestionGeneration.generationFailed");
         }
+
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         List<GeneratedQuizQuestionDTO> questions = mapAndValidateGeneratedQuestions(generatedQuestions);
         return new QuizQuestionGenerationResponseDTO(questions);
@@ -207,14 +228,21 @@ public class HyperionQuizQuestionGenerationService {
                         sanitizeInput(originalQuestion.questionText()), "questionHintLine", questionHintLine, "questionExplanationLine", questionExplanationLine, "answerOptions",
                         answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
 
+        ChatResponse chatResponse;
         RefinedQuestionWithExplanationOutput output;
         try {
-            output = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(outputConverter);
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
+            String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+            output = outputConverter.convert(responseText);
         }
         catch (Exception e) {
             log.error("Failed to refine quiz question for course [{}]", course.getId(), e);
             throw new InternalServerErrorAlertException("Failed to refine quiz question", "QuizQuestionRefinement", "QuizQuestionRefinement.refinementFailed");
         }
+
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
 
         if (output == null || output.question() == null) {
             throw new InternalServerErrorAlertException("Refined quiz question is empty", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyResponse");

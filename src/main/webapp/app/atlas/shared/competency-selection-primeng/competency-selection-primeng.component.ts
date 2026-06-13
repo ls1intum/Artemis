@@ -62,6 +62,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
+    availableCount = output<number>();
 
     disabled: boolean;
     // selected competencies
@@ -99,6 +100,8 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             this.initialize();
+        } else {
+            this.availableCount.emit(0);
         }
     }
 
@@ -146,6 +149,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
      * @param competencies The competencies of the course
      */
     setCompetencyLinks(competencies: CourseCompetency[]) {
+        this.availableCount.emit(competencies.length);
         this.competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;

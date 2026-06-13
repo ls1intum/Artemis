@@ -67,6 +67,8 @@ export class QuizQuestionListEditComponent {
     collapsedQuestions = signal(new Set<QuizQuestion>());
     /** Per-question reasoning from the last bulk refinement. */
     bulkRefinementReasonings = signal(new Map<QuizQuestion, string>());
+    /** Per-question snapshots taken before the last bulk refinement, for restore support. */
+    bulkRefinementPreviousQuestions = signal(new Map<QuizQuestion, MultipleChoiceQuestion>());
 
     showExistingQuestions = false;
     fileMap = new Map<string, { path?: string; file: File }>();
@@ -77,8 +79,9 @@ export class QuizQuestionListEditComponent {
      *
      * @param reasonings map from each refined question to its AI reasoning string
      */
-    applyBulkRefinement(reasonings: Map<QuizQuestion, string>): void {
+    applyBulkRefinement(reasonings: Map<QuizQuestion, string>, previousSnapshots: Map<QuizQuestion, MultipleChoiceQuestion>): void {
         this.bulkRefinementReasonings.set(reasonings);
+        this.bulkRefinementPreviousQuestions.set(previousSnapshots);
         this.editMultipleChoiceQuestionComponents().forEach((component) => component.reloadFromQuestion());
         this.onQuestionUpdated.emit();
     }
@@ -164,14 +167,21 @@ export class QuizQuestionListEditComponent {
         const reasoningsUpdated = new Map(this.bulkRefinementReasonings());
         reasoningsUpdated.delete(quizQuestion);
         this.bulkRefinementReasonings.set(reasoningsUpdated);
+        const prevUpdated = new Map(this.bulkRefinementPreviousQuestions());
+        prevUpdated.delete(quizQuestion);
+        this.bulkRefinementPreviousQuestions.set(prevUpdated);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 
-    /** Removes the stored reasoning for a single question after the user dismisses its card. */
+    /** Removes the stored reasoning and previous snapshot for a question after the user dismisses or restores its card. */
     clearReasoning(quizQuestion: QuizQuestion): void {
-        const updated = new Map(this.bulkRefinementReasonings());
-        updated.delete(quizQuestion);
-        this.bulkRefinementReasonings.set(updated);
+        const reasoningUpdated = new Map(this.bulkRefinementReasonings());
+        reasoningUpdated.delete(quizQuestion);
+        this.bulkRefinementReasonings.set(reasoningUpdated);
+
+        const prevUpdated = new Map(this.bulkRefinementPreviousQuestions());
+        prevUpdated.delete(quizQuestion);
+        this.bulkRefinementPreviousQuestions.set(prevUpdated);
     }
 
     /**
