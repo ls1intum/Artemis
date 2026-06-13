@@ -107,8 +107,9 @@ public class IrisMessageResource {
     /**
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
-     * @param sessionId  of the session
-     * @param requestDTO containing message content and optional uncommitted files
+     * @param sessionId    of the session
+     * @param requestDTO   containing message content and optional uncommitted files
+     * @param clientOrigin the originating client from the {@code X-Artemis-Client} header, e.g. IOS, WEBAPP
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
@@ -164,8 +165,9 @@ public class IrisMessageResource {
      * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when
      * sending it to the LLM
      *
-     * @param sessionId of the session
-     * @param messageId of the message
+     * @param sessionId    of the session
+     * @param messageId    of the message
+     * @param clientOrigin the originating client from the {@code X-Artemis-Client} header, e.g. IOS, WEBAPP
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with
      *         status {@code 404 (Not Found)} if the session or message could not be found.
      */

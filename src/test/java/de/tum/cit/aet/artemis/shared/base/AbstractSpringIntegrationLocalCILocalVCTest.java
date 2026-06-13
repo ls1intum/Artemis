@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -207,6 +208,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected IrisCitationService irisCitationService;
+
+    @MockitoSpyBean
+    protected IrisSessionPresenceService irisSessionPresenceService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
