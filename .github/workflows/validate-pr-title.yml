@@ -15,4 +15,4 @@ jobs:
     steps:
       - uses: Slashgear/action-check-pr-title@v5.0.1
         with:
-          regexp: '^`(Programming exercises|Integrated code lifecycle|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Exam mode|Grading|Assessment|Communication|Notifications|Team exercises|Lectures|Integrated markdown editor|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Tutorial groups|Iris|Hyperion|Scalability|Usability|Performance|Infrastructure|Mobile apps|Development|General)`:\s[A-Z].*$'
+          regexp: '^`(Administration|Lectures|Tutorial groups|Communication|Notifications|Exercises|Programming exercises|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Team exercises|Exam mode|Integrated code lifecycle|LocalCI|LocalVC|Assessment|Grading|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Iris|Hyperion|Athena|Global search|Integrated markdown editor|Mobile apps|Scalability|Usability|Performance|Infrastructure|Migration|Development|General)`:\s[A-Z].*$'

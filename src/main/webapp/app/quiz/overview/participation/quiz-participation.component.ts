@@ -46,6 +46,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -100,6 +101,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     quizHeader = viewChild<ElementRef>('quizHeader');
     stepWizard = viewChild<ElementRef>('stepWizard');
+    private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
 
     private routeAndDataSubscription: Subscription;
 
@@ -148,6 +150,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
 
+    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
+    readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
+
     quizId: number;
     courseId: number;
     interval?: number;
@@ -188,6 +193,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
                 this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
             }
+        });
+        effect((onCleanup) => {
+            // Center the overlays over the quiz by publishing its horizontal center. A ResizeObserver re-measures
+            // whenever the quiz changes size (window resize, sidebar toggle, ...); its first callback covers the initial layout.
+            const root = this.quizRoot()?.nativeElement;
+            if (!root) {
+                return;
+            }
+            const observer = new ResizeObserver(() => {
+                const rect = root.getBoundingClientRect();
+                root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
+                root.style.setProperty('--quiz-overlay-max-width', `${rect.width}px`);
+                root.style.setProperty('--quiz-overlay-display', rect.width === 0 ? 'none' : 'block');
+            });
+            observer.observe(root);
+            onCleanup(() => observer.disconnect());
         });
     }
 
@@ -862,6 +883,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
+            this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
     }
 
@@ -1174,8 +1196,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @returns `true` if the submission should be considered submitted in the UI;
      *          `false` otherwise.
      */
-    private computeShouldTreatAsSubmittedForUi(): boolean {
-        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+    private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
+        const hasSavedOrAnswered = hasAnyAnswer || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 
@@ -1185,12 +1207,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * on a button inside this component.
      */
     syncSubmitState(): void {
-        const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
+        // hasAnyAnswer() materializes the three answer maps; compute it once per tick and share it with both consumers.
+        const hasAnyAnswer = this.hasAnyAnswer();
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
         const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
         this.emitLiveQuizStatus(submittedForUi);
+        this.updateLiveHeaderInfo(hasAnyAnswer);
     }
 
     /**
@@ -1217,5 +1242,38 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.lastEmittedLiveQuizStatus = status;
             this.liveQuizStatusChange.emit(status);
         }
+    }
+
+    /** Recomputes the live header info (remaining time / results-available date) for the exercise header; runs on every UI tick via {@link syncSubmitState} and when results are shown. */
+    private updateLiveHeaderInfo(hasAnyAnswer: boolean): void {
+        if (!this.quizExercise || (this.mode !== 'live' && this.mode !== 'practice')) {
+            this._liveHeaderInfo.set(undefined);
+            return;
+        }
+
+        const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
+        if (!this.showingResult) {
+            if (!this.waitingForQuizStart && !this.submission.submitted && !!this.endDate && this.remainingTimeSeconds >= 0) {
+                info.showRemainingTime = true;
+                info.remainingTimeText = this.remainingTimeText;
+                info.remainingTimeColor = this.remainingTimeColor();
+            } else if (this.quizExercise.dueDate && ((!this.quizExercise.quizEnded && this.submission.submitted) || (this.remainingTimeSeconds < 0 && hasAnyAnswer))) {
+                info.showResultsAvailable = true;
+                info.resultsAvailableDate = this.quizExercise.dueDate;
+            }
+        }
+        this._liveHeaderInfo.set(info);
+    }
+
+    /** Maps the remaining seconds to a bootstrap text color (warning / critical thresholds); undefined for the default color. */
+    private remainingTimeColor(): string | undefined {
+        const duration = this.quizExercise.duration ?? 0;
+        if (this.remainingTimeSeconds < 60 || this.remainingTimeSeconds < duration / 4) {
+            return 'danger';
+        }
+        if (this.remainingTimeSeconds < 120 || this.remainingTimeSeconds < duration / 2) {
+            return 'warning';
+        }
+        return undefined;
     }
 }
