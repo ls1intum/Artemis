@@ -463,9 +463,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
             return;
         }
-        const previousSnapshots = new Map<MultipleChoiceQuestion, MultipleChoiceQuestion>(
-            mcQuestions.map((q) => [q, { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion]),
-        );
         this.isGlobalRefining.set(true);
         this.globalRefinementSubscription = this.quizAiGenerationService
             .refineAllMultipleChoiceQuestions(this.courseId, mcQuestions, prompt)
@@ -475,6 +472,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             )
             .subscribe({
                 next: (results) => {
+                    const previousSnapshots = new Map<MultipleChoiceQuestion, MultipleChoiceQuestion>(
+                        mcQuestions.map((q) => [q, { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion]),
+                    );
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });

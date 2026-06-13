@@ -98,14 +98,8 @@ export class QuizAiQuestionRefinementPanelComponent {
             return;
         }
         const q = this.question() as MultipleChoiceQuestion;
-        q.title = prev.title;
-        q.text = prev.text;
-        q.hint = prev.hint;
-        q.explanation = prev.explanation;
-        q.singleChoice = prev.singleChoice;
-        q.scoringType = prev.scoringType;
+        Object.assign(q, prev);
         q.answerOptions = prev.answerOptions?.map((opt) => ({ ...opt }));
-        q.hasCorrectOption = prev.hasCorrectOption;
         this.questionRefined.emit(q);
         this.refinementExplanation.set(undefined);
         this.previousQuestion.set(undefined);
@@ -137,7 +131,6 @@ export class QuizAiQuestionRefinementPanelComponent {
             return;
         }
 
-        this.previousQuestion.set(this.snapshotQuestion(this.question() as MultipleChoiceQuestion));
         this.isRefining.set(true);
         this.refineSubscription = this.quizAiGenerationService
             .refineMultipleChoiceQuestion(this.courseId(), this.question() as MultipleChoiceQuestion, prompt)
@@ -147,13 +140,13 @@ export class QuizAiQuestionRefinementPanelComponent {
             )
             .subscribe({
                 next: (result) => {
+                    this.previousQuestion.set(this.snapshotQuestion(this.question() as MultipleChoiceQuestion));
                     const reasoning = result.reasoning?.trim() || this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.defaultReasoning');
                     this.refinementExplanation.set(reasoning);
                     this.refinePrompt.set('');
                     this.questionRefined.emit(result.refinedQuestion);
                 },
                 error: () => {
-                    this.previousQuestion.set(undefined);
                     this.alertService.error('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
                 },
             });

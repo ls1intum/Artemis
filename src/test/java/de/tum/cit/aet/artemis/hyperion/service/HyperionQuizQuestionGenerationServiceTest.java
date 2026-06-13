@@ -22,6 +22,8 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
@@ -41,6 +43,12 @@ class HyperionQuizQuestionGenerationServiceTest {
     @Mock
     private HyperionCompetencyContextService competencyContextService;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserRepository userRepository;
+
     private HyperionQuizQuestionGenerationService service;
 
     private AutoCloseable mocks;
@@ -52,7 +60,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService(), competencyContextService);
+        service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService, userRepository);
     }
 
     @AfterEach
@@ -97,7 +105,8 @@ class HyperionQuizQuestionGenerationServiceTest {
 
     @Test
     void generateQuizQuestions_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService);
+        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService,
+                userRepository);
 
         Course course = new Course();
         course.setTitle("Software Engineering");
@@ -146,7 +155,8 @@ class HyperionQuizQuestionGenerationServiceTest {
 
     @Test
     void refineQuizQuestion_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService);
+        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService,
+                userRepository);
 
         Course course = new Course();
         course.setTitle("Software Engineering");

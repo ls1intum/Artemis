@@ -166,7 +166,18 @@
         <section class="quiz-ai-generation-preview">
             <div class="preview-header">
                 <h6 class="section-title mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
-                <button pButton type="button" severity="secondary" [text]="true" [rounded]="true" icon="pi pi-times" (click)="close()"></button>
+                <button
+                    pButton
+                    type="button"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    icon="pi pi-times"
+                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                    [pTooltip]="'entity.action.close' | artemisTranslate"
+                    tooltipPosition="top"
+                    (click)="close()"
+                ></button>
             </div>
 
             @if (!hasGeneratedQuestions()) {
