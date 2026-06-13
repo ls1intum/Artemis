@@ -74,14 +74,28 @@ class AgentSystemPromptServiceTest {
     // ----------
 
     @Test
-    void resolvePrompt_explicitPrompt_isHonoured() {
+    void resolvePrompt_explicitPrompt_fromScratch_isHonouredVerbatim() {
+        // No reviewed spec yet (empty statement) -> the brief is the whole instruction (the lean AI create flow).
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
-        // The exercise has a non-trivial statement, proving the explicit prompt wins over the mode-aware default.
-        ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
+        ProgrammingExercise exercise = exerciseWithStatement("");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
 
         assertThat(prompt).isEqualTo("Make it about graph traversal.");
+    }
+
+    @Test
+    void resolvePrompt_briefIsSubordinateToAReviewedSpec_soThePlanReviewBinds() {
+        // A reviewed problem statement exists AND a brief is supplied (the staged "draft a plan -> Generate" flow, where the create form always threads the brief). The reviewed
+        // statement
+        // must stay authoritative; the brief is applied as a refinement, never returned alone (the old behaviour that made plan review non-binding).
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
+        ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
+
+        String prompt = systemPromptService.resolvePrompt(request, exercise);
+
+        assertThat(prompt).contains(SPEC_MODE_MARKER).contains("Make it about graph traversal.").doesNotContain(FROM_SCRATCH_MARKER);
+        assertThat(prompt).isNotEqualTo("Make it about graph traversal.");
     }
 
     @Test
@@ -154,6 +168,21 @@ class AgentSystemPromptServiceTest {
         // The generic section must point at the language profile for the exact identifier, and the JVM profile must bind to method names and carry the Ares security annotations.
         assertThat(prompt).contains("test identifiers EXACTLY as this language's test runner").contains("the test METHOD name").contains("@WhitelistPath(\"target\")")
                 .contains("@BlacklistPath(\"target/test-classes\")");
+    }
+
+    @Test
+    void build_requiresStudentFacingTestFeedbackAndNonDegenerateWitnessTests() {
+        // Ego-death audit fix: bare assertEquals/assertThrows give a failing student no diagnostic, and a universal "regardless of depth" promise was only witnessed at depth 2.
+        // Pin both.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("human-readable failure message").contains("@DisplayName").contains("NON-DEGENERATE").contains("depth-3-or-deeper");
+    }
+
+    @Test
+    void build_forbidsTypographyInSourceCodeAndExampleReproductionOfGradedInputs() {
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        // The ASCII rule must reach source code (comments/strings/exception messages), and worked examples must not hand over a graded test's exact composite input.
+        assertThat(prompt).contains("all authored SOURCE CODE").contains("exception message").contains("NEVER reproduce a graded test's exact composite input");
     }
 
     @Test

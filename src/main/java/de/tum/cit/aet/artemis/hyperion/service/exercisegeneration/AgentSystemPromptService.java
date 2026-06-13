@@ -80,7 +80,14 @@ public class AgentSystemPromptService {
                 both the solution and the template (they differ only in their method bodies). Write a test for every behaviour and edge case you state in the problem statement — \
                 the happy path, boundary inputs (empty, single element, larger/stress inputs, negatives where relevant), null where specified, and EVERY promise you make: a documented \
                 return value or fluent self-return, the exact exception type thrown on bad input, an invariant like "does not modify the input", and any size/order guarantee. A promise \
-                in the statement that no test checks is a hole that lets a wrong solution pass — so each one needs its own assertion.
+                in the statement that no test checks is a hole that lets a wrong solution pass — so each one needs its own assertion. Every behavioural assertion MUST carry a short, \
+                human-readable failure message naming the behaviour that broke — the STUDENT sees this exact string when they fail, so it is their only diagnostic. A good Artemis test \
+                writes assertEquals(expected, actual, "calculateSize must recurse into every sub-directory and sum all files regardless of depth") and \
+                assertThrows(IllegalArgumentException.class, () -> calc.calculateSize(null), "calculateSize(null) must throw IllegalArgumentException"); NEVER a bare assertEquals(x, y) \
+                whose only feedback is "expected <600> but was <500>". Give each JVM test a @DisplayName (or the language's equivalent human label) so the failing task reads as prose, not \
+                raw camelCase. And when the statement makes a universally-quantified promise ("for any …", "regardless of nesting depth", "at any size"), include at least one NON-DEGENERATE \
+                witness test that actually exercises it: a depth-3-or-deeper nested case for a recursion-depth promise; an empty or one-level case does NOT witness "any depth" and lets an \
+                under-recursive solution score full marks on the very skill the exercise teaches.
                 4. The problem statement clearly describes the task and binds every test to a gradable task using Artemis task syntax. EVERY [task]-bound test MUST FAIL on the template — \
                 a student who submits the untouched template must score ZERO. The verifier REJECTS the exercise if any [task]-bound test passes on the template, so never bind a test \
                 that already passes on the unmodified template: in particular a "the method/class exists" structural check passes because the template keeps the signatures, so either \
@@ -142,12 +149,16 @@ public class AgentSystemPromptService {
                 `Stack s; s.pop(); // throws std::out_of_range`) — an inline prose "would throw" sentence does NOT count; when the domain names a numeric bound, include a boundary-value example \
                 (INT_MIN/INT_MAX, the empty/min/max case, the exact-boundary success). Every example value must be COMPUTED CORRECTLY and agree with your tests and reference solution — a wrong \
                 example is worse than none. For a non-obvious case append a brief because-clause stating the operative rule ("-> reversal is code-point-wise, so the combining mark detaches"); do \
-                not over-explain trivial cases. An abstract restatement ("returns the reversed string") is NOT an example.
+                not over-explain trivial cases. An abstract restatement ("returns the reversed string") is NOT an example. But an example must TEACH the rule, not hand over the answer: \
+                NEVER reproduce a graded test's exact composite input node-for-node (the same tree/list/map a [task] test feeds) as a worked example — vary the values and prefer a SMALLER \
+                illustrative instance, so a student cannot copy the example to pass the test without understanding it.
                 - STRUCTURE consistently: a single top-level `#` title, then the intro (objective + context), then the contract/requirements as Markdown lists with every identifier/literal in \
                 inline `code`, then a `## Tasks` section holding the [task] lines; put any non-graded extension under `## Optional challenges (not graded)`. Descend heading levels one at a time \
-                (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code. Write all prose and [task] titles in plain ASCII — use the hyphen-minus (`-`), not a \
-                typographic or non-breaking dash (U+2011/U+2013/U+2014), and avoid smart quotes/ellipsis; keep non-ASCII only inside fenced code/example blocks where a data literal needs it, and \
-                inside the parenthesised names in a [task] line, which stay byte-identical to the verify output.
+                (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code. Write all prose, [task] titles, AND all authored SOURCE CODE (identifiers, comments, javadoc and string \
+                literals — including any exception message a student can trigger) in plain ASCII — use the hyphen-minus (`-`), not a typographic or non-breaking dash (U+2011/U+2013/U+2014), \
+                avoid smart quotes/ellipsis, and never emit a non-breaking space (U+00A0/U+202F). The ONLY non-ASCII allowed is a genuine data literal whose meaning requires it (e.g. a \
+                Unicode string the exercise is literally about) and the parenthesised names in a [task] line, which stay byte-identical to the verify output. A typographic dash hiding in a \
+                comment or exception message looks fine on screen but breaks the moment a student greps or copy-pastes it.
                 - When the exercise targets MULTIPLE classes, an interface, or a design pattern, add EITHER a precise API/signature block OR a syntactically valid @startuml/@enduml class diagram \
                 (bind each member with color:testsColor(exactTestName) using the same verbatim names as your [task] lines). For a single-function exercise do NOT add a diagram — a gratuitous \
                 diagram is itself a defect.
@@ -314,12 +325,24 @@ public class AgentSystemPromptService {
      * @return the resolved instruction for the agent
      */
     public String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
-        if (request.prompt() != null && !request.prompt().isBlank()) {
-            return request.prompt();
-        }
+        String brief = request.prompt() == null ? "" : request.prompt().strip();
+        // When problem-statement.md is a real, instructor-reviewed specification (drafted via "Draft a plan to review", or the current statement of an exercise being adapted), it
+        // is
+        // AUTHORITATIVE and must bind the result — otherwise the review step is theatre. A brief, when present, is the instruction to APPLY to that statement (the requirements
+        // behind a
+        // from-scratch plan, or the change request of an adaptation), not a licence to silently replace its task, named types, or structure. Returning the brief alone (the old
+        // behaviour)
+        // let the create flow's always-supplied brief override the reviewed plan, which is exactly the divergence we fix here.
         if (isNonTrivialProblemStatement(exercise.getProblemStatement())) {
-            return "An initial problem statement is already in problem-statement.md. Treat it as the authoritative specification and build the solution, template, and tests to match "
-                    + "it, keeping its intent and every stated requirement; refine its wording and add the [task] bindings for the tests you write.";
+            String instruction = "An initial problem statement is already in problem-statement.md. Treat it as the authoritative specification and build the solution, template, and tests "
+                    + "to match it, keeping its intent and every stated requirement; refine its wording and add the [task] bindings for the tests you write.";
+            if (!brief.isBlank()) {
+                instruction += " Apply this additional instruction where it refines the statement, without discarding its task, named types, or structure: " + brief;
+            }
+            return instruction;
+        }
+        if (!brief.isBlank()) {
+            return brief;
         }
         return "Generate a complete, correct programming exercise: a reference solution that passes all tests, a template that compiles but fails the tests, and meaningful tests.";
     }

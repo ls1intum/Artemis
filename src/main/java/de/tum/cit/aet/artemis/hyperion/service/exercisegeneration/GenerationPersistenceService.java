@@ -340,7 +340,16 @@ public class GenerationPersistenceService {
             if (gitService.getFileByName(repository, path).isPresent()) {
                 repositoryService.deleteFile(repository, path);
             }
-            repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
+            // Deterministically scrub typographic dashes / non-breaking spaces from the agent's SOURCE files too — gpt-oss reliably leaks a U+2011 into comments and even live
+            // exception
+            // messages ("size must be non-negative"), which look fine on screen but break the moment a student greps or copy-pastes. The prompt forbids it, but a soft guard on an
+            // invisible
+            // character is unreliable, so we enforce it here on the committed bytes (same normalization the problem statement gets). producedFiles only ever holds text — binaries
+            // are
+            // excluded from the String pipeline — so this never touches a binary; the rare exercise whose data literal needs one of these characters is not in the
+            // generation-capable set.
+            String content = normalizeTypography(entry.getValue());
+            repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
         }
         // The agent's produced tree can re-introduce raw ${...} placeholders (e.g. by copying the worked reference's run.sh), so normalize them to the real-CI checkout values the
         // same way exercise creation does — idempotent for already-clean harnesses, corrective otherwise. See ProgrammingExerciseRepositoryService#replacePlaceholders.

@@ -14,6 +14,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -439,6 +441,22 @@ class GenerationPersistenceServiceTest {
         verify(repositoryService, never()).commitChanges(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    @Test
+    void persist_normalizesTypographyInGeneratedSourceFiles_soNoUnicodeDashLeaksIntoCommittedCode() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        // The exact leak the ego-death audit found: a non-breaking hyphen (U+2011) in a comment AND in a live exception message a student can trigger.
+        String dirty = "public class X {\n    // ensures the value is non‑negative\n    String message() { return \"size must be non‑negative\"; }\n}\n";
+
+        service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("X.java", dirty), Map.of("Test.java", "x"), ""));
+
+        ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
+        verify(repositoryService, atLeastOnce()).createFile(any(), eq("X.java"), captor.capture());
+        String written = new String(captor.getValue().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(written).doesNotContain("‑").contains("non-negative");
+        assertThat(written.chars().allMatch(c -> c < 0x80)).as("the committed source file is pure ASCII").isTrue();
     }
 
     @Test
