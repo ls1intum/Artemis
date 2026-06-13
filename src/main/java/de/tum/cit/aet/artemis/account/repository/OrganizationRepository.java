@@ -58,34 +58,6 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Get the number of users currently mapped to the given organization
-     *
-     * @param organizationId the id of the organization where the users are in
-     * @return the number of users contained in the organization
-     */
-    @Query("""
-            SELECT COUNT(user.id)
-            FROM User user
-                JOIN user.organizations organization
-            WHERE organization.id = :organizationId
-            """)
-    Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
-
-    /**
-     * Get the number of courses currently mapped to the given organization
-     *
-     * @param organizationId the id of the organization where the courses are in
-     * @return the number of courses contained in the organization
-     */
-    @Query("""
-            SELECT COUNT(course.id)
-            FROM Course course
-                JOIN course.organizations organization
-            WHERE organization.id = :organizationId
-            """)
-    Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
-
-    /**
      * Returns the title of the organization with the given id.
      *
      * @param organizationId the id of the organization

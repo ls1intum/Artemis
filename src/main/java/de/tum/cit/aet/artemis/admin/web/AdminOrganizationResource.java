@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -242,23 +241,6 @@ public class AdminOrganizationResource {
         Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET organizations/:organizationId/count : Get the number of users and courses
-     * currently mapped to an organization
-     *
-     * @param organizationId the id of the organization to retrieve the number of users and courses
-     * @return ResponseEntity containing a map containing the numbers of users and courses
-     */
-    @GetMapping("organizations/{organizationId}/count")
-    public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
-        log.debug("REST request to get number of users and courses of organization : {}", organizationId);
-
-        OrganizationCountDTO numberOfUsersAndCourses = new OrganizationCountDTO(organizationId, organizationRepository.getNumberOfUsersByOrganizationId(organizationId),
-                organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
-
-        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
     }
 
     /**

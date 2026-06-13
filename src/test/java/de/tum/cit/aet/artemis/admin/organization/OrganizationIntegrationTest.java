@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -597,29 +596,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).id()).isEqualTo(matchingCourse.getId());
-    }
-
-    /**
-     * Test get number of users and courses of a given organization
-     */
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepository.save(course1);
-
-        Organization organization = organizationUtilService.createOrganization();
-        organization = organizationRepo.save(organization);
-
-        courseRepository.addOrganizationToCourse(course1.getId(), organization);
-        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsers_");
-
-        userTestRepository.addOrganizationToUser(student.getId(), organization);
-
-        OrganizationCountDTO result = request.get("/api/core/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
-
-        assertThat(result.numberOfUsers()).isEqualTo(1);
-        assertThat(result.numberOfCourses()).isEqualTo(1);
     }
 
     /**
