@@ -98,11 +98,11 @@ describe('DataTableComponent', () => {
             expect(component.entities).toEqual([]);
             expect(component.entityCriteria.textSearch).toEqual([]);
             expect(component.entityCriteria.sortProp).toEqual({ field: 'id', order: 'asc' });
-            expect(component.pagingValue).toBe(50);
+            expect(component.pagingValue()).toBe(50);
         });
 
         it('should initialize with default paging value when no cached value exists', () => {
-            expect(component.pagingValue).toBe(component.DEFAULT_PAGING_VALUE);
+            expect(component.pagingValue()).toBe(component.DEFAULT_PAGING_VALUE);
         });
 
         it('should initialize with cached paging value from local storage', () => {
@@ -113,7 +113,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe(100);
+            expect(component.pagingValue()).toBe(100);
         });
 
         it('should use default paging value when cached value is invalid', () => {
@@ -123,7 +123,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe(component.DEFAULT_PAGING_VALUE);
+            expect(component.pagingValue()).toBe(component.DEFAULT_PAGING_VALUE);
         });
 
         it('should handle "all" as cached paging value', () => {
@@ -133,7 +133,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe('all');
+            expect(component.pagingValue()).toBe('all');
         });
     });
 
@@ -183,7 +183,7 @@ describe('DataTableComponent', () => {
         });
 
         it('should return undefined limit when pagingValue is "all"', () => {
-            component.pagingValue = 'all';
+            component.pagingValue.set('all');
 
             expect(component.context.settings.limit).toBeUndefined();
         });
@@ -214,13 +214,13 @@ describe('DataTableComponent', () => {
 
     describe('pageLimit getter', () => {
         it('should return numeric value when pagingValue is a number', () => {
-            component.pagingValue = 100;
+            component.pagingValue.set(100);
 
             expect(component.pageLimit).toBe(100);
         });
 
         it('should return undefined when pagingValue is "all"', () => {
-            component.pagingValue = 'all';
+            component.pagingValue.set('all');
 
             expect(component.pageLimit).toBeUndefined();
         });
@@ -254,7 +254,7 @@ describe('DataTableComponent', () => {
 
             vi.advanceTimersByTime(500);
 
-            expect(component.pagingValue).toBe(100);
+            expect(component.pagingValue()).toBe(100);
             expect(component.isRendering).toBe(false);
         });
 
@@ -272,7 +272,7 @@ describe('DataTableComponent', () => {
             component.setEntitiesPerPage('all');
             vi.advanceTimersByTime(500);
 
-            expect(component.pagingValue).toBe('all');
+            expect(component.pagingValue()).toBe('all');
             expect(storeSpy).toHaveBeenCalledWith('entity-items-per-page', 'all');
         });
     });

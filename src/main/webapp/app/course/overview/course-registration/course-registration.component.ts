@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -35,12 +35,12 @@ export class CourseRegistrationComponent implements OnInit {
     private router = inject(Router);
     private sortService = inject(SortService);
 
-    coursesToSelect: Course[] = [];
-    loading = false;
+    readonly coursesToSelect = signal<Course[]>([]);
+    readonly loading = signal(false);
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
-    filteredCoursesToSelect: Course[] = [];
+    readonly filteredCoursesToSelect = signal<Course[]>([]);
     // Icons
     faCheckCircle = faCheckCircle;
     faSort = faSort;
@@ -55,16 +55,16 @@ export class CourseRegistrationComponent implements OnInit {
      * It also initializes the filteredCoursesToSelect array with the sorted courses.
      */
     loadRegistrableCourses() {
-        this.loading = true;
+        this.loading.set(true);
         this.courseService.findAllForRegistration().subscribe((res) => {
             const courses = res.body!;
             if (this.predicate === 'defaultSort' || !this.predicate) {
-                this.coursesToSelect = this.sortService.sortByProperty(courses, 'title', true);
+                this.coursesToSelect.set(this.sortService.sortByProperty(courses, 'title', true));
             } else {
-                this.coursesToSelect = this.sortService.sortByProperty(courses, this.predicate, this.ascending);
+                this.coursesToSelect.set(this.sortService.sortByProperty(courses, this.predicate, this.ascending));
             }
             this.applySearch(); // Call this here to re-apply the search term after sorting
-            this.loading = false;
+            this.loading.set(false);
         });
     }
 
@@ -74,7 +74,7 @@ export class CourseRegistrationComponent implements OnInit {
      * @param courseId the id of the course that the user has registered for
      */
     removeCourseFromList(courseId: number) {
-        this.coursesToSelect = this.coursesToSelect.filter((course) => course.id !== courseId);
+        this.coursesToSelect.set(this.coursesToSelect().filter((course) => course.id !== courseId));
     }
 
     /**
@@ -126,10 +126,10 @@ export class CourseRegistrationComponent implements OnInit {
      */
     applySearch() {
         if (!this.searchTermString) {
-            this.filteredCoursesToSelect = [...this.coursesToSelect];
+            this.filteredCoursesToSelect.set([...this.coursesToSelect()]);
         } else {
-            this.filteredCoursesToSelect = this.coursesToSelect.filter((course) =>
-                course.title ? course.title.toLowerCase().includes(this.searchTermString.toLowerCase()) : false,
+            this.filteredCoursesToSelect.set(
+                this.coursesToSelect().filter((course) => (course.title ? course.title.toLowerCase().includes(this.searchTermString.toLowerCase()) : false)),
             );
         }
     }

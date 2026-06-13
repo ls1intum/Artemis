@@ -123,11 +123,11 @@
                     <button
                         class="btn"
                         (click)="this.openFilterModal()"
-                        [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter?.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter?.numberOfAppliedFilters }"
+                        [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter()?.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter()?.numberOfAppliedFilters }"
                     >
                         <fa-icon [icon]="faFilter" />
                         <span class="d-s-none d-md-inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter?.numberOfAppliedFilters ?? 0 }"></span>
+                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0 }"></span>
                         </span>
                     </button>
                 </div>
@@ -169,8 +169,8 @@
             <span>&nbsp;{{ displayedBuildJobId }}</span>
         </ng-template>
         <div class="overflow-auto">
-            @if (rawBuildLogsString) {
-                <pre class="mb-0">{{ rawBuildLogsString }}</pre>
+            @if (rawBuildLogsString()) {
+                <pre class="mb-0">{{ rawBuildLogsString() }}</pre>
             } @else {
                 <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
             }

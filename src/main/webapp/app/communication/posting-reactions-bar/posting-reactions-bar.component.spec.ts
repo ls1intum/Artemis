@@ -396,7 +396,7 @@ describe('PostingReactionsBarComponent', () => {
         reactionToCreate.post = component.posting();
         component.addOrRemoveReaction(reactionToCreate.emojiId);
         expect(metisServiceCreateReactionMock).toHaveBeenCalledWith(reactionToCreate);
-        expect(component.showReactionSelector).toBeFalsy();
+        expect(component.showReactionSelector()).toBeFalsy();
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {
@@ -407,7 +407,7 @@ describe('PostingReactionsBarComponent', () => {
         const metisServiceDeleteReactionMock = vi.spyOn(metisService, 'deleteReaction');
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(metisServiceDeleteReactionMock).toHaveBeenCalledWith(reactionToDelete);
-        expect(component.showReactionSelector).toBeFalsy();
+        expect(component.showReactionSelector()).toBeFalsy();
     });
 
     it('should invoke metis service method with own reaction to remove it', () => {

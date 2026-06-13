@@ -111,7 +111,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
 
         comp.ngOnInit();
         expect(comp.onlyViewTestCases).toBe(true);
-        expect(comp.open).toBe(true);
+        expect(comp.open()).toBe(true);
     });
 
     it('should show the tasks if there are more than one', () => {
@@ -122,6 +122,6 @@ describe('ProgrammingExerciseTaskComponent', () => {
 
         comp.ngOnInit();
         expect(comp.onlyViewTestCases).toBeFalsy();
-        expect(comp.open).toBeFalsy();
+        expect(comp.open()).toBeFalsy();
     });
 });

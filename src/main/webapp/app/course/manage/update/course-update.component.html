@@ -3,7 +3,7 @@
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="container headline">
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
-                @if (croppedImage) {
+                @if (croppedImage(); as croppedImage) {
                     <div class="position-relative">
                         <jhi-image class="secured-image" [src]="croppedImage" />
 
@@ -16,7 +16,7 @@
                         </button>
                     </div>
                 }
-                @if (!croppedImage) {
+                @if (!croppedImage()) {
                     <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
                         <div class="h3 my-0 font-weight-bold">+</div>
                         <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
@@ -96,7 +96,7 @@
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
                         <div class="btn-group d-flex flex-wrap">
-                            @for (organization of courseOrganizations; track organization) {
+                            @for (organization of courseOrganizations(); track organization) {
                                 <div>
                                     <h5>
                                         <span class="badge bg-primary font-weight-normal m-2 ps-2">
@@ -260,7 +260,7 @@
                         type="checkbox"
                         class="form-check-input"
                         name="complaintsEnabled"
-                        [checked]="complaintsEnabled"
+                        [checked]="complaintsEnabled()"
                         id="field_maxComplaintSettingEnabled"
                         (change)="changeComplaintsEnabled()"
                         formControlName="complaintsEnabled"
@@ -268,7 +268,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}" />
                 </div>
-                @if (complaintsEnabled) {
+                @if (complaintsEnabled()) {
                     <div>
                         <div class="row nested-form-group">
                             <div class="col-md">
@@ -332,7 +332,7 @@
                         type="checkbox"
                         class="form-check-input"
                         name="requestMoreFeedbackEnabled"
-                        [checked]="requestMoreFeedbackEnabled"
+                        [checked]="requestMoreFeedbackEnabled()"
                         id="field_maxRequestMoreFeedbackSettingEnabled"
                         (change)="changeRequestMoreFeedbackEnabled()"
                         formControlName="requestMoreFeedbackEnabled"
@@ -340,7 +340,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}" />
                 </div>
-                @if (requestMoreFeedbackEnabled) {
+                @if (requestMoreFeedbackEnabled()) {
                     <div class="nested-form-group last">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxRequestMoreFeedbackTimeDays"></label>
                         <fa-icon

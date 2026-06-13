@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -119,11 +119,11 @@ export class CourseUpdateComponent implements OnInit {
     course: Course;
     isSaving: boolean;
     courseImageUploadFile?: File;
-    croppedImage?: string;
-    complaintsEnabled = true;
-    requestMoreFeedbackEnabled = true;
+    readonly croppedImage = signal<string | undefined>(undefined);
+    readonly complaintsEnabled = signal(true);
+    readonly requestMoreFeedbackEnabled = signal(true);
     customizeGroupNames = false;
-    courseOrganizations: Organization[];
+    readonly courseOrganizations = signal<Organization[]>(undefined!);
     isAdmin = false;
 
     communicationEnabled = true;
@@ -151,18 +151,19 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
-                this.croppedImage = course.courseIconPath;
+                this.croppedImage.set(course.courseIconPath);
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
-                    this.courseOrganizations = organizations;
+                    this.courseOrganizations.set(organizations);
                 });
                 this.originalTimeZone = this.course.timeZone;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-                this.complaintsEnabled =
+                this.complaintsEnabled.set(
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
-                    this.course.maxComplaintTimeDays! > 0 &&
-                    this.course.maxComplaintTextLimit! > 0 &&
-                    this.course.maxComplaintResponseTextLimit! > 0;
-                this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+                        this.course.maxComplaintTimeDays! > 0 &&
+                        this.course.maxComplaintTextLimit! > 0 &&
+                        this.course.maxComplaintResponseTextLimit! > 0,
+                );
+                this.requestMoreFeedbackEnabled.set(this.course.maxRequestMoreFeedbackTimeDays! > 0);
             } else {
                 this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
@@ -220,7 +221,7 @@ export class CourseUpdateComponent implements OnInit {
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                organizations: new FormControl(this.courseOrganizations),
+                organizations: new FormControl(this.courseOrganizations()),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
@@ -228,8 +229,8 @@ export class CourseUpdateComponent implements OnInit {
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
-                complaintsEnabled: new FormControl(this.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
+                complaintsEnabled: new FormControl(this.complaintsEnabled()),
+                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
                 }),
@@ -322,11 +323,12 @@ export class CourseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.courseForm.controls['organizations'] !== undefined) {
-            this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
+            this.courseForm.controls['organizations'].setValue(this.courseOrganizations());
         }
         let file = undefined;
-        if (this.courseImageUploadFile && this.croppedImage) {
-            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+        const croppedImage = this.croppedImage();
+        if (this.courseImageUploadFile && croppedImage) {
+            const base64Data = croppedImage.replace('data:image/png;base64,', '');
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
@@ -498,15 +500,15 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable complaints
      */
     changeComplaintsEnabled() {
-        if (!this.complaintsEnabled) {
-            this.complaintsEnabled = true;
+        if (!this.complaintsEnabled()) {
+            this.complaintsEnabled.set(true);
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
             this.courseForm.controls['maxComplaintTextLimit'].setValue(2000);
             this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(2000);
         } else {
-            this.complaintsEnabled = false;
+            this.complaintsEnabled.set(false);
             this.courseForm.controls['maxComplaints'].setValue(0);
             this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);
@@ -519,11 +521,11 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable complaints
      */
     changeRequestMoreFeedbackEnabled() {
-        if (!this.requestMoreFeedbackEnabled) {
-            this.requestMoreFeedbackEnabled = true;
+        if (!this.requestMoreFeedbackEnabled()) {
+            this.requestMoreFeedbackEnabled.set(true);
             this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(7);
         } else {
-            this.requestMoreFeedbackEnabled = false;
+            this.requestMoreFeedbackEnabled.set(false);
             this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(0);
         }
     }
@@ -587,15 +589,12 @@ export class CourseUpdateComponent implements OnInit {
             closable: true,
             dismissableMask: true,
             data: {
-                organizations: this.courseOrganizations,
+                organizations: this.courseOrganizations(),
             } as OrganizationSelectorDialogData,
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                if (this.courseOrganizations === undefined) {
-                    this.courseOrganizations = [];
-                }
-                this.courseOrganizations.push(organization);
+                this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
             }
         });
     }
@@ -605,7 +604,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromCourse(organization: Organization) {
-        this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
+        this.courseOrganizations.set(this.courseOrganizations().filter((o) => o.id !== organization.id));
     }
 
     /**
@@ -689,7 +688,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     deleteCourseIcon() {
         unsetCourseIcon(this.course);
-        this.croppedImage = undefined;
+        this.croppedImage.set(undefined);
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 
@@ -709,7 +708,7 @@ export class CourseUpdateComponent implements OnInit {
         });
         dialogRef?.onClose.subscribe((result: string | undefined) => {
             if (result) {
-                this.croppedImage = result;
+                this.croppedImage.set(result);
             }
         });
     }

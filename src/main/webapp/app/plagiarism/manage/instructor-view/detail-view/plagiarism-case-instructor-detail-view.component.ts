@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
@@ -85,11 +85,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     courseId: number;
     plagiarismCaseId: number;
-    plagiarismCase: PlagiarismCase;
+    readonly plagiarismCase = signal<PlagiarismCase>(undefined!);
 
-    verdictPointDeduction = 0;
-    verdictMessage = '';
-    createdPost: Post;
+    readonly verdictPointDeduction = signal(0);
+    readonly verdictMessage = signal('');
+    readonly createdPost = signal<Post>(undefined!);
     currentAccount?: User;
 
     activeTab = 1;
@@ -103,21 +103,22 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
     private postsSubscription: Subscription;
-    posts: Post[];
+    readonly posts = signal<Post[] | undefined>(undefined);
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
-                this.plagiarismCase = res.body!;
+                const plagiarismCase = res.body!;
+                this.plagiarismCase.set(plagiarismCase);
 
-                this.verdictMessage = this.plagiarismCase.verdictMessage ?? '';
-                this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
-                this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
+                this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
+                this.verdictPointDeduction.set(plagiarismCase.verdictPointDeduction ?? 0);
+                this.metisService.setCourse(getCourseFromExercise(plagiarismCase.exercise!)!);
                 this.metisService.setPageType(this.pageType);
                 this.metisService.getFilteredPosts({
-                    plagiarismCaseId: this.plagiarismCase!.id,
+                    plagiarismCaseId: plagiarismCase.id,
                 });
                 this.accountService.identity().then((user) => {
                     this.currentAccount = user;
@@ -132,7 +133,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             if (filteredPosts.length > 0 || posts.length === 0) {
                 // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
                 // when "posts.length > 0 && filteredPosts.length === 0".
-                this.posts = filteredPosts;
+                this.posts.set(filteredPosts);
             }
         });
     }
@@ -152,14 +153,17 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
-                verdictPointDeduction: this.verdictPointDeduction,
+                verdictPointDeduction: this.verdictPointDeduction(),
             })
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
-                    this.plagiarismCase.verdict = res.body!.verdict;
-                    this.plagiarismCase.verdictPointDeduction = res.body!.verdictPointDeduction!;
-                    this.plagiarismCase.verdictBy = res.body!.verdictBy;
-                    this.plagiarismCase.verdictDate = res.body!.verdictDate;
+                    this.plagiarismCase.update((plagiarismCase) => ({
+                        ...plagiarismCase,
+                        verdict: res.body!.verdict,
+                        verdictPointDeduction: res.body!.verdictPointDeduction!,
+                        verdictBy: res.body!.verdictBy,
+                        verdictDate: res.body!.verdictDate,
+                    }));
                 },
             });
     }
@@ -175,14 +179,17 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
-                verdictMessage: this.verdictMessage,
+                verdictMessage: this.verdictMessage(),
             })
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
-                    this.plagiarismCase.verdict = res.body!.verdict;
-                    this.plagiarismCase.verdictMessage = res.body!.verdictMessage!;
-                    this.plagiarismCase.verdictBy = res.body!.verdictBy;
-                    this.plagiarismCase.verdictDate = res.body!.verdictDate;
+                    this.plagiarismCase.update((plagiarismCase) => ({
+                        ...plagiarismCase,
+                        verdict: res.body!.verdict,
+                        verdictMessage: res.body!.verdictMessage!,
+                        verdictBy: res.body!.verdictBy,
+                        verdictDate: res.body!.verdictDate,
+                    }));
                 },
             });
     }
@@ -196,9 +203,12 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
-                this.plagiarismCase.verdict = res.body!.verdict;
-                this.plagiarismCase.verdictBy = res.body!.verdictBy;
-                this.plagiarismCase.verdictDate = res.body!.verdictDate;
+                this.plagiarismCase.update((plagiarismCase) => ({
+                    ...plagiarismCase,
+                    verdict: res.body!.verdict,
+                    verdictBy: res.body!.verdictBy,
+                    verdictDate: res.body!.verdictDate,
+                }));
             },
         });
     }
@@ -212,15 +222,18 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
-                this.plagiarismCase.verdict = res.body!.verdict;
-                this.plagiarismCase.verdictBy = res.body!.verdictBy;
-                this.plagiarismCase.verdictDate = res.body!.verdictDate;
+                this.plagiarismCase.update((plagiarismCase) => ({
+                    ...plagiarismCase,
+                    verdict: res.body!.verdict,
+                    verdictBy: res.body!.verdictBy,
+                    verdictDate: res.body!.verdictDate,
+                }));
             },
         });
     }
 
     isStudentNotified() {
-        return this.posts?.length > 0;
+        return (this.posts()?.length ?? 0) > 0;
     }
 
     /**
@@ -228,11 +241,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * Adds the created post to the local list so the thread becomes visible immediately.
      */
     onStudentNotified(createdPost: Post): void {
-        const currentPosts = this.posts ?? [];
+        const currentPosts = this.posts() ?? [];
 
         const exists = currentPosts.some((post) => post.id === createdPost.id);
         if (!exists) {
-            this.posts = [...currentPosts, createdPost];
+            this.posts.set([...currentPosts, createdPost]);
         }
 
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
@@ -245,20 +258,18 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * The plagiarism case is set as context, and an example title and body for the instructor is generated.
      **/
     createEmptyPost(): void {
-        const studentName = abbreviateString(this.plagiarismCase.student?.name ?? '', 70);
+        const plagiarismCase = this.plagiarismCase();
+        const studentName = abbreviateString(plagiarismCase.student?.name ?? '', 70);
         const instructorName = abbreviateString(this.currentAccount?.name ?? '', 70);
-        const exerciseTitle = abbreviateString(this.plagiarismCase.exercise?.title ?? '', 70);
-        const belongsToExam = !!this.plagiarismCase.exercise?.exerciseGroup;
-        const courseOrExamTitle = abbreviateString(
-            (belongsToExam ? this.plagiarismCase.exercise?.exerciseGroup?.exam?.title : this.plagiarismCase.exercise?.course?.title) ?? '',
-            70,
-        );
+        const exerciseTitle = abbreviateString(plagiarismCase.exercise?.title ?? '', 70);
+        const belongsToExam = !!plagiarismCase.exercise?.exerciseGroup;
+        const courseOrExamTitle = abbreviateString((belongsToExam ? plagiarismCase.exercise?.exerciseGroup?.exam?.title : plagiarismCase.exercise?.course?.title) ?? '', 70);
 
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.plagiarismCase); // Note the limit of 1.000 characters for the post's content
-        this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
+        const createdPost = this.metisService.createEmptyPostForContext(undefined, plagiarismCase); // Note the limit of 1.000 characters for the post's content
+        createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
             exercise: exerciseTitle,
         });
-        this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
+        createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
             student: studentName,
             instructor: instructorName,
             exercise: exerciseTitle,
@@ -268,6 +279,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             apsoLink: '/public/documents/apso.pdf',
             dueDate: dayjs().add(7, 'day').format('DD.MM.YYYY'),
         });
+        this.createdPost.set(createdPost);
     }
 
     /**

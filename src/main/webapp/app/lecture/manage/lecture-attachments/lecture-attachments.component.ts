@@ -67,7 +67,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     lecture = signal<Lecture>(new Lecture());
-    attachments: Attachment[] = [];
+    attachments = signal<Attachment[]>([]);
     attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
     attachmentFile = signal<File | undefined>(undefined);
@@ -106,7 +106,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     loadAttachments(): void {
         this.attachmentService.findAllByLectureId(this.lecture().id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-            this.attachments = attachmentsResponse.body!;
+            this.attachments.set(attachmentsResponse.body!);
         });
     }
 
@@ -140,9 +140,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
-                    this.attachments = this.attachments.map((el) => {
-                        return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
-                    });
+                    this.attachments.set(this.attachments().map((el) => (el.id === attachmentRes.body!.id ? attachmentRes.body! : el)));
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
@@ -200,7 +198,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     deleteAttachment(attachment: Attachment): void {
         this.attachmentService.delete(attachment.id!).subscribe({
             next: () => {
-                this.attachments = this.attachments.filter((attachmentEl) => attachmentEl.id !== attachment.id);
+                this.attachments.set(this.attachments().filter((attachmentEl) => attachmentEl.id !== attachment.id));
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -218,12 +216,14 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     resetAttachment(): void {
         if (this.attachmentBackup) {
-            this.attachments = this.attachments.map((attachment) => {
-                if (attachment.id === this.attachmentBackup!.id) {
-                    attachment = this.attachmentBackup as Attachment;
-                }
-                return attachment;
-            });
+            this.attachments.set(
+                this.attachments().map((attachment) => {
+                    if (attachment.id === this.attachmentBackup!.id) {
+                        attachment = this.attachmentBackup as Attachment;
+                    }
+                    return attachment;
+                }),
+            );
             this.attachmentBackup = undefined;
         }
     }

@@ -136,8 +136,8 @@ describe('AttachmentVideoUnitsComponent', () => {
         attachmentVideoUnitsComponent = attachmentVideoUnitsComponentFixture.componentInstance;
         attachmentVideoUnitsComponentFixture.detectChanges();
 
-        attachmentVideoUnitsComponent.units = units;
-        attachmentVideoUnitsComponent.numberOfPages = numberOfPages;
+        attachmentVideoUnitsComponent.units.set(units);
+        attachmentVideoUnitsComponent.numberOfPages.set(numberOfPages);
 
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         router = TestBed.inject(Router);
@@ -185,45 +185,45 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should validate valid start page', () => {
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 0, endPage: 1 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 0, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: null, endPage: 10 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: null, endPage: 10 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 10, endPage: 1 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 10, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should validate valid end page', () => {
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: 0 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 1, endPage: 0 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: null }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 2, endPage: null }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
         expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
-        attachmentVideoUnitsComponent.units = [{ unitName: '', startPage: 0, endPage: 0 }];
+        attachmentVideoUnitsComponent.units.set([{ unitName: '', startPage: 0, endPage: 0 }]);
         attachmentVideoUnitsComponent.addRow();
-        expect(attachmentVideoUnitsComponent.units).toHaveLength(2);
+        expect(attachmentVideoUnitsComponent.units()).toHaveLength(2);
         attachmentVideoUnitsComponent.deleteRow(0);
-        expect(attachmentVideoUnitsComponent.units).toHaveLength(1);
+        expect(attachmentVideoUnitsComponent.units()).toHaveLength(1);
         expect(attachmentVideoUnitsComponent.deleteRow(0)).toBe(false);
 
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
@@ -258,16 +258,16 @@ describe('AttachmentVideoUnitsComponent', () => {
         const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitService, 'getSlidesToRemove').mockReturnValue(of(expectedResponse));
         await new Promise((resolve) => setTimeout(resolve, 1000));
         expect(getSlidesToRemoveSpy).toHaveBeenCalledTimes(1);
-        expect(attachmentVideoUnitsComponent.removedSlidesNumbers).toEqual(expectedSlideNumbers);
+        expect(attachmentVideoUnitsComponent.removedSlidesNumbers()).toEqual(expectedSlideNumbers);
     });
 
     it('should not get slides to remove if query is empty', async () => {
-        attachmentVideoUnitsComponent.removedSlidesNumbers = [1, 2, 3];
+        attachmentVideoUnitsComponent.removedSlidesNumbers.set([1, 2, 3]);
         attachmentVideoUnitsComponent.searchTerm = '';
         const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitService, 'getSlidesToRemove');
         await new Promise((resolve) => setTimeout(resolve, 1000));
         expect(getSlidesToRemoveSpy).not.toHaveBeenCalled();
-        expect(attachmentVideoUnitsComponent.removedSlidesNumbers).toEqual([]);
+        expect(attachmentVideoUnitsComponent.removedSlidesNumbers()).toEqual([]);
     });
 
     it('should start uploading file again after timeout', async () => {

@@ -123,11 +123,11 @@ examples.forEach((activeConversation) => {
             await fixture.whenStable();
             vi.advanceTimersByTime(0);
             expect(component).toBeTruthy();
-            expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
+            expect(component.canBeRemovedFromConversation()).toEqual(canRemoveUsersFromConversation());
 
             if (isChannelDTO(activeConversation)) {
-                expect(component.canBeGrantedChannelModeratorRole).toBe(false); // is already moderator
-                expect(component.canBeRevokedChannelModeratorRole).toBe(true);
+                expect(component.canBeGrantedChannelModeratorRole()).toBe(false); // is already moderator
+                expect(component.canBeRevokedChannelModeratorRole()).toBe(true);
             }
         });
 
@@ -137,7 +137,7 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
             if (isGroupChatDTO(activeConversation)) {
-                expect(component.canBeRemovedFromConversation).toBe(true);
+                expect(component.canBeRemovedFromConversation()).toBe(true);
                 checkRemoveMemberButton(true);
             }
         });
@@ -148,8 +148,8 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation)) {
-                expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
-                checkRemoveMemberButton(component.canBeRemovedFromConversation);
+                expect(component.canBeRemovedFromConversation()).toEqual(canRemoveUsersFromConversation());
+                checkRemoveMemberButton(component.canBeRemovedFromConversation());
             }
         });
 
@@ -160,7 +160,7 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
-                expect(component.canBeRemovedFromConversation).toBe(false);
+                expect(component.canBeRemovedFromConversation()).toBe(false);
                 checkRemoveMemberButton(false);
             }
         });
@@ -171,8 +171,8 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation)) {
-                expect(component.canBeGrantedChannelModeratorRole).toBe(false); // is already moderator
-                expect(component.canBeRevokedChannelModeratorRole).toBe(true);
+                expect(component.canBeGrantedChannelModeratorRole()).toBe(false); // is already moderator
+                expect(component.canBeRevokedChannelModeratorRole()).toBe(true);
                 checkRevokeModeratorButton(true);
                 checkGrantModeratorButton(false);
             }
@@ -188,8 +188,8 @@ examples.forEach((activeConversation) => {
                 vi.advanceTimersByTime(0);
                 fixture.changeDetectorRef.detectChanges();
 
-                expect(component.canBeGrantedChannelModeratorRole).toBe(true);
-                expect(component.canBeRevokedChannelModeratorRole).toBe(false);
+                expect(component.canBeGrantedChannelModeratorRole()).toBe(true);
+                expect(component.canBeRevokedChannelModeratorRole()).toBe(false);
                 checkRevokeModeratorButton(false);
                 checkGrantModeratorButton(true);
             }
@@ -310,7 +310,7 @@ examples.forEach((activeConversation) => {
             await fixture.whenStable();
             vi.advanceTimersByTime(0);
 
-            expect(component.isCurrentUser).toBe(true);
+            expect(component.isCurrentUser()).toBe(true);
         });
 
         it('should set isCurrentUser to false if conversation member is NOT the logged-in user', async () => {
@@ -320,7 +320,7 @@ examples.forEach((activeConversation) => {
             await fixture.whenStable();
             vi.advanceTimersByTime(0);
 
-            expect(component.isCurrentUser).toBe(false);
+            expect(component.isCurrentUser()).toBe(false);
         });
 
         it('should prevent removal action if the user is the current user', async () => {
@@ -330,7 +330,7 @@ examples.forEach((activeConversation) => {
             await fixture.whenStable();
             vi.advanceTimersByTime(0);
 
-            expect(component.canBeRemovedFromConversation).toBe(false);
+            expect(component.canBeRemovedFromConversation()).toBe(false);
         });
 
         it.each`

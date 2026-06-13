@@ -37,7 +37,7 @@
                 }
                 <div class="form-group position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
-                    <jhi-category-selector [categories]="faqCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                    <jhi-category-selector [categories]="faqCategories" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
                 </div>
                 @if (faq.course) {
                     <div class="form-group">
@@ -52,7 +52,7 @@
                         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
-                        <button type="submit" id="save-entity" [disabled]="!isAllowedToSave || isSaving" class="btn btn-primary">
+                        <button type="submit" id="save-entity" [disabled]="!isAllowedToSave || isSaving()" class="btn btn-primary">
                             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                         </button>
                     </div>

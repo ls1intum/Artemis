@@ -1,6 +1,6 @@
 <h2 jhiTranslate="artemisApp.userSettings.globalNotificationSettings.title"></h2>
 <p class="text-muted" jhiTranslate="artemisApp.userSettings.globalNotificationSettings.description"></p>
-@if (notificationSettings) {
+@if (notificationSettings(); as notificationSettings) {
     <div class="list-group d-block">
         @for (type of filteredNotificationTypes; track type) {
             <div class="list-group-item">
@@ -12,7 +12,7 @@
                                 class="form-check-input"
                                 [id]="'notification-' + type"
                                 [name]="'notification-' + type"
-                                [(ngModel)]="notificationSettings[type]"
+                                [ngModel]="notificationSettings[type]"
                                 (ngModelChange)="updateSetting(type, $event)"
                             />
                             <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ notificationLabels[type] }}"> </label>

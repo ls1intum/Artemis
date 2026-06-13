@@ -62,7 +62,7 @@ describe('ModelingExercise Management Component', () => {
 
         eventManager = TestBed.inject(EventManager);
 
-        comp.modelingExercises = [modelingExercise];
+        comp.modelingExercises.set([modelingExercise]);
     });
 
     afterEach(() => {
@@ -87,7 +87,7 @@ describe('ModelingExercise Management Component', () => {
 
         // THEN
         expect(findStub).toHaveBeenCalledOnce();
-        expect(comp.modelingExercises[0]).toEqual(modelingExercise);
+        expect(comp.modelingExercises()[0]).toEqual(modelingExercise);
     });
 
     it('should delete exercise', () => {
@@ -111,8 +111,8 @@ describe('ModelingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(1);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
@@ -121,8 +121,8 @@ describe('ModelingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(0);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(0);
         });
     });
 
@@ -148,13 +148,13 @@ describe('ModelingExercise Management Component', () => {
 
     it('should sort rows', () => {
         const sortSpy = vi.spyOn(sortService, 'sortByProperty');
-        comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
+        comp.modelingExercises.set([new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)]);
         comp.predicate = 'testPredicate';
         comp.reverse = true;
         fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter());
         fixture.detectChanges();
         comp.sortRows();
-        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises(), comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledOnce();
     });
 
@@ -164,6 +164,6 @@ describe('ModelingExercise Management Component', () => {
 
         // THEN
         expect(comp.selectedExercises[0]).toMatchObject({ id: modelingExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises.length);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises().length);
     });
 });

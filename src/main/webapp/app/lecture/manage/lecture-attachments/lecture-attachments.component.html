@@ -34,7 +34,7 @@
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        @if (attachments && attachments.length > 0) {
+                        @if (attachments().length > 0) {
                             <td class="table-responsive">
                                 <table class="table table-striped position-relative">
                                     <thead>
@@ -49,7 +49,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (attachment of attachments; track trackId($index, attachment)) {
+                                        @for (attachment of attachments(); track trackId($index, attachment)) {
                                             <tr [ngClass]="{ 'edit-overlay-container': attachmentToBeUpdatedOrCreated()?.id === attachment?.id }">
                                                 <td>
                                                     {{ attachment.id }}

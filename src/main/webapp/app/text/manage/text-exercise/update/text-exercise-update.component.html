@@ -17,7 +17,7 @@
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-                <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
             </div>
         }
         <hr class="mb-5" />
@@ -217,7 +217,7 @@
     <jhi-form-footer
         [isCreation]="!textExercise.id"
         [isImport]="isImport"
-        [isSaving]="isSaving"
+        [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError)"
         (onCancel)="previousState()"
         (save)="save()"

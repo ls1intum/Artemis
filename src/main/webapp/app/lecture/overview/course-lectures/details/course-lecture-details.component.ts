@@ -84,17 +84,17 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
 
     lectureId?: number;
-    courseId?: number;
-    isLoading = false;
-    lecture?: Lecture;
+    readonly courseId = signal<number | undefined>(undefined);
+    readonly isLoading = signal(false);
+    readonly lecture = signal<Lecture | undefined>(undefined);
     isDownloadingLink?: string;
-    lectureUnits: LectureUnit[] = [];
-    hasPdfLectureUnit: boolean;
-    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
+    readonly lectureUnits = signal<LectureUnit[]>([]);
+    readonly hasPdfLectureUnit = signal(false);
+    readonly irisSettings = signal<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
     irisEnabled = false;
-    informationBoxData: InformationBox[] = [];
+    readonly informationBoxData = signal<InformationBox[]>([]);
 
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
@@ -108,7 +108,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         if (grandParentRoute) {
             this.courseParamsSubscription = grandParentRoute.params.subscribe((params) => {
                 // Note: if courseId is not found, sub components cannot navigate properly
-                this.courseId = +params.courseId;
+                this.courseId.set(+params.courseId);
             });
         }
 
@@ -134,52 +134,54 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.targetPdfPage.set(undefined);
             }
 
-            if (this.lectureUnits.length > 0) {
+            if (this.lectureUnits().length > 0) {
                 this.ensureValidDeepLinkTargets();
             }
         });
     }
 
     loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         if (this.lectureId) {
             this.lectureService
                 .findWithDetails(this.lectureId)
                 .pipe(
                     finalize(() => {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }),
                 )
                 .subscribe({
                     next: (findLectureResult) => {
-                        this.lecture = findLectureResult.body!;
-                        this.lecture?.attachments?.forEach((attachment) => {
+                        const lecture = findLectureResult.body!;
+                        this.lecture.set(lecture);
+                        lecture.attachments?.forEach((attachment) => {
                             if (attachment.link) {
                                 attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
                         });
 
-                        this.lectureUnits = this.lecture?.lectureUnits ?? [];
+                        this.lectureUnits.set(lecture.lectureUnits ?? []);
                         this.ensureValidDeepLinkTargets();
-                        this.hasPdfLectureUnit = this.lectureUnits.some(
-                            (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                        this.hasPdfLectureUnit.set(
+                            this.lectureUnits().some(
+                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                            ),
                         );
-                        if (this.irisEnabled && this.lecture?.course?.id) {
-                            this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
-                                this.irisSettings = response;
+                        if (this.irisEnabled && lecture.course?.id) {
+                            this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
+                                this.irisSettings.set(response);
                             });
                         }
-                        this.informationBoxData = [];
-                        if (this.lecture?.startDate) {
+                        const informationBoxData: InformationBox[] = [];
+                        if (lecture.startDate) {
                             const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
-                            const infoBoxStartDate = this.createDateInfoBox(this.lecture!.startDate, startDateInfoBoxTitle);
-                            this.informationBoxData.push(infoBoxStartDate);
+                            informationBoxData.push(this.createDateInfoBox(lecture.startDate, startDateInfoBoxTitle));
                         }
-                        if (this.lecture?.endDate) {
+                        if (lecture.endDate) {
                             const endDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.endDate';
-                            const infoBoxEndDate = this.createDateInfoBox(this.lecture!.endDate, endDateInfoBoxTitle);
-                            this.informationBoxData.push(infoBoxEndDate);
+                            informationBoxData.push(this.createDateInfoBox(lecture.endDate, endDateInfoBoxTitle));
                         }
+                        this.informationBoxData.set(informationBoxData);
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
@@ -187,7 +189,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     redirectToLectureManagement(): void {
-        this.router.navigate(['course-management', this.lecture?.course?.id, 'lectures', this.lecture?.id]);
+        const lecture = this.lecture();
+        this.router.navigate(['course-management', lecture?.course?.id, 'lectures', lecture?.id]);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
@@ -216,7 +219,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 .downloadMergedFile(this.lectureId)
                 .pipe(
                     tap((blob) => {
-                        downloadStream(blob.body, 'application/pdf', this.lecture?.title ?? 'Lecture');
+                        downloadStream(blob.body, 'application/pdf', this.lecture()?.title ?? 'Lecture');
                         this.loadData();
                     }),
                 )
@@ -225,7 +228,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
-        this.lectureUnitService.completeLectureUnit(this.lecture!, event);
+        this.lectureUnitService.completeLectureUnit(this.lecture()!, event);
     }
 
     private ensureValidDeepLinkTargets(): void {
@@ -234,7 +237,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const targetUnit = this.lectureUnits.find((unit) => unit.id === targetUnitId);
+        const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);

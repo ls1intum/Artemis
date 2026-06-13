@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -130,7 +130,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
-    showReactionSelector = false;
+    readonly showReactionSelector = signal(false);
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     isAuthorOfOriginalPost: boolean;
@@ -332,7 +332,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * closes the emoji selector overly if user clicks the '.reaction-button' again or somewhere outside the overlay
      */
     toggleEmojiSelect() {
-        this.showReactionSelector = !this.showReactionSelector;
+        this.showReactionSelector.set(!this.showReactionSelector());
     }
 
     /**
@@ -359,14 +359,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.metisService.deleteReaction(reactionToDelete).subscribe(() => {
                 (this.posting() as Posting).reactions = (this.posting() as Posting).reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
                 this.updatePostingWithReactions();
-                this.showReactionSelector = false;
+                this.showReactionSelector.set(false);
                 this.reactionsUpdated.emit((this.posting() as Posting).reactions!);
             });
         } else {
             const reactionToCreate = this.buildReaction(emojiId);
             this.metisService.createReaction(reactionToCreate).subscribe(() => {
                 this.updatePostingWithReactions();
-                this.showReactionSelector = false;
+                this.showReactionSelector.set(false);
                 this.reactionsUpdated.emit((this.posting() as Posting).reactions || []);
             });
         }

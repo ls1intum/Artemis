@@ -156,7 +156,7 @@ examples.forEach((activeConversation) => {
 
         it('should set initial values correctly', () => {
             fixture.componentRef.setInput('course', course);
-            component._activeConversation = activeConversation;
+            component._activeConversation.set(activeConversation);
             component.posts.set([examplePost]);
         });
 
@@ -176,7 +176,7 @@ examples.forEach((activeConversation) => {
             component.saveScrollPosition(15);
             expect(scrollNextSpy).toHaveBeenCalledWith(15);
             // Manually trigger what the debounced subscription would do
-            const activeConversationId = component._activeConversation?.id;
+            const activeConversationId = component._activeConversation()?.id;
             expect(activeConversationId).toBeDefined();
             sessionStorageService.store<number>(component.sessionStorageKey + activeConversationId, 15);
             expect(storeSpy).toHaveBeenCalledWith(`${component.sessionStorageKey}${activeConversationId}`, 15);
@@ -396,7 +396,7 @@ examples.forEach((activeConversation) => {
                 { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation as Conversation } as Post];
+            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation() as Conversation } as Post];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
             vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
@@ -526,7 +526,7 @@ examples.forEach((activeConversation) => {
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
             vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
 
-            component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
+            component._activeConversation.set({ id: 123, type: ConversationType.CHANNEL });
             fixture.componentRef.setInput('course', { id: 1 } as Course);
 
             component['onActiveConversationChange']();
@@ -599,10 +599,10 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
@@ -621,10 +621,10 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
@@ -647,7 +647,7 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = { ...component._activeConversation, lastReadDate };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate });
             component.currentUser = currentUser;
             component.allPosts.set([{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post]);
 
@@ -660,7 +660,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should clear firstUnreadPostId when there are no unread posts', () => {
-            component._activeConversation = { ...component._activeConversation, lastReadDate: dayjs() };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate: dayjs() });
             component.currentUser = { id: 99, internal: false };
             component.allPosts.set([]);
             component.firstUnreadPostId.set(42);

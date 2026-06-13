@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -30,7 +30,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
-    open: boolean;
+    readonly open = signal(false);
     onlyViewTestCases: boolean;
     testCaseVisibilityList: { value: Visibility; name: string }[] = [];
 
@@ -39,12 +39,12 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.openSubject().subscribe((open) => (this.open = open));
+        this.openSubject().subscribe((open) => this.open.set(open));
 
         // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
             this.onlyViewTestCases = true;
-            this.open = true;
+            this.open.set(true);
         }
 
         this.updateTestCaseVisibilityList();

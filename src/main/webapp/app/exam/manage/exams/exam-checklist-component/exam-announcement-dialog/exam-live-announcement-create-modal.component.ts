@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -37,9 +37,9 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     textContent: string;
     html?: SafeHtml;
 
-    status: 'not_submitted' | 'submitting' | 'submitted' = 'not_submitted';
+    readonly status = signal<'not_submitted' | 'submitting' | 'submitted'>('not_submitted');
 
-    announcement?: ExamWideAnnouncementEvent;
+    readonly announcement = signal<ExamWideAnnouncementEvent | undefined>(undefined);
 
     // Icons
     faSpinner = faSpinner;
@@ -58,26 +58,26 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     }
 
     submitAnnouncement() {
-        this.status = 'submitting';
+        this.status.set('submitting');
         this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent).subscribe({
             next: (event: ExamWideAnnouncementEvent) => {
-                this.status = 'submitted';
-                this.announcement = event;
+                this.status.set('submitted');
+                this.announcement.set(event);
             },
             error: () => {
-                this.status = 'not_submitted';
+                this.status.set('not_submitted');
             },
         });
     }
 
     textContentChanged(textContent: string) {
         this.textContent = textContent;
-        this.announcement = {
+        this.announcement.set({
             id: 0,
             createdDate: dayjs(),
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: textContent,
-        };
+        });
     }
 
     /**

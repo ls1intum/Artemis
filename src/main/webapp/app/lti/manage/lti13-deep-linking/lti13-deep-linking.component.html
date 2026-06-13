@@ -1,8 +1,8 @@
-<div [hidden]="!isLinking" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
+<div [hidden]="!isLinking()" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
     <div class="modal-header">
         <div class="col d-flex flex-row pt-3 pb-1">
-            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
-                Select content from course {{ course?.title }}
+            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
+                Select content from course {{ course()?.title }}
             </h4>
             <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip" />
         </div>
@@ -37,7 +37,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (exercise of exercises; track exercise) {
+                                @for (exercise of exercises(); track exercise) {
                                     <tr id="exercise-{{ exercise.id }}">
                                         <td class="d-md-table-cell">
                                             <input class="form-check-input" type="checkbox" (change)="selectExercise(exercise.id)" [ngModel]="isExerciseSelected(exercise.id)" />
@@ -87,7 +87,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (lecture of lectures; track lecture) {
+                                @for (lecture of lectures(); track lecture) {
                                     <tr id="lecture-{{ lecture.id }}">
                                         <td class="d-md-table-cell">
                                             <input class="form-check-input" type="checkbox" (change)="selectLecture(lecture.id)" [ngModel]="isLectureSelected(lecture.id)" />
@@ -141,4 +141,4 @@
         </div>
     </div>
 </div>
-<h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>
+<h2 [hidden]="isLinking()" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>

@@ -296,7 +296,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.update).toHaveBeenCalledWith(exercise, {});
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
 
@@ -338,7 +338,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.create).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
         });
@@ -360,7 +360,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.import).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
             });
         });
     });
@@ -429,7 +429,7 @@ describe('TextExercise Management Update Component', () => {
             // Verify component is properly initialized
             expect(component.textExercise).toBeDefined();
             expect(component.backupExercise).toBeDefined();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
         });
     });
 

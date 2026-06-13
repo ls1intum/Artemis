@@ -99,8 +99,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
-    exampleSolution: UMLModel;
-    isSaving: boolean;
+    readonly exampleSolution = signal<UMLModel>(undefined!);
+    readonly isSaving = signal(false);
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
@@ -163,7 +163,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
+                this.exampleSolution.set(importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel)));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -222,7 +222,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             )
             .subscribe();
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
     }
 
@@ -314,7 +314,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)
@@ -322,7 +322,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 },
             });
     }
@@ -336,7 +336,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
@@ -348,6 +348,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         } else {
             onError(this.alertService, errorRes);
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

@@ -12,9 +12,7 @@
                 <td>
                     <br />
                     <div>
-                        @if (!shoppingBasket) {
-                            <div jhiTranslate="artemisApp.sharing.error.noImportedExercises"></div>
-                        } @else {
+                        @if (shoppingBasket(); as shoppingBasket) {
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
@@ -43,12 +41,14 @@
                                     }
                                 </tbody>
                             </table>
+                        } @else {
+                            <div jhiTranslate="artemisApp.sharing.error.noImportedExercises"></div>
                         }
                         <br />
                         <div>
                             <span class="message" jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
                         </div>
-                        @if (!isInstructorOrEditor) {
+                        @if (!isInstructorOrEditor()) {
                             <div class="p-2">
                                 <strong jhiTranslate="artemisApp.sharing.loginAsInstructorOrEditor"></strong>
                             </div>
@@ -57,7 +57,7 @@
                 </td>
                 <td>
                     <div class="scroll-courses">
-                        @if (!coursesLoading) {
+                        @if (!coursesLoading()) {
                             <table class="table table-striped">
                                 <thead>
                                     <tr jhiSort [(predicate)]="sortColumn" [(ascending)]="reverseSorting" (sortChange)="sortRows()">
@@ -68,7 +68,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (course of courses; track course) {
+                                    @for (course of courses(); track course) {
                                         <tr>
                                             <td>
                                                 <input

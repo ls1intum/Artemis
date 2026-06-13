@@ -193,7 +193,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
-            expect(component.hideChannelNameInput).toBe(false);
+            expect(component.hideChannelNameInput()).toBe(false);
         });
 
         it('should validate the example solution publication date correctly', () => {
@@ -970,7 +970,7 @@ describe('ExamUpdateComponent', () => {
         it('should initialize without id and dates set', () => {
             fixture.detectChanges();
             expect(fixture).not.toBeNull();
-            expect(component.isImport).toBe(true);
+            expect(component.isImport()).toBe(true);
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');

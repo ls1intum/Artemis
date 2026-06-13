@@ -107,7 +107,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
-    _activeConversation?: ConversationDTO;
+    readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
     elementsAtScrollPosition: PostingThreadComponent[];
@@ -218,17 +218,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
 
         // Ensure that all pinned posts are fetched when the component is initialized
-        this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
+        this.metisService.fetchAllPinnedPosts(this._activeConversation()!.id!).subscribe();
         this.initialized = true;
     }
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
-            if (conversation && this._activeConversation?.id === conversation.id) {
+            if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;
             }
-            this._activeConversation = conversation;
+            this._activeConversation.set(conversation);
             this.onActiveConversationChange();
         });
     }
@@ -281,7 +281,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.focusOnPostId) {
             savedScrollId = this.focusOnPostId;
         } else {
-            const activeConversationId = this._activeConversation?.id;
+            const activeConversationId = this._activeConversation()?.id;
             savedScrollId = activeConversationId ? this.sessionStorageService.retrieve<number>(this.sessionStorageKey + activeConversationId) : undefined;
         }
         if (savedScrollId) {
@@ -290,19 +290,20 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
-        if (this._activeConversation !== undefined && this.getAsChannel(this._activeConversation)?.isAnnouncementChannel) {
-            this.isHiddenInputFull = !canCreateNewMessageInConversation(this._activeConversation);
-            this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(this._activeConversation);
+        const activeConversation = this._activeConversation();
+        if (activeConversation !== undefined && this.getAsChannel(activeConversation)?.isAnnouncementChannel) {
+            this.isHiddenInputFull = !canCreateNewMessageInConversation(activeConversation);
+            this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(activeConversation);
         } else {
             this.isHiddenInputFull = false;
             this.isHiddenInputWithCallToAction = false;
         }
 
-        if (this.course() && this._activeConversation) {
+        if (this.course() && activeConversation) {
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
-            this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe({
+            this.metisService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
                 next: (pinnedPosts: Post[]) => {
                     this.pinnedPosts.set(pinnedPosts);
                     this.pinnedCount.emit(pinnedPosts.length);
@@ -324,9 +325,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private refreshMetisConversationPostContextFilter(): void {
+        const activeConversationId = this._activeConversation()?.id;
         this.currentPostContextFilter = {
             courseId: this.course()?.id,
-            conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
+            conversationIds: activeConversationId ? [activeConversationId] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
@@ -597,7 +599,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts = true; // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation);
+            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
         }
     }
 
@@ -611,22 +613,23 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private createEmptyPostInMetis() {
-        if (!this._activeConversation) {
+        const activeConversation = this._activeConversation();
+        if (!activeConversation) {
             return undefined;
         }
         let conversation: Conversation;
-        if (isChannelDTO(this._activeConversation)) {
+        if (isChannelDTO(activeConversation)) {
             const channel = new Channel();
-            channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
+            channel.isAnnouncementChannel = activeConversation.isAnnouncementChannel;
             conversation = channel;
-        } else if (isGroupChatDTO(this._activeConversation)) {
+        } else if (isGroupChatDTO(activeConversation)) {
             conversation = new GroupChat();
-        } else if (isOneToOneChatDTO(this._activeConversation)) {
+        } else if (isOneToOneChatDTO(activeConversation)) {
             conversation = new OneToOneChat();
         } else {
             throw new Error('Conversation type not supported');
         }
-        conversation.id = this._activeConversation.id;
+        conversation.id = activeConversation.id;
         this.refreshMetisConversationPostContextFilter();
         return this.metisService.createEmptyPostForContext(conversation);
     }
@@ -654,7 +657,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private setupScrollDebounce(): void {
         this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((postId) => {
-            const activeConversationId = this._activeConversation?.id;
+            const activeConversationId = this._activeConversation()?.id;
             if (activeConversationId) {
                 this.sessionStorageService.store<number>(this.sessionStorageKey + activeConversationId, postId);
             }
@@ -739,7 +742,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * and were not authored by the current user (i.e. true unread posts).
      */
     private getUnreadPosts(): Post[] {
-        const lastReadDate = this._activeConversation?.lastReadDate;
+        const lastReadDate = this._activeConversation()?.lastReadDate;
         if (!lastReadDate || !this.allPosts()?.length) {
             return [];
         }

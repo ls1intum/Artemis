@@ -3,14 +3,14 @@
     <jhi-documentation-button [type]="documentationType" />
 </div>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
-@if (plagiarismCases && plagiarismCases.length > 0) {
+@if (plagiarismCases().length > 0) {
     <div>
         <div class="plagiarism-cases--toolbar row mb-3">
             <div class="col-auto">
                 <button class="btn btn-primary" (click)="exportPlagiarismCases()" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></button>
             </div>
         </div>
-        @for (exercise of exercisesWithPlagiarismCases; track exercise.id; let exerciseIndex = $index) {
+        @for (exercise of exercisesWithPlagiarismCases(); track exercise.id; let exerciseIndex = $index) {
             <div #plagExerciseElement class="card mb-2" [id]="'exercise-with-plagiarism-case-' + exercise.id">
                 <div class="card-header">
                     <div class="row">
@@ -32,32 +32,32 @@
                         </div>
                         <div class="col-3">
                             <jhi-progress-bar
-                                [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
-                                [numerator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                                [percentage]="percentageOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
+                                [denominator]="numberOfCases(groupedPlagiarismCases()[exercise!.id!])"
+                                [numerator]="numberOfCasesWithPost(groupedPlagiarismCases()[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithPost(groupedPlagiarismCases()[exercise!.id!])"
                                 [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithPost' | artemisTranslate"
                             />
                         </div>
                         <div class="col-3">
                             <jhi-progress-bar
-                                [denominator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                                [numerator]="numberOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
-                                [percentage]="percentageOfCasesWithStudentAnswer(groupedPlagiarismCases[exercise!.id!])"
+                                [denominator]="numberOfCasesWithPost(groupedPlagiarismCases()[exercise!.id!])"
+                                [numerator]="numberOfCasesWithStudentAnswer(groupedPlagiarismCases()[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithStudentAnswer(groupedPlagiarismCases()[exercise!.id!])"
                                 [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithStudentAnswer' | artemisTranslate"
                             />
                         </div>
                         <div class="col-3">
                             <jhi-progress-bar
-                                [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
-                                [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
-                                [percentage]="percentageOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
+                                [denominator]="numberOfCases(groupedPlagiarismCases()[exercise!.id!])"
+                                [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases()[exercise!.id!])"
+                                [percentage]="percentageOfCasesWithVerdict(groupedPlagiarismCases()[exercise!.id!])"
                                 [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithVerdict' | artemisTranslate"
                             />
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
+                    @for (plagiarismCase of groupedPlagiarismCases()[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
                         <div class="row mb-3">
                             @if (plagiarismCase.student) {
                                 <div class="col-1 text-center">

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -109,9 +109,9 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     textExercise: TextExercise;
     backupExercise: TextExercise;
-    isSaving: boolean;
+    readonly isSaving = signal(false);
     exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
 
     domainActionsProblemStatement = [new FormulaAction()];
@@ -221,7 +221,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
         this.isPlagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
     }
 
@@ -298,7 +298,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.textExercise, this.isExamMode, this.notificationText)
@@ -306,20 +306,20 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 },
             });
     }
 
     private loadCourseExerciseCategories(courseId: number) {
         loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
+            this.existingCategories.set(existingCategories);
         });
     }
 
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
@@ -331,6 +331,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         } else {
             onError(this.alertService, errorRes);
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

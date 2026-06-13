@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -33,6 +33,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
+    host: {
+        '[class.active]': 'isCurrentUser()',
+    },
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
@@ -60,21 +63,20 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     idOfLoggedInUser: number;
 
-    @HostBinding('class.active')
-    isCurrentUser = false;
+    readonly isCurrentUser = signal(false);
 
     isCreator = false;
 
-    canBeRemovedFromConversation = false;
+    readonly canBeRemovedFromConversation = signal(false);
 
-    canBeGrantedChannelModeratorRole = false;
+    readonly canBeGrantedChannelModeratorRole = signal(false);
 
-    canBeRevokedChannelModeratorRole = false;
+    readonly canBeRevokedChannelModeratorRole = signal(false);
 
-    userLabel: string;
-    userName: string | undefined;
-    userId: number | undefined;
-    userImageUrl: string | undefined;
+    readonly userLabel = signal<string>('');
+    readonly userName = signal<string | undefined>(undefined);
+    readonly userId = signal<number | undefined>(undefined);
+    readonly userImageUrl = signal<string | undefined>(undefined);
     // icons
     userIcon: IconProp = faUser;
     userTooltip = '';
@@ -100,26 +102,26 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             this.accountService.identity().then((loggedInUser: User) => {
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
-                    this.isCurrentUser = true;
+                    this.isCurrentUser.set(true);
                 }
                 if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
                     this.isCreator = true;
                 }
 
-                this.userImageUrl = this.conversationMember()?.imageUrl;
-                this.userId = this.conversationMember()?.id;
-                this.userName = this.conversationMember()?.name;
-                this.userLabel = getUserLabel(this.conversationMember()!);
+                this.userImageUrl.set(this.conversationMember()?.imageUrl);
+                this.userId.set(this.conversationMember()?.id);
+                this.userName.set(this.conversationMember()?.name);
+                this.userLabel.set(getUserLabel(this.conversationMember()!));
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
-                this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation()!);
+                this.canBeRemovedFromConversation.set(!this.isCurrentUser() && this.canRemoveUsersFromConversation(this.activeConversation()!));
                 if (isChannelDTO(this.activeConversation())) {
                     // the creator of a channel can not be removed from the channel
                     const channelDTO = this.activeConversation() as ChannelDTO;
-                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !channelDTO.isCourseWide;
-                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator;
+                    this.canBeRemovedFromConversation.set(this.canBeRemovedFromConversation() && !this.isCreator && !channelDTO.isCourseWide);
+                    this.canBeGrantedChannelModeratorRole.set(this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator);
                     // the creator of a channel cannot be revoked the channel moderator role
-                    this.canBeRevokedChannelModeratorRole = this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator;
+                    this.canBeRevokedChannelModeratorRole.set(this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator);
                 }
             });
         }
@@ -144,7 +146,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
         const translationParams = {
             channelName: channel.name!,
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;
@@ -172,7 +174,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
         const translationParams = {
             channelName: channel.name!,
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;
@@ -210,7 +212,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         }
 
         const translationParams = {
-            userName: this.userLabel,
+            userName: this.userLabel(),
             channelName: channel.name!,
         };
         const confirmedCallback = () => {
@@ -238,7 +240,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             confirmButtonKey: 'artemisApp.dialogs.removeUserGroupChat.remove',
         };
         const translationParams = {
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;

@@ -149,9 +149,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         await Promise.resolve();
         expect(component.courseId).toBe(1);
         expect(component.examId).toBe(0);
-        expect(component.plagiarismCases).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
-        expect(component.exercisesWithPlagiarismCases).toEqual([exercise1, exercise2]);
-        expect(component.groupedPlagiarismCases).toEqual({
+        expect(component.plagiarismCases()).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
+        expect(component.exercisesWithPlagiarismCases()).toEqual([exercise1, exercise2]);
+        expect(component.groupedPlagiarismCases()).toEqual({
             1: [plagiarismCase1, plagiarismCase2],
             2: [plagiarismCase3, plagiarismCase4],
         });
@@ -227,7 +227,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should export plagiarism cases as CSV', () => {
         const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
-        component.plagiarismCases = [plagiarismCase1, plagiarismCase4];
+        component.plagiarismCases.set([plagiarismCase1, plagiarismCase4]);
         const expectedBlob = [
             'Student Login; Matr. Nr.; Exercise;Verdict; Verdict Date\n',
             `Student 1; -; Test Exercise 1; PLAGIARISM; ${date}; Test Instructor 1\n`,

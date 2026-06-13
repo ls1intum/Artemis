@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -51,7 +51,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     readonly faHashtag = faHashtag;
     readonly faLock = faLock;
 
-    conversationAsChannel: ChannelDTO | undefined;
+    readonly conversationAsChannel = signal<ChannelDTO | undefined>(undefined);
     canLeaveConversation: boolean;
     canChangeChannelArchivalState: boolean;
     canChangeChannelPrivacyState: boolean;
@@ -68,10 +68,11 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
             return;
         }
         this.canLeaveConversation = canLeaveConversation(conversation);
-        this.conversationAsChannel = getAsChannelDTO(conversation);
-        this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
-        this.canChangeChannelPrivacyState = this.conversationAsChannel ? canChangeChannelPrivacyState(this.conversationAsChannel) : false;
-        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course(), this.conversationAsChannel) : false;
+        const channel = getAsChannelDTO(conversation);
+        this.conversationAsChannel.set(channel);
+        this.canChangeChannelArchivalState = channel ? canChangeChannelArchivalState(channel) : false;
+        this.canChangeChannelPrivacyState = channel ? canChangeChannelPrivacyState(channel) : false;
+        this.canDeleteChannel = channel ? canDeleteChannel(this.course(), channel) : false;
     }
 
     leaveConversation($event: MouseEvent) {
@@ -222,7 +223,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
                     next: (res) => {
                         const updatedChannel = res.body;
                         if (updatedChannel) {
-                            this.conversationAsChannel = updatedChannel;
+                            this.conversationAsChannel.set(updatedChannel);
                             this.channelPrivacyChange.emit();
                         }
                     },

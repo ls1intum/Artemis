@@ -148,7 +148,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     searchTerm?: string = undefined;
 
     /** Filter configuration for finished build jobs */
-    finishedBuildJobFilter: FinishedBuildJobFilter = new FinishedBuildJobFilter();
+    readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
 
     /**
      * Course ID from route params. When 0, operates in admin mode showing all courses.
@@ -166,7 +166,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     displayedBuildJobId?: string;
 
     /** Raw build log content as a string for display and download */
-    rawBuildLogsString: string = '';
+    readonly rawBuildLogsString = signal('');
 
     /** Controls the visibility of the inline build logs dialog */
     buildLogsModalVisible = signal(false);
@@ -315,7 +315,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @returns true if search term or any filter is applied
      */
     private hasActiveFilters(): boolean {
-        return !!(this.searchTerm && this.searchTerm.length > 0) || (this.finishedBuildJobFilter?.numberOfAppliedFilters ?? 0) > 0;
+        return !!(this.searchTerm && this.searchTerm.length > 0) || (this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0) > 0;
     }
 
     /**
@@ -431,10 +431,10 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
         if (this.courseId) {
             // Course mode: fetch finished jobs for this specific course
-            return this.buildQueueService.getFinishedBuildJobsByCourseId(this.courseId, paginationOptions, this.finishedBuildJobFilter);
+            return this.buildQueueService.getFinishedBuildJobsByCourseId(this.courseId, paginationOptions, this.finishedBuildJobFilter());
         } else {
             // Admin mode: fetch all finished jobs across all courses
-            return this.buildQueueService.getFinishedBuildJobs(paginationOptions, this.finishedBuildJobFilter);
+            return this.buildQueueService.getFinishedBuildJobs(paginationOptions, this.finishedBuildJobFilter());
         }
     }
 
@@ -482,14 +482,14 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @param buildJobId The id of the build job
      */
     viewBuildLogs(buildJobId: string | undefined): void {
-        this.rawBuildLogsString = '';
+        this.rawBuildLogsString.set('');
         this.displayedBuildJobId = undefined;
         if (buildJobId) {
             this.buildLogsModalVisible.set(true);
             this.displayedBuildJobId = buildJobId;
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
                 next: (buildLogs: string) => {
-                    this.rawBuildLogsString = buildLogs;
+                    this.rawBuildLogsString.set(buildLogs);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res, false);
@@ -501,8 +501,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * Download the build logs of a specific build job
      */
     downloadBuildLogs(): void {
-        if (this.displayedBuildJobId && this.rawBuildLogsString) {
-            const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
+        const rawBuildLogsString = this.rawBuildLogsString();
+        if (this.displayedBuildJobId && rawBuildLogsString) {
+            const blob = new Blob([rawBuildLogsString], { type: 'text/plain' });
             try {
                 downloadFile(blob, `${this.displayedBuildJobId}.log`);
             } catch (error) {
@@ -557,14 +558,14 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             closeOnEscape: true,
             dismissableMask: true,
             data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter,
+                finishedBuildJobFilter: this.finishedBuildJobFilter(),
                 buildAgentFilterable: true,
                 finishedBuildJobs: this.finishedBuildJobs(),
             },
         });
         dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
             if (result) {
-                this.finishedBuildJobFilter = result;
+                this.finishedBuildJobFilter.set(result);
                 this.loadFinishedBuildJobs();
             }
         });

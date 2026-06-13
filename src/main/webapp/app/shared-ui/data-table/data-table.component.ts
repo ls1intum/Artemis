@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -148,7 +148,7 @@ export class DataTableComponent implements OnInit {
      */
     isRendering: boolean;
     entities: (BaseEntity | StringBaseEntity)[];
-    pagingValue: PagingValue;
+    readonly pagingValue = signal<PagingValue>(this.DEFAULT_PAGING_VALUE);
     entityCriteria: {
         textSearch: string[];
         sortProp: SortProp;
@@ -184,7 +184,7 @@ export class DataTableComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit() {
-        this.pagingValue = this.getCachedEntitiesPerPage();
+        this.pagingValue.set(this.getCachedEntitiesPerPage());
 
         // explicitly bind these callbacks to their current context
         // so that they can be used from child components
@@ -229,7 +229,8 @@ export class DataTableComponent implements OnInit {
      * Number of entities displayed per page. Can be undefined to show all entities without pagination.
      */
     get pageLimit() {
-        return isNumber(this.pagingValue) ? this.pagingValue : undefined;
+        const pagingValue = this.pagingValue();
+        return isNumber(pagingValue) ? pagingValue : undefined;
     }
 
     /**
@@ -271,7 +272,7 @@ export class DataTableComponent implements OnInit {
     setEntitiesPerPage = (paging: PagingValue) => {
         this.isRendering = true;
         setTimeout(() => {
-            this.pagingValue = paging;
+            this.pagingValue.set(paging);
             this.isRendering = false;
         }, 500);
         this.localStorageService.store(this.perPageCacheKey, paging.toString());

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -42,12 +42,12 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
-    currentUser?: User;
+    readonly currentUser = signal<User | undefined>(undefined);
 
     private authStateSubscription: Subscription;
     expiryDate?: dayjs.Dayjs;
     validExpiryDate = false;
-    edit = false;
+    readonly edit = signal(false);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -58,8 +58,8 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
-                    this.currentUser = user;
-                    return this.currentUser;
+                    this.currentUser.set(user);
+                    return user;
                 }),
             )
             .subscribe();
@@ -72,9 +72,11 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     deleteVcsAccessToken() {
         this.accountService.deleteUserVcsAccessToken().subscribe({
             next: () => {
-                if (this.currentUser) {
-                    this.currentUser.vcsAccessTokenExpiryDate = undefined;
-                    this.currentUser.vcsAccessToken = undefined;
+                const current = this.currentUser();
+                if (current) {
+                    current.vcsAccessTokenExpiryDate = undefined;
+                    current.vcsAccessToken = undefined;
+                    this.currentUser.set(Object.assign(new User(), current));
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
@@ -86,7 +88,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     }
 
     addNewVcsAccessToken() {
-        this.edit = true;
+        this.edit.set(true);
     }
 
     sendTokenCreationRequest() {
@@ -96,11 +98,13 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         }
         this.accountService.addNewVcsAccessToken(this.expiryDate.toISOString()).subscribe({
             next: (res) => {
-                if (this.currentUser) {
+                const current = this.currentUser();
+                if (current) {
                     const user = res.body as User;
-                    this.currentUser.vcsAccessToken = user.vcsAccessToken;
-                    this.currentUser.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
-                    this.edit = false;
+                    current.vcsAccessToken = user.vcsAccessToken;
+                    current.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
+                    this.currentUser.set(Object.assign(new User(), current));
+                    this.edit.set(false);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
             },
@@ -121,7 +125,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      *  Cancel creation of a new token
      */
     cancelTokenCreation() {
-        this.edit = false;
+        this.edit.set(false);
         this.expiryDate = undefined;
         this.validExpiryDate = false;
     }

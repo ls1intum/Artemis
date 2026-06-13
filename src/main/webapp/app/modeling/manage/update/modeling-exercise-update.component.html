@@ -59,7 +59,7 @@
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution"></label>
             <jhi-modeling-editor
                 [diagramType]="modelingExercise.diagramType"
-                [umlModel]="exampleSolution"
+                [umlModel]="exampleSolution()"
                 (onModelChanged)="calculateFormSectionStatus()"
                 [withExplanation]="false"
                 [scrollLock]="true"
@@ -195,7 +195,7 @@
     <jhi-form-footer
         [isImport]="isImport"
         [isCreation]="!modelingExercise.id"
-        [isSaving]="isSaving"
+        [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || modelingExercise.exampleSolutionPublicationDateError)"
         (onCancel)="previousState()"
         (save)="save()"

@@ -158,11 +158,11 @@ describe('SharingComponent', () => {
 
     it('test formatted ExpiryDate', () => {
         const someValidityDate = new Date('1.1.2025 17:30');
-        fixture.componentInstance.shoppingBasket = {
+        fixture.componentInstance.shoppingBasket.set({
             exerciseInfo: [],
             userInfo: { email: 'test@banana.com' },
             tokenValidUntil: someValidityDate,
-        };
+        });
         expect(fixture.componentInstance.formattedExpiryDate).toBe(someValidityDate.toLocaleString());
     });
 

@@ -298,7 +298,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
 
@@ -330,7 +330,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show backend error alert and reset saving state on save error', async () => {
@@ -348,7 +348,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('modelingExercise.update.error', 'modelingExercise.update.error.message', { exerciseId: 123 });
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show generic error alert when save error has no backend title', async () => {
@@ -359,7 +359,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('error.http.400');
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
     });

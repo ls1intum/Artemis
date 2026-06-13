@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
@@ -24,7 +24,7 @@ export class AboutUsComponent implements OnInit {
     readonly RELEASE_NOTES_URL = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
-    data: AboutUsModel;
+    readonly data = signal<AboutUsModel | undefined>(undefined);
     gitCommitId?: string;
     gitBranchName?: string;
     operatorName?: string;
@@ -64,14 +64,16 @@ export class AboutUsComponent implements OnInit {
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
             // Map contributors into the model, as the returned data are just plain objects
-            this.data = {
+            const mappedData: AboutUsModel = {
                 ...data,
                 contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
             };
 
             // Sort by last name
             // Either the last "word" in the name, or the dedicated sortBy field, if present
-            this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
+            mappedData.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
+
+            this.data.set(mappedData);
         });
 
         const profileInfo = this.profileService.getProfileInfo();

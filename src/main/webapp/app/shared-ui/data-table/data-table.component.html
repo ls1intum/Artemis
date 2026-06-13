@@ -4,11 +4,11 @@
             @if (showPageSizeDropdown()) {
                 <div ngbDropdown class="d-inline-block me-2">
                     <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
-                        {{ perPageTranslation(pagingValue) | artemisTranslate: { number: pagingValue } }}
+                        {{ perPageTranslation(pagingValue()) | artemisTranslate: { number: pagingValue() } }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         @for (pagingOption of PAGING_VALUES; track pagingOption) {
-                            <button (click)="setEntitiesPerPage(pagingOption)" [class.selected]="pagingOption === pagingValue" ngbDropdownItem>
+                            <button (click)="setEntitiesPerPage(pagingOption)" [class.selected]="pagingOption === pagingValue()" ngbDropdownItem>
                                 {{ perPageTranslation(pagingOption) | artemisTranslate: { number: pagingOption } }}
                             </button>
                         }

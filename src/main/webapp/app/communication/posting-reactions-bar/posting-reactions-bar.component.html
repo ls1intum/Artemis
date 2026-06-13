@@ -74,10 +74,10 @@
         <!-- Emoji picker -->
         @if ((isAnyReactionCountAboveZero() && isEmojiCount()) || !isEmojiCount()) {
             <ng-container>
-                <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector = !showReactionSelector" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+                <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector.set(!showReactionSelector())" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
                     <fa-icon
                         [icon]="getPostingType() === 'post' ? faSmile : faSmile"
-                        [class.open-selector]="showReactionSelector"
+                        [class.open-selector]="showReactionSelector()"
                         [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
                     />
                 </button>
@@ -87,7 +87,7 @@
                     [cdkConnectedOverlayHasBackdrop]="true"
                     [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
                     [cdkConnectedOverlayOrigin]="trigger"
-                    [cdkConnectedOverlayOpen]="showReactionSelector"
+                    [cdkConnectedOverlayOpen]="showReactionSelector()"
                     (backdropClick)="toggleEmojiSelect()"
                 >
                     <jhi-emoji-picker

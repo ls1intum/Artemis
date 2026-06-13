@@ -1,16 +1,16 @@
-@if (exercise) {
+@if (exercise(); as exercise) {
     <div>
         <h2 class="row mb-5 col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title"></h2>
         <div class="mb-3 d-flex justify-content-around">
-            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics" [exerciseType]="exercise.type!" />
+            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics()" [exerciseType]="exercise.type!" />
         </div>
-        @if (exerciseStatistics) {
+        @if (exerciseStatistics(); as exerciseStatistics) {
             <jhi-statistics-score-distribution-graph
-                [averageScoreOfExercise]="exerciseStatistics?.averageScoreOfExercise"
-                [scoreDistribution]="exerciseStatistics?.scoreDistribution"
-                [numberOfExerciseScores]="exerciseStatistics?.numberOfExerciseScores"
+                [averageScoreOfExercise]="exerciseStatistics.averageScoreOfExercise"
+                [scoreDistribution]="exerciseStatistics.scoreDistribution"
+                [numberOfExerciseScores]="exerciseStatistics.numberOfExerciseScores"
                 [exerciseType]="exercise.type!"
-                [courseId]="course.id!"
+                [courseId]="course()?.id!"
                 [exerciseId]="exercise.id!"
             />
         }

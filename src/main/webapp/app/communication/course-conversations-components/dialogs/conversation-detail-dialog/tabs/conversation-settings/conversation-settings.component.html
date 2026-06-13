@@ -12,7 +12,7 @@
                         ></button>
                     }
                 </div>
-                @if (conversationAsChannel; as channel) {
+                @if (conversationAsChannel(); as channel) {
                     @if (canChangeChannelPrivacyState) {
                         <div class="col-12 settings-section text-center">
                             <button type="button" class="btn btn-danger privacy-toggle" (click)="toggleChannelPrivacy()">

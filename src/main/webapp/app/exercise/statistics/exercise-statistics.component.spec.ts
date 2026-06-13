@@ -85,9 +85,9 @@ describe('ExerciseStatisticsComponent', () => {
         expect(component).not.toBeNull();
         expect(statisticsSpy).toHaveBeenCalledTimes(1);
         expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
+        expect(component.exerciseStatistics()?.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics()?.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics()?.absoluteAveragePoints).toBe(5);
     });
 
     it('should trigger when tab changed', () => {
@@ -101,8 +101,8 @@ describe('ExerciseStatisticsComponent', () => {
         expect(component.currentSpan).toBe(SpanType.MONTH);
         expect(statisticsSpy).toHaveBeenCalledTimes(1);
         expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
+        expect(component.exerciseStatistics()?.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics()?.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics()?.absoluteAveragePoints).toBe(5);
     });
 });

@@ -54,7 +54,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     page = 1;
     itemsPerPage = 10;
     totalItems = 0;
-    isSearching = true;
+    readonly isSearching = signal(true);
     searchTerm = '';
 
     // icons
@@ -140,7 +140,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                     return searchTerm.trim().toLowerCase();
                 }),
                 tap((searchTerm) => {
-                    this.isSearching = true;
+                    this.isSearching.set(true);
                     this.searchTerm = searchTerm;
                 }),
                 switchMap(() => {
@@ -161,11 +161,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: HttpResponse<ConversationUserDTO[]>) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     this.onSuccess(res.body, res.headers);
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     onError(this.alertService, errorResponse);
                 },
             });

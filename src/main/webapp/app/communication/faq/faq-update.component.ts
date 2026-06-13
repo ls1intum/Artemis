@@ -42,9 +42,9 @@ export class FaqUpdateComponent implements OnInit {
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     faq: Faq;
-    isSaving: boolean;
+    readonly isSaving = signal(false);
     isAllowedToSave: boolean;
-    existingCategories: FaqCategory[];
+    readonly existingCategories = signal<FaqCategory[]>([]);
     faqCategories: FaqCategory[];
     courseId: number;
     isAtLeastInstructor = false;
@@ -74,7 +74,7 @@ export class FaqUpdateComponent implements OnInit {
     readonly faBan = faBan;
 
     ngOnInit() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
@@ -105,7 +105,7 @@ export class FaqUpdateComponent implements OnInit {
      * This function is called by pressing save after creating or editing a faq
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, UpdateFaqDTO.toUpdateDto(this.faq)));
@@ -131,7 +131,7 @@ export class FaqUpdateComponent implements OnInit {
         if (!this.faq.id) {
             this.faqService.find(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                     const faqBody = response.body;
                     if (faqBody) {
                         this.faq = faqBody;
@@ -162,7 +162,7 @@ export class FaqUpdateComponent implements OnInit {
      * @param errorRes the errorRes handed to the alert service
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
         if (errorRes.error?.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
@@ -177,7 +177,7 @@ export class FaqUpdateComponent implements OnInit {
 
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
+            this.existingCategories.set(existingCategories);
         });
     }
 

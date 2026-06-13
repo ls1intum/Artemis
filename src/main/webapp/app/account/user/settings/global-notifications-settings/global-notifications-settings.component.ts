@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -56,7 +56,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings',
         },
     ];
-    notificationSettings: { [key: string]: boolean } | undefined;
+    readonly notificationSettings = signal<{ [key: string]: boolean } | undefined>(undefined);
 
     private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
     private profileService = inject(ProfileService);
@@ -86,7 +86,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         this.getAllSub?.unsubscribe();
         this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
             next: (settings: { [key: string]: boolean } | undefined) => {
-                this.notificationSettings = settings;
+                this.notificationSettings.set(settings);
             },
             error: (error) => {
                 onError(this.alertService, error);
@@ -103,8 +103,9 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         this.updateSub?.unsubscribe();
         this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
-                if (this.notificationSettings) {
-                    this.notificationSettings[type] = enabled;
+                const current = this.notificationSettings();
+                if (current) {
+                    this.notificationSettings.set({ ...current, [type]: enabled });
                 }
                 this.alertService.success('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
             },

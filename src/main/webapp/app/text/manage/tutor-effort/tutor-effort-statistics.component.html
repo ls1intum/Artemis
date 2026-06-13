@@ -5,7 +5,7 @@
             <fa-icon [icon]="faSync" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
     </div>
-    @if (tutorEfforts && tutorEfforts.length > 0) {
+    @if (tutorEfforts() && tutorEfforts().length > 0) {
         <div>
             <table class="table">
                 <tr>
@@ -13,7 +13,7 @@
                     <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span></th>
                     <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
                     <th class="d-flex flex-row align-items-center justify-content-center">
-                        @if (showMedianLegend) {
+                        @if (showMedianLegend()) {
                             <div class="color-legend"></div>
                         }
                         <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.effortMedian"></span>
@@ -21,11 +21,11 @@
                     <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfTutorsInvolved"></span></th>
                 </tr>
                 <tr>
-                    <td>{{ numberOfSubmissions ? numberOfSubmissions : '0' }}</td>
-                    <td>{{ totalTimeSpent ? totalTimeSpent : '< 1 min' }}</td>
-                    <td>{{ averageTimeSpent ? averageTimeSpent : '0' }}</td>
-                    <td>{{ medianValue ? medianValue : '0.00' }}</td>
-                    <td>{{ numberOfTutorsInvolvedInCourse ? numberOfTutorsInvolvedInCourse : '0' }}</td>
+                    <td>{{ numberOfSubmissions() ? numberOfSubmissions() : '0' }}</td>
+                    <td>{{ totalTimeSpent() ? totalTimeSpent() : '< 1 min' }}</td>
+                    <td>{{ averageTimeSpent() ? averageTimeSpent() : '0' }}</td>
+                    <td>{{ medianValue() ? medianValue() : '0.00' }}</td>
+                    <td>{{ numberOfTutorsInvolvedInCourse() ? numberOfTutorsInvolvedInCourse() : '0' }}</td>
                 </tr>
                 <tr></tr>
             </table>
@@ -44,10 +44,10 @@
                         [yAxis]="true"
                         [showXAxisLabel]="true"
                         [showYAxisLabel]="true"
-                        [xAxisLabel]="xAxisLabel"
-                        [yAxisLabel]="yAxisLabel"
+                        [xAxisLabel]="xAxisLabel()"
+                        [yAxisLabel]="yAxisLabel()"
                         [yAxisTickFormatting]="yAxisTickFormatting"
-                        [yScaleMax]="yScaleMax"
+                        [yScaleMax]="yScaleMax()"
                         (select)="onSelect()"
                     >
                         <ng-template #tooltipTemplate let-model="model">
@@ -71,7 +71,7 @@
             </div>
         </div>
     }
-    @if ((tutorEfforts && tutorEfforts.length === 0) || !tutorEfforts) {
+    @if ((tutorEfforts() && tutorEfforts().length === 0) || !tutorEfforts()) {
         <div class="text-center">
             <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.noData"></span>
         </div>

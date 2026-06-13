@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -53,18 +53,18 @@ export class Lti13DeepLinkingComponent implements OnInit {
     protected readonly faWrench = faWrench;
 
     courseId: number;
-    exercises: Exercise[];
-    lectures: Lecture[];
+    readonly exercises = signal<Exercise[]>([]);
+    readonly lectures = signal<Lecture[]>([]);
     selectedExercises?: Set<number> = new Set();
     selectedLectures?: Set<number> = new Set();
     isCompetencySelected = false;
     isLearningPathSelected = false;
     isIrisSelected = false;
-    course: Course;
+    readonly course = signal<Course | undefined>(undefined);
 
     predicate = 'type';
     reverse = false;
-    isLinking = true;
+    readonly isLinking = signal(true);
 
     //grouping
     isExerciseGroupingActive = false;
@@ -82,10 +82,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
             this.courseId = Number(params['courseId']);
 
             if (!this.courseId) {
-                this.isLinking = false;
+                this.isLinking.set(false);
                 return;
             }
-            if (!this.isLinking) {
+            if (!this.isLinking()) {
                 return;
             }
 
@@ -93,12 +93,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 if (user) {
                     this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
                         if (findWithExercisesResult?.body) {
-                            this.course = findWithExercisesResult.body;
+                            this.course.set(findWithExercisesResult.body);
                             if (findWithExercisesResult?.body?.exercises) {
-                                this.exercises = findWithExercisesResult.body.exercises;
+                                this.exercises.set(findWithExercisesResult.body.exercises);
                             }
                             if (findWithExercisesResult?.body?.lectures) {
-                                this.lectures = findWithExercisesResult.body.lectures;
+                                this.lectures.set(findWithExercisesResult.body.lectures);
                             }
                         }
                     });
@@ -130,7 +130,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * Sorts the list of exercises based on the selected predicate and order.
      */
     sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+        const sortedExercises = [...this.exercises()];
+        this.sortService.sortByProperty(sortedExercises, this.predicate, this.reverse);
+        this.exercises.set(sortedExercises);
     }
 
     /**
@@ -265,12 +267,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                         if (response.status === 200 && response.body) {
                             window.location.replace(response.body.targetLinkUri);
                         } else {
-                            this.isLinking = false;
+                            this.isLinking.set(false);
                             this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
                         }
                     },
                     error: (error) => {
-                        this.isLinking = false;
+                        this.isLinking.set(false);
                         onError(this.alertService, error);
                     },
                 });

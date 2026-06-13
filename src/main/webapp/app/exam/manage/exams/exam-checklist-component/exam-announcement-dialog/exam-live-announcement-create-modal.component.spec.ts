@@ -54,7 +54,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     it('should initialize component with default properties from dialog config', () => {
         fixture.detectChanges();
-        expect(component.status).toBe('not_submitted');
+        expect(component.status()).toBe('not_submitted');
         expect(component.examId).toBe(1);
         expect(component.courseId).toBe(2);
     });
@@ -62,7 +62,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     it('should update text content and announcement when textContentChanged() is called', () => {
         component.textContentChanged('new text');
         expect(component.textContent).toBe('new text');
-        expect(component.announcement?.text).toBe('new text');
+        expect(component.announcement()?.text).toBe('new text');
     });
 
     it('should close the dialog when clear() is called', () => {
@@ -75,7 +75,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
         fixture.detectChanges();
         component.submitAnnouncement();
-        expect(component.status).toBe('submitting');
+        expect(component.status()).toBe('submitting');
         fixture.changeDetectorRef.detectChanges();
 
         let contentSpan = fixture.debugElement.query(By.css('h2 > span'));
@@ -85,7 +85,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
         testingSubject.next({ id: 1, text: 'new announcement' } as any as ExamWideAnnouncementEvent);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.status).toBe('submitted');
+        expect(component.status()).toBe('submitted');
 
         contentSpan = fixture.debugElement.query(By.css('h2 > span'));
         expect(contentSpan).toBeTruthy();
@@ -96,7 +96,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
         fixture.detectChanges();
         component.submitAnnouncement();
-        expect(component.status).toBe('not_submitted');
+        expect(component.status()).toBe('not_submitted');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
     });
 });

@@ -1,8 +1,8 @@
 <div class="task">
     @if (!onlyViewTestCases) {
         <div class="d-flex">
-            <button type="button" (click)="open = !open" class="task__collapse">
-                <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight" />
+            <button type="button" (click)="open.set(!open())" class="task__collapse">
+                <fa-icon class="me-2" [icon]="open() ? faAngleDown : faAngleRight" />
             </button>
             <div class="task__row">
                 <div class="task__row__cell gap-3">
@@ -71,7 +71,7 @@
             </div>
         </div>
     }
-    @if (open) {
+    @if (open()) {
         <div class="task__body">
             @for (test of task().testCases; track test; let j = $index) {
                 <div class="task__row" [class.bg-secondary]="!test.active">

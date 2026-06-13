@@ -148,7 +148,7 @@ describe('FaqUpdateComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
     });
 
     it('should propose faq', () => {
@@ -172,7 +172,7 @@ describe('FaqUpdateComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
     });
 
     it('should edit a faq', () => {
@@ -270,7 +270,7 @@ describe('FaqUpdateComponent', () => {
         const error = { status: 404 };
         vi.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqUpdateComponent.save();
-        expect(faqUpdateComponent.isSaving).toBe(false);
+        expect(faqUpdateComponent.isSaving()).toBe(false);
         expect(alertServiceStub).toHaveBeenCalledOnce();
         vi.runAllTimers();
     });
