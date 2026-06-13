@@ -1,9 +1,15 @@
 import dayjs from 'dayjs/esm';
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+
+/** Minimal team assignment configuration sent to the server (matches the server-side TeamAssignmentConfigDTO). */
+export interface TeamAssignmentConfigDTO {
+    minTeamSize?: number;
+    maxTeamSize?: number;
+}
 
 /**
  * DTO for updating text exercises.
@@ -42,12 +48,24 @@ export interface UpdateTextExerciseDTO {
     // Competency links as DTOs
     competencyLinks?: CompetencyLinkDTO[];
 
+    // Mode and team configuration (only honored at creation time on the server)
+    mode?: ExerciseMode;
+    teamAssignmentConfig?: TeamAssignmentConfigDTO;
+
     // Course/ExerciseGroup references (by ID)
     courseId?: number;
     exerciseGroupId?: number;
 
     // TextExercise specific fields
     exampleSolution?: string;
+}
+
+/**
+ * DTO for importing text exercises. Superset of {@link UpdateTextExerciseDTO} carrying the additional configuration
+ * needed during import. Matches the server-side ImportTextExerciseDTO record.
+ */
+export interface ImportTextExerciseDTO extends UpdateTextExerciseDTO {
+    plagiarismDetectionConfig?: unknown;
 }
 
 /**
@@ -118,5 +136,23 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         courseId,
         exerciseGroupId,
         exampleSolution: textExercise.exampleSolution,
+        mode: textExercise.mode,
+        teamAssignmentConfig: textExercise.teamAssignmentConfig
+            ? { minTeamSize: textExercise.teamAssignmentConfig.minTeamSize, maxTeamSize: textExercise.teamAssignmentConfig.maxTeamSize }
+            : undefined,
+    };
+}
+
+/**
+ * Converts a TextExercise entity to an ImportTextExerciseDTO (flat course/exerciseGroup ids plus mode, team and
+ * plagiarism configuration), so the import endpoint receives the dumb DTO shape instead of a nested entity.
+ *
+ * @param textExercise the (adapted) source exercise to import
+ * @returns the corresponding ImportTextExerciseDTO
+ */
+export function toImportTextExerciseDTO(textExercise: TextExercise): ImportTextExerciseDTO {
+    return {
+        ...toUpdateTextExerciseDTO(textExercise),
+        plagiarismDetectionConfig: textExercise.plagiarismDetectionConfig,
     };
 }
