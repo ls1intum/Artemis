@@ -45,8 +45,12 @@ export type LineChartConfig = BaseChartConfig<'line'>;
 export interface DoughnutChartConfig {
     /** Width of the ring as fraction of the radius, as in ngx-charts (default 0.25 → cutout '75%'). Pass 1 for a full pie chart. */
     arcWidth?: number;
-    /** Outer radius as a px number or '%' of the available space. Defaults to chart.js '100%' (fills the canvas); use e.g. '75%' to leave an ngx-charts-style margin in tight containers. */
-    radius?: number | string;
+    /**
+     * Inset around the arc in px. Defaults to 20 to reproduce ngx-charts' fixed pie/doughnut margin —
+     * chart.js otherwise fills the whole canvas, rendering the arc larger than the previous charts.
+     * Pass 0 to fill the container.
+     */
+    padding?: number;
     legend?: BaseChartConfig['legend'];
     tooltip?: BaseChartConfig<'doughnut'>['tooltip'];
 }
@@ -212,7 +216,7 @@ export function doughnutChartOptions(config: DoughnutChartConfig): ChartOptions<
         maintainAspectRatio: false,
         animation: false,
         cutout: `${Math.round((1 - arcWidth) * 100)}%`,
-        radius: config.radius,
+        layout: { padding: config.padding ?? 20 },
         plugins: {
             legend: buildLegend(config.legend),
             tooltip: buildTooltip(config.tooltip),
