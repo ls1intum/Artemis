@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,12 +38,14 @@ import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
@@ -73,10 +77,13 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final TempFileUtilService tempFileUtilService;
 
+    private final Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService;
+
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService, GitService gitService, FileService fileService,
-            ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService) {
+            ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService,
+            Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
@@ -88,6 +95,7 @@ public class ProgrammingExerciseImportFromFileService {
         this.profileService = profileService;
         this.buildPlanRepository = buildPlanRepository;
         this.tempFileUtilService = tempFileUtilService;
+        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
     }
 
     /**
@@ -130,6 +138,9 @@ public class ProgrammingExerciseImportFromFileService {
             checkRepositoriesExist(importExerciseDir);
 
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
+
+            handleLegacyProgrammingExercise(originalProgrammingExercise);
+
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
@@ -383,5 +394,24 @@ public class ProgrammingExerciseImportFromFileService {
             throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
         return result.getFirst();
+    }
+
+    /**
+     * This handles the build config where the buildPlanConfiguration is still in the old format.
+     *
+     * @param programmingExercise the exercise to handle
+     * @throws JsonProcessingException when serialization failed
+     */
+    private void handleLegacyProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildScript() == null) {
+            return;
+        }
+
+        final Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = legacyBuildPlanConverterService.orElseThrow().convertLegacyBuildPlanConfiguration(programmingExercise);
+        if (buildPlanPhasesDTO.isEmpty()) {
+            throw new BadRequestAlertException("The build plan is in an invalid format!", "programmingExercise", "buildPlanConfigurationInvalid");
+        }
+
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.orElseThrow().toBuildPlanConfiguration());
     }
 }

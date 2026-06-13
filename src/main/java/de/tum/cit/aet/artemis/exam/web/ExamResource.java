@@ -50,6 +50,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
@@ -324,7 +326,12 @@ public class ExamResource {
         boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
         if (scheduleRelevantExamSettingsChanged) {
             if (automaticAfterDueDateService.isPresent()) {
-                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(examWithExercises, originalLatestEndDate);
+                try {
+                    automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(examWithExercises, originalLatestEndDate);
+                }
+                catch (JsonProcessingException e) {
+                    log.error("The build plan configuration is invalid for a programming exercise in exam {}", examWithExercises.getId());
+                }
             }
             final Set<Long> programmingExerciseIds = examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                     .filter(ProgrammingExercise.class::isInstance).map(DomainObject::getId).collect(Collectors.toSet());
@@ -376,8 +383,13 @@ public class ExamResource {
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
         if (automaticAfterDueDateService.isPresent()) {
-            automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
-                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+            try {
+                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
+                        .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+            }
+            catch (JsonProcessingException e) {
+                log.error("The build plan configuration is invalid for a programming exercise in exam {}", exam.getId());
+            }
         }
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
