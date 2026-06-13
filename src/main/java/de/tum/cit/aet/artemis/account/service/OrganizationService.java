@@ -2,15 +2,30 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.account.repository.OrganizationSpecs;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
@@ -100,6 +115,62 @@ public class OrganizationService {
             index(oldOrganization);
         }
         return organizationRepository.save(oldOrganization);
+    }
+
+    /**
+     * Returns a paginated, filtered, and sorted list of all organizations.
+     * When {@code withCounts} is {@code true}, user and course counts are loaded via two batch queries
+     * (one per count type) instead of N+1 individual queries.
+     *
+     * @param search     the search criteria containing the search term and pagination/sorting info
+     * @param withCounts whether to include aggregated user and course counts
+     * @return a page of {@link OrganizationDTO}s
+     */
+    public Page<OrganizationDTO> getAllOrganizations(SearchTermPageableSearchDTO<String> search, boolean withCounts) {
+        Specification<Organization> spec = Specification.where(OrganizationSpecs.getOrganizationSpecification(search.getSearchTerm()))
+                .and(OrganizationSpecs.orderedForOrganizations(search.getSortedColumn(), search.getSortingOrder(), withCounts));
+        var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
+        Page<Organization> orgPage = organizationRepository.findAll(spec, pageable);
+        if (!withCounts) {
+            return orgPage.map(o -> new OrganizationDTO(o.getId(), o.getName(), o.getShortName(), o.getEmailPattern(), o.getLogoUrl(), null, null));
+        }
+        List<Long> orgIds = orgPage.getContent().stream().map(Organization::getId).toList();
+        if (orgIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        Map<Long, Long> userCounts = organizationRepository.findUserCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+        Map<Long, Long> courseCounts = organizationRepository.findCourseCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+        return orgPage.map(o -> new OrganizationDTO(o.getId(), o.getName(), o.getShortName(), o.getEmailPattern(), o.getLogoUrl(), userCounts.getOrDefault(o.getId(), 0L),
+                courseCounts.getOrDefault(o.getId(), 0L)));
+    }
+
+    /**
+     * Returns a paginated, filtered, and sorted list of users belonging to the given organization.
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return a page of {@link OrganizationMemberDTO}s
+     */
+    public Page<OrganizationMemberDTO> getUsersByOrganizationId(long organizationId, SearchTermPageableSearchDTO<String> search) {
+        Specification<User> spec = OrganizationSpecs.getMemberSpecification(organizationId, search.getSearchTerm())
+                .and(OrganizationSpecs.orderedForMembers(search.getSortedColumn(), search.getSortingOrder()));
+        var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
+        return userRepository.findAll(spec, pageable).map(u -> new OrganizationMemberDTO(u.getId(), u.getLogin(),
+                ((u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "")).trim(), u.getEmail()));
+    }
+
+    /**
+     * Returns a paginated, filtered, and sorted list of courses belonging to the given organization.
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return a page of {@link OrganizationCourseDTO}s
+     */
+    public Page<OrganizationCourseDTO> getCoursesByOrganizationId(long organizationId, SearchTermPageableSearchDTO<String> search) {
+        Specification<Course> spec = OrganizationSpecs.getCourseSpecification(organizationId, search.getSearchTerm())
+                .and(OrganizationSpecs.orderedForCourses(search.getSortedColumn(), search.getSortingOrder()));
+        var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
+        return courseRepository.findAll(spec, pageable).map(c -> new OrganizationCourseDTO(c.getId(), c.getTitle(), c.getShortName()));
     }
 
     /**

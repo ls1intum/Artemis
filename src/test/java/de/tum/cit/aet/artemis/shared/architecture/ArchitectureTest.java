@@ -90,7 +90,6 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
-import de.tum.cit.aet.artemis.account.repository.CustomOrganizationRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
@@ -478,7 +477,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule rule = noFields().should().haveRawType(jakarta.persistence.EntityManager.class).orShould().haveRawType(jakarta.persistence.EntityManagerFactory.class)
                 .because("classes should use Spring Data repositories instead of EntityManager directly. " + "See server-development.mdx for details.");
         // TODO: Refactor these classes to eliminate direct EntityManager usage and remove from this exception list.
-        final var exceptions = new Class[] { RepositoryImpl.class, CustomOrganizationRepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
+        final var exceptions = new Class[] { RepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
