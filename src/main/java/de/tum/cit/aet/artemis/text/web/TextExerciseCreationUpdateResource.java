@@ -468,6 +468,14 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
+        // Mode and team configuration are only set at creation time (immutable afterwards). Guard against null so the
+        // entity keeps its INDIVIDUAL default when the (client) DTO omits the mode.
+        if (dto.mode() != null) {
+            exercise.setMode(dto.mode());
+        }
+        if (dto.teamAssignmentConfig() != null) {
+            exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
+        }
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }

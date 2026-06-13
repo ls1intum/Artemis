@@ -243,6 +243,19 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getTextSubmissionWithoutAssessment_studentVisibleForInstructor() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        TextSubmissionWithoutAssessmentDTO textSubmissionWithoutAssessment = request
+                .get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class);
+
+        assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
+        assertThat(textSubmissionWithoutAssessment.id()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(textSubmissionWithoutAssessment.participation().student()).as(TEST_PREFIX + "student of participation is visible for instructor").isNotNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

@@ -37,9 +37,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
-import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -193,7 +191,7 @@ public class TextExerciseExportImportResource {
         exercise.setExampleSolution(dto.exampleSolution());
 
         if (dto.teamAssignmentConfig() != null) {
-            exercise.setTeamAssignmentConfig(toTeamAssignmentConfig(dto.teamAssignmentConfig()));
+            exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
         }
         if (dto.plagiarismDetectionConfig() != null) {
             exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
@@ -235,13 +233,6 @@ public class TextExerciseExportImportResource {
             exercise.setExerciseGroup(exerciseGroup);
         }
         return exercise;
-    }
-
-    private static TeamAssignmentConfig toTeamAssignmentConfig(TeamAssignmentConfigDTO dto) {
-        TeamAssignmentConfig config = new TeamAssignmentConfig();
-        config.setMinTeamSize(dto.minTeamSize());
-        config.setMaxTeamSize(dto.maxTeamSize());
-        return config;
     }
 
     private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {

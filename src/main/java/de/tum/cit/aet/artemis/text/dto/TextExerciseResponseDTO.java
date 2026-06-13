@@ -36,7 +36,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
         String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
         Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria,
-        Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed) implements Serializable {
+        Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed,
+        Set<ExampleSubmissionDTO> exampleSubmissions) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -97,6 +98,11 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
 
+        // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
+        Set<ExampleSubmissionDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exercise.getExampleSubmissions())
+                ? exercise.getExampleSubmissions().stream().map(ExampleSubmissionDTO::of).collect(Collectors.toSet())
+                : null;
+
         return new TextExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
@@ -104,6 +110,6 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getGradingInstructions(), exercise.getCategories(), exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, exerciseGroupId, examId,
                 examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed());
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs);
     }
 }

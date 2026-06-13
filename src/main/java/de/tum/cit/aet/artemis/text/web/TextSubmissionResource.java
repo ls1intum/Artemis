@@ -293,12 +293,15 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        textSubmissionService.hideDetails(textSubmission, user);
 
         // The client resolves the participation via submission.participation; it carries the exercise and the locked
-        // submission with its results. Tutors must not see the student (double-blind), so includeStudent is false.
+        // submission with its results. Tutors must not see the student (double-blind); instructors may, matching the
+        // previous hideDetails behavior which only stripped the participant for non-instructors.
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         studentParticipation.setSubmissions(Set.of(textSubmission));
-        TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, false).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
+        TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, includeStudent).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
         return ResponseEntity.ok().body(TextSubmissionWithoutAssessmentDTO.of(textSubmission, participationDTO));
     }
 

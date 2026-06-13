@@ -373,6 +373,19 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void submitTextAssessment_withOmittedFeedbacks_doesNotFail() throws Exception {
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
+        // feedbacks omitted entirely (null), not just an empty list: this used to NPE/500 on the unguarded feedbacks.stream() path.
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(null, null, null);
+
+        ResultDTO result = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/"
+                + Objects.requireNonNull(latestResultId(submissionWithoutAssessment)) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+
+        assertThat(result).as("submitting an assessment with omitted feedbacks returns 200 (not 500)").isNotNull();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     @ValueSource(booleans = { true, false })

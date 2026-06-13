@@ -295,6 +295,35 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createTeamTextExercise() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+        textExercise.setId(null);
+        textExercise.setTitle("New Team Text Exercise");
+        textExercise.setChannelName("exercise-new-team-text");
+        textExercise.setMode(ExerciseMode.TEAM);
+        TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(textExercise);
+        teamAssignmentConfig.setMinTeamSize(2);
+        teamAssignmentConfig.setMaxTeamSize(5);
+        textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+
+        TextExerciseResponseDTO response = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(response.mode()).as("team mode was persisted on the response").isEqualTo(ExerciseMode.TEAM);
+        assertThat(response.teamAssignmentConfig()).as("team assignment config is present on the response").isNotNull();
+        assertThat(response.teamAssignmentConfig().minTeamSize()).as("min team size was persisted").isEqualTo(2);
+        assertThat(response.teamAssignmentConfig().maxTeamSize()).as("max team size was persisted").isEqualTo(5);
+
+        TextExercise reloaded = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(response.id()).orElseThrow();
+        assertThat(reloaded.getMode()).as("team mode was persisted on the entity").isEqualTo(ExerciseMode.TEAM);
+        assertThat(reloaded.getTeamAssignmentConfig()).as("team assignment config was persisted on the entity").isNotNull();
+        assertThat(reloaded.getTeamAssignmentConfig().getMinTeamSize()).as("min team size was persisted on the entity").isEqualTo(2);
+        assertThat(reloaded.getTeamAssignmentConfig().getMaxTeamSize()).as("max team size was persisted on the entity").isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise_setExerciseTitleNull_badRequest() throws Exception {
         TextExercise textExercise = new TextExercise();
 
@@ -605,7 +634,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(),
                 textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
                 textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(),
-                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, null, null,
+                Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedCreateDto, TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -619,7 +649,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(),
                 textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
                 textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
-                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                null, null, null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedUpdateDto, TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -998,6 +1028,23 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
 
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getTextExerciseWithExampleSubmissions() throws Exception {
+        var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", textExercise, true);
+        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
+        final long exampleSubmissionId = exampleSubmission.getId();
+
+        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+
+        assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+        assertThat(textExerciseServer.exampleSubmissions()).as("example submissions are present in the single GET").isNotNull();
+        assertThat(textExerciseServer.exampleSubmissions()).as("the created example submission is returned").anySatisfy(dto -> assertThat(dto.id()).isEqualTo(exampleSubmissionId));
+        assertThat(textExerciseServer.exampleSubmissions()).as("the returned example submission carries its submission").filteredOn(dto -> dto.id().equals(exampleSubmissionId))
+                .first().satisfies(dto -> assertThat(dto.submission()).isNotNull());
     }
 
     @Test

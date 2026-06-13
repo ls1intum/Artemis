@@ -23,4 +23,16 @@ public record TeamAssignmentConfigDTO(Long id, Integer minTeamSize, Integer maxT
     public static TeamAssignmentConfigDTO of(TeamAssignmentConfig teamAssignmentConfig) {
         return Optional.ofNullable(teamAssignmentConfig).map(config -> new TeamAssignmentConfigDTO(config.getId(), config.getMinTeamSize(), config.getMaxTeamSize())).orElse(null);
     }
+
+    /**
+     * Builds a transient {@link TeamAssignmentConfig} entity from this DTO (min/max team size only).
+     *
+     * @return the transient entity
+     */
+    public TeamAssignmentConfig toEntity() {
+        TeamAssignmentConfig config = new TeamAssignmentConfig();
+        config.setMinTeamSize(minTeamSize);
+        config.setMaxTeamSize(maxTeamSize);
+        return config;
+    }
 }

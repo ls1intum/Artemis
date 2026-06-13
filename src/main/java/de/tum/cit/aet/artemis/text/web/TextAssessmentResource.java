@@ -529,8 +529,11 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return the mapped list, or {@code null} if the input was {@code null}
      */
     private List<Feedback> feedbacksFromDtos(final List<FeedbackDTO> feedbackDTOs) {
+        // Mirror the previous (non-record) TextAssessmentDTO which defaulted feedbacks to an empty list: an omitted/null
+        // feedbacks field must map to an empty list, not null, so the unguarded submit path does not NPE and the
+        // save/example path still clears existing feedbacks (updateAllFeedbackItems treats null as "no change").
         if (feedbackDTOs == null) {
-            return null;
+            return new ArrayList<>();
         }
         return feedbackDTOs.stream().map(this::feedbackFromDto).collect(Collectors.toCollection(ArrayList::new));
     }

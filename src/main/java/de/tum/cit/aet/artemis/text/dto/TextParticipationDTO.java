@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.TeamDTO;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
@@ -27,7 +28,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextParticipationDTO(Long id, String type, boolean testRun, InitializationState initializationState, ZonedDateTime initializationDate,
-        ZonedDateTime individualDueDate, UserNameDTO student, TextExerciseResponseDTO exercise, List<TextSubmissionAssessmentDTO> submissions) implements Serializable {
+        ZonedDateTime individualDueDate, UserNameDTO student, TeamDTO team, TextExerciseResponseDTO exercise, List<TextSubmissionAssessmentDTO> submissions)
+        implements Serializable {
 
     /**
      * Converts a {@link StudentParticipation} into a {@link TextParticipationDTO}, without mapping the exercise (the
@@ -43,8 +45,14 @@ public record TextParticipationDTO(Long id, String type, boolean testRun, Initia
         }
 
         UserNameDTO student = null;
-        if (includeStudent && Hibernate.isInitialized(participation.getStudent().orElse(null))) {
-            student = UserNameDTO.of(participation.getStudent().orElse(null));
+        TeamDTO team = null;
+        if (includeStudent) {
+            if (Hibernate.isInitialized(participation.getStudent().orElse(null))) {
+                student = UserNameDTO.of(participation.getStudent().orElse(null));
+            }
+            if (Hibernate.isInitialized(participation.getTeam().orElse(null))) {
+                team = TeamDTO.of(participation.getTeam().orElse(null));
+            }
         }
 
         List<TextSubmissionAssessmentDTO> submissions = null;
@@ -53,7 +61,7 @@ public record TextParticipationDTO(Long id, String type, boolean testRun, Initia
         }
 
         return new TextParticipationDTO(participation.getId(), participation.getType(), participation.isTestRun(), participation.getInitializationState(),
-                participation.getInitializationDate(), participation.getIndividualDueDate(), student, null, submissions);
+                participation.getInitializationDate(), participation.getIndividualDueDate(), student, team, null, submissions);
     }
 
     /**
@@ -63,6 +71,6 @@ public record TextParticipationDTO(Long id, String type, boolean testRun, Initia
      * @return a copy carrying the exercise
      */
     public TextParticipationDTO withExercise(TextExerciseResponseDTO exercise) {
-        return new TextParticipationDTO(id, type, testRun, initializationState, initializationDate, individualDueDate, student, exercise, submissions);
+        return new TextParticipationDTO(id, type, testRun, initializationState, initializationDate, individualDueDate, student, team, exercise, submissions);
     }
 }
