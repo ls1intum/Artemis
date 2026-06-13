@@ -177,6 +177,7 @@ public class GenerationRecoveryService {
                 case MISSING_WORKED_EXAMPLE -> "Error/edge behaviour without a concrete worked example: \"" + finding.requirement() + "\"";
                 case INVENTED_REQUIREMENT -> "Requirement not asked for by the brief (confirm or remove): \"" + finding.requirement() + "\"";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
+                case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
             };
             findings.add(finding(Severity.MEDIUM, title, finding.detail()));
         }

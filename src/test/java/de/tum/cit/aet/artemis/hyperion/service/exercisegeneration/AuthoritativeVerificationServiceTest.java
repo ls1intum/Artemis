@@ -415,10 +415,10 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void integrityGates_rejectSelfComparisonHarnessThroughVerify_evenWhenTheDifferentialPasses() {
-        // The differential PASSES (solution passes, template fails) yet the tests compare the submission to ITSELF (Test.hs imports the bare Exercise/submission as the reference) — so a
+        // The differential PASSES (solution passes, template fails) yet the tests compare the submission to ITSELF (Test.hs imports the bare Exercise/submission as the reference)
+        // — so a
         // wrong submission would score 100%. The gate must compose into the verify() conjunction and reject; it must not be shadowed by the (passing) differential.
-        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs",
-                "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n");
+        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n");
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("compares the submission against ITSELF"));
@@ -427,8 +427,7 @@ class AuthoritativeVerificationServiceTest {
     @Test
     void integrityGates_acceptCorrectRenamedReferenceHarnessThroughVerify() {
         // The correct harness (Sol = the renamed reference module, Sub = the student code via Interface) must still be accepted — the gate does not regress the good path.
-        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs",
-                "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\n");
+        var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\n");
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
         assertThat(result.accepted()).isTrue();
     }

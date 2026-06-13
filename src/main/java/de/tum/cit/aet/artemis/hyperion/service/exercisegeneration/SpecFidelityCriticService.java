@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * Spec-fidelity / coverage critic — the one quality axis the differential oracle ({@link AuthoritativeVerificationService}) is structurally blind to.
@@ -291,6 +294,76 @@ public class SpecFidelityCriticService {
      * @param report the critic report
      * @return a retry-prompt fragment, or an empty string when there are no findings
      */
+    /**
+     * Languages whose default assertion failure does NOT name the behaviour — a bare {@code assertEquals(600L, actual)} reports only "expected 600 but was 500", so a human failure
+     * message is the failing student's only diagnostic. Other frameworks self-describe (Go {@code t.Errorf} format strings, Jest's auto-diff plus descriptive {@code it()} names,
+     * Catch2/gtest expression expansion), so they are deliberately out of scope and fail open.
+     */
+    private static final Set<ProgrammingLanguage> MESSAGE_SENSITIVE_LANGUAGES = Set.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
+
+    /** A JVM assertion or {@code fail()} call. */
+    private static final Pattern JVM_ASSERTION_CALL = Pattern.compile("\\b(?:assert\\w*|fail)\\s*\\(");
+
+    /**
+     * A JVM assertion/{@code fail} call carrying a string-literal argument somewhere in the same statement. Used only at the FILE level to decide a file is not WHOLLY
+     * message-less: a
+     * matched string may be a real failure message ({@code fail("...")}) or a string expected-value ({@code assertEquals("olleh", ...)}); both make the file "not wholly bare", so
+     * the
+     * check conservatively under-fires rather than risk a false advisory. The {@code [^;{}]} bound keeps the scan inside one statement and out of a braced lambda body.
+     */
+    private static final Pattern JVM_ASSERTION_WITH_STRING = Pattern.compile("\\b(?:assert\\w*|fail)\\s*\\([^;{}]*\"");
+
+    /**
+     * Deterministic, model-free advisory check: flags a graded JVM test file whose assertions carry NO human-readable failure message, so a failing student sees only the raw value
+     * mismatch with no hint at which behaviour broke (the gold-standard {@code SortingExampleBehaviorTest} pairs every branch with a descriptive {@code fail("...")}). File-level
+     * by
+     * design — it flags only a WHOLLY message-less file, which sidesteps per-assertion argument parsing and keeps false positives near zero (a mixed file, or any framework that
+     * self-describes, is left alone). Advisory only; it never affects acceptance, so it can never bounce a correctness-valid exercise into the retry budget.
+     *
+     * @param language           the exercise programming language
+     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
+     * @return one finding per wholly-message-less test file, capped at {@link #MAX_COVERAGE_FINDINGS}; empty for non-JVM languages or when every test file already messages
+     */
+    public List<SpecFidelityReport.Finding> detectMessagelessAssertions(@Nullable ProgrammingLanguage language, @Nullable Map<String, String> producedTestsFiles) {
+        if (language == null || !MESSAGE_SENSITIVE_LANGUAGES.contains(language) || producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>();
+        for (Map.Entry<String, String> entry : producedTestsFiles.entrySet()) {
+            String path = entry.getKey();
+            String content = entry.getValue();
+            if (content == null || !(path.endsWith(".java") || path.endsWith(".kt"))) {
+                continue;
+            }
+            String code = stripCommentsForAssertionScan(content);
+            if (!JVM_ASSERTION_CALL.matcher(code).find()) {
+                continue; // not a file with assertions (a helper/fixture) -> nothing to flag
+            }
+            if (!JVM_ASSERTION_WITH_STRING.matcher(code).find()) {
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE, path,
+                        "Every assertion in this graded test file is bare (no message argument), so a failing student sees only the raw value mismatch with no hint at which behaviour "
+                                + "broke."));
+                if (findings.size() >= MAX_COVERAGE_FINDINGS) {
+                    break;
+                }
+            }
+        }
+        return findings;
+    }
+
+    /** Strips {@code //} line and {@code /* *}{@code /} block comments so a commented-out assertion or message cannot skew the message-coverage scan. */
+    private static String stripCommentsForAssertionScan(String code) {
+        return code.replaceAll("(?s)/\\*.*?\\*/", " ").replaceAll("(?m)//.*$", "");
+    }
+
+    /**
+     * Renders the report's findings as an advisory block appended to the verifier-feedback retry prompt, so the agent fixes them on the next attempt while attempts remain. Clearly
+     * framed as advisory (it did not cause rejection) so the agent prioritises the hard verifier rejection. Returns an empty string when there are no findings, so the caller can
+     * append unconditionally.
+     *
+     * @param report the spec-fidelity report (its findings drive the rendered guidance)
+     * @return a retry-prompt fragment, or an empty string when there are no findings
+     */
     public String renderForRetryPrompt(SpecFidelityReport report) {
         if (!report.hasFindings()) {
             return "";
@@ -306,6 +379,9 @@ public class SpecFidelityCriticService {
                         .append("\". Add a fenced call->result example next to the [task] it illustrates (a prose \"would throw\" sentence is not enough).");
                 case INVENTED_REQUIREMENT -> builder.append("\n- The problem statement adds a graded requirement the brief did not ask for: \"").append(finding.requirement())
                         .append("\". Remove it (and any test enforcing it) unless the brief implies it, so the exercise matches the brief.");
+                case MISSING_FAILURE_MESSAGE -> builder.append("\n- The graded test file ").append(finding.requirement())
+                        .append(" asserts without a human-readable failure message, so a failing student sees only \"expected X but was Y\". Add a short message to each assertion "
+                                + "naming the behaviour that broke, e.g. assertEquals(expected, actual, \"calculateSize must sum every file regardless of nesting depth\").");
                 default -> builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
             }
         }

@@ -28,7 +28,12 @@ public record SpecFidelityReport(List<Finding> findings) {
          */
         MISSING_WORKED_EXAMPLE,
         /** A requirement/constraint the produced problem statement imposes that the instructor's brief never asked for (scope drift the instructor should confirm). */
-        INVENTED_REQUIREMENT
+        INVENTED_REQUIREMENT,
+        /**
+         * A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y" with no hint at which behaviour broke
+         * (the gold-standard Artemis test pairs every check with a descriptive message). Deterministic, advisory.
+         */
+        MISSING_FAILURE_MESSAGE
     }
 
     /**

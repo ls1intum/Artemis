@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
@@ -18,6 +19,8 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * Adversarial unit tests for the spec-fidelity / coverage critic. The critic talks to the model through the shared {@link ChatClient}; the tests wrap a mocked {@link ChatModel} in
@@ -218,5 +221,67 @@ class SpecFidelityCriticServiceTest {
         String rendered = critic.renderForRetryPrompt(report);
         assertThat(rendered).contains("did NOT cause rejection").contains("No test covers this requirement").contains("CJK").contains("grader-mechanics phrasing")
                 .contains("make the tests fail");
+    }
+
+    // --- detectMessagelessAssertions (deterministic, model-free) ---
+
+    /** A critic instance whose model is never used (the detector is deterministic). */
+    private SpecFidelityCriticService detector() {
+        return new SpecFidelityCriticService(null, objectMapper);
+    }
+
+    @Test
+    void messageless_flagsAWhollyBareJvmTestFile() {
+        // The ego-death case: every assertion is a bare value/throws check, so a failing student sees only "expected 600 but was 500".
+        String bare = "class FSSizeCalculatorTest {\n  @Test void calc() { assertEquals(600L, new FSSizeCalculator().calculateSize(root)); }\n"
+                + "  @Test void nul() { assertThrows(IllegalArgumentException.class, () -> new FSSizeCalculator().calculateSize(null)); }\n}";
+        var findings = detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/FSSizeCalculatorTest.java", bare));
+        assertThat(findings).hasSize(1);
+        assertThat(findings.get(0).kind()).isEqualTo(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE);
+        assertThat(findings.get(0).requirement()).isEqualTo("test/FSSizeCalculatorTest.java");
+    }
+
+    @Test
+    void messageless_doesNotFlagWhenAssertionsCarryAMessage() {
+        // A descriptive failure message on an assertion (the gold-standard bar) -> not flagged.
+        String messaged = "class T {\n  @Test void a() { assertEquals(600L, calc.size(root), \"size must sum every file regardless of depth\"); }\n}";
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", messaged))).isEmpty();
+    }
+
+    @Test
+    void messageless_doesNotFlagWhenFailHasAMessage() {
+        // The SortingExample idiom: if (!ok) fail("BubbleSort does not sort correctly"); counts as messaged.
+        String failStyle = "class T {\n  @Test void a() { if (!ok) fail(\"BubbleSort does not sort correctly\"); }\n}";
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", failStyle))).isEmpty();
+    }
+
+    @Test
+    void messageless_doesNotFlagAMixedFile_fileLevelThreshold() {
+        // One messaged assertion makes the file not-wholly-bare -> not flagged (conservative file-level threshold avoids over-firing on a partially-good file).
+        String mixed = "class T {\n  @Test void a() { assertEquals(1, x); }\n  @Test void b() { assertTrue(ok, \"b must hold after push\"); }\n}";
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", mixed))).isEmpty();
+    }
+
+    @Test
+    void messageless_doesNotCountACommentedOutMessageAsCoverage() {
+        // A commented-out messaged assertion must not make a wholly-bare file look messaged.
+        String commented = "class T {\n  // assertEquals(1, x, \"old message\")\n  @Test void a() { assertEquals(1, x); }\n}";
+        var findings = detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/T.java", commented));
+        assertThat(findings).hasSize(1);
+    }
+
+    @Test
+    void messageless_failsOpenForNonJvmLanguages() {
+        // Go (t.Errorf format strings), TS (Jest auto-diff + it() names) and C++ (Catch2 expression expansion) self-describe -> out of scope -> never flagged.
+        String goBare = "func TestReverse(t *testing.T){ if got != want { t.Errorf(\"x\") } }";
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.GO, Map.of("stringutils_test.go", goBare))).isEmpty();
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.TYPESCRIPT, Map.of("Stack.test.ts", "expect(s.pop()).toBe(1);"))).isEmpty();
+    }
+
+    @Test
+    void messageless_ignoresFilesWithoutAssertions() {
+        // A helper/fixture file with no assertions is not a graded test file -> nothing to flag.
+        String helper = "class Helpers {\n  static FSNode tree() { return new FSNode(\"root\", List.of()); }\n}";
+        assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/Helpers.java", helper))).isEmpty();
     }
 }

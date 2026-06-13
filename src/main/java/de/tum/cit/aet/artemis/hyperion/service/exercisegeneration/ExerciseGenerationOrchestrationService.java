@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
@@ -206,7 +208,8 @@ public class ExerciseGenerationOrchestrationService {
                 // final
                 // outcome. It is best-effort and NON-BLOCKING — it never touches `verification`, so it can never flip the accept/reject verdict; a critic failure yields no
                 // findings.
-                specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), producedTests.files(), progress);
+                specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
+                        producedTests.files(), progress);
 
                 if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
@@ -252,10 +255,20 @@ public class ExerciseGenerationOrchestrationService {
      * @param progress         the progress sink for a short transcript line
      * @return the advisory report (possibly empty); never {@code null}
      */
-    private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, Map<String, String> producedTests, Consumer<String> progress) {
+    private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language, Map<String, String> producedTests,
+            Consumer<String> progress) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = specFidelityCritic.critique(brief, problemStatement, testNames);
+            // Merge the deterministic, model-free test-feedback check (a graded test file with no failure messages) into the same advisory report — it folds into the retry prompt
+            // and
+            // the advisory review comments exactly like the brief-coverage findings, and likewise never affects acceptance.
+            List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedTests);
+            if (!messageless.isEmpty()) {
+                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+                combined.addAll(messageless);
+                report = new SpecFidelityReport(combined);
+            }
             if (report.hasFindings()) {
                 emit(progress, "Spec-fidelity review found " + report.findings().size()
                         + " advisory gap(s) against the brief (these do not affect acceptance; they are surfaced for review).");
