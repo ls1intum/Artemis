@@ -183,4 +183,62 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         vi.useRealTimers();
     });
+
+    describe('restore previous version', () => {
+        it('should not emit when no snapshot exists', () => {
+            setupWithHyperionEnabled(true);
+            const emitted: MultipleChoiceQuestion[] = [];
+            component.questionRefined.subscribe((q) => emitted.push(q));
+
+            component.restorePreviousQuestion();
+
+            expect(emitted).toHaveLength(0);
+        });
+
+        it('should store a per-question snapshot after successful refinement and restore the original question', () => {
+            vi.useFakeTimers();
+            setupWithHyperionEnabled(true);
+
+            const refinedQuestion = new MultipleChoiceQuestion();
+            refinedQuestion.title = 'Refined Title';
+            vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'AI changed it' }));
+
+            component.refinePrompt.set('make it harder');
+            runInInjectionContext(envInjector, () => component.submitRefinement());
+            vi.advanceTimersByTime(200);
+
+            // Snapshot holds the pre-refinement state
+            expect(component.previousQuestion()).toBeDefined();
+            expect(component.previousQuestion()!.title).toBe('Test Question');
+
+            const emitted: MultipleChoiceQuestion[] = [];
+            component.questionRefined.subscribe((q) => emitted.push(q));
+            const dismissedCount = { n: 0 };
+            component.reasoningDismissed.subscribe(() => dismissedCount.n++);
+
+            component.restorePreviousQuestion();
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0].title).toBe('Test Question');
+            expect(component.previousQuestion()).toBeUndefined();
+            expect(component.refinementExplanation()).toBeUndefined();
+            expect(dismissedCount.n).toBe(1);
+
+            vi.useRealTimers();
+        });
+
+        it('should not store a snapshot when the refinement call fails', () => {
+            vi.useFakeTimers();
+            setupWithHyperionEnabled(true);
+            vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(throwError(() => new Error('AI error')));
+
+            component.refinePrompt.set('refine');
+            runInInjectionContext(envInjector, () => component.submitRefinement());
+            vi.advanceTimersByTime(200);
+
+            expect(component.previousQuestion()).toBeUndefined();
+
+            vi.useRealTimers();
+        });
+    });
 });

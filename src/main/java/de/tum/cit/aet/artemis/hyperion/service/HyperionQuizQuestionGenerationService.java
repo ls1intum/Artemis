@@ -273,7 +273,7 @@ public class HyperionQuizQuestionGenerationService {
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REFINEMENT_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
-        if (output.question() == null) {
+        if (output == null || output.question() == null) {
             throw new InternalServerErrorAlertException("Refined quiz question is empty", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyResponse");
         }
 
