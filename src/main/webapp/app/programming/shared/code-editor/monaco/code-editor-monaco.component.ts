@@ -2,7 +2,6 @@ import {
     ChangeDetectionStrategy,
     Component,
     Injector,
-    NgZone,
     OnDestroy,
     ViewContainerRef,
     ViewEncapsulation,
@@ -79,7 +78,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly ngZone = inject(NgZone);
     private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
@@ -650,14 +648,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.reviewRenderScheduled = true;
-        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
-                this.reviewRenderScheduled = false;
-                this.ngZone.run(() => {
-                    this.getReviewCommentManager().renderWidgets();
-                });
-            }),
-        );
+        this.reviewRenderAnimationFrameId = requestAnimationFrame(() => {
+            this.reviewRenderScheduled = false;
+            this.getReviewCommentManager().renderWidgets();
+        });
     }
 
     public scheduleReviewCommentRenderForSelectedFile(): void {

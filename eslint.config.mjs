@@ -26,6 +26,18 @@ const blockLayerImportPatterns = (layer) => [
     `../../../../../../${layer}/**`,
 ];
 
+// The client is zoneless (`provideZonelessChangeDetection()` in app.config.ts). `NgZone` must never be
+// reintroduced: under zoneless it is a `NoopNgZone`, so `run`/`runOutsideAngular`/`runGuarded` are no-ops
+// that do NOT schedule change detection — using them creates silent stale-render bugs. This restriction is
+// added to every `no-restricted-imports` block (the foundation/ and shared-ui/ blocks override the rule, so
+// it must be repeated there to stay airtight).
+const noNgZoneImport = {
+    name: '@angular/core',
+    importNames: ['NgZone'],
+    message:
+        'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
+};
+
 // Existing `ngOnChanges` migration backlog. Keep the new rule baseline-clean by excluding unchanged
 // files that still need a focused computed()/effect() migration. Remove entries as the hooks are migrated.
 const remainingNgOnChangesMigrationBacklog = [
@@ -194,6 +206,7 @@ export default tseslint.config(
                             name: 'lodash',
                             message: "Please import from 'lodash-es' instead.",
                         },
+                        noNgZoneImport,
                     ],
                 },
             ],
@@ -231,6 +244,7 @@ export default tseslint.config(
                     paths: [
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
                     ],
                     patterns: [
                         {
@@ -260,6 +274,7 @@ export default tseslint.config(
                     paths: [
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
                     ],
                     patterns: [
                         {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
+import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/foundation/util/utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,7 +10,6 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 })
 export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private cdRef = inject(ChangeDetectorRef);
-    private ngZone = inject(NgZone);
     private translateService = inject(TranslateService);
     private serverDateService = inject(ArtemisServerDateService);
 
@@ -56,21 +55,19 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
         const dayjsInstance = dayjs(this.lastValue);
         const timeToUpdate = getSecondsUntilUpdate(dayjsInstance) * 1000;
 
-        this.currentTimer = this.ngZone.runOutsideAngular(() => {
-            if (typeof window !== 'undefined') {
-                return window.setTimeout(() => {
-                    this.lastText = this.formatFn(dayjs(this.lastValue));
+        if (typeof window !== 'undefined') {
+            this.currentTimer = window.setTimeout(() => {
+                this.lastText = this.formatFn(dayjs(this.lastValue));
 
-                    this.currentTimer = null;
-                    // markForCheck is the canonical mechanism for impure self-updating pipes (Angular's async pipe
-                    // and ngx-translate's pipe do the same): a pipe has no signal/template context of its own, so
-                    // this is the only way to re-render the host when the relative time ticks over. Works under zoneless.
-                    this.ngZone.run(() => this.cdRef.markForCheck());
-                }, timeToUpdate);
-            } else {
-                return null;
-            }
-        });
+                this.currentTimer = null;
+                // markForCheck is the canonical mechanism for impure self-updating pipes (Angular's async pipe
+                // and ngx-translate's pipe do the same): a pipe has no signal/template context of its own, so
+                // this is the only way to re-render the host when the relative time ticks over. Works under zoneless.
+                this.cdRef.markForCheck();
+            }, timeToUpdate);
+        } else {
+            this.currentTimer = null;
+        }
     }
 
     private removeTimer() {

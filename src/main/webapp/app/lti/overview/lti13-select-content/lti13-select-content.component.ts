@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,7 +20,6 @@ import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe
 export class Lti13SelectContentComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private sanitizer = inject(DomSanitizer);
-    private zone = inject(NgZone);
 
     jwt: string;
     id: string;
@@ -42,9 +41,7 @@ export class Lti13SelectContentComponent implements OnInit {
             // postpone auto-submit until after view updates are completed
             // if not jwt and id is not submitted correctly
             if (this.jwt && this.id) {
-                this.zone.runOutsideAngular(() => {
-                    setTimeout(() => this.autoSubmitForm());
-                });
+                setTimeout(() => this.autoSubmitForm());
             }
         });
     }

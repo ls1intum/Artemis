@@ -1,4 +1,4 @@
-import { Injectable, NgZone, SecurityContext, inject, signal } from '@angular/core';
+import { Injectable, SecurityContext, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -58,7 +58,6 @@ const DEFAULT_DISMISSIBLE = true;
 })
 export class AlertService {
     private sanitizer = inject(DomSanitizer);
-    private ngZone = inject(NgZone);
     private translateService = inject(TranslateService);
 
     // Signal-backed so the alert overlay re-renders under zoneless change detection when alerts are
@@ -230,15 +229,9 @@ export class AlertService {
             this.alerts.update((alerts) => [alertInternal, ...alerts]);
 
             if (alertInternal.timeout > 0) {
-                // Workaround protractor waiting for setTimeout.
-                // Reference https://www.protractortest.org/#/timeouts
-                this.ngZone.runOutsideAngular(() => {
-                    setTimeout(() => {
-                        this.ngZone.run(() => {
-                            alertInternal.close();
-                        });
-                    }, alertInternal.timeout);
-                });
+                setTimeout(() => {
+                    alertInternal.close();
+                }, alertInternal.timeout);
             }
         }
 
