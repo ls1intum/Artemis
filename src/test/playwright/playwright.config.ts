@@ -64,7 +64,14 @@ export default defineConfig({
         },
         ignoreHTTPSErrors: true,
         launchOptions: {
-            args: ['--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator'],
+            args: [
+                '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
+                // Optional browser-level host resolver override (e.g. "MAP localhost 127.0.0.1"). The multi-node
+                // runner sets this so the browser reaches the nginx LB over IPv4 (avoiding the historical ::1
+                // ECONNREFUSED cascade) while still using a domain origin (https://localhost) — an IP literal such
+                // as 127.0.0.1 is not a valid WebAuthn Relying Party ID and breaks every passkey test.
+                ...(process.env.PW_BROWSER_HOST_RESOLVER_RULES ? [`--host-resolver-rules=${process.env.PW_BROWSER_HOST_RESOLVER_RULES}`] : []),
+            ],
         },
     },
 
