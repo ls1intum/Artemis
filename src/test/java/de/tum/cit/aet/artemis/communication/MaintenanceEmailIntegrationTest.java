@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -114,7 +115,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(4);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Server Update v2.0", "notificationText", "We will be updating the server to the latest version.", "formattedStart",
                         formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
@@ -131,7 +132,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(2);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Server-Aktualisierung", "notificationText", "Der Server wird aktualisiert.", "formattedStart", formatDate(notificationDate, "de"),
                         "formattedEnd", formatDate(expireDate, "de")));
 
@@ -145,7 +146,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(1);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Quick Maintenance", "formattedStart", formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
         String body = getDeliveredEmailBody();
@@ -161,7 +162,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String start = formatDate(notificationDate, "en");
         String end = formatDate(expireDate, "en");
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Date Format Test", "formattedStart", start, "formattedEnd", end));
 
         String body = getDeliveredEmailBody();
