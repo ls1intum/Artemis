@@ -71,6 +71,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -643,17 +645,17 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
 
         // Verify email is sent with correct parameters
-        ArgumentCaptor<User> adminRecipientCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> adminRecipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportFailedEmailToAdmin(adminRecipientCaptor.capture(), dataExportCaptor.capture(), eq(exception));
 
         // Verify the email is sent to the configured admin email (info.contact=test@localhost)
-        User adminRecipient = adminRecipientCaptor.getValue();
-        assertThat(adminRecipient.getEmail()).isEqualTo("test@localhost");
+        MailRecipientDTO adminRecipient = adminRecipientCaptor.getValue();
+        assertThat(adminRecipient.email()).isEqualTo("test@localhost");
 
-        // Verify the data export contains the affected user (student1), not the admin
-        DataExport capturedDataExport = dataExportCaptor.getValue();
-        assertThat(capturedDataExport.getUser().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        // Verify the data export references the affected user (student1), not the admin
+        DataExportEmailDTO capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.userLogin()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test
@@ -671,18 +673,17 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
 
         // Verify email is sent to the user with correct parameters
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> userCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportCreatedEmail(userCaptor.capture(), dataExportCaptor.capture());
 
         // Verify the email is sent to the correct user (student1)
-        User recipient = userCaptor.getValue();
-        assertThat(recipient.getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        MailRecipientDTO recipient = userCaptor.getValue();
+        assertThat(recipient.login()).isEqualTo(TEST_PREFIX + "student1");
 
         // Verify the data export is the one we created
-        DataExport capturedDataExport = dataExportCaptor.getValue();
-        assertThat(capturedDataExport.getId()).isEqualTo(dataExport.getId());
-        assertThat(capturedDataExport.getFilePath()).isNotNull();
+        DataExportEmailDTO capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.id()).isEqualTo(dataExport.getId());
 
         // Clean up
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
@@ -710,26 +711,22 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
 
         // Capture and verify email parameters
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        ArgumentCaptor<MailRecipientDTO> userCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
         verify(mailService).sendDataExportCreatedEmail(userCaptor.capture(), dataExportCaptor.capture());
 
         // Verify user details in the email
-        User emailRecipient = userCaptor.getValue();
-        assertThat(emailRecipient.getId()).isEqualTo(expectedUser.getId());
-        assertThat(emailRecipient.getLogin()).isEqualTo(expectedUser.getLogin());
-        assertThat(emailRecipient.getEmail()).isEqualTo(expectedUser.getEmail());
-        assertThat(emailRecipient.getFirstName()).isEqualTo(expectedUser.getFirstName());
-        assertThat(emailRecipient.getLastName()).isEqualTo(expectedUser.getLastName());
-        assertThat(emailRecipient.getLangKey()).isEqualTo(expectedUser.getLangKey());
+        MailRecipientDTO emailRecipient = userCaptor.getValue();
+        assertThat(emailRecipient.login()).isEqualTo(expectedUser.getLogin());
+        assertThat(emailRecipient.email()).isEqualTo(expectedUser.getEmail());
+        assertThat(emailRecipient.firstName()).isEqualTo(expectedUser.getFirstName());
+        assertThat(emailRecipient.lastName()).isEqualTo(expectedUser.getLastName());
+        assertThat(emailRecipient.langKey()).isEqualTo(expectedUser.getLangKey());
 
         // Verify data export details
-        DataExport emailDataExport = dataExportCaptor.getValue();
-        assertThat(emailDataExport.getId()).isEqualTo(dataExport.getId());
-        assertThat(emailDataExport.getUser().getId()).isEqualTo(expectedUser.getId());
-        assertThat(emailDataExport.getFilePath()).isNotNull();
-        assertThat(emailDataExport.getFilePath()).isNotEmpty();
-        assertThat(emailDataExport.getCreationFinishedDate()).isNotNull();
+        DataExportEmailDTO emailDataExport = dataExportCaptor.getValue();
+        assertThat(emailDataExport.id()).isEqualTo(dataExport.getId());
+        assertThat(emailDataExport.userLogin()).isEqualTo(expectedUser.getLogin());
 
         // Clean up
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
@@ -754,10 +751,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
 
         // Verify that sendDataExportCreatedEmail was NEVER called
-        verify(mailService, never()).sendDataExportCreatedEmail(any(User.class), any(DataExport.class));
+        verify(mailService, never()).sendDataExportCreatedEmail(any(MailRecipientDTO.class), any(DataExportEmailDTO.class));
 
         // Verify that the admin was notified about the failure
-        verify(mailService, times(1)).sendDataExportFailedEmailToAdmin(any(User.class), any(DataExport.class), eq(exception));
+        verify(mailService, times(1)).sendDataExportFailedEmailToAdmin(any(MailRecipientDTO.class), any(DataExportEmailDTO.class), eq(exception));
     }
 
     @Test
@@ -802,7 +799,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(Files.size(Path.of(dataExportFromDb.getFilePath()))).isGreaterThan(0);
 
         // Verify email was sent
-        verify(mailService, times(1)).sendDataExportCreatedEmail(any(User.class), any(DataExport.class));
+        verify(mailService, times(1)).sendDataExportCreatedEmail(any(MailRecipientDTO.class), any(DataExportEmailDTO.class));
 
         // Clean up
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
@@ -852,11 +849,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(Files.size(readmePath)).isGreaterThan(0);
 
         // Verify email was sent with the export
-        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
-        verify(mailService).sendDataExportCreatedEmail(any(User.class), dataExportCaptor.capture());
+        ArgumentCaptor<DataExportEmailDTO> dataExportCaptor = ArgumentCaptor.forClass(DataExportEmailDTO.class);
+        verify(mailService).sendDataExportCreatedEmail(any(MailRecipientDTO.class), dataExportCaptor.capture());
 
-        DataExport capturedExport = dataExportCaptor.getValue();
-        assertThat(capturedExport.getFilePath()).isEqualTo(dataExportFromDb.getFilePath());
+        DataExportEmailDTO capturedExport = dataExportCaptor.getValue();
+        assertThat(capturedExport.id()).isEqualTo(dataExportFromDb.getId());
 
         // Clean up
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);

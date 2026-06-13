@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @Service
@@ -364,10 +365,7 @@ public class CourseRequestService {
         var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
                 request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
 
-        User recipient = new User();
-        recipient.setEmail(contactEmail);
-        recipient.setLangKey(requesterLangKey);
-        recipient.setLogin("course-request-contact");
+        MailRecipientDTO recipient = new MailRecipientDTO(contactEmail, requesterLangKey, "course-request-contact", null, null, null, null);
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
                 Map.of("courseRequest", emailData));
     }
@@ -398,7 +396,7 @@ public class CourseRequestService {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
                 Map.of("course", course, "courseRequest", toEmailData(request)));
     }
 
@@ -406,14 +404,16 @@ public class CourseRequestService {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", toEmailData(request)));
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
+                Map.of("courseRequest", toEmailData(request)));
     }
 
     private void sendReceivedEmail(User requester, CourseRequest request) {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", toEmailData(request)));
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
+                Map.of("courseRequest", toEmailData(request)));
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {

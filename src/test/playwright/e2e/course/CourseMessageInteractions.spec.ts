@@ -3,6 +3,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
 
 const writeCourse = { id: SEED_COURSES.channel2.id };
@@ -344,6 +345,54 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await expect(page.getByRole('heading', { name: /search results/i })).toBeVisible({ timeout: 15000 });
             // Verify no message posts are shown in the results area (markdown-preview contains message content)
             await expect(page.locator('.markdown-preview', { hasText: noMatchText })).toHaveCount(0, { timeout: 5000 });
+        });
+    });
+
+    test.describe('Message forwarding', () => {
+        // self-contained source + destination channels so membership and names are deterministic
+        let sourceChannel: Channel;
+        let destinationChannel: Channel;
+        let sourcePost: Post;
+        let reply: Post;
+
+        test.beforeEach('Create source/destination channels, a message and a reply', async ({ login, communicationAPIRequests }) => {
+            await login(admin);
+            const uid = generateUUID().slice(0, 8);
+            const courseRef = { id: writeCourse.id } as any;
+            sourceChannel = await communicationAPIRequests.createCourseMessageChannel(courseRef, `fwd-src-${uid}`, 'Forward source', false, true);
+            destinationChannel = await communicationAPIRequests.createCourseMessageChannel(courseRef, `fwd-dst-${uid}`, 'Forward destination', false, true);
+            // the forwarder (instructor) must participate in both: in the source to forward from it, in the destination to target and view it
+            await communicationAPIRequests.joinUserIntoChannel(courseRef, sourceChannel.id!, instructor);
+            await communicationAPIRequests.joinUserIntoChannel(courseRef, destinationChannel.id!, instructor);
+            sourcePost = await communicationAPIRequests.createCourseMessage(courseRef, sourceChannel.id!, 'channel', `Forward source message ${uid}`);
+            reply = await communicationAPIRequests.createCourseMessageReply(courseRef, sourcePost, `Forward reply message ${uid}`);
+        });
+
+        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
+
+            await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
+
+            // opening the destination triggers the source-post fetch that the access check guards; it must succeed for an accessible source
+            const sourcePostsResponse = page.waitForResponse((resp) => resp.url().includes('/messages-source-posts') && resp.request().method() === 'GET');
+            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
+            expect((await sourcePostsResponse).status()).toBe(200);
+
+            await courseMessages.checkForwardedPreview(sourcePost.content!);
+        });
+
+        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
+
+            await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
+
+            const answerSourceResponse = page.waitForResponse((resp) => resp.url().includes('/answer-messages-source-posts') && resp.request().method() === 'GET');
+            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
+            expect((await answerSourceResponse).status()).toBe(200);
+
+            await courseMessages.checkForwardedPreview(reply.content!);
         });
     });
 });

@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,7 +73,7 @@ class CourseRequestServiceTest {
     private ArgumentCaptor<CourseRequest> courseRequestCaptor;
 
     @Captor
-    private ArgumentCaptor<User> userCaptor;
+    private ArgumentCaptor<MailRecipientDTO> mailRecipientCaptor;
 
     @BeforeEach
     void setUp() {
@@ -107,9 +108,10 @@ class CourseRequestServiceTest {
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 
-        verify(channelService).createDefaultChannels(courseCaptor.capture());
+        verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
+        verify(channelService).createDefaultChannels(courseCaptor.getValue());
         verify(courseAccessService).addUserToCourse(eq(requester), eq(courseCaptor.getValue()), eq(CourseRole.INSTRUCTOR));
-        verify(mailSendingService).buildAndSendAsync(eq(requester), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        verify(mailSendingService).buildAndSendAsync(eq(MailRecipientDTO.from(requester)), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());
 
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
@@ -155,9 +157,10 @@ class CourseRequestServiceTest {
 
         courseRequestService.acceptRequest(1L);
 
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        // The recipient DTO must be built from the original eagerly-loaded requester (not the merged proxy whose requester is null);
+        // asserting full equality verifies every field is extracted, not just the email.
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -185,9 +188,8 @@ class CourseRequestServiceTest {
 
         courseRequestService.rejectRequest(1L, "Not enough justification");
 
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -233,12 +235,12 @@ class CourseRequestServiceTest {
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
 
         // Verify contact notification was also sent
-        verify(mailSendingService).buildAndSendAsync(any(User.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"), anyMap());
+        verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"),
+                anyMap());
     }
 
     private User createRequester() {

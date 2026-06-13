@@ -6,6 +6,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
@@ -36,6 +39,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -65,12 +69,15 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
+    private final PostRepository postRepository;
+
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PostRepository postRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.postRepository = postRepository;
     }
 
     /**
@@ -231,6 +238,12 @@ public class ConversationMessageResource {
         if (posts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        // authorization: the caller may only retrieve posts they can access (course-wide channel or participant of the conversation).
+        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        User user = userRepository.getUser();
+        Set<Long> foundPostIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
+        postRepository.userHasAccessToAllPostsElseThrow(foundPostIds, user.getId());
 
         if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");

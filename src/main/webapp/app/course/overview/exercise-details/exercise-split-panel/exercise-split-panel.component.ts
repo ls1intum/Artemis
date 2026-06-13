@@ -88,6 +88,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
+    readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;

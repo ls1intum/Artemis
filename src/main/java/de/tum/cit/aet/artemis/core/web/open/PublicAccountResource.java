@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -125,7 +126,7 @@ public class PublicAccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(user);
+        mailService.sendActivationEmail(MailRecipientDTO.from(user));
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
@@ -258,7 +259,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(internalUsers.getFirst());
+                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
             }
         }
         else {
