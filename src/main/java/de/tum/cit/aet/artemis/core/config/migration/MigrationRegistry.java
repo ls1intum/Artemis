@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.migration;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +12,11 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
+
+import de.tum.cit.aet.artemis.core.config.migration.entries.MigrationEntry20260613_115800;
 
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
@@ -27,9 +32,12 @@ public class MigrationRegistry {
 
     private final MigrationService migrationService;
 
-    public MigrationRegistry(MigrationService migrationService) {
+    public MigrationRegistry(MigrationService migrationService, Environment environment) {
         this.migrationService = migrationService;
         // Here we define the order of the ChangeEntries
+        if (environment.acceptsProfiles(Profiles.of(PROFILE_LOCALCI))) {
+            migrationEntryMap.put(0, MigrationEntry20260613_115800.class);
+        }
     }
 
     /**

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -21,6 +22,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepository<ProgrammingExerciseBuildConfig, Long> {
 
     Optional<ProgrammingExerciseBuildConfig> findByProgrammingExerciseId(Long programmingExerciseId);
+
+    @Query("""
+            SELECT pebc
+            FROM ProgrammingExerciseBuildConfig pebc
+            WHERE pebc.buildScript IS NOT NULL
+                AND pebc.buildPlanConfiguration IS NOT NULL
+            """)
+    List<ProgrammingExerciseBuildConfig> findAllWithLegacyBuildScriptAndBuildPlanConfiguration();
 
     default ProgrammingExerciseBuildConfig getProgrammingExerciseBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
