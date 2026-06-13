@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -35,12 +36,12 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 
@@ -109,8 +110,9 @@ public abstract class PushNotificationService {
      * @param recipients         who should be contacted
      */
     @Async
-    public void sendCourseNotification(CourseNotificationDTO courseNotification, Set<User> recipients) {
-        final var userDeviceConfigurations = getRepository().findByUserIn(recipients, getDeviceType());
+    public void sendCourseNotification(CourseNotificationDTO courseNotification, Set<CourseNotificationRecipientDTO> recipients) {
+        final var recipientIds = recipients.stream().map(CourseNotificationRecipientDTO::id).collect(Collectors.toSet());
+        final var userDeviceConfigurations = getRepository().findByUserIdIn(recipientIds, getDeviceType());
         if (userDeviceConfigurations.isEmpty()) {
             return;
         }

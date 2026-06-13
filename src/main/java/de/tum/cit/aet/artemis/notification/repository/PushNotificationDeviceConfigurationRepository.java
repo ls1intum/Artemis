@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfigurationId;
@@ -28,17 +27,17 @@ import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotifica
 public interface PushNotificationDeviceConfigurationRepository extends ArtemisJpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
     /**
-     * @param users      a list of users you want the deviceTokens for.
+     * @param userIds    the ids of the users you want the deviceTokens for.
      * @param deviceType the device type you want the deviceTokens to be found for. Either Firebase or APNS.
-     * @return Finds all the deviceTokens for a specific deviceType for a list of users.
+     * @return Finds all the deviceTokens for a specific deviceType for a set of user ids.
      */
     @Query("""
             SELECT p FROM PushNotificationDeviceConfiguration p
             WHERE p.expirationDate > CURRENT_TIMESTAMP()
-                AND p.owner IN :users
+                AND p.owner.id IN :userIds
                 AND p.deviceType = :deviceType
             """)
-    List<PushNotificationDeviceConfiguration> findByUserIn(@Param("users") Set<User> users, @Param("deviceType") PushNotificationDeviceType deviceType);
+    List<PushNotificationDeviceConfiguration> findByUserIdIn(@Param("userIds") Set<Long> userIds, @Param("deviceType") PushNotificationDeviceType deviceType);
 
     /**
      * Cleans up the old/expired push notifications device configurations
