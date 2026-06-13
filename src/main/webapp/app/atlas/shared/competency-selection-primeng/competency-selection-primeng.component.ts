@@ -62,7 +62,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
 
-    disabled: boolean;
+    readonly disabled = signal(false);
     // selected competencies
     selectedCompetencyLinks?: CompetencyLearningObjectLink[];
     // all course competencies
@@ -129,7 +129,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
                             }
                         },
                         error: () => {
-                            this.disabled = true;
+                            this.disabled.set(true);
                         },
                     });
             }
@@ -302,6 +302,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     }
 
     setDisabledState?(isDisabled: boolean): void {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 }

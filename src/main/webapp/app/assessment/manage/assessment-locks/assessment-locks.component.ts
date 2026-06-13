@@ -38,7 +38,7 @@ export class AssessmentLocksComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
 
     course: Course;
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     tutorId: number;
     examId?: number;
     readonly showAll = signal(false);
@@ -63,7 +63,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     public ngOnInit() {
         combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
-            this.courseId = Number(params['courseId']);
+            this.courseId.set(Number(params['courseId']));
             this.examId = Number(params['examId']);
             this.tutorId = Number(queryParams['tutorId']);
 
@@ -77,10 +77,10 @@ export class AssessmentLocksComponent implements OnInit {
     getAllLockedSubmissions() {
         let lockedSubmissionsObservable;
         if (this.examId) {
-            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
+            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId(), this.examId);
             this.showAll.set(true);
         } else {
-            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
+            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId());
         }
         lockedSubmissionsObservable.subscribe({
             next: (response: HttpResponse<Submission[]>) => {

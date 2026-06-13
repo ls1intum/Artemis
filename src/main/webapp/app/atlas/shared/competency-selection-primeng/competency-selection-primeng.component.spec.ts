@@ -115,7 +115,7 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading()).toBeFalsy();
-        expect(component.disabled).toBeTruthy();
+        expect(component.disabled()).toBeTruthy();
     });
 
     it('should be hidden when no competencies', () => {
@@ -200,9 +200,9 @@ describe('CompetencySelection', () => {
     });
 
     it('should set disabled state', () => {
-        component.disabled = true;
+        component.disabled.set(true);
         component.setDisabledState?.(false);
-        expect(component.disabled).toBeFalsy();
+        expect(component.disabled()).toBeFalsy();
     });
 
     describe('AtlasML Competency Suggestions', () => {

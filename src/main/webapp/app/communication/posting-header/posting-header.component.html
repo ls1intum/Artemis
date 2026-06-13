@@ -27,11 +27,11 @@
         }
         <span class="post-header-date-separator">-</span>
         <span class="post-header-date">
-            @if (postingIsOfToday) {
-                <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>,
+            @if (postingIsOfToday()) {
+                <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="fs-small"></span>,
             }
-            <span class="post-header-date fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ creationDate | artemisDate: 'time' }}">
-                {{ postingIsOfToday ? (creationDate | artemisDate: 'time') : (creationDate | artemisDate: 'short-date') + ' - ' + (creationDate | artemisDate: 'time') }}
+            <span class="post-header-date fs-small" [disableTooltip]="postingIsOfToday()" ngbTooltip="{{ creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday() ? (creationDate | artemisDate: 'time') : (creationDate | artemisDate: 'short-date') + ' - ' + (creationDate | artemisDate: 'time') }}
             </span>
         </span>
         @if (isPostResolved()) {

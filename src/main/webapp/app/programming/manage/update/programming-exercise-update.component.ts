@@ -202,17 +202,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isExamMode: boolean;
     isLocalCIEnabled: boolean;
     hasUnsavedChanges = false;
-    private _programmingExercise!: ProgrammingExercise;
+    // programmingExercise is deeply template-bound (directly via [programmingExercise]/[(exercise)] and through the
+    // recomputed getProgrammingExerciseCreationConfig()) and populated asynchronously from the route resolver, so it
+    // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
+    // synchronous reads/writes (this.programmingExercise = ... assignments, template bindings) unchanged.
+    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseIdForAi = signal<number | undefined>(undefined);
     programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
 
     get programmingExercise(): ProgrammingExercise {
-        return this._programmingExercise;
+        return this._programmingExercise();
     }
 
     set programmingExercise(value: ProgrammingExercise) {
         value.id = value.id ?? undefined;
-        this._programmingExercise = value;
+        this._programmingExercise.set(value);
         this.programmingExerciseIdForAi.set(value.id);
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }

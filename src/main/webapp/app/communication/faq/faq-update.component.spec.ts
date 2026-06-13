@@ -248,7 +248,7 @@ describe('FaqUpdateComponent', () => {
         const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.updateCategories(categories);
-        expect(faqUpdateComponent.faqCategories).toEqual(categories);
+        expect(faqUpdateComponent.faqCategories()).toEqual(categories);
         expect(faqUpdateComponent.faq.categories).toEqual(categories);
     });
 

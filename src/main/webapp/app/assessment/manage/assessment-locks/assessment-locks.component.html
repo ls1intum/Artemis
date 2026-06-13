@@ -47,7 +47,7 @@
                                         <a
                                             [routerLink]="[
                                                 '/course-management',
-                                                courseId,
+                                                courseId(),
                                                 'text-exercises',
                                                 submission.participation!.exercise!.id!,
                                                 'participations',
@@ -65,7 +65,7 @@
                                         <a
                                             [routerLink]="[
                                                 '/course-management',
-                                                courseId,
+                                                courseId(),
                                                 submission.participation!.exercise!.type + '-exercises',
                                                 submission.participation!.exercise!.id!,
                                                 'submissions',

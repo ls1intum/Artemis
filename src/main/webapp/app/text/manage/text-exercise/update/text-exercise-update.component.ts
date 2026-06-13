@@ -107,10 +107,19 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     AssessmentType = AssessmentType;
     isPlagiarismEnabled = false;
 
-    textExercise: TextExercise;
+    // textExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
+    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.textExercise = ... assignments) unchanged.
+    private readonly _textExercise = signal<TextExercise>(undefined!);
+    get textExercise(): TextExercise {
+        return this._textExercise();
+    }
+    set textExercise(value: TextExercise) {
+        this._textExercise.set(value);
+    }
     backupExercise: TextExercise;
     readonly isSaving = signal(false);
-    exerciseCategories: ExerciseCategory[];
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
 
@@ -180,7 +189,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        this.exerciseCategories = this.textExercise.categories || [];
+                        this.exerciseCategories.set(this.textExercise.categories || []);
                         if (this.examCourseId) {
                             this.loadCourseExerciseCategories(this.examCourseId);
                         }
@@ -294,7 +303,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.textExercise.categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
     }
 
     save() {

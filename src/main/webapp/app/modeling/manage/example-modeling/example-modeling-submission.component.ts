@@ -68,7 +68,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private readonly themeService = inject(ThemeService);
 
     readonly isNewSubmission = signal(false);
-    assessmentMode = false;
+    readonly assessmentMode = signal(false);
     exerciseId: number;
     readonly exampleSubmission = signal<ExampleSubmission>(undefined!);
     modelingSubmission: ModelingSubmission;
@@ -159,7 +159,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
         // interested in the modeling editor, i.e. we only want to use the assessment mode
         if (this.readOnly || this.toComplete) {
-            this.assessmentMode = true;
+            this.assessmentMode.set(true);
         }
         this.loadAll();
     }
@@ -327,7 +327,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (this.modelChanged()) {
             this.updateExampleModelingSubmission().subscribe();
         }
-        this.assessmentMode = true;
+        this.assessmentMode.set(true);
     }
 
     private modelChanged(): boolean {
@@ -344,7 +344,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.saveExampleAssessment();
             this.feedbackChanged = false;
         }
-        this.assessmentMode = false;
+        this.assessmentMode.set(false);
     }
 
     public saveExampleAssessment(): void {

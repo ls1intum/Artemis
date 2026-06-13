@@ -163,7 +163,7 @@ describe('ModelingExercise Management Component', () => {
         comp.toggleExercise(modelingExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: modelingExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises().length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: modelingExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.modelingExercises().length);
     });
 });

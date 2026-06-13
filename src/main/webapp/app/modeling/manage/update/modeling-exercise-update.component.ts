@@ -97,12 +97,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
 
-    modelingExercise: ModelingExercise;
+    // modelingExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
+    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.modelingExercise = ... assignments) unchanged.
+    private readonly _modelingExercise = signal<ModelingExercise>(undefined!);
+    get modelingExercise(): ModelingExercise {
+        return this._modelingExercise();
+    }
+    set modelingExercise(value: ModelingExercise) {
+        this._modelingExercise.set(value);
+    }
     backupExercise: ModelingExercise;
     readonly exampleSolution = signal<UMLModel>(undefined!);
     readonly isSaving = signal(false);
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
@@ -180,7 +189,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     let courseId;
 
                     if (!this.isExamMode) {
-                        this.exerciseCategories = this.modelingExercise.categories || [];
+                        this.exerciseCategories.set(this.modelingExercise.categories || []);
                         if (this.modelingExercise.course) {
                             courseId = this.modelingExercise.course!.id!;
                         } else {
@@ -216,7 +225,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     }
 
                     loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
-                        this.existingCategories = existingCategories;
+                        this.existingCategories.set(existingCategories);
                     });
                 }),
             )
@@ -261,7 +270,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
     }
 
     /**

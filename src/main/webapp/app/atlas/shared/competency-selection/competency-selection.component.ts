@@ -65,7 +65,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
 
-    disabled: boolean;
+    readonly disabled = signal(false);
     // selected competencies
     selectedCompetencyLinks?: CompetencyLearningObjectLink[];
     // all course competencies
@@ -132,7 +132,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                             }
                         },
                         error: () => {
-                            this.disabled = true;
+                            this.disabled.set(true);
                         },
                     });
             }
@@ -305,6 +305,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     setDisabledState?(isDisabled: boolean): void {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 }

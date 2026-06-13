@@ -87,14 +87,14 @@ export class FileUploadAssessmentComponent implements OnInit {
     notFound = false;
     userId: number;
     readonly isLoading = signal(true);
-    isTestRun = false;
+    readonly isTestRun = signal(false);
     courseId: number;
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
-    correctionRound = 0;
+    readonly correctionRound = signal(0);
     resultId: number;
     examId = 0;
     exerciseGroupId: number;
-    exerciseDashboardLink: string[];
+    readonly exerciseDashboardLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
     highlightDifferences = false;
 
@@ -124,10 +124,10 @@ export class FileUploadAssessmentComponent implements OnInit {
             }
         });
         this.route.queryParamMap.subscribe((queryParams) => {
-            this.isTestRun = queryParams.get('testRun') === 'true';
+            this.isTestRun.set(queryParams.get('testRun') === 'true');
             const correctionRoundParam = queryParams.get('correction-round');
             if (correctionRoundParam) {
-                this.correctionRound = parseInt(correctionRoundParam, 10);
+                this.correctionRound.set(parseInt(correctionRoundParam, 10));
             }
         });
 
@@ -143,7 +143,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.exerciseGroupId = Number(params['exerciseGroupId']);
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+            this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
 
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
@@ -164,7 +164,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: FileUploadSubmission) => {
                 if (!submission) {
                     // there is no submission waiting for assessment at the moment
@@ -195,7 +195,7 @@ export class FileUploadAssessmentComponent implements OnInit {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId, this.correctionRound, this.resultId)
+            .get(submissionId, this.correctionRound(), this.resultId)
             .pipe(filter((res) => !!res.body))
             .subscribe({
                 next: (res) => {
@@ -235,7 +235,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
             const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound = foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0;
+            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
             this.result.set(getSubmissionResultById(submission, this.resultId));
         } else {
             this.result.set(getLatestSubmissionResult(submission));
@@ -259,7 +259,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.checkPermissions();
         this.calculateTotalScore();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), submission);
 
         this.busy.set(false);
         this.isLoading.set(false);
@@ -291,7 +291,7 @@ export class FileUploadAssessmentComponent implements OnInit {
 
         this.isLoading.set(true);
         this.unreferencedFeedback.set([]);
-        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, false, this.correctionRound).subscribe({
+        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, false, this.correctionRound()).subscribe({
             next: (submission?: FileUploadSubmission) => {
                 this.isLoading.set(false);
                 this.unassessedSubmission = submission;
@@ -427,7 +427,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun());
     }
 
     updateAssessment() {
@@ -455,7 +455,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.calculateTotalScore();
 
         if (this.submission()) {
-            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission()!);
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
         }
     }
 
@@ -560,7 +560,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.exercise());
+        return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.exercise());
     }
 
     private onError(error: string) {

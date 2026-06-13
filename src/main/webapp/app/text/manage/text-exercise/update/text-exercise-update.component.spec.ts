@@ -565,12 +565,12 @@ describe('TextExercise Management Update Component', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        component.exerciseCategories = [];
+        component.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         component.updateCategories(newCategories);
 
         expect(component.textExercise.categories).toEqual(newCategories);
-        expect(component.exerciseCategories).toEqual(newCategories);
+        expect(component.exerciseCategories()).toEqual(newCategories);
     });
 });

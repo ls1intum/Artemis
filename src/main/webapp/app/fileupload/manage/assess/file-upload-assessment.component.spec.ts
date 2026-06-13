@@ -243,8 +243,8 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.isTestRun).toBe(true);
-            expect(component.correctionRound).toBe(1);
+            expect(component.isTestRun()).toBe(true);
+            expect(component.correctionRound()).toBe(1);
         });
 
         it('should extract route params for course and exercise', () => {
@@ -496,7 +496,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should call submissionService.handleFeedbackCorrectionRoundTag', () => {
-            component.correctionRound = 1;
+            component.correctionRound.set(1);
             component.unreferencedFeedback.set([]);
 
             component.validateAssessment();

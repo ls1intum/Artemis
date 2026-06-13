@@ -45,7 +45,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
     // Async-loaded, template-bound state — signals so the list/loading state render under zoneless without markForCheck.
     readonly complaints = signal<Complaint[]>([]);
-    public complaintType: ComplaintType;
+    readonly complaintType = signal<ComplaintType>(undefined!);
 
     private courseId: number;
     private exerciseId: number;
@@ -59,7 +59,7 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly showAddressedComplaints = signal(false);
     readonly allComplaintsForTutorLoaded = signal(false);
     readonly isLoadingAllComplaints = signal(false);
-    filterOption?: number;
+    readonly filterOption = signal<number | undefined>(undefined);
 
     readonly loading = signal(true);
     // Icons
@@ -82,10 +82,10 @@ export class ListOfComplaintsComponent implements OnInit {
             this.tutorId = Number(queryParams['tutorId']);
             this.correctionRound = Number(queryParams['correctionRound']);
             if (queryParams['filterOption']) {
-                this.filterOption = Number(queryParams['filterOption']);
+                this.filterOption.set(Number(queryParams['filterOption']));
             }
 
-            this.complaintType = data.complaintType;
+            this.complaintType.set(data.complaintType);
 
             this.loadComplaints();
         });
@@ -96,20 +96,20 @@ export class ListOfComplaintsComponent implements OnInit {
 
         if (this.tutorId) {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
             } else if (this.examId) {
                 // TODO make exam complaints visible for tutors too
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
             }
         } else {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType());
             } else if (this.examId) {
                 complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
             } else {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
             }
         }
         this.subscribeToComplaintResponse(complaintResponse);
@@ -123,13 +123,13 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
-                if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+                if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
                     this.showAddressedComplaints.set(true);
                 }
 
                 if (!this.showAddressedComplaints()) {
                     this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
-                } else if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+                } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
                     this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
                 } else {
                     this.complaintsToShow.set(this.complaints());
@@ -152,7 +152,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
         this.correctionRound = this.correctionRound || 0;
-        if (this.complaintType == ComplaintType.COMPLAINT && complaint.accepted) {
+        if (this.complaintType() == ComplaintType.COMPLAINT && complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
@@ -198,7 +198,7 @@ export class ListOfComplaintsComponent implements OnInit {
      */
     triggerShowAllComplaints() {
         this.isLoadingAllComplaints.set(true);
-        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
         this.subscribeToComplaintResponse(complaintResponse);
         this.isLoadingAllComplaints.set(false);
         this.allComplaintsForTutorLoaded.set(true);
@@ -232,6 +232,6 @@ export class ListOfComplaintsComponent implements OnInit {
     resetFilterOptions(): void {
         this.updateFilteredComplaints(this.complaints());
         this.showAddressedComplaints.set(false);
-        this.filterOption = undefined;
+        this.filterOption.set(undefined);
     }
 }

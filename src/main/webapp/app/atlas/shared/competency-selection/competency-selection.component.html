@@ -14,7 +14,7 @@
             @if (competencyLinks && competencyLinks.length > 0) {
                 <jhi-button
                     [btnType]="ButtonType.WARNING"
-                    [disabled]="isSuggesting() || disabled || !exerciseDescription()?.trim()"
+                    [disabled]="isSuggesting() || disabled() || !exerciseDescription()?.trim()"
                     (onClick)="suggestCompetencies()"
                     [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
                     [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
@@ -42,7 +42,7 @@
                                     type="checkbox"
                                     [ngModel]="checkboxStates[competencyLink.competency.id]"
                                     (ngModelChange)="toggleCompetency(competencyLink)"
-                                    [disabled]="disabled"
+                                    [disabled]="disabled()"
                                     class="me-2"
                                 />
                                 <label for="competency-{{ competencyLink.competency.id }}" class="d-flex align-items-center m-0">

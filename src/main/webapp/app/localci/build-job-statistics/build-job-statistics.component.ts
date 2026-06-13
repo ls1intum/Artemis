@@ -54,10 +54,10 @@ export class BuildJobStatisticsComponent implements OnInit {
     missingBuildsPercentage = signal('-%');
 
     /** Whether to show the time span selector tabs (hidden when statistics come from input) */
-    displaySpanSelector = true;
+    readonly displaySpanSelector = signal(true);
 
     /** Whether to show missing builds in the chart (hidden when embedded in agent details) */
-    displayMissingBuilds = true;
+    readonly displayMissingBuilds = signal(true);
 
     /** Current build job statistics data */
     buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
@@ -100,8 +100,8 @@ export class BuildJobStatisticsComponent implements OnInit {
                 this.getBuildJobStatisticsForBuildQueue(span);
             } else {
                 // Embedded in another component: use input statistics without span selector
-                this.displayMissingBuilds = false;
-                this.displaySpanSelector = false;
+                this.displayMissingBuilds.set(false);
+                this.displaySpanSelector.set(false);
                 this.updateDisplayedBuildJobStatistics(this.buildJobStatisticsInput()!);
             }
         });
@@ -171,7 +171,7 @@ export class BuildJobStatisticsComponent implements OnInit {
             { name: 'Timeout', value: statistics.timeOutBuilds },
         ];
         // Only include missing builds when displayMissingBuilds is enabled
-        if (this.displayMissingBuilds) {
+        if (this.displayMissingBuilds()) {
             chartData.push({ name: 'Missing', value: statistics.missingBuilds });
         }
         this.pieChartData.set(chartData);

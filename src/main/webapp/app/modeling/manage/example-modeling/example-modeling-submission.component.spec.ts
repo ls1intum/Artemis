@@ -356,7 +356,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.feedbackChanged).toBe(false);
-        expect(comp.assessmentMode).toBe(false);
+        expect(comp.assessmentMode()).toBe(false);
         expect(comp.totalScore()).toBe(mockFeedbackWithReference.credits);
     });
 
@@ -422,7 +422,7 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.referencedFeedback.set([mockFeedbackInvalid]);
-        comp.assessmentMode = true;
+        comp.assessmentMode.set(true);
 
         // WHEN
         comp.markAllFeedbackToCorrect();
@@ -436,7 +436,7 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.referencedFeedback.set([mockFeedbackInvalid]);
-        comp.assessmentMode = true;
+        comp.assessmentMode.set(true);
 
         // WHEN
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
@@ -516,7 +516,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(assessmentSpy).toHaveBeenCalledOnce();
-        expect(comp.assessmentMode).toBe(true);
+        expect(comp.assessmentMode()).toBe(true);
         expect(result.feedbacks).toEqual(comp.assessments());
     });
 

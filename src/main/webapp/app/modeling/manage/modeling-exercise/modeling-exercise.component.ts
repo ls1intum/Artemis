@@ -66,16 +66,16 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<ModelingExercise[]>) => {
                 const modelingExercises = res.body!;
                 // reconnect exercise with course
                 modelingExercises.forEach((exercise) => {
-                    exercise.course = this.courseContext;
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.modelingExercises.set(modelingExercises);
-                this.selectedExercises = [];
+                this.selectedExercises.set([]);
                 this.applyFilter();
                 this.emitExerciseCount(modelingExercises.length);
             },

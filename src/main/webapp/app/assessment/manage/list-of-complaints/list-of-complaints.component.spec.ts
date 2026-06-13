@@ -323,7 +323,7 @@ describe('ListOfComplaintsComponent', () => {
 
         const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
-        comp.filterOption = Number(filterOption);
+        comp.filterOption.set(Number(filterOption));
         comp.loadComplaints();
 
         switch (Number(filterOption)) {
@@ -344,7 +344,7 @@ describe('ListOfComplaintsComponent', () => {
         comp.resetFilterOptions();
 
         expect(comp.complaintsToShow()).toEqual(openComplaints);
-        expect(comp.filterOption).toBeUndefined();
+        expect(comp.filterOption()).toBeUndefined();
     });
 
     function verifyNotCalled(...instances: MockInstance[]) {

@@ -1,7 +1,7 @@
 <div class="mb-4">
     <div class="d-flex align-items-center gap-2 mb-3">
         <h5 id="build-queue-overview" class="mb-0" jhiTranslate="artemisApp.buildQueue.statistics.title"></h5>
-        @if (displaySpanSelector) {
+        @if (displaySpanSelector()) {
             <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
             <div class="btn-group btn-group-toggle btn-group-sm ms-2" data-toggle="buttons">
                 <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
@@ -46,7 +46,7 @@
                 <span class="stats-value">{{ buildJobStatistics().timeOutBuilds }}</span>
                 <span class="stats-percentage">({{ timeoutBuildsPercentage() }})</span>
             </div>
-            @if (displayMissingBuilds) {
+            @if (displayMissingBuilds()) {
                 <div class="stats-item">
                     <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
                     <span class="stats-value">{{ buildJobStatistics().missingBuilds }}</span>

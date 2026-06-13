@@ -56,7 +56,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     sortingOrder = SortDirection.ASCENDING;
 
     private ngUnsubscribe = new Subject<void>();
-    public isFetchingPosts = true;
+    readonly isFetchingPosts = signal(true);
     totalNumberOfPosts = 0;
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
@@ -94,7 +94,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
-            this.isFetchingPosts = false;
+            this.isFetchingPosts.set(false);
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -138,7 +138,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     public commandMetisToFetchPosts(forceUpdate = false) {
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts = true; // will be set to false in subscription
+            this.isFetchingPosts.set(true); // will be set to false in subscription
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
         }
     }

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -42,8 +42,8 @@ export class PostingHeaderComponent implements OnInit {
     isAtLeastInstructorInCourse: boolean;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
-    postingIsOfToday: boolean;
-    todayFlag?: string;
+    readonly postingIsOfToday = signal(false);
+    readonly todayFlag = signal<string | undefined>(undefined);
     userAuthorityIcon: IconProp;
     userAuthority: string;
     userRoleBadge: string;
@@ -96,8 +96,8 @@ export class PostingHeaderComponent implements OnInit {
                 }),
             )
             .subscribe();
-        this.postingIsOfToday = dayjs().isSame(this.posting()?.creationDate, 'day');
-        this.todayFlag = this.getTodayFlag();
+        this.postingIsOfToday.set(dayjs().isSame(this.posting()?.creationDate, 'day'));
+        this.todayFlag.set(this.getTodayFlag());
     }
 
     private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
@@ -129,7 +129,7 @@ export class PostingHeaderComponent implements OnInit {
      * sets a flag that replaces the date by "Today" in the posting's header if applicable
      */
     getTodayFlag(): string | undefined {
-        if (this.postingIsOfToday) {
+        if (this.postingIsOfToday()) {
             return 'artemisApp.metis.today';
         } else {
             return undefined;

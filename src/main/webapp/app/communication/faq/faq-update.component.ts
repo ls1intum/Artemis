@@ -41,11 +41,20 @@ export class FaqUpdateComponent implements OnInit {
     private accountService = inject(AccountService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    faq: Faq;
+    // faq is deeply template-bound through [(ngModel)] and populated asynchronously from the route resolver, so it
+    // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
+    // synchronous reads/writes ([(ngModel)] bindings, this.faq = ... assignments) unchanged.
+    private readonly _faq = signal<Faq>(undefined!);
+    get faq(): Faq {
+        return this._faq();
+    }
+    set faq(value: Faq) {
+        this._faq.set(value);
+    }
     readonly isSaving = signal(false);
     isAllowedToSave: boolean;
     readonly existingCategories = signal<FaqCategory[]>([]);
-    faqCategories: FaqCategory[];
+    readonly faqCategories = signal<FaqCategory[]>([]);
     courseId: number;
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
@@ -86,7 +95,7 @@ export class FaqUpdateComponent implements OnInit {
                 this.loadCourseFaqCategories(course.id);
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
-            this.faqCategories = faq?.categories ? faq.categories : [];
+            this.faqCategories.set(faq?.categories ? faq.categories : []);
         });
         this.validate();
     }
@@ -172,7 +181,7 @@ export class FaqUpdateComponent implements OnInit {
 
     updateCategories(categories: FaqCategory[]) {
         this.faq.categories = categories;
-        this.faqCategories = categories;
+        this.faqCategories.set(categories);
     }
 
     private loadCourseFaqCategories(courseId: number) {

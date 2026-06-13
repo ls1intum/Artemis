@@ -395,7 +395,7 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
 
         it('should load exercise categories', async () => {
@@ -443,7 +443,7 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
     });
 
@@ -549,12 +549,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        comp.exerciseCategories = [];
+        comp.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
+        expect(comp.exerciseCategories()).toEqual(newCategories);
     });
 
     it('should properly clean up subscriptions on destroy', async () => {
