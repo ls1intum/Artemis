@@ -9,7 +9,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +16,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseCookie;
@@ -29,14 +27,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
-import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -52,10 +48,7 @@ class LtiServiceTest {
     private UserTestRepository userRepository;
 
     @Mock
-    private UserCourseRoleTestRepository userCourseRoleTestRepository;
-
-    @Mock
-    private AuthorityService authorityService;
+    private UserService userService;
 
     @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
@@ -77,7 +70,7 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        ltiService = new LtiService(userCreationService, userRepository, userService, artemisAuthenticationProvider, jwtCookieService);
         Course course = new Course();
         course.setId(100L);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -95,7 +88,7 @@ class LtiServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        reset(userCreationService, userRepository, userService, artemisAuthenticationProvider, jwtCookieService);
     }
 
     @Test
@@ -140,22 +133,35 @@ class LtiServiceTest {
 
     @Test
     void successFullAuthentication() {
-        String courseStudentGroupName = "course100-students";
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setStudentGroupName(courseStudentGroupName);
-        when(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
-        when(authorityService.buildAuthorities(user)).thenReturn(new HashSet<>());
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);
 
-        ArgumentCaptor<UserCourseRole> ucrCaptor = ArgumentCaptor.forClass(UserCourseRole.class);
-        verify(userCourseRoleTestRepository).save(ucrCaptor.capture());
-        UserCourseRole savedUcr = ucrCaptor.getValue();
-        assertThat(savedUcr.getUser()).isEqualTo(user);
-        assertThat(savedUcr.getCourse()).isEqualTo(course);
-        assertThat(savedUcr.getRole()).isEqualTo(CourseRole.STUDENT);
-        assertThat(user.getGroups()).contains(courseStudentGroupName);
-        verify(userCreationService).saveUser(user);
+        // enrollment is fully delegated to UserService.addUserToCourse, which handles
+        // the UCR insert, legacy dual-write, authority build, and user save
+        verify(userService).addUserToCourse(user, course, CourseRole.STUDENT);
+    }
+
+    /**
+     * Regression test: Lti13Service loads users with {@code findOneWithCourseRolesAndAuthoritiesByLogin},
+     * which does NOT include the groups entity graph. The old inline enrollUserInCourse called
+     * {@code user.getGroups().contains(...)} directly, causing a LazyInitializationException (or NPE
+     * when groups is null). Delegating to {@link UserService#addUserToCourse} fixes this because that
+     * method checks {@code Hibernate.isInitialized} and re-fetches the user with groups if needed.
+     * <p>
+     * TODO (follow-up PR for #12788): remove this test once the user_groups table is dropped and
+     * {@link UserService#addUserToCourse} no longer needs the groups entity graph at all.
+     */
+    @Test
+    void enrollUserInCourse_groupsNotInitialized_doesNotThrow() {
+        // simulate a user loaded without the groups entity graph
+        user.setGroups(null);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        ltiService.onSuccessfulLtiAuthentication(user, exercise);
+
+        // must reach UserService without touching user.getGroups() directly
+        verify(userService).addUserToCourse(user, course, CourseRole.STUDENT);
     }
 
     @Test

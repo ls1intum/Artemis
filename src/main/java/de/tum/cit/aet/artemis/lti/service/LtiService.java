@@ -26,17 +26,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
-import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
@@ -58,20 +55,17 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
-    private final UserCourseRoleRepository userCourseRoleRepository;
-
-    private final AuthorityService authorityService;
+    private final UserService userService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final JWTCookieService jwtCookieService;
 
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService) {
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider,
+            JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
-        this.userCourseRoleRepository = userCourseRoleRepository;
-        this.authorityService = authorityService;
+        this.userService = userService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
     }
@@ -154,32 +148,16 @@ public class LtiService {
 
     /**
      * Handler for successful LTI auth. Enrolls the user as a student in the exercise's course.
+     * Delegates to {@link UserService#addUserToCourse} which handles the user_course_role insert,
+     * the legacy user_groups dual-write, and re-fetches the user with groups initialized when the
+     * caller loaded the entity without that entity graph (e.g. Lti13Service loads users via
+     * {@code findOneWithCourseRolesAndAuthoritiesByLogin}, which omits the groups collection).
      *
-     * @param user     The user that is authenticated
-     * @param exercise Exercise to launch
+     * @param user     the user that is authenticated; groups collection need not be initialized
+     * @param exercise exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
-        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember());
-    }
-
-    /**
-     * Enrolls a user as a student in the given course.
-     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
-     *
-     * @param user   the user to enroll
-     * @param course the course to enroll the user in
-     */
-    private void enrollUserInCourse(User user, Course course) {
-        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
-            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
-        }
-        // Dual-write: also write to legacy user_groups table until the follow-up PR for #12788 removes it
-        String groupName = course.getStudentGroupName();
-        if (groupName != null && !user.getGroups().contains(groupName)) {
-            user.getGroups().add(groupName);
-        }
-        user.setAuthorities(authorityService.buildAuthorities(user));
-        userCreationService.saveUser(user);
+        userService.addUserToCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember(), CourseRole.STUDENT);
     }
 
     /**
