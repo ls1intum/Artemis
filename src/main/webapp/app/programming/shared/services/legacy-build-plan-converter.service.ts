@@ -101,7 +101,7 @@ export class LegacyBuildPlanConverterService {
         const wrappedScript = `# feel free to remove the code surrounding your script and split your script into multiple phases
 cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
 local tmp_file=$(mktemp)
-cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will indented be for a phase
+cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase
 ${script}
 __LEGACY_INNER_SCRIPT_END__
 chmod +x "\${tmp_file}"

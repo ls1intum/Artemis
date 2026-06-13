@@ -17,9 +17,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
 /**
- * The purpose of this service is to directly extract the data for a trigger of unedited legacy exercises.
+ * The purpose of this service is to transform the legacy build plan into the new phases format.
  */
 @Lazy
 @Service
@@ -28,23 +32,28 @@ public class LegacyBuildPlanConverterService {
 
     private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
-    public record DataFromLegacyFormat(String dockerImage, List<String> resultPaths, String buildScript) {
+    /**
+     * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase.
+     *
+     * @param programmingExercise the exercise that is assumed to be legacy
+     * @return the converted build plan phases
+     */
+    public Optional<BuildPlanPhasesDTO> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
+        return convertLegacyBuildPlanConfiguration(programmingExercise.getBuildConfig());
     }
 
     /**
-     * If successful it returns a present {@link DataFromLegacyFormat} containing data for
-     * a {@link de.tum.cit.aet.artemis.buildagent.dto.BuildConfig}
+     * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase.
      *
-     * @param programmingExercise the exercise that is assumed to be legacy
-     * @return the extracted data
+     * @param buildConfig the build config that is assumed to be legacy
+     * @return the converted build plan phases
      */
-    public Optional<DataFromLegacyFormat> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
-        var buildConfig = programmingExercise.getBuildConfig();
+    public Optional<BuildPlanPhasesDTO> convertLegacyBuildPlanConfiguration(ProgrammingExerciseBuildConfig buildConfig) {
         if (buildConfig == null || buildConfig.getBuildScript() == null) {
             return Optional.empty();
         }
 
-        String buildPlanConfiguration = programmingExercise.getBuildConfig().getBuildPlanConfiguration();
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
             return Optional.empty();
         }
@@ -65,12 +74,25 @@ public class LegacyBuildPlanConverterService {
                 return Optional.empty();
             }
 
-            String buildScript = "cd " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir\n" + buildConfig.getBuildScript();
-            return Optional.of(new DataFromLegacyFormat(dockerImage, resultPaths, buildScript));
+            return Optional.of(new BuildPlanPhasesDTO(wrapLegacyBuildScript(buildConfig.getBuildScript(), resultPaths), dockerImage));
         }
         catch (JsonProcessingException e) {
             return Optional.empty();
         }
+    }
+
+    private static List<BuildPhaseDTO> wrapLegacyBuildScript(String script, List<String> resultPaths) {
+        String wrappedScript = """
+                # feel free to remove the code surrounding your script and split your script into multiple phases
+                cd %s/testing-dir
+                local tmp_file=$(mktemp)
+                cat << '  __LEGACY_INNER_SCRIPT_END__' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase
+                %s
+                __LEGACY_INNER_SCRIPT_END__
+                chmod +x "${tmp_file}"
+                "${tmp_file}" "$@"
+                """.formatted(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY, script);
+        return List.of(new BuildPhaseDTO("script", wrappedScript, BuildPhaseCondition.ALWAYS, false, resultPaths));
     }
 
     private static String parseDockerImage(JsonNode node) {

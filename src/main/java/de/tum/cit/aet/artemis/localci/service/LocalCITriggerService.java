@@ -332,13 +332,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // legacy exercise handling
         final boolean shouldFallBackToLegacyHandling = buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null;
         if (shouldFallBackToLegacyHandling) {
-            LegacyBuildPlanConverterService.DataFromLegacyFormat dataFromLegacyFormat = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)
-                    .orElse(null);
-            if (dataFromLegacyFormat != null) {
-                List<String> resultPaths = finalizeResultPaths(buildConfig, dataFromLegacyFormat.resultPaths().stream());
-                return new BuildConfig(dataFromLegacyFormat.buildScript(), dataFromLegacyFormat.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
-                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
-                        buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+            BuildPlanPhasesDTO legacyBuildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise).orElse(null);
+            if (legacyBuildPlanPhases != null) {
+                List<BuildPhaseDTO> legacyPhases = legacyBuildPlanPhases.phases();
+                Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(legacyPhases);
+                List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
+                String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, legacyPhases);
+                return new BuildConfig(buildScript, legacyBuildPlanPhases.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage,
+                        projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
+                        buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
             }
             log.error("The build config with id {} has a build script and plan but the legacy exercise was not able to be interpreted", buildConfig.getId());
         }

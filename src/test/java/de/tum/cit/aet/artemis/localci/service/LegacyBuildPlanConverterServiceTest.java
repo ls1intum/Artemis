@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 
 class LegacyBuildPlanConverterServiceTest {
 
@@ -41,14 +42,27 @@ class LegacyBuildPlanConverterServiceTest {
                 }
                 """, "echo hi");
 
-        var legacyData = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
 
-        assertThat(legacyData).isPresent();
-        assertThat(legacyData.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
-        assertThat(legacyData.orElseThrow().buildScript()).contains("echo hi");
-        assertThat(legacyData.orElseThrow().resultPaths().size()).isEqualTo(2);
-        assertThat(legacyData.orElseThrow().resultPaths().getFirst()).isEqualTo("build/test-results/test/*.xml");
-        assertThat(legacyData.orElseThrow().resultPaths().getLast()).isEqualTo("coverage.xml");
+        assertThat(buildPlanPhases).isPresent();
+        assertThat(buildPlanPhases.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
+        assertThat(buildPlanPhases.orElseThrow().phases()).hasSize(1);
+
+        var phase = buildPlanPhases.orElseThrow().phases().getFirst();
+        assertThat(phase.name()).isEqualTo("script");
+        assertThat(phase.condition()).isEqualTo(BuildPhaseCondition.ALWAYS);
+        assertThat(phase.forceRun()).isFalse();
+        assertThat(phase.resultPaths()).containsExactly("build/test-results/test/*.xml", "coverage.xml");
+        assertThat(phase.script()).isEqualTo("""
+                # feel free to remove the code surrounding your script and split your script into multiple phases
+                cd /var/tmp/testing-dir
+                local tmp_file=$(mktemp)
+                cat << '  __LEGACY_INNER_SCRIPT_END__' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase
+                echo hi
+                __LEGACY_INNER_SCRIPT_END__
+                chmod +x "${tmp_file}"
+                "${tmp_file}" "$@"
+                """);
     }
 
     @Test
