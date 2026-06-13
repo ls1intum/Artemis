@@ -36,6 +36,8 @@ export interface BarChartConfig extends BaseChartConfig<'bar'> {
     percentScale?: boolean;
     /** Persistent labels rendered on the bars via chartjs-plugin-datalabels — pass the plugin to <p-chart [plugins]>. */
     dataLabels?: { formatter: (value: number, context: Context) => string };
+    /** Caps the bar's cross-axis thickness in px. Use for slim summary bars (e.g. the feedback score bar) so they don't stretch to fill the container height. */
+    maxBarThickness?: number;
 }
 
 export type LineChartConfig = BaseChartConfig<'line'>;
@@ -151,6 +153,7 @@ export function barChartOptions(config: BarChartConfig): ChartOptions<'bar'> {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        datasets: config.maxBarThickness ? { bar: { maxBarThickness: config.maxBarThickness } } : undefined,
         scales: {
             x: buildScale(config.xAxis, { stacked: config.stacked, isCategoryAxis: !horizontal, percent: horizontal && valueAxisPercent }),
             y: buildScale(config.yAxis, { stacked: config.stacked, isCategoryAxis: horizontal, percent: !horizontal && valueAxisPercent }),

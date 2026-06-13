@@ -230,6 +230,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         barChartOptions({
             horizontal: true,
             stacked: true,
+            maxBarThickness: 25,
             xAxis: { max: this.chartData().xScaleMax, tickFormatter: this.xAxisFormatting },
             yAxis: { display: false },
             legend: { position: 'bottom' },
