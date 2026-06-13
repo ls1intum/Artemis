@@ -92,7 +92,7 @@ examples.forEach((activeConversation) => {
 
         it('should create', () => {
             expect(component).toBeTruthy();
-            expect(component.activeConversation).toEqual(activeConversation);
+            expect(component.activeConversation()).toEqual(activeConversation);
         });
 
         it('should open the add users dialog', () => {
@@ -139,10 +139,10 @@ examples.forEach((activeConversation) => {
                 { id: 2, isRequestingUser: false },
             ];
 
-            component.activeConversation = oneToOneChat;
+            component.activeConversation.set(oneToOneChat);
             component.getOtherUser();
 
-            expect(component.otherUser).toEqual(oneToOneChat.members[1]);
+            expect(component.otherUser()).toEqual(oneToOneChat.members[1]);
         });
 
         it('should toggle pinned messages visibility', () => {

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -53,7 +53,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isExamMode: boolean;
 
     baseUrl: string;
-    isEvaluatingQuizExercise: boolean;
+    readonly isEvaluatingQuizExercise = signal(false);
 
     isDetailPage = input(false);
 
@@ -126,15 +126,15 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     }
 
     evaluateQuizExercise() {
-        this.isEvaluatingQuizExercise = true;
+        this.isEvaluatingQuizExercise.set(true);
         this.exerciseService.evaluateQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
-                this.isEvaluatingQuizExercise = false;
+                this.isEvaluatingQuizExercise.set(false);
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
-                this.isEvaluatingQuizExercise = false;
+                this.isEvaluatingQuizExercise.set(false);
             },
         });
     }

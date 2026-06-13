@@ -244,7 +244,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         // Assertions
-        expect(comp.isFeedbackView).toBe(false);
+        expect(comp.isFeedbackView()).toBe(false);
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
         expect(getSubmissionsWithResultsSpy).not.toHaveBeenCalled();
         expect(comp.submission()).toEqual(submission);
@@ -290,7 +290,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         // Assertions
-        expect(comp.isFeedbackView).toBe(true);
+        expect(comp.isFeedbackView()).toBe(true);
         expect(comp.submissionId).toBe(20);
         expect(getSubmissionsWithResultsSpy).toHaveBeenCalledOnce();
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
@@ -347,7 +347,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         // Assertions
-        expect(comp.isFeedbackView).toBe(true);
+        expect(comp.isFeedbackView()).toBe(true);
         expect(comp.submissionId).toBe(20);
         expect(comp.resultId).toBe(99);
         // When resultId is present, results should NOT be filtered to single result

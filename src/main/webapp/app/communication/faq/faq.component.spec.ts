@@ -157,7 +157,7 @@ describe('FaqComponent', () => {
         expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);
         expect(faqComponent.faqs).not.toContain(faq1);
-        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
+        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs());
     });
 
     it('should not delete faq on error', () => {
@@ -175,9 +175,9 @@ describe('FaqComponent', () => {
         faqComponentFixture.detectChanges();
         faqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(faqComponent.filteredFaqs).toHaveLength(2);
-        expect(faqComponent.filteredFaqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(faqComponent.filteredFaqs()).toHaveLength(2);
+        expect(faqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should catch error if no categories are found', () => {
@@ -197,9 +197,9 @@ describe('FaqComponent', () => {
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
         expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
-        expect(faqComponent.filteredFaqs).toHaveLength(2);
-        expect(faqComponent.filteredFaqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(faqComponent.filteredFaqs()).toHaveLength(2);
+        expect(faqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should call sortService when sortRows is called', () => {
@@ -303,6 +303,6 @@ describe('FaqComponent', () => {
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
         expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
-        expect(faqComponent.irisEnabled).toBe(true);
+        expect(faqComponent.irisEnabled()).toBe(true);
     });
 });

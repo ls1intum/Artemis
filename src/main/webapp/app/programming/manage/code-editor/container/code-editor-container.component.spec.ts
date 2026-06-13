@@ -413,8 +413,8 @@ describe('CodeEditorContainerComponent', () => {
     it('should forward annotations and compute error files', () => {
         component.onAnnotations([{ fileName: 'A.java', type: 'warning' } as any, { fileName: 'B.java', type: 'error' } as any, { fileName: 'B.java', type: 'error' } as any]);
 
-        expect(component.errorFiles).toEqual(['B.java']);
-        expect(component.annotations).toHaveLength(3);
+        expect(component.errorFiles()).toEqual(['B.java']);
+        expect(component.annotations()).toHaveLength(3);
     });
 
     it('should propagate error messages and include connection details', () => {

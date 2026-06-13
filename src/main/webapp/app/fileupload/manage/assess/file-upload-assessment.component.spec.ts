@@ -300,7 +300,7 @@ describe('FileUploadAssessmentComponent', () => {
             component.exercise.set(createExercise());
             component.ngOnInit();
 
-            expect(component.loadingInitialSubmission).toBe(false);
+            expect(component.loadingInitialSubmission()).toBe(false);
         });
 
         it('should validate assessments after loading submission', () => {

@@ -2,12 +2,12 @@
     <h2 class="fw-medium">Tasks</h2>
     <div class="d-flex justify-content-between">
         <div>
-            @if (tasks.length !== 1) {
+            @if (tasks().length !== 1) {
                 <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(true)" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
                     Expand all
                 </jhi-button>
             }
-            @if (tasks.length !== 1) {
+            @if (tasks().length !== 1) {
                 <jhi-button
                     [shouldSubmit]="false"
                     (click)="toggleAllTasksExpanded(false)"
@@ -23,14 +23,14 @@
                 type="button"
                 (click)="saveTestCases()"
                 class="btn btn-primary"
-                [disabled]="isSaving"
+                [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             ></button>
             <button
                 type="button"
                 (click)="resetTestCases()"
                 class="btn btn-secondary"
-                [disabled]="isSaving"
+                [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
             ></button>
         </div>
@@ -128,7 +128,7 @@
         </button>
         <div class="task__row__cell" jhiTranslate="artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent"></div>
     </div>
-    @for (task of tasks; track task; let i = $index) {
+    @for (task of tasks(); track task; let i = $index) {
         <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise" />
     }
 </form>

@@ -165,7 +165,7 @@ describe('Student Exam Timeline Component', () => {
         const submissionVersionServiceSpy = vi
             .spyOn(submissionVersionService, 'findAllSubmissionVersionsOfSubmission')
             .mockReturnValueOnce(of([submissionVersion]) as unknown as Observable<SubmissionVersion[]>);
-        component.studentExam = studentExamValue;
+        component.studentExam.set(studentExamValue);
         component.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
             expect(results).toEqual([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]);
         });
@@ -182,7 +182,7 @@ describe('Student Exam Timeline Component', () => {
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
         expect(component.selectedTimestamp()).toEqual(dayjs('2023-01-07').valueOf());
-        expect(component.submissionTimeStamps).toEqual([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
+        expect(component.submissionTimeStamps()).toEqual([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
         expect(component.submissionVersions).toEqual([submissionVersion]);
         expect(component.fileUploadSubmissions).toEqual([fileUploadSubmission1]);
         expect(component.programmingSubmissions).toEqual([programmingSubmission1]);
@@ -246,7 +246,7 @@ describe('Student Exam Timeline Component', () => {
         component.submissionVersions = [submissionVersion];
         component.fileUploadSubmissions = [fileUploadSubmission1];
         component.programmingSubmissions = [programmingSubmission1];
-        component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+        component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
         fixture.changeDetectorRef.detectChanges();
 
         component.onPageChange({
@@ -272,18 +272,18 @@ describe('Student Exam Timeline Component', () => {
         component.submissionVersions = [submissionVersion];
         component.fileUploadSubmissions = [fileUploadSubmission1];
         component.programmingSubmissions = [programmingSubmission1];
-        component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+        component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
         component.timestampIndex = index;
 
         //when
         component.onSliderInputChange();
         fixture.changeDetectorRef.detectChanges();
         //then
-        if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
+        if (dayjs(component.submissionTimeStamps()[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
             expect(component.currentSubmission).toEqual(submissionVersion);
             expect(component.exerciseIndex()).toBe(0);
             expect(component.currentExercise).toEqual(textExercise);
-        } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
+        } else if (dayjs(component.submissionTimeStamps()[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
             expect(component.currentSubmission).toEqual(programmingSubmission1);
             expect(component.exerciseIndex()).toBe(1);
             expect(component.currentExercise).toEqual(programmingExercise);
@@ -292,7 +292,7 @@ describe('Student Exam Timeline Component', () => {
             expect(component.exerciseIndex()).toBe(2);
             expect(component.currentExercise).toEqual(fileUploadExercise);
         }
-        expect(component.selectedTimestamp()).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
+        expect(component.selectedTimestamp()).toEqual(component.submissionTimeStamps()[component.timestampIndex].valueOf());
     });
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
         'should correctly determine the previous submission',

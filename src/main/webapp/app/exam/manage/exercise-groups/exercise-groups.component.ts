@@ -83,8 +83,8 @@ export class ExerciseGroupsComponent implements OnInit {
     courseId!: number;
     course = signal<Course | undefined>(undefined);
     examId!: number;
-    exam!: Exam;
-    exerciseGroups: ExerciseGroup[] | undefined = undefined;
+    exam = signal<Exam | undefined>(undefined);
+    exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -120,9 +120,9 @@ export class ExerciseGroupsComponent implements OnInit {
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
             next: ([examRes, examInfoDTO]) => {
-                this.exam = examRes.body!;
-                this.exerciseGroups = this.exam.exerciseGroups;
-                this.course.set(this.exam.course!);
+                this.exam.set(examRes.body!);
+                this.exerciseGroups.set(this.exam()!.exerciseGroups);
+                this.course.set(this.exam()!.course!);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
                 this.setupExerciseGroupToExerciseTypesDict();
             },
@@ -171,10 +171,13 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseGroupId
      */
     removeExercise(exerciseId: number, exerciseGroupId: number) {
-        if (this.exerciseGroups) {
-            this.exerciseGroups.forEach((exerciseGroup) => {
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                    // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+                    this.exerciseGroups.set([...exerciseGroups]);
                     this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
@@ -194,7 +197,7 @@ export class ExerciseGroupsComponent implements OnInit {
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
                 const dict = new Map(this.exerciseGroupToExerciseTypesDict());
                 dict.delete(exerciseGroupId);
                 this.exerciseGroupToExerciseTypesDict.set(dict);
@@ -271,8 +274,11 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveUp(index: number): void {
-        if (this.exerciseGroups) {
-            [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
+            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+            this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
     }
@@ -282,15 +288,18 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveDown(index: number): void {
-        if (this.exerciseGroups) {
-            [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
+            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+            this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe({
-            next: (res) => (this.exerciseGroups = res.body!),
+        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups()!).subscribe({
+            next: (res) => this.exerciseGroups.set(res.body!),
             error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         });
     }
@@ -302,8 +311,9 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     setupExerciseGroupToExerciseTypesDict() {
         const dict = new Map<number, ExerciseType[]>();
-        if (this.exerciseGroups) {
-            for (const exerciseGroup of this.exerciseGroups) {
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            for (const exerciseGroup of exerciseGroups) {
                 dict.set(exerciseGroup.id!, []);
                 if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
@@ -338,7 +348,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
         dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
             if (exerciseGroups) {
-                this.exerciseGroups = exerciseGroups;
+                this.exerciseGroups.set(exerciseGroups);
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });

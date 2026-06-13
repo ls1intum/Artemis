@@ -95,7 +95,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
-    loadingInitialSubmission = true;
+    readonly loadingInitialSubmission = signal(true);
     highlightDifferences = false;
 
     private cancelConfirmationText: string;
@@ -183,7 +183,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 }
             },
             error: (error: HttpErrorResponse) => {
-                this.loadingInitialSubmission = false;
+                this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
@@ -205,7 +205,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                     }
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.loadingInitialSubmission = false;
+                    this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
                     } else {
@@ -216,7 +216,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
-        this.loadingInitialSubmission = false;
+        this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const participation = submission.participation as StudentParticipation;
         this.participation.set(participation);

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -21,7 +21,7 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
     private alertService = inject(AlertService);
 
     apollonDiagram: ApollonDiagram;
-    isSaving: boolean;
+    readonly isSaving = signal(false);
     readonly titleInput = viewChild.required<ElementRef>('titleInput');
 
     // Icons
@@ -42,11 +42,11 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
      * Saves the diagram
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
             next: ({ body }) => {
                 if (body) {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                     this.dialogRef.close(body);
                 }
             },

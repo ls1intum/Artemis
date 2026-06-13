@@ -221,7 +221,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
             // THEN
-            expect(comp.isExportToSharingEnabled).toBeFalsy();
+            expect(comp.isExportToSharingEnabled()).toBeFalsy();
         });
 
         it('should not be in sharing mode', () => {
@@ -230,7 +230,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             comp.programmingExercise.set(mockProgrammingExercise);
 
             // THEN
-            expect(comp.isExportToSharingEnabled).toBeFalsy();
+            expect(comp.isExportToSharingEnabled()).toBeFalsy();
         });
 
         it('should not be in sharing mode because profile enabled but body empty', () => {
@@ -240,7 +240,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
             // THEN
-            expect(comp.isExportToSharingEnabled).toBeFalsy();
+            expect(comp.isExportToSharingEnabled()).toBeFalsy();
         });
     });
 });

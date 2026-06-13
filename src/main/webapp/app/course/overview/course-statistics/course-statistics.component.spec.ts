@@ -376,7 +376,7 @@ describe('CourseStatisticsComponent', () => {
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups.size).toBe(4);
+        expect(comp.ngxExerciseGroups().size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
@@ -384,7 +384,7 @@ describe('CourseStatisticsComponent', () => {
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.presentationScore');
 
-        const programming: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.PROGRAMMING)![0];
+        const programming: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
         expect(programming.series[2].isProgrammingExercise).toBe(true);
     });
@@ -398,7 +398,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
 
-        let exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        let exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -406,7 +406,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -415,7 +415,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -438,8 +438,8 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups.size).toBe(1);
-        const exercise: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.MODELING)![0];
+        expect(comp.ngxExerciseGroups().size).toBe(1);
+        const exercise: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.MODELING)![0];
         expect(exercise.absoluteScore).toBe(20);
         expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
@@ -460,7 +460,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
-        expect(comp.course).toBeUndefined();
+        expect(comp.course()).toBeUndefined();
 
         const courseToSubscribeTo = { ...course };
         courseToSubscribeTo.exercises = [...modelingExercises];
@@ -470,7 +470,7 @@ describe('CourseStatisticsComponent', () => {
 
         courseStorageService.updateCourse(courseToSubscribeTo);
 
-        expect(comp.course).toEqual(courseToSubscribeTo);
+        expect(comp.course()).toEqual(courseToSubscribeTo);
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
     });
 
@@ -498,9 +498,9 @@ describe('CourseStatisticsComponent', () => {
             vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
-            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
-            expect(comp.ngxExerciseGroups.size).toBe(3);
-            const modelingExercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+            expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
+            expect(comp.ngxExerciseGroups().size).toBe(3);
+            const modelingExercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
             expect(modelingExercises).toHaveLength(5);
             expect(modelingExercises[0].name).toBe('Until 18:20');
             expect(modelingExercises[1].name).toBe('Until 18:20 too');

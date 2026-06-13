@@ -142,8 +142,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     editorState: EditorState;
     commitState: CommitState;
 
-    errorFiles: string[] = [];
-    annotations: Array<Annotation> = [];
+    readonly errorFiles = signal<string[]>([]);
+    readonly annotations = signal<Array<Annotation>>([]);
 
     private fileTreeChangeSubscription?: Subscription;
 
@@ -443,8 +443,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param annotations The new annotations array
      */
     onAnnotations(annotations: Array<Annotation>) {
-        this.annotations = annotations;
-        this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
+        this.annotations.set(annotations);
+        this.errorFiles.set(uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName)));
     }
 
     /**

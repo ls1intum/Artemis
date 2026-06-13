@@ -180,12 +180,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
-    isExportToSharingEnabled = false;
+    readonly isExportToSharingEnabled = signal(false);
 
     isAdmin = false;
     readonly isBuildPlanEditable = signal(false);
 
-    plagiarismCheckSupported = false; // default value
+    readonly plagiarismCheckSupported = signal(false); // default value
 
     /**
      * Determines if the current user can access participations and scores for this exercise.
@@ -216,7 +216,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS));
-        this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
+        this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
@@ -240,7 +240,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe((isEnabled) => {
-                this.isExportToSharingEnabled = isEnabled;
+                this.isExportToSharingEnabled.set(isEnabled);
             });
     }
 
@@ -325,8 +325,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.checkAndAlertInconsistencies();
                     if (programmingExercise.programmingLanguage) {
-                        this.plagiarismCheckSupported =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
+                        this.plagiarismCheckSupported.set(
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false,
+                        );
                     }
 
                     this.startDiffRefresh();

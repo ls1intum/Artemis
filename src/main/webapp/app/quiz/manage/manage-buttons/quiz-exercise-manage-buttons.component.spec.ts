@@ -131,12 +131,12 @@ describe('QuizExercise Management Buttons Component', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
 
-        expect(comp.isEvaluatingQuizExercise).toBeFalsy();
+        expect(comp.isEvaluatingQuizExercise()).toBeFalsy();
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
         expect(successSpy).toHaveBeenCalledWith('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle evaluate quiz exercise error', () => {
@@ -149,7 +149,7 @@ describe('QuizExercise Management Buttons Component', () => {
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle delete quiz exercise error', () => {

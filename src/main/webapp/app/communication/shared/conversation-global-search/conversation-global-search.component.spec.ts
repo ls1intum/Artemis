@@ -97,8 +97,8 @@ describe('ConversationGlobalSearchComponent', () => {
         // Verify that dropdown is shown with filtered results
         expect(component.showDropdown).toBe(true);
         expect(component.searchMode).toBe(component.SearchMode.CONVERSATION);
-        expect(component.filteredOptions).toHaveLength(1);
-        expect(component.filteredOptions[0].name).toBe('General Channel');
+        expect(component.filteredOptions()).toHaveLength(1);
+        expect(component.filteredOptions()[0].name).toBe('General Channel');
     });
 
     it('should filter users when using "from:" prefix and search length >= 3', () => {
@@ -115,7 +115,7 @@ describe('ConversationGlobalSearchComponent', () => {
         // Verify dropdown shows user results
         expect(component.showDropdown).toBe(true);
         expect(component.searchMode).toBe(component.SearchMode.USER);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
         expect(component.filteredUsers).toEqual(mockUsers);
     });
 
@@ -130,7 +130,7 @@ describe('ConversationGlobalSearchComponent', () => {
         // Verify dropdown shows current user
         expect(component.showDropdown).toBe(true);
         expect(component.searchMode).toBe(component.SearchMode.USER);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
         expect(component.filteredUsers).toEqual([mockCurrentUser]);
     });
 
@@ -141,7 +141,7 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        component.selectOption(component.filteredOptions[0]);
+        component.selectOption(component.filteredOptions()[0]);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
@@ -244,7 +244,7 @@ describe('ConversationGlobalSearchComponent', () => {
         // Simulate enter press
         component.selectActiveOption();
 
-        expect(selectOptionSpy).toHaveBeenCalledWith(component.filteredOptions[0]);
+        expect(selectOptionSpy).toHaveBeenCalledWith(component.filteredOptions()[0]);
     });
 
     it('should focus input and select a conversation when focusWithSelectedConversation is called', () => {
@@ -262,16 +262,16 @@ describe('ConversationGlobalSearchComponent', () => {
         const focusSpy = vi.spyOn(component, 'focusInput');
 
         component.filteredUsers = [mockUsers[0]];
-        component.filteredOptions = [
+        component.filteredOptions.set([
             {
                 id: mockUsers[0].id!,
                 name: mockUsers[0].name!,
                 type: 'user',
                 img: mockUsers[0].imageUrl,
             },
-        ];
+        ]);
 
-        component.selectOption(component.filteredOptions[0]);
+        component.selectOption(component.filteredOptions()[0]);
         vi.advanceTimersByTime(0);
 
         expect(component.selectedAuthors).toEqual([mockUsers[0]]);
@@ -377,7 +377,7 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.filteredUsers).toEqual([]);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
     });
 
     it('should not select a conversation when focusWithSelectedConversation is called with undefined', () => {

@@ -97,7 +97,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     readOnlyMode = false;
     notificationSettings?: CourseNotificationSettingInfo;
-    isNotificationsEnabled = false;
+    readonly isNotificationsEnabled = signal(false);
+    readonly isMuted = signal(false);
 
     muteOptions: { label: string; value: boolean }[] = [];
 
@@ -115,6 +116,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
+        this.isMuted.set(!!this.activeConversation()?.isMuted);
         this.initEditableValues();
         this.loadNotificationSettings();
         this.updateConversationIsMuted();
@@ -273,6 +275,9 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     if (conversation) {
                         conversation.isMuted = isMuted;
                     }
+                    // The conversation is held by an input signal whose reference does not change on
+                    // in-place mutation, so drive the muted state through a dedicated signal (zoneless).
+                    this.isMuted.set(isMuted);
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -299,7 +304,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private checkNotificationStatus() {
-        this.isNotificationsEnabled = this.notificationSettings?.selectedPreset !== 3;
+        this.isNotificationsEnabled.set(this.notificationSettings?.selectedPreset !== 3);
     }
 
     protected readonly ConversationDTO = ConversationDTO;

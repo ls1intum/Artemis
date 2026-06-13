@@ -7,7 +7,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 
@@ -26,7 +26,6 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected accountService = inject(AccountService);
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
-    protected changeDetector = inject(ChangeDetectorRef);
 
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;

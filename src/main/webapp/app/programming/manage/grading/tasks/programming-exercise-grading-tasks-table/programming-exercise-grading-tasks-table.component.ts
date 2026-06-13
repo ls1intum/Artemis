@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -45,8 +45,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     faMedal = faMedal;
     faAsterisk = faAsterisk;
 
-    isSaving = false;
-    tasks: ProgrammingExerciseTask[] = [];
+    readonly isSaving = signal(false);
+    readonly tasks = signal<ProgrammingExerciseTask[]>([]);
     allTasksExpandedSubject: Subject<boolean>;
 
     currentSort: Sort | undefined;
@@ -72,7 +72,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     }
 
     updateTasks = () => {
-        this.tasks = this.taskService.updateTasks();
+        this.tasks.set(this.taskService.updateTasks());
     };
 
     toggleShowInactiveTestsShown = () => {
@@ -81,14 +81,14 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     saveTestCases = () => {
-        this.isSaving = true;
-        this.taskService.saveTestCases().subscribe(() => (this.isSaving = false));
+        this.isSaving.set(true);
+        this.taskService.saveTestCases().subscribe(() => this.isSaving.set(false));
     };
 
     resetTestCases = () => {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.taskService.resetTestCases().subscribe(() => {
-            this.isSaving = false;
+            this.isSaving.set(false);
             this.updateTasks();
         });
     };
@@ -134,7 +134,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             return this.currentSort?.descending ? order : -order;
         };
 
-        this.tasks = this.tasks.sort(comparator);
+        const sortedTasks = [...this.tasks()].sort(comparator);
 
         // the objects task and test have their name attribute named differently, making this necessary
         if (this.currentSort?.by === 'name') {
@@ -143,7 +143,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
                 return this.currentSort?.descending ? order : -order;
             };
         }
-        this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        sortedTasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        this.tasks.set(sortedTasks);
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {

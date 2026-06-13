@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
@@ -81,9 +81,9 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     showDropdown = false;
     isSearchActive = false;
     searchMode: SearchMode = SearchMode.NORMAL;
-    userSearchStatus: UserSearchStatus = UserSearchStatus.LOADING;
+    readonly userSearchStatus = signal<UserSearchStatus>(UserSearchStatus.LOADING);
 
-    filteredOptions: CombinedOption[] = [];
+    readonly filteredOptions = signal<CombinedOption[]>([]);
     filteredUsers: UserPublicInfoDTO[] = [];
     user: User | undefined;
     activeDropdownIndex: number = -1;
@@ -162,13 +162,15 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.filteredOptions = matchingConversations.map(
-            (conversation) =>
-                ({
-                    id: conversation.id!,
-                    name: this.getConversationName(conversation),
-                    type: 'conversation',
-                }) as CombinedOption,
+        this.filteredOptions.set(
+            matchingConversations.map(
+                (conversation) =>
+                    ({
+                        id: conversation.id!,
+                        name: this.getConversationName(conversation),
+                        type: 'conversation',
+                    }) as CombinedOption,
+            ),
         );
     }
 
@@ -181,12 +183,12 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         }
 
         if (!searchQuery || searchQuery.length < 3 || !courseId) {
-            this.filteredOptions = [];
-            this.userSearchStatus = UserSearchStatus.TOO_SHORT;
+            this.filteredOptions.set([]);
+            this.userSearchStatus.set(UserSearchStatus.TOO_SHORT);
             return;
         }
 
-        this.userSearchStatus = UserSearchStatus.LOADING;
+        this.userSearchStatus.set(UserSearchStatus.LOADING);
         this.courseManagementService
             .searchUsers(courseId, searchQuery, ['students', 'tutors', 'instructors'])
             .pipe(
@@ -197,19 +199,21 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             )
             .subscribe((users) => {
                 this.filteredUsers = users;
-                this.filteredOptions = users.map((user) => ({
-                    id: user.id!,
-                    name: user.name!,
-                    type: 'user',
-                    img: user.imageUrl,
-                }));
+                this.filteredOptions.set(
+                    users.map((user) => ({
+                        id: user.id!,
+                        name: user.name!,
+                        type: 'user',
+                        img: user.imageUrl,
+                    })),
+                );
                 if (
                     (this.user && this.user.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
                     (this.user && this.user.login?.toLowerCase().includes(searchQuery.toLowerCase()))
                 ) {
                     this.addOwnUserToOptions();
                 }
-                this.userSearchStatus = UserSearchStatus.RESULTS;
+                this.userSearchStatus.set(UserSearchStatus.RESULTS);
             });
     }
 
@@ -253,16 +257,16 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
         if (this.user && !alreadySelected) {
             this.filteredUsers = [this.user, ...this.filteredUsers];
-            this.filteredOptions = [
+            this.filteredOptions.set([
                 {
                     id: this.user.id!,
                     name: this.user.name!,
                     type: 'user',
                     img: this.user.imageUrl,
                 },
-                ...this.filteredOptions,
-            ];
-            this.userSearchStatus = UserSearchStatus.RESULTS;
+                ...this.filteredOptions(),
+            ]);
+            this.userSearchStatus.set(UserSearchStatus.RESULTS);
         }
     }
 
@@ -328,10 +332,11 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     navigateDropdown(step: number, event: Event): void {
-        if (this.showDropdown && this.filteredOptions.length > 0) {
+        const optionsLength = this.filteredOptions().length;
+        if (this.showDropdown && optionsLength > 0) {
             event.preventDefault();
             const newIndex = this.activeDropdownIndex + step;
-            this.setActiveDropdownIndex((newIndex + this.filteredOptions.length) % this.filteredOptions.length);
+            this.setActiveDropdownIndex((newIndex + optionsLength) % optionsLength);
         }
     }
 
@@ -356,8 +361,9 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     selectActiveOption(): void {
-        if (this.fullSearchTerm && this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
-            const selectedOption = this.filteredOptions[this.activeDropdownIndex];
+        const options = this.filteredOptions();
+        if (this.fullSearchTerm && this.activeDropdownIndex >= 0 && this.activeDropdownIndex < options.length) {
+            const selectedOption = options[this.activeDropdownIndex];
             this.selectOption(selectedOption);
         }
     }

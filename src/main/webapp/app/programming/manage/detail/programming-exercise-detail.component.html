@@ -56,7 +56,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
                             </a>
                         }
-                        @if (programmingExercise().isAtLeastEditor && plagiarismCheckSupported) {
+                        @if (programmingExercise().isAtLeastEditor && plagiarismCheckSupported()) {
                             <jhi-feature-overlay [enabled]="plagiarismEnabled()">
                                 <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
                                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism"></span>
@@ -94,7 +94,7 @@
                     <div>
                         @if (programmingExercise().isAtLeastInstructor) {
                             <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise().id!" class="me-1" />
-                            @if (isExportToSharingEnabled) {
+                            @if (isExportToSharingEnabled()) {
                                 <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise().id!" class="me-1" />
                             }
                         }

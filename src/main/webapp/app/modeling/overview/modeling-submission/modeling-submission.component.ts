@@ -166,8 +166,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     faTimeline = faTimeline;
 
     // mode
-    isFeedbackView = false;
-    showResultHistory = false;
+    readonly isFeedbackView = signal(false);
+    readonly showResultHistory = signal(false);
 
     private routeParams = toSignal(this.route.params);
 
@@ -186,10 +186,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     switchMap((params) => {
                         this.submissionId = Number(params['submissionId']) || undefined;
                         this.resultId = Number(params['resultId']) || undefined;
-                        this.isFeedbackView = !!this.submissionId;
+                        this.isFeedbackView.set(!!this.submissionId);
 
                         // If participationId exists and feedback view is needed, fetch history results first
-                        if (this.effectiveParticipationId() && this.isFeedbackView) {
+                        if (this.effectiveParticipationId() && this.isFeedbackView()) {
                             return this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission()));
                         }
                         // Otherwise, directly fetch the latest submission
@@ -329,7 +329,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
-        if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
+        if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory) {
             const matchingSubmission = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId);
 
             if (matchingSubmission) {
@@ -343,7 +343,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         // reconnect participation <--> result
         // Skip reducing to single result when viewing a specific result in feedback view
-        if (getLatestSubmissionResult(modelingSubmission) && !(this.isFeedbackView && this.resultId)) {
+        if (getLatestSubmissionResult(modelingSubmission) && !(this.isFeedbackView() && this.resultId)) {
             modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation.set(modelingSubmission.participation as StudentParticipation);
@@ -372,9 +372,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
 
         this.subscribeToWebsockets();
-        if ((getLatestSubmissionResult(this.submission()) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
+        if ((getLatestSubmissionResult(this.submission()) && this.isAfterAssessmentDueDate) || this.isFeedbackView()) {
             this.result.set(getLatestSubmissionResult(this.submission()));
-            if (this.isFeedbackView && this.submissionId) {
+            if (this.isFeedbackView() && this.submissionId) {
                 if (this.resultId) {
                     // Find the specific result by resultId (from clicked result in timeline)
                     this.result.set(this.submission().results?.find((result) => result.id === this.resultId));
@@ -392,7 +392,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 // Feedbacks are already loaded, use them directly
                 this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
                 this.prepareAssessmentData();
-            } else if (!this.isAutomaticResult && this.isFeedbackView && this.resultId && this.submissionId) {
+            } else if (!this.isAutomaticResult && this.isFeedbackView() && this.resultId && this.submissionId) {
                 // Feedbacks not loaded for manual result, fetch from backend using specific resultId
                 this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe({
                     next: (assessmentResult: Result) => {

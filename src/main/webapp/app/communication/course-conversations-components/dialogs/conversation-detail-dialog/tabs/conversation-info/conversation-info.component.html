@@ -76,9 +76,9 @@
                 </div>
 
                 <p class="text-muted small mb-2">
-                    @if (!isNotificationsEnabled) {
+                    @if (!isNotificationsEnabled()) {
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled"></span>
-                    } @else if (activeConversation()?.isMuted) {
+                    } @else if (isMuted()) {
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription"></span>
                     } @else {
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription"></span>
@@ -93,7 +93,7 @@
                     <p-selectbutton
                         id="muteSelectButton"
                         [options]="muteOptions"
-                        [ngModel]="activeConversation()?.isMuted ?? false"
+                        [ngModel]="isMuted()"
                         (ngModelChange)="onMuteOptionChange($event)"
                         optionLabel="label"
                         optionValue="value"

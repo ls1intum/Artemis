@@ -48,7 +48,7 @@
                 @if (showDropdown) {
                     <!-- Suggestions dropdown -->
                     <ul class="list-group suggestions-dropdown">
-                        @if (filteredOptions.length === 0) {
+                        @if (filteredOptions().length === 0) {
                             <li class="list-group-item">
                                 @if (searchMode === SearchMode.CONVERSATION) {
                                     <span
@@ -57,21 +57,21 @@
                                         [translateValues]="{ search: searchTermWithoutPrefix }"
                                     ></span>
                                 } @else if (searchMode === SearchMode.USER) {
-                                    @if (userSearchStatus === UserSearchStatus.RESULTS) {
+                                    @if (userSearchStatus() === UserSearchStatus.RESULTS) {
                                         <span
                                             class="text-muted"
                                             jhiTranslate="artemisApp.metis.globalSearch.noUserFound"
                                             [translateValues]="{ search: searchTermWithoutPrefix }"
                                         ></span>
-                                    } @else if (userSearchStatus === UserSearchStatus.LOADING) {
+                                    } @else if (userSearchStatus() === UserSearchStatus.LOADING) {
                                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
-                                    } @else if (userSearchStatus === UserSearchStatus.TOO_SHORT) {
+                                    } @else if (userSearchStatus() === UserSearchStatus.TOO_SHORT) {
                                         <span class="text-muted" jhiTranslate="artemisApp.metis.globalSearch.userQueryTooShort"></span>
                                     }
                                 }
                             </li>
                         } @else {
-                            @for (option of filteredOptions; let i = $index; track option) {
+                            @for (option of filteredOptions(); let i = $index; track option) {
                                 <li
                                     class="list-group-item dropdown-option"
                                     [class.active]="i === activeDropdownIndex"
