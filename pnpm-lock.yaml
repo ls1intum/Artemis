@@ -177,10 +177,10 @@ importers:
         specifier: 5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
       chart.js:
-        specifier: ^4.5.1
+        specifier: 4.5.1
         version: 4.5.1
       chartjs-plugin-datalabels:
-        specifier: ^2.2.0
+        specifier: 2.2.0
         version: 2.2.0(chart.js@4.5.1)
       dayjs:
         specifier: 1.11.21
