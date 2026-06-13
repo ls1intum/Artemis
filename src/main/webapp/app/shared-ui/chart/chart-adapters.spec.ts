@@ -135,6 +135,35 @@ describe('chart-adapters', () => {
             expect(data.datasets[1].meta?.[0]).toBeUndefined();
             expect(data.datasets[1].meta?.[1]).toEqual({ name: 'W2', value: 5 });
         });
+
+        it('preserves duplicate labels when all entries share the same series structure', () => {
+            const entries: ChartMultiSeriesEntry[] = [
+                {
+                    name: 'Your Score',
+                    series: [
+                        { name: 'Homework 1', value: 80, exerciseId: 1 },
+                        { name: 'Homework 1', value: 60, exerciseId: 2 },
+                        { name: 'Quiz 1', value: 90, exerciseId: 3 },
+                    ],
+                },
+                {
+                    name: 'Average',
+                    series: [
+                        { name: 'Homework 1', value: 70, exerciseId: 1 },
+                        { name: 'Homework 1', value: 50, exerciseId: 2 },
+                        { name: 'Quiz 1', value: 85, exerciseId: 3 },
+                    ],
+                },
+            ];
+            const data = multiSeriesToLineData(entries, ['blue', 'yellow']);
+
+            expect(data.labels).toEqual(['Homework 1', 'Homework 1', 'Quiz 1']);
+            expect(data.datasets[0].data).toEqual([80, 60, 90]);
+            expect(data.datasets[1].data).toEqual([70, 50, 85]);
+            expect(data.datasets[0].meta?.[0]).toEqual({ name: 'Homework 1', value: 80, exerciseId: 1 });
+            expect(data.datasets[0].meta?.[1]).toEqual({ name: 'Homework 1', value: 60, exerciseId: 2 });
+            expect(data.datasets[1].meta?.[1]).toEqual({ name: 'Homework 1', value: 50, exerciseId: 2 });
+        });
     });
 
     describe('referenceLineDataset', () => {

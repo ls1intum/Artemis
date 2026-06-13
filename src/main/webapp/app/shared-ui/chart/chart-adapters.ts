@@ -76,6 +76,9 @@ export function multiSeriesToNormalizedStackedBarData(entries: ChartMultiSeriesE
  * Each entry becomes one line (dataset); the labels are the union of all series item names in
  * order of first occurrence. Points missing in a series are null (visualized according to spanGaps).
  *
+ * When all entries share the same series names in the same order, data is mapped positionally
+ * so that duplicate labels (e.g. exercises with identical titles) are preserved correctly.
+ *
  * @param entries one entry per line
  * @param colors concrete colors, one per line; cycled if shorter
  * @param options monotone applies monotone cubic interpolation (equivalent of d3 curveMonotoneX);
@@ -86,28 +89,44 @@ export function multiSeriesToLineData(
     colors: string[],
     options?: { monotone?: boolean; spanGaps?: boolean },
 ): ChartData<'line', (number | null)[], string> {
-    const labels: string[] = [];
-    for (const entry of entries) {
-        for (const item of entry.series) {
-            if (!labels.includes(item.name)) {
-                labels.push(item.name);
+    const firstSeries = entries[0]?.series ?? [];
+    const allAligned = entries.every((e) => e.series.length === firstSeries.length && e.series.every((item, i) => item.name === firstSeries[i].name));
+
+    let labels: string[];
+    let dataForEntry: (entry: ChartMultiSeriesEntry) => (number | null)[];
+    let metaForEntry: (entry: ChartMultiSeriesEntry) => (ChartSeriesEntry | undefined)[];
+
+    if (allAligned) {
+        labels = firstSeries.map((item) => item.name);
+        dataForEntry = (entry) => entry.series.map((item) => item.value);
+        metaForEntry = (entry) => [...entry.series];
+    } else {
+        labels = [];
+        for (const entry of entries) {
+            for (const item of entry.series) {
+                if (!labels.includes(item.name)) {
+                    labels.push(item.name);
+                }
             }
         }
+        dataForEntry = (entry) => labels.map((label) => findSegment(entry, label)?.value ?? null);
+        metaForEntry = (entry) => labels.map((label) => findSegment(entry, label));
     }
+
     return {
         labels,
         datasets: entries.map((entry, index) => {
             const color = colors[index % colors.length];
             return {
                 label: entry.name,
-                data: labels.map((label) => findSegment(entry, label)?.value ?? null),
+                data: dataForEntry(entry),
                 borderColor: color,
                 backgroundColor: color,
                 pointBackgroundColor: color,
                 fill: false,
                 cubicInterpolationMode: options?.monotone ? ('monotone' as const) : ('default' as const),
                 spanGaps: options?.spanGaps ?? false,
-                meta: labels.map((label) => findSegment(entry, label)),
+                meta: metaForEntry(entry),
             };
         }),
     };
