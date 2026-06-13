@@ -174,7 +174,9 @@ class CourseRequestServiceTest {
         courseRequestService.acceptRequest(1L);
 
         verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
-        assertThat(mailRecipientCaptor.getValue().email()).isEqualTo("instructor@uni.test");
+        // The recipient DTO must be built from the original eagerly-loaded requester (not the merged proxy whose requester is null);
+        // asserting full equality verifies every field is extracted, not just the email.
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -203,7 +205,7 @@ class CourseRequestServiceTest {
         courseRequestService.rejectRequest(1L, "Not enough justification");
 
         verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
-        assertThat(mailRecipientCaptor.getValue().email()).isEqualTo("instructor@uni.test");
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -250,7 +252,7 @@ class CourseRequestServiceTest {
 
         // Verify received email was sent with the original requester, not from the saved entity
         verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
-        assertThat(mailRecipientCaptor.getValue().email()).isEqualTo("instructor@uni.test");
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
 
         // Verify contact notification was also sent
         verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"),

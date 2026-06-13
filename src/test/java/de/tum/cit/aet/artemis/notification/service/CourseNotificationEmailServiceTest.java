@@ -93,7 +93,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), contextCaptor.capture());
-            verify(mailSendingService).sendEmailSync(eq(MailRecipientDTO.from(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
 
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
@@ -120,8 +120,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine, times(2)).process(eq("mail/course_notification/ASSIGNMENT_RELEASED"), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(MailRecipientDTO.from(englishUser)), anyString(), anyString(), eq(false), eq(true));
-            verify(mailSendingService).sendEmailSync(eq(MailRecipientDTO.from(germanUser)), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(englishUser)), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(germanUser)), anyString(), anyString(), eq(false), eq(true));
         });
     }
 
@@ -189,8 +189,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(eq(MailRecipientDTO.from(user1)), anyString(), anyString(), anyBoolean(), anyBoolean());
-            verify(mailSendingService).sendEmailSync(eq(MailRecipientDTO.from(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService, never()).sendEmailSync(eq(expectedMailRecipient(user1)), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
         });
     }
 
@@ -239,7 +239,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq(expectedLocalePrefix), any(), any(Locale.class));
             verify(templateEngine).process(eq(expectedTemplatePath), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(MailRecipientDTO.from(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
         });
     }
 
@@ -248,6 +248,16 @@ class CourseNotificationEmailServiceTest {
         user.setLogin(login);
         user.setLangKey(langKey);
         return user;
+    }
+
+    /**
+     * Mirrors the {@code CourseNotificationRecipientDTO -> MailRecipientDTO} conversion performed by
+     * {@code CourseNotificationEmailService}: course-notification emails never carry an activation or reset key, so those
+     * are always {@code null}. Building the expected DTO this way keeps the assertions independent of whether the
+     * {@link User} fixture happens to set an activation/reset key.
+     */
+    private static MailRecipientDTO expectedMailRecipient(User user) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
