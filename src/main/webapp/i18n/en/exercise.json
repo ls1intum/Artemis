@@ -318,7 +318,8 @@
                 "title": {
                     "undefined": "You need to specify a title.",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!",
-                    "disallowedValue": "The title is already used for another exercise!"
+                    "disallowedValue": "The title is already used for another exercise!",
+                    "maxlength": "The title must be shorter than {{max}} characters!"
                 },
                 "channelName": {
                     "empty": "You need to specify a channel name."
