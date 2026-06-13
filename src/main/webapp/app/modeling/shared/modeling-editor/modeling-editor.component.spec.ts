@@ -6,6 +6,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
     class MockApollonEditorClass {
         _model: any;
+        _options: any;
         _subscriptions = new Map<number, (model: any) => void>();
         _subscriptionCounter = 0;
         _broadcastCallback: ((patch: string) => void) | undefined;
@@ -29,6 +30,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         broadcastFullState = vi.fn();
 
+        setLocalAwarenessUser = vi.fn();
+
         destroy = vi.fn(() => {
             this._destroyed = true;
             this._subscriptions.clear();
@@ -38,7 +41,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         nextRender = Promise.resolve();
 
-        constructor(_container: HTMLElement, options?: { model?: any }) {
+        constructor(_container: HTMLElement, options?: { model?: any; collaboration?: any }) {
+            this._options = options;
             this._model = options?.model ? deepClone(options.model) : {};
         }
 
@@ -171,6 +175,29 @@ describe('ModelingEditorComponent', () => {
         // verify teardown
         expect(component['apollonEditor']).toBeUndefined();
         expect(editor.destroy).toHaveBeenCalled();
+    });
+
+    it('should wait for the local user before mounting a collaborative editor', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        expect(component['apollonEditor']).toBeUndefined();
+
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as any;
+        expect(editor).toBeDefined();
+        expect(editor._options.collaboration).toEqual({
+            enabled: true,
+            user: collaborationUser,
+            showPresence: true,
+            showCursors: true,
+            showSelectionHighlights: true,
+        });
+        expect(editor.setLocalAwarenessUser).toHaveBeenCalledWith(collaborationUser);
     });
 
     it('ngOnChanges', async () => {

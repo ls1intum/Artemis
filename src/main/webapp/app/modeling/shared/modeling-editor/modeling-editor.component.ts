@@ -66,7 +66,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             const enabled = this.collaborationEnabled();
             const user = this.collaborationUser();
 
-            if (this.isDestroyed || !enabled || !user || !this.apollonEditor) {
+            if (this.isDestroyed || !enabled || !user) {
+                return;
+            }
+
+            if (!this.apollonEditor) {
+                this.initializeApollonEditor();
                 return;
             }
 
@@ -119,6 +124,15 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * This function initializes the Apollon editor in Modeling mode.
      */
     private initializeApollonEditor(): void {
+        const collaborationEnabled = this.collaborationEnabled() && !this.readOnly();
+        const collaborationUser = collaborationEnabled ? this.collaborationUser() : undefined;
+
+        // Apollon determines whether to mount its collaboration UI from the initial options.
+        // Wait for the local user instead of constructing an editor whose presence layer stays inactive.
+        if (collaborationEnabled && !collaborationUser) {
+            return;
+        }
+
         if (this.apollonEditor) {
             if (this.modelSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.modelSubscription);
@@ -134,9 +148,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         const editorContainer = this.editorContainer();
         if (editorContainer) {
-            const collaborationEnabled = this.collaborationEnabled() && !this.readOnly();
-            const collaborationUser = collaborationEnabled ? this.collaborationUser() : undefined;
-
             this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
                 model: umlModel,
                 mode: ApollonMode.Modelling,
