@@ -15,9 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -40,8 +40,8 @@ class CourseNotificationPushServiceTest {
     @Test
     void shouldSendNotificationsToBothServicesWhenRecipientListProvided() {
         CourseNotificationDTO notification = createTestNotification();
-        List<User> recipients = createTestRecipients();
-        HashSet<User> expectedRecipientSet = new HashSet<>(recipients);
+        List<CourseNotificationRecipientDTO> recipients = createTestRecipients();
+        HashSet<CourseNotificationRecipientDTO> expectedRecipientSet = new HashSet<>(recipients);
 
         ReflectionTestUtils.invokeMethod(courseNotificationPushService, "sendCourseNotification", notification, recipients);
 
@@ -52,8 +52,8 @@ class CourseNotificationPushServiceTest {
     @Test
     void shouldSendNotificationsWhenRecipientListIsEmpty() {
         CourseNotificationDTO notification = createTestNotification();
-        List<User> emptyRecipients = List.of();
-        HashSet<User> expectedEmptySet = new HashSet<>(emptyRecipients);
+        List<CourseNotificationRecipientDTO> emptyRecipients = List.of();
+        HashSet<CourseNotificationRecipientDTO> expectedEmptySet = new HashSet<>(emptyRecipients);
 
         ReflectionTestUtils.invokeMethod(courseNotificationPushService, "sendCourseNotification", notification, emptyRecipients);
 
@@ -65,15 +65,9 @@ class CourseNotificationPushServiceTest {
         return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, Map.of(), "/");
     }
 
-    private List<User> createTestRecipients() {
-        User user1 = new User();
-        user1.setId(1L);
-        user1.setLogin("user1");
-
-        User user2 = new User();
-        user2.setId(2L);
-        user2.setLogin("user2");
-
+    private List<CourseNotificationRecipientDTO> createTestRecipients() {
+        var user1 = new CourseNotificationRecipientDTO(1L, "user1", null, null, null, null);
+        var user2 = new CourseNotificationRecipientDTO(2L, "user2", null, null, null, null);
         return List.of(user1, user2);
     }
 }
