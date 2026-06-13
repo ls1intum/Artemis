@@ -74,10 +74,11 @@ export function toChartSelectEvent(event: { element?: { datasetIndex: number; in
         return undefined;
     }
     const rawValue = dataset.data?.[element.index];
+    const rawLabel = data.labels?.[element.index];
     return {
         datasetIndex: element.datasetIndex,
         index: element.index,
-        label: data.labels?.[element.index] as string | undefined,
+        label: typeof rawLabel === 'string' ? rawLabel : undefined,
         datasetLabel: dataset.label,
         value: typeof rawValue === 'number' ? rawValue : undefined,
         meta: dataset.meta?.[element.index],

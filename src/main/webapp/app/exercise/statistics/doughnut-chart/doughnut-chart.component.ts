@@ -121,7 +121,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * This is necessary in order to compensate the workaround for
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)
      */
-    valueFormatting(data: any): string {
-        return this.currentMax() === 0 ? '0' : data.value;
+    valueFormatting(data: { value: number }): string {
+        return this.currentMax() === 0 ? '0' : String(data.value);
     }
 }

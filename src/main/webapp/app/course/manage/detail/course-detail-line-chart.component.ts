@@ -217,15 +217,15 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
         this.reloadChart();
     }
 
-    formatYAxis(value: any) {
+    formatYAxis(value: number | string): string {
         return value.toLocaleString() + ' %';
     }
 
     /**
      * Using the model, we look for the entry with the same title (CW XX) and return the absolute value for this entry
      */
-    findAbsoluteValue(model: any) {
-        const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
+    findAbsoluteValue(model: { name: string }): number | string | undefined {
+        const result = this.absoluteSeries.find((entry) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
     }
 
