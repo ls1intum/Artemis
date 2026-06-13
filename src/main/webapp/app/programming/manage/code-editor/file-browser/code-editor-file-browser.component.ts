@@ -268,9 +268,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             this.repositoryFiles.set({});
         }
 
-        // Only write when the entry actually changes — see initializeRepositoryFiles.
         if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
-            if (PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles()) {
+            if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
                 this.repositoryFiles.update((files) => {
                     const updated = { ...files };
                     delete updated[PROBLEM_STATEMENT_IDENTIFIER];
@@ -280,7 +279,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             if (this.isProblemStatementSelected()) {
                 this.selectedFileChange.emit(undefined);
             }
-        } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] !== FileType.PROBLEM_STATEMENT) {
+        } else if (!(PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles())) {
             this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
         }
 

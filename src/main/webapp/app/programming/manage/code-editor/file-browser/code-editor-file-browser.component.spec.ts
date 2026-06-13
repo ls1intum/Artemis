@@ -250,6 +250,19 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.filesTreeViewItem().map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
     });
 
+    it('preserves a real FILE entry named __problem_statement__ across visibility toggles', () => {
+        comp.repositoryFiles.set({ [PROBLEM_STATEMENT_IDENTIFIER]: FileType.FILE });
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        internals(comp).handleProblemStatementVisibility?.();
+
+        expect(comp.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.FILE);
+
+        fixture.componentRef.setInput('isProblemStatementVisible', false);
+        internals(comp).handleProblemStatementVisibility?.();
+
+        expect(comp.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.FILE);
+    });
+
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
