@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pure (sandbox-free) correctness gates that the {@link AuthoritativeVerificationService} applies on top of the differential build oracle. They catch two classes of broken
@@ -221,6 +224,108 @@ final class ExerciseIntegrityGate {
             }
         }
         return reasons;
+    }
+
+    /**
+     * The cabal mixin that renames the reference solution's module so the tests can compare against it: {@code solution (Exercise as <Ref>)}. Capture group 1 is the reference
+     * alias.
+     */
+    private static final Pattern CABAL_REFERENCE_MIXIN = Pattern.compile("solution\\s*\\(\\s*Exercise\\s+as\\s+(\\w+)\\s*\\)", Pattern.CASE_INSENSITIVE);
+
+    /** A Haskell import line: {@code import [qualified] <Module> [as <Alias>]}. Capture group 1 is the imported module name. */
+    private static final Pattern HASKELL_IMPORT = Pattern.compile("^import\\s+(?:qualified\\s+)?([\\w.]+)");
+
+    /**
+     * Detects a Haskell test harness that compares the submission against ITSELF — a self-comparison tautology that the differential oracle is structurally blind to (the template
+     * still errors, so the solution-passes/template-fails invariant holds) yet which scores ANY submission 100%. Under the cabal mixin layout the tests build renames the reference
+     * solution's module ({@code solution (Exercise as Solution)}) and reaches the student code through an {@code Interface} indirection; a correct {@code Test.hs} imports the
+     * reference
+     * via the renamed module and the submission via {@code Interface}. The bug (observed live, oracle-accepted 22/22) is {@code import qualified Exercise as Sol}: the bare
+     * {@code Exercise} module IS the submission under that mixin, so every assertion becomes {@code submission == submission} and passes for any implementation.
+     * <p>
+     * Haskell-only and contract-gated: it fires ONLY when a tests-repo cabal declares the {@code solution (Exercise as <Ref>)} mixin and an {@code Interface} indirection, and it
+     * REJECTS only on the unambiguous positive fingerprint (a bare {@code Exercise} import present AND no renamed-reference import). Every other shape — non-Haskell harnesses, an
+     * unrecognized cabal, both imports present (ambiguous), or any parse error — fails OPEN, because a false reject (bouncing a good exercise into the retry budget) is worse than
+     * the
+     * gap.
+     *
+     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
+     * @return a single actionable reason when the self-comparison fingerprint is unambiguous, otherwise an empty list (gate passes)
+     */
+    static List<String> selfComparisonHarnessReasons(Map<String, String> producedTestsFiles) {
+        try {
+            if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+                return List.of();
+            }
+            // Scope: a Haskell cabal-mixin harness with a Test.hs driver. Absent either -> not this harness shape -> fail open.
+            String cabal = null;
+            String testHs = null;
+            for (Map.Entry<String, String> entry : producedTestsFiles.entrySet()) {
+                String base = basename(entry.getKey());
+                if (base.endsWith(".cabal")) {
+                    cabal = entry.getValue();
+                }
+                else if ("Test.hs".equals(base)) {
+                    testHs = entry.getValue();
+                }
+            }
+            if (cabal == null || testHs == null) {
+                return List.of();
+            }
+            // Learn the renamed-reference module name(s) FROM the cabal (never hardcode "Solution"); require the Interface submission indirection too.
+            Set<String> referenceModules = new LinkedHashSet<>();
+            Matcher mixin = CABAL_REFERENCE_MIXIN.matcher(cabal);
+            while (mixin.find()) {
+                referenceModules.add(mixin.group(1));
+            }
+            if (referenceModules.isEmpty() || !cabal.contains("Interface")) {
+                return List.of();
+            }
+            // Scan Test.hs imports (comment-stripped): is the bare Exercise module imported, and is any renamed-reference module imported?
+            boolean importsBareExercise = false;
+            boolean importsRenamedReference = false;
+            for (String rawLine : testHs.split("\n", -1)) {
+                String line = stripHaskellComments(rawLine).strip();
+                Matcher importMatcher = HASKELL_IMPORT.matcher(line);
+                if (!importMatcher.find()) {
+                    continue;
+                }
+                String module = importMatcher.group(1);
+                if ("Exercise".equals(module)) {
+                    importsBareExercise = true;
+                }
+                else if (referenceModules.contains(module)) {
+                    importsRenamedReference = true;
+                }
+            }
+            // REJECT only on the certain fingerprint: the bare submission module is imported as the reference AND no renamed reference is imported. Both-present is ambiguous ->
+            // open.
+            if (importsBareExercise && !importsRenamedReference) {
+                String reference = referenceModules.iterator().next();
+                return List.of(
+                        "The test harness compares the submission against ITSELF, so wrong code would score 100%. In tests/test/Test.hs you imported the submission module as the "
+                                + "reference (an `import qualified Exercise as ...` line): under the cabal `solution (Exercise as " + reference
+                                + ")` mixin the bare `Exercise` module IS the "
+                                + "submission, so every assertion becomes submission == submission and passes for any implementation. Fix: import the reference as the renamed module — "
+                                + "`import qualified " + reference
+                                + " as Sol` — and reach the student's code only through `import qualified Interface as Sub`. Do NOT edit the .cabal mixins.");
+            }
+            return List.of();
+        }
+        catch (RuntimeException e) {
+            // Fail open on any unexpected parse problem, like the other integrity probes — never block on a gate we could not evaluate confidently.
+            return List.of();
+        }
+    }
+
+    /**
+     * Removes Haskell comments from a single line: inline {@code &#123;- ... -&#125;} blocks and everything from a {@code --} line comment, so a commented-out import can never
+     * trip the gate.
+     */
+    private static String stripHaskellComments(String line) {
+        String withoutBlocks = line.replaceAll("\\{-.*?-\\}", " ");
+        int lineComment = withoutBlocks.indexOf("--");
+        return lineComment < 0 ? withoutBlocks : withoutBlocks.substring(0, lineComment);
     }
 
     /** Normalizes a file body for content-equality: CRLF folded and surrounding whitespace stripped. */

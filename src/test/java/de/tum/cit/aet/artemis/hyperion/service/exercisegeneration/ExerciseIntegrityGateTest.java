@@ -251,4 +251,73 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isResidueOutsideCanonicalRoot("Calculator.cs")).isFalse();
         assertThat(ExerciseIntegrityGate.isResidueOutsideCanonicalRoot("R/column_sums.R")).isFalse();
     }
+
+    // --- Self-comparison harness gate (Haskell mixin) ---
+
+    /** The cabal that renames the reference solution's module and reaches the student code through the Interface indirection (the real Haskell mixin harness shape). */
+    private static final String CABAL_WITH_MIXIN = """
+            test-suite test
+              other-modules: Interface
+              build-depends: solution
+              mixins:
+                solution (Exercise as Solution)
+            library solution
+              exposed-modules: Exercise
+            """;
+
+    @Test
+    void selfComparison_rejectsTestImportingTheSubmissionModuleAsTheReference() {
+        // The real oracle-accepted-22/22 bug: Test.hs imports `Exercise as Sol`, but under the mixin the bare Exercise module IS the submission, so every Sub.f x @?= Sol.f x is a
+        // self-comparison that any implementation passes.
+        String buggyTestHs = "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\nimport Test.Tasty.HUnit\n";
+        var reasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", CABAL_WITH_MIXIN, "test/Test.hs", buggyTestHs));
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.get(0)).contains("compares the submission against ITSELF").contains("import qualified Solution as Sol");
+    }
+
+    @Test
+    void selfComparison_acceptsTestImportingTheRenamedReference() {
+        // The correct harness: Sol resolves to the renamed reference module `Solution`, Sub to the student code via Interface.
+        String correctTestHs = "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\nimport Test.Tasty.HUnit\n";
+        assertThat(ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", CABAL_WITH_MIXIN, "test/Test.hs", correctTestHs))).isEmpty();
+    }
+
+    @Test
+    void selfComparison_failsOpenForNonHaskellHarness() {
+        // No cabal at all (a Jest/JUnit harness) -> out of scope -> never fires.
+        assertThat(ExerciseIntegrityGate.selfComparisonHarnessReasons(map("package.json", "{}", "src/Stack.test.ts", "expect(s.pop()).toBe(1);"))).isEmpty();
+    }
+
+    @Test
+    void selfComparison_failsOpenWhenCabalHasNoReferenceMixin() {
+        // A cabal without the `solution (Exercise as <Ref>)` mixin -> reference-module set empty -> unrecognized harness -> fail open even if Test.hs imports bare Exercise.
+        String cabalNoMixin = "test-suite test\n  other-modules: Interface\n  build-depends: base\n";
+        String testHs = "module Test where\nimport qualified Exercise as Sol\n";
+        assertThat(ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", cabalNoMixin, "test/Test.hs", testHs))).isEmpty();
+    }
+
+    @Test
+    void selfComparison_failsOpenWhenBothReferenceAndBareExerciseAreImported() {
+        // Ambiguous: a renamed reference IS imported, so the reference is present; resolving which alias the assertions use needs full Haskell semantics -> refuse to guess ->
+        // open.
+        String testHs = "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\nimport qualified Exercise as Raw\n";
+        assertThat(ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", CABAL_WITH_MIXIN, "test/Test.hs", testHs))).isEmpty();
+    }
+
+    @Test
+    void selfComparison_failsOpenWhenTheBuggyImportIsCommentedOut() {
+        // A commented-out buggy import must not trip the gate; the live import is the correct renamed reference.
+        String testHs = "module Test where\nimport qualified Interface as Sub\n-- import qualified Exercise as Sol\nimport qualified Solution as Sol\n";
+        assertThat(ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", CABAL_WITH_MIXIN, "test/Test.hs", testHs))).isEmpty();
+    }
+
+    @Test
+    void selfComparison_readsTheReferenceNameFromTheCabalRatherThanHardcodingSolution() {
+        // A harness that renames to a different alias (`Exercise as Reference`) is pinned to whatever the cabal declares; importing bare Exercise is still the bug.
+        String cabal = "test-suite test\n  other-modules: Interface\n  mixins:\n    solution (Exercise as Reference)\n";
+        String testHs = "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n";
+        var reasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", cabal, "test/Test.hs", testHs));
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.get(0)).contains("import qualified Reference as Sol").doesNotContain("import qualified Solution as Sol");
+    }
 }

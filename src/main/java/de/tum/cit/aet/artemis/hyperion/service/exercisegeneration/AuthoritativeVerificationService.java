@@ -259,13 +259,19 @@ public class AuthoritativeVerificationService {
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
+        // A self-comparison test harness (the tests import the submission under the reference alias) passes the differential invariant — the template still errors — while grading
+        // ANY
+        // submission 100%. The differential oracle is structurally blind to it, so it is gated here. Fails OPEN on every shape but the exact, verified Haskell-mixin fingerprint.
+        List<String> selfComparisonReasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(producedTestsFiles);
+        boolean noSelfComparison = selfComparisonReasons.isEmpty();
+        reasons.addAll(selfComparisonReasons);
 
         boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && extractionSound;
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound;
         if (!accepted) {
-            log.info("Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, extractionSound={}", solution,
-                    template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, extractionSound);
+            log.info("Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
+                    + "extractionSound={}", solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound);
         }
         return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
