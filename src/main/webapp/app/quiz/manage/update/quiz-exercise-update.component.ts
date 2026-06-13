@@ -329,6 +329,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
+                // The server omits empty collections during serialization, so a quiz without questions
+                // arrives without the quizQuestions field — the editor relies on it being an array.
+                this.quizExercise.quizQuestions ??= [];
                 this.init();
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
@@ -620,7 +623,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.quizQuestions!.forEach((question) => (scoreSum += question.points!));
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach((question) => (scoreSum += question.points!));
+        }
         return scoreSum;
     }
 
@@ -768,6 +773,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        // The server omits empty collections during serialization — keep the editor working on a real array.
+        this.quizExercise.quizQuestions ??= [];
         // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
         // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
         // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.

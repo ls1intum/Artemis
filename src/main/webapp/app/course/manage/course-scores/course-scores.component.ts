@@ -19,7 +19,7 @@ import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
 import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';

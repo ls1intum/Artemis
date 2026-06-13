@@ -211,6 +211,42 @@ describe('SubmissionResultStatusComponent', () => {
             expect(span?.attributes['jhiTranslate']).toBe('artemisApp.courseOverview.exerciseList.userParticipatingShort');
         });
 
+        it('should show the live result for a programming practice participation without any result, so build feedback is visible', async () => {
+            // Practice always happens after the due date. The live result (queued / building) must
+            // still be shown, otherwise submitting in practice mode gives no feedback until the
+            // first build result arrives.
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(1, 'hours'),
+            } as Exercise);
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+                testRun: true,
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.shouldShowResult()).toBe(true);
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).not.toBeNull();
+        });
+
+        it('should not show the live result for a graded programming participation without results after the due date', async () => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(1, 'hours'),
+            } as Exercise);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.shouldShowResult()).toBe(false);
+        });
+
         it('should show the result once a practice participation with a result exists', async () => {
             fixture.componentRef.setInput('exercise', {
                 type: ExerciseType.QUIZ,
