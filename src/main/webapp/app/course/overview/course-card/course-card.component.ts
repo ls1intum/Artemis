@@ -91,6 +91,9 @@ export class CourseCardComponent {
     readonly chartOptions = computed(() =>
         doughnutChartOptions({
             arcWidth: 0.3,
+            // ngx-charts inset the doughnut to ~75% of the 160px view; chart.js fills the canvas by
+            // default, so cap the radius to keep the ring from overflowing this tight card.
+            radius: '75%',
             legend: false,
             tooltip: { label: (item) => `${this.translateService.instant('artemisApp.courseOverview.statistics.' + item.label)}: ${item.parsed}` },
         }),
