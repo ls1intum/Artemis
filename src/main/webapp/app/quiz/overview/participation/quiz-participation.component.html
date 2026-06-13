@@ -1,96 +1,95 @@
-<div [id]="'exercise-' + quizExercise()?.id" class="position-relative min-h-100 d-flex flex-column">
+<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise()) {
         @if (mode() === 'live' && quizExercise().quizEnded && !shouldTreatAsSubmittedForUi()) {
             <div id="missed-deadline-message" class="d-flex justify-content-center text-center my-3">
                 <span [jhiTranslate]="'artemisApp.quizExercise.missedDeadlinePracticeHint'"></span>
             </div>
         } @else {
-            <div id="quiz-header" #quizHeader class="row module-bg">
-                <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
-                    <h5 class="mb-0 d-flex gap-2 align-items-center">
-                        <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
-                        @if (mode() === 'preview' || mode() === 'solution') {
-                            {{ quizExercise().course?.title ? quizExercise().course?.title : quizExercise().exerciseGroup?.exam?.course?.title }}
-                            - {{ quizExercise().title }}
-                        }
-                        @switch (mode()) {
-                            @case ('practice') {
-                                <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }" />
+            @if (mode() === 'preview' || mode() === 'solution') {
+                <div id="quiz-header" #quizHeader class="row module-bg">
+                    <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
+                        <h5 class="mb-0 d-flex gap-2 align-items-center">
+                            <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
+                            @if (mode() === 'preview' || mode() === 'solution') {
+                                {{ quizExercise().course?.title ? quizExercise().course?.title : quizExercise().exerciseGroup?.exam?.course?.title }}
+                                - {{ quizExercise().title }}
                             }
-                            @case ('preview') {
-                                <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'preview' }" />
-                            }
-                            @case ('solution') {
-                                <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
-                            }
-                        }
-                        <ng-template #modeBadge let-modeTranslation>
-                            <span class="small">
-                                <span class="badge bg-secondary" [jhiTranslate]="'artemisApp.quizExercise.' + modeTranslation"></span>
-                            </span>
-                        </ng-template>
-                    </h5>
-                    <div>
-                        @if (!showingResult()) {
-                            <div class="d-flex gap-2 align-items-center">
-                                @if (!waitingForQuizStart() && !submission().submitted && remainingTimeSeconds() >= 0) {
-                                    <div class="align-content-center">
-                                        <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                                        <span
-                                            id="remaining-time-value"
-                                            [ngClass]="{
-                                                'time-critical': remainingTimeSeconds() < 60 || remainingTimeSeconds() < quizExercise().duration! / 4,
-                                                'time-warning': remainingTimeSeconds() < 120 || remainingTimeSeconds() < quizExercise().duration! / 2,
-                                            }"
-                                        >
-                                            {{ remainingTimeText() }}
-                                        </span>
-                                    </div>
-                                } @else if (!waitingForQuizStart() && remainingTimeSeconds() < 0 && !showingResult() && !hasAnyAnswer()) {
-                                    <div class="align-content-center">
-                                        <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                                        <span id="remaining-time-value" class="time-critical">{{ remainingTimeText() }}</span>
-                                    </div>
-                                } @else if (quizExercise().dueDate && !quizExercise().quizEnded && submission().submitted) {
-                                    <div class="align-content-center">
-                                        <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
-                                        <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
-                                    </div>
-                                } @else if (quizExercise().dueDate && remainingTimeSeconds() < 0 && hasAnyAnswer()) {
-                                    <div class="align-content-center">
-                                        <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
-                                        <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
-                                    </div>
+                            @switch (mode()) {
+                                @case ('preview') {
+                                    <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'preview' }" />
                                 }
-                                <!-- Show the submit button only in preview mode(). In live and practice modes submission() is handled by the quiz flow; solution mode() is read-only. -->
-                                @if (mode() === 'preview') {
-                                    <jhi-button
-                                        id="submit-quiz"
-                                        (onClick)="onSubmit()"
-                                        [btnSize]="ButtonSize.SMALL"
-                                        [btnType]="ButtonType.PRIMARY"
-                                        [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
-                                        [disabled]="shouldTreatAsSubmittedForUi() || isSubmitting() || waitingForQuizStart() || remainingTimeSeconds() < 0"
-                                    />
+                                @case ('solution') {
+                                    <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                                 }
-                            </div>
-                        } @else if (mode() !== 'solution') {
-                            <div class="text-center">
-                                <div id="quiz-score" [ngClass]="{ incorrect: userScore() < totalScore() }">
-                                    <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
-                                    <span id="quiz-score-result"
-                                        >{{ userScore() }}/{{ totalScore() }} ({{
-                                            roundScoreSpecifiedByCourseSettings(result().score, quizExercise().course || quizExercise().exerciseGroup?.exam?.course)
-                                        }}
-                                        %)</span
-                                    >
+                            }
+                            <ng-template #modeBadge let-modeTranslation>
+                                <span class="small">
+                                    <span class="badge bg-secondary" [jhiTranslate]="'artemisApp.quizExercise.' + modeTranslation"></span>
+                                </span>
+                            </ng-template>
+                        </h5>
+                        <div>
+                            @if (!showingResult()) {
+                                <div class="d-flex gap-2 align-items-center">
+                                    @if (!waitingForQuizStart() && !submission().submitted && remainingTimeSeconds() >= 0) {
+                                        <div class="align-content-center">
+                                            <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                                            <span
+                                                id="remaining-time-value"
+                                                [ngClass]="{
+                                                    'time-critical': remainingTimeSeconds() < 60 || remainingTimeSeconds() < quizExercise().duration! / 4,
+                                                    'time-warning': remainingTimeSeconds() < 120 || remainingTimeSeconds() < quizExercise().duration! / 2,
+                                                }"
+                                            >
+                                                {{ remainingTimeText() }}
+                                            </span>
+                                        </div>
+                                    } @else if (!waitingForQuizStart() && remainingTimeSeconds() < 0 && !showingResult() && !hasAnyAnswer()) {
+                                        <div class="align-content-center">
+                                            <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                                            <span id="remaining-time-value" class="time-critical">{{ remainingTimeText() }}</span>
+                                        </div>
+                                    } @else if (quizExercise().dueDate && !quizExercise().quizEnded && submission().submitted) {
+                                        <div class="align-content-center">
+                                            <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
+                                            <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
+                                        </div>
+                                    } @else if (quizExercise().dueDate && remainingTimeSeconds() < 0 && hasAnyAnswer()) {
+                                        <div class="align-content-center">
+                                            <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
+                                            <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
+                                        </div>
+                                    }
+                                    <!-- Show the submit button only in preview mode(). In live and practice modes submission() is handled by the quiz flow; solution mode() is read-only. -->
+                                    @if (mode() === 'preview') {
+                                        <jhi-button
+                                            id="submit-quiz"
+                                            (onClick)="onSubmit()"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [btnType]="ButtonType.PRIMARY"
+                                            [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                                            [disabled]="shouldTreatAsSubmittedForUi() || isSubmitting() || waitingForQuizStart() || remainingTimeSeconds() < 0"
+                                        />
+                                    }
                                 </div>
-                            </div>
-                        }
+                            } @else if (mode() !== 'solution') {
+                                <div class="text-center">
+                                    <div id="quiz-score" [ngClass]="{ incorrect: userScore() < totalScore() }">
+                                        <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
+                                        <span id="quiz-score-result"
+                                            >{{ userScore() }}/{{ totalScore() }} ({{
+                                                roundScoreSpecifiedByCourseSettings(result().score, quizExercise().course || quizExercise().exerciseGroup?.exam?.course)
+                                            }}
+                                            %)</span
+                                        >
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
+                    <hr class="mt-2" />
                 </div>
-                <hr class="mt-2" />
-            </div>
+            }
             <!-- STEPWIZARD SECTION -->
             <!-- TODO the STEPWIZARD SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
             <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->

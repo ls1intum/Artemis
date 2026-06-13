@@ -569,6 +569,60 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(emitted).toBe(expected);
     });
 
+    it('should show the remaining time box in practice mode even though the official quiz has ended', () => {
+        // In practice the official quiz has already ended, but the practice run has its own countdown that must still show.
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+
+        component.syncSubmitState();
+
+        const info = component.liveHeaderInfo();
+        expect(info?.showRemainingTime).toBe(true);
+        expect(info?.remainingTimeText).toBe('5 min');
+    });
+
+    it('should keep the same liveHeaderInfo reference across ticks when nothing displayed changes', () => {
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).toBe(first);
+    });
+
+    it('should produce a new liveHeaderInfo when a displayed field changes', () => {
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
+        component.endDate = dayjs().add(5, 'minute');
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+
+        component.remainingTimeText.set('4 min');
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).not.toBe(first);
+        expect(component.liveHeaderInfo()?.remainingTimeText).toBe('4 min');
+    });
+
     it('should not emit a live quiz status before the quiz has loaded', () => {
         component.mode.set('live');
         component.quizExercise.set(undefined as unknown as QuizExercise);
@@ -645,7 +699,8 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 
     it('should not show missed deadline message when student effectively submitted', () => {
@@ -657,7 +712,8 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 
     it('should not show missed deadline message when deadline has not passed', () => {
@@ -667,7 +723,8 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 });
 
