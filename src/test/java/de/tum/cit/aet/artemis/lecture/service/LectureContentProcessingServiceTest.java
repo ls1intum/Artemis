@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -763,6 +764,31 @@ class LectureContentProcessingServiceTest {
             verify(transcriptionRepository).delete(existingTranscription);
             verify(irisLectureApi).deleteLectureFromPyrisDB(any());
             verify(processingStateRepository).save(testState);
+            verify(processingStateRepository, never()).countByPhaseIn(any());
+        }
+
+        @Test
+        void shouldPreserveStoredContentMarkersWhenDeleteFailsDuringLastContentRemoval() {
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+            testState.setId(47L);
+            testState.setVideoSourceHash("old-video-hash");
+            testState.setAttachmentVersion(5);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            LectureTranscription existingTranscription = new LectureTranscription();
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            doThrow(new RuntimeException("Pyris unavailable")).when(irisLectureApi).deleteLectureFromPyrisDB(any());
+
+            service.triggerProcessing(testUnit);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testState.getVideoSourceHash()).isEqualTo("old-video-hash");
+            assertThat(testState.getAttachmentVersion()).isEqualTo(5);
+            verify(transcriptionRepository).delete(existingTranscription);
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+            verify(processingStateRepository, never()).save(any());
             verify(processingStateRepository, never()).countByPhaseIn(any());
         }
 

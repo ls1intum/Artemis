@@ -346,7 +346,11 @@ public class LectureContentProcessingService {
         if (previousVideoKnown) {
             processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
         }
-        cleanupForReprocessing(unit);
+        boolean cleanupSucceeded = cleanupForReprocessing(unit);
+        if (!cleanupSucceeded) {
+            log.warn("Cleanup delete failed for unit {}, preserving stored content markers for a future retry", unit.getId());
+            return;
+        }
 
         state.resetRetryCount();
         state.setPhase(ProcessingPhase.DONE);
@@ -360,16 +364,27 @@ public class LectureContentProcessingService {
         processingStateRepository.save(state);
     }
 
-    private void cleanupForReprocessing(AttachmentVideoUnit unit) {
+    private boolean cleanupForReprocessing(AttachmentVideoUnit unit) {
+        Attachment attachment = unit.getAttachment();
+        if (attachment != null && attachment.getDisplayPageNumbers() != null) {
+            log.info("Clearing existing display page numbers for unit {} (content changed)", unit.getId());
+            attachment.setDisplayPageNumbers(null);
+            attachmentRepository.save(attachment);
+        }
+
         // When a new job starts, Iris terminates old processes automatically
-        if (irisLectureApi.isPresent()) {
-            try {
-                irisLectureApi.get().deleteLectureFromPyrisDB(List.of(unit));
-                log.info("Deleted unit {} from Iris vector DB", unit.getId());
-            }
-            catch (Exception e) {
-                log.warn("Failed to delete unit {} from Iris: {}", unit.getId(), e.getMessage());
-            }
+        if (irisLectureApi.isEmpty()) {
+            log.warn("Cannot delete unit {} from Iris because the lecture API is unavailable", unit.getId());
+            return false;
+        }
+        try {
+            irisLectureApi.get().deleteLectureFromPyrisDB(List.of(unit));
+            log.info("Deleted unit {} from Iris vector DB", unit.getId());
+            return true;
+        }
+        catch (Exception e) {
+            log.warn("Failed to delete unit {} from Iris: {}", unit.getId(), e.getMessage());
+            return false;
         }
     }
 
