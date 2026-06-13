@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNotification;
-import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 
 /**
@@ -79,7 +79,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     private CourseNotificationTestRepository courseNotificationTestRepository;
 
     @Autowired
-    private CourseNotificationParameterRepository courseNotificationParameterRepository;
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
 
     private AtomicBoolean pipelineDone;
 

@@ -287,7 +287,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService);
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService);
         super.resetSpyBeans();
     }
 
