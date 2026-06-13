@@ -488,7 +488,14 @@ public class GenerationPersistenceService {
         if (problemStatement == null) {
             return null;
         }
-        return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ');
+        // Dashes (U+2010..U+2015) -> hyphen-minus; non-breaking / narrow-no-break spaces -> normal space; smart single/double quotes -> ASCII ' and "; ellipsis -> "...". Applied
+        // to both
+        // the problem statement and every generated source file: gpt-oss leaks these into comments, exception messages and string literals where they read fine on screen but break
+        // a grep
+        // or copy-paste. The generation-capable language set has no exercise whose identifier/data literal legitimately needs one of these characters, so the substitution is
+        // always safe.
+        return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'')
+                .replace('\u201C', '"').replace('\u201D', '"').replace("\u2026", "...");
     }
 
     /**

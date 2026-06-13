@@ -84,8 +84,9 @@ public class AgentSystemPromptService {
                 human-readable failure message naming the behaviour that broke — the STUDENT sees this exact string when they fail, so it is their only diagnostic. A good Artemis test \
                 writes assertEquals(expected, actual, "calculateSize must recurse into every sub-directory and sum all files regardless of depth") and \
                 assertThrows(IllegalArgumentException.class, () -> calc.calculateSize(null), "calculateSize(null) must throw IllegalArgumentException"); NEVER a bare assertEquals(x, y) \
-                whose only feedback is "expected <600> but was <500>". Give each JVM test a @DisplayName (or the language's equivalent human label) so the failing task reads as prose, not \
-                raw camelCase. And when the statement makes a universally-quantified promise ("for any …", "regardless of nesting depth", "at any size"), include at least one NON-DEGENERATE \
+                whose only feedback is "expected <600> but was <500>". The human prose belongs in that failure MESSAGE — do NOT rename the test or add a display title (e.g. a JUnit \
+                @DisplayName): Artemis binds the [task] to the test's reported NAME, so a display name would unbind it and the task would grade nothing. And when the statement makes a \
+                universally-quantified promise ("for any …", "regardless of nesting depth", "at any size"), include at least one NON-DEGENERATE \
                 witness test that actually exercises it: a depth-3-or-deeper nested case for a recursion-depth promise; an empty or one-level case does NOT witness "any depth" and lets an \
                 under-recursive solution score full marks on the very skill the exercise teaches.
                 4. The problem statement clearly describes the task and binds every test to a gradable task using Artemis task syntax. EVERY [task]-bound test MUST FAIL on the template — \

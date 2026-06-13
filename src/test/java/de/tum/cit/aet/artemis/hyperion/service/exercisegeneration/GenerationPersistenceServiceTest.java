@@ -465,9 +465,9 @@ class GenerationPersistenceServiceTest {
         // emitting
         // even when the prompt forbids them. The deterministic persist-time pass must leave the student-facing statement pure ASCII regardless of model compliance, untouched
         // elsewhere.
-        String produced = "Reject a non\u2011negative amount \u2013 see the deposit\u2014withdraw flow.";
+        String produced = "Reject a non\u2011negative amount \u2013 see the deposit\u2014withdraw flow. It\u2019s the \u201cmain\u201d path\u2026";
         String normalized = GenerationPersistenceService.normalizeTypography(produced);
-        assertThat(normalized).isEqualTo("Reject a non-negative amount - see the deposit-withdraw flow.");
+        assertThat(normalized).isEqualTo("Reject a non-negative amount - see the deposit-withdraw flow. It's the \"main\" path...");
         assertThat(normalized.chars().allMatch(c -> c < 0x80)).as("the normalised statement is pure ASCII").isTrue();
         // A statement already free of typographic punctuation is returned unchanged; null is tolerated.
         String clean = "# Stack\nImplement push and pop.";

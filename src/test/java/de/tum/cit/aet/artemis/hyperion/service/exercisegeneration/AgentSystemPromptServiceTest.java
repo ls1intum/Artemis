@@ -175,7 +175,11 @@ class AgentSystemPromptServiceTest {
         // Ego-death audit fix: bare assertEquals/assertThrows give a failing student no diagnostic, and a universal "regardless of depth" promise was only witnessed at depth 2.
         // Pin both.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("human-readable failure message").contains("@DisplayName").contains("NON-DEGENERATE").contains("depth-3-or-deeper");
+        assertThat(prompt).contains("human-readable failure message").contains("NON-DEGENERATE").contains("depth-3-or-deeper");
+        // Cross-validation caught a self-contradiction: a global "add a @DisplayName" instruction breaks the [task]<->method-name binding the JVM profile relies on. The prompt
+        // must
+        // FORBID a display title, not require one.
+        assertThat(prompt).contains("do NOT rename the test or add a display title").doesNotContain("Give each JVM test a @DisplayName");
     }
 
     @Test
