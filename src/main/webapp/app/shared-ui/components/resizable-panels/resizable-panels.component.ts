@@ -67,6 +67,9 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly _isRightPanelCollapsed = signal(false);
     readonly isRightPanelCollapsed = this._isRightPanelCollapsed.asReadonly();
 
+    /** In narrow (combined) mode the tab header is only useful when there is more than one panel to switch between. */
+    readonly showCombinedTabHeader = computed(() => this.panels().length > 1);
+
     readonly splitPanes = viewChildren(SplitPaneDirective);
     private splitInstance?: Split.Instance;
     private resizeObserver?: ResizeObserver;
