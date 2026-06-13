@@ -175,8 +175,8 @@ importers:
         specifier: 11.0.0
         version: 11.0.0(patch_hash=31411831092d63795046e443a0692133ff7d35eafe2aa844a99eb113cae77708)(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/cdk@21.2.14(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@tumaet/apollon':
-        specifier: 4.5.0
-        version: 4.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 4.6.0
+        version: 4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vscode/codicons':
         specifier: 0.0.45
         version: 0.0.45
@@ -569,6 +569,8 @@ packages:
       '@angular/ssr': ^21.2.14
       '@web/test-runner': ^0.20.0
       browser-sync: ^3.0.2
+      jest: ^30.2.0
+      jest-environment-jsdom: ^30.2.0
       karma: ^6.3.0
       ng-packagr: ^21.0.0
       protractor: ^7.0.0
@@ -590,6 +592,10 @@ packages:
       '@web/test-runner':
         optional: true
       browser-sync:
+        optional: true
+      jest:
+        optional: true
+      jest-environment-jsdom:
         optional: true
       karma:
         optional: true
@@ -680,6 +686,7 @@ packages:
   '@angular/animations@21.2.16':
     resolution: {integrity: sha512-YPhph/OC1A0vkT95XZW6lXMNmi5ly91JeXi+5yeG8CCxfqscVfRNPsYbRWjSueO0cQT2HJ8U1CLteQ5a1OaoHA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
+    deprecated: '@angular/animations is deprecated. Use `animate.enter` and `animate.leave` instead. For more information see: https://v22.angular.dev/guide/animations.'
     peerDependencies:
       '@angular/core': 21.2.16
 
@@ -3322,8 +3329,8 @@ packages:
     resolution: {integrity: sha512-Y8cK9aggNRsqJVaKUlEYs4s7CvQ1b1ta2DVPyAimb0I2qhzjNk+A+mxvll/klL0RlfuIUei8BF7YWiua4kQqww==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  '@tumaet/apollon@4.5.0':
-    resolution: {integrity: sha512-cd1NfYRXAEiu0O+afgCYwL0SzMwBtn4Q7KAVF0l1lj8zH38ZI3TS+EoGoFeXXCe2E4ddVQOQtRIvytUdfRgQVA==}
+  '@tumaet/apollon@4.6.0':
+    resolution: {integrity: sha512-hrwM2F6vjDZH/hecehi4lJ46w10gFrdu5nf9/J/w0y/rD2mIYwVkCO7KhSa9ej0+7oZeDz7jYsamQvFiQ6Lq8w==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@emotion/react': ^11.11.0
@@ -5211,6 +5218,10 @@ packages:
   istanbul-reports@3.2.0:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
+
+  jest-worker@27.5.1:
+    resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
+    engines: {node: '>= 10.13.0'}
 
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
@@ -10341,7 +10352,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 10.2.5
 
-  '@tumaet/apollon@4.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@tumaet/apollon@4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@chenglou/pretext': 0.0.6
       '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12358,6 +12369,12 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
+  jest-worker@27.5.1:
+    dependencies:
+      '@types/node': 24.13.0
+      merge-stream: 2.0.0
+      supports-color: 8.1.1
+
   jiti@2.7.0: {}
 
   jose@6.2.3: {}
@@ -14089,6 +14106,7 @@ snapshots:
   terser-webpack-plugin@5.6.1(esbuild@0.28.0)(postcss@8.5.14)(webpack@5.106.2(esbuild@0.28.0)(postcss@8.5.14)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.46.0
       webpack: 5.106.2(esbuild@0.28.0)(postcss@8.5.14)
