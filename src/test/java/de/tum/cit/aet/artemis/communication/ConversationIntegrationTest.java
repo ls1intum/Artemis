@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,6 +101,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
                 OneToOneChatDTO.class, HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
+        // updateLastMessageDateAsync runs in a separate thread; wait for it to commit before
+        // querying conversations so the oneToOneChat.lastMessageDate IS NOT NULL condition is met
+        await().atMost(5, TimeUnit.SECONDS).until(() -> conversationRepository.findByIdElseThrow(oneToOneChat.getId()).getLastMessageDate() != null);
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
         var channel2 = createChannel(false, TEST_PREFIX + "2");

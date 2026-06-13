@@ -612,7 +612,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         // persist the answer post and pass a matching body/path id so the 400 genuinely originates from the course-mismatch validation, not from id parsing
         AnswerPost answerPostToUpdate = saveAnswerPost(TEST_PREFIX + "student1", existingPostsWithAnswersCourseWide.getFirst());
-        Course dummyCourse = courseUtilService.createCourse();
+        Course dummyCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
 
         AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
                 "/api/communication/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
@@ -793,8 +793,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-create");
         Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
@@ -813,8 +812,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-update");
         Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
         AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
@@ -828,8 +826,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-delete");
         Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
         AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
