@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -92,10 +93,22 @@ public class AgentLoopRunner {
             The workspace files on disk are the source of truth — the agent can always re-read any file. Keep the whole summary under ~400 words.""";
 
     /**
-     * How many times to issue a single model call before giving up. LLM endpoints have transient errors (rate limits, 5xx, occasional malformed tool-format responses); since the
-     * model is sampled fresh each call, a retry usually succeeds, so one transient failure should not abort a whole generation.
+     * How many times to issue a single model call before giving up. LLM endpoints have transient errors (rate limits, 5xx/401 session blips, occasional malformed tool-format
+     * responses); since the model is sampled fresh each call, a retry usually succeeds, so one transient failure should not abort a whole generation. A flaky endpoint can fail
+     * several
+     * consecutive calls, so we retry generously AND back off (below) so the retries spread across time instead of hammering the same failure spike.
      */
-    private static final int MODEL_CALL_ATTEMPTS = 3;
+    private static final int MODEL_CALL_ATTEMPTS = 6;
+
+    /**
+     * Exponential-backoff base and cap (milliseconds) between model-call retries. Without a wait, all {@link #MODEL_CALL_ATTEMPTS} retries hit the same transient failure window
+     * (observed against the gpt-oss endpoint returning bursts of 401 "session expired" / "can't start new thread"); spacing them out — 1.5s, 3s, 6s, 12s, capped at 20s, plus
+     * jitter —
+     * lets a call land in one of the endpoint's healthy windows. Instance fields (not constants) so a test can shrink them to assert retry behaviour without real waits.
+     */
+    private long modelCallRetryBaseMillis = 1_500L;
+
+    private long modelCallRetryCapMillis = 20_000L;
 
     @Nullable
     private final ChatModel chatModel;
@@ -346,8 +359,19 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Calls the model, retrying a transient failure a few times before giving up. Returns {@code null} only when every attempt failed, which the caller turns into an ERROR
-     * outcome.
+     * Test hook: shrink the model-call retry backoff (base and cap, in milliseconds) so retry behaviour can be asserted deterministically without real waits.
+     *
+     * @param baseMillis the backoff base
+     * @param capMillis  the backoff cap
+     */
+    void setModelCallRetryTimingForTests(long baseMillis, long capMillis) {
+        this.modelCallRetryBaseMillis = baseMillis;
+        this.modelCallRetryCapMillis = capMillis;
+    }
+
+    /**
+     * Calls the model, retrying a transient failure a few times (with exponential backoff) before giving up. Returns {@code null} only when every attempt failed, which the caller
+     * turns into an ERROR outcome.
      */
     @Nullable
     private ChatResponse callModelWithRetries(Prompt prompt, int turn, @Nullable Consumer<String> stepListener) {
@@ -361,6 +385,20 @@ public class AgentLoopRunner {
                 log.warn("Agent loop model call failed on turn {} (attempt {}/{}): {}", turn, attempt, MODEL_CALL_ATTEMPTS, e.getMessage());
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "Model call failed (" + e.getMessage() + "); retrying.");
+                    // Exponential backoff with jitter so retries spread across time and catch a flaky endpoint's healthy windows, rather than re-hitting the same failure burst.
+                    long backoff = Math.min(modelCallRetryCapMillis, modelCallRetryBaseMillis * (1L << (attempt - 1)));
+                    if (backoff > 0) {
+                        backoff += ThreadLocalRandom.current().nextLong(modelCallRetryBaseMillis + 1);
+                        try {
+                            Thread.sleep(backoff);
+                        }
+                        catch (InterruptedException ie) {
+                            // Honour cooperative cancellation/interrupt instead of swallowing it: stop retrying and let the caller turn the null into an ERROR outcome.
+                            Thread.currentThread().interrupt();
+                            log.warn("Interrupted while backing off before a model-call retry on turn {}", turn);
+                            return null;
+                        }
+                    }
                 }
             }
         }

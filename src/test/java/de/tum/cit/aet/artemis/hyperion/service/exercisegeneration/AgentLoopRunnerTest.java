@@ -104,6 +104,45 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_backsOffAndRetriesTransientModelFailures_thenRecovers() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // The endpoint fails transiently on the first two calls (observed against the gpt-oss endpoint: bursts of 401 "session expired" and "can't start new thread"), then
+        // succeeds.
+        // The loop must retry WITHIN the turn rather than aborting the whole generation.
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 401: session expired"))
+                .thenThrow(new RuntimeException("GPU endpoint returned HTTP 400: can't start new thread")).thenReturn(textResponse("DONE"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L); // no real backoff waits in the test
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+        verify(chatModel, times(3)).call(any(Prompt.class)); // 2 transient failures + 1 success
+        assertThat(steps).contains("Model call failed (GPU endpoint returned HTTP 401: session expired); retrying.");
+    }
+
+    @Test
+    void agentLoop_givesUpAfterAllSixAttemptsFail_andReportsError() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 500"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(6)).call(any(Prompt.class)); // MODEL_CALL_ATTEMPTS, all exhausted
+        assertThat(steps).anyMatch(s -> s.startsWith("Model call failed after 6 attempts"));
+    }
+
+    @Test
     void agentLoop_normalizesLeakedHarmonyToolName_andDispatchesToTheRealTool() {
         ChatModel chatModel = mock(ChatModel.class);
         // Some model servers leak a harmony control token into the tool name (observed: "bash<|channel|>commentary"). Without normalization the name matches no registered tool and
