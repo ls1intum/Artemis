@@ -158,4 +158,15 @@ export class IrisChatHttpService {
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
+
+    /**
+     * Seeds an empty Iris chat session with a Q&A pair from global search.
+     * The backend creates real USER and LLM messages and pushes them via WebSocket.
+     * @param sessionId the ID of the session to seed
+     * @param query     the original search query
+     * @param answer    the Iris answer shown in the global search card
+     */
+    seedFromGlobalSearch(sessionId: number, query: string, answer: string): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.apiPrefix}/chat/sessions/${sessionId}/global-search-seed`, { query, answer }, { observe: 'response' });
+    }
 }

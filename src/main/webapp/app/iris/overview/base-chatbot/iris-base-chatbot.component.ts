@@ -40,6 +40,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisHandoffContextService } from 'app/iris/overview/services/iris-handoff-context.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -166,6 +167,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly irisHandoffContextService = inject(IrisHandoffContextService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -522,9 +524,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.focusInputAfterAcceptance();
         }
 
-        // Handle route query params (irisQuestion)
+        // Handle route query params (irisQuestion).
+        // When a handoff context is set (the user clicked "Continue in Iris" from global search),
+        // create a fresh session and seed it with the Q&A pair instead of pre-filling the text field.
+        // This fires reliably whether the component is freshly mounted or already alive on the same
+        // route (in which case the constructor-time check would have missed it).
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
-            if (params?.irisQuestion) {
+            if (!params?.irisQuestion) return;
+            const handoffCtx = this.irisHandoffContextService.context();
+            if (handoffCtx) {
+                this.irisHandoffContextService.clear();
+                // Force a new session so the Q&A is seeded into a clean context, not an old chat.
+                // clearChat() emits initialLoadComplete=false via close(), then true once the new
+                // session arrives — at which point the effect below seeds it exactly once.
+                this.chatService.clearChat();
+                let seeded = false;
+                effect(() => {
+                    if (this.initialLoadComplete() && !seeded) {
+                        const { query, answer } = handoffCtx;
+                        untracked(() => {
+                            seeded = true;
+                            this.chatService.seedFromGlobalSearch(query, answer).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+                        });
+                    }
+                });
+            } else {
                 this.newMessageTextContent.set(params.irisQuestion);
             }
         });

@@ -1,6 +1,17 @@
 import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 
 /**
+ * Routing hint from Pyris. Only present on the done message when the pipeline produced an answer.
+ * The frontend uses this to show a "Continue in X chat" button.
+ */
+export interface IrisSearchHandoff {
+    type: 'course' | 'lecture' | 'exercise';
+    courseId: number;
+    lectureId?: number;
+    exerciseId?: number;
+}
+
+/**
  * WebSocket message pushed by Artemis during an async Iris global search request.
  *
  * - `isThinking: true`  → Pyris classified the query as a real question; LLM is running. Show thinking animation.
@@ -11,4 +22,5 @@ export interface IrisSearchStatusUpdate {
     isThinking: boolean;
     answer?: string;
     sources?: GlobalSearchSource[];
+    handoff?: IrisSearchHandoff;
 }

@@ -293,6 +293,19 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
+     * Seeds the current session with a Q&A pair from global search.
+     * Only fires when the session has been initialized (sessionId is set).
+     * @param query  the original global search query
+     * @param answer the Iris answer shown in the global search card
+     */
+    public seedFromGlobalSearch(query: string, answer: string): Observable<undefined> {
+        if (!this.sessionId) {
+            return throwError(() => new Error('Not initialized'));
+        }
+        return this.irisChatHttpService.seedFromGlobalSearch(this.sessionId, query, answer).pipe(map(() => undefined));
+    }
+
+    /**
      * requests a tutor suggestion from the server
      */
     public requestTutorSuggestion(): Observable<undefined> {

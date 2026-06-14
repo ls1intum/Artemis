@@ -36,36 +36,49 @@
                 </button>
             }
 
-            <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
-            @if (sources().length > 0) {
-                <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
-                    @for (source of moreOpen() ? sources() : sources().slice(0, INITIAL_VISIBLE_SOURCE_COUNT); track $index) {
+            <!-- Footer: source chips (left) + handoff CTA (right) in one row -->
+            @if (sources().length > 0 || handoffLink()) {
+                <div class="iris-footer" [class.iris-footer--expanded]="moreOpen()">
+                    <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
+                        @for (source of moreOpen() ? sources() : sources().slice(0, INITIAL_VISIBLE_SOURCE_COUNT); track $index) {
+                            <a
+                                class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                                [routerLink]="linkFor(source)"
+                                [queryParams]="queryParamsFor(source)"
+                            >
+                                <fa-icon [icon]="iconFor(source)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                                <span class="iris-chip-name text-truncate">{{ source.title }}</span>
+                                @if (source.lectureUnit?.displayMeta) {
+                                    <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit!.displayMeta }}</span>
+                                }
+                            </a>
+                        }
+                        @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
+                            <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
+                                +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
+                            </button>
+                        }
+                        @if (moreOpen()) {
+                            <button
+                                class="iris-collapse-btn d-inline-flex align-items-center justify-content-center rounded-pill flex-shrink-0"
+                                type="button"
+                                (click)="moreOpen.set(false)"
+                                [attr.aria-label]="'global.search.irisCollapseSources' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faChevronUp" />
+                            </button>
+                        }
+                    </div>
+                    @if (handoffLink()) {
                         <a
-                            class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
-                            [routerLink]="linkFor(source)"
-                            [queryParams]="queryParamsFor(source)"
+                            class="btn btn-primary rounded-pill btn-sm iris-cta flex-shrink-0 text-nowrap"
+                            [routerLink]="handoffLink()"
+                            [queryParams]="handoffQueryParams()"
+                            (click)="setHandoffContext()"
                         >
-                            <fa-icon [icon]="iconFor(source)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
-                            <span class="iris-chip-name text-truncate">{{ source.title }}</span>
-                            @if (source.lectureUnit?.displayMeta) {
-                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit!.displayMeta }}</span>
-                            }
+                            {{ handoffLabelKey()! | artemisTranslate }}
+                            <fa-icon [icon]="faChevronRight" class="ms-1" aria-hidden="true" />
                         </a>
-                    }
-                    @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
-                        <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
-                            +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
-                        </button>
-                    }
-                    @if (moreOpen()) {
-                        <button
-                            class="iris-collapse-btn d-inline-flex align-items-center justify-content-center rounded-pill flex-shrink-0"
-                            type="button"
-                            (click)="moreOpen.set(false)"
-                            [attr.aria-label]="'global.search.irisCollapseSources' | artemisTranslate"
-                        >
-                            <fa-icon [icon]="faChevronUp" />
-                        </button>
                     }
                 </div>
             }

@@ -5,6 +5,7 @@ import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
+    faChevronRight,
     faChevronUp,
     faFile,
     faFilePdf,
@@ -23,6 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
+import { IrisHandoffContextService } from 'app/iris/overview/services/iris-handoff-context.service';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
@@ -57,6 +59,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
+    private readonly irisHandoffContextService = inject(IrisHandoffContextService);
 
     readonly searchQuery = input.required<string>();
 
@@ -71,9 +74,32 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
 
+    protected readonly handoffLink = computed(() => {
+        const handoff = this.irisResult()?.handoff;
+        if (!handoff) return null;
+        const cid = String(handoff.courseId);
+        switch (handoff.type) {
+            case 'exercise':
+                return ['/courses', cid, 'exercises', String(handoff.exerciseId)];
+            case 'lecture':
+                return ['/courses', cid, 'lectures', String(handoff.lectureId)];
+            case 'course':
+                return ['/courses', cid, 'iris'];
+        }
+    });
+
+    protected readonly handoffQueryParams = computed(() => {
+        const handoff = this.irisResult()?.handoff;
+        if (!handoff) return {};
+        return { irisQuestion: this.searchQuery() };
+    });
+
+    protected readonly handoffLabelKey = computed(() => (this.irisResult()?.handoff ? 'global.search.irisHandoff' : null));
+
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
     protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronRight = faChevronRight;
 
     private readonly SOURCE_ICONS: Record<string, IconDefinition> = {
         lecture_unit_slide: faFilePdf,
@@ -179,9 +205,16 @@ export class GlobalSearchIrisAnswerComponent {
                         return; // stale response from a superseded pipeline run
                     }
                     this.irisThinking.set(false);
-                    this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [] } : undefined);
+                    this.irisResult.set(update.answer ? { answer: update.answer, sources: update.sources ?? [], handoff: update.handoff } : undefined);
                 }
             });
+    }
+
+    protected setHandoffContext(): void {
+        const result = this.irisResult();
+        if (result?.answer) {
+            this.irisHandoffContextService.set(this.searchQuery(), result.answer);
+        }
     }
 
     collapse(): void {
