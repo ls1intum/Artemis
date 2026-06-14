@@ -1028,6 +1028,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
 
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+        // The single GET must carry a nested course projection: the client reads exercise.course to render links and,
+        // crucially, the course group names so it can compute access rights (account.service.setAccessRightsForCourse).
+        // Dropping it crashed the example-submissions page with "Cannot set properties of undefined (setting 'isAtLeastTutor')".
+        assertThat(textExerciseServer.course()).as("nested course is present for a course exercise").isNotNull();
+        assertThat(textExerciseServer.course().id()).as("nested course carries its id").isEqualTo(course.getId());
+        assertThat(textExerciseServer.course().teachingAssistantGroupName()).as("nested course carries the TA group name used for access rights")
+                .isEqualTo(course.getTeachingAssistantGroupName());
+        assertThat(textExerciseServer.course().instructorGroupName()).as("nested course carries the instructor group name used for access rights")
+                .isEqualTo(course.getInstructorGroupName());
     }
 
     @Test
@@ -1067,6 +1076,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
         assertThat(textExerciseServer.id()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
+        // Exam exercises resolve their course client-side via the exercise group, mirroring the original entity where
+        // exercise.course was only populated for course exercises; the nested course projection stays null here.
+        assertThat(textExerciseServer.course()).as("nested course is not set for an exam exercise").isNull();
     }
 
     @Test
