@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { NodeDimension } from '@swimlane/ngx-graph';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 import { CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 
 export interface SizeUpdate {
     id: string;
-    dimension: NodeDimension;
+    dimension: GraphNodeDimension;
 }
 
 @Component({
