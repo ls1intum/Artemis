@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, TemplateRef, computed, contentChild, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef, computed, contentChild, inject, input, signal } from '@angular/core';
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { curveBundle, line } from 'd3-shape';
 import { DagGraphEdge, DagGraphLayout, DagGraphLayoutEdge, DagGraphLayoutNode, DagGraphNode, GraphNodeDimension, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
@@ -41,7 +41,7 @@ interface PanState {
     templateUrl: './dag-graph.component.html',
     styleUrl: './dag-graph.component.scss',
 })
-export class DagGraphComponent {
+export class DagGraphComponent implements OnDestroy {
     private static readonly DEFAULT_NODE_WIDTH = 100;
     private static readonly DEFAULT_NODE_HEIGHT = 45.59;
     private static readonly MIN_ZOOM = 0.1;
@@ -117,18 +117,22 @@ export class DagGraphComponent {
     });
 
     private readonly element = inject(ElementRef);
+    private resizeObserver?: ResizeObserver;
 
     constructor() {
         if (typeof ResizeObserver !== 'undefined') {
-            const resizeObserver = new ResizeObserver((entries) => {
+            this.resizeObserver = new ResizeObserver((entries) => {
                 const contentRect = entries[0]?.contentRect;
                 if (contentRect) {
                     this.hostSize.set({ width: contentRect.width, height: contentRect.height });
                 }
             });
-            resizeObserver.observe(this.element.nativeElement);
-            inject(DestroyRef).onDestroy(() => resizeObserver.disconnect());
+            this.resizeObserver.observe(this.element.nativeElement);
         }
+    }
+
+    ngOnDestroy(): void {
+        this.resizeObserver?.disconnect();
     }
 
     /**

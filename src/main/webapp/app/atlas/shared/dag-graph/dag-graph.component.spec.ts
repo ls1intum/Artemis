@@ -3,8 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { curveBundle, line } from 'd3-shape';
+import { layout as dagreLayout } from '@dagrejs/dagre';
 import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
 import { DagGraphEdge, DagGraphNode, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
+
+// Wrap the real dagre layout so a single test can force it to throw and exercise the empty-graph
+// fallback; by default it delegates to the real implementation, so all other tests are unaffected.
+vi.mock('@dagrejs/dagre', async (importOriginal) => {
+    const actual = (await importOriginal()) as typeof import('@dagrejs/dagre');
+    return { ...actual, layout: vi.fn(actual.layout) };
+});
 
 @Component({
     imports: [DagGraphComponent],
@@ -216,6 +224,21 @@ describe('DagGraphComponent', () => {
             expect(component.layout().width).toBe(0);
             expect(component.layout().height).toBe(0);
             expect(fixture.debugElement.query(By.css('.minimap'))).toBeNull();
+        });
+
+        it('should fall back to an empty graph and log when the layout engine throws', () => {
+            const consoleSpy = vi.spyOn(globalThis.console, 'error').mockImplementation(() => undefined);
+            vi.mocked(dagreLayout).mockImplementationOnce(() => {
+                throw new Error('layout failure');
+            });
+            host.nodes.set(measuredNodes());
+            host.edges.set(measuredEdges());
+            fixture.detectChanges();
+
+            // the try/catch around the dagre call must degrade gracefully instead of breaking change detection
+            expect(component.layout()).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
         });
     });
 
