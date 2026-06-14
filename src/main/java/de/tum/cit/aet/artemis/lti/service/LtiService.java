@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,14 +27,17 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
@@ -55,17 +59,20 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
-    private final UserService userService;
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
+    private final AuthorityService authorityService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final JWTCookieService jwtCookieService;
 
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
-        this.userService = userService;
+        this.userCourseRoleRepository = userCourseRoleRepository;
+        this.authorityService = authorityService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
     }
@@ -148,16 +155,46 @@ public class LtiService {
 
     /**
      * Handler for successful LTI auth. Enrolls the user as a student in the exercise's course.
-     * Delegates to {@link UserService#addUserToCourse} which handles the user_course_role insert,
-     * the legacy user_groups dual-write, and re-fetches the user with groups initialized when the
-     * caller loaded the entity without that entity graph (e.g. Lti13Service loads users via
-     * {@code findOneWithCourseRolesAndAuthoritiesByLogin}, which omits the groups collection).
      *
-     * @param user     the user that is authenticated; groups collection need not be initialized
-     * @param exercise exercise to launch
+     * @param user     The user that is authenticated
+     * @param exercise Exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
-        userService.addUserToCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember(), CourseRole.STUDENT);
+        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember());
+    }
+
+    /**
+     * Enrolls a user as a student in the given course.
+     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync
+     * until the follow-up PR for #12788 removes it.
+     * <p>
+     * Lti13Service loads users via {@code findOneWithCourseRolesAndAuthoritiesByLogin}, which does
+     * NOT include the groups entity graph. Calling {@code user.getGroups()} on such an entity either
+     * throws {@code LazyInitializationException} (session closed) or produces a
+     * {@code PersistentSet(sn=null)} that causes NPE at flush time. The fix is to re-fetch the user
+     * with groups initialized before the legacy write when Hibernate reports the collection as
+     * uninitialized.
+     *
+     * @param user   the user to enroll; groups collection need not be initialized
+     * @param course the course to enroll the user in
+     */
+    private void enrollUserInCourse(User user, Course course) {
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
+        }
+        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
+        // Dual-write: also write to legacy user_groups table.
+        // Re-fetch with groups if the caller loaded the user without that entity graph so the legacy
+        // write is always correct and saveUser never receives a PersistentSet(sn=null) at flush time.
+        if (!Hibernate.isInitialized(user.getGroups())) {
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+        }
+        String groupName = course.getStudentGroupName();
+        if (groupName != null && !user.getGroups().contains(groupName)) {
+            user.getGroups().add(groupName);
+        }
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        userCreationService.saveUser(user);
     }
 
     /**
