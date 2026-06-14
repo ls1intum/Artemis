@@ -666,7 +666,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param logins the logins to look up
      * @return list of matching users with organizations initialized
      */
-    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.organizations WHERE AND u.deleted = FALSE u.login IN :logins")
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.organizations WHERE u.deleted = FALSE AND u.login IN :logins")
     List<User> findAllByLoginsWithOrganizations(@Param("logins") Collection<String> logins);
 
     @Query("""
