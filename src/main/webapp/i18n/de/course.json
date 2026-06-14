@@ -360,7 +360,7 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 },
-                "addUsers": "Benutzer hinzufügen",
+                "addUsers": "Nutzer:innen hinzufügen",
                 "profilePicture": "Profilbild"
             },
             "averageScore": "Durchschnittliche Punktzahl",

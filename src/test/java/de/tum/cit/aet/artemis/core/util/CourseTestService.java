@@ -114,6 +114,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -3484,5 +3485,70 @@ public class CourseTestService {
         // Regression guard: short names were never returned because includeShortNames compared the lowercase request param
         // ("programming") against ExerciseType.PROGRAMMING.toString() ("PROGRAMMING"), which is always false (#12940).
         assertThat(details.shortNames()).contains(programmingExercise.getShortName());
+    }
+
+    /**
+     * Test: search by login prefix returns matching users with the login prefix.
+     */
+    public void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).isNotEmpty();
+        assertThat(result).allMatch(u -> u.login().startsWith(userPrefix + "student"));
+    }
+
+    /**
+     * Test: a user already enrolled in the course role is flagged with {@code isRegistered = true}.
+     */
+    public void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        // student1 is enrolled as STUDENT in this course
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student1");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(userPrefix + "student1");
+        assertThat(result.getFirst().isRegistered()).isTrue();
+    }
+
+    /**
+     * Test: a user that exists in Artemis but is not enrolled in the given role is flagged with {@code isRegistered = false}.
+     */
+    public void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        // tutor1 exists but is enrolled as TEACHING_ASSISTANT, not STUDENT
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "tutor1");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().login()).isEqualTo(userPrefix + "tutor1");
+        assertThat(result.getFirst().isRegistered()).isFalse();
+    }
+
+    /**
+     * Test: an unknown search term returns an empty result.
+     */
+    public void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", "zzz_no_match_zzz");
+        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+        assertThat(result).isEmpty();
+    }
+
+    /**
+     * Test: a non-instructor (tutor or student) receives 403 Forbidden.
+     */
+    public void searchUsersForCourseRole_forbiddenForNonInstructor() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("searchTerm", userPrefix + "student");
+        request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
     }
 }

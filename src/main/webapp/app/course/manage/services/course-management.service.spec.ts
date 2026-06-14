@@ -30,6 +30,7 @@ import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -479,6 +480,22 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(users));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
         req.flush(returnedFromService);
+    });
+
+    it('should search users for course role and return content with total count', () => {
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
+        const mockUsers: UserForRegistration[] = [
+            { id: 1, login: 'student1', name: 'Student One', isRegistered: true },
+            { id: 2, login: 'student2', name: 'Student Two', isRegistered: false },
+        ];
+        let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+        courseManagementService
+            .searchUsersForCourseRole(course.id!, courseRoleSlug, 'student', 0, 10)
+            .pipe(take(1))
+            .subscribe((res) => (result = res));
+        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${resourceUrl}/${course.id}/${courseRoleSlug}/users/search`);
+        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
+        expect(result).toEqual({ content: mockUsers, totalElements: 2 });
     });
 
     it('getNumberOfAllowedComplaintsInCourse', () => {

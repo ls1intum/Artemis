@@ -554,6 +554,42 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
+        courseTestService.searchUsersForCourseRole_byLogin_returnsMatchingUsers();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
+        courseTestService.searchUsersForCourseRole_marksAlreadyEnrolledUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
+        courseTestService.searchUsersForCourseRole_nonEnrolledUserNotFlagged();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
+        courseTestService.searchUsersForCourseRole_noResultsForUnknownTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void searchUsersForCourseRole_forbiddenForTutor() throws Exception {
+        courseTestService.searchUsersForCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersForCourseRole_forbiddenForStudent() throws Exception {
+        courseTestService.searchUsersForCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }
