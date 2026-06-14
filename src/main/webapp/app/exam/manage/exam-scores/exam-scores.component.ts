@@ -4,7 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/foundation/service/sort.service';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -683,18 +683,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param customOptions Custom csv options that should be used for export.
      */
     exportAsCsv(headers: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
-        const options = {
-            showLabels: true,
-            showTitle: false,
-            filename: `${this.examScoreDTO.title} Exam Results`,
-            useTextFile: false,
-            useBom: true,
+        downloadCsv(rows, {
             columnHeaders: headers,
-        };
-
-        const csvExportOptions = mkConfig(Object.assign(options, customOptions));
-        const csvData = generateCsv(csvExportOptions)(rows);
-        download(csvExportOptions)(csvData);
+            fileName: `${this.examScoreDTO.title} Exam Results`,
+            fieldSeparator: customOptions.fieldSeparator,
+            quoteStrings: customOptions.quoteStrings,
+            quoteCharacter: customOptions.quoteCharacter,
+            decimalSeparator: customOptions.decimalSeparator,
+        });
     }
 
     /**

@@ -29,15 +29,13 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
-vi.mock('export-to-csv', () => {
+vi.mock('app/foundation/util/csv-download.util', () => {
     return {
-        mkConfig: vi.fn(),
-        download: vi.fn(() => vi.fn()),
-        generateCsv: vi.fn(() => vi.fn()),
+        downloadCsv: vi.fn(),
     };
 });
 
@@ -860,9 +858,7 @@ describe('GradingComponent', () => {
 
             comp.exportGradingStepsToCsv();
 
-            expect(mkConfig).toHaveBeenCalled();
-            expect(generateCsv).toHaveBeenCalled();
-            expect(download).toHaveBeenCalled();
+            expect(downloadCsv).toHaveBeenCalled();
         });
 
         it('should convert grade step to csv row for GRADE type', () => {
