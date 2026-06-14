@@ -119,7 +119,7 @@ public class ComplaintUtilService {
      * @param complaintType The type of the complaint to create.
      */
     public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType complaintType) {
-        Result result = submission.getLatestResult();
+        Result result = resultTestRepository.findFirstBySubmissionIdOrderByIdDesc(submission.getId()).orElse(null);
         if (result != null) {
             result.hasComplaint(true);
             resultTestRepository.save(result);
