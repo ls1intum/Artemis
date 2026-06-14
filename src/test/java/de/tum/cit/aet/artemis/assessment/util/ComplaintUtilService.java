@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -123,6 +124,8 @@ public class ComplaintUtilService {
         if (result != null) {
             result.hasComplaint(true);
             resultTestRepository.save(result);
+            submission.getResults().stream().filter(existingResult -> Objects.equals(existingResult.getId(), result.getId())).findFirst()
+                    .ifPresent(existingResult -> existingResult.hasComplaint(true));
         }
         Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);
