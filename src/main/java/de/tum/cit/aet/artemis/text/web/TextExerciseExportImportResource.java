@@ -35,8 +35,9 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
@@ -79,11 +80,11 @@ public class TextExerciseExportImportResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExerciseGroupRepository exerciseGroupRepository;
+    private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, Optional<AthenaApi> athenaApi,
-            ExerciseVersionService exerciseVersionService, CourseRepository courseRepository, ExerciseGroupRepository exerciseGroupRepository) {
+            ExerciseVersionService exerciseVersionService, CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -92,7 +93,7 @@ public class TextExerciseExportImportResource {
         this.athenaApi = athenaApi;
         this.exerciseVersionService = exerciseVersionService;
         this.courseRepository = courseRepository;
-        this.exerciseGroupRepository = exerciseGroupRepository;
+        this.exerciseGroupApi = exerciseGroupApi;
     }
 
     /**
@@ -229,7 +230,7 @@ public class TextExerciseExportImportResource {
             exercise.setCourse(course);
         }
         if (dto.exerciseGroupId() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(dto.exerciseGroupId());
+            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
         }
         return exercise;

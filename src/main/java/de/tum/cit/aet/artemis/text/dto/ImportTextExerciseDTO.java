@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Superset of {@link UpdateTextExerciseDTO} with the additional configuration needed during import.
  * Dumb DTO: only scalars, enums, date/time values, and nested DTOs. The controller builds the entity from this payload.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ImportTextExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         ExerciseMode mode, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
