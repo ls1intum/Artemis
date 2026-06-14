@@ -9,6 +9,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +42,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -520,6 +524,28 @@ public class CourseAccessResource {
         Page<User> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/{courseId}/{courseRoleSlug}/search : Search for Artemis users that can be registered for the given course role.
+     * Already registered users are flagged with {@code isRegistered = true}.
+     *
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param searchTerm     the text entered by the instructor
+     * @param page           zero-based page index (default 0)
+     * @param size           number of results per page (default 10)
+     * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} pagination header
+     */
+    @GetMapping("courses/{courseId}/{courseRoleSlug}/users/search")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
+        log.debug("REST request to search users for course {} role {} with term: {}", courseId, courseRoleSlug, searchTerm);
+        CourseRole role = CourseRole.fromRole(Role.fromString(courseRoleSlug));
+        Page<UserForRegistrationDTO> result = courseAccessService.searchUsersForCourseRole(courseId, role, searchTerm, page, size);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
+        return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
     }
 
     /**

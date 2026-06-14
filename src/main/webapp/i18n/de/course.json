@@ -351,7 +351,7 @@
                 "outOf": "von",
                 "usersPerPage": "{{number}} Nutzer:innen pro Seite",
                 "showAllUsers": "Alle Nutzer:innen anzeigen",
-                "searchForUsers": "Nutzer:in zu dieser Gruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchForUsers": "Nutzer:innen nach Login oder Namen suchen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",
@@ -360,6 +360,7 @@
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 },
+                "addUsers": "Benutzer hinzufügen",
                 "profilePicture": "Profilbild"
             },
             "averageScore": "Durchschnittliche Punktzahl",

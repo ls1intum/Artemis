@@ -13,12 +13,19 @@
 <ng-template #tableActionsTemplate>
     @if (course().isAtLeastInstructor) {
         <div class="d-flex gap-1 align-items-center">
-            <jhi-user-import-button [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" (importDone)="onImportDone()" [tutorialGroup]="tutorialGroup()" />
+            <p-button size="small" (onClick)="openAddUsersModal()">
+                <i class="pi pi-user-plus"></i>
+                <span jhiTranslate="artemisApp.course.courseGroup.addUsers"></span>
+            </p-button>
+            <p-button size="small" severity="secondary" (onClick)="openImportDialog($event)">
+                <i class="pi pi-file-import"></i>
+                <span jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
+            </p-button>
             @if (totalMembers() > 0) {
-                <button class="btn btn-primary" (click)="exportUserInformation()">
-                    <fa-icon [icon]="faDownload" [fixedWidth]="true" />
+                <p-button size="small" severity="secondary" (onClick)="exportUserInformation()">
+                    <i class="pi pi-download"></i>
                     <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
-                </button>
+                </p-button>
             }
         </div>
     }
@@ -49,13 +56,22 @@
 <!-- Row actions -->
 <ng-template #rowActionsTemplate let-user>
     <button
+        pButton
         jhiDeleteButton
+        severity="danger"
+        outlined
+        size="small"
+        [renderButtonStyle]="false"
         [actionType]="ActionType.Remove"
         [entityTitle]="user.login"
         deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
         (delete)="removeFromGroup(user)"
         [dialogError]="dialogError$"
     >
-        <fa-icon [icon]="faUserSlash" class="me-1" />
+        <i class="pi pi-user-minus"></i>
     </button>
 </ng-template>
+
+<jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onImportDone()" />
+
+<jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onImportDone()" />

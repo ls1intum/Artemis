@@ -31,6 +31,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -471,6 +472,24 @@ export class CourseManagementService implements OnDestroy {
         };
         return this.http
             .get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+    }
+
+    /**
+     * Searches Artemis users by login, full name, email, or registration number for registration in the given course role.
+     * Users already in the role are marked with {@code isRegistered = true}.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param searchTerm     the text entered by the instructor
+     * @param page           zero-based page index
+     * @param size           number of results per page
+     */
+    searchUsersForCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
+        return this.http
+            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/users/search`, {
+                params: { searchTerm, page, size },
+                observe: 'response',
+            })
             .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
     }
 

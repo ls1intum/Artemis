@@ -351,7 +351,7 @@
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this group by searching for login or name",
+                "searchForUsers": "Search for users by login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
                 "registrationNumber": "Registration Number",
@@ -360,6 +360,7 @@
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 },
+                "addUsers": "Add Users",
                 "profilePicture": "Profile Picture"
             },
             "averageScore": "Average Score",

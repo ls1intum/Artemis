@@ -1,16 +1,15 @@
 import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { User } from 'app/account/user/user.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -19,12 +18,26 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
 import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { Button, ButtonDirective } from 'primeng/button';
 
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
     styleUrls: ['./course-group.component.scss'],
-    imports: [UsersImportButtonComponent, FaIconComponent, TranslateDirective, TableViewComponent, RouterLink, ProfilePictureComponent, DeleteButtonDirective],
+    imports: [
+        UsersImportDialogComponent,
+        TranslateDirective,
+        TableViewComponent,
+        RouterLink,
+        ProfilePictureComponent,
+        DeleteButtonDirective,
+        UserRegistrationModalComponent,
+        Button,
+        ButtonDirective,
+    ],
 })
 export class CourseGroupComponent {
     private readonly courseManagementService = inject(CourseManagementService);
@@ -32,6 +45,8 @@ export class CourseGroupComponent {
     private readonly tableViewRef = viewChild(TableViewComponent);
     readonly profilePictureTemplate = viewChild<CellTemplateRef<User>>('profilePictureTemplate');
     readonly loginTemplate = viewChild<CellTemplateRef<User>>('loginTemplate');
+    private readonly addUsersModal = viewChild(UserRegistrationModalComponent);
+    private readonly importDialog = viewChild(UsersImportDialogComponent);
 
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
@@ -59,8 +74,23 @@ export class CourseGroupComponent {
         return slug.charAt(0).toUpperCase() + slug.slice(1) + ' ' + courseTitle;
     });
 
-    protected readonly faDownload = faDownload;
-    protected readonly faUserSlash = faUserSlash;
+    /** searchFn passed to the registration modal — searches all Artemis users, marks already-enrolled ones. */
+    readonly searchUsersFn = computed(() => {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        return (term: string, page: number, size: number) => this.courseManagementService.searchUsersForCourseRole(courseId!, slug, term, page, size);
+    });
+
+    /** registerFn passed to the registration modal — bulk-adds selected users via the existing import endpoint. */
+    readonly registerUsersFn = computed(() => {
+        const courseId = this.course().id;
+        const slug = this.courseRoleSlug();
+        return (users: UserForRegistration[]): Observable<void> => {
+            if (!courseId) return of(void 0);
+            const dtos: StudentDTO[] = users.map((u) => ({ login: u.login, firstName: '', lastName: '', registrationNumber: u.registrationNumber ?? '', email: u.email ?? '' }));
+            return this.courseManagementService.addUsersToCourseRole(courseId, dtos, slug).pipe(map(() => void 0));
+        };
+    });
 
     readonly tableOptions: TableViewOptions = {
         scrollable: true,
@@ -125,6 +155,15 @@ export class CourseGroupComponent {
 
     onImportDone(): void {
         this.tableViewRef()?.reload();
+    }
+
+    openAddUsersModal(): void {
+        this.addUsersModal()?.open();
+    }
+
+    openImportDialog(event: MouseEvent): void {
+        event.stopPropagation();
+        this.importDialog()?.open();
     }
 
     /**
