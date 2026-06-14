@@ -63,7 +63,6 @@
         "katex": "0.17.0",
         "lodash-es": "4.18.1",
         "markdown-it": "14.2.0",
-        "markdown-it-github-alerts": "1.0.1",
         "markdown-it-highlightjs": "4.3.0",
         "monaco-editor": "0.55.1",
         "ngx-extended-pdf-viewer": "27.0.0",
