@@ -435,7 +435,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @internal
      */
     private static compressAndEncode(payload: string): string {
-        // 1. Compress if larger than 1 KB
         const compressedPayload = gzipSync(strToU8(payload));
         // 2. Convert binary data to base64 string
         return window.btoa(
