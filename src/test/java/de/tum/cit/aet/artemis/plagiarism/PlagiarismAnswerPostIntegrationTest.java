@@ -97,20 +97,24 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPostingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         var persistedCourse = courseRepository.findByIdElseThrow(courseId);
-        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
-        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
         Post parentPost = existingPostsWithAnswers.getFirst();
         PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
 
         var answerPostCount = answerPostRepository.count();
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isZero();
+        assertThat(newAnswerPostCount).isOne();
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);

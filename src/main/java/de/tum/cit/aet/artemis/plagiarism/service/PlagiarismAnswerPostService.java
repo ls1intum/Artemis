@@ -20,11 +20,9 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -62,9 +60,6 @@ public class PlagiarismAnswerPostService extends PostingService {
     public AnswerPost createAnswerPost(Long courseId, PlagiarismAnswerPostCreateRequestDTO request) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
-            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
-        }
 
         Post post = postRepository.findPostByIdElseThrow(request.post().id());
         parseUserMentions(course, request.content());

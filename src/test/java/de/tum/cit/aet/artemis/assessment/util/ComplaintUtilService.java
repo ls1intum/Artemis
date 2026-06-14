@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.assessment.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -121,15 +119,10 @@ public class ComplaintUtilService {
      * @param complaintType The type of the complaint to create.
      */
     public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType complaintType) {
-        Result result = resultTestRepository.findFirstBySubmissionIdOrderByIdDesc(submission.getId()).orElse(null);
+        Result result = submission.getLatestResult();
         if (result != null) {
             result.hasComplaint(true);
             resultTestRepository.save(result);
-            var submissionResults = submission.getResults();
-            if (submissionResults != null && Hibernate.isInitialized(submissionResults)) {
-                submissionResults.stream().filter(existingResult -> Objects.equals(existingResult.getId(), result.getId())).findFirst()
-                        .ifPresent(existingResult -> existingResult.hasComplaint(true));
-            }
         }
         Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);

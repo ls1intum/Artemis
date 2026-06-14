@@ -29,8 +29,6 @@ public interface ResultTestRepository extends ResultRepository {
 
     Optional<Result> findDistinctBySubmissionId(long submissionId);
 
-    Optional<Result> findFirstBySubmissionIdOrderByIdDesc(long submissionId);
-
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
 

@@ -7,10 +7,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -377,62 +374,23 @@ public class ParticipantScoreScheduleService {
      * @param resultIdsToIgnore A list of result ids to ignore when calculating the score
      */
     private void updateParticipantScore(ParticipantScore participantScore, Long... resultIdsToIgnore) {
-        var ignoredResultIds = new LinkedHashSet<>(Arrays.asList(resultIdsToIgnore));
-        var retriedAfterConcurrentResultDeletion = false;
+        var lastRatedResult = getLastRatedResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
+        setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
 
-        while (true) {
-            var ignoredResultIdArray = ignoredResultIds.toArray(Long[]::new);
+        var lastResult = getLastResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
+        setLastAttributes(participantScore, lastResult, participantScore.getExercise());
 
-            var lastRatedResult = getLastRatedResultForParticipantScore(participantScore, ignoredResultIdArray).orElse(null);
-            setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
-
-            var lastResult = getLastResultForParticipantScore(participantScore, ignoredResultIdArray).orElse(null);
-            setLastAttributes(participantScore, lastResult, participantScore.getExercise());
-
-            // Persist the changes or delete the participant score if it is not needed anymore
-            if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
-                if (participantScore.getId() != null) {
-                    // Delete the participant score if it exists in the database
-                    participantScoreRepository.delete(participantScore);
-                    log.debug("Deleted participant score {}.", participantScore.getId());
-                }
-                return;
-            }
-
-            var isNewParticipantScore = participantScore.getId() == null;
-            try {
-                participantScoreRepository.saveAndFlush(participantScore);
-                log.debug("Updated participant score {}.", participantScore.getId());
-                return;
-            }
-            catch (DataIntegrityViolationException ex) {
-                if (retriedAfterConcurrentResultDeletion) {
-                    throw ex;
-                }
-                var additionallyIgnoredResultIds = getDeletedReferencedResultIds(participantScore, ignoredResultIds);
-                if (additionallyIgnoredResultIds.isEmpty()) {
-                    throw ex;
-                }
-                if (isNewParticipantScore) {
-                    participantScore.setId(null);
-                }
-                ignoredResultIds.addAll(additionallyIgnoredResultIds);
-                retriedAfterConcurrentResultDeletion = true;
-                log.debug("Retry participant score update because result(s) {} were deleted concurrently.", additionallyIgnoredResultIds);
+        // Persist the changes or delete the participant score if it is not needed anymore
+        if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
+            if (participantScore.getId() != null) {
+                // Delete the participant score if it exists in the database
+                participantScoreRepository.delete(participantScore);
+                log.debug("Deleted participant score {}.", participantScore.getId());
             }
         }
-    }
-
-    private Set<Long> getDeletedReferencedResultIds(ParticipantScore participantScore, Set<Long> ignoredResultIds) {
-        var referencedResultIds = new LinkedHashSet<Long>();
-        addDeletedReferencedResultId(referencedResultIds, ignoredResultIds, participantScore.getLastRatedResult());
-        addDeletedReferencedResultId(referencedResultIds, ignoredResultIds, participantScore.getLastResult());
-        return referencedResultIds;
-    }
-
-    private void addDeletedReferencedResultId(Set<Long> referencedResultIds, Set<Long> ignoredResultIds, Result result) {
-        if (result != null && result.getId() != null && !ignoredResultIds.contains(result.getId()) && !resultRepository.existsById(result.getId())) {
-            referencedResultIds.add(result.getId());
+        else {
+            participantScoreRepository.save(participantScore);
+            log.debug("Updated participant score {}.", participantScore.getId());
         }
     }
 
