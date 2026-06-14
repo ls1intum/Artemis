@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Lazy
 @Profile(PROFILE_LOCALCI)
 public class AutomaticAfterDueDateService {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomaticAfterDueDateService.class);
 
     private static final int BUILD_AND_TEST_OFFSET_MINUTES = 15;
 
@@ -163,8 +167,7 @@ public class AutomaticAfterDueDateService {
      * @param originalLatestEndDate the original latest end date of the exam (used for offset calculation), only needed when timing changed
      * @return a set of the ids of the programming exercises that were updated
      */
-    public Set<Long> updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(final Exam examWithExercises, final ZonedDateTime originalLatestEndDate)
-            throws JsonProcessingException {
+    public Set<Long> updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(final Exam examWithExercises, final ZonedDateTime originalLatestEndDate) {
         final List<ProgrammingExercise> programmingExercises = examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                 .filter(ProgrammingExercise.class::isInstance).map(e -> (ProgrammingExercise) e).toList();
         final ZonedDateTime newLatestEndDate = getLatestExamEndDateWithGrace(examWithExercises);
@@ -178,7 +181,15 @@ public class AutomaticAfterDueDateService {
                 programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow());
             }
 
-            final ZonedDateTime computedBuildAndTestDate = computeBuildAndTestDate(programmingExercise, offset, newLatestEndDate, true);
+            final ZonedDateTime computedBuildAndTestDate;
+            try {
+                computedBuildAndTestDate = computeBuildAndTestDate(programmingExercise, offset, newLatestEndDate, true);
+            }
+            catch (JsonProcessingException e) {
+                log.error("Skipping automatic build-and-test date recomputation for programming exercise {} due to invalid build plan configuration in build config {}.",
+                        programmingExercise.getId(), programmingExercise.getBuildConfig().getId(), e);
+                continue;
+            }
             if (!Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
                 programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
                 updatedExercises.add(programmingExercise);

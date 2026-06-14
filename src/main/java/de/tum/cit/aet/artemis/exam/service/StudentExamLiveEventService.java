@@ -7,13 +7,9 @@ import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -29,8 +25,6 @@ import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 @Lazy
 @Service
 public class StudentExamLiveEventService {
-
-    private static final Logger log = LoggerFactory.getLogger(StudentExamLiveEventService.class);
 
     private final UserRepository userRepository;
 
@@ -85,13 +79,8 @@ public class StudentExamLiveEventService {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
             }
             if (automaticAfterDueDateService.isPresent()) {
-                try {
-                    automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
-                            .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
-                }
-                catch (JsonProcessingException e) {
-                    log.error("The build plan configuration is invalid for a programming exercise in exam {}", exam.getId());
-                }
+                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
+                        .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
             }
         }
 
