@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import java.util.List;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 
 /**
  * Interface for services that broadcast course notifications to users.
@@ -27,7 +27,7 @@ public abstract class CourseNotificationBroadcastService {
      * </p>
      *
      * @param courseNotification The notification data to be sent
-     * @param recipients         The list of users who should receive the notification
+     * @param recipients         The list of recipients who should receive the notification
      */
-    protected abstract void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients);
+    protected abstract void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients);
 }
