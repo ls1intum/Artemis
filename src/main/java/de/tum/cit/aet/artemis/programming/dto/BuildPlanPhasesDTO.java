@@ -23,6 +23,9 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
      * @throws JsonProcessingException if the JSON is invalid
      */
     public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return new BuildPlanPhasesDTO(null, null);
+        }
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
     }
 

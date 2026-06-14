@@ -137,9 +137,9 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
-            programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
-
             handleLegacyProgrammingExercise(originalProgrammingExercise);
+
+            programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
 
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
@@ -413,5 +413,6 @@ public class ProgrammingExerciseImportFromFileService {
         }
 
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.orElseThrow().toBuildPlanConfiguration());
+        programmingExercise.getBuildConfig().setBuildScript(null);
     }
 }
