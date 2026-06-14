@@ -70,13 +70,13 @@ describe('SplitPaneHeaderComponent', () => {
 
     it('handles selection of a file', () => {
         const idx = 1;
-        comp1.showFiles = true;
+        comp1.showFiles.set(true);
         vi.spyOn(comp1.selectFile, 'emit');
 
         comp1.handleFileSelect(files[idx], idx, true);
 
         expect(comp1.activeFileIndex).toBe(idx);
-        expect(comp1.showFiles).toBe(false);
+        expect(comp1.showFiles()).toBe(false);
         expect(comp1.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp1.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
     });
@@ -91,20 +91,20 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('toggles "show files"', () => {
-        comp1.showFiles = false;
+        comp1.showFiles.set(false);
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBe(true);
+        expect(comp1.showFiles()).toBe(true);
     });
 
     it('does not toggle "show files"', () => {
         fixture2.componentRef.setInput('files', []);
-        comp2.showFiles = false;
+        comp2.showFiles.set(false);
 
         comp2.toggleShowFiles(false);
 
-        expect(comp2.showFiles).toBe(false);
+        expect(comp2.showFiles()).toBe(false);
     });
 
     it('should emit selected file through fileSelectedSubject', () => {
@@ -124,8 +124,8 @@ describe('SplitPaneHeaderComponent', () => {
         const idx = 0;
         const selectedFile = { idx: idx, file: files[idx] };
         const lockFilesEnabled = true;
-        comp1.showFiles = true;
-        comp2.showFiles = true;
+        comp1.showFiles.set(true);
+        comp2.showFiles.set(true);
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
@@ -161,7 +161,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
-        comp1.showFiles = true;
+        comp1.showFiles.set(true);
         fixture1.changeDetectorRef.detectChanges();
 
         const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
@@ -194,20 +194,20 @@ describe('SplitPaneHeaderComponent', () => {
 
     it('should update showFiles when hasFiles returns true', () => {
         comp1.hasFiles = vi.fn().mockReturnValue(true);
-        const initialShowFiles = comp1.showFiles;
+        const initialShowFiles = comp1.showFiles();
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).not.toBe(initialShowFiles);
+        expect(comp1.showFiles()).not.toBe(initialShowFiles);
     });
 
     it('should not update showFiles when hasFiles returns false', () => {
         comp1.hasFiles = vi.fn().mockReturnValue(false);
-        const initialShowFiles = comp1.showFiles;
+        const initialShowFiles = comp1.showFiles();
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBe(initialShowFiles);
+        expect(comp1.showFiles()).toBe(initialShowFiles);
     });
 
     it('should set hoveredFileIdx to -1 if file does not match and getIndexOf returns -1', () => {

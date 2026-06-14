@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,8 +41,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     subscription: Subscription;
 
     // state change variables
-    isCreateMode = false; // true when creating new key, false when viewing existing key
-    isLoading = true;
+    readonly isCreateMode = signal(false); // true when creating new key, false when viewing existing key
+    readonly isLoading = signal(true);
 
     copyInstructions = '';
     selectedOption: string = 'doNotUseExpiration';
@@ -54,7 +54,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     hasExpired? = false;
     displayedExpiryDate?: dayjs.Dayjs;
     isExpiryDateValid = false;
-    displayCreationDate: dayjs.Dayjs;
+    readonly displayCreationDate = signal<dayjs.Dayjs | undefined>(undefined);
     displayedLastUsedDate?: dayjs.Dayjs;
     currentDate: dayjs.Dayjs;
 
@@ -70,11 +70,11 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                 filter((params) => {
                     const keyId = Number(params['keyId']);
                     if (keyId) {
-                        this.isCreateMode = false;
+                        this.isCreateMode.set(false);
                         return true;
                     } else {
-                        this.isLoading = false;
-                        this.isCreateMode = true;
+                        this.isLoading.set(false);
+                        this.isCreateMode.set(true);
                         return false;
                     }
                 }),
@@ -85,11 +85,11 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     this.displayedSshKey = publicKey.publicKey;
                     this.displayedKeyLabel = publicKey.label;
                     this.displayedKeyHash = publicKey.keyHash;
-                    this.displayCreationDate = publicKey.creationDate;
+                    this.displayCreationDate.set(publicKey.creationDate);
                     this.displayedExpiryDate = publicKey.expiryDate;
                     this.displayedLastUsedDate = publicKey.lastUsedDate;
                     this.hasExpired = publicKey.expiryDate && dayjs().isAfter(dayjs(publicKey.expiryDate));
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe();

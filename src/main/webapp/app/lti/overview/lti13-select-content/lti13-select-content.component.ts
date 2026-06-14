@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, SecurityContext, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,7 +24,7 @@ export class Lti13SelectContentComponent implements OnInit {
     jwt: string;
     id: string;
     actionLink: string;
-    isLinking = true;
+    readonly isLinking = signal(true);
 
     readonly deepLinkingForm = viewChild<ElementRef>('deepLinkingForm');
 
@@ -56,7 +56,7 @@ export class Lti13SelectContentComponent implements OnInit {
         this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
         this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
         if (this.actionLink === '' || this.jwt === '' || this.id === '') {
-            this.isLinking = false;
+            this.isLinking.set(false);
             return;
         }
     }

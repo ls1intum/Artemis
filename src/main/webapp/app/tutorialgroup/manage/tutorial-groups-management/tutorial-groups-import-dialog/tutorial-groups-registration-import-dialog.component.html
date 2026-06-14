@@ -222,17 +222,17 @@
                 <div>
                     <label class="font-weight-bold" jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.label"></label>
                 </div>
-                @if (isCSVParsing) {
+                @if (isCSVParsing()) {
                     <fa-icon class="position-relative ms-1" [icon]="faSpinner" animation="spin" />
                 }
             </div>
             <div class="mt-2">
                 <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
-                @if (validationErrors && validationErrors.length > 0) {
+                @if (validationErrors().length > 0) {
                     <div class="mt-4 mb-2 text-danger">
                         <div jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.validationFailed"></div>
                         <ul class="mt-1">
-                            @for (validationError of validationErrors; track validationError) {
+                            @for (validationError of validationErrors(); track validationError) {
                                 <li>
                                     <b>{{ validationError }}</b>
                                 </li>

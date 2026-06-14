@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -49,9 +49,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     questionStatistic: MultipleChoiceQuestionStatistic;
     questionIdParam: number;
     // timer
-    waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
+    readonly waitingForQuizStart = signal(false);
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
     interval: any;
 
     // Icons
@@ -83,17 +83,17 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             const endDate = this.quizExercise.dueDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -131,7 +131,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
+        this.waitingForQuizStart.set(!this.quizExercise.quizStarted);
     }
 
     /**

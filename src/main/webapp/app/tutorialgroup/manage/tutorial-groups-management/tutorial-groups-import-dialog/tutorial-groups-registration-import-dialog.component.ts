@@ -68,9 +68,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     notImportedRegistrations: TutorialGroupImportData[] = [];
     importedRegistrations: TutorialGroupImportData[] = [];
 
-    isCSVParsing = false;
+    readonly isCSVParsing = signal(false);
     protected readonly CsvExample = CsvExample;
-    validationErrors: string[] = [];
+    readonly validationErrors = signal<string[]>([]);
     isImporting = false;
     isImportDone = false;
     numberOfImportedRegistrations = 0;
@@ -144,7 +144,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     get isParseDisabled() {
         return (
             this.selectedFile === undefined ||
-            this.isCSVParsing ||
+            this.isCSVParsing() ||
             this.isImporting ||
             (this.specifyFixedPlaceControl?.value && (!this.statusHeaderControl?.value || !this.fixedPlaceValueControl?.value)) ||
             this.fixedPlaceForm.invalid
@@ -160,10 +160,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.allRegistrations = [];
         this.notImportedRegistrations = [];
         this.importedRegistrations = [];
-        this.validationErrors = [];
+        this.validationErrors.set([]);
         this.isImportDone = false;
         this.isImporting = false;
-        this.isCSVParsing = false;
+        this.isCSVParsing.set(false);
         this.numberOfImportedRegistrations = 0;
         this.numberOfNotImportedRegistration = 0;
     }
@@ -187,26 +187,26 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupImportData[]> {
         let csvRows: ParsedCSVRow[] = [];
         try {
-            this.isCSVParsing = true;
-            this.validationErrors = [];
+            this.isCSVParsing.set(true);
+            this.validationErrors.set([]);
             const parseResult = await this.parseCSVFile(csvFile);
 
             if (parseResult.errors.length > 0) {
                 const errorMessagesCombined = parseResult.errors.map((error) => error.message).join('|');
-                this.validationErrors.push(errorMessagesCombined);
+                this.validationErrors.update((errors) => [...errors, errorMessagesCombined]);
             } else {
                 csvRows = parseResult.data as ParsedCSVRow[];
             }
         } catch (error) {
-            this.validationErrors.push(error.message);
+            this.validationErrors.update((errors) => [...errors, error.message]);
         } finally {
-            this.isCSVParsing = false;
+            this.isCSVParsing.set(false);
         }
 
         if (csvRows && csvRows.length > 0) {
             this.performExtraRowValidation(csvRows);
         }
-        if (this.validationErrors && this.validationErrors.length > 0) {
+        if (this.validationErrors().length > 0) {
             this.resetFileUpload();
             return [];
         }
@@ -254,7 +254,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             .sort((a, b) => this.compareTitle(a, b));
 
         this.performExtraDTOValidation(registrations);
-        if (this.validationErrors && this.validationErrors.length > 0) {
+        if (this.validationErrors().length > 0) {
             this.resetFileUpload();
             return [];
         } else {
@@ -328,15 +328,16 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const withoutIdentifierValidationError = this.withoutIdentifierValidation(csvRows);
         const maxLength = 1000;
         if (titleValidationError !== null) {
-            this.validationErrors.push(titleValidationError.length <= maxLength ? titleValidationError : titleValidationError.slice(0, maxLength) + '...');
+            const message = titleValidationError.length <= maxLength ? titleValidationError : titleValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         if (titleRegexValidationError !== null) {
-            this.validationErrors.push(titleRegexValidationError.length <= maxLength ? titleRegexValidationError : titleRegexValidationError.slice(0, maxLength) + '...');
+            const message = titleRegexValidationError.length <= maxLength ? titleRegexValidationError : titleRegexValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         if (withoutIdentifierValidationError !== null) {
-            this.validationErrors.push(
-                withoutIdentifierValidationError.length <= maxLength ? withoutIdentifierValidationError : withoutIdentifierValidationError.slice(0, maxLength) + '...',
-            );
+            const message = withoutIdentifierValidationError.length <= maxLength ? withoutIdentifierValidationError : withoutIdentifierValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
     }
 
@@ -344,13 +345,13 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const duplicatedRegistrationNumbers = this.duplicatedRegistrationNumbers(registrations);
         const maxLength = 1000;
         if (duplicatedRegistrationNumbers !== null) {
-            this.validationErrors.push(
-                duplicatedRegistrationNumbers.length <= maxLength ? duplicatedRegistrationNumbers : duplicatedRegistrationNumbers.slice(0, maxLength) + '...',
-            );
+            const message = duplicatedRegistrationNumbers.length <= maxLength ? duplicatedRegistrationNumbers : duplicatedRegistrationNumbers.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         const duplicatedLogins = this.duplicatedLogins(registrations);
         if (duplicatedLogins !== null) {
-            this.validationErrors.push(duplicatedLogins.length <= maxLength ? duplicatedLogins : duplicatedLogins.slice(0, maxLength) + '...');
+            const message = duplicatedLogins.length <= maxLength ? duplicatedLogins : duplicatedLogins.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
     }
 

@@ -81,7 +81,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.registrationsDisplayedInTable).toEqual([]);
         expect(component.notImportedRegistrations).toEqual([]);
         expect(component.importedRegistrations).toEqual([]);
-        expect(component.validationErrors).toEqual([]);
+        expect(component.validationErrors()).toEqual([]);
         expect(component.numberOfNotImportedRegistration).toBe(0);
         expect(component.numberOfImportedRegistrations).toBe(0);
         expect(component.selectedFile).toEqual(exampleFile);
@@ -117,8 +117,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await component.onParseClicked();
         // then
         expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
-        expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBe(false);
+        expect(component.validationErrors()).toEqual([]);
+        expect(component.isCSVParsing()).toBe(false);
     });
 
     it('should read registrations without student from csv string', async () => {
@@ -140,8 +140,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const registration = component.registrationsDisplayedInTable[0];
         expect(registration.student).toEqual(generateStudentDTO('', '', '', ''));
         expect(registration.title).toBe('group');
-        expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBe(false);
+        expect(component.validationErrors()).toEqual([]);
+        expect(component.isCSVParsing()).toBe(false);
     });
 
     it('should filter out unconfirmed registrations', async () => {
@@ -157,8 +157,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await component.onParseClicked();
 
         expect(component.registrationsDisplayedInTable).toEqual([exampleOne]);
-        expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBe(false);
+        expect(component.validationErrors()).toEqual([]);
+        expect(component.isCSVParsing()).toBe(false);
     });
 
     it('should fail csv validation when csv is malformed', async () => {
@@ -309,8 +309,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await component.onParseClicked();
         // then
         expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
-        expect(component.validationErrors).toEqual([]);
-        expect(component.isCSVParsing).toBe(false);
+        expect(component.validationErrors()).toEqual([]);
+        expect(component.isCSVParsing()).toBe(false);
         expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
         expect(component.registrationsDisplayedInTable[0].language).toBe('German');
         expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
@@ -361,8 +361,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     }
     function assertStateAfterValidationError(expectedError: string) {
         expect(component.registrationsDisplayedInTable).toEqual([]);
-        expect(component.validationErrors).toEqual([expectedError]);
-        expect(component.isCSVParsing).toBe(false);
+        expect(component.validationErrors()).toEqual([expectedError]);
+        expect(component.isCSVParsing()).toBe(false);
         expect(component.selectedFile).toBeUndefined();
     }
 
@@ -377,7 +377,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.registrationsDisplayedInTable = component.allRegistrations;
         component.notImportedRegistrations = [generateImportDTO()];
         component.importedRegistrations = [generateImportDTO('Another title')];
-        component.validationErrors = ['error'];
+        component.validationErrors.set(['error']);
         component.numberOfNotImportedRegistration = 1;
         component.numberOfImportedRegistrations = 1;
     }

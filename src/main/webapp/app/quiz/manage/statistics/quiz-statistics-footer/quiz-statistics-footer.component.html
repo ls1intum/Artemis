@@ -122,26 +122,26 @@
             </div>
             @if (isQuizPointStatistic()) {
                 <div id="remaining-time" class="form-group col-sm">
-                    @if (waitingForQuizStart) {
+                    @if (waitingForQuizStart()) {
                         <div>
                             <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                         </div>
                     }
-                    @if (!waitingForQuizStart) {
+                    @if (!waitingForQuizStart()) {
                         <div>
                             <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                             <span
                                 id="remaining-time-value"
                                 [ngClass]="{
-                                    'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
-                                    'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2,
+                                    'time-critical': remainingTimeSeconds() < 60 || remainingTimeSeconds() < quizExercise.duration! / 4,
+                                    'time-warning': remainingTimeSeconds() < 120 || remainingTimeSeconds() < quizExercise.duration! / 2,
                                 }"
                             >
-                                {{ remainingTimeText }}
+                                {{ remainingTimeText() }}
                             </span>
                         </div>
                     }
-                    @if (waitingForQuizStart || remainingTimeSeconds >= 0) {
+                    @if (waitingForQuizStart() || remainingTimeSeconds() >= 0) {
                         <jhi-connection-status />
                     }
                 </div>

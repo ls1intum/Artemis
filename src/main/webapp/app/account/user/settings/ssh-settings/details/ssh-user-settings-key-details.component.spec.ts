@@ -80,7 +80,7 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(of({}));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
@@ -103,7 +103,7 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
@@ -121,7 +121,7 @@ describe('SshUserSettingsComponent', () => {
         activatedRoute.setParameters({ keyId: 1 });
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
         expect(comp.displayedSshKey).toEqual(mockKey);
         comp.goBack();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
