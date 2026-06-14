@@ -42,6 +42,8 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
 
+    private static final HttpClient HEALTH_HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).version(HttpClient.Version.HTTP_1_1).build();
+
     private final RestTemplate shortTimeoutRestTemplate;
 
     private final ObjectMapper objectMapper;
@@ -70,9 +72,8 @@ public class AthenaHealthIndicator implements HealthIndicator {
      */
     public boolean isHealthy() {
         try {
-            var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).version(HttpClient.Version.HTTP_1_1).build();
             var request = HttpRequest.newBuilder().uri(URI.create(athenaUrl + "/")).timeout(Duration.ofSeconds(3)).GET().build();
-            var response = client.send(request, HttpResponse.BodyHandlers.discarding());
+            var response = HEALTH_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
             return response.statusCode() < 400;
         }
         catch (Exception ex) {

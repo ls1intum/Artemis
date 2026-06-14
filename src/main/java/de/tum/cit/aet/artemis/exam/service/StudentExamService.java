@@ -253,7 +253,7 @@ public class StudentExamService {
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && participation.getExercise().areFeedbackSuggestionsEnabled()).toList();
         if (eligibleParticipations.isEmpty()) {
-            throw new BadRequestAlertException("No exam exercises with course-level Athena grading feedback enabled", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
+            throw new BadRequestAlertException("No exam exercises with course-level Athena grading feedback enabled", "StudentExam", "noCourseLevelAthenaGradingEnabled", true);
         }
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();

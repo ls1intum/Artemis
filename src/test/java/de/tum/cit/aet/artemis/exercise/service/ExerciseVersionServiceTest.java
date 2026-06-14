@@ -501,8 +501,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         // Fields covered by addIfChanged calls in ExerciseVersionService.collectChangedFields
         Set<String> coveredFields = Set.of("title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate",
                 "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore",
-                "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "feedbackSuggestionModule", "gradingCriteria",
-                "plagiarismDetectionConfig");
+                "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig");
 
         // Fields intentionally excluded from metadata sync change detection
         Set<String> excludedFields = Set.of("id", // structural identifier, not editable metadata

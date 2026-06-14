@@ -309,6 +309,10 @@ public class ParticipationResource {
                     "feedbackRequest.athenaNotEnabled");
         }
 
+        if (!exercise.getAllowFeedbackRequests()) {
+            throw new BadRequestAlertException("Feedback requests are not enabled for this course", ENTITY_NAME, "feedbackRequest.notEnabled");
+        }
+
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate()) && !participation.isPracticeMode()) {
             throw new BadRequestAlertException("Feedback requests are not allowed after the due date for graded participations", ENTITY_NAME,
                     "dueDateOver.feedbackRequestAfterDueDate");
