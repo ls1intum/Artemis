@@ -32,7 +32,8 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import JSZip from 'jszip';
+import { strToU8 } from 'fflate';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -509,26 +510,35 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(handleZipFileSpy).toHaveBeenCalledWith();
         });
 
-        it('should correctly extract images from a ZIP file', async () => {
-            const extractImagesFromZipSpy = vi.spyOn(component, 'extractImagesFromZip');
-            const zip = new JSZip();
-            zip.file('image1.png', 'fakeImageData1');
-            zip.file('image2.jpg', 'fakeImageData2');
-            zip.file('data.json', '{}');
-            const zipContent = await zip.generateAsync({ type: 'blob' });
+        it('should correctly extract images from ZIP entries', () => {
+            const zipEntries = {
+                'image1.png': strToU8('fakeImageData1'),
+                'image2.jpg': strToU8('fakeImageData2'),
+                'data.json': strToU8('{}'),
+            };
 
-            component.importFile = new File([zipContent], 'quiz.zip', { type: 'application/zip' });
-            const extractedImages = new Map();
-            extractedImages.set('image1', new File(['fakeImageData1'], 'image1.png'));
-            extractedImages.set('image2', new File(['fakeImageData2'], 'image2.jpg'));
-            vi.spyOn(JSZip.prototype, 'loadAsync').mockResolvedValue(zip);
-            vi.spyOn(zip.files['image1.png'], 'async').mockResolvedValue(new Blob(['fakeImageData1']));
-            vi.spyOn(zip.files['image2.jpg'], 'async').mockResolvedValue(new Blob(['fakeImageData2']));
-            const result = await component.extractImagesFromZip(zip);
-            expect(extractImagesFromZipSpy).toHaveBeenCalledWith(zip);
+            const result = component.extractImagesFromZip(zipEntries);
+
             expect(result.size).toBe(2);
             expect(result.has('image1')).toBe(true);
             expect(result.has('image2')).toBe(true);
+            expect(result.get('image1')!.name).toBe('image1.png');
+        });
+
+        it('should import questions and images from a real ZIP file', async () => {
+            const addQuestionsSpy = vi.spyOn(component, 'addQuestions').mockResolvedValue(undefined);
+            const zip = new ZipBuilder();
+            zip.file('quiz.json', '[]');
+            zip.file('image1.png', 'fakeImageData1');
+            const zipBlob = await zip.generateBlob();
+            component.importFile = new File([zipBlob], 'quiz.zip', { type: 'application/zip' });
+
+            await component.handleZipFile();
+
+            expect(addQuestionsSpy).toHaveBeenCalledOnce();
+            const images = addQuestionsSpy.mock.calls[0][1] as Map<string, File>;
+            expect(images.size).toBe(1);
+            expect(images.has('image1')).toBe(true);
         });
     });
 });

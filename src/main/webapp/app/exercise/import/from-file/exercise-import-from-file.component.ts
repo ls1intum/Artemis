@@ -6,7 +6,8 @@ import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
-import JSZip from 'jszip';
+import { strFromU8 } from 'fflate';
+import { readZipEntries } from 'app/foundation/util/zip.util';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -48,13 +49,13 @@ export class ExerciseImportFromFileComponent implements OnInit {
         }
 
         const jsonRegex = new RegExp('.*.json');
-        const zip = await JSZip.loadAsync(this.fileForImport as File);
-        const jsonFiles = zip.file(jsonRegex);
+        const zipEntries = await readZipEntries(this.fileForImport as File);
+        const jsonFiles = Object.keys(zipEntries).filter((fileName) => jsonRegex.test(fileName));
         if (jsonFiles.length !== 1) {
             this.alertService.error('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
             return;
         }
-        const exerciseDetails = await jsonFiles[0].async('string');
+        const exerciseDetails = strFromU8(zipEntries[jsonFiles[0]]);
 
         const exerciseJson = JSON.parse(exerciseDetails) as Exercise;
         if (exerciseJson.type !== exerciseType) {

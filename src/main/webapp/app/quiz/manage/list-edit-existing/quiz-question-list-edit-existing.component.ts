@@ -15,7 +15,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
-import JSZip from 'jszip';
+import { strFromU8 } from 'fflate';
+import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -192,29 +193,25 @@ export class QuizQuestionListEditExistingComponent {
     }
 
     async handleZipFile() {
-        const jszip = new JSZip();
-
         try {
-            const zipContent = await jszip.loadAsync(this.importFile!);
-            const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'));
+            const zipEntries = await readZipEntries(this.importFile!);
+            const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
 
-            const images = await this.extractImagesFromZip(zipContent);
-            const jsonFile = zipContent.files[jsonFiles[0]];
-            const jsonContent = await jsonFile.async('string');
+            const images = this.extractImagesFromZip(zipEntries);
+            const jsonContent = strFromU8(zipEntries[jsonFiles[0]]);
             await this.processJsonContent(jsonContent, images);
         } catch (error) {
             alert('Import Quiz Failed! Invalid zip file.');
             return;
         }
     }
-    async extractImagesFromZip(zipContent: JSZip) {
+    extractImagesFromZip(zipEntries: ZipEntries): Map<string, File> {
         const images: Map<string, File> = new Map();
-        for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
+        for (const [fileName, data] of Object.entries(zipEntries)) {
             if (!fileName.endsWith('.json')) {
                 const lastDotIndex = fileName.lastIndexOf('.');
                 const fileNameNoExtension = fileName.substring(0, lastDotIndex);
-                const imageData = await zipEntry.async('blob');
-                const imageFile = new File([imageData], fileName);
+                const imageFile = new File([data], fileName);
                 images.set(fileNameNoExtension, imageFile);
             }
         }
