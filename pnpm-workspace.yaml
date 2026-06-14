@@ -10,8 +10,8 @@
 
 # Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
 # Without this, peer deps such as `@angular/animations` (required by
-# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
-# Angular esbuild bundle fails with "Could not resolve @angular/animations".
+# @swimlane/ngx-graph) are not installed, and the Angular esbuild bundle
+# fails with "Could not resolve @angular/animations".
 autoInstallPeers: true
 
 # Treat the lockfile as authoritative; never silently update it during install.
@@ -44,16 +44,6 @@ peerDependencyRules:
 # transitive packages to CVE-patched versions and force Angular 21 across all
 # @swimlane/* and ng-mocks subtrees (still on older peer ranges).
 overrides:
-    '@swimlane/ngx-charts>@angular/animations': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/cdk': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/common': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/compiler': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/core': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/forms': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/platform-browser': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/platform-browser-dynamic': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/router': '^21.2.0'
-    '@swimlane/ngx-charts>rxjs': '^7.8.2'
     '@swimlane/ngx-graph>@angular/animations': '^21.2.0'
     '@swimlane/ngx-graph>@angular/cdk': '^21.2.0'
     '@swimlane/ngx-graph>@angular/common': '^21.2.0'

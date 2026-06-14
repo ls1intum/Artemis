@@ -1,20 +1,19 @@
-import { Directive } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Directive, signal } from '@angular/core';
 import { yAxisTickFormatting } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 
 @Directive()
 export abstract class PlagiarismAndTutorEffortDirective {
-    ngxChartLabels: string[];
+    chartLabels: string[];
     /**
-     * The similarity distribution is visualized in a bar chart.
+     * The similarity/effort distribution that is visualized in a bar chart; one entry per bar.
      */
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    ngxColor = {
-        name: 'similarity distribution',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    readonly yAxisTickFormatting = yAxisTickFormatting;
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    /**
+     * The raw per-bar colors (CSS variable references, see {@code GraphColors}).
+     * Subclasses resolve them to concrete colors via {@code ChartColorService.resolvedColors}.
+     */
+    readonly chartColors = signal<string[]>([]);
+    /** Formats the value axis ticks so that only integer values are displayed. */
+    readonly yAxisTickFormatting = (tick: number | string) => yAxisTickFormatting(String(tick));
 }
