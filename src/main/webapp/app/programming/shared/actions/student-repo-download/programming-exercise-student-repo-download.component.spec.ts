@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,6 +9,8 @@ import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseStudentRepoDownloadComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentRepoDownloadComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -26,29 +30,29 @@ describe('ProgrammingExerciseStudentRepoDownloadComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should not attempt to download if the exercise id is missing', () => {
-        const exportSpy = jest.spyOn(programmingExerciseService, 'exportStudentRepository');
-        comp.participationId = 100;
+        const exportSpy = vi.spyOn(programmingExerciseService, 'exportStudentRepository');
+        fixture.componentRef.setInput('participationId', 100);
         fixture.detectChanges();
         comp.exportRepository();
         expect(exportSpy).not.toHaveBeenCalled();
     });
 
     it('should not attempt to download if the participation id is missing', () => {
-        const exportSpy = jest.spyOn(programmingExerciseService, 'exportStudentRepository');
-        comp.exerciseId = 100;
+        const exportSpy = vi.spyOn(programmingExerciseService, 'exportStudentRepository');
+        fixture.componentRef.setInput('exerciseId', 100);
         fixture.detectChanges();
         comp.exportRepository();
         expect(exportSpy).not.toHaveBeenCalled();
     });
 
     it('should download the correct repository', () => {
-        const exportSpy = jest.spyOn(programmingExerciseService, 'exportStudentRepository');
-        comp.exerciseId = 10;
-        comp.participationId = 20;
+        const exportSpy = vi.spyOn(programmingExerciseService, 'exportStudentRepository');
+        fixture.componentRef.setInput('exerciseId', 10);
+        fixture.componentRef.setInput('participationId', 20);
         fixture.detectChanges();
         comp.exportRepository();
         expect(exportSpy).toHaveBeenCalledExactlyOnceWith(10, 20);

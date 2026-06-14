@@ -1,5 +1,5 @@
-import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,6 +16,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 
 describe('ExerciseCreateButtonComponent', () => {
     setupTestBed({ zoneless: true });
+
     let component: ExerciseCreateButtonComponent;
     let fixture: ComponentFixture<ExerciseCreateButtonComponent>;
     let router: Router;
@@ -50,8 +51,8 @@ describe('ExerciseCreateButtonComponent', () => {
 
         component.linkToExerciseCreation();
 
-        expect(beforeNavigateSpy).toHaveBeenCalledOnce();
-        expect(modalService.dismissAll).toHaveBeenCalledOnce();
+        expect(beforeNavigateSpy).toHaveBeenCalledTimes(1);
+        expect(modalService.dismissAll).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
     });
 });

@@ -1,8 +1,6 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
-import jestPlugin from 'eslint-plugin-jest';
-import jestExtendedPlugin from 'eslint-plugin-jest-extended';
 import typescriptParser from '@typescript-eslint/parser';
 import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
@@ -26,6 +24,31 @@ const blockLayerImportPatterns = (layer) => [
     `../../../../${layer}/**`,
     `../../../../../${layer}/**`,
     `../../../../../../${layer}/**`,
+];
+
+// Existing `ngOnChanges` migration backlog. Keep the new rule baseline-clean by excluding unchanged
+// files that still need a focused computed()/effect() migration. Remove entries as the hooks are migrated.
+const remainingNgOnChangesMigrationBacklog = [
+    'src/main/webapp/app/atlas/manage/forms/common-course-competency-form.component.ts',
+    'src/main/webapp/app/atlas/manage/forms/competency/competency-form.component.ts',
+    'src/main/webapp/app/atlas/manage/forms/prerequisite/prerequisite-form.component.ts',
+    'src/main/webapp/app/atlas/overview/competency-accordion/competency-accordion.component.ts',
+    'src/main/webapp/app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component.ts',
+    'src/main/webapp/app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component.ts',
+    'src/main/webapp/app/exercise/feedback/feedback.component.ts',
+    'src/main/webapp/app/exercise/rating/rating.component.ts',
+    'src/main/webapp/app/exercise/statistics/doughnut-chart/doughnut-chart.component.ts',
+    'src/main/webapp/app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component.ts',
+    'src/main/webapp/app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component.ts',
+    'src/main/webapp/app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component.ts',
+    'src/main/webapp/app/plagiarism/manage/plagiarism-run-details/plagiarism-run-details.component.ts',
+    'src/main/webapp/app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component.ts',
+    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component.ts',
+    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component.ts',
+    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.ts',
+    'src/main/webapp/app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component.ts',
+    'src/main/webapp/app/quiz/manage/re-evaluate/quiz-re-evaluate.component.ts',
+    'src/main/webapp/app/quiz/manage/update/quiz-exercise-update.component.ts',
 ];
 
 export default tseslint.config(
@@ -118,7 +141,7 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
-            localRules: localRulesPlugin
+            localRules: localRulesPlugin,
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
@@ -137,13 +160,16 @@ export default tseslint.config(
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
             '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unused-vars': ['error', {
-                vars: 'all',
-                varsIgnorePattern: '^_', // Ignore variables prefixed with `_`
-                args: 'none',
-                ignoreRestSiblings: true,
-                caughtErrors: 'none',
-            },],
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_', // Ignore variables prefixed with `_`
+                    args: 'none',
+                    ignoreRestSiblings: true,
+                    caughtErrors: 'none',
+                },
+            ],
             'no-unused-private-class-members': 'error',
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
@@ -162,18 +188,31 @@ export default tseslint.config(
                     paths: [
                         {
                             name: 'dayjs',
-                            message: "Please import from 'dayjs/esm' instead."
+                            message: "Please import from 'dayjs/esm' instead.",
                         },
                         {
                             name: 'lodash',
-                            message: "Please import from 'lodash-es' instead."
-                        }
-                    ]
-                }
+                            message: "Please import from 'lodash-es' instead.",
+                        },
+                    ],
+                },
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
-            'localRules/enforce-signal-apis-in-migrated-modules': 'error',
+            'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
+        },
+    },
+    // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
+    // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
+    // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above
+    // until converted; genuinely unavoidable new cases should use a justified line-level disable.
+    // Full rationale + decision table:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts', ...remainingNgOnChangesMigrationBacklog],
+        rules: {
+            'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
         },
     },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
@@ -198,11 +237,13 @@ export default tseslint.config(
                             // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
                             group: blockLayerImportPatterns('shared-ui'),
-                            message: 'app/foundation/ must not depend on app/shared-ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/shared-ui/ instead.',
+                            message:
+                                'app/foundation/ must not depend on app/shared-ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/shared-ui/ instead.',
                         },
                         {
                             group: blockLayerImportPatterns('editor'),
-                            message: 'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
+                            message:
+                                'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
                         },
                     ],
                 },
@@ -224,7 +265,8 @@ export default tseslint.config(
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
                             group: blockLayerImportPatterns('editor'),
-                            message: 'app/shared-ui/ must not depend on app/editor/. shared-ui/ holds generic UI primitives; the editor stack is specialised and sits above shared-ui/.',
+                            message:
+                                'app/shared-ui/ must not depend on app/editor/. shared-ui/ holds generic UI primitives; the editor stack is specialised and sits above shared-ui/.',
                         },
                     ],
                 },
@@ -232,37 +274,22 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
-        plugins: {
-            jest: jestPlugin,
-            'jest-extended': jestExtendedPlugin,
-        },
+        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
         rules: {
-            ...jestPlugin.configs.recommended.rules,
-            ...jestPlugin.configs.style.rules,
-            ...jestExtendedPlugin.configs.all.rules,
-            // jest-extended matchers are intentionally NOT registered in the Vitest setup (only Jest registers
-            // 'jest-extended/all'). These rules auto-fix native matchers to jest-extended forms (e.g. toBe(true) ->
-            // toBeTrue(), toEqual([]) -> toBeArray()) which throw "Invalid Chai property" under Vitest. Disable the
-            // matcher-conversion auto-fixes so specs keep native matchers that work under both runners.
-            // (prefer-to-have-been-called-once stays enabled: toHaveBeenCalledOnce is native to Vitest.)
-            'jest-extended/prefer-to-be-true': 'off',
-            'jest-extended/prefer-to-be-false': 'off',
-            'jest-extended/prefer-to-be-array': 'off',
-            'jest-extended/prefer-to-be-object': 'off',
-            'jest/expect-expect': 'off',
-            'jest/no-conditional-expect': 'off',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-require-imports': 'off',
-            '@typescript-eslint/no-unused-vars': ['warn', {
-                vars: 'all',
-                varsIgnorePattern: '^_',
-                args: 'none',
-                ignoreRestSiblings: true,
-                caughtErrors: 'none',
-            }],
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_',
+                    args: 'none',
+                    ignoreRestSiblings: true,
+                    caughtErrors: 'none',
+                },
+            ],
             'no-unused-private-class-members': 'error',
             'no-unused-vars': 'off',
             'no-undef': 'off',

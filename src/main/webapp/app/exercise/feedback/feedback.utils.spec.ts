@@ -1,4 +1,6 @@
-import { expect, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -7,22 +9,19 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
-import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('FeedbackUtils', () => {
     setupTestBed({ zoneless: true });
+
     let exerciseService: ExerciseService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [MockProvider(ExerciseService)],
-        })
-            .compileComponents()
-            .then(() => {
-                exerciseService = TestBed.inject(ExerciseService);
-            });
+        }).compileComponents();
+
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     describe('prepareFeedbackComponentParameters', () => {

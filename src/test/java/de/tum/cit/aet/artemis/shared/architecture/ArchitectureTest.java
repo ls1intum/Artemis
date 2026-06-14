@@ -104,6 +104,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
@@ -127,6 +128,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
                         + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
+    }
+
+    @Test
+    void testNoShadedDependencies() {
+        ArchRule noShadedDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("..shaded..", "..repackaged..")
+                .because("Depending on a third-party library's shaded/relocated internal copy (e.g. org.apache.velocity.shaded.commons.io.FilenameUtils) is fragile: "
+                        + "the host library can drop or relocate the shaded package on any version bump, silently breaking the build (this happened during the OpenSAML/Velocity "
+                        + "upgrade in the Spring Boot 4.1 bump). Depend on the real, explicitly-declared library instead (e.g. commons-io for FilenameUtils).");
+        noShadedDependencies.check(allClasses);
     }
 
     @Test
@@ -365,9 +375,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testJsonIncludeNonEmptyOrNonNull() {
-        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
-        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
+    void testJsonIncludeNonEmpty() {
+        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
+        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
     }
 
     /**
@@ -392,8 +402,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_NULL)") {
+    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
 
             @Override
             public void check(T item, ConditionEvents events) {
@@ -404,8 +414,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
-                if (!value.name().equals("NON_EMPTY") && !value.name().equals("NON_NULL")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(NON_EMPTY) or @JsonInclude(NON_NULL)"));
+                if (!value.name().equals("NON_EMPTY")) {
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
                 }
             }
         };
@@ -482,6 +492,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
+                .and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -108,12 +109,12 @@ class DeimosBatchServiceTest {
         var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        var userCaptor = ArgumentCaptor.forClass(User.class);
+        var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
+        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
                 contextCaptor.capture());
-        assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
+        assertThat(recipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(triggerUser));
         @SuppressWarnings("unchecked")
         List<DeimosMaliciousParticipationLink> links = (List<DeimosMaliciousParticipationLink>) contextCaptor.getValue().get("maliciousParticipationLinks");
         assertThat(links).hasSize(1);
@@ -139,9 +140,9 @@ class DeimosBatchServiceTest {
         var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        var userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
-        assertThat(userCaptor.getValue()).isEqualTo(triggerUser);
+        var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        assertThat(recipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(triggerUser));
     }
 
     @Test

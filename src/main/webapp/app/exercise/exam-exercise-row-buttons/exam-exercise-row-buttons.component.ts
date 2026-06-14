@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -41,12 +41,12 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
 
-    @Input() course: Course;
-    @Input() exercise: Exercise;
-    @Input() exam: Exam;
-    @Input() exerciseGroupId: number;
-    @Input() latestIndividualEndDate: dayjs.Dayjs | undefined;
-    @Output() onDeleteExercise = new EventEmitter<void>();
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly exam = input.required<Exam>();
+    readonly exerciseGroupId = input.required<number>();
+    readonly latestIndividualEndDate = input<dayjs.Dayjs>();
+    readonly onDeleteExercise = output<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -75,21 +75,23 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
      * Checks whether the exam is over using the latestIndividualEndDate
      */
     isExamOver() {
-        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(dayjs()) : false;
+        const latestIndividualEndDate = this.latestIndividualEndDate();
+        return latestIndividualEndDate ? latestIndividualEndDate.isBefore(dayjs()) : false;
     }
 
     /**
      * Checks whether the exam has started
      */
     hasExamStarted() {
-        return this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
+        const exam = this.exam();
+        return exam.startDate ? exam.startDate.isBefore(dayjs()) : false;
     }
 
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
      */
     deleteExercise() {
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.TEXT:
                 this.deleteTextExercise();
                 break;
@@ -106,13 +108,14 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise.id!).subscribe({
+        this.textExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -120,13 +123,14 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise.id!).subscribe({
+        this.modelingExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted a modelingExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -134,13 +138,14 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe({
+        this.fileUploadExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted a fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -148,13 +153,14 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise.id!).subscribe({
+        this.quizExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted a quiz',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -162,13 +168,14 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -176,7 +183,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(this.exercise);
+        return this.exerciseService.getDeletionSummary(this.exercise());
     }
 
     /**
@@ -184,7 +191,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(exportAll: boolean) {
-        this.quizExerciseService.find(this.exercise.id!).subscribe((res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.find(this.exercise().id!).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body!;
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });

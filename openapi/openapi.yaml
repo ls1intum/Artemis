@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: "9.3"
+  version: "9.4"
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
@@ -1415,10 +1415,17 @@ components:
             text}
     QuizQuestionGenerationRequest:
       type: object
-      description: Request to generate quiz questions
+      description: Request to generate quiz questions. Either topic or competencyIds
+        must be provided.
       properties:
-        topic: {type: string, description: Main topic for the generated quiz, maxLength: 500,
-          minLength: 1}
+        topic: {type: string, description: Main topic for the generated quiz (used
+            in free-topic mode), maxLength: 500, minLength: 1}
+        competencyIds:
+          type: array
+          description: IDs of course competencies to assess (used in competency mode).
+            Either topic or competencyIds must be provided.
+          items: {type: integer, format: int64}
+          minItems: 1
         optionalPrompt: {type: string, description: Optional additional instructions,
           maxLength: 2000, minLength: 0}
         language:
@@ -1437,7 +1444,7 @@ components:
             to generate, maximum: 10, minimum: 1}
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
-      required: [difficulty, language, numberOfQuestions, questionTypes, topic]
+      required: [difficulty, language, numberOfQuestions, questionTypes]
     GlobalSearchResult:
       type: object
       description: Unified search result representing an entity found via global search

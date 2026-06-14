@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -17,26 +17,28 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExerciseInfoComponent implements OnInit {
-    @Input() exercise: Exercise;
-    @Input() studentParticipation?: StudentParticipation;
+    readonly exercise = input.required<Exercise>();
+    readonly studentParticipation = input<StudentParticipation>();
 
     dueDate?: dayjs.Dayjs;
     individualComplaintDueDate?: dayjs.Dayjs;
     canComplainLaterOn: boolean;
 
     ngOnInit(): void {
-        this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-        if (this.exercise.course?.maxComplaintTimeDays) {
+        const exercise = this.exercise();
+        this.dueDate = getExerciseDueDate(exercise, this.studentParticipation());
+        const studentParticipation = this.studentParticipation();
+        if (exercise.course?.maxComplaintTimeDays) {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-                this.exercise,
-                this.exercise.course.maxComplaintTimeDays,
-                getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
-                this.studentParticipation,
+                exercise,
+                exercise.course.maxComplaintTimeDays,
+                getAllResultsOfAllSubmissions(studentParticipation?.submissions).last(),
+                studentParticipation,
             );
         }
         // The student can either still submit or there is a submission where the student did not have the chance to complain yet
         this.canComplainLaterOn =
-            ((this.dueDate && dayjs().isBefore(this.dueDate)) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDueDate)) &&
-            (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
+            ((this.dueDate && dayjs().isBefore(this.dueDate)) || (!!studentParticipation?.submissionCount && !this.individualComplaintDueDate)) &&
+            (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC);
     }
 }

@@ -1,15 +1,9 @@
-@if (!isExamReviewPage) {
+@if (!isExamReviewPage() && !dialogRef) {
     <div class="modal-header feedback-header">
         @if (taskName) {
             <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
         } @else {
             <h3 class="modal-title" jhiTranslate="artemisApp.result.detail.feedback"></h3>
-        }
-
-        @if (activeModal) {
-            <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-                <fa-icon [icon]="faXmark" size="xl" />
-            </button>
         }
     </div>
 }
@@ -33,7 +27,7 @@
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
             <div class="result-detail-container">
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
@@ -83,24 +77,13 @@
 
                 @if (showScoreChart && result.submission?.participation?.exercise) {
                     <div class="result-score-chart">
-                        <div id="feedback-chart" #containerRef class="chart-space">
-                            <ngx-charts-bar-horizontal-stacked
-                                [view]="[containerRef.offsetWidth, 80]"
-                                [results]="chartData.results"
-                                [scheme]="chartData.scheme"
-                                [xScaleMax]="chartData.xScaleMax"
-                                [xAxis]="true"
-                                [xAxisTickFormatting]="xAxisFormatting"
-                                [legend]="true"
-                                [legendTitle]="''"
-                                [legendPosition]="legendPosition"
-                                [tooltipDisabled]="true"
-                            />
+                        <div id="feedback-chart" class="chart-space" style="height: 80px">
+                            <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
                         </div>
                     </div>
                 }
 
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <hr />
                 }
 
@@ -155,7 +138,7 @@
                     }
                 </dl>
             } @else {
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
                 } @else {
                     <span jhiTranslate="artemisApp.result.noResultDetails"></span>
@@ -191,7 +174,7 @@
             </dl>
         } @else {
             <!-- No content fallback -->
-            @if (!isExamReviewPage) {
+            @if (!isExamReviewPage()) {
                 <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
             } @else {
                 <span jhiTranslate="artemisApp.result.noResultDetails"></span>
@@ -203,7 +186,7 @@
     </ng-template>
 </div>
 <div class="modal-footer">
-    @if (activeModal) {
-        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    @if (dialogRef) {
+        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="dialogRef.close()" jhiTranslate="entity.action.close">Close</button>
     }
 </div>

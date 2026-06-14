@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -62,6 +62,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -85,6 +86,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         FormFooterComponent,
         FeatureOverlayComponent,
     ],
+    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -106,6 +108,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -119,10 +122,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
     private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
 
-    @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
-    @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
-    @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
-    @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
+    exerciseInfoComponent = viewChild(ProgrammingExerciseInformationComponent);
+    exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
+    exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
+    exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -267,7 +270,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        setTestCaseVisibilityToAfterDueDate: false,
+        setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
@@ -633,10 +636,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.exerciseInfoComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseInfoComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent()?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseLanguageComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
+        this.inputFieldSubscriptions.push(this.exerciseGradingComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
     }
 
     ngOnDestroy() {
@@ -666,15 +669,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const updatedFormStatusSections = [
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
-                valid: this.exerciseInfoComponent?.formValid ?? false,
+                valid: this.exerciseInfoComponent()?.formValid ?? false,
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-                valid: (this.exerciseDifficultyComponent?.teamConfigComponent?.formValid && this.validIdeSelection()) ?? false,
+                valid: (this.exerciseDifficultyComponent()?.teamConfigComponent?.formValid && this.validIdeSelection()) ?? false,
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-                valid: (this.exerciseLanguageComponent?.formValid && this.validOnlineIdeSelection()) ?? false,
+                valid: (this.exerciseLanguageComponent()?.formValid && this.validOnlineIdeSelection()) ?? false,
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
@@ -684,10 +687,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
-                    this.exerciseGradingComponent?.formValid &&
+                    this.exerciseGradingComponent()?.formValid &&
                     (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
-                empty: this.exerciseGradingComponent?.formEmpty,
+                empty: this.exerciseGradingComponent()?.formEmpty,
             },
         ];
 
@@ -773,6 +776,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
             this.courseService.find(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
@@ -780,6 +784,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = false;
 
             // Sync categories
             this.exerciseCategories = this.programmingExercise.categories ?? [];
@@ -882,7 +887,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private saveExerciseWithOptions(emptyRepositories: boolean) {
         // trim potential whitespaces that can lead to issues
         if (this.programmingExercise.customizeBuildPlan) {
-            const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
+            const phasesJSON = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent()?.getBuildPlanPhasesJSON();
             if (phasesJSON) {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
             } else {
@@ -1256,7 +1261,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
-        if (this.exerciseGradingComponent?.formValid === false) {
+        if (this.exerciseGradingComponent()?.formValid === false) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
                 translateValues: {},
@@ -1294,8 +1299,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        const customBuildPlanComponent = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent;
-        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(customBuildPlanComponent.buildPlanPhases.phases);
+        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
+        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
@@ -1315,7 +1320,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
-        } else if (this.exerciseInfoComponent?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
+        } else if (this.exerciseInfoComponent()?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
@@ -1338,7 +1343,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
                 translateValues: {},
             });
-        } else if (this.exerciseInfoComponent?.shortNameField()?.control?.errors?.disallowedValue) {
+        } else if (this.exerciseInfoComponent()?.shortNameField()?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
@@ -1603,8 +1608,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
     }
 
+    /**
+     * Cached creation-config object. It is mutated in place and the same reference is returned on every
+     * call so the value bound to the child components' {@link ProgrammingExerciseCreationConfig} input keeps
+     * a stable identity. Returning a fresh object on every change-detection pass (as the template binding
+     * does) would, under zoneless change detection, repeatedly notify the children's input signals; a child
+     * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
+     * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
+     */
+    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = {} as ProgrammingExerciseCreationConfig;
+
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
-        return {
+        return Object.assign(this.programmingExerciseCreationConfig, {
             isImportFromFile: this.isImportFromFile,
             isImportFromSharing: this.isImportFromSharing,
             isImportFromExistingExercise: this.isImportFromExistingExercise,
@@ -1653,7 +1668,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             updateTemplate: this.importOptions.updateTemplate,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
-        };
+        });
     }
 
     private updateFormSectionOnIsValidPlagiarismChange() {

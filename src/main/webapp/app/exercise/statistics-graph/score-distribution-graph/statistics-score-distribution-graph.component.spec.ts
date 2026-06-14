@@ -7,7 +7,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {
@@ -20,16 +21,24 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [StatisticsScoreDistributionGraphComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: Router, useClass: MockRouter }, provideNoopAnimationsForTests()],
-        }).compileComponents();
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+            ],
+        })
+            .overrideComponent(StatisticsScoreDistributionGraphComponent, {
+                remove: { imports: [ChartModule] },
+                add: { imports: [MockComponent(UIChart)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(StatisticsScoreDistributionGraphComponent);
         component = fixture.componentInstance;
-        component.averageScoreOfExercise = 75;
-        component.scoreDistribution = [0, 0, 0, 0, 0, 5, 0, 0, 0, 5];
-        component.numberOfExerciseScores = 10;
-        component.exerciseId = 1;
-        component.courseId = 2;
-        component.exerciseType = ExerciseType.FILE_UPLOAD;
+        fixture.componentRef.setInput('averageScoreOfExercise', 75);
+        fixture.componentRef.setInput('scoreDistribution', [0, 0, 0, 0, 0, 5, 0, 0, 0, 5]);
+        fixture.componentRef.setInput('numberOfExerciseScores', 10);
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('courseId', 2);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.FILE_UPLOAD);
 
         const navigationService = TestBed.inject(ArtemisNavigationUtilService);
         routeInNewTabStub = vi.spyOn(navigationService, 'routeInNewTab').mockImplementation(() => undefined);
@@ -40,19 +49,19 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
         expect(component.barChartLabels).toEqual(expectedLabels);
         let expectedRelativeData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 50];
         expectedRelativeData.forEach((data, index) => {
-            expect(component.ngxData[index].value).toBe(data);
+            expect(component.chartEntries()[index].value).toBe(data);
         });
 
-        component.numberOfExerciseScores = 0;
+        fixture.componentRef.setInput('numberOfExerciseScores', 0);
         component.ngOnInit();
         expectedRelativeData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         expectedRelativeData.forEach((data, index) => {
-            expect(component.ngxData[index].value).toBe(data);
+            expect(component.chartEntries()[index].value).toBe(data);
         });
     });
 
     it.each(expectedLabels)('should delegate the on bar select', (label: string) => {
-        const event = { name: label };
+        const event = { element: { datasetIndex: 0, index: expectedLabels.indexOf(label) } };
         component.ngOnInit();
 
         component.selectChartBar(event);

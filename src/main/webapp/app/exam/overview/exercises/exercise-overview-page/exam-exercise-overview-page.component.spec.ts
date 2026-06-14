@@ -17,6 +17,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,6 +35,7 @@ describe('ExamExerciseOverviewPageComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

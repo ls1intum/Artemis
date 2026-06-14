@@ -55,17 +55,17 @@ describe('ManageAssessmentButtonsComponent', () => {
         textAssessmentService = TestBed.inject(TextAssessmentService);
         fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
 
-        comp.exercise = exercise;
-        comp.course = course;
-        comp.participation = {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('participation', {
             id: 1,
             submissions: [{ id: 1, results: [{ id: 1 } as Result] } as Submission],
-        } as Participation;
+        } as Participation);
     });
 
     describe('ngOnInit', () => {
         it('should set newManualResultAllowed for non-exam exercise', () => {
-            comp.exercise = { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any;
+            fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any);
 
             comp.ngOnInit();
 
@@ -80,7 +80,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                     exam: { numberOfCorrectionRoundsInExam: 2 },
                 } as ExerciseGroup,
             } as Exercise;
-            comp.exercise = examExercise;
+            fixture.componentRef.setInput('exercise', examExercise);
 
             comp.ngOnInit();
 
@@ -90,17 +90,17 @@ describe('ManageAssessmentButtonsComponent', () => {
 
         it('should disable manual results for practice mode (testRun)', () => {
             // isPracticeMode checks testRun property
-            comp.participation = {
+            fixture.componentRef.setInput('participation', {
                 id: 1,
                 testRun: true, // This is what isPracticeMode checks
                 submissions: [],
-            } as StudentParticipation;
+            } as StudentParticipation);
             // Use an exercise that would normally allow manual results
-            comp.exercise = {
+            fixture.componentRef.setInput('exercise', {
                 ...exercise,
                 assessmentType: 'SEMI_AUTOMATIC',
                 allowManualFeedbackRequests: true,
-            } as any;
+            } as any);
 
             comp.ngOnInit();
 
@@ -111,7 +111,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     describe('getAssessmentLink', () => {
         it('should return undefined when exercise type is missing', () => {
-            comp.exercise = { id: 1 } as Exercise;
+            fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);
 
             const result = comp.getAssessmentLink();
 
@@ -119,7 +119,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should return undefined when submission id is missing', () => {
-            comp.participation = { id: 1, submissions: [] } as Participation;
+            fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
 
             const result = comp.getAssessmentLink();
 
@@ -127,11 +127,11 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should return assessment link for valid exercise', () => {
-            comp.exercise = { id: 1, type: ExerciseType.TEXT } as Exercise;
-            comp.participation = {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+            fixture.componentRef.setInput('participation', {
                 id: 1,
                 submissions: [{ id: 1, results: [{ id: 1 }] } as Submission],
-            } as Participation;
+            } as Participation);
 
             const result = comp.getAssessmentLink();
 
@@ -141,7 +141,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     describe('getCorrectionRoundForAssessmentLink', () => {
         it('should return correctionRound when no result exists', () => {
-            comp.participation = { id: 1, submissions: [{ id: 1, results: [] } as Submission] } as Participation;
+            fixture.componentRef.setInput('participation', { id: 1, submissions: [{ id: 1, results: [] } as Submission] } as Participation);
 
             const result = comp.getCorrectionRoundForAssessmentLink(0);
 
@@ -149,7 +149,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should return next correction round when complaint was accepted', () => {
-            comp.participation = {
+            fixture.componentRef.setInput('participation', {
                 id: 1,
                 submissions: [
                     {
@@ -157,7 +157,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                         results: [{ id: 1, hasComplaint: true } as Result, { id: 2 } as Result],
                     } as Submission,
                 ],
-            } as Participation;
+            } as Participation);
 
             const result = comp.getCorrectionRoundForAssessmentLink(0);
 
@@ -165,10 +165,10 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should return same correction round when no complaint', () => {
-            comp.participation = {
+            fixture.componentRef.setInput('participation', {
                 id: 1,
                 submissions: [{ id: 1, results: [{ id: 1, hasComplaint: false } as Result] } as Submission],
-            } as Participation;
+            } as Participation);
 
             const result = comp.getCorrectionRoundForAssessmentLink(0);
 
@@ -188,10 +188,10 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should cancel programming assessment', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
-            comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise;
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
             const result = { id: 1, submission: { id: 1 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(1);
             expect(refreshSpy).toHaveBeenCalled();
@@ -200,10 +200,10 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should cancel modeling assessment', () => {
             const cancelSpy = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
-            comp.exercise = { ...exercise, type: ExerciseType.MODELING } as Exercise;
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
             const result = { id: 1, submission: { id: 1 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(1);
             expect(refreshSpy).toHaveBeenCalled();
@@ -212,10 +212,10 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should cancel text assessment', () => {
             const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
-            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as Exercise;
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
             const result = { id: 1, submission: { id: 1 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(1, 1);
             expect(refreshSpy).toHaveBeenCalled();
@@ -224,10 +224,10 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should cancel file upload assessment', () => {
             const cancelSpy = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
-            comp.exercise = { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise;
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
             const result = { id: 1, submission: { id: 1 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(1);
             expect(refreshSpy).toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 1, submission: { id: 1 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });
@@ -247,7 +247,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 1, submission: undefined } as Result;
 
-            comp.cancelAssessment(result, comp.participation);
+            comp.cancelAssessment(result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });

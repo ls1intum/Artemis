@@ -1,3 +1,5 @@
+import { Mocked, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingLanguageFeatureService } from './programming-language-feature.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -5,8 +7,10 @@ import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-in
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProgrammingLanguageFeatureService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingLanguageFeatureService;
-    let mockProfileService: jest.Mocked<ProfileService>;
+    let mockProfileService: Mocked<ProfileService>;
 
     const mockProgrammingLanguageFeatures: ProgrammingLanguageFeature[] = [
         {
@@ -33,14 +37,14 @@ describe('ProgrammingLanguageFeatureService', () => {
 
     beforeEach(() => {
         const profileSpy = {
-            getProfileInfo: jest.fn(),
+            getProfileInfo: vi.fn(),
         };
 
         TestBed.configureTestingModule({
             providers: [ProgrammingLanguageFeatureService, { provide: ProfileService, useValue: profileSpy }],
         });
 
-        mockProfileService = TestBed.inject(ProfileService) as jest.Mocked<ProfileService>;
+        mockProfileService = TestBed.inject(ProfileService) as Mocked<ProfileService>;
         mockProfileService.getProfileInfo.mockReturnValue({
             programmingLanguageFeatures: mockProgrammingLanguageFeatures,
         } as any);
@@ -80,19 +84,19 @@ describe('ProgrammingLanguageFeatureService', () => {
         it('should return true for a supported programming language', () => {
             const isSupported = service.supportsProgrammingLanguage(ProgrammingLanguage.JAVA);
 
-            expect(isSupported).toBeTrue();
+            expect(isSupported).toBe(true);
         });
 
         it('should return false for an unsupported programming language', () => {
             const isSupported = service.supportsProgrammingLanguage(ProgrammingLanguage.C);
 
-            expect(isSupported).toBeFalse();
+            expect(isSupported).toBe(false);
         });
 
         it('should return true for Python', () => {
             const isSupported = service.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON);
 
-            expect(isSupported).toBeTrue();
+            expect(isSupported).toBe(true);
         });
     });
 });

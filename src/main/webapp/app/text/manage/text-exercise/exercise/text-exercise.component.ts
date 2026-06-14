@@ -81,7 +81,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
                 // reconnect exercise with course
                 exercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.selectedExercises = [];
                 });

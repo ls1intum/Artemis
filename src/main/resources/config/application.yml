@@ -247,7 +247,7 @@ spring: #disabled by default, you must enable it
             preferred-json-mapper: jackson2
     ai:
         model:
-            chat: none # possible values: openai, azure-openai, none
+            chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
             audio.speech: none
             audio.transcription: none
             embedding: none

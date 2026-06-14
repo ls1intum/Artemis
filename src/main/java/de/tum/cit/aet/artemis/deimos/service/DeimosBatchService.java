@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -210,7 +211,7 @@ public class DeimosBatchService {
         emailContext.put("failed", summary.failed());
         emailContext.put("notificationUrl", notificationUrl);
         emailContext.put("maliciousParticipationLinks", maliciousParticipationLinks);
-        mailSendingService.buildAndSendAsync(triggerUser, DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE, emailContext);
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(triggerUser), DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE, emailContext);
     }
 
     private List<Long> collectParticipationIds(Function<Pageable, Slice<Long>> sliceProvider) {
