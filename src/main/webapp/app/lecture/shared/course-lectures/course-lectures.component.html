@@ -1,8 +1,8 @@
 <div class="d-flex justify-content-between">
     @if (course()) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed() }">
             <jhi-sidebar
-                [itemSelected]="lectureSelected"
+                [itemSelected]="lectureSelected()"
                 [courseId]="courseId()"
                 [sidebarData]="sidebarData()"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
@@ -10,8 +10,8 @@
             />
         </div>
 
-        @if (lectureSelected) {
-            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed }" class="content-width module-bg rounded-3">
+        @if (lectureSelected()) {
+            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed() }" class="content-width module-bg rounded-3">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

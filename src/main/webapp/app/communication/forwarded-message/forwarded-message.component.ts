@@ -25,18 +25,18 @@ export class ForwardedMessageComponent implements AfterViewInit {
     readonly faShare = faShare;
     readonly onNavigateToPost = output<Posting>();
 
-    sourceName: string | undefined = '';
-    todayFlag?: string;
+    readonly sourceName = signal<string | undefined>('');
+    readonly todayFlag = signal<string | undefined>(undefined);
 
     /** the forwarded post (can be a Post or AnswerPost) */
     originalPostDetails = input<Posting | undefined>();
     messageContent = viewChild<ElementRef>('messageContent');
     readonly isContentLong = signal(false);
-    showFullForwardedMessage = false;
-    postingIsOfToday = false;
+    readonly showFullForwardedMessage = signal(false);
+    readonly postingIsOfToday = signal(false);
 
     /** Controls whether the "View" button should be shown */
-    protected viewButtonVisible = false;
+    protected readonly viewButtonVisible = signal(false);
     hasOriginalPostBeenDeleted = input<boolean | undefined>();
 
     private conversation: Conversation | undefined;
@@ -52,19 +52,19 @@ export class ForwardedMessageComponent implements AfterViewInit {
                         this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
                         this.updateSourceName();
                         this.isChannel();
-                        this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
-                        this.todayFlag = this.getTodayFlag();
+                        this.postingIsOfToday.set(dayjs().isSame(post.creationDate, 'day'));
+                        this.todayFlag.set(this.getTodayFlag());
                     } else {
-                        this.sourceName = '';
+                        this.sourceName.set('');
                         this.conversation = undefined;
-                        this.viewButtonVisible = false;
-                        this.postingIsOfToday = false;
-                        this.todayFlag = undefined;
+                        this.viewButtonVisible.set(false);
+                        this.postingIsOfToday.set(false);
+                        this.todayFlag.set(undefined);
                     }
                 } catch (error) {
-                    this.sourceName = '';
+                    this.sourceName.set('');
                     this.conversation = undefined;
-                    this.viewButtonVisible = false;
+                    this.viewButtonVisible.set(false);
                 }
             });
         });
@@ -78,7 +78,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     /** Toggles whether full message content should be shown */
     toggleShowFullForwardedMessage(): void {
-        this.showFullForwardedMessage = !this.showFullForwardedMessage;
+        this.showFullForwardedMessage.update((value) => !value);
     }
 
     /**
@@ -96,7 +96,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
      * sets a flag that replaces the date by "Today" in the posting's header if applicable
      */
     getTodayFlag(): string | undefined {
-        if (this.postingIsOfToday) {
+        if (this.postingIsOfToday()) {
             return 'artemisApp.metis.today';
         } else {
             return undefined;
@@ -105,7 +105,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     isChannel() {
         if (this.conversation?.type?.valueOf() === 'channel') {
-            this.viewButtonVisible = true;
+            this.viewButtonVisible.set(true);
         }
     }
 
@@ -122,17 +122,17 @@ export class ForwardedMessageComponent implements AfterViewInit {
      */
     updateSourceName() {
         if (!this.conversation) {
-            this.sourceName = '';
+            this.sourceName.set('');
         } else if (this.conversation?.type?.valueOf() === 'channel') {
             if (this.isAnswerPost) {
-                this.sourceName = (this.conversation as any)?.name ? `a thread in #${(this.conversation as any)?.name} |` : 'a thread in #unknown |';
+                this.sourceName.set((this.conversation as any)?.name ? `a thread in #${(this.conversation as any)?.name} |` : 'a thread in #unknown |');
             } else {
-                this.sourceName = (this.conversation as any)?.name ? `#${(this.conversation as any)?.name} |` : '#unknown |';
+                this.sourceName.set((this.conversation as any)?.name ? `#${(this.conversation as any)?.name} |` : '#unknown |');
             }
         } else if (this.conversation?.type?.valueOf() === 'oneToOneChat') {
-            this.sourceName = this.isAnswerPost ? 'a thread in a direct message ' : 'a direct message ';
+            this.sourceName.set(this.isAnswerPost ? 'a thread in a direct message ' : 'a direct message ');
         } else {
-            this.sourceName = this.isAnswerPost ? 'a thread in a group message ' : 'a group message ';
+            this.sourceName.set(this.isAnswerPost ? 'a thread in a group message ' : 'a group message ');
         }
     }
 

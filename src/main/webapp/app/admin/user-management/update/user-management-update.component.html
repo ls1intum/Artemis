@@ -150,7 +150,7 @@
                             />
                         </mat-chip-grid>
                         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event); groups.value = ''" class="group-panel" classlist="group-panel">
-                            @for (group of filteredGroups | async; track group) {
+                            @for (group of filteredGroups() | async; track group) {
                                 @if (!user().groups?.includes(group)) {
                                     <mat-option [value]="group">
                                         {{ group }}
@@ -238,11 +238,11 @@
                         <span jhiTranslate="artemisApp.userManagement.activated"></span>
                     </label>
                 </div>
-                @if (languages && languages.length > 0) {
+                @if (languages() && languages().length > 0) {
                     <div class="form-group">
                         <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey"></label>
                         <select class="form-select" id="langKey" name="langKey" formControlName="langKey">
-                            @for (language of languages; track language) {
+                            @for (language of languages(); track language) {
                                 <option [value]="language">{{ language | findLanguageFromKey }}</option>
                             }
                         </select>

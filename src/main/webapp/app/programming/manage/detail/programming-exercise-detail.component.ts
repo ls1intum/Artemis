@@ -159,9 +159,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     solutionFileContentByPath?: Map<string, string>;
     readonly isExamExercise = signal<boolean>(false);
     supportsAuxiliaryRepositories = false; // default value
-    baseResource: string;
-    shortBaseResource: string;
-    teamBaseResource: string;
+    readonly baseResource = signal<string>(undefined!);
+    readonly shortBaseResource = signal<string>(undefined!);
+    readonly teamBaseResource = signal<string>(undefined!);
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     diffReady = false;
@@ -269,17 +269,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise().gradingInstructions);
 
         if (!this.isExamExercise()) {
-            this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/`;
-            this.teamBaseResource = `/course-management/${this.courseId}/exercises/${exerciseId}/`;
+            this.baseResource.set(`/course-management/${this.courseId}/programming-exercises/${exerciseId}/`);
+            this.shortBaseResource.set(`/course-management/${this.courseId}/`);
+            this.teamBaseResource.set(`/course-management/${this.courseId}/exercises/${exerciseId}/`);
         } else {
-            this.baseResource =
+            this.baseResource.set(
                 `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/programming-exercises/${exerciseId}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/`;
-            this.teamBaseResource =
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/programming-exercises/${exerciseId}/`,
+            );
+            this.shortBaseResource.set(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/`);
+            this.teamBaseResource.set(
                 `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/exercises/${exerciseId}/`;
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/exercises/${exerciseId}/`,
+            );
         }
 
         this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
@@ -874,7 +876,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param participationId of the participation
      */
     getParticipationSubmissionLink(participationId: number) {
-        const link = [this.baseResource, 'participations', participationId];
+        const link = [this.baseResource(), 'participations', participationId];
         // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
         if (!this.isExamExercise()) {
             link.push('submissions');

@@ -34,7 +34,7 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     courseId: number;
     examId: number;
 
-    textContent: string;
+    readonly textContent = signal<string>(undefined!);
     html?: SafeHtml;
 
     readonly status = signal<'not_submitted' | 'submitting' | 'submitted'>('not_submitted');
@@ -59,7 +59,7 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
 
     submitAnnouncement() {
         this.status.set('submitting');
-        this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent).subscribe({
+        this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent()).subscribe({
             next: (event: ExamWideAnnouncementEvent) => {
                 this.status.set('submitted');
                 this.announcement.set(event);
@@ -71,7 +71,7 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     }
 
     textContentChanged(textContent: string) {
-        this.textContent = textContent;
+        this.textContent.set(textContent);
         this.announcement.set({
             id: 0,
             createdDate: dayjs(),

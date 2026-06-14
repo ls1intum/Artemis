@@ -176,14 +176,14 @@ describe('AssessmentDashboardComponent', () => {
     it('should init component correctly for exam', () => {
         comp.ngOnInit();
 
-        expect(comp.isExamMode).toBe(true);
-        expect(comp.courseId).toBe(10);
-        expect(comp.examId).toBe(20);
-        expect(comp.isTestRun).toBe(false);
+        expect(comp.isExamMode()).toBe(true);
+        expect(comp.courseId()).toBe(10);
+        expect(comp.examId()).toBe(20);
+        expect(comp.isTestRun()).toBe(false);
         expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(comp.exam()).toEqual(exam);
-        expect(comp.hideFinishedExercises).toBe(false);
+        expect(comp.hideFinishedExercises()).toBe(false);
         expect(comp.allExercises()).toHaveLength(4);
         expect(comp.currentlyShownExercises()).toHaveLength(4);
     });
@@ -200,9 +200,9 @@ describe('AssessmentDashboardComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isExamMode).toBe(false);
-        expect(comp.courseId).toBe(10);
-        expect(comp.examId).toBe(0);
+        expect(comp.isExamMode()).toBe(false);
+        expect(comp.courseId()).toBe(10);
+        expect(comp.examId()).toBe(0);
         expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
         expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
         expect(comp.course()).toEqual(Course.from(course));
@@ -259,26 +259,26 @@ describe('AssessmentDashboardComponent', () => {
 
     describe('getAssessmentDashboardLinkForExercise', () => {
         beforeEach(() => {
-            comp.courseId = course.id!;
-            comp.examId = exam.id!;
+            comp.courseId.set(course.id!);
+            comp.examId.set(exam.id!);
         });
 
         it('should getAssessmentDashboardLinkForExercise for exam', () => {
-            comp.isExamMode = true;
-            const link = ['/course-management', comp.courseId.toString(), 'exams', comp.examId.toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
+            comp.isExamMode.set(true);
+            const link = ['/course-management', comp.courseId().toString(), 'exams', comp.examId().toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
             expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
         });
 
         it('should getAssessmentDashboardLinkForExercise for exam and testrun', () => {
-            comp.isExamMode = true;
-            comp.isTestRun = true;
-            const link = ['/course-management', comp.courseId.toString(), 'exams', comp.examId.toString(), 'test-assessment-dashboard', fileUploadExercise.id!.toString()];
+            comp.isExamMode.set(true);
+            comp.isTestRun.set(true);
+            const link = ['/course-management', comp.courseId().toString(), 'exams', comp.examId().toString(), 'test-assessment-dashboard', fileUploadExercise.id!.toString()];
             expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
         });
 
         it('should getAssessmentDashboardLinkForExercise for course', () => {
-            comp.isExamMode = false;
-            const link = ['/course-management', comp.courseId.toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
+            comp.isExamMode.set(false);
+            const link = ['/course-management', comp.courseId().toString(), 'assessment-dashboard', fileUploadExercise.id!.toString()];
             expect(comp.getAssessmentDashboardLinkForExercise(fileUploadExercise)).toEqual(link);
         });
     });

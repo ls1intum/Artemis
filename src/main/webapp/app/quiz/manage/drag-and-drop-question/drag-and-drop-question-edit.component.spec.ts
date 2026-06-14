@@ -318,9 +318,9 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should drag, drop', () => {
         component.drag();
-        expect(component.dropAllowed).toBe(true);
+        expect(component.dropAllowed()).toBe(true);
         component.drop();
-        expect(component.dropAllowed).toBe(false);
+        expect(component.dropAllowed()).toBe(false);
     });
 
     it('should duplicate drop location', () => {
@@ -654,7 +654,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should toggle preview', () => {
-        component.showPreview = true;
+        component.showPreview.set(true);
         const q = new DragAndDropQuestion();
         q.text = 'should be removed';
         fixture.componentRef.setInput('question', q);
@@ -662,7 +662,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.togglePreview();
 
-        expect(component.showPreview).toBe(false);
+        expect(component.showPreview()).toBe(false);
         expect(component.question().text).toBeUndefined();
     });
 

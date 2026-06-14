@@ -79,7 +79,7 @@
                             labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
                             [(ngModel)]="expiryDate"
                             (valueChange)="validateDate()"
-                            [error]="!!expiryDate && !validExpiryDate"
+                            [error]="!!expiryDate && !validExpiryDate()"
                             name="expiryDate"
                             id="expiryDate"
                         />
@@ -92,7 +92,7 @@
                         id="create-vcs-token-button"
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.SMALL"
-                        [disabled]="!validExpiryDate"
+                        [disabled]="!validExpiryDate()"
                         [icon]="faSave"
                         [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
                         (onClick)="sendTokenCreationRequest()"

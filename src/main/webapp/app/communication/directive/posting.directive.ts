@@ -20,7 +20,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     readonly isThreadSidebar = input<boolean | undefined>();
     abstract get reactionsBar(): any;
     readonly showDropdown = signal(false);
-    dropdownPosition = { x: 0, y: 0 };
+    readonly dropdownPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
     showReactionSelector = false;
     clickPosition = { x: 0, y: 0 };
 

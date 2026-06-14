@@ -1,9 +1,9 @@
 @if (activeConversation() && course()) {
     <div class="container-fluid conversation-settings">
-        @if (canLeaveConversation || canChangeChannelArchivalState || canDeleteChannel) {
+        @if (canLeaveConversation() || canChangeChannelArchivalState() || canDeleteChannel()) {
             <div class="row settings-container">
                 <div class="col-12 settings-section text-center">
-                    @if (canLeaveConversation) {
+                    @if (canLeaveConversation()) {
                         <button
                             type="button"
                             class="btn btn-danger leave-conversation"
@@ -13,7 +13,7 @@
                     }
                 </div>
                 @if (conversationAsChannel(); as channel) {
-                    @if (canChangeChannelPrivacyState) {
+                    @if (canChangeChannelPrivacyState()) {
                         <div class="col-12 settings-section text-center">
                             <button type="button" class="btn btn-danger privacy-toggle" (click)="toggleChannelPrivacy()">
                                 <fa-icon [icon]="channel.isPublic ? faLock : faHashtag" class="me-2" />
@@ -27,7 +27,7 @@
                             </button>
                         </div>
                     }
-                    @if (canChangeChannelArchivalState) {
+                    @if (canChangeChannelArchivalState()) {
                         <div class="col-12 settings-section text-center">
                             <button type="button" class="btn btn-danger archive-toggle" (click)="toggleChannelArchivalState($event)">
                                 <fa-icon [icon]="channel.isArchived ? faBoxOpen : faBoxArchive" class="me-2" />
@@ -41,7 +41,7 @@
                             </button>
                         </div>
                     }
-                    @if (canDeleteChannel) {
+                    @if (canDeleteChannel()) {
                         <div class="col-12 settings-section text-center">
                             <button
                                 class="btn btn-danger delete"

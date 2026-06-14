@@ -252,7 +252,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             this.programmingExercise().buildConfig?.testCheckoutPath,
             this.programmingExercise().buildConfig?.solutionCheckoutPath,
         ];
-        return Boolean(editCheckoutDirectories.formValid && editCheckoutDirectories.areValuesUnique(checkoutPaths));
+        return Boolean(editCheckoutDirectories.formValid() && editCheckoutDirectories.areValuesUnique(checkoutPaths));
     }
 
     toggleEditRepositoryCheckoutPath() {

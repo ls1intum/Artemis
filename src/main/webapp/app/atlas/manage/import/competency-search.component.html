@@ -13,7 +13,7 @@
                 (keydown.enter)="performSearch()"
             />
         </div>
-        <div [ngbCollapse]="!advancedSearchEnabled">
+        <div [ngbCollapse]="!advancedSearchEnabled()">
             <div class="form-group">
                 <label for="competency-description-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyDescription"></label>
                 <textarea
@@ -58,9 +58,9 @@
         </div>
         <div class="d-flex flex-row justify-content-center">
             <div id="toggleAdvancedSearch" class="clickable" (click)="toggleAdvancedSearch()">
-                <fa-icon [icon]="advancedSearchEnabled ? faChevronUp : faChevronDown" />
+                <fa-icon [icon]="advancedSearchEnabled() ? faChevronUp : faChevronDown" />
                 <span
-                    jhiTranslate="{{ advancedSearchEnabled ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch' }}"
+                    jhiTranslate="{{ advancedSearchEnabled() ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch' }}"
                 ></span>
             </div>
         </div>

@@ -180,7 +180,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
-            component.showSection = true;
+            component.showSection.set(true);
             component.isCorrectUserToFileAction.set(true);
             const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
@@ -216,7 +216,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.showSection).toBe(true);
+            expect(component.showSection()).toBe(true);
             expect(serverDateStub).not.toHaveBeenCalled();
         });
 
@@ -232,9 +232,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
         function expectExamDefault() {
             expectDefault();
-            expect(component.isExamMode).toBe(true);
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.isExamMode()).toBe(true);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
+            expect(component.timeOfComplaintValid()).toBe(true);
         }
 
         function testVisibilityToBeHiddenWithExam(exam: Exam) {
@@ -246,7 +246,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.showSection).toBe(false);
+            expect(component.showSection()).toBe(false);
         }
     });
 
@@ -271,10 +271,10 @@ describe('ComplaintsStudentViewComponent', () => {
                 ...courseExercise,
                 course: courseWithMaxComplaints,
             };
-            component.course = courseWithMaxComplaints;
+            component.course.set(courseWithMaxComplaints);
             fixture.componentRef.setInput('exercise', exerciseWithMaxComplaints);
 
-            component.showSection = true;
+            component.showSection.set(true);
             component.isCorrectUserToFileAction.set(true);
             component.remainingNumberOfComplaints.set(1);
 
@@ -296,7 +296,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', async () => {
             await testInitWithResultStub(of());
-            component.showSection = true;
+            component.showSection.set(true);
             component.isCorrectUserToFileAction.set(true);
 
             fixture.changeDetectorRef.detectChanges();
@@ -326,8 +326,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
+            expect(component.timeOfComplaintValid()).toBe(false);
         });
 
         it('should not be available if assessment due date not set and completion date is out of period', () => {
@@ -338,8 +338,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
+            expect(component.timeOfComplaintValid()).toBe(false);
         });
 
         it('should not be available if completionDate after assessment due date and date is out of period', () => {
@@ -355,8 +355,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
+            expect(component.timeOfComplaintValid()).toBe(false);
         });
 
         it('should be available if result was before due date', () => {
@@ -367,8 +367,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(true);
         });
 
         it('should be available if result was before assessment due date', () => {
@@ -386,8 +386,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(true);
         });
 
         it('complaints should be available if feedback requests disabled', () => {
@@ -396,13 +396,13 @@ describe('ComplaintsStudentViewComponent', () => {
                 course: courseWithoutFeedback,
                 assessmentDueDate: dayjs().subtract(2),
             } as Exercise);
-            component.course = courseWithoutFeedback;
+            component.course.set(courseWithoutFeedback);
 
             fixture.detectChanges();
 
-            expect(component.showSection).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.showSection()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(true);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
         });
 
         it('feedback requests should be available if complaints are disabled', () => {
@@ -418,13 +418,13 @@ describe('ComplaintsStudentViewComponent', () => {
                 course: courseWithoutComplaints,
                 assessmentDueDate: dayjs().subtract(2),
             } as Exercise);
-            component.course = courseWithoutComplaints;
+            component.course.set(courseWithoutComplaints);
 
             fixture.detectChanges();
 
-            expect(component.showSection).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
+            expect(component.showSection()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(true);
         });
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', () => {
@@ -433,16 +433,16 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            expect(component.showSection).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.showSection()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(false);
         });
 
         function expectCourseDefault() {
             expectDefault();
-            expect(component.isExamMode).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.isExamMode()).toBe(false);
+            expect(component.timeOfFeedbackRequestValid()).toBe(true);
+            expect(component.timeOfComplaintValid()).toBe(true);
         }
 
         async function testInitWithResultStub(content: Observable<EntityResponseType>) {
@@ -463,8 +463,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
     function expectDefault() {
         expect(component.submission).toStrictEqual(submission);
-        expect(component.course).toStrictEqual(course);
-        expect(component.showSection).toBe(true);
+        expect(component.course()).toStrictEqual(course);
+        expect(component.showSection()).toBe(true);
         expect(component.formComplaintType()).toBeUndefined();
         expect(component.remainingNumberOfComplaints()).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction()).toBe(true);
@@ -479,7 +479,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.timeOfComplaintValid).toBe(false);
+        expect(component.timeOfComplaintValid()).toBe(false);
     });
 
     it('complaint should be possible with long assessment periods', () => {
@@ -488,8 +488,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.showSection).toBe(true);
-        expect(component.timeOfComplaintValid).toBe(true);
-        expect(component.timeOfFeedbackRequestValid).toBe(true);
+        expect(component.showSection()).toBe(true);
+        expect(component.timeOfComplaintValid()).toBe(true);
+        expect(component.timeOfFeedbackRequestValid()).toBe(true);
     });
 });

@@ -133,7 +133,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(getAllSpy).toHaveBeenCalledOnce();
-            expect(component.languages).toEqual(LANGUAGES);
+            expect(component.languages()).toEqual(LANGUAGES);
             expect(profileInfoSpy).toHaveBeenCalledOnce();
         });
 
@@ -752,7 +752,7 @@ describe('UserManagementUpdateComponent', () => {
             await fixture.whenStable();
 
             let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
+            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
 
             component.groupCtrl.setValue('admin');
 
@@ -768,7 +768,7 @@ describe('UserManagementUpdateComponent', () => {
             await fixture.whenStable();
 
             let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
+            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
 
             component.groupCtrl.setValue(undefined);
 

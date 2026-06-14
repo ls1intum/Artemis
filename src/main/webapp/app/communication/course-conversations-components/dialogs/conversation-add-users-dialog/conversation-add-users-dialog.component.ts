@@ -36,7 +36,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     activeConversation = signal<ConversationDTO | undefined>(undefined);
 
     isInitialized = false;
-    maxSelectable: number | undefined;
+    readonly maxSelectable = signal<number | undefined>(undefined);
     protected readonly isLoading = signal(false);
 
     initialize() {
@@ -44,7 +44,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
         if (this.isInitialized) {
             const activeConversation = this.activeConversation()!;
             if (isGroupChatDTO(activeConversation)) {
-                this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0);
+                this.maxSelectable.set(MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0));
             }
         }
     }

@@ -1,7 +1,7 @@
 @if (exercise()) {
-    <jhi-header-exercise-page-with-details [exercise]="exercise()" [exam]="exam()" [isTestRun]="isTestRun">
+    <jhi-header-exercise-page-with-details [exercise]="exercise()" [exam]="exam()" [isTestRun]="isTestRun()">
         <ng-container pagetitle>
-            @if (!isTestRun) {
+            @if (!isTestRun()) {
                 <span>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise()?.title }}</span>
             } @else {
                 <span>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise()?.title }}</span>
@@ -12,7 +12,7 @@
 
 @if (exercise()) {
     <div>
-        @if (!isTestRun) {
+        @if (!isTestRun()) {
             <div class="row my-3 d-flex justify-content-between">
                 <div class="col-12 col-md-7 col-xl-4">
                     <p class="h3">
@@ -35,7 +35,7 @@
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
 
-                    @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun) {
+                    @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun()) {
                         <div class="d-inline-block">
                             <jhi-second-correction-enable-button
                                 data-testid="toggle-second-correction"
@@ -81,11 +81,11 @@
                                 <div class="col-5">
                                     @if (exercise().isAtLeastInstructor) {
                                         <div>
-                                            <a [routerLink]="complaintsLink">
+                                            <a [routerLink]="complaintsLink()">
                                                 {{ complaintsDashboardInfo().done }} / {{ complaintsDashboardInfo().total }} ({{ complaintsDashboardInfo().doneToTotalPercentage }})
                                             </a>
                                             |
-                                            <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutor?.id }">
+                                            <a [routerLink]="complaintsLink()" [queryParams]="{ tutorId: tutor()?.id }">
                                                 {{ complaintsDashboardInfo().tutor }}
                                             </a>
                                         </div>
@@ -93,7 +93,7 @@
                                     @if (!exercise().isAtLeastInstructor) {
                                         <div>
                                             {{ complaintsDashboardInfo().done }} / {{ complaintsDashboardInfo().total }} ({{ complaintsDashboardInfo().doneToTotalPercentage }}) |
-                                            <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutor?.id }">
+                                            <a [routerLink]="complaintsLink()" [queryParams]="{ tutorId: tutor()?.id }">
                                                 {{ complaintsDashboardInfo().tutor }}
                                             </a>
                                         </div>
@@ -108,13 +108,13 @@
                                 <div class="col-5">
                                     @if (exercise().isAtLeastInstructor) {
                                         <div>
-                                            <a [routerLink]="moreFeedbackRequestsLink">
+                                            <a [routerLink]="moreFeedbackRequestsLink()">
                                                 {{ moreFeedbackRequestsDashboardInfo().done }} / {{ moreFeedbackRequestsDashboardInfo().total }} ({{
                                                     moreFeedbackRequestsDashboardInfo().doneToTotalPercentage
                                                 }})
                                             </a>
                                             |
-                                            <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutor?.id }">
+                                            <a [routerLink]="moreFeedbackRequestsLink()" [queryParams]="{ tutorId: tutor()?.id }">
                                                 {{ moreFeedbackRequestsDashboardInfo().tutor }}
                                             </a>
                                         </div>
@@ -124,7 +124,7 @@
                                             {{ moreFeedbackRequestsDashboardInfo().done }} / {{ moreFeedbackRequestsDashboardInfo().total }} ({{
                                                 moreFeedbackRequestsDashboardInfo().doneToTotalPercentage
                                             }}) |
-                                            <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutor?.id }">
+                                            <a [routerLink]="moreFeedbackRequestsLink()" [queryParams]="{ tutorId: tutor()?.id }">
                                                 {{ moreFeedbackRequestsDashboardInfo().tutor }}
                                             </a>
                                         </div>
@@ -161,7 +161,7 @@
             </div>
         }
 
-        @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun) {
+        @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun()) {
             <div class="markdown-preview">
                 @if (exercise().problemStatement && exercise().problemStatement!.length > 0) {
                     <jhi-info-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate">
@@ -204,7 +204,7 @@
                         <jhi-code-button
                             [smallButtons]="true"
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
-                            [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
+                            [routerLinkForRepositoryView]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
                         />
                     </div>
                 }
@@ -224,7 +224,7 @@
             </div>
         }
 
-        @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun) {
+        @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun()) {
             <div class="col-12 text-center mt-2 mb-4">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
@@ -240,10 +240,10 @@
             </div>
         }
 
-        @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun) {
+        @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun()) {
             <div class="d-flex">
                 <div class="flex-grow-1">
-                    @if (tutorParticipationStatus() === REVIEWED_INSTRUCTIONS && !isTestRun) {
+                    @if (tutorParticipationStatus() === REVIEWED_INSTRUCTIONS && !isTestRun()) {
                         <div class="alert alert-warning row" role="alert">
                             <span
                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
@@ -256,7 +256,7 @@
                         </div>
                     }
 
-                    @if (tutorParticipationStatus() !== NOT_PARTICIPATED && !isTestRun) {
+                    @if (tutorParticipationStatus() !== NOT_PARTICIPATED && !isTestRun()) {
                         <div class="row">
                             @if (stats.toReview.total > 0) {
                                 <div class="col-6">
@@ -334,7 +334,7 @@
                     }
                     @for (roundState of numberOfAssessmentsOfCorrectionRounds(); track roundState; let correctionRound = $index) {
                         <div>
-                            @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun) {
+                            @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
                                 @if (!isExamMode()) {
                                     <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                 }
@@ -354,10 +354,10 @@
                                 }
                             }
                             @if (numberOfCorrectionRoundsEnabled() > correctionRound) {
-                                @if (isTestRun) {
+                                @if (isTestRun()) {
                                     <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
-                                @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun) {
+                                @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
                                     <div class="table-responsive">
                                         @if (showSubmissionsForRound(correctionRound)) {
                                             <table class="table exercise-table">
@@ -390,7 +390,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun) {
+                                                    @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun()) {
                                                         <tr>
                                                             <td></td>
                                                             <td>{{ unassessedSubmissionByRound()[correctionRound]!.submissionDate | artemisDate }}</td>
@@ -435,7 +435,7 @@
                                                                 </td>
                                                             }
                                                             <td>
-                                                                @if ((isTestRun && complaints().length === 0) || !isTestRun) {
+                                                                @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
                                                                     @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                         <a
                                                                             [routerLink]="getAssessmentLink(submission)"
@@ -477,7 +477,7 @@
                                         }
                                         @if (
                                             isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun) &&
+                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
                                             numberOfSubmissions().inTime !== roundState.inTime
                                         ) {
                                             <div class="alert alert-info">
@@ -491,7 +491,7 @@
                                                 @if (correctionRound === 1) {
                                                     <span
                                                         jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfoSecondCorrection"
-                                                        [translateValues]="{ firstRoundAssessments: firstRoundAssessments }"
+                                                        [translateValues]="{ firstRoundAssessments: firstRoundAssessments() }"
                                                     ></span>
                                                 }
                                             </div>
@@ -505,7 +505,7 @@
                         </div>
                     }
                     <!-- Complaints -->
-                    @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun) {
+                    @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
                         <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.complaints"></h4>
                         <fa-icon class="text-secondary" [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate" />
                         <div class="table-responsive">

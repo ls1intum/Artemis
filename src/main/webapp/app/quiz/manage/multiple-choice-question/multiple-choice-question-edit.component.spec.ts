@@ -157,7 +157,7 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
     it('should initialize with question markdown text', async () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.questionEditorText).toEqual(
+        expect(component.questionEditorText()).toEqual(
             'some-text\n' +
                 '\t[hint] some-hint\n' +
                 '\t[exp] some-explanation\n' +

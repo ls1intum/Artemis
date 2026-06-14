@@ -239,7 +239,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should maintain suggested status when toggling competencies', () => {
-            const dataStructuresLink = component.competencyLinks?.find((link) => link.competency?.id === 2);
+            const dataStructuresLink = component.competencyLinks()?.find((link) => link.competency?.id === 2);
             expect(dataStructuresLink).toBeTruthy();
 
             // Toggle competency on/off - suggestion status should persist
@@ -447,8 +447,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     describe('User Workflow Integration', () => {
         it('should maintain user selections when suggestions are made', () => {
             // User selects some competencies first
-            const competency1 = component.competencyLinks?.[0];
-            const competency4 = component.competencyLinks?.[3];
+            const competency1 = component.competencyLinks()?.[0];
+            const competency4 = component.competencyLinks()?.[3];
 
             if (competency1 && competency4) {
                 component.toggleCompetency(competency1);
@@ -464,8 +464,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
                 // User selections should be preserved
                 expect(component.selectedCompetencyLinks?.length).toBe(2);
-                expect(component.checkboxStates[1]).toBeTruthy();
-                expect(component.checkboxStates[4]).toBeTruthy();
+                expect(component.checkboxStates()[1]).toBeTruthy();
+                expect(component.checkboxStates()[4]).toBeTruthy();
 
                 // But suggestions should still be shown
                 expect(component.isSuggested(2)).toBeTruthy();
@@ -480,10 +480,10 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             fixture.detectChanges();
 
             // User clicks on suggested competency
-            const suggestedCompetency = component.competencyLinks?.find((link) => link.competency?.id === 2);
+            const suggestedCompetency = component.competencyLinks()?.find((link) => link.competency?.id === 2);
             if (suggestedCompetency) {
                 component.toggleCompetency(suggestedCompetency);
-                expect(component.checkboxStates[2]).toBeTruthy();
+                expect(component.checkboxStates()[2]).toBeTruthy();
                 expect(component.selectedCompetencyLinks).toContainEqual(suggestedCompetency);
                 expect(component.isSuggested(2)).toBeTruthy(); // Should still be marked as suggested
             }

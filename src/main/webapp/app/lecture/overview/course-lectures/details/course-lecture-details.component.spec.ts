@@ -323,7 +323,7 @@ describe('CourseLectureDetailsComponent', () => {
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
         expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
-        expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
+        expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
     });
 
     it('should download PDF file', async () => {

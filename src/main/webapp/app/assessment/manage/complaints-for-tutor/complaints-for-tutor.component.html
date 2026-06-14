@@ -68,14 +68,14 @@
                             id="responseTextArea"
                             class="col-12 px-1"
                             rows="4"
-                            [maxlength]="maxComplaintResponseTextLimit"
+                            [maxlength]="maxComplaintResponseTextLimit()"
                             [(ngModel)]="complaintResponse.responseText"
                             [readonly]="handled() || isLockedForLoggedInUser()"
                             [disabled]="handled() || isLockedForLoggedInUser()"
                             ondrop="return false;"
                         >
                         </textarea>
-                        <jhi-textarea-counter [maxLength]="maxComplaintResponseTextLimit" [content]="complaintResponse.responseText" [visible]="!handled()" />
+                        <jhi-textarea-counter [maxLength]="maxComplaintResponseTextLimit()" [content]="complaintResponse.responseText" [visible]="!handled()" />
                     </div>
                     @if (!handled() && complaint().complaintType === ComplaintType.COMPLAINT) {
                         <div class="d-flex flex-wrap gap-1 justify-content-between mt-1">
@@ -84,7 +84,7 @@
                                 type="button"
                                 class="btn btn-success btn-block"
                                 (click)="respondToComplaint(true)"
-                                [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit"
+                                [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit()"
                                 title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
                             >
                                 {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
@@ -94,7 +94,7 @@
                                 type="button"
                                 class="btn btn-danger btn-block"
                                 (click)="respondToComplaint(false)"
-                                [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit"
+                                [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit()"
                                 title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
                             >
                                 {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}

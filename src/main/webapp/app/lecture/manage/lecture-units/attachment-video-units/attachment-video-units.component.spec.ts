@@ -181,41 +181,41 @@ describe('AttachmentVideoUnitsComponent', () => {
 
     it('should validate valid table correctly', () => {
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(true);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeUndefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeUndefined();
     });
 
     it('should validate valid start page', () => {
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 0, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
 
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
 
         // @ts-ignore
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: null, endPage: 10 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
 
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 10, endPage: 1 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
     });
 
     it('should validate valid end page', () => {
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
 
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 1, endPage: 0 }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
 
         // @ts-ignore
         attachmentVideoUnitsComponent.units.set([{ unitName: 'Unit 1', startPage: 2, endPage: null }]);
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
     });
 
     it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
@@ -227,7 +227,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.deleteRow(0)).toBe(false);
 
         expect(attachmentVideoUnitsComponent.validUnitInformation()).toBe(false);
-        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage()).toBeDefined();
     });
 
     it('should navigate to previous state', async () => {

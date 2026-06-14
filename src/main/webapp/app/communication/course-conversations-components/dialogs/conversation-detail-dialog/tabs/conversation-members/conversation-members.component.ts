@@ -53,7 +53,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     // page information
     page = 1;
     itemsPerPage = 10;
-    totalItems = 0;
+    readonly totalItems = signal<number>(0);
     readonly isSearching = signal(true);
     searchTerm = '';
 
@@ -211,14 +211,14 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     }
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
         if (this.activeConversation) {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
                     return {
                         ...current,
-                        numberOfMembers: this.totalItems,
+                        numberOfMembers: this.totalItems(),
                     };
                 }
                 return current;

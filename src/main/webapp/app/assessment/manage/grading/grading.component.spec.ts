@@ -235,7 +235,7 @@ describe('GradingComponent', () => {
             expect(comp).toBeTruthy();
             expect(comp.courseId).toBe(courseId);
             expect(comp.examId).toBeUndefined();
-            expect(comp.isExam).toBe(false);
+            expect(comp.isExam()).toBe(false);
         });
 
         it('should expose GradeType enum', () => {
@@ -350,7 +350,7 @@ describe('GradingComponent', () => {
             expect(comp).toBeTruthy();
             expect(comp.courseId).toBe(456);
             expect(comp.examId).toBe(789);
-            expect(comp.isExam).toBe(true);
+            expect(comp.isExam()).toBe(true);
         });
     });
 
@@ -369,11 +369,11 @@ describe('GradingComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(comp.isExam).toBe(true);
+            expect(comp.isExam()).toBe(true);
             expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, courseId, examId);
             expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
             expect(findExamStub).toHaveBeenCalledTimes(1);
-            expect(comp.exam).toStrictEqual(exam);
+            expect(comp.exam()).toStrictEqual(exam);
             expect(comp.maxPoints()).toBe(exam.examMaxPoints);
         });
 
@@ -504,7 +504,7 @@ describe('GradingComponent', () => {
         });
 
         it('should not delete non-existing grading scale', () => {
-            comp.existingGradingScale = false;
+            comp.existingGradingScale.set(false);
             const gradingSystemDeleteForCourseSpy = vi.spyOn(gradingService, 'deleteGradingScaleForCourse');
             const gradingSystemDeleteForExamSpy = vi.spyOn(gradingService, 'deleteGradingScaleForExam');
 
@@ -515,8 +515,8 @@ describe('GradingComponent', () => {
         });
 
         it('should delete grading scale for course', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = false;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(false);
             comp.courseId = courseId;
             const gradingSystemDeleteForCourseStub = vi.spyOn(gradingService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
 
@@ -524,25 +524,25 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemDeleteForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId);
             expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(false);
+            expect(comp.existingGradingScale()).toBe(false);
         });
 
         it('should delete grading scale for exam', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = true;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(true);
             const gradingSystemDeleteForExamStub = vi.spyOn(gradingService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
 
             comp.delete();
 
             expect(gradingSystemDeleteForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId);
             expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(false);
+            expect(comp.existingGradingScale()).toBe(false);
         });
 
         it('should create grading scale correctly for course', () => {
-            comp.existingGradingScale = false;
-            comp.isExam = false;
-            comp.course = course;
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(false);
+            comp.course.set(course);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemCreateForCourseMock = vi
                 .spyOn(gradingService, 'createGradingScaleForCourse')
@@ -552,13 +552,13 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
             expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should create grading scale correctly for exam', () => {
-            comp.existingGradingScale = false;
-            comp.isExam = true;
-            comp.exam = exam;
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(true);
+            comp.exam.set(exam);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemCreateForExamMock = vi
                 .spyOn(gradingService, 'createGradingScaleForExam')
@@ -568,13 +568,13 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
             expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should update grading scale correctly for course', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = false;
-            comp.course = course;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(false);
+            comp.course.set(course);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemUpdateForCourseMock = vi
                 .spyOn(gradingService, 'updateGradingScaleForCourse')
@@ -584,13 +584,13 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
             expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should update grading scale correctly for exam', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = true;
-            comp.exam = exam;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(true);
+            comp.exam.set(exam);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemUpdateForExamMock = vi
                 .spyOn(gradingService, 'updateGradingScaleForExam')
@@ -600,7 +600,7 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemUpdateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
             expect(gradingSystemUpdateForExamMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should handle find response correctly', () => {
@@ -608,7 +608,7 @@ describe('GradingComponent', () => {
 
             expect(comp.firstPassingGrade()).toBe('Pass');
             expect(comp.lowerBoundInclusivity).toBe(true);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should validate valid grading scale correctly', () => {
@@ -626,7 +626,7 @@ describe('GradingComponent', () => {
         });
 
         it('should validate invalid grading scale with negative max points', () => {
-            comp.course = course;
+            comp.course.set(course);
             comp.maxPoints.set(-10);
             translateStub.mockReturnValue('negative max points');
 
@@ -736,8 +736,8 @@ describe('GradingComponent', () => {
         });
 
         it('should validate grading scale with basic presentations and invalid presentationScore', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.BASIC };
-            comp.course = { presentationScore: 0 } as Course;
+            comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
+            comp.course.set({ presentationScore: 0 } as Course);
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);
@@ -745,7 +745,7 @@ describe('GradingComponent', () => {
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.GRADED, presentationsNumber: 2, presentationsWeight: 128 };
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 2, presentationsWeight: 128 });
             translateStub.mockReturnValue('invalid presentations weight');
 
             expect(comp.validPresentationsConfig()).toBe(false);
@@ -753,7 +753,7 @@ describe('GradingComponent', () => {
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.GRADED, presentationsNumber: 0, presentationsWeight: 20 };
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 0, presentationsWeight: 20 });
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);

@@ -94,7 +94,7 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly user = signal<User>(undefined!);
 
     /** Available languages for selection */
-    languages: string[];
+    readonly languages = signal<string[]>(undefined!);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -123,7 +123,7 @@ export class UserManagementUpdateComponent implements OnInit {
     allGroups: string[];
 
     /** Filtered groups based on input */
-    filteredGroups: Observable<string[]>;
+    readonly filteredGroups = signal<Observable<string[]>>(undefined!);
 
     /** Separator key codes for chip input */
     readonly separatorKeysCodes = [ENTER, COMMA, TAB];
@@ -175,9 +175,11 @@ export class UserManagementUpdateComponent implements OnInit {
                     }
                 });
             }
-            this.filteredGroups = this.groupCtrl.valueChanges.pipe(
-                startWith(undefined),
-                map((value) => (value ? this.filter(value) : this.allGroups.slice())),
+            this.filteredGroups.set(
+                this.groupCtrl.valueChanges.pipe(
+                    startWith(undefined),
+                    map((value) => (value ? this.filter(value) : this.allGroups.slice())),
+                ),
             );
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
@@ -186,7 +188,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
             );
         });
-        this.languages = this.languageHelper.getAll();
+        this.languages.set(this.languageHelper.getAll());
         // Empty array for new user
         if (!this.user().id) {
             this.user().groups = [];

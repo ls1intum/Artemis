@@ -91,20 +91,20 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     // callbacks, and while the loading branch is shown no other tracked signal is live in the
     // template — a plain field write would never schedule the render that swaps the branches.
     protected readonly isLoading = signal(false);
-    latestResultValue?: Result;
+    readonly latestResultValue = signal<Result | undefined>(undefined);
     // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
-    protected tasks: TaskArray;
+    protected readonly tasks = signal<TaskArray>(undefined!);
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
     private lastRenderedProblemStatement?: string;
 
     get latestResult() {
-        return this.latestResultValue;
+        return this.latestResultValue();
     }
 
     set latestResult(result: Result | undefined) {
-        this.latestResultValue = result;
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue);
+        this.latestResultValue.set(result);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue());
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
@@ -241,13 +241,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                         );
                     } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
                         // Re-assign latestResult to refresh singleton task/UML extension state.
-                        this.latestResult = this.latestResultValue;
+                        this.latestResult = this.latestResultValue();
                         this.problemStatement = currentExercise?.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise?.problemStatement;
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
                     } else if (currentExercise && this.problemStatementHasChangedFromLast()) {
-                        this.latestResult = this.latestResultValue;
+                        this.latestResult = this.latestResultValue();
                         this.problemStatement = currentExercise.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise.problemStatement;
                         this.problemStatementUpdateSubject.next();
@@ -317,7 +317,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
-        this.latestResult = this.latestResultValue;
+        this.latestResult = this.latestResultValue();
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
@@ -468,21 +468,23 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             return problemStatementHtml;
         }
 
-        this.tasks = tasks
-            // check that all groups (full match, name, tests) are present
-            .filter((testMatch) => testMatch?.length === 3)
-            .map((testMatch: RegExpMatchArray | null) => {
-                const nextIndex = this.taskIndex;
-                this.taskIndex++;
-                return {
-                    id: nextIndex,
-                    completeString: testMatch![0],
-                    taskName: testMatch![1],
-                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
-                };
-            });
+        this.tasks.set(
+            tasks
+                // check that all groups (full match, name, tests) are present
+                .filter((testMatch) => testMatch?.length === 3)
+                .map((testMatch: RegExpMatchArray | null) => {
+                    const nextIndex = this.taskIndex;
+                    this.taskIndex++;
+                    return {
+                        id: nextIndex,
+                        completeString: testMatch![0],
+                        taskName: testMatch![1],
+                        testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
+                    };
+                }),
+        );
 
-        return this.tasks.reduce(
+        return this.tasks().reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
@@ -493,7 +495,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     }
 
     private injectTasksIntoDocument = () => {
-        this.tasks.forEach(({ id, taskName, testIds }) => {
+        this.tasks().forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {

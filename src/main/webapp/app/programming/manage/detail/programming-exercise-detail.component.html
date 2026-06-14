@@ -10,7 +10,7 @@
                 <div class="button-header">
                     <div class="d-flex flex-wrap gap-2">
                         @if (programmingExercise().isAtLeastEditor) {
-                            <a [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
+                            <a [routerLink]="[baseResource(), 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"></span>
                             </a>
@@ -18,7 +18,7 @@
                             @if (programmingExercise().templateParticipation) {
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                    [routerLink]="[baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise().templateParticipation!.id!]"
+                                    [routerLink]="[baseResource(), 'code-editor', RepositoryType.TEMPLATE, programmingExercise().templateParticipation!.id!]"
                                     class="btn btn-warning btn-sm"
                                 >
                                     <fa-icon [icon]="faPencilAlt" />
@@ -27,31 +27,31 @@
                             }
                             <!-- Edit build plan button -->
                             @if (isBuildPlanEditable()) {
-                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" [routerLink]="[baseResource, 'edit-build-plan']" class="btn btn-warning btn-sm">
+                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" [routerLink]="[baseResource(), 'edit-build-plan']" class="btn btn-warning btn-sm">
                                     <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editBuildPlan"></span>
                                 </a>
                             }
-                            <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
+                            <a [routerLink]="[baseResource(), 'grading', 'test-cases']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faFileSignature" />
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                             </a>
                         }
                         @if (canAccessParticipationsAndScores()) {
-                            <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
+                            <a [routerLink]="[baseResource(), 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations"></span>
                             </a>
                         }
                         <!-- Teams -->
                         @if (programmingExercise().teamMode && programmingExercise().isAtLeastTutor) {
-                            <a [routerLink]="[teamBaseResource, 'teams']" class="btn btn-primary btn-sm">
+                            <a [routerLink]="[teamBaseResource(), 'teams']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faUsers" />
                                 <span jhiTranslate="artemisApp.exercise.teams"></span>
                             </a>
                         }
                         @if (programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise().allowComplaintsForAutomaticAssessments) {
-                            <a [routerLink]="[shortBaseResource, 'assessment-dashboard', programmingExercise().id]" class="btn btn-info btn-sm">
+                            <a [routerLink]="[shortBaseResource(), 'assessment-dashboard', programmingExercise().id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faUserCheck" />
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
                             </a>
@@ -64,13 +64,13 @@
                             </jhi-feature-overlay>
                         }
                         @if (programmingExercise().isAtLeastEditor) {
-                            <a [routerLink]="[baseResource, 'version-history']" class="btn btn-info btn-sm">
+                            <a [routerLink]="[baseResource(), 'version-history']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faHistory" />
                                 <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
                             </a>
                         }
                         @if (canAccessParticipationsAndScores()) {
-                            <a [routerLink]="[baseResource, 'scores']" class="btn btn-info btn-sm">
+                            <a [routerLink]="[baseResource(), 'scores']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
                             </a>

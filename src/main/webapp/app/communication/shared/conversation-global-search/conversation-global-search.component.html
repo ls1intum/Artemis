@@ -1,14 +1,14 @@
-<div class="search-block" [class.active]="isSearchActive">
+<div class="search-block" [class.active]="isSearchActive()">
     <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg">
         <!-- search bar with selected channel -->
         <div class="tag-input-container form-control">
-            @for (conversation of selectedConversations; track conversation) {
+            @for (conversation of selectedConversations(); track conversation) {
                 <span class="badge bg-primary me-1">
                     <span class="me-1">{{ CONVERSATION_FILTER.value }}#{{ getConversationName(conversation) }}</span>
                     <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(conversation)"></button>
                 </span>
             }
-            @for (author of selectedAuthors; track author) {
+            @for (author of selectedAuthors(); track author) {
                 <span class="badge bg-secondary me-1">
                     <span class="me-1">{{ USER_FILTER.value }}&#64;{{ author.name }}</span>
                     <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedAuthor(author)"></button>
@@ -21,8 +21,8 @@
                 autocomplete="off"
                 [(ngModel)]="fullSearchTerm"
                 class="tag-input"
-                (focus)="isSearchActive = true"
-                (blur)="isSearchActive = false"
+                (focus)="isSearchActive.set(true)"
+                (blur)="isSearchActive.set(false)"
                 (keyup.enter)="onTriggerSearch()"
                 (input)="filterItems($event)"
                 (click)="onSearchInputClick()"
@@ -30,12 +30,12 @@
                 (keydown.arrowUp)="navigateDropdown(-1, $event)"
                 (keydown.enter)="selectActiveOption()"
                 placeholder="{{
-                    (selectedConversations.length > 0 ? 'artemisApp.metis.globalSearch.searchBarWithConversationSelected' : 'artemisApp.metis.globalSearch.searchBarDefault')
+                    (selectedConversations().length > 0 ? 'artemisApp.metis.globalSearch.searchBarWithConversationSelected' : 'artemisApp.metis.globalSearch.searchBarDefault')
                         | artemisTranslate
                 }}"
             />
 
-            @if (fullSearchTerm || selectedConversations.length > 0 || selectedAuthors.length > 0) {
+            @if (fullSearchTerm || selectedConversations().length > 0 || selectedAuthors().length > 0) {
                 <button type="button" class="btn-close ms-1" aria-label="Clear search" (click)="clearSearch()"></button>
             } @else {
                 <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.metis.globalSearch.toolTip' | artemisTranslate" class="text-secondary" />
@@ -43,25 +43,25 @@
         </div>
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
 
-        @if (isSearchActive) {
+        @if (isSearchActive()) {
             <div class="filter-suggestions">
-                @if (showDropdown) {
+                @if (showDropdown()) {
                     <!-- Suggestions dropdown -->
                     <ul class="list-group suggestions-dropdown">
                         @if (filteredOptions().length === 0) {
                             <li class="list-group-item">
-                                @if (searchMode === SearchMode.CONVERSATION) {
+                                @if (searchMode() === SearchMode.CONVERSATION) {
                                     <span
                                         class="text-muted"
                                         jhiTranslate="artemisApp.metis.globalSearch.noConversationFound"
-                                        [translateValues]="{ search: searchTermWithoutPrefix }"
+                                        [translateValues]="{ search: searchTermWithoutPrefix() }"
                                     ></span>
-                                } @else if (searchMode === SearchMode.USER) {
+                                } @else if (searchMode() === SearchMode.USER) {
                                     @if (userSearchStatus() === UserSearchStatus.RESULTS) {
                                         <span
                                             class="text-muted"
                                             jhiTranslate="artemisApp.metis.globalSearch.noUserFound"
-                                            [translateValues]="{ search: searchTermWithoutPrefix }"
+                                            [translateValues]="{ search: searchTermWithoutPrefix() }"
                                         ></span>
                                     } @else if (userSearchStatus() === UserSearchStatus.LOADING) {
                                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
@@ -74,7 +74,7 @@
                             @for (option of filteredOptions(); let i = $index; track option) {
                                 <li
                                     class="list-group-item dropdown-option"
-                                    [class.active]="i === activeDropdownIndex"
+                                    [class.active]="i === activeDropdownIndex()"
                                     (mousedown)="selectOption(option)"
                                     (mouseover)="setActiveDropdownIndex(i)"
                                     (focus)="setActiveDropdownIndex(i)"
@@ -108,7 +108,7 @@
                     <ul class="list-group">
                         <li
                             class="list-group-item dropdown-option"
-                            [class.active]="0 === activeDropdownIndex"
+                            [class.active]="0 === activeDropdownIndex()"
                             (mousedown)="onPreselectFilter(USER_FILTER)"
                             (mouseover)="setActiveDropdownIndex(0)"
                             (focus)="setActiveDropdownIndex(0)"
@@ -118,7 +118,7 @@
                         </li>
                         <li
                             class="list-group-item dropdown-option"
-                            [class.active]="1 === activeDropdownIndex"
+                            [class.active]="1 === activeDropdownIndex()"
                             (mousedown)="onPreselectFilter(CONVERSATION_FILTER)"
                             (mouseover)="setActiveDropdownIndex(1)"
                             (focus)="setActiveDropdownIndex(1)"

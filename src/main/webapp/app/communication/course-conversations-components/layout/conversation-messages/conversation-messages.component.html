@@ -2,13 +2,13 @@
     <div class="justify-content-center conversation-messages">
         <div class="channel-content">
             <!-- loading messages -->
-            @if (isFetchingPosts) {
+            @if (isFetchingPosts()) {
                 <div class="envelope">
                     <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                 </div>
             }
             <!-- no message exist -->
-            @if (!isFetchingPosts && (posts().length === 0 || !_activeConversation())) {
+            @if (!isFetchingPosts() && (posts().length === 0 || !_activeConversation())) {
                 <div class="envelope">
                     <fa-icon size="5x" [icon]="faEnvelope" />
                 </div>
@@ -19,16 +19,16 @@
                 #container
                 [ngClass]="{
                     'posting-infinite-scroll-container': posts().length !== 0,
-                    'is-fetching-posts': isFetchingPosts,
-                    'hide-input-full': isHiddenInputFull,
-                    'hide-input': isHiddenInputWithCallToAction,
+                    'is-fetching-posts': isFetchingPosts(),
+                    'hide-input-full': isHiddenInputFull(),
+                    'hide-input': isHiddenInputWithCallToAction(),
                 }"
                 infinite-scroll
                 class="conversation-messages-message-list position-relative"
                 [scrollWindow]="false"
                 (scrolledUp)="fetchNextPage()"
             >
-                @if (unreadPostsCount > 0 && !atNewPostPosition()) {
+                @if (unreadPostsCount() > 0 && !atNewPostPosition()) {
                     <div class="scroll-sticky-wrapper">
                         <jhi-button
                             [btnType]="ButtonType.PRIMARY"
@@ -38,7 +38,7 @@
                             [title]="'artemisApp.metis.newMessagesButton'"
                             (onClick)="scrollToFirstUnreadPostIfNotVisible()"
                         >
-                            <span [jhiTranslate]="'artemisApp.metis.newMessagesButton'" [translateValues]="{ count: unreadPostsCount }"></span>
+                            <span [jhiTranslate]="'artemisApp.metis.newMessagesButton'" [translateValues]="{ count: unreadPostsCount() }"></span>
                         </jhi-button>
                     </div>
                 }
@@ -47,7 +47,7 @@
                 @for (group of groupedPosts(); track postsGroupTrackByFn($index, group)) {
                     <div class="message-group">
                         @for (post of group.posts; track postsTrackByFn($index, post)) {
-                            @if (post.id === firstUnreadPostId() && unreadPostsCount > 0) {
+                            @if (post.id === firstUnreadPostId() && unreadPostsCount() > 0) {
                                 <div class="new-messages-separator">
                                     <div class="separator-line" id="unread-post-line"></div>
                                     <span class="new-label" jhiTranslate="artemisApp.metis.newMessages">New</span>
@@ -74,20 +74,20 @@
                     </div>
                 }
                 @if (_activeConversation(); as activeConversation) {
-                    @if (newPost && canCreateNewMessageInConversation(activeConversation) && isMobile()) {
+                    @if (newPost() && canCreateNewMessageInConversation(activeConversation) && isMobile()) {
                         <div class="px-3">
                             @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
                                     <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
-                                    <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
+                                    <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                                 </div>
                             } @else {
                                 <jhi-message-inline-input
                                     class="message-input"
-                                    [posting]="newPost!"
+                                    [posting]="newPost()!"
                                     (onCreate)="handleNewMessageCreated()"
                                     [course]="course()"
-                                    [activeConversation]="newPost.conversation"
+                                    [activeConversation]="newPost()!.conversation"
                                 />
                             }
                         </div>
@@ -95,20 +95,20 @@
                 }
             </div>
             @if (_activeConversation(); as activeConversation) {
-                @if (newPost && canCreateNewMessageInConversation(activeConversation) && !isMobile()) {
+                @if (newPost() && canCreateNewMessageInConversation(activeConversation) && !isMobile()) {
                     <div class="d-none d-sm-block px-3">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
                                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
-                                <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
+                                <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                             </div>
                         } @else {
                             <jhi-message-inline-input
                                 class="message-input"
-                                [posting]="newPost!"
+                                [posting]="newPost()!"
                                 (onCreate)="handleNewMessageCreated()"
                                 [course]="course()"
-                                [activeConversation]="newPost.conversation"
+                                [activeConversation]="newPost()!.conversation"
                             />
                         }
                     </div>

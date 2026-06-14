@@ -78,8 +78,8 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     readonly userId = signal<number | undefined>(undefined);
     readonly userImageUrl = signal<string | undefined>(undefined);
     // icons
-    userIcon: IconProp = faUser;
-    userTooltip = '';
+    readonly userIcon = signal<IconProp>(faUser);
+    readonly userTooltip = signal('');
 
     faEllipsis = faEllipsis;
     faUserGear = faUserGear;
@@ -300,14 +300,14 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember()?.isInstructor) {
-            this.userIcon = faUserGraduate;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
+            this.userIcon.set(faUserGraduate);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'instructor'));
         } else if (this.conversationMember()?.isEditor || this.conversationMember()?.isTeachingAssistant) {
-            this.userIcon = faUserCheck;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'tutor');
+            this.userIcon.set(faUserCheck);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'tutor'));
         } else {
-            this.userIcon = faUser;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');
+            this.userIcon.set(faUser);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'student'));
         }
     }
 

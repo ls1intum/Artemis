@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
@@ -45,7 +45,7 @@ export class CommonCourseCompetencyFormComponent {
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly DateTimePickerType = DateTimePickerType;
 
-    suggestedTaxonomies: string[] = [];
+    readonly suggestedTaxonomies = signal<string[]>([]);
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -109,7 +109,7 @@ export class CommonCourseCompetencyFormComponent {
      * Triggered after the user changes the title or description input field.
      */
     suggestTaxonomies() {
-        this.suggestedTaxonomies = [];
+        const suggestedTaxonomies: string[] = [];
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.competencyTaxonomy) {
@@ -117,8 +117,9 @@ export class CommonCourseCompetencyFormComponent {
             const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
             keywords.push(taxonomyName);
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
-                this.suggestedTaxonomies.push(taxonomyName);
+                suggestedTaxonomies.push(taxonomyName);
             }
         }
+        this.suggestedTaxonomies.set(suggestedTaxonomies);
     }
 }

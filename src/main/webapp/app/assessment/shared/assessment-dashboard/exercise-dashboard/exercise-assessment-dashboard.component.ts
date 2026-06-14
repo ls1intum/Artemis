@@ -140,17 +140,17 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly exercise = signal<Exercise>(undefined!);
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
     readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     readonly exam = signal<Exam | undefined>(undefined);
     examId: number;
     exerciseGroupId: number;
     readonly isExamMode = signal(false);
-    isTestRun = false;
+    readonly isTestRun = signal<boolean>(false);
     readonly isLoading = signal(false);
 
     readonly statsForDashboard = signal(new StatsForDashboard());
 
-    exerciseId: number;
+    readonly exerciseId = signal<number>(undefined!);
     readonly numberOfTutorAssessments = signal(0);
     readonly numberOfSubmissions = signal(new DueDateStat());
     readonly totalNumberOfAssessments = signal(0);
@@ -187,7 +187,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
     lockedSubmissionsByOtherTutor: number[] = [];
     notYetAssessed: number[] = [];
-    firstRoundAssessments: number;
+    readonly firstRoundAssessments = signal<number>(undefined!);
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
@@ -212,7 +212,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor?: User;
+    readonly tutor = signal<User | undefined>(undefined);
     readonly togglingSecondCorrectionButton = signal(false);
 
     readonly complaintsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
@@ -236,8 +236,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
-    complaintsLink: any[];
-    moreFeedbackRequestsLink: any[];
+    readonly complaintsLink = signal<any[]>(undefined!);
+    readonly moreFeedbackRequestsLink = signal<any[]>(undefined!);
 
     // Icons
     faSpinner = faSpinner;
@@ -252,16 +252,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
     ngOnInit(): void {
-        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
+        this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.isTestRun.set(this.router.url.indexOf('test-assessment-dashboard') >= 0);
         this.unassessedSubmissionByRound.set([]);
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         }
 
-        this.tutor = this.accountService.userIdentity();
+        this.tutor.set(this.accountService.userIdentity());
 
         this.loadAll();
 
@@ -315,15 +315,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     setupLinks() {
-        this.complaintsLink = ['/course-management', this.courseId, this.exercise().type! + '-exercises', this.exercise().id!, 'complaints'];
-        this.moreFeedbackRequestsLink = ['/course-management', this.courseId, this.exercise().type! + '-exercises', this.exercise().id!, 'more-feedback-requests'];
+        this.complaintsLink.set(['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!, 'complaints']);
+        this.moreFeedbackRequestsLink.set(['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!, 'more-feedback-requests']);
     }
 
     /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
-        this.exerciseService.getForTutors(this.exerciseId).subscribe({
+        this.exerciseService.getForTutors(this.exerciseId()).subscribe({
             next: (res: HttpResponse<Exercise>) => {
                 const exercise = res.body!;
                 this.exercise.set(exercise);
@@ -384,7 +384,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
-                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun) {
+                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun()) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 
@@ -393,8 +393,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             error: (response: string) => this.onError(response),
         });
 
-        if (!this.isTestRun) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
+        if (!this.isTestRun()) {
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints.set(res.body || []);
                     this.sortComplaintRows();
@@ -402,7 +402,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
-            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
+            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests.set(res.body || []);
                     this.sortMoreFeedbackRows();
@@ -410,7 +410,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
-            this.exerciseService.getStatsForTutors(this.exerciseId).subscribe({
+            this.exerciseService.getStatsForTutors(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
                     this.statsForDashboard.set(StatsForDashboard.from(res.body!));
                     this.numberOfSubmissions.set(this.statsForDashboard().numberOfSubmissions);
@@ -419,7 +419,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.numberOfAutomaticAssistedAssessments.set(this.statsForDashboard().numberOfAutomaticAssistedAssessments);
                     this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set(this.statsForDashboard().numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
-                    const tutorLeaderboardEntry = this.statsForDashboard().tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
+                    const tutorLeaderboardEntry = this.statsForDashboard().tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()!.id);
                     this.sortService.sortByProperty(this.statsForDashboard().tutorLeaderboardEntries, 'points', false);
 
                     // Prepare the table data for the side table
@@ -475,7 +475,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 error: (response: string) => this.onError(response),
             });
         } else {
-            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe({
+            this.complaintService.getComplaintsForTestRun(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<ComplaintDTO[]>) => {
                     this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
                 },
@@ -528,22 +528,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        if (this.isTestRun) {
-            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
+        if (this.isTestRun()) {
+            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
         } else {
             // TODO: This could be one generic endpoint.
             switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
             }
         }
@@ -616,16 +616,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         let submissionObservable: Observable<Submission | undefined> = of();
         switch (this.exercise().type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, 'head', correctionRound);
+                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
         }
 
@@ -678,7 +678,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readInstruction() {
         this.isLoading.set(true);
         this.tutorParticipationService
-            .create(this.exerciseId)
+            .create(this.exerciseId())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (res: HttpResponse<TutorParticipationDTO>) => {
@@ -723,7 +723,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
+        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
@@ -750,7 +750,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (submission !== 'new' && submission.participation) {
             participationId = submission.participation.id;
         }
-        return getLinkToSubmissionAssessment(this.exercise().type!, this.courseId, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise().type!, this.courseId(), this.exerciseId(), participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
     }
 
     /**
@@ -758,9 +758,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param correctionRound
      */
     getAssessmentQueryParams(correctionRound = 0): object {
-        if (this.isTestRun) {
+        if (this.isTestRun()) {
             return {
-                testRun: this.isTestRun,
+                testRun: this.isTestRun(),
                 'correction-round': correctionRound,
             };
         } else {
@@ -805,7 +805,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton.set(true);
-        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: boolean) => {
+        this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
             this.secondCorrectionEnabled.set(res as boolean);
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             this.togglingSecondCorrectionButton.set(false);
@@ -827,7 +827,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
                 // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
                 // lock-count from the remaining unassessed submissions of the current correction round.
-                this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
+                this.firstRoundAssessments.set(this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i]);
             }
         }
     }
@@ -870,6 +870,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Generates a link to the respective exercise details page
      */
     getExerciseDetailsLink() {
-        return ['/course-management', this.courseId, this.exercise().type! + '-exercises', this.exercise().id!];
+        return ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!];
     }
 }

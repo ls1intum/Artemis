@@ -49,12 +49,38 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     readonly safeImgDataUrl = signal<SafeUrl | string>('');
     readonly safeTransformStyle = signal<SafeStyle | string>('');
     readonly marginLeft = signal<SafeStyle | string>('0px');
-    maxSize: Dimensions;
+    // Backed by a signal because the template reads it; the getter/setter facade keeps the existing in-place
+    // mutations (and pass-by-reference into services) working. Call commitMaxSize() after in-place mutations in
+    // async paths so the template re-renders.
+    private readonly _maxSize = signal<Dimensions>(undefined!);
+    get maxSize(): Dimensions {
+        return this._maxSize();
+    }
+    set maxSize(value: Dimensions) {
+        this._maxSize.set(value);
+    }
+    private commitMaxSize(): void {
+        this._maxSize.set({ ...this._maxSize() });
+    }
     moveTypes = MoveTypes;
     readonly imageVisible = signal(false);
 
-    /** Mutable internal cropper position. Synced from the {@link cropperInput} on each ngOnChanges run. */
-    cropper: CropperPosition = defaultCropperPosition();
+    /**
+     * Mutable internal cropper position. Synced from the {@link cropperInput} on each ngOnChanges run.
+     * Backed by a signal (template reads it); the getter/setter facade preserves in-place mutation and the
+     * pass-by-reference contract with the cropper services. Call commitCropper() after in-place mutations in
+     * async paths so the template re-renders.
+     */
+    private readonly _cropper = signal<CropperPosition>(defaultCropperPosition());
+    get cropper(): CropperPosition {
+        return this._cropper();
+    }
+    set cropper(value: CropperPosition) {
+        this._cropper.set(value);
+    }
+    private commitCropper(): void {
+        this._cropper.set({ ...this._cropper() });
+    }
 
     readonly wrapper = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
     readonly sourceImage = viewChild<ElementRef<HTMLDivElement>>('sourceImage');
@@ -285,6 +311,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.setCropperScaledMinSize();
             this.setCropperScaledMaxSize();
             this.resetCropperPosition();
+            // Reached from a setTimeout (see imageLoadedInView), so the in-place mutations above schedule no
+            // change detection on their own. Commit both signals to re-render the template.
+            this.commitMaxSize();
+            this.commitCropper();
             this.cropperReady.emit({ ...this.maxSize });
         } else {
             this.setImageMaxSizeRetries++;

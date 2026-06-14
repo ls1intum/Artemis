@@ -111,17 +111,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly onNavigateToPost = output<Posting>();
 
     elementsAtScrollPosition: PostingThreadComponent[];
-    newPost?: Post;
+    readonly newPost = signal<Post | undefined>(undefined);
     readonly posts = signal<Post[]>([]);
     readonly allPosts = signal<Post[]>([]);
     unreadPosts: Post[] = [];
     readonly groupedPosts = signal<PostGroup[]>([]);
     totalNumberOfPosts = 0;
     page = 1;
-    public isFetchingPosts = true;
+    readonly isFetchingPosts = signal(true);
     currentUser: User;
     readonly firstUnreadPostId = signal<number | undefined>(undefined);
-    unreadPostsCount: number = 0;
+    readonly unreadPostsCount = signal<number>(0);
     readonly atNewPostPosition = signal(false);
 
     // Icons
@@ -130,8 +130,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faArrowDown = faArrowDown;
 
-    isHiddenInputWithCallToAction = false;
-    isHiddenInputFull = false;
+    readonly isHiddenInputWithCallToAction = signal(false);
+    readonly isHiddenInputFull = signal(false);
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
 
@@ -292,11 +292,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private onActiveConversationChange() {
         const activeConversation = this._activeConversation();
         if (activeConversation !== undefined && this.getAsChannel(activeConversation)?.isAnnouncementChannel) {
-            this.isHiddenInputFull = !canCreateNewMessageInConversation(activeConversation);
-            this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(activeConversation);
+            this.isHiddenInputFull.set(!canCreateNewMessageInConversation(activeConversation));
+            this.isHiddenInputWithCallToAction.set(canCreateNewMessageInConversation(activeConversation));
         } else {
-            this.isHiddenInputFull = false;
-            this.isHiddenInputWithCallToAction = false;
+            this.isHiddenInputFull.set(false);
+            this.isHiddenInputWithCallToAction.set(false);
         }
 
         if (this.course() && activeConversation) {
@@ -316,7 +316,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.allPosts.set(posts);
             this.setPosts();
-            this.isFetchingPosts = false;
+            this.isFetchingPosts.set(false);
             this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -598,7 +598,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public commandMetisToFetchPosts(forceUpdate = false) {
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts = true; // will be set to false in subscription
+            this.isFetchingPosts.set(true); // will be set to false in subscription
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
         }
     }
@@ -609,7 +609,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     createEmptyPost(): void {
-        this.newPost = this.createEmptyPostInMetis();
+        this.newPost.set(this.createEmptyPostInMetis());
     }
 
     private createEmptyPostInMetis() {
@@ -733,7 +733,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private computeLastReadState(): void {
         this.unreadPosts = this.getUnreadPosts();
-        this.unreadPostsCount = this.unreadPosts.length;
+        this.unreadPostsCount.set(this.unreadPosts.length);
         this.setFirstUnreadPostId();
     }
 

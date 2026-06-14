@@ -80,7 +80,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         this._exam.set(value);
     }
     course: Course;
-    isSaving: boolean;
+    readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);
 
@@ -305,7 +305,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         this.createOrUpdateOrImportExam()
             ?.pipe(
@@ -327,7 +327,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
             if (!this.examExerciseImportComponent().validateUserInput()) {
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving = false;
+                this.isSaving.set(false);
                 return;
             }
             this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
@@ -345,7 +345,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @private
      */
     private async onSaveSuccess(exam: Exam) {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
@@ -375,7 +375,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 onError(this.alertService, httpErrorResponse);
             }
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 
     /**

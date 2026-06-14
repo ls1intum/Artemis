@@ -180,18 +180,18 @@ describe('AnswerPostComponent', () => {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        component.dropdownPosition = { x: screenWidth - 50, y: 100 };
+        component.dropdownPosition.set({ x: screenWidth - 50, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(screenWidth - dropdownWidth - 10);
+        expect(component.dropdownPosition().x).toBe(screenWidth - dropdownWidth - 10);
     });
 
     it('should not adjust dropdown position if it does not overflow the screen width', () => {
         const initialX = 100;
-        component.dropdownPosition = { x: initialX, y: 100 };
+        component.dropdownPosition.set({ x: initialX, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(initialX);
+        expect(component.dropdownPosition().x).toBe(initialX);
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
@@ -241,7 +241,7 @@ describe('AnswerPostComponent', () => {
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
             expect(component.showDropdown()).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
         });
     });
 

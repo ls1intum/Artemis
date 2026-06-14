@@ -86,7 +86,7 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading()).toBeFalsy();
-        expect(component.competencyLinks).toHaveLength(2);
+        expect(component.competencyLinks()).toHaveLength(2);
         expect(selector).not.toBeNull();
     });
 
@@ -101,9 +101,9 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading()).toBeFalsy();
-        expect(component.competencyLinks).toHaveLength(2);
-        expect(component.competencyLinks?.first()?.competency?.course).toBeUndefined();
-        expect(component.competencyLinks?.first()?.competency?.userProgress).toBeUndefined();
+        expect(component.competencyLinks()).toHaveLength(2);
+        expect(component.competencyLinks()?.first()?.competency?.course).toBeUndefined();
+        expect(component.competencyLinks()?.first()?.competency?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -128,7 +128,7 @@ describe('CompetencySelection', () => {
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading()).toBeFalsy();
-        expect(component.competencyLinks).toHaveLength(0);
+        expect(component.competencyLinks()).toHaveLength(0);
         expect(select).toBeNull();
     });
 
@@ -192,7 +192,7 @@ describe('CompetencySelection', () => {
     });
 
     it('should register onchange', () => {
-        component.checkboxStates = {};
+        component.checkboxStates.set({});
         const registerSpy = vi.fn();
         component.registerOnChange(registerSpy);
         component.toggleCompetency(new CompetencyLearningObjectLink({ id: 1 }, 1));
@@ -295,7 +295,7 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            const firstCompetency = component.competencyLinks?.[0];
+            const firstCompetency = component.competencyLinks()?.[0];
             expect(firstCompetency?.competency?.id).toBe(3);
             expect(component.isSuggested(3)).toBeTruthy();
         });

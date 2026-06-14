@@ -83,14 +83,14 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
 
-    plagiarismEnabled = false;
+    readonly plagiarismEnabled = signal<boolean>(false);
 
     // Signal-backed reactive state: these are populated from async subscriptions (and recomputed in place previously),
     // so under zoneless they are signals — each write schedules change detection without markForCheck.
     readonly course = signal<Course>(undefined!);
     readonly exam = signal<Exam>(undefined!);
-    courseId: number;
-    examId: number;
+    readonly courseId = signal<number>(undefined!);
+    readonly examId = signal<number>(undefined!);
     exerciseGroupId: number;
     readonly allExercises = signal<Exercise[]>([]);
     readonly currentlyShownExercises = signal<Exercise[]>([]);
@@ -106,8 +106,8 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly ratings = signal(new AssessmentDashboardInformationEntry(0, 0));
 
     readonly totalAssessmentPercentage = signal(0);
-    hideFinishedExercises = true;
-    hideOptional = false;
+    readonly hideFinishedExercises = signal<boolean>(true);
+    readonly hideOptional = signal<boolean>(false);
 
     readonly stats = signal(new StatsForDashboard());
 
@@ -119,8 +119,8 @@ export class AssessmentDashboardComponent implements OnInit {
 
     readonly tutor = signal<User>(undefined!);
 
-    isExamMode = false;
-    isTestRun = false;
+    readonly isExamMode = signal<boolean>(false);
+    readonly isTestRun = signal<boolean>(false);
 
     readonly tutorIssues = signal<TutorIssue[]>([]);
 
@@ -136,16 +136,16 @@ export class AssessmentDashboardComponent implements OnInit {
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.isExamMode = !!this.examId;
-        if (this.isExamMode) {
-            this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
+        this.isExamMode.set(!!this.examId());
+        if (this.isExamMode()) {
+            this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
         this.accountService.identity().then((user) => this.tutor.set(user!));
-        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
     }
 
     /**
@@ -153,33 +153,35 @@ export class AssessmentDashboardComponent implements OnInit {
      * Percentages are calculated and rounded towards zero.
      */
     loadAll() {
-        if (this.isExamMode) {
-            this.hideFinishedExercises = false;
-            this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
-                const exam = res.body!;
-                this.exam.set(exam);
-                this.course.set(Course.from(exam.course!));
-                this.accountService.setAccessRightsForCourse(this.course());
+        if (this.isExamMode()) {
+            this.hideFinishedExercises.set(false);
+            this.examManagementService
+                .getExamWithInterestingExercisesForAssessmentDashboard(this.courseId(), this.examId(), this.isTestRun())
+                .subscribe((res: HttpResponse<Exam>) => {
+                    const exam = res.body!;
+                    this.exam.set(exam);
+                    this.course.set(Course.from(exam.course!));
+                    this.accountService.setAccessRightsForCourse(this.course());
 
-                // No exercises exist yet
-                if (exam.exerciseGroups) {
-                    // get all exercises
-                    const exercises: Exercise[] = [];
-                    exam.exerciseGroups.forEach((exerciseGroup) => {
-                        if (exerciseGroup.exercises) {
-                            exercises.push(...exerciseGroup.exercises);
+                    // No exercises exist yet
+                    if (exam.exerciseGroups) {
+                        // get all exercises
+                        const exercises: Exercise[] = [];
+                        exam.exerciseGroups.forEach((exerciseGroup) => {
+                            if (exerciseGroup.exercises) {
+                                exercises.push(...exerciseGroup.exercises);
 
-                            // Set the exercise group since it is undefined by default here
-                            exerciseGroup.exercises.forEach((exercise: Exercise) => {
-                                exercise.exerciseGroup = exerciseGroup;
-                            });
-                        }
-                    });
+                                // Set the exercise group since it is undefined by default here
+                                exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                                    exercise.exerciseGroup = exerciseGroup;
+                                });
+                            }
+                        });
 
-                    this.extractExercises(exercises);
-                }
-            });
-            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe({
+                        this.extractExercises(exercises);
+                    }
+                });
+            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId(), this.examId()).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
                     const stats = StatsForDashboard.from(res.body!);
                     this.stats.set(stats);
@@ -220,7 +222,7 @@ export class AssessmentDashboardComponent implements OnInit {
                 error: (response: string) => this.onError(response),
             });
         } else {
-            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe({
+            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId()).subscribe({
                 next: (res: HttpResponse<Course>) => {
                     const course = Course.from(res.body!);
                     this.course.set(course);
@@ -229,7 +231,7 @@ export class AssessmentDashboardComponent implements OnInit {
                 error: (response: string) => this.onError(response),
             });
 
-            this.courseService.getStatsForTutors(this.courseId).subscribe({
+            this.courseService.getStatsForTutors(this.courseId()).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
                     const stats = StatsForDashboard.from(res.body!);
                     this.stats.set(stats);
@@ -393,7 +395,7 @@ export class AssessmentDashboardComponent implements OnInit {
      * Toggle the option to show finished exercises.
      */
     triggerFinishedExercises() {
-        this.hideFinishedExercises = !this.hideFinishedExercises;
+        this.hideFinishedExercises.update((value) => !value);
         this.updateExercises();
     }
 
@@ -401,7 +403,7 @@ export class AssessmentDashboardComponent implements OnInit {
      * Toggle the option to hide optional exercises.
      */
     triggerOptionalExercises() {
-        this.hideOptional = !this.hideOptional;
+        this.hideOptional.update((value) => !value);
         this.updateExercises();
     }
 
@@ -409,8 +411,8 @@ export class AssessmentDashboardComponent implements OnInit {
      * update the exercise array based on the option show finished exercises
      */
     updateExercises() {
-        let shown = this.hideFinishedExercises ? this.getUnfinishedExercises(this.allExercises()) : this.allExercises();
-        if (this.hideOptional) {
+        let shown = this.hideFinishedExercises() ? this.getUnfinishedExercises(this.allExercises()) : this.allExercises();
+        if (this.hideOptional()) {
             shown = shown.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
         }
         this.currentlyShownExercises.set(shown);
@@ -447,17 +449,17 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {
-        if (this.isExamMode) {
+        if (this.isExamMode()) {
             return [
                 '/course-management',
-                this.courseId.toString(),
+                this.courseId().toString(),
                 'exams',
-                this.examId.toString(),
-                this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
+                this.examId().toString(),
+                this.isTestRun() ? 'test-assessment-dashboard' : 'assessment-dashboard',
                 exercise.id!.toString(),
             ];
         } else {
-            return ['/course-management', this.courseId.toString(), 'assessment-dashboard', exercise.id!.toString()];
+            return ['/course-management', this.courseId().toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
     }
 

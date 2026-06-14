@@ -53,7 +53,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly SortDirection = SortDirection;
     readonly onNavigateToPost = output<Posting>();
-    sortingOrder = SortDirection.ASCENDING;
+    readonly sortingOrder = signal(SortDirection.ASCENDING);
 
     private ngUnsubscribe = new Subject<void>();
     readonly isFetchingPosts = signal(true);
@@ -211,7 +211,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onChangeSortDir(): void {
-        this.sortingOrder = this.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.sortingOrder.update((order) => (order === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING));
         this.onSelectContext();
     }
 
@@ -221,7 +221,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
-        searchConfig.sortingOrder = this.sortingOrder;
+        searchConfig.sortingOrder = this.sortingOrder();
         this.commandMetisToFetchPosts(true);
     }
 

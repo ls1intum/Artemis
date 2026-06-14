@@ -64,11 +64,11 @@
             </div>
             <div class="members-footer">
                 <div class="d-flex justify-content-center">
-                    <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                    <jhi-item-count [params]="{ page: page, totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                 </div>
                 <div class="d-flex justify-content-center">
                     <ngb-pagination
-                        [collectionSize]="totalItems"
+                        [collectionSize]="totalItems()"
                         [(page)]="page"
                         [pageSize]="itemsPerPage"
                         [maxSize]="5"

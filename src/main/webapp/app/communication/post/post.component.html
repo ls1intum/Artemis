@@ -32,7 +32,7 @@
     <div class="align-items-center">
         <div>
             <div class="post-context-information-wrap post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
-                @if (showAnnouncementIcon) {
+                @if (showAnnouncementIcon()) {
                     <fa-icon
                         [icon]="faBullhorn"
                         iconSize="xs"
@@ -42,25 +42,25 @@
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (showChannelReference() && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
+                @if (showChannelReference() && (pageType() === PageType.OVERVIEW || previewMode()) && contextInformation().displayName !== '') {
                     <span>
-                        @if (contextInformation.routerLinkComponents) {
+                        @if (contextInformation().routerLinkComponents) {
                             <a
                                 class="linked-context-information ms-1"
-                                [routerLink]="contextInformation.routerLinkComponents"
-                                [queryParams]="contextInformation.queryParams"
+                                [routerLink]="contextInformation().routerLinkComponents"
+                                [queryParams]="contextInformation().queryParams"
                                 (click)="onNavigateToContext($event)"
                                 routerLinkActive="active"
-                                >{{ contextInformation.displayName }}</a
+                                >{{ contextInformation().displayName }}</a
                             >
                         }
-                        @if (!contextInformation.routerLinkComponents) {
-                            <span class="context-information ms-1">{{ contextInformation.displayName }}:</span>
+                        @if (!contextInformation().routerLinkComponents) {
+                            <span class="context-information ms-1">{{ contextInformation().displayName }}:</span>
                         }
                     </span>
                 }
                 <!-- post title not shown for plagiarism cases -->
-                @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT) {
+                @if (pageType() !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType() !== PageType.PLAGIARISM_CASE_STUDENT) {
                     <span>
                         @if (posting()?.title?.length) {
                             <span class="post-title ms-1">{{ posting()?.title }}</span>
@@ -92,7 +92,7 @@
                         @if (originalPostDetails()) {
                             <jhi-forwarded-message
                                 [originalPostDetails]="originalPostDetails()"
-                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted"
+                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted()"
                                 (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails())"
                             />
                         }
@@ -103,10 +103,10 @@
                                     [lastReadDate]="lastReadDate()"
                                     [isReadOnlyMode]="readOnlyMode()"
                                     [previewMode]="previewMode()"
-                                    [course]="course"
+                                    [course]="course()"
                                     [posting]="posting()"
                                     [(showAnswers)]="showAnswers"
-                                    [sortedAnswerPosts]="sortedAnswerPosts"
+                                    [sortedAnswerPosts]="sortedAnswerPosts()"
                                     [isCommunicationPage]="isCommunicationPage()"
                                     [isThreadSidebar]="isThreadSidebar()"
                                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
@@ -147,8 +147,8 @@
                     [previewMode]="previewMode()"
                     [posting]="posting()"
                     [(showAnswers)]="showAnswers"
-                    [showSearchResultInAnswersHint]="showSearchResultInAnswersHint"
-                    [sortedAnswerPosts]="sortedAnswerPosts"
+                    [showSearchResultInAnswersHint]="showSearchResultInAnswersHint()"
+                    [sortedAnswerPosts]="sortedAnswerPosts()"
                     [isCommunicationPage]="isCommunicationPage()"
                     [isThreadSidebar]="isThreadSidebar()"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
@@ -168,12 +168,12 @@
     #postFooter
     [readOnlyMode]="readOnlyMode()"
     [modalRef]="modalRef()"
-    [previewMode]="previewMode() || pageType === PageType.PLAGIARISM_CASE_STUDENT"
+    [previewMode]="previewMode() || pageType() === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting()"
     [showAnswers]="showAnswers()"
     [isCommunicationPage]="isCommunicationPage() ?? false"
     [isThreadSidebar]="isThreadSidebar() ?? false"
-    [sortedAnswerPosts]="sortedAnswerPosts"
+    [sortedAnswerPosts]="sortedAnswerPosts()"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate()"
     (userReferenceClicked)="onUserReferenceClicked($event)"
@@ -183,24 +183,24 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
+    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show">
         <button class="dropdown-item d-flex" (click)="addReaction($event)">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
-        @if (canPin) {
+        @if (canPin()) {
             <button class="dropdown-item d-flex" (click)="togglePin()">
                 <fa-icon [icon]="faThumbtack" class="item-icon" />
                 <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
             </button>
         }
-        @if (mayEdit) {
+        @if (mayEdit()) {
             <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
             </button>
         }
-        @if (mayDelete) {
+        @if (mayDelete()) {
             <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
@@ -218,7 +218,7 @@
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
-        @if (canMarkAsUnread) {
+        @if (canMarkAsUnread()) {
             <button class="dropdown-item d-flex" (click)="markMessageAsUnread()">
                 <fa-icon [icon]="faEnvelopeOpenText" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.markAsUnread"></span>

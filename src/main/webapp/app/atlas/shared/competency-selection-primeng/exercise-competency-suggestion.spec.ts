@@ -205,8 +205,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Step 9: Select suggested competencies via component API for reliability
                 const compForSelect = component.competencySelection();
-                const linkJava = compForSelect.competencyLinks?.find((l) => l.competency?.id === 1);
-                const linkDS = compForSelect.competencyLinks?.find((l) => l.competency?.id === 2);
+                const linkJava = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 1);
+                const linkDS = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 2);
                 expect(linkJava).toBeTruthy();
                 expect(linkDS).toBeTruthy();
                 if (linkJava) {
@@ -254,8 +254,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Select both suggested and non-suggested via component API
                 const compMixed = component.competencySelection();
-                const linkTesting = compMixed.competencyLinks?.find((l) => l.competency?.id === 4);
-                const linkPatterns = compMixed.competencyLinks?.find((l) => l.competency?.id === 5);
+                const linkTesting = compMixed.competencyLinks()?.find((l) => l.competency?.id === 4);
+                const linkPatterns = compMixed.competencyLinks()?.find((l) => l.competency?.id === 5);
                 expect(linkTesting).toBeTruthy();
                 expect(linkPatterns).toBeTruthy();
                 if (linkTesting) {

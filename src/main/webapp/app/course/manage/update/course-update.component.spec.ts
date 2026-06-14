@@ -147,7 +147,7 @@ describe('Course Management Update Component', () => {
             expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalled();
-            expect(comp.customizeGroupNames).toBe(true);
+            expect(comp.customizeGroupNames()).toBe(true);
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
             expect(comp.course.editorGroupName).toBe('artemis-dev');
@@ -241,7 +241,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should call create service on save for new entity', async () => {
@@ -276,7 +276,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {
@@ -552,19 +552,19 @@ describe('Course Management Update Component', () => {
                 editorGroupName: new FormControl('noname'),
                 instructorGroupName: new FormControl('noname'),
             });
-            comp.customizeGroupNames = false;
+            comp.customizeGroupNames.set(false);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames).toBe(true);
+            expect(comp.customizeGroupNames()).toBe(true);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames).toBe(false);
+            expect(comp.customizeGroupNames()).toBe(false);
         });
     });
 

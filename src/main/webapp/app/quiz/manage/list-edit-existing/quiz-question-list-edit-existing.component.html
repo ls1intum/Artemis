@@ -5,7 +5,7 @@
                 @for (state of State | keyvalue; track state; let i = $index) {
                     <div
                         class="btn"
-                        [ngClass]="{ 'btn-primary': currentState === state.value, 'btn-default': currentState !== state.value }"
+                        [ngClass]="{ 'btn-primary': currentState() === state.value, 'btn-default': currentState() !== state.value }"
                         (click)="setCurrentState(state.value)"
                     >
                         <span [jhiTranslate]="stateTexts[i]"></span>
@@ -15,7 +15,7 @@
         </div>
         <hr />
         <div class="form-group question-options existing-question-container">
-            @if (currentState === State.COURSE) {
+            @if (currentState() === State.COURSE) {
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
                     <select class="form-select ms-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
@@ -25,7 +25,7 @@
                     </select>
                 </div>
             }
-            @if (currentState === State.EXAM) {
+            @if (currentState() === State.EXAM) {
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
                     <select class="form-select ms-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
@@ -35,7 +35,7 @@
                     </select>
                 </div>
             }
-            @if (currentState === State.FILE) {
+            @if (currentState() === State.FILE) {
                 <div class="question-options row d-flex justify-content-start">
                     <div class="me-2 col flex-grow-0" style="white-space: nowrap">
                         <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"></span>
@@ -46,7 +46,7 @@
                     </div>
                 </div>
             }
-            @if (currentState !== State.FILE) {
+            @if (currentState() !== State.FILE) {
                 @if (allExistingQuestions().length !== 0) {
                     <div class="existing-question-filter w-100">
                         <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />

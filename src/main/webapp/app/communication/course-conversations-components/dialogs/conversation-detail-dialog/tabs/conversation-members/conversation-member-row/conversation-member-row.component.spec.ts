@@ -350,8 +350,8 @@ examples.forEach((activeConversation) => {
             fixture.componentRef.setInput('conversationMember', updatedMember);
             fixture.changeDetectorRef.detectChanges();
             component.setUserAuthorityIconAndTooltip();
-            expect(component.userIcon).toBe(expectedIcon);
-            expect(component.userTooltip).toBe(expectedTooltip);
+            expect(component.userIcon()).toBe(expectedIcon);
+            expect(component.userTooltip()).toBe(expectedTooltip);
         });
 
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {

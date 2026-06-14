@@ -112,7 +112,23 @@ export class BonusComponent implements OnInit {
     readonly examples = signal<BonusExample[]>([]);
     dynamicExample = new BonusExample(0, 0);
 
-    bonus = new Bonus();
+    /**
+     * Backing signal for {@link bonus}. The template binds `[(ngModel)]="bonus.sourceGradingScale"` (a deep two-way
+     * target), so {@link bonus} is exposed as a getter/setter facade over this signal rather than a bare signal: the
+     * template keeps writing `bonus.…` while reads stay reactive. Deep mutations (e.g. `this.bonus.id = …`) must be
+     * followed by {@link commitBonus} so dependent template bindings re-render under zoneless.
+     */
+    private readonly _bonus = signal<Bonus>(new Bonus());
+    get bonus(): Bonus {
+        return this._bonus();
+    }
+    set bonus(value: Bonus) {
+        this._bonus.set(value);
+    }
+    /** Rebuilds the bonus signal reference after an in-place mutation so dependent template bindings re-render under zoneless. */
+    private commitBonus(): void {
+        this._bonus.update((bonus) => Object.assign(new Bonus(), bonus));
+    }
     readonly hasBonusStrategyWeightMismatch = signal(false);
 
     private state: SearchTermPageableSearch = {
@@ -187,6 +203,7 @@ export class BonusComponent implements OnInit {
             sourceGradingScale.course = this.bonus.sourceGradingScale.course;
             sourceGradingScale.exam = this.bonus.sourceGradingScale.exam;
             this.bonus.sourceGradingScale = sourceGradingScale;
+            this.commitBonus();
             this.onBonusSourceChange(this.bonus.sourceGradingScale);
         }
     }
@@ -246,11 +263,14 @@ export class BonusComponent implements OnInit {
 
     onBonusStrategyInputChange() {
         this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
+        this.commitBonus();
         this.generateExamples();
         this.refreshDynamicExample();
     }
 
     onWeightChange() {
+        // The mode-picker two-way binding mutated bonus.weight in place; commit a fresh reference so dependent template bindings re-render under zoneless.
+        this.commitBonus();
         this.generateExamples();
         this.refreshDynamicExample();
     }
@@ -289,6 +309,7 @@ export class BonusComponent implements OnInit {
             )
             .subscribe((bonusResponse) => {
                 this.bonus.id = bonusResponse.body?.id;
+                this.commitBonus();
             });
     }
 
@@ -361,6 +382,8 @@ export class BonusComponent implements OnInit {
     }
 
     onBonusSourceChange(gradingScale: GradingScale) {
+        // The select's two-way binding mutated bonus.sourceGradingScale in place; commit a fresh reference so the dependent table re-renders under zoneless.
+        this.commitBonus();
         this.setBonusSourcePoints(gradingScale);
         this.generateExamples();
         this.refreshDynamicExample();

@@ -43,7 +43,14 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
     complaintText?: string;
     readonly handled = signal(false);
-    complaintResponse: ComplaintResponse = new ComplaintResponse();
+    // Deep [(ngModel)]="complaintResponse.responseText" two-way target → getter/setter facade over a signal so template reads stay reactive.
+    private readonly _complaintResponse = signal<ComplaintResponse>(new ComplaintResponse());
+    get complaintResponse(): ComplaintResponse {
+        return this._complaintResponse();
+    }
+    set complaintResponse(value: ComplaintResponse) {
+        this._complaintResponse.set(value);
+    }
     complaintResponseUpdate: ComplaintResponseUpdateDTO;
     ComplaintType = ComplaintType;
     readonly isLoading = signal(false);
@@ -51,15 +58,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly lockedByCurrentUser = signal(false);
     readonly isLockedForLoggedInUser = signal(false);
     course?: Course;
-    maxComplaintResponseTextLimit: number;
+    readonly maxComplaintResponseTextLimit = signal<number>(undefined!);
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise()!);
 
-        this.maxComplaintResponseTextLimit = this.course?.maxComplaintResponseTextLimit ?? 0;
+        this.maxComplaintResponseTextLimit.set(this.course?.maxComplaintResponseTextLimit ?? 0);
         if (this.exercise()?.exerciseGroup) {
             // Exams should always allow at least 2000 characters
-            this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
+            this.maxComplaintResponseTextLimit.set(Math.max(2000, this.maxComplaintResponseTextLimit()));
         }
 
         if (this.complaint()) {
@@ -164,9 +171,9 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
-        if (this.complaintResponse.responseText.length > this.maxComplaintResponseTextLimit) {
+        if (this.complaintResponse.responseText.length > this.maxComplaintResponseTextLimit()) {
             this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
-                maxComplaintRespondTextLimit: this.maxComplaintResponseTextLimit,
+                maxComplaintRespondTextLimit: this.maxComplaintResponseTextLimit(),
             });
             return;
         }

@@ -81,8 +81,8 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     refineRequested = output();
     collapseChanged = output<boolean>();
 
-    questionEditorText = '';
-    isQuestionCollapsed: boolean;
+    readonly questionEditorText = signal('');
+    readonly isQuestionCollapsed = signal<boolean>(undefined!);
     reEvaluationInProgress = input<boolean>(false);
     backupQuestion: MultipleChoiceQuestion;
 
@@ -125,7 +125,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      * Init the question editor text by parsing the markdown.
      */
     ngOnInit(): void {
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -277,13 +277,13 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     }
 
     toggleCollapse(): void {
-        this.isQuestionCollapsed = !this.isQuestionCollapsed;
-        this.collapseChanged.emit(this.isQuestionCollapsed);
+        this.isQuestionCollapsed.update((collapsed) => !collapsed);
+        this.collapseChanged.emit(this.isQuestionCollapsed());
     }
 
     refineAndExpand(): void {
-        if (this.isQuestionCollapsed) {
-            this.isQuestionCollapsed = false;
+        if (this.isQuestionCollapsed()) {
+            this.isQuestionCollapsed.set(false);
             this.collapseChanged.emit(false);
         }
         this.refineRequested.emit();
@@ -294,10 +294,10 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      * Called after an external update (e.g. AI refinement) mutates the question object in-place.
      */
     reloadFromQuestion(): void {
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
         const editor = this.markdownEditor();
         if (editor) {
-            editor.setMarkdown(this.questionEditorText);
+            editor.setMarkdown(this.questionEditorText());
         }
         this.resetMultipleChoicePreview();
         this.resetMultipleChoiceVisual();

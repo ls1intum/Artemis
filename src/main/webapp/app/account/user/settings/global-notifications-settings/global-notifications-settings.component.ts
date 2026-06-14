@@ -36,8 +36,8 @@ interface NotificationTypeLink {
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
-    protected filteredNotificationTypes: GlobalNotificationType[] = [];
-    protected notificationLabels: Partial<Record<GlobalNotificationType, string>> = {};
+    protected readonly filteredNotificationTypes = signal<GlobalNotificationType[]>([]);
+    protected readonly notificationLabels = signal<Partial<Record<GlobalNotificationType, string>>>({});
 
     public readonly notificationTypeLinks: NotificationTypeLink[] = [
         {
@@ -69,8 +69,8 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-        this.filteredNotificationTypes = this.notificationTypes.filter((type) => this.isSettingAvailable(type));
-        this.notificationLabels = Object.fromEntries(this.filteredNotificationTypes.map((type) => [type, this.getNotificationTypeLabel(type)]));
+        this.filteredNotificationTypes.set(this.notificationTypes.filter((type) => this.isSettingAvailable(type)));
+        this.notificationLabels.set(Object.fromEntries(this.filteredNotificationTypes().map((type) => [type, this.getNotificationTypeLabel(type)])));
         this.loadSettings();
     }
 

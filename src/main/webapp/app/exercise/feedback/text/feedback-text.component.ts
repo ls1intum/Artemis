@@ -17,8 +17,8 @@ export class FeedbackTextComponent implements OnInit {
 
     readonly text = signal<string | undefined>(undefined);
 
-    downloadText?: string;
-    downloadFilename?: string;
+    readonly downloadText = signal<string | undefined>(undefined);
+    readonly downloadFilename = signal<string | undefined>(undefined);
 
     ngOnInit(): void {
         this.text.set(this.feedback().text ?? '');
@@ -40,7 +40,7 @@ export class FeedbackTextComponent implements OnInit {
     }
 
     private setDownloadInfo(longFeedback: string) {
-        this.downloadText = 'data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback);
-        this.downloadFilename = `feedback_${this.feedback().feedbackReference.id}.txt`;
+        this.downloadText.set('data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback));
+        this.downloadFilename.set(`feedback_${this.feedback().feedbackReference.id}.txt`);
     }
 }

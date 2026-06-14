@@ -85,7 +85,7 @@ describe('SshUserSettingsComponent', () => {
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBe(true);
+        expect(comp.isExpiryDateValid()).toBe(true);
         comp.saveSshKey();
         expect(alertServiceMock.success).toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
@@ -108,7 +108,7 @@ describe('SshUserSettingsComponent', () => {
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBe(true);
+        expect(comp.isExpiryDateValid()).toBe(true);
         comp.saveSshKey();
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
@@ -130,36 +130,36 @@ describe('SshUserSettingsComponent', () => {
     it('should detect Windows', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('cat ~/.ssh/id_ed25519.pub | clip');
+        expect(comp.copyInstructions()).toBe('cat ~/.ssh/id_ed25519.pub | clip');
     });
 
     it('should detect MacOS', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Linux', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Android', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 10; Pixel 3)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
+        expect(comp.copyInstructions()).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect iOS', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 13_5)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('Ctrl + C');
+        expect(comp.copyInstructions()).toBe('Ctrl + C');
     });
 
     it('should return Unknown for unrecognized OS', () => {
         vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Unknown OS)');
         comp.ngOnInit();
-        expect(comp.copyInstructions).toBe('Ctrl + C');
+        expect(comp.copyInstructions()).toBe('Ctrl + C');
     });
 });

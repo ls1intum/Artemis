@@ -340,7 +340,7 @@
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
                     [disabled]="editForm.form.invalid || !isValidConfiguration"
-                    [isLoading]="isSaving"
+                    [isLoading]="isSaving()"
                     [icon]="faSave"
                     [title]="saveTitle"
                 />

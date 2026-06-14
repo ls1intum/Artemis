@@ -4,7 +4,7 @@
             <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
             <jhi-markdown-editor-monaco
                 class="markdown-editor"
-                [markdown]="textContent"
+                [markdown]="textContent()"
                 [showPreviewButton]="false"
                 [showEditButton]="false"
                 [enableFileUpload]="false"
@@ -37,7 +37,7 @@
         <button type="button" class="btn btn-secondary" [class.btn-primary]="status() === 'submitted'" (click)="clear()" jhiTranslate="entity.action.close"></button>
         @if (status() !== 'submitted') {
             <button
-                [disabled]="status() === 'submitting' || !textContent"
+                [disabled]="status() === 'submitting' || !textContent()"
                 type="button"
                 class="btn btn-primary"
                 (click)="submitAnnouncement()"

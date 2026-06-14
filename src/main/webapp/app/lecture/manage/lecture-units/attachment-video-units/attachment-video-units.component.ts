@@ -56,7 +56,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faQuestionCircle = faQuestionCircle;
 
-    invalidUnitTableMessage?: string;
+    readonly invalidUnitTableMessage = signal<string | undefined>(undefined);
     //Comma-seperated keyphrases used to detect slides to be removed
     keyphrases: string;
     private search = new Subject<void>();
@@ -225,53 +225,59 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         const numberOfPages = this.numberOfPages();
         for (const unit of this.units()) {
             if (!unit.unitName) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.unitName`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.unitName`));
                 return false;
             }
 
             if (unit.startPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.startPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.startPage`));
                 return false;
             }
 
             if (unit.endPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.endPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.endPage`));
                 return false;
             }
 
             if (unit.startPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPage`));
                 return false;
             }
 
             if (unit.startPage > numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
-                    max: numberOfPages ?? '',
-                });
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
+                        max: numberOfPages ?? '',
+                    }),
+                );
                 return false;
             }
 
             if (unit.endPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPageLower`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPageLower`));
                 return false;
             }
 
             if (unit.endPage > numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPage`, {
-                    max: numberOfPages ?? '',
-                });
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPage`, {
+                        max: numberOfPages ?? '',
+                    }),
+                );
                 return false;
             }
 
             if (unit.startPage > unit.endPage) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.invalidPages`, {
-                    unitName: unit.unitName ?? '',
-                });
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.invalidPages`, {
+                        unitName: unit.unitName ?? '',
+                    }),
+                );
                 return false;
             }
         }
 
-        this.invalidUnitTableMessage = undefined;
+        this.invalidUnitTableMessage.set(undefined);
         return true;
     }
 }

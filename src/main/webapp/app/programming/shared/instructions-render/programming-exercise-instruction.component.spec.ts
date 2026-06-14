@@ -67,7 +67,7 @@ type InstructionInternals = Omit<
     lastRenderedProblemStatement: string | undefined;
     isInitial: boolean;
     isLoading: WritableSignal<boolean>;
-    tasks: TaskArray;
+    tasks: WritableSignal<TaskArray>;
     setupMarkdownSubscriptions: () => void;
 };
 
@@ -360,14 +360,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
@@ -436,14 +436,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',

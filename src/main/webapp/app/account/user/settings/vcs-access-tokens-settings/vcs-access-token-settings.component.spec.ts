@@ -107,7 +107,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // add an invalid expiry date
         comp.expiryDate = dayjs().add(7, 'day');
-        comp.validExpiryDate = true;
+        comp.validExpiryDate.set(true);
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));

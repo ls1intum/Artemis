@@ -308,7 +308,7 @@ describe('ComplaintsForTutorComponent', () => {
         const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         expect(responseTextArea.value).toHaveLength(26);
-        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(26);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit()).toBe(26);
 
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -365,7 +365,7 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // use the default value if the course would define a lower maximum for exam exercises
-        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit()).toBe(2000);
     });
 
     it.each(['success', 'failure'])('should handle %s after updating assessment after complaint', (successOrFailure: string) => {

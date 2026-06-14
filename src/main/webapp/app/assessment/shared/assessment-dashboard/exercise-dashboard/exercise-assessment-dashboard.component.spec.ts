@@ -283,7 +283,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
-        comp.exerciseId = modelingExercise.id!;
+        comp.exerciseId.set(modelingExercise.id!);
         modelingSubmissionStubWithoutAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
         modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissions');
         textSubmissionStubWithoutAssessment = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
@@ -314,11 +314,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         accountService.userIdentity.set(user);
         fixture.detectChanges();
 
-        expect(comp.courseId).toBe(1);
+        expect(comp.courseId()).toBe(1);
         expect(comp.examId).toBe(2);
-        expect(comp.exerciseId).toBe(modelingExercise.id);
+        expect(comp.exerciseId()).toBe(modelingExercise.id);
 
-        expect(comp.tutor).toEqual(user);
+        expect(comp.tutor()).toEqual(user);
 
         const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
 
@@ -465,7 +465,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
         const dto: TutorParticipationDTO = {
             id: 1,
-            exerciseId: comp.exerciseId,
+            exerciseId: comp.exerciseId(),
             tutorId: 2,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
@@ -481,7 +481,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.readInstruction();
 
         expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());
 
         expect(comp.isLoading()).toBe(false);
 
@@ -586,8 +586,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 studentAssignedTeamIdComputed: false,
                 secondCorrectionEnabled: false,
             });
-            comp.courseId = fakeCourseId;
-            comp.exerciseId = fakeExerciseId;
+            comp.courseId.set(fakeCourseId);
+            comp.exerciseId.set(fakeExerciseId);
             comp.examId = fakeExamId;
             comp.exerciseGroupId = fakeExerciseGroupId;
         }
@@ -703,7 +703,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         it('should openExampleSubmission', () => {
             comp.exercise.set(exercise);
             comp.exercise().type = ExerciseType.PROGRAMMING;
-            comp.courseId = 4;
+            comp.courseId.set(4);
             comp.exercise.set(exercise);
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
@@ -715,7 +715,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('generate exercise detail link', () => {
         comp.exercise.set(modelingExercise);
-        comp.courseId = 4;
+        comp.courseId.set(4);
         const exerciseDetailsLink = comp.getExerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
     });
@@ -728,7 +728,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.spyOn(exerciseService, 'toggleSecondCorrection').mockImplementation((exerciseId) => {
             expect(comp.togglingSecondCorrectionButton()).toBe(secondCorrectionEnabled);
 
-            expect(exerciseId).toBe(comp.exerciseId);
+            expect(exerciseId).toBe(comp.exerciseId());
             return of(secondCorrectionEnabled);
         });
 

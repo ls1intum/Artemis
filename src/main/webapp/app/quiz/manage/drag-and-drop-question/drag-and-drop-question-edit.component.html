@@ -1,4 +1,4 @@
-<div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
+<div class="edit-dnd-question" [hidden]="showPreview()" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header">
             <button
@@ -277,7 +277,7 @@
                                 <div
                                     id="drop-location"
                                     class="drop-location"
-                                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                                    [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                                     [ngStyle]="{
                                         top: dropLocation.posY! / 2 + '%',
                                         left: dropLocation.posX! / 2 + '%',
@@ -478,7 +478,7 @@
         }
     </div>
 </div>
-@if (!reEvaluationInProgress() && showPreview) {
+@if (!reEvaluationInProgress() && showPreview()) {
     <div class="preview-dnd-question">
         <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths()" />
         <hr />

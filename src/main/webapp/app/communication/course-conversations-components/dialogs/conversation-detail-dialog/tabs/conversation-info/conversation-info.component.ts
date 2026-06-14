@@ -70,7 +70,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     });
 
     canEditName(): boolean {
-        if (this.readOnlyMode) return false;
+        if (this.readOnlyMode()) return false;
         const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
         if (!channelOrGroupChat) return false;
         return isChannelDTO(channelOrGroupChat) ? this.canChangeChannelProperties(channelOrGroupChat) : this.canChangeGroupChatProperties(channelOrGroupChat);
@@ -95,25 +95,25 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private translateService = inject(TranslateService);
 
-    readOnlyMode = false;
+    readonly readOnlyMode = signal<boolean>(false);
     notificationSettings?: CourseNotificationSettingInfo;
     readonly isNotificationsEnabled = signal(false);
     readonly isMuted = signal(false);
 
-    muteOptions: { label: string; value: boolean }[] = [];
+    readonly muteOptions = signal<{ label: string; value: boolean }[]>([]);
 
     protected readonly faVolumeXmark = faVolumeXmark;
     protected readonly faCalendarPlus = faCalendarPlus;
     protected readonly faUser = faUser;
 
     ngOnInit(): void {
-        this.muteOptions = [
+        this.muteOptions.set([
             { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.unmuted'), value: false },
             { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.muted'), value: true },
-        ];
+        ]);
         if (this.activeConversation()) {
             if (getAsChannelDTO(this.activeConversation())) {
-                this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
+                this.readOnlyMode.set(!!getAsChannelDTO(this.activeConversation())?.isArchived);
             }
         }
         this.isMuted.set(!!this.activeConversation()?.isMuted);

@@ -71,8 +71,8 @@ describe('FeedbackTextComponent', () => {
         expect(getLongFeedbackStub).toHaveBeenCalledOnce();
         expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
         expect(comp.text()).toBe(longFeedbackText);
-        expect(comp.downloadText).toBeDefined();
-        expect(comp.downloadFilename).toBeDefined();
+        expect(comp.downloadText()).toBeDefined();
+        expect(comp.downloadFilename()).toBeDefined();
     });
 
     it('should create a download link for very long feedback', async () => {
@@ -84,9 +84,9 @@ describe('FeedbackTextComponent', () => {
         await fixture.whenStable();
 
         expect(comp.text()).toBe(longFeedbackText);
-        expect(comp.downloadFilename).toBe('feedback_2.txt');
-        expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
-        expect(comp.downloadText).toContain(longFeedbackText);
+        expect(comp.downloadFilename()).toBe('feedback_2.txt');
+        expect(comp.downloadText()).toContain('data:text/plain;charset=utf-8,');
+        expect(comp.downloadText()).toContain(longFeedbackText);
     });
 
     const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedbackText: boolean): Feedback => {

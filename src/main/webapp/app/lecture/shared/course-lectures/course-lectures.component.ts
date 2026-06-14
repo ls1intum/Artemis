@@ -61,19 +61,19 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     readonly course = signal<Course | undefined>(undefined);
     readonly courseId = signal<number>(undefined!);
 
-    lectureSelected = true;
+    readonly lectureSelected = signal(true);
     readonly sidebarData = signal<SidebarData>(undefined!);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
     isMultiLaunch = false;
     multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     ngOnInit() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');
+        this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId.set(Number(params.courseId));
         });
@@ -108,7 +108,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         } else if (!lectureId && upcomingLecture) {
             this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.lectureSelected = !!lectureId;
+            this.lectureSelected.set(!!lectureId);
         }
     }
 
@@ -151,8 +151,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
-        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed);
+        this.isCollapsed.update((collapsed) => !collapsed);
+        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed());
     }
 
     getLastSelectedLecture(): string | undefined {

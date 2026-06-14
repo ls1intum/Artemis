@@ -61,7 +61,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     it('should update text content and announcement when textContentChanged() is called', () => {
         component.textContentChanged('new text');
-        expect(component.textContent).toBe('new text');
+        expect(component.textContent()).toBe('new text');
         expect(component.announcement()?.text).toBe('new text');
     });
 

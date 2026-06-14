@@ -52,10 +52,10 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     readonly faLock = faLock;
 
     readonly conversationAsChannel = signal<ChannelDTO | undefined>(undefined);
-    canLeaveConversation: boolean;
-    canChangeChannelArchivalState: boolean;
-    canChangeChannelPrivacyState: boolean;
-    canDeleteChannel: boolean;
+    readonly canLeaveConversation = signal<boolean>(undefined!);
+    readonly canChangeChannelArchivalState = signal<boolean>(undefined!);
+    readonly canChangeChannelPrivacyState = signal<boolean>(undefined!);
+    readonly canDeleteChannel = signal<boolean>(undefined!);
 
     private dialogService = inject(DialogService);
     private channelService = inject(ChannelService);
@@ -67,12 +67,12 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
         if (!conversation) {
             return;
         }
-        this.canLeaveConversation = canLeaveConversation(conversation);
+        this.canLeaveConversation.set(canLeaveConversation(conversation));
         const channel = getAsChannelDTO(conversation);
         this.conversationAsChannel.set(channel);
-        this.canChangeChannelArchivalState = channel ? canChangeChannelArchivalState(channel) : false;
-        this.canChangeChannelPrivacyState = channel ? canChangeChannelPrivacyState(channel) : false;
-        this.canDeleteChannel = channel ? canDeleteChannel(this.course(), channel) : false;
+        this.canChangeChannelArchivalState.set(channel ? canChangeChannelArchivalState(channel) : false);
+        this.canChangeChannelPrivacyState.set(channel ? canChangeChannelPrivacyState(channel) : false);
+        this.canDeleteChannel.set(channel ? canDeleteChannel(this.course(), channel) : false);
     }
 
     leaveConversation($event: MouseEvent) {

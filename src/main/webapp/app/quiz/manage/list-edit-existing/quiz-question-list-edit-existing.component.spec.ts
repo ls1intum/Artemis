@@ -182,9 +182,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
     });
 
     it('should set current state', () => {
-        component.currentState = State.COURSE;
+        component.currentState.set(State.COURSE);
         component.setCurrentState(State.EXAM);
-        expect(component.currentState).toEqual(State.EXAM);
+        expect(component.currentState()).toEqual(State.EXAM);
     });
 
     describe('onCourseSelect', () => {

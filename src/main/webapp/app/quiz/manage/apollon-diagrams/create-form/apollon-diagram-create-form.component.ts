@@ -20,7 +20,15 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
     private apollonDiagramService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
 
-    apollonDiagram: ApollonDiagram;
+    // Backed by a signal so the template stays reactive under zoneless change detection, while the
+    // getter/setter facade keeps the [(ngModel)]="apollonDiagram.title|diagramType" deep two-way bindings working.
+    private readonly _apollonDiagram = signal<ApollonDiagram>(undefined!);
+    get apollonDiagram(): ApollonDiagram {
+        return this._apollonDiagram();
+    }
+    set apollonDiagram(value: ApollonDiagram) {
+        this._apollonDiagram.set(value);
+    }
     readonly isSaving = signal(false);
     readonly titleInput = viewChild.required<ElementRef>('titleInput');
 

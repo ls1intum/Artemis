@@ -157,7 +157,7 @@ describe('PostComponent', () => {
         component.posting.set(post);
         component.posting()!.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
+        expect(component.sortedAnswerPosts()).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
@@ -165,7 +165,7 @@ describe('PostComponent', () => {
         component.posting()!.answers = unsortedAnswerArray;
         component.posting()!.answers = undefined;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual([]);
+        expect(component.sortedAnswerPosts()).toEqual([]);
     });
 
     it('should set router link and query params', () => {
@@ -409,7 +409,7 @@ describe('PostComponent', () => {
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
             expect(component.showDropdown()).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
 
             vi.restoreAllMocks();
         });
@@ -546,39 +546,39 @@ describe('PostComponent', () => {
             filterToAnsweredOrReacted: false,
             sortingOrder: SortDirection.ASCENDING,
         });
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     // update to true when selected author is in answers
@@ -586,9 +586,9 @@ describe('PostComponent', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] });
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 });

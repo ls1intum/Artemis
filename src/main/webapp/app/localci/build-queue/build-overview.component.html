@@ -1,5 +1,5 @@
-<div [class.build-overview-course-view]="courseId">
-    @if (!courseId) {
+<div [class.build-overview-course-view]="courseId()">
+    @if (!courseId()) {
         <h5 *adminTitleBarTitle id="build-overview-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.title"></h5>
         <div *adminTitleBarActions class="d-flex align-items-center gap-2">
             <span class="text-muted small" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
@@ -24,7 +24,7 @@
         </div>
     }
 
-    @if (courseId) {
+    @if (courseId()) {
         <!-- Navigation bar for course management view -->
         <div class="build-queue-nav-bar">
             <div class="d-flex justify-content-end align-items-center gap-2">
@@ -71,7 +71,7 @@
                 [buildJobs]="runningBuildJobs()"
                 [showCourseId]="isAdministrationView()"
                 [isAdminView]="isAdministrationView()"
-                [courseId]="courseId"
+                [courseId]="courseId()"
                 (cancelJob)="cancelBuildJob($event)"
                 (jobClick)="navigateToJobDetail($event)"
             />
@@ -92,7 +92,7 @@
             <jhi-queued-jobs-table
                 [buildJobs]="queuedBuildJobs()"
                 [showCourseId]="isAdministrationView()"
-                [courseId]="courseId"
+                [courseId]="courseId()"
                 (cancelJob)="cancelBuildJob($event)"
                 (jobClick)="navigateToJobDetail($event)"
             />
@@ -136,7 +136,7 @@
                 [buildJobs]="finishedBuildJobs()"
                 [showCourseId]="isAdministrationView()"
                 [isAdminView]="isAdministrationView()"
-                [courseId]="courseId"
+                [courseId]="courseId()"
                 [buildAgents]="buildAgents()"
                 [(predicate)]="predicate"
                 [(ascending)]="ascending"
@@ -166,7 +166,7 @@
     >
         <ng-template pTemplate="header">
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
-            <span>&nbsp;{{ displayedBuildJobId }}</span>
+            <span>&nbsp;{{ displayedBuildJobId() }}</span>
         </ng-template>
         <div class="overflow-auto">
             @if (rawBuildLogsString()) {

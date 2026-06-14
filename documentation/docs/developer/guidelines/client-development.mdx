@@ -95,9 +95,20 @@ If you need more information/examples or methods to avoid function calls, have a
 The Artemis client runs **zoneless** ([`provideZonelessChangeDetection()`](https://angular.dev/guide/zoneless)). `zone.js` has been removed from the build, and `NgZone` is **banned** (a `no-restricted-imports` ESLint rule fails the build on any `import { NgZone } from '@angular/core'`). This changes the single most important rule about how you write components.
 
 <Callout variant={CalloutVariant.danger}>
-**Core rule: every component member that the template reads and that can change at runtime must be a signal (or `computed` / `input` / `model`).**
+**Core rule: a component/directive member must be a signal (`signal` / `computed` / `input` / `model` / `viewChild` / `contentChild`). The _only_ exceptions are:**
 
-Only values that are **constant** for the lifetime of the component (icons, enum references, injected services, configuration literals) may stay plain class fields. Everything else that the template binds to — and that you ever reassign or mutate — must be signal-backed, so the view re-renders automatically when it changes.
+1. a **constant** — a field that is never reassigned (icons, enum references, configuration literals);
+2. an **injected service** (`inject(...)`);
+3. a value a framework API forces to stay plain — most notably a `[(ngModel)]` / `[(x)]` two-way target a signal cannot back. Even then, prefer a **getter/setter-over-signal facade**; reach for a raw plain field only for the rare directive two-way (e.g. `jhiSort`'s `[(predicate)]` / `[(ascending)]`).
+
+Everything else — any member you reassign that the template reads — must be signal-backed, so the view re-renders automatically when it changes. **Prefer too many signals over too few:** a signal whose value never changes is harmless, a missing one is a silent render bug. A field that the template never reads (a `Subscription`, a timer handle, an internal cache) may stay plain — it cannot cause a render bug.
+
+This is enforced by the `localRules/prefer-signal-template-state` ESLint rule (a mutable, template-read field that is not a signal is an error). Suppress it on a line only for a genuine case (3), with a justification:
+
+```ts
+// eslint-disable-next-line localRules/prefer-signal-template-state -- [(ascending)] two-way to jhiSort; a signal cannot back [(x)]
+reverse = true;
+```
 </Callout>
 
 **Why.** With zone.js, Angular re-ran change detection after _every_ async event (any `setTimeout`, XHR, event, promise) and re-checked the whole component tree. Without it, Angular only schedules a re-render when something it can actually observe changes: a **signal read in a template updates**, an `async` pipe emits, a template event handler `(click)` runs, or code explicitly calls `markForCheck()`. A plain field that you reassign inside an async callback changes _nothing Angular is watching_, so the template keeps showing the old value. Background: [Angular zoneless guide](https://angular.dev/guide/zoneless), [Angular signals guide](https://angular.dev/guide/signals).

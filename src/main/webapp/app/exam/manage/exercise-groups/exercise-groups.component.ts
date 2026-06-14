@@ -82,7 +82,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     courseId!: number;
     course = signal<Course | undefined>(undefined);
-    examId!: number;
+    readonly examId = signal<number>(undefined!);
     exam = signal<Exam | undefined>(undefined);
     exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
     dialogErrorSource = new Subject<string>();
@@ -116,7 +116,7 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
             next: ([examRes, examInfoDTO]) => {
@@ -148,7 +148,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * null will be returned
      */
     loadLatestIndividualEndDateOfExam() {
-        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId()).pipe(
             // When the exam start date was not set properly an error will be thrown.
             // Catch this in the inner observable otherwise forkJoin won't return data
             catchError(() => {
@@ -161,7 +161,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        return this.examManagementService.find(this.courseId, this.examId, true);
+        return this.examManagementService.find(this.courseId, this.examId(), true);
     }
 
     /**
@@ -190,7 +190,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.exerciseGroupService.delete(this.courseId, this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
@@ -231,7 +231,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
         const dialogData: ExerciseImportDialogData = { exerciseType };
 
         // Determine the header key based on exercise type
@@ -298,7 +298,7 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups()!).subscribe({
+        this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
             next: (res) => this.exerciseGroups.set(res.body!),
             error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         });
@@ -332,7 +332,7 @@ export class ExerciseGroupsComponent implements OnInit {
         const dialogData: ExamImportDialogData = {
             subsequentExerciseGroupSelection: true,
             targetCourseId: this.courseId,
-            targetExamId: this.examId,
+            targetExamId: this.examId(),
         };
 
         const dialogRef = this.dialogService.open(ExamImportComponent, {

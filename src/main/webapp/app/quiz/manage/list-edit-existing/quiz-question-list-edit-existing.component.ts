@@ -56,7 +56,7 @@ export class QuizQuestionListEditExistingComponent {
     readonly State = State;
     readonly stateTexts = ['artemisApp.quizExercise.fromACourse', 'artemisApp.quizExercise.fromAnExam', 'artemisApp.quizExercise.fromAFile'];
 
-    currentState: State = State.COURSE;
+    readonly currentState = signal<State>(State.COURSE);
     selectedCourseId?: number;
     selectedExamId?: number;
     readonly courses = signal<Course[]>([]);
@@ -84,7 +84,7 @@ export class QuizQuestionListEditExistingComponent {
     }
 
     setCurrentState(state: State) {
-        this.currentState = state;
+        this.currentState.set(state);
     }
 
     /**

@@ -142,17 +142,17 @@ export class GradingComponent implements OnInit {
     readonly invalidGradeStepsMessage = computed(() => this.gradingForm().errorSummary()[0]?.message);
 
     lowerBoundInclusivity = true;
-    existingGradingScale = false;
+    readonly existingGradingScale = signal(false);
     firstPassingGrade = signal<string | undefined>(undefined);
     courseId?: number;
     examId?: number;
-    isExam = false;
+    readonly isExam = signal(false);
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     readonly isLoading = signal(false);
 
-    course?: Course;
-    exam?: Exam;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly exam = signal<Exam | undefined>(undefined);
     maxPoints = signal<number | undefined>(undefined);
 
     /**
@@ -231,7 +231,7 @@ export class GradingComponent implements OnInit {
     /**
      * Configuration for presentation settings in the grading system.
      */
-    presentationsConfig: PresentationsConfig = { presentationType: PresentationType.NONE };
+    readonly presentationsConfig = signal<PresentationsConfig>({ presentationType: PresentationType.NONE });
 
     // Icons
     readonly faSave = faSave;
@@ -250,9 +250,9 @@ export class GradingComponent implements OnInit {
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);
-                this.isExam = true;
+                this.isExam.set(true);
             }
-            if (this.isExam) {
+            if (this.isExam()) {
                 this.handleFindObservable(this.gradingService.findGradingScaleForExam(this.courseId!, this.examId!));
             } else {
                 this.handleFindObservable(this.gradingService.findGradingScaleForCourse(this.courseId!));
@@ -279,7 +279,7 @@ export class GradingComponent implements OnInit {
      * Handles updates to the presentations configuration emitted by the child component.
      */
     onPresentationsConfigChange(config: PresentationsConfig): void {
-        this.presentationsConfig = config;
+        this.presentationsConfig.set(config);
     }
 
     // =========================================================================
@@ -297,18 +297,18 @@ export class GradingComponent implements OnInit {
                 if (gradingSystemResponse.body) {
                     this.handleFindResponse(gradingSystemResponse.body);
                 }
-                if (this.isExam) {
+                if (this.isExam()) {
                     this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
-                        this.exam = examResponse.body!;
-                        this.maxPoints.set(this.exam?.examMaxPoints);
-                        this.onChangeMaxPoints(this.exam?.examMaxPoints);
+                        this.exam.set(examResponse.body!);
+                        this.maxPoints.set(this.exam()?.examMaxPoints);
+                        this.onChangeMaxPoints(this.exam()?.examMaxPoints);
                     });
                 } else {
                     this.courseService.find(this.courseId!).subscribe((courseResponse) => {
-                        this.course = courseResponse.body!;
-                        this.gradingScaleMeta.course = this.course;
-                        this.maxPoints.set(this.course?.maxPoints);
-                        this.onChangeMaxPoints(this.course?.maxPoints);
+                        this.course.set(courseResponse.body!);
+                        this.gradingScaleMeta.course = this.course();
+                        this.maxPoints.set(this.course()?.maxPoints);
+                        this.onChangeMaxPoints(this.course()?.maxPoints);
                     });
                 }
             });
@@ -321,8 +321,8 @@ export class GradingComponent implements OnInit {
     handleFindResponse(gradingScaleDTO?: GradingScaleDTO): void {
         if (gradingScaleDTO) {
             gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-            this.gradingScale = toEntity(gradingScaleDTO, this.course, this.exam);
-            this.existingGradingScale = true;
+            this.gradingScale = toEntity(gradingScaleDTO, this.course(), this.exam());
+            this.existingGradingScale.set(true);
             this.setBoundInclusivity();
             this.determineFirstPassingGrade();
         }
@@ -348,24 +348,24 @@ export class GradingComponent implements OnInit {
         gradingScale.gradeSteps.forEach((gradeStep) => {
             gradeStep.id = undefined;
         });
-        if (this.isExam) {
-            gradingScale.exam = this.exam;
+        if (this.isExam()) {
+            gradingScale.exam = this.exam();
             gradingScale.exam!.examMaxPoints = this.maxPoints();
         } else {
-            gradingScale.course = this.course;
+            gradingScale.course = this.course();
             gradingScale.course!.maxPoints = this.maxPoints();
-            gradingScale.course!.presentationScore = this.presentationsConfig.presentationScore;
+            gradingScale.course!.presentationScore = this.presentationsConfig().presentationScore;
         }
         // Reflect the sorted/inclusivity-adjusted scale that is being sent back into the editor's model.
         this.gradingScale = gradingScale;
-        if (this.existingGradingScale) {
-            if (this.isExam) {
+        if (this.existingGradingScale()) {
+            if (this.isExam()) {
                 this.handleSaveObservable(this.gradingService.updateGradingScaleForExam(this.courseId!, this.examId!, gradingScale));
             } else {
                 this.handleSaveObservable(this.gradingService.updateGradingScaleForCourse(this.courseId!, gradingScale));
             }
         } else {
-            if (this.isExam) {
+            if (this.isExam()) {
                 this.handleSaveObservable(this.gradingService.createGradingScaleForExam(this.courseId!, this.examId!, gradingScale));
             } else {
                 this.handleSaveObservable(this.gradingService.createGradingScaleForCourse(this.courseId!, gradingScale));
@@ -389,7 +389,7 @@ export class GradingComponent implements OnInit {
     private handleSaveResponse(newGradingScaleDTO?: GradingScaleDTO): void {
         if (newGradingScaleDTO) {
             newGradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(newGradingScaleDTO.gradeSteps.gradeSteps);
-            this.existingGradingScale = true;
+            this.existingGradingScale.set(true);
         }
     }
 
@@ -401,11 +401,11 @@ export class GradingComponent implements OnInit {
      * Deletes a grading scale for the given course/exam via the service
      */
     delete(): void {
-        if (!this.existingGradingScale) {
+        if (!this.existingGradingScale()) {
             return;
         }
         this.isLoading.set(true);
-        if (this.isExam) {
+        if (this.isExam()) {
             this.handleDeleteObservable(this.gradingService.deleteGradingScaleForExam(this.courseId!, this.examId!));
         } else {
             this.handleDeleteObservable(this.gradingService.deleteGradingScaleForCourse(this.courseId!));
@@ -416,9 +416,9 @@ export class GradingComponent implements OnInit {
         deleteObservable.subscribe({
             next: () => {
                 // Reset state only on successful delete
-                this.existingGradingScale = false;
+                this.existingGradingScale.set(false);
                 const emptyGradingScale = new GradingScale();
-                emptyGradingScale.course = this.course;
+                emptyGradingScale.course = this.course();
                 this.gradingScale = emptyGradingScale;
                 this.dialogErrorSource.next('');
                 this.isLoading.set(false);
@@ -523,19 +523,20 @@ export class GradingComponent implements OnInit {
      * zoneless when invoked from template bindings). Re-evaluated on every change-detection pass.
      */
     presentationsConfigErrorMessage(): string | undefined {
-        if (this.presentationsConfig.presentationType === PresentationType.BASIC && (this.course?.presentationScore ?? 0) <= 0) {
+        const presentationsConfig = this.presentationsConfig();
+        if (presentationsConfig.presentationType === PresentationType.BASIC && (this.course()?.presentationScore ?? 0) <= 0) {
             return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
         }
-        if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
-            const presentationsNumber = this.presentationsConfig.presentationsNumber;
+        if (presentationsConfig.presentationType === PresentationType.GRADED) {
+            const presentationsNumber = presentationsConfig.presentationsNumber;
             if (presentationsNumber === undefined || !Number.isInteger(presentationsNumber) || presentationsNumber < 1) {
                 return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
             }
-            const presentationsWeight = this.presentationsConfig.presentationsWeight;
+            const presentationsWeight = presentationsConfig.presentationsWeight;
             if (presentationsWeight === undefined || presentationsWeight < 0 || presentationsWeight > 99) {
                 return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
             }
-            if ((this.course?.presentationScore ?? 0) > 0) {
+            if ((this.course()?.presentationScore ?? 0) > 0) {
                 return this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
             }
         }
@@ -546,38 +547,35 @@ export class GradingComponent implements OnInit {
      * Checks if the currently entered presentation settings are valid
      */
     validPresentationsConfig(): boolean {
-        if (this.presentationsConfig.presentationType === PresentationType.NONE) {
-            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
+        const presentationsConfig = this.presentationsConfig();
+        if (presentationsConfig.presentationType === PresentationType.NONE) {
+            if (presentationsConfig.presentationsNumber !== undefined || presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            if (this.presentationsConfig.presentationScore !== undefined) {
-                return false;
-            }
-        }
-        if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
-            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
-                return false;
-            }
-            if ((this.course?.presentationScore ?? 0) <= 0) {
+            if (presentationsConfig.presentationScore !== undefined) {
                 return false;
             }
         }
-        if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
+        if (presentationsConfig.presentationType === PresentationType.BASIC) {
+            if (presentationsConfig.presentationsNumber !== undefined || presentationsConfig.presentationsWeight !== undefined) {
+                return false;
+            }
+            if ((this.course()?.presentationScore ?? 0) <= 0) {
+                return false;
+            }
+        }
+        if (presentationsConfig.presentationType === PresentationType.GRADED) {
             if (
-                this.presentationsConfig.presentationsNumber === undefined ||
-                !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
-                this.presentationsConfig.presentationsNumber < 1
+                presentationsConfig.presentationsNumber === undefined ||
+                !Number.isInteger(presentationsConfig.presentationsNumber) ||
+                presentationsConfig.presentationsNumber < 1
             ) {
                 return false;
             }
-            if (
-                this.presentationsConfig.presentationsWeight === undefined ||
-                this.presentationsConfig.presentationsWeight < 0 ||
-                this.presentationsConfig.presentationsWeight > 99
-            ) {
+            if (presentationsConfig.presentationsWeight === undefined || presentationsConfig.presentationsWeight < 0 || presentationsConfig.presentationsWeight > 99) {
                 return false;
             }
-            if ((this.course?.presentationScore ?? 0) > 0) {
+            if ((this.course()?.presentationScore ?? 0) > 0) {
                 return false;
             }
         }
@@ -1028,7 +1026,7 @@ export class GradingComponent implements OnInit {
         return {
             gradeSteps,
             gradeType: GradeType.GRADE,
-            course: this.course,
+            course: this.course(),
         };
     }
 

@@ -87,7 +87,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number | undefined>(undefined);
     readonly isLoading = signal(false);
     readonly lecture = signal<Lecture | undefined>(undefined);
-    isDownloadingLink?: string;
+    readonly isDownloadingLink = signal<string | undefined>(undefined);
     readonly lectureUnits = signal<LectureUnit[]>([]);
     readonly hasPdfLectureUnit = signal(false);
     readonly irisSettings = signal<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
@@ -206,10 +206,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     downloadAttachment(downloadUrl?: string, downloadName?: string): void {
-        if (!this.isDownloadingLink && downloadUrl && downloadName) {
-            this.isDownloadingLink = downloadUrl;
+        if (!this.isDownloadingLink() && downloadUrl && downloadName) {
+            this.isDownloadingLink.set(downloadUrl);
             this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
-            this.isDownloadingLink = undefined;
+            this.isDownloadingLink.set(undefined);
         }
     }
 

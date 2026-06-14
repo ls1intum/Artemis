@@ -228,6 +228,19 @@ export default tseslint.config(
             'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
         },
     },
+    // Zoneless correctness: a mutable component/directive field that the template reads must be a signal,
+    // otherwise reassigning it outside a synchronous render / event handler (subscribe, setTimeout, a helper
+    // reached from one, …) schedules no change detection and the view silently goes stale. Fields the template
+    // never reads, injected services, and constants are exempt; genuine [(ngModel)]/[(x)] two-way targets that
+    // cannot be signals use a justified line-level disable. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Zoneless change detection & signal-based state").
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/prefer-signal-template-state': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:

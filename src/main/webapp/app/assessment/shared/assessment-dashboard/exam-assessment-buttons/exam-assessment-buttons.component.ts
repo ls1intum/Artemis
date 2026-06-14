@@ -32,8 +32,8 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     private accountService = inject(AccountService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    courseId: number;
-    examId: number;
+    readonly courseId = signal<number>(undefined!);
+    readonly examId = signal<number>(undefined!);
     studentExams: StudentExam[];
     // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
     readonly course = signal<Course | undefined>(undefined);
@@ -54,8 +54,8 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Initialize the courseId and examId
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         this.loadAll();
     }
 
@@ -63,7 +63,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
         this.isLoading.set(true);
         this.paramSub = this.route.params.subscribe(() => {
             this.isAdmin.set(this.accountService.isAdmin());
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
             });
 
@@ -72,7 +72,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - set the longestWorkingTime
             - trigger (re)calculation of whether the exam is over
              */
-            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId, this.examId).pipe(
+            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId(), this.examId()).pipe(
                 tap((value) => {
                     this.longestWorkingTime.set(value);
                     this.calculateIsExamOver();
@@ -84,7 +84,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - set the exam
             - trigger (re)calculation of whether the exam is over
              */
-            const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
+            const examObservable = this.examManagementService.find(this.courseId(), this.examId(), true).pipe(
                 tap((examResponse) => {
                     this.exam.set(examResponse.body!);
                     this.calculateIsExamOver();
@@ -103,7 +103,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      */
     evaluateQuizExercises() {
         this.isEvaluatingQuizExercises.set(true);
-        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe({
+        this.examManagementService.evaluateQuizExercises(this.courseId(), this.examId()).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
                 this.isEvaluatingQuizExercises.set(false);
@@ -117,7 +117,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
 
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isAssessingUnsubmittedExams.set(true);
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
+        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId(), this.examId()).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
                 this.isAssessingUnsubmittedExams.set(false);

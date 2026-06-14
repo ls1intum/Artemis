@@ -66,9 +66,9 @@
                             <div class="col-auto p-0 me-1" jhiTranslate="artemisApp.metis.overview.sortedByDate"></div>
                             <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
                                 <fa-icon
-                                    [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                    [icon]="sortingOrder() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                     [ngbTooltip]="
-                                        sortingOrder === SortDirection.ASCENDING
+                                        sortingOrder() === SortDirection.ASCENDING
                                             ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                             : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                                     "

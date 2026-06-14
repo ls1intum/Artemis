@@ -46,7 +46,7 @@
                 <div class="post-content-padding hover-actions">
                     <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode()"
-                        [course]="course"
+                        [course]="course()"
                         [posting]="posting()"
                         [isLastAnswer]="isLastAnswer()"
                         [isThreadSidebar]="isThreadSidebar()"
@@ -85,18 +85,18 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
+    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show">
         <button class="dropdown-item d-flex" (click)="addReaction($event)">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
-        @if (mayEdit) {
+        @if (mayEdit()) {
             <button class="dropdown-item d-flex" (click)="editPosting()">
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
             </button>
         }
-        @if (mayDelete) {
+        @if (mayDelete()) {
             <button class="dropdown-item d-flex" (click)="deletePost()">
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.answerPost.deleteAnswer"></span>

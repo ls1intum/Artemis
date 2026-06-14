@@ -158,8 +158,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     readonly questionEditorText = signal('');
     backupQuestion: DragAndDropQuestion;
     readonly filePreviewPaths = signal<Map<string, string>>(new Map<string, string>());
-    dropAllowed = false;
-    showPreview = false;
+    readonly dropAllowed = signal(false);
+    readonly showPreview = signal(false);
     readonly backgroundReady = signal(false);
     readonly CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
@@ -291,14 +291,14 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Handles drag-available UI
      */
     drag(): void {
-        this.dropAllowed = true;
+        this.dropAllowed.set(true);
     }
 
     /**
      * Handles drag-available UI
      */
     drop(): void {
-        this.dropAllowed = false;
+        this.dropAllowed.set(false);
     }
 
     /**
@@ -909,7 +909,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Toggles the preview in the template
      */
     togglePreview(): void {
-        this.showPreview = !this.showPreview;
+        this.showPreview.update((showPreview) => !showPreview);
         this.prepareForSave();
     }
 

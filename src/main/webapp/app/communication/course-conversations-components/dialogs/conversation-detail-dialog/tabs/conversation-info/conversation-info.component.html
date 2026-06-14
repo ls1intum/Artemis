@@ -29,7 +29,7 @@
             @if (getAsChannel(activeConversation()); as channel) {
                 <div id="topic-section" class="col-12 info-section">
                     <label class="info-label" for="topic-input" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.topic"></label>
-                    @if (!readOnlyMode && canChangeChannelProperties(channel)) {
+                    @if (!readOnlyMode() && canChangeChannelProperties(channel)) {
                         <textarea
                             pTextarea
                             id="topic-input"
@@ -51,7 +51,7 @@
             @if (getAsChannel(activeConversation()); as channel) {
                 <div id="description-section" class="col-12 info-section">
                     <label class="info-label" for="description-input" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.description"></label>
-                    @if (!readOnlyMode && canChangeChannelProperties(channel)) {
+                    @if (!readOnlyMode() && canChangeChannelProperties(channel)) {
                         <textarea
                             pTextarea
                             id="description-input"
@@ -92,7 +92,7 @@
                 <div class="d-flex align-items-center gap-3 mt-2">
                     <p-selectbutton
                         id="muteSelectButton"
-                        [options]="muteOptions"
+                        [options]="muteOptions()"
                         [ngModel]="isMuted()"
                         (ngModelChange)="onMuteOptionChange($event)"
                         optionLabel="label"

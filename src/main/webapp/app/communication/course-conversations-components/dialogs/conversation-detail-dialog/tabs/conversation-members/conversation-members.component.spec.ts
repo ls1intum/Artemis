@@ -109,9 +109,9 @@ examples.forEach((activeConversation) => {
                 expectSearchPerformed('');
             } else {
                 component.members.set([{ id: 1, name: 'user1', login: 'user1' } as ConversationUserDTO, { id: 2, name: 'user2', login: 'user2' } as ConversationUserDTO]);
-                component.totalItems = 2;
+                component.totalItems.set(2);
                 expect(component.members()).toHaveLength(2);
-                expect(component.totalItems).toBe(2);
+                expect(component.totalItems()).toBe(2);
             }
         });
 
@@ -181,7 +181,7 @@ examples.forEach((activeConversation) => {
             expect(searchMembersOfConversationSpy).toHaveBeenCalledOnce();
             expect(searchMembersOfConversationSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, expectedSearchTerm, 0, 10, expectedFilter);
             expect(component.members()).toHaveLength(2);
-            expect(component.totalItems).toBe(2);
+            expect(component.totalItems()).toBe(2);
         }
     });
 });

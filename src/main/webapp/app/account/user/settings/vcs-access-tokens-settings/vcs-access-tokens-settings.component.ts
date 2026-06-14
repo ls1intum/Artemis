@@ -46,7 +46,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     expiryDate?: dayjs.Dayjs;
-    validExpiryDate = false;
+    readonly validExpiryDate = signal(false);
     readonly edit = signal(false);
 
     private dialogErrorSource = new Subject<string>();
@@ -118,7 +118,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      * Validates if the expiry date is after current time
      */
     validateDate() {
-        this.validExpiryDate = !!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year'));
+        this.validExpiryDate.set(!!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year')));
     }
 
     /**
@@ -127,6 +127,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     cancelTokenCreation() {
         this.edit.set(false);
         this.expiryDate = undefined;
-        this.validExpiryDate = false;
+        this.validExpiryDate.set(false);
     }
 }
