@@ -116,7 +116,7 @@ export class QuizAiGenerationService {
     }
 
     private snapshotQuestion(q: MultipleChoiceQuestion): MultipleChoiceQuestion {
-        return { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion;
+        return Object.assign(Object.assign({}, q), { answerOptions: q.answerOptions?.map((opt) => Object.assign({}, opt)) }) as MultipleChoiceQuestion;
     }
 
     private applyRefinedContentToQuestion(original: MultipleChoiceQuestion, refined: GeneratedQuestion): MultipleChoiceQuestion {
