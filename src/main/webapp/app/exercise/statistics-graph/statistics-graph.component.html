@@ -4,24 +4,8 @@
     </div>
     <div class="row">
         <fa-icon [icon]="faArrowLeft" size="2x" class="col-1 d-flex justify-content-end align-items-center px-0" role="button" (click)="switchTimeSpan(LEFT)" />
-        <div #containerRef class="chart col-10 px-0">
-            <ngx-charts-bar-vertical
-                [view]="[containerRef.offsetWidth, 250]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [xAxis]="true"
-                [yAxis]="true"
-                [showDataLabel]="true"
-                [yScaleMax]="yScaleMax"
-                [yAxisTickFormatting]="yAxisTickFormatting"
-                [animations]="false"
-                [roundEdges]="false"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ model.name }}</b> <br />
-                    <span>{{ tooltipTranslation | artemisTranslate }}: {{ model.value }}</span>
-                </ng-template>
-            </ngx-charts-bar-vertical>
+        <div class="chart col-10 px-0" style="height: 250px">
+            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
         </div>
         <fa-icon [icon]="faArrowRight" size="2x" class="col-1 d-flex justify-content-start align-items-center px-0" role="button" (click)="switchTimeSpan(RIGHT)" />
     </div>

@@ -1,26 +1,8 @@
 <div class="row d-flex justify-content-center mb-1">
-    <div #containerRef class="col-md-8 col-11 align-items-center px-0">
+    <div class="col-md-8 col-11 align-items-center px-0">
         <h6 class="text-center" jhiTranslate="artemisApp.examScores.exerciseGroupTitle" [translateValues]="{ groupTitle: this.averageScores().title }"></h6>
-        <ngx-charts-bar-horizontal
-            [roundEdges]="false"
-            [view]="[containerRef.offsetWidth, 100]"
-            [results]="ngxData"
-            [scheme]="ngxColor"
-            [xAxis]="true"
-            [yAxis]="true"
-            [xScaleMax]="xScaleMax"
-            [xAxisTickFormatting]="xAxisTickFormatting"
-            (select)="onSelect($event)"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b>
-                <br />
-                <span>
-                    {{ 'artemisApp.examScores.averagePointsTooltip' | artemisTranslate }}: {{ this.lookupAbsoluteValue(model.name) }} ({{
-                        roundAndPerformLocalConversion(model.value)
-                    }}%)
-                </span>
-            </ng-template>
-        </ngx-charts-bar-horizontal>
+        <div style="height: 100px">
+            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($event)" />
+        </div>
     </div>
 </div>

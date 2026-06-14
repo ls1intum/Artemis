@@ -81,7 +81,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./exam-scores.component.scss'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,
