@@ -7,7 +7,7 @@
                     <fa-icon [icon]="faSync" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
                 </button>
             }
-            <div #containerRef class="text-center">
+            <div class="text-center">
                 <p class="text-start" class="chart-title-text">
                     <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
                 </p>
@@ -28,23 +28,9 @@
                         </p>
                     </div>
                 </div>
-                <ngx-charts-bar-vertical
-                    [view]="[containerRef.offsetWidth, height]"
-                    [results]="ngxData"
-                    [scheme]="ngxColor"
-                    [xAxisLabel]="xAxisLabel"
-                    [yAxisLabel]="yAxisLabel"
-                    [legend]="false"
-                    [showXAxisLabel]="true"
-                    [showYAxisLabel]="true"
-                    [xAxis]="true"
-                    [yAxis]="true"
-                    [yScaleMax]="maxScale"
-                    [roundEdges]="false"
-                    [showDataLabel]="true"
-                    [dataLabelFormatting]="bindFormatting"
-                    [tooltipDisabled]="true"
-                />
+                <div class="quiz-statistic-chart" style="height: 500px">
+                    <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
+                </div>
                 <div class="text-center button-row">
                     <button (click)="switchRated()" type="button" class="btn btn-primary">
                         <fa-icon [icon]="faSync" />&nbsp;
