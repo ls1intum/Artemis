@@ -28,7 +28,7 @@ export class QuizAiGenerationService {
      * @param courseId the id of the course the quiz belongs to
      * @param question the multiple-choice question to refine
      * @param refinementPrompt user instructions describing how the question should change
-     * @returns an observable that emits the refined question and the AI reasoning string
+     * @returns an observable that emits the refined question, the AI reasoning string, and a previousQuestion snapshot taken before refinement for restore capability
      */
     refineMultipleChoiceQuestion(
         courseId: number,
@@ -75,7 +75,7 @@ export class QuizAiGenerationService {
      * @param courseId the id of the course the quiz belongs to
      * @param questions the multiple-choice questions to refine
      * @param refinementPrompt user instructions describing how all questions should change
-     * @returns an observable that emits a map from each successfully refined question to its reasoning string; failed questions are omitted
+     * @returns an observable that emits an object with a results map (each successfully refined question to its reasoning string; failed questions omitted) and a previousSnapshots map (each refined question to its pre-refinement snapshot for restore capability)
      */
     refineAllMultipleChoiceQuestions(
         courseId: number,
