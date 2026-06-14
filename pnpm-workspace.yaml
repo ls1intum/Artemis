@@ -40,8 +40,8 @@ peerDependencyRules:
 
 # Dependency overrides. pnpm 11 reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
-# transitive packages to CVE-patched versions and force Angular 21 across all
-# @swimlane/* and ng-mocks subtrees (still on older peer ranges).
+# transitive packages to CVE-patched versions and force Angular 21 across the
+# ng-mocks subtree (still on an older peer range).
 overrides:
     'ng-mocks>@angular/common': '^21.2.0'
     'ng-mocks>@angular/core': '^21.2.0'
