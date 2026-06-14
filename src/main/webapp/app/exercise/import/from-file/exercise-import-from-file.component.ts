@@ -48,9 +48,8 @@ export class ExerciseImportFromFileComponent implements OnInit {
             return;
         }
 
-        const jsonRegex = new RegExp('.*.json');
         const zipEntries = await readZipEntries(this.fileForImport as File);
-        const jsonFiles = Object.keys(zipEntries).filter((fileName) => jsonRegex.test(fileName));
+        const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
         if (jsonFiles.length !== 1) {
             this.alertService.error('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
             return;

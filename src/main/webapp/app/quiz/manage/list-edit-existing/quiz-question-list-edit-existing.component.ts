@@ -196,6 +196,9 @@ export class QuizQuestionListEditExistingComponent {
         try {
             const zipEntries = await readZipEntries(this.importFile!);
             const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
+            if (jsonFiles.length === 0) {
+                throw new Error('No JSON file found in the ZIP archive.');
+            }
 
             const images = this.extractImagesFromZip(zipEntries);
             const jsonContent = strFromU8(zipEntries[jsonFiles[0]]);
@@ -210,7 +213,7 @@ export class QuizQuestionListEditExistingComponent {
         for (const [fileName, data] of Object.entries(zipEntries)) {
             if (!fileName.endsWith('.json')) {
                 const lastDotIndex = fileName.lastIndexOf('.');
-                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
+                const fileNameNoExtension = lastDotIndex === -1 ? fileName : fileName.substring(0, lastDotIndex);
                 const imageFile = new File([data], fileName);
                 images.set(fileNameNoExtension, imageFile);
             }
