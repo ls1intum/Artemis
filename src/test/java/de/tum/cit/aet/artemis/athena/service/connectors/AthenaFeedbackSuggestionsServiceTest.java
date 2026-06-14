@@ -73,6 +73,8 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     private ModelingSubmission modelingSubmission;
 
+    private Course autoCourse;
+
     @BeforeEach
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
@@ -80,8 +82,14 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         var course = new Course();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);
-        athenaConfig.setAutoFeedbackEnabled(true);
+        athenaConfig.setAutoFeedbackEnabled(false);
         course.setAthenaConfig(athenaConfig);
+
+        var autoConfig = new CourseAthenaConfig();
+        autoConfig.setGradingFeedbackEnabled(false);
+        autoConfig.setAutoFeedbackEnabled(true);
+        autoCourse = new Course();
+        autoCourse.setAthenaConfig(autoConfig);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setCourse(course);
@@ -202,6 +210,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsTextIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        textExercise.setCourse(autoCourse);
         var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
@@ -217,6 +226,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsProgrammingIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        programmingExercise.setCourse(autoCourse);
         var currentUser = ((StudentParticipation) programmingSubmission.getParticipation()).getStudent().orElseThrow();
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
@@ -234,6 +244,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsModelingIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        modelingExercise.setCourse(autoCourse);
         var currentUser = ((StudentParticipation) modelingSubmission.getParticipation()).getStudent().orElseThrow();
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
                 jsonPath("$.submission.id").value(modelingSubmission.getId()), jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
@@ -247,6 +258,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsTextTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        textExercise.setCourse(autoCourse);
         var teamParticipation = new StudentParticipation().exercise(textExercise);
         teamParticipation.setId(7L);
         var team = new Team();
@@ -274,6 +286,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsProgrammingTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        programmingExercise.setCourse(autoCourse);
         var teamParticipation = new ProgrammingExerciseStudentParticipation();
         teamParticipation.setExercise(programmingExercise);
         teamParticipation.setId(10L);
@@ -305,6 +318,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFeedbackSuggestionsModelingTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        modelingExercise.setCourse(autoCourse);
         var teamParticipation = new StudentParticipation().exercise(modelingExercise);
         teamParticipation.setId(16L);
         var team = new Team();
@@ -330,6 +344,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testFeedbackSuggestionsTextRejectsNoAiSelectionForNonGradedRequest() {
+        textExercise.setCourse(autoCourse);
         var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
         currentUser.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
 
@@ -339,6 +354,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testFeedbackSuggestionsTextRejectsMissingSelectionForNonGradedRequest() {
+        textExercise.setCourse(autoCourse);
         var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
         currentUser.setSelectedLLMUsage(null);
 
