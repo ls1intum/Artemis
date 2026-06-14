@@ -12,18 +12,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * Thin read DTO for listing {@link TextExercise} instances.
- * Omits course, participations, and other heavy associations.
+ * Thin read DTO for listing {@link TextExercise} instances (course/exercise list and the cross-course import search).
+ * Omits participations and other heavy associations, but carries a light {@code course} reference (id + title) so the
+ * client's {@code courseTitle} pipe can render the course column.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextExerciseListItemDTO(Long id, String title, String shortName, String type, ExerciseType exerciseType, ZonedDateTime releaseDate, ZonedDateTime dueDate,
-        ZonedDateTime assessmentDueDate, Double maxPoints, Set<String> categories, Set<GradingCriterionDTO> gradingCriteria, Long courseId, Long examId, String examTitle)
-        implements Serializable {
+        ZonedDateTime assessmentDueDate, Double maxPoints, Set<String> categories, Set<GradingCriterionDTO> gradingCriteria, Long courseId, CourseRefDTO course, Long examId,
+        String examTitle) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseListItemDTO} from the given {@link TextExercise}.
@@ -63,8 +65,12 @@ public record TextExerciseListItemDTO(Long id, String title, String shortName, S
             gradingCriterionDTOs = null;
         }
 
+        // Light course reference (id + title) so the client courseTitle pipe can render the course column in the list and
+        // the cross-course import search; resolves the course for both course and exam exercises.
+        CourseRefDTO course = CourseRefDTO.from(exercise.getCourseViaExerciseGroupOrCourseMember());
+
         return new TextExerciseListItemDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getCategories(), gradingCriterionDTOs,
-                courseId, examId, examTitle);
+                courseId, course, examId, examTitle);
     }
 }
