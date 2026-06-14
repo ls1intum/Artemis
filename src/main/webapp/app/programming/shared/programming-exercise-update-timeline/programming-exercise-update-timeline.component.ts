@@ -1,5 +1,5 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
-import { MODULE_FEATURE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -52,11 +52,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     assessmentDueDate = model<Dayjs | undefined>();
     exampleSolutionPublicationDate = model<Dayjs | undefined>();
     assessmentType = model<AssessmentType>();
-    allowFeedbackRequests = model<boolean>();
     setTestCaseVisibilityToAfterDueDate = model<boolean>();
     allowComplaintsForAutomaticAssessments = model<boolean>();
     releaseTestsWithExampleSolution = model<boolean>();
-    feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
     isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
@@ -68,7 +66,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
     isSemiAutomaticAssessmentToggleEnabled = computed(() => this.isExamMode() || this.isImport() || !!this.dueDate());
     isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
-    isFeedbackRequestsToggleEnabled = computed(() => this.computeIsFeedbackRequestsToggleEnabled());
     isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
     isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
 
@@ -77,7 +74,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     formValid = true;
     formEmpty = false;
     formValidChanges = new Subject<boolean>();
-    isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
     private previousAutomaticAfterDueDatePreviewRequest: AutomaticAfterDueDatePreviewRequest | undefined = undefined;
@@ -133,25 +129,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (this.assessmentType() === AssessmentType.SEMI_AUTOMATIC) {
                 this.allowComplaintsForAutomaticAssessments.set(false);
-                this.allowFeedbackRequests.set(false);
             } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);
-                this.allowFeedbackRequests.set(false);
-                this.feedbackSuggestionModule.set(undefined);
-            }
-        });
-        effect(() => {
-            if (this.allowFeedbackRequests()) {
-                this.assessmentDueDate.set(undefined);
-                if (!this.isLocalCIEnabled) {
-                    this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
-                }
-            }
-        });
-        effect(() => {
-            if (this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate() && this.allowFeedbackRequests()) {
-                this.allowFeedbackRequests.set(false);
             }
         });
         effect(() => {
@@ -244,13 +224,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         const isSemiAutomaticAssessmentToggleVisible = this.isSemiAutomaticAssessmentToggleVisible();
         const isSemiAutomaticAssessmentToggleEnabled = this.isSemiAutomaticAssessmentToggleEnabled();
         const assessmentTypeIsSemiAutomatic = this.assessmentType() === AssessmentType.SEMI_AUTOMATIC;
-        return (
-            isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests()
-        );
-    }
-
-    private computeIsFeedbackRequestsToggleEnabled(): boolean {
-        return this.assessmentType() === AssessmentType.SEMI_AUTOMATIC && !(this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate());
+        return isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode();
     }
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
