@@ -43,6 +43,7 @@ import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services
 type FileBrowserInternals = Omit<CodeEditorFileBrowserComponent, 'repositoryFiles'> & {
     repositoryFiles: WritableSignal<{ [fileName: string]: FileType } | undefined>;
     handleProblemStatementVisibility?: () => void;
+    initializeRepositoryFiles?: () => void;
 };
 const internals = (c: CodeEditorFileBrowserComponent): FileBrowserInternals => c as unknown as FileBrowserInternals;
 
@@ -259,6 +260,14 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         fixture.componentRef.setInput('isProblemStatementVisible', false);
         internals(comp).handleProblemStatementVisibility?.();
+
+        expect(comp.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.FILE);
+    });
+
+    it('preserves a real FILE entry named __problem_statement__ during initialization in hidden mode', () => {
+        comp.repositoryFiles.set({ [PROBLEM_STATEMENT_IDENTIFIER]: FileType.FILE });
+        fixture.componentRef.setInput('isProblemStatementVisible', false);
+        internals(comp).initializeRepositoryFiles?.();
 
         expect(comp.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.FILE);
     });

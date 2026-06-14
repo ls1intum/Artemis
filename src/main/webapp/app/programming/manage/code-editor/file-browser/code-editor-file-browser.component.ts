@@ -234,8 +234,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             if (!this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]) {
                 this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
             }
-        } else if (PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles()) {
-            // Ensure Problem Statement is removed when in repository view mode
+        } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
             this.repositoryFiles.update((files) => {
                 const updated = { ...files };
                 delete updated[PROBLEM_STATEMENT_IDENTIFIER];
