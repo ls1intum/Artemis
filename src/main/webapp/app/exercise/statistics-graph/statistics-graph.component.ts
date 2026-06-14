@@ -1,21 +1,24 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
-import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions } from 'app/shared-ui/chart/chart-options';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
-    styleUrls: ['../chart/vertical-bar-chart.scss'],
-    imports: [FaIconComponent, BarChartModule, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ChartModule, ArtemisTranslatePipe],
 })
 export class StatisticsGraphComponent {
     private service = inject(StatisticsService);
@@ -37,17 +40,24 @@ export class StatisticsGraphComponent {
     barChartLabels: string[] = [];
     dataForSpanType: number[];
 
-    // ngx
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    ngxColor: Color = {
-        name: 'Statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
-    };
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
     tooltipTranslation: string;
-    yScaleMax: number;
-    yAxisTickFormatting = yAxisTickFormatting;
+    readonly yScaleMax = signal<number | undefined>(undefined);
+
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE]);
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            yAxis: { max: this.yScaleMax(), tickFormatter: (value) => yAxisTickFormatting(String(value)) },
+            tooltip: {
+                label: (item) => `${this.translateService.instant(this.tooltipTranslation)}: ${item.parsed.y}`,
+            },
+            dataLabels: { formatter: (value) => `${value}` },
+        }),
+    );
+    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
+    readonly dataLabelsPlugin = [ChartDataLabels];
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
@@ -200,13 +210,13 @@ export class StatisticsGraphComponent {
     }
 
     /**
-     * Converts the data retrieved from the service to dedicated objects that can be interpreted by ngx-charts
-     * and pushes them to ngxData.
+     * Converts the data retrieved from the service to chart series entries
+     * and publishes them to the chart.
      * Then, computes the upper limit for the y-axis of the chart.
      */
     private pushToData(): void {
-        this.ngxData = this.dataForSpanType.map((score, index) => ({ name: this.barChartLabels[index], value: score }));
-        this.yScaleMax = Math.max(3, ...this.dataForSpanType);
+        this.chartEntries.set(this.dataForSpanType.map((score, index) => ({ name: this.barChartLabels[index], value: score })));
+        this.yScaleMax.set(Math.max(3, ...this.dataForSpanType));
     }
 
     /**
@@ -214,9 +224,6 @@ export class StatisticsGraphComponent {
      */
     private onSystemLanguageChange(): void {
         this.createLabels();
-        this.ngxData.forEach((dataPack, index) => {
-            dataPack.name = this.barChartLabels[index];
-        });
-        this.ngxData = [...this.ngxData];
+        this.chartEntries.update((entries) => entries.map((entry, index) => ({ name: this.barChartLabels[index], value: entry.value })));
     }
 }

@@ -292,14 +292,13 @@ describe('QuizStatisticComponent', () => {
         comp.totalParticipants = 100;
         comp.participants = 100;
 
-        let result = comp.bindFormatting(30);
+        // the data label formatter is wired into the chart options
+        const formatter = (comp.chartOptions().plugins as any).datalabels.formatter;
 
-        expect(result).toBe('30 (30%)');
+        expect(formatter(30)).toBe('30 (30%)');
 
         comp.totalParticipants = 0;
 
-        result = comp.bindFormatting(0);
-
-        expect(result).toBe('0 (0%)');
+        expect(formatter(0)).toBe('0 (0%)');
     });
 });
