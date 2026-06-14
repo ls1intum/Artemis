@@ -17,7 +17,6 @@ import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -180,15 +179,12 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.quizExercise().quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
     });
 
-    it('Updates quiz on changes', () => {
+    it('prepares the quiz entity on init', () => {
         const prepareEntitySpy = vi.spyOn(comp, 'prepareEntity');
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        comp.ngOnChanges({
-            quizExercise: { currentValue: quizExercise } as SimpleChange,
-        });
 
-        expect(prepareEntitySpy).toHaveBeenCalledTimes(2);
+        expect(prepareEntitySpy).toHaveBeenCalledOnce();
     });
 
     describe('Quiz question validation', () => {

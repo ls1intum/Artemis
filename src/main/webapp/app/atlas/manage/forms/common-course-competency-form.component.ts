@@ -1,4 +1,4 @@
-import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
@@ -29,7 +29,7 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
         MarkdownEditorMonacoComponent,
     ],
 })
-export class CommonCourseCompetencyFormComponent implements OnChanges {
+export class CommonCourseCompetencyFormComponent {
     private translateService = inject(TranslateService);
 
     formData = input.required<CourseCompetencyFormData>();
@@ -81,6 +81,12 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     }
 
     constructor() {
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        effect(() => {
+            if (this.isEditMode() && this.formData()) {
+                this.setFormValues(this.formData());
+            }
+        });
         effect((onCleanup) => {
             const titleCtrl = this.titleControl;
             const descCtrl = this.descriptionControl;
@@ -92,12 +98,6 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
                 onCleanup(() => subscription.unsubscribe());
             }
         });
-    }
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData());
-        }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {

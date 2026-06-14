@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, signal, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChildren } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -48,7 +48,7 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-ev
         ReEvaluateMultipleChoiceQuestionComponent,
     ],
 })
-export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
+export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnDestroy {
     private quizExerciseService = inject(QuizExerciseService);
     private route = inject(ActivatedRoute);
     private quizExercisePopupService = inject(QuizExercisePopupService);
@@ -83,14 +83,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         /** Initialize constants **/
         this.isSaving.set(false);
         this.duration = new Duration(0, 0);
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.quizExercise && changes.quizExercise.currentValue !== null) {
-            this.prepareEntity(this.quizExercise());
-            this.savedEntity = cloneDeep(this.quizExercise());
-            this.cacheValidation();
-        }
     }
 
     /**

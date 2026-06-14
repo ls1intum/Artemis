@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectorRef, SimpleChange } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
@@ -691,28 +691,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.onDurationChange();
                 expect(comp.quizExercise().duration).toBe(1530);
                 comp.isExamMode.set(false);
-            });
-        });
-
-        describe('ngOnChanges', () => {
-            it('should call init if there are changes on course or quiz exercise', () => {
-                const change = new SimpleChange(0, 1, false);
-                const initStub = vi.spyOn(comp, 'init').mockImplementation(() => {});
-
-                comp.ngOnChanges({ course: change });
-                expect(initStub).toHaveBeenCalledOnce();
-                initStub.mockClear();
-
-                comp.ngOnChanges({ quizExercise: change });
-                expect(initStub).toHaveBeenCalledOnce();
-                initStub.mockClear();
-
-                comp.ngOnChanges({ course: change, quizExercise: change });
-                expect(initStub).toHaveBeenCalledOnce();
-                initStub.mockClear();
-
-                comp.ngOnChanges({});
-                expect(initStub).not.toHaveBeenCalled();
             });
         });
 

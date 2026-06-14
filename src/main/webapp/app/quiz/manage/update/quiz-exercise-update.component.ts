@@ -1,18 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import {
-    ChangeDetectionStrategy,
-    Component,
-    DestroyRef,
-    HostListener,
-    OnChanges,
-    OnInit,
-    SimpleChanges,
-    ViewEncapsulation,
-    computed,
-    inject,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
@@ -124,7 +111,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         JsonPipe,
     ],
 })
-export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
+export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private quizExerciseService = inject(QuizExerciseService);
@@ -544,16 +531,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             if (idx >= 0) {
                 this.quizExercise().quizBatches!.splice(idx, 1);
             }
-        }
-    }
-
-    /**
-     * Apply updates for changed course and quizExercise
-     * @param changes the changes to apply
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.course || changes.quizExercise) {
-            this.init();
         }
     }
 
