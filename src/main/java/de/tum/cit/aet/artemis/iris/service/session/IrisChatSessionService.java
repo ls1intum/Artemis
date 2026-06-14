@@ -16,6 +16,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.text.LineBreakRendering;
 import org.commonmark.renderer.text.TextContentRenderer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -165,12 +166,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * not open live anywhere (app backgrounded/closed, or the chat closed in the web client).
      * <p>
      * The push notification is only sent when the triggering user message originated from the iOS app
-     * ({@link IrisMessageClientOrigin#IOS}). Messages sent from other clients (e.g. the web client) or
+     * ({@link ArtemisApp#IOS}). Messages sent from other clients (e.g. the web client or the Android app) or
      * event-triggered Iris responses (which have no client origin) never produce a push notification.
      */
     @Override
-    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message, IrisMessageClientOrigin clientOrigin) {
-        if (clientOrigin != IrisMessageClientOrigin.IOS) {
+    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
+        if (clientOrigin != ArtemisApp.IOS) {
             // The triggering message did not come from the iOS app — do not send a push notification.
             return;
         }

@@ -24,8 +24,8 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -48,18 +48,28 @@ import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTes
  * Integration tests for the push-notification flow that fires after an asynchronous Iris answer
  * (see {@code IrisChatSessionService#notifyUserOfIrisResponse}). Covers:
  * <ul>
- * <li>persisting the originating client ({@code X-Artemis-Client} header) on the user message,</li>
- * <li>creating an {@link IrisResponseNotification} only when the triggering message came from iOS and the
+ * <li>persisting the originating Artemis app (resolved from the request {@code User-Agent}) on the user message,</li>
+ * <li>creating an {@link IrisResponseNotification} only when the triggering message came from the iOS app and the
  * chat is not open anywhere,</li>
- * <li>suppressing the notification for non-iOS clients and while the session is open live.</li>
+ * <li>suppressing the notification for web browsers, the Android app and unrecognized clients, and while the session
+ * is open live.</li>
  * </ul>
- * The session-presence check is spied so both branches (open / not open) can be exercised deterministically.
+ * The originating app is detected exactly like the login-notification flow — from the standard {@code User-Agent}
+ * header — so no dedicated client header is required. The session-presence check is spied so both branches
+ * (open / not open) can be exercised deterministically.
  */
 class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTest {
 
     private static final String TEST_PREFIX = "irisresponsenotification";
 
-    private static final String CLIENT_HEADER = "X-Artemis-Client";
+    /** User-Agent sent by the native iOS app (format: "Artemis/<build> CFNetwork/<version> Darwin/<version>"). */
+    private static final String IOS_USER_AGENT = "Artemis/20250524013147 CFNetwork/3826.500.131 Darwin/24.5.0";
+
+    /** The Android app uses ktor (https://ktor.io/) as its HTTP client. */
+    private static final String ANDROID_USER_AGENT = "ktor-client";
+
+    /** A regular desktop browser User-Agent (recognized as a browser, i.e. not an Artemis app). */
+    private static final String BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0";
 
     private static final Short IRIS_RESPONSE_TYPE = (short) IrisResponseNotification.class.getAnnotation(CourseNotificationType.class).value();
 
@@ -94,7 +104,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     }
 
     // =========================================================================
-    // Originating-client persistence
+    // Originating-app persistence
     // =========================================================================
 
     @Test
@@ -103,49 +113,26 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
         IrisChatSession session = createSession("student1");
         mockChatResponse(_ -> pipelineDone.set(true));
 
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, clientHeader("ios"));
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED,
+                userAgentHeaders(IOS_USER_AGENT));
         await().until(pipelineDone::get);
 
-        assertThat(userMessageOrigin(session)).isEqualTo(IrisMessageClientOrigin.IOS);
+        assertThat(userMessageOrigin(session)).isEqualTo(ArtemisApp.IOS);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createMessage_persistsWebSenderOrigin() throws Exception {
-        IrisChatSession session = createSession("student1");
-        mockChatResponse(_ -> pipelineDone.set(true));
-
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, clientHeader("web"));
-        await().until(pipelineDone::get);
-
-        assertThat(userMessageOrigin(session)).isEqualTo(IrisMessageClientOrigin.WEB);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createMessage_persistsUnknownSenderOriginWhenHeaderMissing() throws Exception {
-        IrisChatSession session = createSession("student1");
-        mockChatResponse(_ -> pipelineDone.set(true));
-
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, clientHeader(null));
-        await().until(pipelineDone::get);
-
-        assertThat(userMessageOrigin(session)).isEqualTo(IrisMessageClientOrigin.UNKNOWN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void resendMessage_updatesSenderOriginFromHeader() throws Exception {
+    void resendMessage_updatesSenderOriginFromUserAgent() throws Exception {
         IrisChatSession session = createSession("student1");
         IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
-        userMessage.setSenderOrigin(IrisMessageClientOrigin.WEB);
+        userMessage.setSenderOrigin(ArtemisApp.ANDROID);
         irisMessageRepository.save(userMessage);
 
         mockChatResponse(_ -> pipelineDone.set(true));
-        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK, clientHeader("ios"));
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK, userAgentHeaders(IOS_USER_AGENT));
         await().until(pipelineDone::get);
 
-        assertThat(irisMessageRepository.findById(userMessage.getId()).orElseThrow().getSenderOrigin()).isEqualTo(IrisMessageClientOrigin.IOS);
+        assertThat(irisMessageRepository.findById(userMessage.getId()).orElseThrow().getSenderOrigin()).isEqualTo(ArtemisApp.IOS);
     }
 
     // =========================================================================
@@ -159,7 +146,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
         doReturn(false).when(irisSessionPresenceService).isSessionOpenAnywhere(anyString(), anyLong());
         long before = irisResponseNotificationCount();
 
-        runChatWithAssistantAnswer(session, "**Hello** _World_", "ios");
+        runChatWithAssistantAnswer(session, "**Hello** _World_", IOS_USER_AGENT);
 
         assertThat(irisResponseNotificationCount()).isEqualTo(before + 1);
         assertThat(latestNotificationParameter("messagePreview")).isEqualTo("Hello World");
@@ -172,26 +159,38 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
         doReturn(true).when(irisSessionPresenceService).isSessionOpenAnywhere(anyString(), anyLong());
         long before = irisResponseNotificationCount();
 
-        runChatWithAssistantAnswer(session, "Hello World", "ios");
+        runChatWithAssistantAnswer(session, "Hello World", IOS_USER_AGENT);
 
         assertThat(irisResponseNotificationCount()).isEqualTo(before);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void webMessage_doesNotCreateNotification() throws Exception {
+    void browserMessage_doesNotCreateNotification() throws Exception {
         IrisChatSession session = createSession("student1");
         doReturn(false).when(irisSessionPresenceService).isSessionOpenAnywhere(anyString(), anyLong());
         long before = irisResponseNotificationCount();
 
-        runChatWithAssistantAnswer(session, "Hello World", "web");
+        runChatWithAssistantAnswer(session, "Hello World", BROWSER_USER_AGENT);
 
         assertThat(irisResponseNotificationCount()).isEqualTo(before);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void messageWithoutClientHeader_doesNotCreateNotification() throws Exception {
+    void androidMessage_doesNotCreateNotification() throws Exception {
+        IrisChatSession session = createSession("student1");
+        doReturn(false).when(irisSessionPresenceService).isSessionOpenAnywhere(anyString(), anyLong());
+        long before = irisResponseNotificationCount();
+
+        runChatWithAssistantAnswer(session, "Hello World", ANDROID_USER_AGENT);
+
+        assertThat(irisResponseNotificationCount()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void messageWithoutUserAgent_doesNotCreateNotification() throws Exception {
         IrisChatSession session = createSession("student1");
         doReturn(false).when(irisSessionPresenceService).isSessionOpenAnywhere(anyString(), anyLong());
         long before = irisResponseNotificationCount();
@@ -211,19 +210,19 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     }
 
     /**
-     * Posts a user message with the given client header and lets the mocked Pyris pipeline answer with the given text,
-     * waiting until the answer (and the resulting notification side effect) has been processed.
+     * Posts a user message with the given {@code User-Agent} and lets the mocked Pyris pipeline answer with the given
+     * text, waiting until the answer (and the resulting notification side effect) has been processed.
      */
-    private void runChatWithAssistantAnswer(IrisChatSession session, String assistantAnswer, String clientHeader) throws Exception {
+    private void runChatWithAssistantAnswer(IrisChatSession session, String assistantAnswer, String userAgent) throws Exception {
         mockChatResponse(dto -> {
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), assistantAnswer, dto.initialStages()));
             pipelineDone.set(true);
         });
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, clientHeader(clientHeader));
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, userAgentHeaders(userAgent));
         await().until(pipelineDone::get);
     }
 
-    private IrisMessageClientOrigin userMessageOrigin(IrisChatSession session) {
+    private ArtemisApp userMessageOrigin(IrisChatSession session) {
         return irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().stream().filter(message -> message.getSender() == IrisMessageSender.USER)
                 .findFirst().orElseThrow().getSenderOrigin();
     }
@@ -239,10 +238,10 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
         return parameters.stream().filter(parameter -> parameter.getKey().equals(key)).map(CourseNotificationParameter::getValue).findFirst().orElseThrow();
     }
 
-    private HttpHeaders clientHeader(String value) {
+    private HttpHeaders userAgentHeaders(String userAgent) {
         HttpHeaders headers = new HttpHeaders();
-        if (value != null) {
-            headers.add(CLIENT_HEADER, value);
+        if (userAgent != null) {
+            headers.add(HttpHeaders.USER_AGENT, userAgent);
         }
         return headers;
     }

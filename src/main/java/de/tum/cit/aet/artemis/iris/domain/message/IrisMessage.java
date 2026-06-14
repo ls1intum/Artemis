@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 
@@ -56,13 +57,13 @@ public class IrisMessage extends DomainObject {
     private IrisMessageSender sender;
 
     /**
-     * The client a user message was sent from, or {@code null} for non-user messages (only set for user messages).
-     * Used to decide whether the (asynchronous) Iris response should be delivered as a push notification.
+     * The Artemis app a user message was sent from (iOS/Android), resolved from the request {@code User-Agent}.
+     * {@code null} for messages sent from a web browser, from an unrecognized client, or for non-user messages.
      */
     @Nullable
     @Column(name = "sender_origin")
     @Enumerated(EnumType.STRING)
-    private IrisMessageClientOrigin senderOrigin;
+    private ArtemisApp senderOrigin;
 
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -114,11 +115,11 @@ public class IrisMessage extends DomainObject {
     }
 
     @Nullable
-    public IrisMessageClientOrigin getSenderOrigin() {
+    public ArtemisApp getSenderOrigin() {
         return senderOrigin;
     }
 
-    public void setSenderOrigin(@Nullable IrisMessageClientOrigin senderOrigin) {
+    public void setSenderOrigin(@Nullable ArtemisApp senderOrigin) {
         this.senderOrigin = senderOrigin;
     }
 

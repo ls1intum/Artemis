@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,10 +19,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageClientOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -178,9 +179,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
-            // Resolve the client the triggering user message came from (persisted on that message) to decide on a push notification.
-            IrisMessageClientOrigin clientOrigin = job.userMessageId() == null ? null
-                    : irisMessageRepository.findById(job.userMessageId()).map(IrisMessage::getSenderOrigin).orElse(null);
+            ArtemisApp clientOrigin = job.userMessageId() == null ? null : irisMessageRepository.findById(job.userMessageId()).map(IrisMessage::getSenderOrigin).orElse(null);
             notifyUserOfIrisResponse(session, savedMessage, clientOrigin);
         }
         else {
@@ -240,9 +239,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param session      the chat session the message belongs to
      * @param message      the assistant message that was sent
-     * @param clientOrigin the client the triggering user message came from, or {@code null} if event-triggered (no user message)
+     * @param clientOrigin the Artemis app the triggering user message came from, or {@code null} if it came from a web
+     *                         browser / unrecognized client or the response was event-triggered (no user message)
      */
-    protected void notifyUserOfIrisResponse(S session, IrisMessage message, IrisMessageClientOrigin clientOrigin) {
+    protected void notifyUserOfIrisResponse(S session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
         // no-op by default
     }
 
