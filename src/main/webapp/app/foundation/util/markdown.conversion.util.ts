@@ -39,14 +39,13 @@ type MarkdownRenderRule = NonNullable<MarkdownIt['renderer']['rules']['fence']>;
  * highlight with the explicit language, and fall back to escaped HTML on any error).
  */
 function highlightWithHljs(md: MarkdownIt, code: string, language: string): string {
-    try {
-        if (language) {
-            return hljs.highlight(code, { language, ignoreIllegals: true }).value;
+    if (language) {
+        if (!hljs.getLanguage(language)) {
+            return md.utils.escapeHtml(code);
         }
-        return hljs.highlightAuto(code).value;
-    } catch {
-        return md.utils.escapeHtml(code);
+        return hljs.highlight(code, { language, ignoreIllegals: true }).value;
     }
+    return hljs.highlightAuto(code).value;
 }
 
 /**

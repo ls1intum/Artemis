@@ -21,6 +21,8 @@ export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-edi
 
 export const MAX_TAB_SIZE = 8;
 
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
@@ -1053,8 +1055,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     const lineContent = model.getLineContent(lineNumber);
 
                     const textBeforeCursor = lineContent.substring(0, column - 1);
-                    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-                    const graphemes = Array.from(segmenter.segment(textBeforeCursor), (segment) => segment.segment);
+                    const graphemes = Array.from(GRAPHEME_SEGMENTER.segment(textBeforeCursor), (segment) => segment.segment);
 
                     if (textBeforeCursor.length === 0) {
                         editor.trigger('keyboard', 'deleteLeft', null);
