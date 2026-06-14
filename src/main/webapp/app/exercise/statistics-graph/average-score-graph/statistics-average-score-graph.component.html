@@ -12,29 +12,8 @@
             (click)="switchTimeSpan(LEFT)"
             [class.hidden]="!(currentSize > MAX_SPAN_SIZE && currentPeriod > 0)"
         />
-        <div #containerRef class="col-lg-8 ps-0 chart-container">
-            <ngx-charts-bar-vertical
-                [roundEdges]="false"
-                [view]="[containerRef.offsetWidth, 300]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [yScaleMax]="100"
-                [xAxis]="true"
-                [yAxis]="true"
-                [yAxisTickFormatting]="yAxisTickFormatting"
-                [dataLabelFormatting]="formatDataLabel"
-                [showDataLabel]="true"
-                (select)="onSelect($event)"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ model.name }}</b> <br />
-                    <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span> <br />
-                    <b
-                        >{{ 'artemisApp.courseStatistics.exerciseType' | artemisTranslate }}:
-                        {{ 'artemisApp.courseStatistics.' + convertTypeForTooltip(model.name, model.value) | artemisTranslate }}</b
-                    >
-                </ng-template>
-            </ngx-charts-bar-vertical>
+        <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
+            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
         </div>
         <fa-icon
             [icon]="faArrowRight"

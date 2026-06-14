@@ -21,6 +21,6 @@
                 </h1>
             }
         </div>
-        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxDoughnutData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting" />
+        <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="200px" height="200px" />
     </div>
 </div>

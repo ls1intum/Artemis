@@ -1,8 +1,8 @@
 /**
  * Centralized animation providers for tests.
  *
- * Some third-party libraries (@swimlane/ngx-charts) internally use @angular/animations.
- * Until these libraries migrate to CSS animations, we need to provide animation support in tests.
+ * Some component tests still require @angular/animations providers. This was originally needed
+ * for @swimlane/ngx-charts and @swimlane/ngx-graph, both of which have been replaced.
  *
  * NOTE: As of PrimeNG 21 and Angular 21, PrimeNG components no longer require animation providers in tests.
  *
@@ -11,7 +11,7 @@
  * 2. It's easy to find and remove once no longer needed
  * 3. All tests import from a consistent location
  *
- * TODO: Remove this file once ngx-charts no longer requires @angular/animations
+ * TODO: Remove this file once no component tests require @angular/animations
  */
 
 // eslint-disable-next-line @typescript-eslint/no-deprecated
@@ -21,11 +21,8 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
  * Provides noop animation support for tests that use components requiring @angular/animations.
  * Use this in TestBed.configureTestingModule({ providers: [..., provideNoopAnimationsForTests()] })
  *
- * Required for:
- * - @swimlane/ngx-charts (uses @animationState synthetic property)
- *
  * NOT required for:
- * - PrimeNG components (Dialog, Popover, etc.) - as of PrimeNG 21
+ * - PrimeNG components (Dialog, Popover, Chart, etc.) - as of PrimeNG 21
  */
 export function provideNoopAnimationsForTests() {
     return provideNoopAnimations();
