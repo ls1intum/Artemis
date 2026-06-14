@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -13,7 +14,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 @JsonInclude()
 public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get();
+    private static final ObjectMapper mapper = JsonObjectMapper.get().copy().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
     /**
      * Deserializes a JSON string representation to a {@link BuildPlanPhasesDTO} object
