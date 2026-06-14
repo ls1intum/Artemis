@@ -306,7 +306,7 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(result!.reasonings.get(q)).toBe('Some reasoning.');
+            expect(result!.results.get(q)).toBe('Some reasoning.');
             expect(q.title).toBe('New Title');
             expect(q.text).toBe('New text?');
             expect(q.hint).toBe('New hint');
