@@ -90,6 +90,100 @@ This also includes getter functions. The only exception is the use of [signals](
 If you need more information/examples or methods to avoid function calls, have a look at this [article](https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa).
 </Callout>
 
+### Zoneless change detection & signal-based state
+
+The Artemis client runs **zoneless** ([`provideZonelessChangeDetection()`](https://angular.dev/guide/zoneless)). `zone.js` has been removed from the build, and `NgZone` is **banned** (a `no-restricted-imports` ESLint rule fails the build on any `import { NgZone } from '@angular/core'`). This changes the single most important rule about how you write components.
+
+<Callout variant={CalloutVariant.danger}>
+**Core rule: every component member that the template reads and that can change at runtime must be a signal (or `computed` / `input` / `model`).**
+
+Only values that are **constant** for the lifetime of the component (icons, enum references, injected services, configuration literals) may stay plain class fields. Everything else that the template binds to — and that you ever reassign or mutate — must be signal-backed, so the view re-renders automatically when it changes.
+</Callout>
+
+**Why.** With zone.js, Angular re-ran change detection after _every_ async event (any `setTimeout`, XHR, event, promise) and re-checked the whole component tree. Without it, Angular only schedules a re-render when something it can actually observe changes: a **signal read in a template updates**, an `async` pipe emits, a template event handler `(click)` runs, or code explicitly calls `markForCheck()`. A plain field that you reassign inside an async callback changes _nothing Angular is watching_, so the template keeps showing the old value. Background: [Angular zoneless guide](https://angular.dev/guide/zoneless), [Angular signals guide](https://angular.dev/guide/signals).
+
+**The bug class to avoid.** A plain, template-bound field mutated inside an async callback (HTTP `subscribe`, WebSocket, `setTimeout`/`setInterval`, promise `then`, an observer) will silently **not** re-render under zoneless:
+
+```ts
+// Don't - plain field set in an async callback never triggers a re-render under zoneless
+@Component({ template: `<span>{{ title }}</span>` })
+export class ExampleComponent implements OnInit {
+    title = '';
+    ngOnInit() {
+        this.service.getTitle().subscribe((t) => (this.title = t)); // view stays empty
+    }
+}
+
+// Do - a signal write schedules change detection automatically
+@Component({ template: `<span>{{ title() }}</span>` })
+export class ExampleComponent implements OnInit {
+    readonly title = signal('');
+    ngOnInit() {
+        this.service.getTitle().subscribe((t) => this.title.set(t)); // view updates
+    }
+}
+```
+
+This bug is invisible to unit tests — they call `fixture.detectChanges()` manually — so **passing Vitest does not prove zoneless-correctness**. The AOT build (`pnpm run webapp:build`) type-checks templates and catches most signal-vs-value slips (e.g. binding the signal `title` where a `string` input is expected), but it cannot catch every missing `()`; the **E2E (Playwright) suite is the real arbiter** for "does it actually re-render in the running app".
+
+**Prefer `toSignal()` for Observable-backed state.** When a value comes straight from an `Observable` (an HTTP call, a store selector, a service stream) and the template only reads it, convert the stream to a signal with [`toSignal()`](https://angular.dev/api/core/rxjs-interop/toSignal) instead of subscribing and calling `.set()` by hand — it wires up change detection and unsubscribes automatically:
+
+```ts
+// instead of: subscribe + this.title.set(...) in ngOnInit
+readonly title = toSignal(this.service.getTitle(), { initialValue: '' });
+```
+
+**Derive, don't recompute — use `computed`.** Any value that is a pure function of other signals must be a `computed`, never a field you keep in sync by hand. It is lazy, memoised, and can never go stale:
+
+```ts
+readonly exercise = input.required<Exercise>();
+readonly isProgramming = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
+readonly maxPoints = computed(() => this.exercise().maxPoints ?? 0);
+```
+
+**Update collections and objects immutably.** A signal only notifies when its reference changes. Mutating an array/`Map`/object held in a signal **in place** changes nothing Angular observes — always write a fresh reference:
+
+```ts
+// Don't - in-place mutation; the signal reference is unchanged, no re-render
+this.items().push(newItem);
+this.lookup().set(key, value);
+
+// Do - replace with a new reference
+this.items.update((items) => [...items, newItem]);
+this.lookup.update((map) => new Map(map).set(key, value));
+```
+
+**Two-way binding to deep entity objects (`[(ngModel)]`).** A signal cannot back a `[(ngModel)]` on a nested object property directly. Use a **getter/setter facade over a backing signal** — the setter publishes through the signal (scheduling change detection) while the getter keeps the plain API the template and `ngModel` expect:
+
+```ts
+private readonly _course = signal<Course>(new Course());
+get course(): Course {
+    return this._course();
+}
+set course(course: Course) {
+    this._course.set(course); // async assignment routes through the setter → re-render
+}
+```
+
+**Inputs, model, two-way state, and view queries are signals too.** Use `input()` / `input.required()`, [`model()`](https://angular.dev/api/core/model) for two-way bindings, [`viewChild()` / `viewChildren()` / `contentChild()`](https://angular.dev/guide/components/queries), and [`linkedSignal()`](https://angular.dev/guide/signals/linked-signal) for a derived value that can also be set locally (see the decorator rules above).
+
+**Reach for `effect()` last.** [Effects](https://angular.dev/guide/signals/effect) are for syncing signal state _out_ to non-reactive APIs (imperative third-party libraries, the DOM, logging) — not for deriving state (use `computed`) and not for general reactivity. An `effect` that reads a signal and also writes another signal it reads will re-trigger itself forever; if an effect must both read and write, read its triggers explicitly and wrap the writes in [`untracked()`](https://angular.dev/api/core/untracked). To run code once **after** the view has rendered (e.g. measuring the DOM), use [`afterNextRender()`](https://angular.dev/api/core/afterNextRender) rather than `setTimeout` — it self-schedules a change-detection tick under zoneless.
+
+**The handful of legitimate non-signal cases** (an impure self-updating pipe such as a time-ago pipe; CD on dynamically injected components living outside the template tree) require an explicit, commented justification. If you ever think you need `NgZone`, you don't — it is a no-op under zoneless and is banned.
+
+| Member                                          | Signal API                                          |
+| ----------------------------------------------- | --------------------------------------------------- |
+| Local mutable state read by the template        | `signal()` + `.set()` / `.update()`                 |
+| Value derived from other signals/inputs         | `computed()`                                        |
+| Component input                                 | `input()` / `input.required()`                      |
+| Two-way bound input                             | `model()`                                           |
+| Derived value that is also locally settable     | `linkedSignal()`                                    |
+| `@ViewChild` / `@ViewChildren` / `@ContentChild` | `viewChild()` / `viewChildren()` / `contentChild()` |
+| Sync state to a non-reactive API (rare)         | `effect()`                                          |
+| Constant (icon, enum, injected service)         | plain `readonly` field — no signal needed           |
+
+Reference migration: [PR #12872 (zoneless migration)](https://github.com/ls1intum/Artemis/pull/12872). Further reading: [Angular signals](https://angular.dev/guide/signals), [zoneless](https://angular.dev/guide/zoneless), [signal queries](https://angular.dev/guide/components/queries), [linkedSignal](https://angular.dev/guide/signals/linked-signal), [signal-input migration](https://angular.dev/reference/migrations/signal-inputs).
+
 ### Reacting to input changes & lifecycle hooks
 
 Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based components.
