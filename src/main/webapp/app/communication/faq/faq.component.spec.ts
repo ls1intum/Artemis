@@ -288,7 +288,7 @@ describe('FaqComponent', () => {
             activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;
         const irisSettingsResponse = {
-            courseId: faqComponent.courseId,
+            courseId: faqComponent.courseId(),
             settings: {
                 enabled: true,
                 customInstructions: '',
@@ -302,7 +302,7 @@ describe('FaqComponent', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId());
         expect(faqComponent.irisEnabled()).toBe(true);
     });
 });

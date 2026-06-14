@@ -28,7 +28,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     // html properties
     SpanType = SpanType;
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.ACTIVE_TUTORS, Graphs.CREATED_RESULTS, Graphs.CREATED_FEEDBACKS];
-    currentSpan: SpanType = SpanType.WEEK;
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
     paramSub: Subscription;
 
@@ -52,6 +52,6 @@ export class ExerciseStatisticsComponent implements OnInit {
     }
 
     onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
+        this.currentSpan.set(span);
     }
 }

@@ -110,11 +110,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private athenaResultUpdateListener?: Subscription;
 
     readonly participation = signal<StudentParticipation>(undefined!);
-    isOwnerOfParticipation: boolean;
+    readonly isOwnerOfParticipation = signal<boolean>(undefined!);
 
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
     readonly modelingParticipationHeader = signal<StudentParticipation>(undefined!);
-    modelingExerciseHeader: ModelingExercise;
+    readonly modelingExerciseHeader = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
@@ -124,11 +124,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly submission = signal<ModelingSubmission>(undefined!);
     submissionId: number | undefined;
     resultId: number | undefined;
-    sortedSubmissionHistory: ModelingSubmission[];
+    readonly sortedSubmissionHistory = signal<ModelingSubmission[]>(undefined!);
     readonly sortedResultHistory = signal<Result[]>([]);
 
     readonly assessmentResult = signal<Result | undefined>(undefined);
-    assessmentsNames: AssessmentNamesForModelId = {};
+    readonly assessmentsNames = signal<AssessmentNamesForModelId>({});
     totalScore: number;
 
     readonly umlModel = signal<UMLModel>(undefined!); // input model for Apollon
@@ -146,10 +146,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     readonly isLoading = signal(true);
-    isLate: boolean; // indicates if the submission is late
+    readonly isLate = signal<boolean>(undefined!); // indicates if the submission is late
     readonly isGeneratingFeedback = signal(false);
     ComplaintType = ComplaintType;
-    examMode = false;
+    readonly examMode = signal(false);
 
     // submission sync with team members
     private submissionChange = new Subject<ModelingSubmission>();
@@ -241,17 +241,19 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 return of([]);
             }),
             tap((submissions: ModelingSubmission[]) => {
-                this.sortedSubmissionHistory = submissions.sort((a, b) => {
-                    const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
-                    const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
+                this.sortedSubmissionHistory.set(
+                    submissions.sort((a, b) => {
+                        const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
+                        const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
 
-                    // Use the latest result's completionDate for comparison
-                    const dateA = latestResultA?.completionDate ? dayjs(latestResultA.completionDate).valueOf() : 0;
-                    const dateB = latestResultB?.completionDate ? dayjs(latestResultB.completionDate).valueOf() : 0;
+                        // Use the latest result's completionDate for comparison
+                        const dateA = latestResultA?.completionDate ? dayjs(latestResultA.completionDate).valueOf() : 0;
+                        const dateB = latestResultB?.completionDate ? dayjs(latestResultB.completionDate).valueOf() : 0;
 
-                    return dateA - dateB;
-                });
-                const sortedResultHistory = this.sortedSubmissionHistory
+                        return dateA - dateB;
+                    }),
+                );
+                const sortedResultHistory = this.sortedSubmissionHistory()
                     .map((submission) => {
                         let latestResult: Result | undefined; // Initialize latestResult
 
@@ -323,14 +325,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // In the header we always want to display the latest submission, even when we are viewing a specific submission
         this.modelingParticipationHeader.set(modelingSubmission.participation as StudentParticipation);
         this.modelingParticipationHeader().submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
-        this.modelingExerciseHeader = this.modelingParticipationHeader().exercise as ModelingExercise;
-        if (this.modelingExerciseHeader) {
-            this.modelingExerciseHeader.studentParticipations = [this.participation()];
+        const modelingExerciseHeader = this.modelingParticipationHeader().exercise as ModelingExercise;
+        if (modelingExerciseHeader) {
+            modelingExerciseHeader.studentParticipations = [this.participation()];
         }
+        this.modelingExerciseHeader.set(modelingExerciseHeader);
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
-        if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory) {
-            const matchingSubmission = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId);
+        if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory()) {
+            const matchingSubmission = this.sortedSubmissionHistory().find((submission) => submission.id === this.submissionId);
 
             if (matchingSubmission) {
                 modelingSubmission = matchingSubmission;
@@ -347,7 +350,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation.set(modelingSubmission.participation as StudentParticipation);
-        this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation());
+        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
 
         // reconnect participation <--> submission
         this.participation().submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
@@ -355,17 +358,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.modelingExercise.set(this.participation().exercise as ModelingExercise);
         this.course.set(getCourseFromExercise(this.modelingExercise()));
         this.modelingExercise().studentParticipations = [this.participation()];
-        this.examMode = !!this.modelingExercise().exerciseGroup;
+        this.examMode.set(!!this.modelingExercise().exerciseGroup);
         if (this.modelingExercise().diagramType == undefined) {
             this.modelingExercise().diagramType = UMLDiagramType.ClassDiagram;
         }
         // checks if the student started the exercise after the due date
-        this.isLate =
+        this.isLate.set(
             this.modelingExercise() &&
-            !!this.modelingExercise().dueDate &&
-            !!this.participation().initializationDate &&
-            !this.participation().testRun &&
-            dayjs(this.participation().initializationDate).isAfter(getExerciseDueDate(this.modelingExercise(), this.participation()));
+                !!this.modelingExercise().dueDate &&
+                !!this.participation().initializationDate &&
+                !this.participation().testRun &&
+                dayjs(this.participation().initializationDate).isAfter(getExerciseDueDate(this.modelingExercise(), this.participation())),
+        );
 
         this.isAfterAssessmentDueDate = !this.modelingExercise().assessmentDueDate || dayjs().isAfter(this.modelingExercise().assessmentDueDate);
 
@@ -655,13 +659,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission().participation!.submissions = [this.submission()];
                     this.participationWebsocketService.addParticipation(this.participation(), this.modelingExercise());
                     this.modelingExercise().studentParticipations = [this.participation()];
-                    if (this.modelingExerciseHeader) {
-                        this.modelingExerciseHeader.studentParticipations = [this.participation()];
+                    if (this.modelingExerciseHeader()) {
+                        this.modelingExerciseHeader().studentParticipations = [this.participation()];
                     }
                     this.result.set(getLatestSubmissionResult(this.submission()));
                     this.retryStarted.set(false);
 
-                    if (this.isLate) {
+                    if (this.isLate()) {
                         this.alertService.warning('entity.action.submitDueDateMissedAlert');
                     } else {
                         this.alertService.success('entity.action.submitSuccessfulAlert');
@@ -682,7 +686,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.participation().exercise = this.modelingExercise();
                     this.modelingExercise().studentParticipations = [this.participation()];
                     this.result.set(getLatestSubmissionResult(this.submission()));
-                    if (this.isLate) {
+                    if (this.isLate()) {
                         this.alertService.warning('artemisApp.modelingEditor.submitDueDateMissed');
                     } else {
                         this.alertService.success('artemisApp.modelingEditor.submitSuccessful');
@@ -814,7 +818,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private initializeAssessmentInfo(): void {
         const assessmentResult = this.assessmentResult();
         if (assessmentResult?.feedbacks && this.umlModel()) {
-            this.assessmentsNames = getNamesForAssessments(assessmentResult, this.umlModel());
+            this.assessmentsNames.set(getNamesForAssessments(assessmentResult, this.umlModel()));
             let totalScore = 0;
             for (const feedback of assessmentResult.feedbacks) {
                 totalScore += feedback.credits!;
@@ -903,11 +907,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return this.modelingExercise() && !this.examMode && (!hasExerciseDueDatePassed(this.modelingExercise(), this.participation()) || !!this.participation()?.testRun);
+        return this.modelingExercise() && !this.examMode() && (!hasExerciseDueDatePassed(this.modelingExercise(), this.participation()) || !!this.participation()?.testRun);
     }
 
     get submitButtonTooltip(): string {
-        if (!this.isLate) {
+        if (!this.isLate()) {
             if (this.isActive && !this.modelingExercise().dueDate) {
                 return 'entity.action.submitNoDueDateTooltip';
             } else if (this.isActive) {

@@ -56,12 +56,12 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     selectedUsers: UserPublicInfoDTO[] = [];
     readonly combinedOptions = signal<CombinedOption[]>([]);
     readonly filteredOptions = signal<CombinedOption[]>([]);
-    defaultActions: TextEditorAction[];
+    readonly defaultActions = signal<TextEditorAction[]>([]);
     searchTerm: string = '';
     newPost = new Post();
     isInputFocused = false;
-    showDropdown = false;
-    showFullForwardedMessage = false;
+    readonly showDropdown = signal(false);
+    readonly showFullForwardedMessage = signal(false);
     readonly isContentLong = signal(false);
 
     protected dialogRef = inject(DynamicDialogRef);
@@ -93,7 +93,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             }
         }
         this.filteredChannels = this.channels() || [];
-        this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
+        this.defaultActions.set([new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()]);
         this.filteredUsers.set(this.users());
 
         // Combine users and channels into a single options list
@@ -136,7 +136,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     /** Toggles whether full forwarded message content should be shown */
     toggleShowFullForwardedMessage(): void {
-        this.showFullForwardedMessage = !this.showFullForwardedMessage;
+        this.showFullForwardedMessage.update((value) => !value);
     }
 
     /** Updates content of the new post with editor input */
@@ -231,7 +231,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
         this.searchTerm = '';
         this.filterOptions();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.focusInput();
     }
 
@@ -280,13 +280,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     /** Sets input focus and opens dropdown */
     onInputFocus(): void {
         this.isInputFocused = true;
-        this.showDropdown = true;
+        this.showDropdown.set(true);
     }
 
     /** Hides dropdown when input loses focus */
     onInputBlur(): void {
         this.isInputFocused = false;
-        this.showDropdown = false;
+        this.showDropdown.set(false);
     }
 
     /** Programmatically focuses on the search input field */
@@ -302,7 +302,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
-            this.showDropdown = false;
+            this.showDropdown.set(false);
         }
     }
 

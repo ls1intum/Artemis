@@ -207,7 +207,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
     globalSearchComponent = viewChild<ConversationGlobalSearchComponent>(ConversationGlobalSearchComponent);
 
-    courseWideSearchConfig: CourseWideSearchConfig;
+    // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
+    // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
+    // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!);
+    get courseWideSearchConfig(): CourseWideSearchConfig {
+        return this._courseWideSearchConfig();
+    }
+    set courseWideSearchConfig(value: CourseWideSearchConfig) {
+        this._courseWideSearchConfig.set(value);
+    }
+    private commitCourseWideSearchConfig(): void {
+        this._courseWideSearchConfig.update((config) => Object.assign(new CourseWideSearchConfig(), config));
+    }
 
     // Icons
     faPlus = faPlus;
@@ -490,6 +502,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
         this.courseWideSearchConfig.selectedAuthors = [];
         this.courseWideSearchConfig.selectedConversations = [];
+        this.commitCourseWideSearchConfig();
     }
 
     initializeSidebarAccordions() {
@@ -516,6 +529,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
         this.courseWideSearch()?.onSearch();
     }
 
@@ -526,6 +540,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
         this.courseWideSearch()?.onSearchConfigSelectionChange();
     }
 
@@ -533,6 +548,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.searchTerm = '';
         this.courseWideSearchConfig.selectedConversations = [];
         this.courseWideSearchConfig.selectedAuthors = [];
+        this.commitCourseWideSearchConfig();
 
         if (this.previousConversationBeforeSearch?.id) {
             this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);

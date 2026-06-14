@@ -168,7 +168,7 @@ describe('NavbarComponent', () => {
         const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
-        component.currAccount = undefined;
+        component.currAccount.set(undefined);
         fixture.changeDetectorRef.detectChanges();
         component.changeLanguage('elvish');
 
@@ -329,10 +329,10 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.gitCommitId).toBe('95ef2a');
-        expect(component.gitBranchName).toBe('code-button');
-        expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
-        expect(component.gitUsername).toBe('Max Musterman');
+        expect(component.gitCommitId()).toBe('95ef2a');
+        expect(component.gitBranchName()).toBe('code-button');
+        expect(component.gitTimestamp()).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
+        expect(component.gitUsername()).toBe('Max Musterman');
     });
 
     it('should set the exam active state correctly', async () => {
@@ -864,15 +864,15 @@ describe('NavbarComponent', () => {
         const accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
 
-        component.currAccount = account as User;
+        component.currAccount.set(account as User);
         window['innerWidth'] = width;
 
         component.onResize();
 
         expect({
-            isCollapsed: component.isCollapsed,
-            isNavbarNavVertical: component.isNavbarNavVertical,
-            iconsMovedToMenu: component.iconsMovedToMenu,
+            isCollapsed: component.isCollapsed(),
+            isNavbarNavVertical: component.isNavbarNavVertical(),
+            iconsMovedToMenu: component.iconsMovedToMenu(),
         }).toEqual(expected);
     });
 });

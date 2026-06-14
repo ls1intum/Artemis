@@ -47,18 +47,18 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     readonly isSaving = signal(false);
     readonly tasks = signal<ProgrammingExerciseTask[]>([]);
-    allTasksExpandedSubject: Subject<boolean>;
+    readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
 
     currentSort: Sort | undefined;
 
-    isExamExercise = false;
+    readonly isExamExercise = signal(false);
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
 
     ngOnInit(): void {
-        this.allTasksExpandedSubject = new Subject();
+        this.allTasksExpandedSubject.set(new Subject());
         this.gradingStatisticsObservable().subscribe((gradingStatistics) => {
             this.taskService.configure(this.exercise(), this.course(), gradingStatistics).subscribe(this.updateTasks);
         });
@@ -68,7 +68,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             descending: true,
         };
 
-        this.isExamExercise = isExamExercise(this.exercise());
+        this.isExamExercise.set(isExamExercise(this.exercise()));
     }
 
     updateTasks = () => {
@@ -94,7 +94,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     toggleAllTasksExpanded = (value: boolean) => {
-        this.allTasksExpandedSubject.next(value);
+        this.allTasksExpandedSubject().next(value);
     };
 
     changeSort = (by: Sort['by']) => {

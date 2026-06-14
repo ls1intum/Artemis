@@ -52,7 +52,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     examId: number;
     isExamMode: boolean;
 
-    baseUrl: string;
+    readonly baseUrl = signal<string>(undefined!);
     readonly isEvaluatingQuizExercise = signal(false);
 
     isDetailPage = input(false);
@@ -71,9 +71,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
         }
 
         if (this.isExamMode) {
-            this.baseUrl = `/course-management/${this.courseId}/exams/${this.examId}/exercise-groups/${groupId}`;
+            this.baseUrl.set(`/course-management/${this.courseId}/exams/${this.examId}/exercise-groups/${groupId}`);
         } else {
-            this.baseUrl = `/course-management/${this.courseId}`;
+            this.baseUrl.set(`/course-management/${this.courseId}`);
         }
     }
 

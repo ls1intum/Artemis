@@ -36,7 +36,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     examId?: number;
     readonly plagiarismCases = signal<PlagiarismCase[]>([]);
     readonly groupedPlagiarismCases = signal<GroupedPlagiarismCases>({});
@@ -63,11 +63,11 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const plagiarismCasesForInstructor$ = this.examId
-            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
-            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
+            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId(), this.examId)
+            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId());
 
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {

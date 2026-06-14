@@ -93,8 +93,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     readonly filteredProgrammingExercises = signal<ProgrammingExercise[]>([]);
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
-    localCIEnabled = true;
-    onlineIdeEnabled = false;
+    readonly localCIEnabled = signal(true);
+    readonly onlineIdeEnabled = signal(false);
     numberOfResultsOfSolutionParticipation = 0;
     numberOfResultsOfTemplateParticipation = 0;
 
@@ -130,8 +130,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 const programmingExercises = res.body!;
                 const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
-                this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
+                this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+                this.onlineIdeEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
                 // reconnect exercise with course
                 programmingExercises.forEach((exercise) => {
                     exercise.course = this.courseContext();
@@ -139,14 +139,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
                     this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;
                     if (exercise.projectKey) {
-                        if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled) {
+                        if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled()) {
                             exercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate!,
                                 exercise.projectKey,
                                 exercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        if (exercise.templateParticipation?.buildPlanId && !this.localCIEnabled) {
+                        if (exercise.templateParticipation?.buildPlanId && !this.localCIEnabled()) {
                             exercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate!,
                                 exercise.projectKey,

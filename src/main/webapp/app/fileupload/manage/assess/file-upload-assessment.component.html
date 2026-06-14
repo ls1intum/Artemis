@@ -7,7 +7,7 @@
     [exerciseDashboardLink]="exerciseDashboardLink()"
     [canOverride]="canOverride"
     [result]="result()"
-    [assessmentsAreValid]="assessmentsAreValid"
+    [assessmentsAreValid]="assessmentsAreValid()"
     [complaint]="complaint()"
     [exercise]="exercise()!"
     [submission]="submission()"
@@ -27,7 +27,7 @@
                 <span left-header>{{ exercise()?.title ?? '' }}</span>
                 <ng-container left-header>
                     @if (exercise()?.maxPoints !== undefined) {
-                        <jhi-score-display [score]="totalScore" [maxPoints]="exercise()!.maxPoints!" [maxBonusPoints]="exercise()!.bonusPoints ?? 0" [course]="course()" />
+                        <jhi-score-display [score]="totalScore()" [maxPoints]="exercise()!.maxPoints!" [maxBonusPoints]="exercise()!.bonusPoints ?? 0" [course]="course()" />
                     }
                 </ng-container>
                 <div left-body>
@@ -49,8 +49,8 @@
         }
         <!--Feedbacks-->
         <div class="row mt-3">
-            @if (invalidError) {
-                <div class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
+            @if (invalidError()) {
+                <div class="col-8 alert alert-danger" role="alert">{{ invalidError() | artemisTranslate }}</div>
             }
             @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback

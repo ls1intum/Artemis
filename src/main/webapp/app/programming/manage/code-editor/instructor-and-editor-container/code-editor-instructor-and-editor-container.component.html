@@ -507,9 +507,9 @@
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
                         <button pButton type="button" severity="secondary" outlined class="consistency-issue-nav-btn" disabled>
-                            @if (selectedIssue) {
-                                <fa-icon [icon]="getSeverityIcon(selectedIssue.severity)" [class]="getSeverityColor(selectedIssue.severity) + ' me-1'" />
-                                <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue.category"></span>
+                            @if (selectedIssue()) {
+                                <fa-icon [icon]="getSeverityIcon(selectedIssue()!.severity)" [class]="getSeverityColor(selectedIssue()!.severity) + ' me-1'" />
+                                <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue()!.category"></span>
                                 <span class="ms-1 fw-bold">({{ currentGlobalIndex }} / {{ totalLocationsCount() }})</span>
                             } @else {
                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>

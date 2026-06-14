@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -25,12 +25,12 @@ export class LinkPreviewComponent implements OnInit {
     readonly isReply = input<boolean>();
     readonly multiple = input<boolean>();
 
-    isAuthorOfOriginalPost: boolean;
+    readonly isAuthorOfOriginalPost = signal<boolean>(undefined!);
 
     faTimes = faTimes;
 
     ngOnInit() {
-        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting()!);
+        this.isAuthorOfOriginalPost.set(this.metisService.metisUserIsAuthorOfPosting(this.posting()!));
     }
 
     /**

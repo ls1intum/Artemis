@@ -1,4 +1,4 @@
-@if (isTestRun) {
+@if (isTestRun()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
 <div id="exam-results-title">
@@ -11,7 +11,7 @@
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
         </button>
         @if (studentExam()) {
-            <jhi-exam-request-ai-feedback-button [courseId]="courseId" [studentExam]="studentExam()" [testExamConduction]="testExamConduction" />
+            <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
         }
     </h2>
 </div>
@@ -25,7 +25,7 @@
         <jhi-exam-general-information
             [exam]="studentExam().exam!"
             [studentExam]="studentExam()"
-            [reviewIsOpen]="(studentExam()?.exam || false) && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+            [reviewIsOpen]="(studentExam()?.exam || false) && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun()"
         />
     </div>
 }
@@ -36,7 +36,7 @@
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"
             [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed()"
             [exerciseInfos]="exerciseInfos()"
-            [isTestRun]="isTestRun"
+            [isTestRun]="isTestRun()"
         />
     </div>
 }
@@ -65,7 +65,7 @@
                             <a
                                 class="btn ms-2 float-end"
                                 [ngClass]="plagiarismCaseInfos()[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'btn-info' : 'btn-danger'"
-                                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfos()[exercise.id!]!.id]"
+                                [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfos()[exercise.id!]!.id]"
                             >
                                 <span
                                     [jhiTranslate]="
@@ -77,7 +77,7 @@
                                 </span>
                             </a>
                         }
-                        @if (exampleSolutionPublished) {
+                        @if (exampleSolutionPublished()) {
                             @if (exerciseInfos()[exercise.id!].displayExampleSolution) {
                                 <span class="alert alert-info p-1" jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"></span>
                             }
@@ -168,7 +168,7 @@
                                 @if (
                                     exerciseInfos()[exercise.id!]?.submission &&
                                     exercise.type !== QUIZ &&
-                                    isAfterStudentReviewStart &&
+                                    isAfterStudentReviewStart() &&
                                     exerciseInfos()[exercise.id!]?.submission?.submitted
                                 ) {
                                     <jhi-complaint-student-view
@@ -176,8 +176,8 @@
                                         [exercise]="exercise"
                                         [participation]="exerciseInfos()[exercise.id!]!.participation!"
                                         [result]="exerciseInfos()[exercise.id!]!.participation!.submissions![0].results?.[0]"
-                                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                                        [testRun]="isTestRun"
+                                        [exam]="examWithOnlyIdAndStudentReviewPeriod()"
+                                        [testRun]="isTestRun()"
                                     />
                                 }
                             }
@@ -194,9 +194,9 @@
                         <jhi-programming-exam-summary
                             [exercise]="exercise"
                             [participation]="exerciseInfos()[exercise.id!]!.participation!"
-                            [isTestRun]="isTestRun"
-                            [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                            [isAfterStudentReviewStart]="isAfterStudentReviewStart"
+                            [isTestRun]="isTestRun()"
+                            [exam]="examWithOnlyIdAndStudentReviewPeriod()"
+                            [isAfterStudentReviewStart]="isAfterStudentReviewStart()"
                             [resultsPublished]="resultsArePublished"
                             [isPrinting]="isPrinting()"
                             [isAfterResultsArePublished]="resultsArePublished"

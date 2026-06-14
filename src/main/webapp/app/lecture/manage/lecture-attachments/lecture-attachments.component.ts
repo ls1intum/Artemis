@@ -71,10 +71,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
     attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
     attachmentFile = signal<File | undefined>(undefined);
-    isDownloadingAttachmentLink?: string;
+    readonly isDownloadingAttachmentLink = signal<string | undefined>(undefined);
     notificationText?: string;
-    erroredFile?: File;
-    errorMessage?: string;
+    readonly erroredFile = signal<File | undefined>(undefined);
+    readonly errorMessage = signal<string | undefined>(undefined);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -164,8 +164,8 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     private handleFailedUpload(error: HttpErrorResponse): void {
-        this.errorMessage = error.message;
-        this.erroredFile = this.attachmentFile();
+        this.errorMessage.set(error.message);
+        this.erroredFile.set(this.attachmentFile());
         const fileInputEl = this.fileInput();
         if (fileInputEl) {
             fileInputEl.nativeElement.value = '';
@@ -210,7 +210,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             this.resetAttachment();
         }
         this.attachmentToBeUpdatedOrCreated.set(undefined);
-        this.erroredFile = undefined;
+        this.erroredFile.set(undefined);
         this.resetAttachmentFormVariables();
     }
 
@@ -233,10 +233,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     downloadAttachment(downloadName: string, downloadUrl: string): void {
-        if (!this.isDownloadingAttachmentLink) {
-            this.isDownloadingAttachmentLink = downloadUrl;
+        if (!this.isDownloadingAttachmentLink()) {
+            this.isDownloadingAttachmentLink.set(downloadUrl);
             this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
-            this.isDownloadingAttachmentLink = undefined;
+            this.isDownloadingAttachmentLink.set(undefined);
         }
     }
 

@@ -158,7 +158,7 @@ describe('RatingComponent', () => {
         });
 
         it('should return', () => {
-            ratingComponent.disableRating = true;
+            ratingComponent.disableRating.set(true);
 
             ratingComponent.onRate({
                 oldValue: 0,

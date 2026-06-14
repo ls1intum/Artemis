@@ -43,8 +43,8 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    quizExercise: QuizExercise;
-    question: QuizQuestion;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly question = signal<QuizQuestion>(undefined!);
     quizPointStatistic: QuizPointStatistic;
     questionStatistic: MultipleChoiceQuestionStatistic;
     questionIdParam: number;
@@ -79,8 +79,8 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (this.quizExercise() && this.quizExercise().dueDate) {
+            const endDate = this.quizExercise().dueDate!;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
                 this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
@@ -128,10 +128,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
-        this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
-        this.question = updatedQuestion as QuizQuestion;
-        this.waitingForQuizStart.set(!this.quizExercise.quizStarted);
+        this.quizExercise.set(quiz);
+        const updatedQuestion = this.quizExercise().quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        this.question.set(updatedQuestion as QuizQuestion);
+        this.waitingForQuizStart.set(!this.quizExercise().quizStarted);
     }
 
     /**
@@ -139,19 +139,20 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the first quiz question statistic then it will navigate to the quiz statistic
      */
     previousStatistic() {
-        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+        const quizExercise = this.quizExercise();
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic()) {
-            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
+            if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
             } else {
                 // go to previous question-statistic
-                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions.last()!);
+                this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions.last()!);
             }
         } else {
-            this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
+            this.quizStatisticUtil.previousStatistic(quizExercise, this.question());
         }
     }
 
@@ -160,20 +161,21 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the last quiz question statistic then it will navigate to the quiz point statistic
      */
     nextStatistic() {
-        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+        const quizExercise = this.quizExercise();
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizPointStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
         } else if (this.isQuizStatistic()) {
             // go to quiz-statistic if the position = last position
-            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
+            if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
-                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[0]);
+                this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[0]);
             }
         } else {
-            this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
+            this.quizStatisticUtil.nextStatistic(quizExercise, this.question());
         }
     }
 }

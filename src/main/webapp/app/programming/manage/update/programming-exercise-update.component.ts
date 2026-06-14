@@ -199,7 +199,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     isEdit: boolean;
     isCreate: boolean;
-    isExamMode: boolean;
+    readonly isExamMode = signal<boolean>(undefined!);
     isLocalCIEnabled: boolean;
     hasUnsavedChanges = false;
     // programmingExercise is deeply template-bound (directly via [programmingExercise]/[(exercise)] and through the
@@ -222,13 +222,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     backupExercise: ProgrammingExercise;
-    isSaving: boolean;
+    readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
     buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
@@ -255,7 +255,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
-    public plagiarismEnabled = false;
+    readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
 
@@ -544,7 +544,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Sets the values for the creation/update of a programming exercise
      */
     ngOnInit() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
@@ -582,7 +582,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             this.createProgrammingExerciseForImport(params);
                         } else {
                             if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
-                                this.isExamMode = true;
+                                this.isExamMode.set(true);
                                 this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                     this.programmingExercise.exerciseGroup = res.body!;
                                     if (
@@ -596,13 +596,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId = params['courseId'];
+                                    this.courseId.set(params['courseId']);
                                     this.loadCourseExerciseCategories(params['courseId']);
                                 }
                             } else if (params['courseId']) {
-                                this.courseId = params['courseId'];
-                                this.isExamMode = false;
-                                this.courseService.find(this.courseId).subscribe((res) => {
+                                this.courseId.set(params['courseId']);
+                                this.isExamMode.set(false);
+                                this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
                                     if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
@@ -634,7 +634,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
-        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.defineSupportedProgrammingLanguages();
     }
@@ -692,7 +692,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent()?.formValid &&
-                    (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
+                    (this.isExamMode() || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent()?.formEmpty,
             },
@@ -779,7 +779,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
             });
-            this.isExamMode = true;
+            this.isExamMode.set(true);
             this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
             this.courseService.find(courseId).subscribe((res) => {
@@ -787,7 +787,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;
             });
-            this.isExamMode = false;
+            this.isExamMode.set(false);
             this.importOptions.setTestCaseVisibilityToAfterDueDate = false;
 
             // Sync categories
@@ -800,7 +800,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
-        if (this.isExamMode && this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+        if (this.isExamMode() && this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
             // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
             this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
@@ -844,10 +844,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
-        if (this.isSaving || this.isGeneratingWithAi()) {
+        if (this.isSaving() || this.isGeneratingWithAi()) {
             return;
         }
-        const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
+        const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
         if (!this.modalService.hasOpenModals()) {
@@ -872,7 +872,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with cleared sources and navigates to the code editor.
      */
     saveExerciseWithAi() {
-        if (this.isSaving || this.isGeneratingWithAi()) {
+        if (this.isSaving() || this.isGeneratingWithAi()) {
             return;
         }
         if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
@@ -914,7 +914,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         Exercise.sanitize(this.programmingExercise);
 
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
             this.alertService.addAlert({
@@ -944,9 +944,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         }
         if (this.isImportFromFile) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId()));
         } else if (this.isImportFromSharing) {
-            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId, this.sharingInfo).subscribe({
+            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId(), this.sharingInfo).subscribe({
                 next: (response: HttpResponse<ProgrammingExercise>) => {
                     this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
                     this.onSaveSuccess(response.body!);
@@ -997,7 +997,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (this.goBackAfterSaving) {
             this.navigationUtilService.navigateBack();
@@ -1015,7 +1015,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param exercise the created exercise
      */
     private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.isGeneratingWithAi.set(false);
 
         if (!exercise?.id) {
@@ -1083,7 +1083,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             message: errorMessage,
             disableTranslation: disableTranslation,
         });
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.isGeneratingWithAi.set(false);
         window.scrollTo(0, 0);
     }
@@ -1629,7 +1629,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             isImportFromExistingExercise: this.isImportFromExistingExercise,
             showSummary: false,
             isEdit: this.isEdit,
-            isExamMode: this.isExamMode,
+            isExamMode: this.isExamMode(),
             auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,

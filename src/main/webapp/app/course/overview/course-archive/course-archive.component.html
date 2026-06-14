@@ -14,7 +14,7 @@
                 <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
                     <div class="text-primary d-inline-flex">
                         <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center">
-                            <fa-icon id="icon-test-down" [icon]="isSortAscending ? faArrowDown19 : faArrowUp19" />
+                            <fa-icon id="icon-test-down" [icon]="isSortAscending() ? faArrowDown19 : faArrowUp19" />
                             <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                         </a>
                     </div>
@@ -33,7 +33,7 @@
                         tabindex="0"
                         role="button"
                         id="semester-group-{{ i }}"
-                        [ngClass]="{ 'text-secondary': !(coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText).length }"
+                        [ngClass]="{ 'text-secondary': !(coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText()).length }"
                     >
                         <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings()[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                         <fa-icon [icon]="semesterCollapsed()[semester] ? faAngleDown : faAngleUp" />
@@ -41,7 +41,7 @@
                     @if (!semesterCollapsed()[semester]) {
                         <div class="container-fluid mt-2">
                             <div class="course-grid justify-content-center align-items-center">
-                                @for (course of coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText; track course) {
+                                @for (course of coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText(); track course) {
                                     <div class="course-card-wrapper p-0">
                                         <jhi-course-card-header
                                             class="col-2"

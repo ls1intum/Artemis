@@ -24,7 +24,7 @@ export abstract class CourseDiscussionDirective {
     readonly isLoading = signal(true);
 
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
-    currentSortDirection?: SortDirection;
+    readonly currentSortDirection = signal<SortDirection | undefined>(undefined);
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
 

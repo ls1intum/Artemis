@@ -96,7 +96,7 @@ describe('ExerciseStatisticsComponent', () => {
         button.click();
 
         expect(tabSpy).toHaveBeenCalledTimes(1);
-        expect(component.currentSpan).toBe(SpanType.MONTH);
+        expect(component.currentSpan()).toBe(SpanType.MONTH);
         expect(statisticsSpy).toHaveBeenCalledTimes(1);
         expect(exerciseSpy).toHaveBeenCalledTimes(1);
         expect(component.exerciseStatistics()?.participationsInPercent).toBe(100);

@@ -89,7 +89,7 @@
                                                 <div class="col-auto pe-1">
                                                     <span jhiTranslate="artemisApp.metis.discussionSection.sortByDate"></span>
                                                 </div>
-                                                @if (!currentSortDirection) {
+                                                @if (!currentSortDirection()) {
                                                     <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                                                         <fa-icon
                                                             [icon]="faLongArrowRight"
@@ -97,12 +97,12 @@
                                                         />
                                                     </div>
                                                 }
-                                                @if (currentSortDirection) {
+                                                @if (currentSortDirection()) {
                                                     <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                                                         <fa-icon
-                                                            [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                                            [icon]="currentSortDirection() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                                             [ngbTooltip]="
-                                                                currentSortDirection === SortDirection.ASCENDING
+                                                                currentSortDirection() === SortDirection.ASCENDING
                                                                     ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                                                     : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                                                             "

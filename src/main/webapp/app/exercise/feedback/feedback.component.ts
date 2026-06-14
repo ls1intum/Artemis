@@ -214,10 +214,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
     readonly isLoading = signal(false);
     readonly loadingFailed = signal(false);
     readonly buildLogs = signal<BuildLogEntryArray | undefined>(undefined);
-    course?: Course;
-    isOnlyCompilationTested: boolean;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isOnlyCompilationTested = signal<boolean>(undefined!);
 
-    commitHash?: string;
+    readonly commitHash = signal<string | undefined>(undefined);
 
     readonly chartData = signal<FeedbackChartData>({
         xScaleMax: 100,
@@ -277,12 +277,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
         this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.initFeedbackInformation();
 
-        this.commitHash = this.getCommitHash().slice(0, 11);
+        this.commitHash.set(this.getCommitHash().slice(0, 11));
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(
-            this.result,
-            this.participation,
-            evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false),
+        this.isOnlyCompilationTested.set(
+            isOnlyCompilationTested(this.result, this.participation, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false)),
         );
     }
 
@@ -307,7 +305,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private initializeExerciseInformation() {
         this.exercise ??= this.participation?.exercise;
         if (this.exercise) {
-            this.course = getCourseFromExercise(this.exercise);
+            this.course.set(getCourseFromExercise(this.exercise));
         }
 
         if (!this.exerciseType && this.exercise?.type) {

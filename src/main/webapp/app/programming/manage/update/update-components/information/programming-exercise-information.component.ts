@@ -104,10 +104,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     exerciseTitle = signal<string | undefined>(undefined);
 
-    editRepositoryCheckoutPath = false;
-    submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
+    readonly editRepositoryCheckoutPath = signal(false);
+    readonly submissionBuildPlanCheckoutRepositories = signal<BuildPlanCheckoutDirectoriesDTO>(undefined!);
 
-    isLocalCIEnabled = true;
+    readonly isLocalCIEnabled = signal(true);
 
     constructor() {
         effect(() => {
@@ -143,7 +143,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     ngOnInit() {
-        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
     }
 
     ngAfterViewInit() {
@@ -256,11 +256,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     toggleEditRepositoryCheckoutPath() {
-        this.editRepositoryCheckoutPath = !this.editRepositoryCheckoutPath;
+        this.editRepositoryCheckoutPath.update((editRepositoryCheckoutPath) => !editRepositoryCheckoutPath);
     }
 
     updateSubmissionBuildPlanCheckoutDirectories(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
-        this.submissionBuildPlanCheckoutRepositories = buildPlanCheckoutDirectoriesDTO;
+        this.submissionBuildPlanCheckoutRepositories.set(buildPlanCheckoutDirectoriesDTO);
     }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {

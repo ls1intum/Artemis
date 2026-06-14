@@ -77,13 +77,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         component.onCSVFileSelected(event);
 
         // then
-        expect(component.allRegistrations).toEqual([]);
-        expect(component.registrationsDisplayedInTable).toEqual([]);
+        expect(component.allRegistrations()).toEqual([]);
+        expect(component.registrationsDisplayedInTable()).toEqual([]);
         expect(component.notImportedRegistrations).toEqual([]);
         expect(component.importedRegistrations).toEqual([]);
         expect(component.validationErrors()).toEqual([]);
-        expect(component.numberOfNotImportedRegistration).toBe(0);
-        expect(component.numberOfImportedRegistrations).toBe(0);
+        expect(component.numberOfNotImportedRegistration()).toBe(0);
+        expect(component.numberOfImportedRegistrations()).toBe(0);
         expect(component.selectedFile).toEqual(exampleFile);
         expect(resetSpy).toHaveBeenCalled();
     });
@@ -116,7 +116,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         // when
         await component.onParseClicked();
         // then
-        expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleDTO]);
         expect(component.validationErrors()).toEqual([]);
         expect(component.isCSVParsing()).toBe(false);
     });
@@ -136,8 +136,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await component.onParseClicked();
 
         // then
-        expect(component.registrationsDisplayedInTable).toHaveLength(1);
-        const registration = component.registrationsDisplayedInTable[0];
+        expect(component.registrationsDisplayedInTable()).toHaveLength(1);
+        const registration = component.registrationsDisplayedInTable()[0];
         expect(registration.student).toEqual(generateStudentDTO('', '', '', ''));
         expect(registration.title).toBe('group');
         expect(component.validationErrors()).toEqual([]);
@@ -156,7 +156,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         // when
         await component.onParseClicked();
 
-        expect(component.registrationsDisplayedInTable).toEqual([exampleOne]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleOne]);
         expect(component.validationErrors()).toEqual([]);
         expect(component.isCSVParsing()).toBe(false);
     });
@@ -223,21 +223,21 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const exampleTwo = generateImportDTO('Tutorial Group 2');
         const exampleThree = generateImportDTO('Tutorial Group 3');
 
-        component.allRegistrations = [exampleOne, exampleTwo, exampleThree];
-        component.registrationsDisplayedInTable = [exampleOne, exampleTwo, exampleThree];
+        component.allRegistrations.set([exampleOne, exampleTwo, exampleThree]);
+        component.registrationsDisplayedInTable.set([exampleOne, exampleTwo, exampleThree]);
         component.notImportedRegistrations = [exampleOne];
         component.importedRegistrations = [exampleTwo, exampleThree];
-        component.selectedFilter = 'all';
+        component.selectedFilter.set('all');
         component.onFilterChange('onlyNotImported');
-        expect(component.registrationsDisplayedInTable).toEqual([exampleOne]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleOne]);
         component.onFilterChange('onlyImported');
-        expect(component.registrationsDisplayedInTable).toEqual([exampleTwo, exampleThree]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleTwo, exampleThree]);
         component.onFilterChange('all');
-        expect(component.registrationsDisplayedInTable).toEqual([exampleOne, exampleTwo, exampleThree]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleOne, exampleTwo, exampleThree]);
     });
 
     it('wasImported should check the import status set by the server', () => {
-        component.isImportDone = true;
+        component.isImportDone.set(true);
         const failedExample = generateImportDTO();
         failedExample.importSuccessful = false;
         expect(component.wasImported(failedExample)).toBe(false);
@@ -278,8 +278,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     it('should call the import service when the import button is clicked', async () => {
         const exampleOne = generateImportDTO('Tutorial Group 1');
         const exampleTwo = generateImportDTO('Tutorial Group 2');
-        component.registrationsDisplayedInTable = [exampleOne, exampleTwo];
-        component.isImportDone = false;
+        component.registrationsDisplayedInTable.set([exampleOne, exampleTwo]);
+        component.isImportDone.set(false);
         fixture.componentRef.setInput('courseId', 1);
 
         const returnedDTOOne = { ...exampleOne, importSuccessful: true };
@@ -291,13 +291,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
         expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledWith(1, [exampleOne, exampleTwo], 'response');
-        expect(component.isImporting).toBe(false);
-        expect(component.isImportDone).toBe(true);
+        expect(component.isImporting()).toBe(false);
+        expect(component.isImportDone()).toBe(true);
         expect(component.importedRegistrations).toEqual([returnedDTOOne]);
         expect(component.notImportedRegistrations).toEqual([returnedDTOTwo]);
-        expect(component.allRegistrations).toEqual([returnedDTOOne, returnedDTOTwo]);
-        expect(component.numberOfImportedRegistrations).toBe(1);
-        expect(component.numberOfNotImportedRegistration).toBe(1);
+        expect(component.allRegistrations()).toEqual([returnedDTOOne, returnedDTOTwo]);
+        expect(component.numberOfImportedRegistrations()).toBe(1);
+        expect(component.numberOfNotImportedRegistration()).toBe(1);
     });
 
     it('should read registrations from csv string with additional headers', async () => {
@@ -308,14 +308,14 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         // when
         await component.onParseClicked();
         // then
-        expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
+        expect(component.registrationsDisplayedInTable()).toEqual([exampleDTO]);
         expect(component.validationErrors()).toEqual([]);
         expect(component.isCSVParsing()).toBe(false);
-        expect(component.registrationsDisplayedInTable[0].campus).toBe('Main Campus');
-        expect(component.registrationsDisplayedInTable[0].language).toBe('German');
-        expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
-        expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
-        expect(component.registrationsDisplayedInTable[0].isOnline).toBeUndefined();
+        expect(component.registrationsDisplayedInTable()[0].campus).toBe('Main Campus');
+        expect(component.registrationsDisplayedInTable()[0].language).toBe('German');
+        expect(component.registrationsDisplayedInTable()[0].additionalInformation).toBe('');
+        expect(component.registrationsDisplayedInTable()[0].capacity).toBe(25);
+        expect(component.registrationsDisplayedInTable()[0].isOnline).toBeUndefined();
     });
     it('should remove spaces from header names correctly', () => {
         const headerWithSpaces = ' Header Name ';
@@ -360,7 +360,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(instantSpy).toHaveBeenCalledWith(translationKey);
     }
     function assertStateAfterValidationError(expectedError: string) {
-        expect(component.registrationsDisplayedInTable).toEqual([]);
+        expect(component.registrationsDisplayedInTable()).toEqual([]);
         expect(component.validationErrors()).toEqual([expectedError]);
         expect(component.isCSVParsing()).toBe(false);
         expect(component.selectedFile).toBeUndefined();
@@ -373,13 +373,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     };
 
     function setExampleState() {
-        component.allRegistrations = [generateImportDTO(), generateImportDTO('Another title')];
-        component.registrationsDisplayedInTable = component.allRegistrations;
+        component.allRegistrations.set([generateImportDTO(), generateImportDTO('Another title')]);
+        component.registrationsDisplayedInTable.set(component.allRegistrations());
         component.notImportedRegistrations = [generateImportDTO()];
         component.importedRegistrations = [generateImportDTO('Another title')];
         component.validationErrors.set(['error']);
-        component.numberOfNotImportedRegistration = 1;
-        component.numberOfImportedRegistrations = 1;
+        component.numberOfNotImportedRegistration.set(1);
+        component.numberOfImportedRegistrations.set(1);
     }
 
     const generateImportDTO = (

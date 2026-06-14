@@ -100,10 +100,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     private readonly questionEditor = viewChild.required<MarkdownEditorMonacoComponent>('questionEditor');
     readonly questionElement = viewChild.required<ElementRef>('question');
 
-    markdownActions: TextEditorAction[];
+    readonly markdownActions = signal<TextEditorAction[]>(undefined!);
     insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
     insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(ngModel)] two-way targets (e.g. [(ngModel)]="shortAnswerQuestion.title") and in-template property writes (e.g. (click)="shortAnswerQuestion.invalid = true") whose in-place mutations cannot be intercepted to commit a signal rebuild
     shortAnswerQuestion: ShortAnswerQuestion;
 
     question = input<QuizQuestion>();
@@ -121,10 +122,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     readonly MAX_QUESTION_TITLE_LENGTH = MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1;
 
     readonly questionEditorText = signal('');
-    showVisualMode: boolean;
+    readonly showVisualMode = signal<boolean>(undefined!);
 
     /** Status boolean for collapse status **/
-    isQuestionCollapsed: boolean;
+    readonly isQuestionCollapsed = signal<boolean>(undefined!);
 
     /** Variables needed for the setup of editorText **/
     // equals the highest spotNr
@@ -171,7 +172,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     ngOnInit(): void {
-        this.markdownActions = [
+        this.markdownActions.set([
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
@@ -182,11 +183,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             new OrderedListAction(),
             this.insertShortAnswerSpotAction,
             this.insertShortAnswerOptionAction,
-        ];
+        ]);
 
         /** Assign status booleans and strings **/
-        this.showVisualMode = false;
-        this.isQuestionCollapsed = false;
+        this.showVisualMode.set(false);
+        this.isQuestionCollapsed.set(false);
     }
 
     /**
@@ -634,11 +635,18 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     /**
+     * Toggles the collapsed state of the question card.
+     */
+    toggleQuestionCollapse(): void {
+        this.isQuestionCollapsed.update((collapsed) => !collapsed);
+    }
+
+    /**
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-        this.showVisualMode = !this.showVisualMode;
+        this.showVisualMode.update((visual) => !visual);
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
         this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
 

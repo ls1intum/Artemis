@@ -18,7 +18,7 @@ export class RatingComponent implements OnInit, OnChanges {
     private accountService = inject(AccountService);
 
     public readonly rating = signal<number>(undefined!);
-    public disableRating = false;
+    public readonly disableRating = signal(false);
     private previousResultId?: number;
 
     readonly result = input<Result>();
@@ -52,14 +52,14 @@ export class RatingComponent implements OnInit, OnChanges {
     onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
         const result = this.result();
-        if (this.disableRating || !result) {
+        if (this.disableRating() || !result) {
             return;
         }
 
         const oldRating = this.rating();
         this.rating.set(event.newValue);
 
-        this.disableRating = true;
+        this.disableRating.set(true);
         let observable: Observable<number>;
         // set/update feedback on the server
         if (oldRating) {
@@ -68,6 +68,6 @@ export class RatingComponent implements OnInit, OnChanges {
             observable = this.ratingService.createRating(this.rating(), result.id!);
         }
 
-        observable.subscribe((rating) => this.rating.set(rating)).add(() => (this.disableRating = false));
+        observable.subscribe((rating) => this.rating.set(rating)).add(() => this.disableRating.set(false));
     }
 }

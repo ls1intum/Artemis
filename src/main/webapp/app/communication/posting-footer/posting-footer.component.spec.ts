@@ -83,7 +83,7 @@ describe('PostingFooterComponent', () => {
         metisServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(true);
-        expect(component.createdAnswerPost.resolvesPost).toBe(true);
+        expect(component.createdAnswerPost().resolvesPost).toBe(true);
     });
 
     it('should group answer posts correctly', () => {
@@ -169,7 +169,7 @@ describe('PostingFooterComponent', () => {
         metisServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBe(false);
-        expect(component.createdAnswerPost.resolvesPost).toBe(false);
+        expect(component.createdAnswerPost().resolvesPost).toBe(false);
     });
 
     it('should open create answer post modal', () => {

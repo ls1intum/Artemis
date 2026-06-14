@@ -116,7 +116,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('uncompresses the tree when toggling from true → false', () => {
         comp.repositoryFiles.set({ a: FileType.FILE });
-        comp.compressFolders = true;
+        comp.compressFolders.set(true);
 
         const treeNode = { folder: '', file: 'a', children: [], text: 'a', value: 'a' };
         vi.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
@@ -124,7 +124,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         comp.toggleTreeCompress();
 
-        expect(comp.compressFolders).toBe(false);
+        expect(comp.compressFolders()).toBe(false);
         expect(transformSpy).toHaveBeenCalled();
     });
 
@@ -347,7 +347,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/folder3': FileType.FOLDER,
             'folder2/folder3/file3': FileType.FILE,
         });
-        comp.compressFolders = false;
+        comp.compressFolders.set(false);
         comp.setupTreeview();
         fixture.changeDetectorRef.detectChanges();
         // after compression
@@ -393,9 +393,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         vi.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
         const transformTreeToTreeViewItemStub = vi.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeViewItem(treeNode)]);
-        comp.compressFolders = false;
+        comp.compressFolders.set(false);
         comp.toggleTreeCompress();
-        expect(comp.compressFolders).toBe(true);
+        expect(comp.compressFolders()).toBe(true);
         expect(transformTreeToTreeViewItemStub).toHaveBeenCalledExactlyOnceWith([treeNode]);
     });
 
@@ -410,7 +410,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/folder3/folder4': FileType.FOLDER,
             'folder2/folder3/folder4/folder5': FileType.FOLDER,
         });
-        comp.compressFolders = true;
+        comp.compressFolders.set(true);
         comp.setupTreeview();
         fixture.changeDetectorRef.detectChanges();
         // after compression

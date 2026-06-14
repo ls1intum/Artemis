@@ -71,7 +71,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         return this.content()?.nativeElement.clientHeight ?? 700;
     }
     private viewChildrenInitialized = false;
-    currentSortDirection = SortDirection.DESCENDING;
 
     readonly channel = signal<ChannelDTO | undefined>(undefined);
     readonly noChannelAvailable = signal(false);
@@ -91,6 +90,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor() {
         super();
+        this.currentSortDirection.set(SortDirection.DESCENDING);
         effect(() => {
             const exerciseValue = this.exercise();
             const lectureValue = this.lecture();
@@ -163,7 +163,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * sorted on the server
      */
     onChangeSortDir(): void {
-        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.currentSortDirection.set(this.currentSortDirection() === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING);
         this.onSelectContext();
     }
 
@@ -305,7 +305,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             page: 0,
             pageSize: this.PAGE_SIZE,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: this.currentSortDirection,
+            sortingOrder: this.currentSortDirection(),
         };
     }
 

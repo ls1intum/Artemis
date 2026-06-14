@@ -429,7 +429,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.importCategories(5);
 
         expect(comp.staticCodeAnalysisCategoriesForTable()).toBe(newConfiguration);
-        expect(comp.staticCodeAnalysisCategoriesForCharts).toBe(newConfiguration);
+        expect(comp.staticCodeAnalysisCategoriesForCharts()).toBe(newConfiguration);
         expect(comp.backupStaticCodeAnalysisCategories).toBe(newConfiguration);
     });
 
@@ -476,7 +476,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.maxIssuesPerCategory()).toBe(5);
         expect(comp.gradingStatistics()).toEqual(gradingStatistics);
 
-        expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
+        expect(comp.staticCodeAnalysisCategoriesForCharts()).toEqual(codeAnalysisCategories1);
 
         const issuesMapForFirstCategory = comp.getIssuesMap(codeAnalysisCategories1[0].name);
         expect(issuesMapForFirstCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[0].name]);
@@ -506,7 +506,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should require confirmation if there are unsaved changes', () => {
         initGradingComponent();
-        comp.changedTestCaseIds = [1, 2, 3];
+        comp.changedTestCaseIds.set([1, 2, 3]);
 
         // Ignore window confirm
         window.confirm = () => {
@@ -522,7 +522,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             // Reset default sorts to avoid ngx-datatable compareFn issues in tests
             comp.tableSorts = { testCases: [], codeAnalysis: [] };
             fixture.changeDetectorRef.detectChanges();
-            const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts;
+            const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts();
             const expectedCategory = {
                 id: 1,
                 name: 'Bad Practice',
@@ -535,7 +535,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
             expect(comp.staticCodeAnalysisCategoriesForTable()).toHaveLength(1);
             expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual([expectedCategory]);
-            expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(scaCategoriesDisplayedByChart);
+            expect(comp.staticCodeAnalysisCategoriesForCharts()).toEqual(scaCategoriesDisplayedByChart);
         });
 
         it('should update category accordingly if modified while chart filtering', () => {
@@ -560,7 +560,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
             expect(comp.staticCodeAnalysisCategoriesForTable()).toHaveLength(1);
             expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual([currentlyDisplayedCategory]);
-            expect(comp.staticCodeAnalysisCategoriesForCharts).toContainEqual(currentlyDisplayedCategory);
+            expect(comp.staticCodeAnalysisCategoriesForCharts()).toContainEqual(currentlyDisplayedCategory);
 
             // we reset the table
             comp.filterByChart(-5, ChartFilterType.CATEGORIES);

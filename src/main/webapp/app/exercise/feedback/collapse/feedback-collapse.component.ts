@@ -24,7 +24,7 @@ export class FeedbackCollapseComponent implements OnInit {
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
     readonly feedback = input<FeedbackItem>(undefined!);
-    previewText?: string;
+    readonly previewText = signal<string | undefined>(undefined);
     readonly isCollapsed = signal(true);
 
     // Icons
@@ -32,7 +32,7 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     ngOnInit(): void {
-        this.previewText = this.computeFeedbackPreviewText(this.feedback().text);
+        this.previewText.set(this.computeFeedbackPreviewText(this.feedback().text));
     }
 
     /**

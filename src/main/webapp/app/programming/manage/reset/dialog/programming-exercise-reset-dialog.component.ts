@@ -33,13 +33,13 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
 
     programmingExerciseResetOptions: ProgrammingExerciseResetOptions;
-    isLoading = false;
+    readonly isLoading = signal(false);
     readonly resetInProgress = signal(false);
     confirmText: string;
 
     versionControlName?: string;
     continuousIntegrationName?: string;
-    hasCustomizedBuildPlans = false;
+    readonly hasCustomizedBuildPlans = signal(false);
 
     // Icons
     faBan = faBan;
@@ -48,18 +48,18 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     faUndo = faUndo;
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const profileInfo = this.profileService.getProfileInfo();
         this.versionControlName = profileInfo.versionControlName;
         this.continuousIntegrationName = profileInfo.continuousIntegrationName;
-        this.hasCustomizedBuildPlans = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.hasCustomizedBuildPlans.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
         this.resetInProgress.set(false);
         this.programmingExerciseResetOptions = {
             deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: false,
         };
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 
     /**

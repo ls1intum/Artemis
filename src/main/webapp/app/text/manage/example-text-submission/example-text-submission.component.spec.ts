@@ -542,11 +542,11 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         await comp.ngOnInit();
 
-        comp.toComplete = true;
+        comp.toComplete.set(true);
 
         await comp.back();
 
-        comp.toComplete = false;
+        comp.toComplete.set(false);
 
         await comp.back();
 

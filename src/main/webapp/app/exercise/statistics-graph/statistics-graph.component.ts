@@ -34,8 +34,8 @@ export class StatisticsGraphComponent {
     RIGHT = true;
     SpanType = SpanType;
     // Histogram related properties
-    chartName: string;
-    chartTime: string;
+    readonly chartName = signal<string>(undefined!);
+    readonly chartTime = signal<string>(undefined!);
     // Data
     barChartLabels: string[] = [];
     dataForSpanType: number[];
@@ -78,7 +78,7 @@ export class StatisticsGraphComponent {
     private setupAndInitializeChart(): void {
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.chartName = `statistics.${this.graphType().toString().toLowerCase()}`;
+        this.chartName.set(`statistics.${this.graphType().toString().toLowerCase()}`);
         this.tooltipTranslation = `statistics.${this.graphType().toString().toLowerCase()}Title`;
         this.initializeChart();
     }
@@ -111,22 +111,24 @@ export class StatisticsGraphComponent {
                 for (let i = 0; i < 24; i++) {
                     this.barChartLabels[i] = `${i}:00-${i + 1}:00`;
                 }
-                this.chartTime = now.add(this.currentPeriod, 'days').format('DD.MM.YYYY');
+                this.chartTime.set(now.add(this.currentPeriod, 'days').format('DD.MM.YYYY'));
                 break;
             case SpanType.WEEK:
                 this.barChartLabels = this.getWeekdays();
                 startDate = dayjs().add(this.currentPeriod, 'weeks').subtract(6, 'days').format('DD.MM.YYYY');
                 endDate = dayjs().add(this.currentPeriod, 'weeks').format('DD.MM.YYYY');
-                this.chartTime = startDate + ' - ' + endDate;
+                this.chartTime.set(startDate + ' - ' + endDate);
                 break;
             case SpanType.MONTH:
                 startDate = dayjs().subtract(1 - this.currentPeriod, 'months');
                 endDate = dayjs().subtract(-this.currentPeriod, 'months');
                 this.barChartLabels = this.getLabelsForMonth(endDate.diff(startDate, 'days'));
-                this.chartTime = now
-                    .add(this.currentPeriod, 'months')
-                    .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
-                    .format('MMMM YYYY');
+                this.chartTime.set(
+                    now
+                        .add(this.currentPeriod, 'months')
+                        .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
+                        .format('MMMM YYYY'),
+                );
                 break;
             case SpanType.QUARTER:
                 startDate = dayjs().subtract(11 + 12 * -this.currentPeriod, 'weeks');
@@ -140,11 +142,11 @@ export class StatisticsGraphComponent {
                         .isoWeek();
                     this.barChartLabels[i] = this.translateService.instant('calendar_week') + ' ' + currentWeek;
                 }
-                this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
+                this.chartTime.set(startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY'));
                 break;
             case SpanType.YEAR:
                 this.barChartLabels = this.getMonths();
-                this.chartTime = now.add(this.currentPeriod, 'years').subtract(5, 'months').format('YYYY');
+                this.chartTime.set(now.add(this.currentPeriod, 'years').subtract(5, 'months').format('YYYY'));
                 break;
         }
     }

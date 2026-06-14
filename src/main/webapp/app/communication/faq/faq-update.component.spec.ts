@@ -256,13 +256,13 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
         faqUpdateComponent.faq = { questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(false);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(false);
         faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as Faq;
         faqUpdateComponent.validate();
-        expect(faqUpdateComponent.isAllowedToSave).toBe(true);
+        expect(faqUpdateComponent.isAllowedToSave()).toBe(true);
     });
 
     it('should fail while saving with ErrorResponse', () => {

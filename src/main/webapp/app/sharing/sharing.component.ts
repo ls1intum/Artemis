@@ -47,7 +47,7 @@ export class SharingComponent implements OnInit {
      */
     sharingInfo: SharingInfo = new SharingInfo();
 
-    selectedCourse: Course;
+    readonly selectedCourse = signal<Course | undefined>(undefined);
 
     readonly isInstructorOrEditor = signal(false);
 
@@ -88,11 +88,11 @@ export class SharingComponent implements OnInit {
     }
 
     onCourseSelected(course: Course): void {
-        this.selectedCourse = course;
+        this.selectedCourse.set(course);
     }
 
     courseId(): number {
-        return this.selectedCourse?.id ?? 0;
+        return this.selectedCourse()?.id ?? 0;
     }
 
     onExerciseSelected(index: number): void {

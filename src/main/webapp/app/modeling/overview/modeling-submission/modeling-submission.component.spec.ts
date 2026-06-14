@@ -294,7 +294,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submissionId).toBe(20);
         expect(getSubmissionsWithResultsSpy).toHaveBeenCalledOnce();
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
-        expect(comp.sortedSubmissionHistory).toEqual([submission]);
+        expect(comp.sortedSubmissionHistory()).toEqual([submission]);
         expect(comp.sortedResultHistory()).toEqual([result]);
         expect(comp.submission()).toEqual(submission);
     });
@@ -373,7 +373,7 @@ describe('ModelingSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
-        expect(comp.examMode).toBe(true);
+        expect(comp.examMode()).toBe(true);
     });
 
     it('should not allow to submit in exam mode if there is a non-automatic result', async () => {
@@ -955,7 +955,7 @@ describe('ModelingSubmissionComponent', () => {
         // Verify service call
         expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123);
         // Verify sorted submission and result history
-        expect(comp.sortedSubmissionHistory).toEqual(expectedSortedSubmissions);
+        expect(comp.sortedSubmissionHistory()).toEqual(expectedSortedSubmissions);
         comp.sortedResultHistory().forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBe(true);

@@ -1,4 +1,4 @@
-@if (isVisible) {
+@if (isVisible()) {
     <div
         class="modal-backdrop"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
@@ -135,7 +135,7 @@
                         </li>
                     </ul>
                 </div>
-                @if (isOnPremiseEnabled) {
+                @if (isOnPremiseEnabled()) {
                     <!-- Local AI Card -->
                     <div class="option-card local-card" tabindex="0" role="button" (click)="selectLocal()" (keydown.enter)="selectLocal()" (keydown.space)="selectLocal()">
                         <div class="icons-wrapper">

@@ -52,7 +52,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     readonly containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
     readonly createAnswerPostModalComponent = viewChild.required<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
 
-    createdAnswerPost: AnswerPost;
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
     isAtLeastTutorInCourse = false;
     courseId!: number;
     readonly groupedAnswerPosts = signal<PostGroup[]>([]);
@@ -62,7 +62,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
         this.groupAnswerPosts();
     }
 

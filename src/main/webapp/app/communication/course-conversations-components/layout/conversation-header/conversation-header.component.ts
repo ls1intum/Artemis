@@ -64,7 +64,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
 
-    course: Course;
+    readonly course = signal<Course>(undefined!);
     readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
 
     readonly activeConversationAsChannel = signal<ChannelDTO | undefined>(undefined);
@@ -87,7 +87,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     canAddUsers = canAddUsersToConversation;
 
     ngOnInit(): void {
-        this.course = this.metisConversationService.course!;
+        this.course.set(this.metisConversationService.course!);
         this.subscribeToActiveConversation();
     }
 
@@ -134,7 +134,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
             ...defaultFirstLayerDialogOptions,
             data: {
-                course: this.course,
+                course: this.course(),
                 activeConversation: this.activeConversation(),
             },
         });
@@ -161,7 +161,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(ConversationDetailDialogComponent, {
             ...defaultFirstLayerDialogOptions,
             data: {
-                course: this.course,
+                course: this.course(),
                 activeConversation: this.activeConversation(),
                 selectedTab,
                 onUserNameClicked: (userId: number) => {

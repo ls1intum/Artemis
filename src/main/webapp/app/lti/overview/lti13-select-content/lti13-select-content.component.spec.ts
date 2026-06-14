@@ -86,7 +86,7 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.actionLink).toBe(deepLinkUri);
+        expect(component.actionLink()).toBe(deepLinkUri);
         expect(component.isLinking()).toBe(true);
     });
 
@@ -179,7 +179,7 @@ describe('Lti13SelectContentComponent', () => {
 
         expect(component.jwt).toBe('test_jwt');
         expect(component.id).toBe('test_id');
-        expect(component.actionLink).toBe('http://test.com/link');
+        expect(component.actionLink()).toBe('http://test.com/link');
     });
 
     it('should sanitize deepLinkUri correctly', () => {
@@ -198,7 +198,7 @@ describe('Lti13SelectContentComponent', () => {
 
         component.updateFormValues();
 
-        expect(component.actionLink).toBe('http://safe-url.com/path');
+        expect(component.actionLink()).toBe('http://safe-url.com/path');
         expect(component.isLinking()).toBe(true);
     });
 
@@ -218,7 +218,7 @@ describe('Lti13SelectContentComponent', () => {
 
         component.updateFormValues();
 
-        expect(component.actionLink).toBe('');
+        expect(component.actionLink()).toBe('');
         expect(component.isLinking()).toBe(false);
     });
 

@@ -133,11 +133,11 @@ describe('ResultComponent', () => {
 
         participationServiceMock.downloadArtifact = vi.fn();
 
-        comp.badge = {
+        comp.badge.set({
             tooltip: 'Example Tooltip',
             class: 'Example Class',
             text: 'Example Test',
-        };
+        });
         fixture.detectChanges();
     });
 

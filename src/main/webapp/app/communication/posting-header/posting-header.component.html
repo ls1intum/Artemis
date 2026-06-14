@@ -12,15 +12,15 @@
                     [authorName]="authorOfPosting.name"
                     [imageUrl]="addPublicFilePrefix(authorOfPosting.imageUrl)"
                     [imageBackgroundColor]="authorOfPosting.bot ? 'transparent' : undefined"
-                    [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
+                    [isEditable]="currentUser() !== undefined && authorOfPosting.id === currentUser()!.id"
                 />
                 <span class="fs-small d-inline-flex flex-column align-items-start">
-                    <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting && posting()?.authorRole }" (click)="userNameClicked()">{{ authorOfPosting.name }}</span>
+                    <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting() && posting()?.authorRole }" (click)="userNameClicked()">{{ authorOfPosting.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">
-                        <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
-                            <fa-icon [icon]="userAuthorityIcon" />
+                        <span class="me-1 fs-x-small" [ngClass]="'post-authority-icon-' + userAuthority()" id="role-badge">
+                            <fa-icon [icon]="userAuthorityIcon()" />
                         </span>
-                        <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" [jhiTranslate]="userRoleBadge"></span>
+                        <span ngbTooltip="{{ userAuthorityTooltip() | artemisTranslate }}" [jhiTranslate]="userRoleBadge()"></span>
                     </span>
                 </span>
             </span>
@@ -45,7 +45,7 @@
         @if (isPostPinned()) {
             <jhi-emoji class="fs-x-small" emoji="pushpin" />
         }
-        @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting)) {
+        @if ((!!isCommunicationPage() && !lastReadDate()) || (lastReadDate() && creationDate && isAfter && !isAuthorOfPosting())) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>

@@ -37,9 +37,9 @@ export class DoughnutChartComponent implements OnInit {
     readonly currentMax = input<number>();
 
     readonly receivedStats = signal(false);
-    doughnutChartTitle: string;
+    readonly doughnutChartTitle = signal<string>(undefined!);
     stats: number[];
-    titleLink: string[] | undefined;
+    readonly titleLink = signal<string[] | undefined>(undefined);
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([
         { name: 'Done', value: 0 },
@@ -84,20 +84,20 @@ export class DoughnutChartComponent implements OnInit {
     ngOnInit(): void {
         switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                this.doughnutChartTitle = 'averageScore';
-                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
+                this.doughnutChartTitle.set('averageScore');
+                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`]);
                 break;
             case DoughnutChartType.PARTICIPATIONS:
-                this.doughnutChartTitle = 'participationRate';
-                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
+                this.doughnutChartTitle.set('participationRate');
+                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
                 break;
             case DoughnutChartType.QUESTIONS:
-                this.doughnutChartTitle = 'resolved_posts';
-                this.titleLink = [`/courses/${this.course().id}/exercises/${this.exerciseId()}`];
+                this.doughnutChartTitle.set('resolved_posts');
+                this.titleLink.set([`/courses/${this.course().id}/exercises/${this.exerciseId()}`]);
                 break;
             default:
-                this.doughnutChartTitle = '';
-                this.titleLink = undefined;
+                this.doughnutChartTitle.set('');
+                this.titleLink.set(undefined);
         }
     }
 
@@ -106,8 +106,9 @@ export class DoughnutChartComponent implements OnInit {
      * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        if (this.course().id && this.exerciseId() && this.titleLink) {
-            this.router.navigate(this.titleLink);
+        const titleLink = this.titleLink();
+        if (this.course().id && this.exerciseId() && titleLink) {
+            this.router.navigate(titleLink);
         }
     }
 

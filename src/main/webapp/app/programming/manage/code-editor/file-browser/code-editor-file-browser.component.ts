@@ -168,9 +168,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     readonly repositoryFiles = signal<{ [fileName: string]: FileType }>(undefined!);
     readonly repositoryFilesWithInformationAboutChange = signal<{ [fileName: string]: boolean } | undefined>(undefined);
     readonly filesTreeViewItem = signal<TreeViewItem<string>[]>([]);
-    compressFolders = true;
+    readonly compressFolders = signal(true);
 
-    collapsed = false;
+    readonly collapsed = signal(false);
 
     renamingInput = viewChild<ElementRef>('renamingInput');
     creatingInput = viewChild<ElementRef>('creatingInput');
@@ -405,7 +405,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     }
 
     toggleTreeCompress() {
-        this.compressFolders = !this.compressFolders;
+        this.compressFolders.update((value) => !value);
         this.setupTreeview();
     }
 
@@ -426,7 +426,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
         });
 
         let tree = this.buildTree(fileKeys);
-        if (this.compressFolders) {
+        if (this.compressFolders()) {
             tree = tree.map(this.compressTree.bind(this));
         }
         this.filesTreeViewItem.set(this.transformTreeToTreeViewItem(tree));
@@ -529,7 +529,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      * @param event
      */
     toggleEditorCollapse(event: any) {
-        this.collapsed = !this.collapsed;
+        this.collapsed.update((value) => !value);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 

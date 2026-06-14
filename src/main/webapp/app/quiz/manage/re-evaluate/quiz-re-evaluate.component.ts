@@ -61,7 +61,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     popupService: QuizExercisePopupService;
 
     readonly isSaving = signal<boolean>(false);
-    duration: Duration;
+    readonly duration = signal<Duration>(new Duration(0, 0));
 
     // Icons
     faUndo = faUndo;
@@ -82,7 +82,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
         /** Initialize constants **/
         this.isSaving.set(false);
-        this.duration = new Duration(0, 0);
+        this.duration.set(new Duration(0, 0));
     }
 
     /**
@@ -225,7 +225,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     */
     updateDuration(): void {
         const duration = dayjs.duration(this.quizExercise().duration ?? 0, 'seconds');
-        this.duration.minutes = 60 * duration.hours() + duration.minutes();
-        this.duration.seconds = duration.seconds();
+        this.duration.set(new Duration(60 * duration.hours() + duration.minutes(), duration.seconds()));
     }
 }

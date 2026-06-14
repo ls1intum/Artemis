@@ -1,4 +1,4 @@
-@if (!isLoading) {
+@if (!isLoading()) {
     <form name="resetForm" role="form" (ngSubmit)="resetProgrammingExercise()" #resetForm="ngForm">
         <div class="modal-body">
             <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
@@ -28,7 +28,7 @@
                                 <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
                                 <span
                                     [jhiTranslate]="
-                                        hasCustomizedBuildPlans
+                                        hasCustomizedBuildPlans()
                                             ? 'artemisApp.programmingExercise.reset.recreateCustomizedBuildPlans'
                                             : 'artemisApp.programmingExercise.reset.recreateBuildPlans'
                                     "

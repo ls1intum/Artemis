@@ -172,7 +172,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     /** Route params **/
     examId?: number;
-    courseId?: number;
+    readonly courseId = signal<number | undefined>(undefined);
 
     // Icons
     faPlus = faPlus;
@@ -270,7 +270,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.shortAnswerFilterEnabled = true;
         this.notificationText = undefined;
 
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
@@ -283,12 +283,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         /** Query the courseService for the participationId given by the params */
-        if (this.courseId) {
-            this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
+        if (this.courseId()) {
+            this.courseService.find(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
-                    this.exerciseGroupService.find(this.courseId!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                    this.exerciseGroupService.find(this.courseId()!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
                         // Make sure to call init if we didn't receive an id => new quiz-exercise
                         this.exerciseGroup = groupResponse.body || undefined;
                         if (!quizId) {
@@ -376,7 +376,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         if (!this.isExamMode()) {
             this.exerciseCategories.set(this.quizExercise().categories || []);
-            this.courseService.findAllCategoriesOfCourse(this.courseId!).subscribe({
+            this.courseService.findAllCategoriesOfCourse(this.courseId()!).subscribe({
                 next: (response: HttpResponse<string[]>) => {
                     this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!));
                 },
@@ -402,7 +402,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     canShowAiGenerationButton(): boolean {
-        return this.hyperionEnabled && !this.isImport() && !this.isExamMode() && !!this.courseId && !!this.quizExercise()?.isEditable;
+        return this.hyperionEnabled && !this.isImport() && !this.isExamMode() && !!this.courseId() && !!this.quizExercise()?.isEditable;
     }
 
     /**
@@ -445,12 +445,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         const prompt = this.globalRefinementPrompt().trim();
         this.quizQuestionListEditComponent().parseAllQuestions();
         const mcQuestions = (this.quizExercise()?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
-        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
+        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId()) {
             return;
         }
         this.isGlobalRefining.set(true);
         this.globalRefinementSubscription = this.quizAiGenerationService
-            .refineAllMultipleChoiceQuestions(this.courseId, mcQuestions, prompt)
+            .refineAllMultipleChoiceQuestions(this.courseId()!, mcQuestions, prompt)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isGlobalRefining.set(false)),
@@ -866,7 +866,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.isExamMode()) {
             return [
                 '/course-management',
-                String(this.courseId),
+                String(this.courseId()),
                 'exams',
                 String(this.examId),
                 'exercise-groups',
@@ -876,7 +876,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 're-evaluate',
             ];
         }
-        return ['/course-management', String(this.courseId), 'quiz-exercises', String(this.quizExercise()?.id), 're-evaluate'];
+        return ['/course-management', String(this.courseId()), 'quiz-exercises', String(this.quizExercise()?.id), 're-evaluate'];
     }
 
     /**

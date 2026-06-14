@@ -189,7 +189,7 @@ describe('SplitPaneHeaderComponent', () => {
         comp1.dropdownHoverSubject()!.next({ file: mockFile, idx: mockIdx });
 
         expect(comp1['handleDropdownHover']).toHaveBeenCalledWith(mockFile, mockIdx);
-        expect(comp1.hoveredFileIndex).toBe(mockIdx);
+        expect(comp1.hoveredFileIndex()).toBe(mockIdx);
     });
 
     it('should update showFiles when hasFiles returns true', () => {
@@ -218,6 +218,6 @@ describe('SplitPaneHeaderComponent', () => {
 
         (comp1 as any).handleDropdownHover(mockFile, mockIdx);
 
-        expect(comp1.hoveredFileIndex).toBe(-1);
+        expect(comp1.hoveredFileIndex()).toBe(-1);
     });
 });

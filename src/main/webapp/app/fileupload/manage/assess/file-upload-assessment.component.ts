@@ -77,9 +77,9 @@ export class FileUploadAssessmentComponent implements OnInit {
     readonly exercise = signal<FileUploadExercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
     exerciseId: number;
-    totalScore = 0;
-    assessmentsAreValid: boolean;
-    invalidError?: string;
+    readonly totalScore = signal(0);
+    readonly assessmentsAreValid = signal<boolean>(undefined!);
+    readonly invalidError = signal<string | undefined>(undefined);
     readonly isAssessor = signal(true);
     readonly busy = signal(true);
     readonly complaint = signal<Complaint>(undefined!);
@@ -106,7 +106,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     constructor() {
         const translateService = inject(TranslateService);
 
-        this.assessmentsAreValid = false;
+        this.assessmentsAreValid.set(false);
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -352,7 +352,7 @@ export class FileUploadAssessmentComponent implements OnInit {
 
     onSubmitAssessment() {
         this.validateAssessment();
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
             return;
         }
@@ -446,11 +446,11 @@ export class FileUploadAssessmentComponent implements OnInit {
         if (updatedFeedbacks) {
             this.unreferencedFeedback.set(updatedFeedbacks);
         }
-        this.assessmentsAreValid = true;
-        this.invalidError = undefined;
+        this.assessmentsAreValid.set(true);
+        this.invalidError.set(undefined);
 
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
+        this.assessmentsAreValid.set(Feedback.haveCreditsAndComments(this.unreferencedFeedback()));
 
         this.calculateTotalScore();
 
@@ -468,7 +468,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     private calculateTotalScore() {
         const maxPoints = getTotalMaxPoints(this.exercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
-        this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
+        this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
     }
 
     downloadFile(filePath: string) {
@@ -516,7 +516,7 @@ export class FileUploadAssessmentComponent implements OnInit {
      */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateAssessment();
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
             assessmentAfterComplaint.onError();
             return;

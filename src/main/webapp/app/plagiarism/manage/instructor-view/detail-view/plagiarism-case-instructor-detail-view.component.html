@@ -29,7 +29,7 @@
                     <div class="btn-group m-1">
                         <a
                             class="btn btn-primary d-print-none"
-                            [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
+                            [routerLink]="['/course-management', courseId(), getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
                         >
                             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise"></span>
                         </a>
@@ -38,7 +38,13 @@
                             <div class="dropdown-menu" ngbDropdownMenu>
                                 <a
                                     ngbDropdownItem
-                                    [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        courseId(),
+                                        getExerciseUrlSegment(plagiarismCase.exercise!.type),
+                                        plagiarismCase.exercise!.id,
+                                        'plagiarism',
+                                    ]"
                                 >
                                     <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
                                 </a>

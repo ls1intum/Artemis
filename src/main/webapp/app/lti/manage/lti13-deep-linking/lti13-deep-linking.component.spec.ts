@@ -270,25 +270,25 @@ describe('Lti13DeepLinkingComponent', () => {
     });
 
     it('should select and deselect a competency', () => {
-        component.isCompetencySelected = false;
+        component.isCompetencySelected.set(false);
         component.enableCompetency();
-        expect(component.isCompetencySelected).toBe(true);
-        expect(component.isLearningPathSelected).toBe(false);
-        expect(component.isIrisSelected).toBe(false);
+        expect(component.isCompetencySelected()).toBe(true);
+        expect(component.isLearningPathSelected()).toBe(false);
+        expect(component.isIrisSelected()).toBe(false);
 
         component.enableCompetency();
-        expect(component.isCompetencySelected).toBe(true);
+        expect(component.isCompetencySelected()).toBe(true);
     });
 
     it('should select and deselect a learning path', () => {
-        component.isLearningPathSelected = false;
+        component.isLearningPathSelected.set(false);
         component.enableLearningPath();
-        expect(component.isLearningPathSelected).toBe(true);
-        expect(component.isCompetencySelected).toBe(false);
-        expect(component.isIrisSelected).toBe(false);
+        expect(component.isLearningPathSelected()).toBe(true);
+        expect(component.isCompetencySelected()).toBe(false);
+        expect(component.isIrisSelected()).toBe(false);
 
         component.enableLearningPath();
-        expect(component.isLearningPathSelected).toBe(true);
+        expect(component.isLearningPathSelected()).toBe(true);
     });
 
     it('should send deep link request when competency is selected', async () => {
@@ -395,9 +395,9 @@ describe('Lti13DeepLinkingComponent', () => {
     it('should show an error when no content is selected', () => {
         component.selectedExercises = new Set();
         component.selectedLectures = new Set();
-        component.isCompetencySelected = false;
-        component.isLearningPathSelected = false;
-        component.isIrisSelected = false;
+        component.isCompetencySelected.set(false);
+        component.isLearningPathSelected.set(false);
+        component.isIrisSelected.set(false);
 
         component.sendDeepLinkRequest();
 
@@ -474,25 +474,25 @@ describe('Lti13DeepLinkingComponent', () => {
     });
 
     it('should activate exercise grouping', () => {
-        expect(component.isExerciseGroupingActive).toBe(false);
+        expect(component.isExerciseGroupingActive()).toBe(false);
         component.activateExerciseGrouping();
-        expect(component.isExerciseGroupingActive).toBe(true);
+        expect(component.isExerciseGroupingActive()).toBe(true);
     });
 
     it('should activate lecture grouping', () => {
-        expect(component.isLectureGroupingActive).toBe(false);
+        expect(component.isLectureGroupingActive()).toBe(false);
         component.activateLectureGrouping();
-        expect(component.isLectureGroupingActive).toBe(true);
+        expect(component.isLectureGroupingActive()).toBe(true);
     });
 
     it('should enable Iris and disable other selections', () => {
-        component.isCompetencySelected = true;
-        component.isLearningPathSelected = true;
+        component.isCompetencySelected.set(true);
+        component.isLearningPathSelected.set(true);
         component.enableIris();
 
-        expect(component.isIrisSelected).toBe(true);
-        expect(component.isCompetencySelected).toBe(false);
-        expect(component.isLearningPathSelected).toBe(false);
+        expect(component.isIrisSelected()).toBe(true);
+        expect(component.isCompetencySelected()).toBe(false);
+        expect(component.isLearningPathSelected()).toBe(false);
     });
 
     it('should send grouped exercise deep link request when exercise grouping is active', async () => {

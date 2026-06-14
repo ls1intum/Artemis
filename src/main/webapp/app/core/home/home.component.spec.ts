@@ -83,18 +83,18 @@ describe('HomeComponent', () => {
 
     it('should initialize with profile info and prefilled username', () => {
         expect(component.username).toBe('prefilledUsername');
-        expect(component.isPasskeyEnabled).toBe(false);
+        expect(component.isPasskeyEnabled()).toBe(false);
     });
 
     it('should validate form correctly', () => {
         component.username = 'testUser';
         component.password = 'password123';
         component.checkFormValidity();
-        expect(component.isFormValid).toBe(true);
+        expect(component.isFormValid()).toBe(true);
 
         component.password = '';
         component.checkFormValidity();
-        expect(component.isFormValid).toBe(false);
+        expect(component.isFormValid()).toBe(false);
     });
 
     it('should handle successful login', async () => {
@@ -185,7 +185,7 @@ describe('HomeComponent', () => {
 
     describe('prefillPasskeysIfPossible', () => {
         it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
-            component.isPasskeyEnabled = true;
+            component.isPasskeyEnabled.set(true);
             const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
             (window as any).PublicKeyCredential = {
                 isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
@@ -199,7 +199,7 @@ describe('HomeComponent', () => {
         });
 
         it('should not call startConditionalMediation if passkey is disabled', async () => {
-            component.isPasskeyEnabled = false;
+            component.isPasskeyEnabled.set(false);
             const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
 
             await component.prefillPasskeysIfPossible();
@@ -208,7 +208,7 @@ describe('HomeComponent', () => {
         });
 
         it('should not call startConditionalMediation if conditional mediation is unavailable', async () => {
-            component.isPasskeyEnabled = true;
+            component.isPasskeyEnabled.set(true);
             const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
             (window as any).PublicKeyCredential = {
                 isConditionalMediationAvailable: vi.fn().mockResolvedValue(false),
@@ -221,7 +221,7 @@ describe('HomeComponent', () => {
         });
 
         it('should not throw if PublicKeyCredential is undefined', async () => {
-            component.isPasskeyEnabled = true;
+            component.isPasskeyEnabled.set(true);
             (window as any).PublicKeyCredential = undefined;
 
             await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();

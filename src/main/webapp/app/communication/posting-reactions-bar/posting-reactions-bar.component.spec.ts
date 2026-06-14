@@ -165,11 +165,11 @@ describe('PostingReactionsBarComponent', () => {
         const differentUser = { ...metisUser1, id: 999 };
         vi.spyOn(metisService, 'getUser').mockReturnValue(differentUser);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBe(false);
+        expect(component.isAtLeastTutorInCourse()).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
-        expect(component.reactionMetaDataMap).toEqual({
+        expect(component.reactionMetaDataMap()).toEqual({
             smile: {
                 count: 1,
                 hasReacted: false,
@@ -367,14 +367,14 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('isEmojiCount', true);
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.reactionMetaDataMap).toEqual({
+        expect(component.reactionMetaDataMap()).toEqual({
             smile: {
                 count: 1,
                 hasReacted: true,
                 reactingUsers: [PLACEHOLDER_USER_REACTED],
             },
         });
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.metis.pinPostTooltip');
     });
 
     it.each`
@@ -430,7 +430,7 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('posting', updatedPost);
         fixture.detectChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
-        expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.metis.removePinPostTooltip');
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
@@ -445,7 +445,7 @@ describe('PostingReactionsBarComponent', () => {
         pinEmoji.click();
         expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is pinned
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
+        expect(component.pinTooltip()).toBe('artemisApp.metis.pinnedPostTooltip');
     });
 
     it('should display button to show single answer', () => {
@@ -582,15 +582,15 @@ describe('PostingReactionsBarComponent', () => {
 
         fixture.componentRef.setInput('posting', post);
         component.ngOnInit();
-        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+        expect(component.displayPriority()).toBe(DisplayPriority.NONE);
 
         component.togglePin();
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.PINNED);
-        expect(component.displayPriority).toBe(DisplayPriority.PINNED);
+        expect(component.displayPriority()).toBe(DisplayPriority.PINNED);
 
         component.togglePin();
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(post.id!, DisplayPriority.NONE);
-        expect(component.displayPriority).toBe(DisplayPriority.NONE);
+        expect(component.displayPriority()).toBe(DisplayPriority.NONE);
     });
 
     it('should display forward button and invoke forwardMessage function when clicked', () => {

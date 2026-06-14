@@ -95,8 +95,8 @@
                     }
                 </span>
                 @if (showBadge()) {
-                    <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
-                        {{ badge.text | artemisTranslate | uppercase }}
+                    <span class="badge" [ngClass]="badge().class" id="result-score-badge" ngbTooltip="{{ badge().tooltip | artemisTranslate }}">
+                        {{ badge().text | artemisTranslate | uppercase }}
                     </span>
                 }
             }

@@ -25,12 +25,12 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     readonly choice = output<LLMModalResult>();
 
-    isVisible = false;
+    readonly isVisible = signal(false);
     readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
     readonly memirisEnabled = signal(true);
     private modalSubscription?: Subscription;
 
-    isOnPremiseEnabled: boolean;
+    readonly isOnPremiseEnabled = signal<boolean>(undefined!);
 
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
@@ -38,7 +38,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
             this.memirisEnabled.set(this.accountService.userIdentity()?.memirisEnabled ?? true);
             this.open();
         });
-        this.isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
+        this.isOnPremiseEnabled.set(this.profileService.isLLMDeploymentEnabled());
     }
 
     ngOnDestroy(): void {
@@ -46,11 +46,11 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     open(): void {
-        this.isVisible = true;
+        this.isVisible.set(true);
     }
 
     close(): void {
-        this.isVisible = false;
+        this.isVisible.set(false);
     }
 
     selectCloud(): void {

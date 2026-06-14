@@ -1,13 +1,13 @@
-<div id="cardFiles" class="card file-browser resizable-filebrowser" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
+<div id="cardFiles" class="card file-browser resizable-filebrowser" [ngStyle]="collapsed() ? { height: '250px' } : { height: '100%' }">
     <div class="card-header d-flex justify-content-center bg-primary text-white" [class.d-none]="!showHeader()" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
-            @if (!collapsed) {
+            @if (!collapsed()) {
                 <span>
                     <fa-icon [icon]="faFolderOpen" />
                     <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
                 </span>
             }
-            @if (collapsed) {
+            @if (collapsed()) {
                 <span class="collapsed-file-browser">
                     <fa-icon class="top-icon" [icon]="faChevronRight" />
                     <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
@@ -48,7 +48,7 @@
                 (click)="toggleTreeCompress()"
                 title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
             >
-                <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown" />
+                <fa-icon [icon]="compressFolders() ? faAngleDoubleUp : faAngleDoubleDown" />
             </button>
         </div>
     }
@@ -74,7 +74,7 @@
             </div>
         }
     </div>
-    @if (!collapsed && !displayOnly()) {
+    @if (!collapsed() && !displayOnly()) {
         <jhi-code-editor-status #status [editorState]="editorState()" [commitState]="commitState()" />
     }
 </div>
@@ -92,7 +92,7 @@
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"
             [onCollapseExpand]="onCollapseExpand"
-            [isCompressed]="compressFolders"
+            [isCompressed]="compressFolders()"
             [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
             [badges]="getFolderBadges(item)"
             (onSetRenamingNode)="setRenamingFile(item)"

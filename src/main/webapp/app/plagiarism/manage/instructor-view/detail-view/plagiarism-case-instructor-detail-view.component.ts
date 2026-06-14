@@ -83,7 +83,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private accountService = inject(AccountService);
     private plagiarismPostService = inject(PlagiarismPostService);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     plagiarismCaseId: number;
     readonly plagiarismCase = signal<PlagiarismCase>(undefined!);
 
@@ -106,9 +106,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly posts = signal<Post[] | undefined>(undefined);
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
-        this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
+        this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId(), this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 const plagiarismCase = res.body!;
                 this.plagiarismCase.set(plagiarismCase);
@@ -151,7 +151,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             throw new Error('Cannot call savePointDeductionVerdict before student is notified');
         }
         this.plagiarismCasesService
-            .saveVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId(), this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
                 verdictPointDeduction: this.verdictPointDeduction(),
             })
@@ -177,7 +177,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             throw new Error('Cannot call saveWarningVerdict before student is notified');
         }
         this.plagiarismCasesService
-            .saveVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId(), this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
                 verdictMessage: this.verdictMessage(),
             })
@@ -201,7 +201,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         if (!this.isStudentNotified()) {
             throw new Error('Cannot call saveVerdict before student is notified');
         }
-        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+        this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.update((plagiarismCase) => ({
                     ...plagiarismCase,
@@ -220,7 +220,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         if (!this.isStudentNotified()) {
             throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
         }
-        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
+        this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.update((plagiarismCase) => ({
                     ...plagiarismCase,
@@ -297,6 +297,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             hasForwardedMessages: post.hasForwardedMessages ?? false,
             plagiarismCaseId: this.plagiarismCaseId,
         };
-        return this.plagiarismPostService.createPlagiarismPost(this.courseId, dto);
+        return this.plagiarismPostService.createPlagiarismPost(this.courseId(), dto);
     };
 }

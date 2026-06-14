@@ -564,7 +564,7 @@ describe('QuizExerciseUpdateComponent', () => {
             let alertServiceStub: any;
             beforeEach(() => {
                 comp.course = course;
-                comp.courseId = course.id;
+                comp.courseId.set(course.id);
                 courseServiceStub = vi.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.mockReturnValue(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
                 exerciseServiceCategoriesAsStringStub = vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
@@ -1151,7 +1151,7 @@ describe('QuizExerciseUpdateComponent', () => {
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache.set(true);
-                if (comp.courseId) {
+                if (comp.courseId()) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
                     (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
                     vi.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
@@ -1170,7 +1170,7 @@ describe('QuizExerciseUpdateComponent', () => {
 
             beforeEach(() => {
                 comp.course = course;
-                comp.courseId = course.id!;
+                comp.courseId.set(course.id!);
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
                 quizExerciseServiceCreateStub = vi.spyOn(quizExerciseService, 'create');
@@ -1379,14 +1379,14 @@ describe('QuizExerciseUpdateComponent', () => {
 
             it('should return correct re-evaluate URL for course quiz', () => {
                 comp.quizExercise().id = 456;
-                comp.courseId = 123;
+                comp.courseId.set(123);
                 comp.isExamMode.set(false);
                 expect(comp.reEvaluateUrl).toEqual(['/course-management', '123', 'quiz-exercises', '456', 're-evaluate']);
             });
 
             it('should return correct re-evaluate URL for exam quiz', () => {
                 comp.quizExercise().id = 456;
-                comp.courseId = 123;
+                comp.courseId.set(123);
                 comp.examId = 789;
                 comp.isExamMode.set(true);
                 const testRoute = {
@@ -2234,7 +2234,7 @@ describe('QuizExerciseUpdateComponent', () => {
             configureFixtureAndServices();
             comp.quizExercise.set(quizExercise);
             comp.quizExercise().isEditable = true;
-            comp.courseId = course.id;
+            comp.courseId.set(course.id);
             comp.isImport.set(false);
             comp.isExamMode.set(false);
             comp.hyperionEnabled = true;
@@ -2263,7 +2263,7 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         it('should not show AI generation button without courseId', () => {
-            comp.courseId = undefined;
+            comp.courseId.set(undefined);
 
             expect(comp.canShowAiGenerationButton()).toBe(false);
         });

@@ -81,8 +81,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     invalidError?: string;
     readonly exercise = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
-    readOnly: boolean;
-    toComplete: boolean;
+    readonly readOnly = signal<boolean>(undefined!);
+    readonly toComplete = signal<boolean>(undefined!);
     readonly assessmentExplanation = signal<string>(undefined!);
     isExamMode: boolean;
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
@@ -145,8 +145,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
-        this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
-        this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
+        this.readOnly.set(!!this.route.snapshot.queryParamMap.get('readOnly'));
+        this.toComplete.set(!!this.route.snapshot.queryParamMap.get('toComplete'));
 
         if (exampleSubmissionId === 'new') {
             this.isNewSubmission.set(true);
@@ -158,7 +158,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
         // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
         // interested in the modeling editor, i.e. we only want to use the assessment mode
-        if (this.readOnly || this.toComplete) {
+        if (this.readOnly() || this.toComplete()) {
             this.assessmentMode.set(true);
         }
         this.loadAll();
@@ -192,7 +192,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
                     this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
 
-                    if (this.toComplete) {
+                    if (this.toComplete()) {
                         this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
                             this.updateExampleAssessmentSolution(result);
                         });
@@ -438,7 +438,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     async back() {
         const exercise = this.exercise();
         const courseId = exercise.course?.id || exercise.exerciseGroup?.exam?.course?.id;
-        if (this.readOnly || this.toComplete) {
+        if (this.readOnly() || this.toComplete()) {
             await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
         } else if (this.isExamMode) {
             await this.router.navigate([

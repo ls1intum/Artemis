@@ -71,8 +71,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('averageScore');
-            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/scores']);
+            expect(component.doughnutChartTitle()).toBe('averageScore');
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/scores']);
         });
 
         it('should set title for participations', () => {
@@ -80,8 +80,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('participationRate');
-            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/participations']);
+            expect(component.doughnutChartTitle()).toBe('participationRate');
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/participations']);
         });
 
         it('should set title for question chart', () => {
@@ -89,8 +89,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('resolved_posts');
-            expect(component.titleLink).toEqual(['/courses/1/exercises/2']);
+            expect(component.doughnutChartTitle()).toBe('resolved_posts');
+            expect(component.titleLink()).toEqual(['/courses/1/exercises/2']);
         });
     });
 

@@ -99,7 +99,7 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should initialize with the correct default values', () => {
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.GENERAL);
         expect(componentAsAny.notifications).toBeUndefined();
         expect(componentAsAny.notificationsForSelectedCategory()).toEqual([]);
@@ -131,17 +131,17 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should toggle overlay visibility when toggleOverlay is called', () => {
-        componentAsAny.isShown = false;
+        componentAsAny.isShown.set(false);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBe(true);
+        expect(componentAsAny.isShown()).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
     });
 
@@ -195,25 +195,25 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should hide overlay when clicking outside the component', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
         const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(false);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
     it('should not hide overlay when clicking inside the component', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
         const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(true);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBe(true);
+        expect(componentAsAny.isShown()).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
@@ -359,7 +359,7 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should apply is-shown class when overlay is shown', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
 
         fixture.changeDetectorRef.detectChanges();
 

@@ -58,27 +58,27 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     password: string;
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
-    needsToAcceptTerms = false;
+    readonly needsToAcceptTerms = signal(false);
     userAcceptedTerms = false;
     username: string;
     credentials: Credentials;
-    isRegistrationEnabled = false;
+    readonly isRegistrationEnabled = signal(false);
     readonly isPasswordLoginDisabled = signal(false);
-    isPasskeyEnabled = false;
+    readonly isPasskeyEnabled = signal(false);
     readonly loading = signal(true);
     mainElementFocused = false;
 
     usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
     readonly usernamePlaceholderTranslated = signal('Login or email'); // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
-    usernameRegexPattern = /^[a-zA-Z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
-    errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
-    accountName?: string; // additional information in the welcome message
+    readonly usernameRegexPattern = signal<RegExp>(/^[a-zA-Z0-9.@_-]{4,50}$/); // default (at least 4, at most 50 characters), might be overridden
+    readonly errorMessageUsername = signal('home.errors.usernameIncorrect'); // default, might be overridden
+    readonly accountName = signal<string | undefined>(undefined); // additional information in the welcome message
 
-    isFormValid = false;
+    readonly isFormValid = signal(false);
     readonly isSubmittingLogin = signal(false);
 
-    profileInfo: ProfileInfo;
+    readonly profileInfo = signal<ProfileInfo>(undefined!);
 
     ngOnInit() {
         this.initializeWithProfileInfo();
@@ -113,7 +113,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * @see https://www.w3.org/TR/webauthn-3/#client-side-discoverable-credential
      */
     async prefillPasskeysIfPossible() {
-        if (!this.isPasskeyEnabled) {
+        if (!this.isPasskeyEnabled()) {
             return;
         }
         if (!window.PublicKeyCredential?.isConditionalMediationAvailable) {
@@ -175,30 +175,31 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * Initializes the component with the required information received from the server.
      */
     private initializeWithProfileInfo() {
-        this.profileInfo = this.profileService.getProfileInfo();
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
+        const profileInfo = this.profileService.getProfileInfo();
+        this.profileInfo.set(profileInfo);
+        this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
 
-        this.accountName = this.profileInfo.accountName;
-        if (this.profileInfo.allowedLdapUsernamePattern) {
-            this.usernameRegexPattern = new RegExp(this.profileInfo.allowedLdapUsernamePattern);
+        this.accountName.set(profileInfo.accountName);
+        if (profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern.set(new RegExp(profileInfo.allowedLdapUsernamePattern));
         }
-        if (this.accountName === 'TUM') {
+        if (this.accountName() === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
-            this.errorMessageUsername = 'home.errors.tumWarning';
+            this.errorMessageUsername.set('home.errors.tumWarning');
             // Temporary workaround: Do not show a warning when TUM users login with an email address with a specific ending
             // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
-            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
+            this.usernameRegexPattern.set(new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/));
         }
         this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         });
 
-        this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
-        this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
+        this.isRegistrationEnabled.set(!!profileInfo.registrationEnabled);
+        this.needsToAcceptTerms.set(!!profileInfo.needsToAcceptTerms);
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
-            this.isPasswordLoginDisabled.set(!!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride);
+            this.isPasswordLoginDisabled.set(!!this.profileInfo()?.saml2 && this.profileInfo().saml2!.passwordLoginDisabled && !loginFormOverride);
         });
     }
 
@@ -292,12 +293,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     checkFormValidity() {
-        this.isFormValid =
+        this.isFormValid.set(
             this.username !== undefined &&
-            this.username.length >= this.USERNAME_MIN_LENGTH &&
-            this.username.length <= this.USERNAME_MAX_LENGTH &&
-            this.password !== undefined &&
-            this.password.length >= this.PASSWORD_MIN_LENGTH &&
-            this.password.length <= this.PASSWORD_MAX_LENGTH;
+                this.username.length >= this.USERNAME_MIN_LENGTH &&
+                this.username.length <= this.USERNAME_MAX_LENGTH &&
+                this.password !== undefined &&
+                this.password.length >= this.PASSWORD_MIN_LENGTH &&
+                this.password.length <= this.PASSWORD_MAX_LENGTH,
+        );
     }
 }

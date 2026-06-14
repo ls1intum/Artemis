@@ -94,7 +94,7 @@
             type="button"
             class="task__row__cell sort__button"
             [ngbTooltip]="
-                (this.isExamExercise ? 'artemisApp.programmingExercise.configureGrading.help.visibilityExam' : 'artemisApp.programmingExercise.configureGrading.help.visibility')
+                (this.isExamExercise() ? 'artemisApp.programmingExercise.configureGrading.help.visibilityExam' : 'artemisApp.programmingExercise.configureGrading.help.visibility')
                     | artemisTranslate
             "
             placement="bottom auto"
@@ -129,6 +129,6 @@
         <div class="task__row__cell" jhiTranslate="artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent"></div>
     </div>
     @for (task of tasks(); track task; let i = $index) {
-        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise" />
+        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject()" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise()" />
     }
 </form>

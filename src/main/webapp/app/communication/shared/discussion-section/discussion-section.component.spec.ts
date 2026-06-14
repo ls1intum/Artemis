@@ -362,12 +362,12 @@ describe('DiscussionSectionComponent', () => {
 
     it('should change sort direction', () => {
         fixture.detectChanges();
-        component.currentSortDirection = SortDirection.ASCENDING;
+        component.currentSortDirection.set(SortDirection.ASCENDING);
         fixture.changeDetectorRef.detectChanges();
         component.onChangeSortDir();
-        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
+        expect(component.currentSortDirection()).toBe(SortDirection.DESCENDING);
         component.onChangeSortDir();
-        expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
+        expect(component.currentSortDirection()).toBe(SortDirection.ASCENDING);
     });
 
     it('fetches new messages on scroll up if more messages are available', () => {

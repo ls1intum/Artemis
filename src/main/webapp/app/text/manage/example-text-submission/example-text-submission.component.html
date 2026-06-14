@@ -8,7 +8,7 @@
                 {{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
-            @if (state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission().length > 0) {
+            @if (state.ui === UIStates.ASSESSMENT && toComplete() && referencedBlocksInExampleSubmission().length > 0) {
                 <div class="col">
                     <div class="my-2 text-center hint">
                         <span jhiTranslate="artemisApp.exampleSubmission.textHint"></span>
@@ -16,7 +16,7 @@
                 </div>
             }
         </div>
-        @if ((exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise) {
+        @if ((exercise?.isAtLeastEditor || false) && !readOnly() && !toComplete() && exercise) {
             <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end">
                 <div>
                     <div class="text-start">
@@ -101,7 +101,7 @@
         }
     </div>
 </div>
-@if (toComplete) {
+@if (toComplete()) {
     <h5 class="fw-light mt-3" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
 }
 <jhi-resizeable-container class="col-12 mt-3">
@@ -125,10 +125,10 @@
         }
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-text-assessment-area
-                [allowManualBlockSelection]="!this.toComplete"
+                [allowManualBlockSelection]="!this.toComplete()"
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
-                [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
+                [readOnly]="readOnly() || (!!exercise && !exercise.isAtLeastEditor && !toComplete())"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
             />
@@ -149,7 +149,7 @@
             <jhi-assessment-instructions
                 id="instructions"
                 [exercise]="exercise"
-                [isAssessmentTraining]="toComplete"
+                [isAssessmentTraining]="toComplete()"
                 [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
                 class="markdown-preview"
             />
@@ -161,14 +161,14 @@
     @if (result() && result()!.id) {
         <jhi-unreferenced-feedback
             [(feedbacks)]="unreferencedFeedback"
-            [readOnly]="readOnly"
+            [readOnly]="readOnly()"
             [addReferenceIdForExampleSubmission]="true"
             (feedbacksChange)="validateFeedback()"
             [resultId]="result()!.id!"
         />
     }
 }
-@if (toComplete) {
+@if (toComplete()) {
     <div class="col-12 text-end pt-2">
         <button
             class="btn btn-primary col-3"
@@ -179,7 +179,7 @@
         ></button>
     </div>
 }
-@if (readOnly) {
+@if (readOnly()) {
     <div class="col-12 text-end pt-2">
         <button (click)="readAndUnderstood()" class="btn btn-success col-3">
             <fa-icon [icon]="faSave" />

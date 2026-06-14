@@ -78,14 +78,14 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should set plagiarism case and exercises on initialization', async () => {
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         expect(component.plagiarismCase()).toEqual(plagiarismCase);
         expect(component.currentAccount?.id).toBe(99);
     });
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         expect(() => component.saveVerdict()).toThrow(Error);
@@ -97,7 +97,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should save plagiarism case plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.saveVerdict();
@@ -108,7 +108,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should save plagiarism case warning verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.verdictMessage.set('message');
@@ -120,7 +120,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should save plagiarism case point deduction verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.verdictPointDeduction.set(80);
@@ -132,7 +132,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should save plagiarism case no plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.NO_PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.saveNoPlagiarismVerdict();
@@ -224,7 +224,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should notify student', () => {
         const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
 
-        component.courseId = 1;
+        component.courseId.set(1);
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
         component.onStudentNotified(newPost);
 

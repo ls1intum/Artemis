@@ -98,24 +98,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
-    inProduction: boolean;
-    testServer: boolean;
-    isNavbarCollapsed: boolean;
-    gitCommitId: string;
-    gitBranchName: string;
-    gitTimestamp: string;
-    gitUsername: string;
+    readonly inProduction = signal<boolean>(undefined!);
+    readonly testServer = signal<boolean>(undefined!);
+    readonly isNavbarCollapsed = signal<boolean>(undefined!);
+    readonly gitCommitId = signal<string>(undefined!);
+    readonly gitBranchName = signal<string>(undefined!);
+    readonly gitTimestamp = signal<string>(undefined!);
+    readonly gitUsername = signal<string>(undefined!);
     readonly isBuildAgentDetails = signal(false);
     languages = LANGUAGES;
-    version: string;
-    currAccount?: User;
+    readonly version = signal<string>(undefined!);
+    readonly currAccount = signal<User | undefined>(undefined);
     isRegistrationEnabled = false;
-    passwordResetEnabled = false;
+    readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
     breadcrumbSubscriptions: Subscription[];
-    isCollapsed: boolean;
-    iconsMovedToMenu: boolean;
-    isNavbarNavVertical: boolean;
+    readonly isCollapsed = signal<boolean>(undefined!);
+    readonly iconsMovedToMenu = signal<boolean>(undefined!);
+    readonly isNavbarNavVertical = signal<boolean>(undefined!);
     readonly isExamActive = signal(false);
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
@@ -144,8 +144,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private lastRouteUrlSegment?: string;
 
     constructor() {
-        this.version = VERSION ? VERSION : '';
-        this.isNavbarCollapsed = true;
+        this.version.set(VERSION ? VERSION : '');
+        this.isNavbarCollapsed.set(true);
         this.subscribeToNavigationEventsForExamId();
         this.onResize();
     }
@@ -156,8 +156,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         let neededWidthToNotRequireCollapse: number;
         let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
         let neededWidthForIconOptionsToBeInMainNavBar: number;
-        if (this.currAccount) {
-            const nameLength = (this.currAccount.login?.length ?? 0) * 8;
+        const currAccount = this.currAccount();
+        if (currAccount) {
+            const nameLength = (currAccount.login?.length ?? 0) * 8;
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
@@ -177,19 +178,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 430;
         }
 
-        this.isCollapsed = window.innerWidth < neededWidthToNotRequireCollapse;
-        this.isNavbarNavVertical = window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480);
-        this.iconsMovedToMenu = window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar;
+        this.isCollapsed.set(window.innerWidth < neededWidthToNotRequireCollapse);
+        this.isNavbarNavVertical.set(window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480));
+        this.iconsMovedToMenu.set(window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar);
     }
 
     ngOnInit() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.inProduction = this.profileService.isProduction();
-        this.testServer = this.profileService.isTestServer();
-        this.gitCommitId = profileInfo.git.commit.id.abbrev;
-        this.gitBranchName = profileInfo.git.branch;
-        this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
-        this.gitUsername = profileInfo.git.commit.user.name;
+        this.inProduction.set(this.profileService.isProduction());
+        this.testServer.set(this.profileService.isTestServer());
+        this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
+        this.gitBranchName.set(profileInfo.git.branch);
+        this.gitTimestamp.set(new Date(profileInfo.git.commit.time).toUTCString());
+        this.gitUsername.set(profileInfo.git.commit.user.name);
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
@@ -208,8 +209,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
-                    this.currAccount = user;
-                    this.passwordResetEnabled = user?.internal || false;
+                    this.currAccount.set(user);
+                    this.passwordResetEnabled.set(user?.internal || false);
                     this.onResize();
                 }),
             )
@@ -788,7 +789,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     changeLanguage(languageKey: string) {
-        if (this.currAccount) {
+        if (this.currAccount()) {
             this.accountService.updateLanguage(languageKey).subscribe({
                 next: () => {
                     this.translateService.use(languageKey);
@@ -801,7 +802,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     collapseNavbar() {
-        this.isNavbarCollapsed = true;
+        this.isNavbarCollapsed.set(true);
     }
 
     isAuthenticated() {
@@ -819,7 +820,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     toggleNavbar() {
-        this.isNavbarCollapsed = !this.isNavbarCollapsed;
+        this.isNavbarCollapsed.update((collapsed) => !collapsed);
     }
 
     getImageUrl() {

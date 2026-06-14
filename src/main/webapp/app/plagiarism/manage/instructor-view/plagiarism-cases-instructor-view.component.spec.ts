@@ -147,7 +147,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should set plagiarism cases and exercises on initialization', async () => {
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(0);
         expect(component.plagiarismCases()).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
         expect(component.exercisesWithPlagiarismCases()).toEqual([exercise1, exercise2]);
@@ -162,7 +162,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(0);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).toHaveBeenCalledOnce();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).not.toHaveBeenCalled();
@@ -178,7 +178,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(1);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).not.toHaveBeenCalled();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).toHaveBeenCalledOnce();

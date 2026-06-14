@@ -1,14 +1,14 @@
 <div [id]="'exercise-' + modelingExercise()?.id">
-    @if (displayHeader() && examMode) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader()">
+    @if (displayHeader() && examMode()) {
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader()" [participation]="modelingParticipationHeader()">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
-                <span class="font-weight-normal">{{ examMode ? modelingExercise()?.exerciseGroup?.title : modelingExercise()?.title }}</span>
+                <span class="font-weight-normal">{{ examMode() ? modelingExercise()?.exerciseGroup?.title : modelingExercise()?.title }}</span>
             </span>
             <ng-container submitbutton>
-                @if (isOwnerOfParticipation) {
+                @if (isOwnerOfParticipation()) {
                     @if (isFeedbackView()) {
-                        @if ((sortedSubmissionHistory?.length || 0) > 1) {
+                        @if ((sortedSubmissionHistory()?.length || 0) > 1) {
                             <jhi-button
                                 id="toggleTimeline"
                                 [icon]="faTimeline"
@@ -30,12 +30,12 @@
                         id="submit"
                         class="submission-button"
                         [exercise]="modelingExercise()"
-                        [disabled]="(!examMode && !isActive && !isLate) || !submission() || (!!result() && !isAutomaticResult) || (isLate && !!submission().submitted)"
-                        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
+                        [disabled]="(!examMode() && !isActive && !isLate()) || !submission() || (!!result() && !isAutomaticResult) || (isLate() && !!submission().submitted)"
+                        [title]="!isLate() ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                         (onSubmit)="submit()"
                         [isLoading]="isSaving()"
                         [isSubmitted]="!!submission()?.submitted"
-                        [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+                        [btnType]="!isLate() ? ButtonType.PRIMARY : ButtonType.WARNING"
                         [tooltip]="submitButtonTooltip"
                         [isGeneratingFeedback]="isGeneratingFeedback()"
                         (generatingFeedback)="isGeneratingFeedback.set(true)"
@@ -64,7 +64,7 @@
             [isBeingPrinted]="isPrinting()"
             [expandProblemStatement]="expandProblemStatement()"
             [collapsed]="isFeedbackView()"
-            [showRightPanel]="showProblemStatement() && examMode"
+            [showRightPanel]="showProblemStatement() && examMode()"
         >
             <!--region Left Panel-->
             <ng-container left-body>
@@ -72,7 +72,7 @@
                     <div class="w-100">
                         <div class="submission-container d-flex flex-column w-100">
                             <div class="d-flex flex-column flex-md-row">
-                                @if (modelingExercise().teamMode && (isActive || isLate)) {
+                                @if (modelingExercise().teamMode && (isActive || isLate())) {
                                     <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
                                         <jhi-team-participate-info-box
                                             [exercise]="modelingExercise()"
@@ -87,11 +87,15 @@
                                 <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
                                     <div class="row" style="flex-grow: 1; display: flex">
                                         @if (
-                                            submission() && (isActive || isLate) && !(result() && !isAutomaticResult) && (!isLate || !submission().submitted) && !isFeedbackView()
+                                            submission() &&
+                                            (isActive || isLate()) &&
+                                            !(result() && !isAutomaticResult) &&
+                                            (!isLate() || !submission().submitted) &&
+                                            !isFeedbackView()
                                         ) {
                                             <div class="col-12 editor-large">
                                                 <jhi-modeling-editor
-                                                    [readOnly]="!isOwnerOfParticipation"
+                                                    [readOnly]="!isOwnerOfParticipation()"
                                                     [umlModel]="umlModel()"
                                                     [diagramType]="modelingExercise().diagramType!"
                                                     [withExplanation]="true"
@@ -114,7 +118,7 @@
                                                 }
                                             </div>
                                         }
-                                        @if (((!isActive || (result() && !isAutomaticResult)) && (!isLate || submission().submitted)) || isFeedbackView()) {
+                                        @if (((!isActive || (result() && !isAutomaticResult)) && (!isLate() || submission().submitted)) || isFeedbackView()) {
                                             <div class="col-8 editor-assessment">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel()"
@@ -147,7 +151,7 @@
                                                                         [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                                         [points]="feedback.credits || 0"
                                                                         [feedback]="feedback"
-                                                                        [assessmentsNames]="assessmentsNames"
+                                                                        [assessmentsNames]="assessmentsNames()"
                                                                         [scoreAccuracy]="course()?.accuracyOfScores"
                                                                     />
                                                                 }
@@ -178,7 +182,7 @@
                                 <jhi-rating class="mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
                             </div>
                         }
-                        @if (result() && !examMode && !isFeedbackView()) {
+                        @if (result() && !examMode() && !isFeedbackView()) {
                             <jhi-complaint-student-view
                                 [exercise]="modelingExercise()"
                                 [participation]="participation()"

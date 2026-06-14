@@ -1,5 +1,5 @@
 <div class="feedback-text">
-    @if (!previewText) {
+    @if (!previewText()) {
         <p>{{ feedback().text }}</p>
     } @else {
         @if (isCollapsed()) {
@@ -9,7 +9,7 @@
                     <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
                 </div>
                 <!-- Only show first line as preview -->
-                <p>{{ previewText }}</p>
+                <p>{{ previewText() }}</p>
             </div>
         } @else {
             <div>

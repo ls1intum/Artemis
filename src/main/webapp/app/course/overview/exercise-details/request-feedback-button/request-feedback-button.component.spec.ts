@@ -208,7 +208,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise);
-            component.isExamExercise = false;
+            component.isExamExercise.set(false);
 
             await initAndTick();
 

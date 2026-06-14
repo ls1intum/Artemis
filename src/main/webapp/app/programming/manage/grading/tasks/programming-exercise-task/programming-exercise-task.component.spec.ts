@@ -110,7 +110,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         taskService.currentTasks = [{ taskName: 'Not assigned to task', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
 
         comp.ngOnInit();
-        expect(comp.onlyViewTestCases).toBe(true);
+        expect(comp.onlyViewTestCases()).toBe(true);
         expect(comp.open()).toBe(true);
     });
 
@@ -121,7 +121,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         ] as ProgrammingExerciseTask[];
 
         comp.ngOnInit();
-        expect(comp.onlyViewTestCases).toBeFalsy();
+        expect(comp.onlyViewTestCases()).toBeFalsy();
         expect(comp.open()).toBeFalsy();
     });
 });

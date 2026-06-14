@@ -58,7 +58,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     isSubmissionSynced = input<boolean>();
     saveCurrentExercise = output<void>();
 
-    explanationText: string; // current explanation text
+    readonly explanationText = signal<string>(undefined!); // current explanation text
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
@@ -98,7 +98,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
                 this.umlModel.set(importDiagram(JSON.parse(this.studentSubmission()!.model!)));
             }
             // Updates explanation text with the latest submission
-            this.explanationText = this.studentSubmission()!.explanationText ?? '';
+            this.explanationText.set(this.studentSubmission()!.explanationText ?? '');
         }
     }
 
@@ -117,7 +117,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             if (diagramJson) {
                 this.studentSubmission()!.model = diagramJson;
             }
-            this.studentSubmission()!.explanationText = this.explanationText;
+            this.studentSubmission()!.explanationText = this.explanationText();
         }
     }
 
@@ -142,7 +142,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
         this.studentSubmission()!.isSynced = false;
-        this.explanationText = explanation;
+        this.explanationText.set(explanation);
     }
 
     async setSubmissionVersion(submission: SubmissionVersion): Promise<void> {
@@ -165,7 +165,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             this.umlModel.set(importDiagram(JSON.parse(model)));
             // same as above regarding the string operations
             const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
-            this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';
+            this.explanationText.set(this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '');
         }
     }
 

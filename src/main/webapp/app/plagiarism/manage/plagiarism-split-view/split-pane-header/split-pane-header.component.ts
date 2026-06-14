@@ -41,7 +41,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     // Icons
     faChevronDown = faChevronDown;
-    hoveredFileIndex: number;
+    readonly hoveredFileIndex = signal<number>(undefined!);
 
     ngOnInit(): void {
         this.subscribeToFileSelection();
@@ -98,7 +98,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
         const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
-        this.hoveredFileIndex = index >= 0 ? index : -1;
+        this.hoveredFileIndex.set(index >= 0 ? index : -1);
     }
 
     ngOnChanges(changes: SimpleChanges) {

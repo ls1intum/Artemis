@@ -122,16 +122,28 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly Visibility = Visibility;
 
     readonly course = signal<Course>(undefined!);
-    programmingExercise: ProgrammingExercise;
+    // Backed by a signal but exposed via a getter/setter facade: the template binds `programmingExercise.prop`
+    // directly and several subscribe handlers mutate nested properties in place, so we rebuild the reference
+    // via commitProgrammingExercise() after deep mutations to keep template reads reactive under zoneless CD.
+    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
+    get programmingExercise(): ProgrammingExercise {
+        return this._programmingExercise();
+    }
+    set programmingExercise(value: ProgrammingExercise) {
+        this._programmingExercise.set(value);
+    }
+    private commitProgrammingExercise(): void {
+        this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+    }
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
 
     readonly testCasesValue = signal<ProgrammingExerciseTestCase[]>([]);
-    changedTestCaseIds: number[] = [];
+    readonly changedTestCaseIds = signal<number[]>([]);
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     filteredTestCasesForTable: ProgrammingExerciseTestCase[] = [];
-    filteredTestCasesForCharts: ProgrammingExerciseTestCase[] = [];
+    readonly filteredTestCasesForCharts = signal<ProgrammingExerciseTestCase[]>([]);
     // backup in order to restore the setting before filtering by chart interaction
     backupTestCases: ProgrammingExerciseTestCase[] = [];
 
@@ -146,13 +158,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     readonly staticCodeAnalysisCategoriesForTable = signal<StaticCodeAnalysisCategory[]>([]);
-    staticCodeAnalysisCategoriesForCharts: StaticCodeAnalysisCategory[] = [];
+    readonly staticCodeAnalysisCategoriesForCharts = signal<StaticCodeAnalysisCategory[]>([]);
     // backup in order to restore the setting before filtering by chart interaction
     backupStaticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
     readonly changedCategoryIds = signal<number[]>([]);
 
     buildAfterDueDateActive: boolean;
-    isReleasedAndHasResults: boolean;
+    readonly isReleasedAndHasResults = signal<boolean>(undefined!);
     showInactiveValue = false;
     readonly isSaving = signal(false);
     readonly isLoading = signal(false);
@@ -161,7 +173,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly activeTab = signal<GradingTab>(undefined!);
 
     readonly gradingStatistics = signal<ProgrammingExerciseGradingStatistics | undefined>(undefined);
-    gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
+    readonly gradingStatisticsObservable = signal<Observable<ProgrammingExerciseGradingStatistics>>(undefined!);
     readonly maxIssuesPerCategory = signal(0);
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
@@ -171,7 +183,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
-    hadPolicyBefore: boolean;
+    readonly hadPolicyBefore = signal<boolean>(undefined!);
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -236,7 +248,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         if (this.programmingExercise.staticCodeAnalysisEnabled) {
                             this.loadStaticCodeAnalysisCategories();
                         }
-                        this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
+                        this.hadPolicyBefore.set(this.programmingExercise.submissionPolicy !== undefined);
                     }),
                     catchError(() => of(null)),
                 );
@@ -244,7 +256,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
                     tap((releaseState) => {
                         this.hasUpdatedGradingConfig.set(releaseState.testCasesChanged);
-                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                        this.isReleasedAndHasResults.set(releaseState.released && releaseState.hasStudentResult);
                         this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                     }),
                     catchError(() => of(null)),
@@ -336,7 +348,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             newValue = this.checkFieldValue(newValue, editedTestCase[field as keyof ProgrammingExerciseTestCase], field);
             // Only mark the testcase as changed, if the field has changed.
             if (newValue !== editedTestCase[field as keyof ProgrammingExerciseTestCase]) {
-                this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
+                this.changedTestCaseIds.update((ids) => (ids.includes(editedTestCase.id!) ? ids : [...ids, editedTestCase.id!]));
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
                 this.updateTestPoints(editedTestCase, field, newValue);
             }
@@ -486,7 +498,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap(() => {
                     this.programmingExercise.submissionPolicy = undefined;
-                    this.hadPolicyBefore = false;
+                    this.commitProgrammingExercise();
+                    this.hadPolicyBefore.set(false);
                 }),
                 catchError(() => {
                     return of(null);
@@ -507,7 +520,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap((submissionPolicy: SubmissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
-                    this.hadPolicyBefore = true;
+                    this.commitProgrammingExercise();
+                    this.hadPolicyBefore.set(true);
                 }),
                 catchError(() => {
                     return of(null);
@@ -522,10 +536,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Updates the submission policy of the programming exercise.
      */
     updateSubmissionPolicy() {
-        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore) {
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore()) {
             this.removeSubmissionPolicy();
             return;
-        } else if (!this.hadPolicyBefore && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
+        } else if (!this.hadPolicyBefore() && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
             this.addSubmissionPolicy();
             return;
         }
@@ -556,6 +570,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .pipe(
                     tap(() => {
                         this.programmingExercise!.submissionPolicy!.active = false;
+                        this.commitProgrammingExercise();
                     }),
                 )
                 .subscribe(deactivateSaving);
@@ -565,6 +580,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .pipe(
                     tap(() => {
                         this.programmingExercise!.submissionPolicy!.active = true;
+                        this.commitProgrammingExercise();
                     }),
                 )
                 .subscribe(deactivateSaving);
@@ -576,7 +592,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateTestCaseFilter() {
         this.filteredTestCasesForTable = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
-        this.filteredTestCasesForCharts = this.filteredTestCasesForTable;
+        this.filteredTestCasesForCharts.set(this.filteredTestCasesForTable);
         this.backupTestCases = this.filteredTestCasesForTable;
     }
 
@@ -615,10 +631,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedGradingConfig())) {
+        if (!this.changedTestCaseIds().length && (!this.isReleasedAndHasResults() || !this.hasUpdatedGradingConfig())) {
             return true;
         }
-        const warning = this.changedTestCaseIds.length
+        const warning = this.changedTestCaseIds().length
             ? this.translateService.instant('pendingChanges')
             : this.translateService.instant('artemisApp.programmingExercise.configureGrading.updatedGradingConfig');
         return confirm(warning);
@@ -722,9 +738,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param exerciseId The current exercise id
      */
     private loadStatistics(exerciseId: number) {
-        this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId);
+        this.gradingStatisticsObservable.set(this.gradingService.getGradingStatistics(exerciseId));
 
-        this.gradingStatisticsObservable.subscribe((statistics) => {
+        this.gradingStatisticsObservable().subscribe((statistics) => {
             this.gradingStatistics.set(statistics);
             this.maxIssuesPerCategory.set(0);
             if (statistics?.categoryIssuesMap) {
@@ -789,7 +805,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
                 break;
             case TestCaseView.CHART:
-                this.filteredTestCasesForCharts = this.filteredTestCasesForCharts.map(mapFunction);
+                this.filteredTestCasesForCharts.update((testCases) => testCases.map(mapFunction));
                 break;
             case TestCaseView.BACKUP:
                 this.backupTestCases = this.backupTestCases.map(mapFunction);
@@ -811,14 +827,14 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);
-        this.staticCodeAnalysisCategoriesForCharts = this.backupStaticCodeAnalysisCategories;
+        this.staticCodeAnalysisCategoriesForCharts.set(this.backupStaticCodeAnalysisCategories);
     }
 
     /**
      * Auxiliary method that sets the chart and backup view on the static code analysis categories
      */
     private setChartAndBackupCategoryView(): void {
-        this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable();
+        this.staticCodeAnalysisCategoriesForCharts.set(this.staticCodeAnalysisCategoriesForTable());
         this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable();
     }
 }

@@ -9,10 +9,10 @@
         @if (!isPasswordLoginDisabled()) {
             <div class="login-col col-12 col-xl-5 h-100">
                 <!-- Traditional Authentication -->
-                @if (!accountName) {
+                @if (!accountName()) {
                     <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
                 } @else {
-                    <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center mb-4">
+                    <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName() }" class="lead text-center mb-4">
                         Sign in with your account.
                     </div>
                 }
@@ -32,7 +32,7 @@
                                     #usernameForm="ngModel"
                                     [(ngModel)]="username"
                                     [ngModelOptions]="{ updateOn: 'change' }"
-                                    [pattern]="usernameRegexPattern"
+                                    [pattern]="usernameRegexPattern()"
                                     autocomplete="username webauthn"
                                     class="form-control"
                                     id="username"
@@ -46,7 +46,7 @@
                                     tabindex="1"
                                 />
                                 @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
-                                    <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
+                                    <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername()"></span>
                                 }
                             </div>
                             <div class="form-group">
@@ -82,7 +82,7 @@
                                         <span jhiTranslate="login.form.rememberme"></span>
                                     </label>
                                 </div>
-                                @if (needsToAcceptTerms) {
+                                @if (needsToAcceptTerms()) {
                                     <div class="form-check">
                                         <label class="form-check-label" for="acceptTerms">
                                             <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
@@ -93,7 +93,7 @@
                             </div>
                             <div class="btn-toolbar">
                                 <button
-                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
+                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !isFormValid()"
                                     class="btn btn-primary w-100"
                                     id="login-button"
                                     type="submit"
@@ -106,7 +106,7 @@
                                 </button>
                             </div>
                         </form>
-                        @if (isPasskeyEnabled) {
+                        @if (isPasskeyEnabled()) {
                             <div class="d-flex align-items-center my-3">
                                 <div class="flex-grow-1 border-top"></div>
                                 <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
@@ -125,7 +125,7 @@
                         }
                     </div>
                     <div class="text-center">
-                        @if (isRegistrationEnabled) {
+                        @if (isRegistrationEnabled()) {
                             <div>
                                 <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
                                 <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
@@ -135,23 +135,23 @@
                 </div>
             </div>
         }
-        @if (!isPasswordLoginDisabled() && !!profileInfo?.saml2) {
+        @if (!isPasswordLoginDisabled() && !!profileInfo()?.saml2) {
             <div class="col-12 col-xl-2 py-5 h-100">
                 <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
                 <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
             </div>
         }
-        @if (!!profileInfo?.saml2) {
+        @if (!!profileInfo()?.saml2) {
             <div class="login-col col-12 col-xl-5">
                 <!-- SAML2 Authentication -->
                 <div class="h-100 d-flex flex-column align-items-center justify-content-center">
-                    @if (!profileInfo!.saml2!.identityProviderName) {
+                    @if (!profileInfo().saml2!.identityProviderName) {
                         <div [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">Please sign in via Single Sign-on.</div>
                     }
-                    @if (profileInfo!.saml2!.identityProviderName) {
+                    @if (profileInfo().saml2!.identityProviderName) {
                         <div
                             [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
-                            [translateValues]="{ provider: profileInfo!.saml2!.identityProviderName }"
+                            [translateValues]="{ provider: profileInfo().saml2!.identityProviderName }"
                             class="lead text-center"
                         >
                             Please sign in.
@@ -159,7 +159,7 @@
                     }
                     <div class="saml2-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
                         <div class="form-group">
-                            @if (needsToAcceptTerms) {
+                            @if (needsToAcceptTerms()) {
                                 <div class="form-check">
                                     <label class="form-check-label" for="acceptTerms">
                                         <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
@@ -169,9 +169,9 @@
                             }
                         </div>
                         <jhi-saml2-login
-                            [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms"
+                            [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
                             [rememberMe]="rememberMe"
-                            [saml2Profile]="profileInfo!.saml2!"
+                            [saml2Profile]="profileInfo().saml2!"
                             class="d-block text-center"
                         />
                     </div>

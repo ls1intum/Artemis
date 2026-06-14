@@ -73,8 +73,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     readonly result = signal<Result | undefined>(undefined);
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     readonly totalScore = signal<number>(undefined!);
-    readOnly: boolean;
-    toComplete: boolean;
+    readonly readOnly = signal<boolean>(undefined!);
+    readonly toComplete = signal<boolean>(undefined!);
     // The State machine assigns `context.state` through the Context interface, so the plain property API must stay;
     // the signal backing makes the async state transitions schedule zoneless change detection.
     private readonly stateSignal = signal<State>(State.initialWithContext(this));
@@ -119,8 +119,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
-        this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
-        this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
+        this.readOnly.set(!!this.route.snapshot.queryParamMap.get('readOnly'));
+        this.toComplete.set(!!this.route.snapshot.queryParamMap.get('toComplete'));
 
         if (exampleSubmissionId === 'new') {
             this.isNewSubmission.set(true);
@@ -149,7 +149,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.exampleSubmission = exampleSubmissionResponse.body!;
             this.submission = this.exampleSubmission.submission as TextSubmission;
             await this.fetchExampleResult();
-            if (this.toComplete) {
+            if (this.toComplete()) {
                 this.state = State.forCompletion(this);
                 this.restrictSelectableTextBlocks();
                 this.textBlockRefs.forEach((ref) => delete ref.feedback);
@@ -318,7 +318,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         if (this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup.id;
-            if (this.readOnly || this.toComplete) {
+            if (this.readOnly() || this.toComplete()) {
                 await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
                 await this.router.navigate([
@@ -334,7 +334,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 ]);
             }
         } else {
-            if (this.readOnly || this.toComplete) {
+            if (this.readOnly() || this.toComplete()) {
                 this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
                 this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
@@ -424,7 +424,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result()?.feedbacks || []);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
 
-        if (!this.toComplete) {
+        if (!this.toComplete()) {
             this.unreferencedFeedback.set(this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED) ?? []);
         }
     }

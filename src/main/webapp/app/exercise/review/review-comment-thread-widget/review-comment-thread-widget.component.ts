@@ -57,9 +57,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly editingCommentId = signal<number | undefined>(undefined);
     readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly editText = signal('');
-    userCommentMenuItems: MenuItem[] = [];
-    nonUserCommentMenuItems: MenuItem[] = [];
-    resolveGroupMenuItems: MenuItem[] = [];
+    readonly userCommentMenuItems = signal<MenuItem[]>([]);
+    readonly nonUserCommentMenuItems = signal<MenuItem[]>([]);
+    readonly resolveGroupMenuItems = signal<MenuItem[]>([]);
     readonly commentMenus = viewChildren<Menu>('commentMenu');
     readonly resolveGroupMenu = viewChild<Menu>('resolveGroupMenu');
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
@@ -439,11 +439,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     private updateMenuItems(): void {
-        this.userCommentMenuItems = [
+        this.userCommentMenuItems.set([
             { id: 'edit', label: this.translateService.instant('artemisApp.review.editComment') },
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
-        ];
-        this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
+        ]);
+        this.nonUserCommentMenuItems.set([{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }]);
         const resolveGroupMenuItems: MenuItem[] = [];
         if (this.canResolveGroup()) {
             resolveGroupMenuItems.push({ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') });
@@ -451,7 +451,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (this.canUnresolveGroup()) {
             resolveGroupMenuItems.push({ id: 'unresolve-group', label: this.translateService.instant('artemisApp.review.unresolveThreadGroup') });
         }
-        this.resolveGroupMenuItems = resolveGroupMenuItems;
+        this.resolveGroupMenuItems.set(resolveGroupMenuItems);
     }
 
     private readonly hideOpenMenus = (): void => {

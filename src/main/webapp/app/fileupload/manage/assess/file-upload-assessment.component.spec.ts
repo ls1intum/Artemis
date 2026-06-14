@@ -312,7 +312,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('should set examId and exerciseGroupId from route params for exam exercises', () => {
@@ -469,7 +469,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.validateAssessment();
 
-            expect(component.totalScore).toBe(15);
+            expect(component.totalScore()).toBe(15);
         });
     });
 
@@ -484,7 +484,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.validateAssessment();
 
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('should set assessmentsAreValid to false when feedback lacks detailText', () => {
@@ -492,7 +492,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.validateAssessment();
 
-            expect(component.assessmentsAreValid).toBe(false);
+            expect(component.assessmentsAreValid()).toBe(false);
         });
 
         it('should call submissionService.handleFeedbackCorrectionRoundTag', () => {

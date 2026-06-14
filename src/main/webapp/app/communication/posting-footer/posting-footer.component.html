@@ -36,8 +36,8 @@
     <ng-container #createEditAnswerPostContainer />
     <jhi-answer-post-create-edit-modal
         #createAnswerPostModal
-        [posting]="createdAnswerPost"
+        [posting]="createdAnswerPost()"
         [createEditAnswerPostContainerRef]="containerRef()"
-        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers()"
+        (onCreate)="createdAnswerPost.set(createEmptyAnswerPost()); showAnswers()"
     />
 </div>

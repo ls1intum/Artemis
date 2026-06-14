@@ -31,8 +31,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
     readonly open = signal(false);
-    onlyViewTestCases: boolean;
-    testCaseVisibilityList: { value: Visibility; name: string }[] = [];
+    readonly onlyViewTestCases = signal(false);
+    readonly testCaseVisibilityList = signal<{ value: Visibility; name: string }[]>([]);
 
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
@@ -43,7 +43,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
 
         // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
-            this.onlyViewTestCases = true;
+            this.onlyViewTestCases.set(true);
             this.open.set(true);
         }
 
@@ -86,17 +86,19 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     }
 
     private updateTestCaseVisibilityList() {
-        this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
-            let displayName = name;
+        this.testCaseVisibilityList.set(
+            Object.entries(Visibility).map(([name, value]) => {
+                let displayName = name;
 
-            if (this.isExamExercise() && value === Visibility.AfterDueDate) {
-                displayName = 'AfterReleaseDateOfResults';
-            }
+                if (this.isExamExercise() && value === Visibility.AfterDueDate) {
+                    displayName = 'AfterReleaseDateOfResults';
+                }
 
-            return {
-                value,
-                name: displayName,
-            };
-        });
+                return {
+                    value,
+                    name: displayName,
+                };
+            }),
+        );
     }
 }

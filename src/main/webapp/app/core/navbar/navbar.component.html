@@ -1,6 +1,6 @@
 <ng-template #iconMenu>
-    <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
+    <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical(), 'in-menu': iconsMovedToMenu() }">
+        <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div
                 ngbDropdown
@@ -15,11 +15,11 @@
                     @if (!getImageUrl()) {
                         <span>
                             <fa-icon [icon]="faUser" />
-                            @if (!currAccount) {
+                            @if (!currAccount()) {
                                 <span jhiTranslate="global.menu.account.main"></span>
                             }
-                            @if (currAccount) {
-                                <span>{{ currAccount.login }}</span>
+                            @if (currAccount()) {
+                                <span>{{ currAccount()!.login }}</span>
                             }
                         </span>
                     }
@@ -60,7 +60,7 @@
                             </a>
                         </li>
                     }
-                    @if (passwordResetEnabled) {
+                    @if (passwordResetEnabled()) {
                         <li>
                             <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faLock" [fixedWidth]="true" />
@@ -69,7 +69,7 @@
                         </li>
                     }
                     <li>
-                        @if (currAccount) {
+                        @if (currAccount()) {
                             <a class="dropdown-item" (click)="logout()" id="logout">
                                 <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.logout"></span>
@@ -81,28 +81,28 @@
         }
     </div>
 </ng-template>
-<nav class="navbar jh-navbar" [class.expanded]="!isCollapsed">
+<nav class="navbar jh-navbar" [class.expanded]="!isCollapsed()">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
             <img [src]="'public/images/logo.svg'" width="32" height="30" alt="" style="object-fit: contain" />
             <div jhiTranslate="global.title" class="navbar-title"></div>
             <ng-template #gitInfo>
                 <div>
-                    {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
-                    {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
-                    {{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
-                    {{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitUsername }}
+                    {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName() }} <br />
+                    {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId() }} <br />
+                    {{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp() }} <br />
+                    {{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitUsername() }}
                 </div>
             </ng-template>
-            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction && !testServer">
-                {{ version }}
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction() && !testServer()">
+                {{ version() }}
             </div>
         </a>
         <div class="indicators">
             <jhi-connection-warning class="align-self-center" />
             <jhi-loading-notification class="align-self-center" />
         </div>
-        @if (!iconsMovedToMenu && isCollapsed) {
+        @if (!iconsMovedToMenu() && isCollapsed()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }
         <div class="toggler-wrapper">
@@ -119,14 +119,14 @@
             </a>
         </div>
     </div>
-    <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
-        <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
-            @if (currAccount && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
+    <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
+        <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical()">
+            @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
                 <li class="nav-item">
                     <jhi-global-search-navbar />
                 </li>
             }
-            @if (currAccount && !isExamActive() && !isExamStarted()) {
+            @if (currAccount() && !isExamActive() && !isExamStarted()) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
@@ -147,7 +147,7 @@
                 }
             </li>
             <jhi-server-administration class="nav-item" [isExamActive]="isExamActive()" [isExamStarted]="isExamStarted()" (collapseNavbarListener)="collapseNavbar()" />
-            @if (!currAccount && languages && languages.length > 1) {
+            @if (!currAccount() && languages && languages.length > 1) {
                 <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
                     <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
                         <span>
@@ -165,7 +165,7 @@
                 </li>
             }
         </ul>
-        @if (!isCollapsed || iconsMovedToMenu) {
+        @if (!isCollapsed() || iconsMovedToMenu()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }
     </div>

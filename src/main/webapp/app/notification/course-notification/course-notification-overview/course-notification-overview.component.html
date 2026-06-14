@@ -5,7 +5,7 @@
         <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount()" [isSmall]="true" />
     </button>
 
-    <div [ngClass]="isShown ? 'is-shown' : ''" class="course-notification-overview-overlay">
+    <div [ngClass]="isShown() ? 'is-shown' : ''" class="course-notification-overview-overlay">
         <div class="course-notification-overview-triangle"></div>
 
         <div class="course-notification-overview-headline-button-wrap mb-2">
@@ -31,7 +31,7 @@
         </div>
 
         <div class="course-notification-overview-category-wrap pb-1">
-            @for (category of courseCategories; track category) {
+            @for (category of courseCategories(); track category) {
                 <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
                     <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
                 </div>

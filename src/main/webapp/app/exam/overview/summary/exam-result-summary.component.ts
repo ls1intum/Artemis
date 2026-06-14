@@ -123,7 +123,7 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly studentExam = input.required<StudentExam>();
 
     readonly plagiarismCaseInfos = signal<{ [exerciseId: number]: PlagiarismCaseInfo }>({});
-    exampleSolutionPublished = false;
+    readonly exampleSolutionPublished = signal(false);
 
     constructor() {
         effect(() => {
@@ -146,22 +146,22 @@ export class ExamResultSummaryComponent implements OnInit {
 
     readonly instructorView = input(false);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
-    isTestRun = false;
+    readonly isTestRun = signal(false);
     isTestExam = false;
 
     testRunConduction = false;
-    testExamConduction = false;
+    readonly testExamConduction = signal(false);
 
-    examWithOnlyIdAndStudentReviewPeriod: Exam;
+    readonly examWithOnlyIdAndStudentReviewPeriod = signal<Exam>(undefined!);
 
-    isBeforeStudentReviewEnd = false;
+    readonly isBeforeStudentReviewEnd = signal(false);
     /**
      * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
      * the review dates are set and the review start date has passed.
      */
-    isAfterStudentReviewStart = false;
+    readonly isAfterStudentReviewStart = signal(false);
 
     readonly exerciseInfos = signal<Record<number, ResultSummaryExerciseInfo>>({});
 
@@ -183,11 +183,11 @@ export class ExamResultSummaryComponent implements OnInit {
     ngOnInit(): void {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
-        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+        this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
         this.isTestExam = studentExam.exam!.testExam!;
-        this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction = this.isTestExam && !studentExam.submitted;
-        this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
+        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }
@@ -198,9 +198,9 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (isExamResultPublished(this.isTestRun, studentExam.exam, this.serverDateService)) {
+        if (isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, studentExam.exam.id, studentExam.id, studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id, studentExam.user.id)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam();
                     this.studentExamGradeInfoDTO.set(studentExamWithGrade);
@@ -208,22 +208,22 @@ export class ExamResultSummaryComponent implements OnInit {
                 });
         }
 
-        this.exampleSolutionPublished = !!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate);
+        this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
 
-        this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
-        this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+        this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
+        this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
     get resultsArePublished(): boolean | any {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
 
-        if (this.testRunConduction || this.testExamConduction) {
+        if (this.testRunConduction || this.testExamConduction()) {
             return false;
         }
 
@@ -247,8 +247,8 @@ export class ExamResultSummaryComponent implements OnInit {
         }
 
         const exerciseIds = studentExam?.exercises?.map((exercise) => exercise.id!);
-        if (exerciseIds?.length && this.courseId) {
-            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
+        if (exerciseIds?.length && this.courseId()) {
+            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId(), exerciseIds).subscribe((res) => {
                 this.plagiarismCaseInfos.set(res.body ?? {});
             });
         }
@@ -314,7 +314,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     public generateLink(exercise: Exercise) {
         if (exercise?.studentParticipations?.length) {
-            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+            return ['/courses', this.courseId(), `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
         return undefined;
     }
@@ -345,11 +345,11 @@ export class ExamResultSummaryComponent implements OnInit {
         exam.examStudentReviewStart = studentExam?.exam?.examStudentReviewStart;
         exam.examStudentReviewEnd = studentExam?.exam?.examStudentReviewEnd;
         exam.course = studentExam?.exam?.course;
-        this.examWithOnlyIdAndStudentReviewPeriod = exam;
+        this.examWithOnlyIdAndStudentReviewPeriod.set(exam);
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -360,7 +360,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
         const studentExam = this.studentExam();

@@ -182,16 +182,16 @@ describe('LectureAttachmentsComponent', () => {
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
         expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
-        expect(comp.errorMessage).toBe(errorMessage);
+        expect(comp.errorMessage()).toBe(errorMessage);
         expect(mockFileInput.nativeElement.value).toBe('');
         expect(comp.attachments()).toEqual([backup]);
         expect(comp.attachmentBackup).toBeUndefined();
         expect(comp.attachmentFile()).toBeUndefined();
 
         if (withFile) {
-            expect(comp.erroredFile).toEqual(file);
+            expect(comp.erroredFile()).toEqual(file);
         } else {
-            expect(comp.erroredFile).toBeUndefined();
+            expect(comp.erroredFile()).toBeUndefined();
         }
     });
 
@@ -298,10 +298,10 @@ describe('LectureAttachmentsComponent', () => {
     it('should download attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.isDownloadingAttachmentLink = undefined;
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
+        comp.isDownloadingAttachmentLink.set(undefined);
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
         comp.downloadAttachment('https://my/own/download/url', 'test');
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
     });
 
     it('should set lecture attachment', async () => {

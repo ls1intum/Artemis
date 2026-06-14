@@ -93,9 +93,9 @@ describe('QuizExercise Point Statistic Component', () => {
             const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
-            comp.quizExercise = quizExercise;
-            comp.quizExercise.quizPointStatistic = new QuizPointStatistic();
-            comp.quizExercise.quizPointStatistic.pointCounters = pointCounters;
+            comp.quizExercise.set(quizExercise);
+            comp.quizExercise().quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise().quizPointStatistic!.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -127,7 +127,7 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should update remaining time', () => {
             // setup
             quizExercise.dueDate = dayjs();
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
@@ -139,7 +139,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should show remaining time as zero if time unknown', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
@@ -188,7 +188,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(routerSpy).not.toHaveBeenCalled();
-            expect(comp.quizExercise).toEqual(quizExercise);
+            expect(comp.quizExercise()).toEqual(quizExercise);
             expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
@@ -209,7 +209,7 @@ describe('QuizExercise Point Statistic Component', () => {
         // setup
         quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
-        comp.quizExercise = quizExercise;
+        comp.quizExercise.set(quizExercise);
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
         vi.spyOn(comp, 'loadData').mockImplementation(() => {});
@@ -218,7 +218,7 @@ describe('QuizExercise Point Statistic Component', () => {
         comp.loadQuizSuccess(quizExercise);
 
         // check
-        expect(comp.maxScore).toBe(42);
+        expect(comp.maxScore()).toBe(42);
     });
 
     describe('loadData', () => {
@@ -227,7 +227,7 @@ describe('QuizExercise Point Statistic Component', () => {
             const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
-            comp.maxScore = 4;
+            comp.maxScore.set(4);
 
             // call
             comp.loadData();
@@ -258,7 +258,7 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should recalculate', () => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             comp.recalculate();
 

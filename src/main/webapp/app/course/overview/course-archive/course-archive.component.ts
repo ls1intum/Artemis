@@ -34,8 +34,8 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     readonly fullFormOfSemesterStrings = signal<{ [key: string]: string }>({});
     readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
     readonly coursesBySemester = signal<{ [key: string]: Course[] }>({});
-    searchCourseText = '';
-    isSortAscending = true;
+    readonly searchCourseText = signal('');
+    readonly isSortAscending = signal(true);
     iconSize: SizeProp = 'lg';
 
     //Icons
@@ -93,7 +93,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     }
 
     setSearchValue(searchValue: string): void {
-        this.searchCourseText = searchValue;
+        this.searchCourseText.set(searchValue);
         if (searchValue !== '') {
             this.expandOrCollapseBasedOnSearchValue();
         } else {
@@ -104,7 +104,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     onSort(): void {
         if (this.semesters().length) {
             this.semesters.set([...this.semesters()].reverse());
-            this.isSortAscending = !this.isSortAscending;
+            this.isSortAscending.update((value) => !value);
         }
     }
     /**
@@ -113,7 +113,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     expandOrCollapseBasedOnSearchValue(): void {
         const semesterCollapsed = { ...this.semesterCollapsed() };
         for (const semester of this.semesters()) {
-            const hasMatchingCourse = this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
+            const hasMatchingCourse = this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
             semesterCollapsed[semester] = !hasMatchingCourse;
         }
         this.semesterCollapsed.set(semesterCollapsed);
@@ -134,7 +134,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     }
 
     isCourseFoundInSemester(semester: string): boolean {
-        return this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
+        return this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
     }
 
     sortCoursesByTitle(courses: CourseForArchiveDTO[]): CourseForArchiveDTO[] {

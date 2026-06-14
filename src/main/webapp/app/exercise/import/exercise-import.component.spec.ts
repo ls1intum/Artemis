@@ -258,14 +258,14 @@ describe('ExerciseImportComponent', () => {
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBe(true);
-        expect(comp.isExamFilter).toBe(true);
+        expect(comp.isCourseFilter()).toBe(true);
+        expect(comp.isExamFilter()).toBe(true);
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
         vi.advanceTimersByTime(299);
-        expect(comp.isCourseFilter).toBe(false);
-        expect(comp.isExamFilter).toBe(false);
+        expect(comp.isCourseFilter()).toBe(false);
+        expect(comp.isExamFilter()).toBe(false);
         expect(searchStub).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(1);
@@ -319,8 +319,8 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should sort by exam title when only the exam filter is active', () => {
-        comp.isExamFilter = true;
-        comp.isCourseFilter = false;
+        comp.isExamFilter.set(true);
+        comp.isCourseFilter.set(false);
 
         comp.sortedColumn = 'COURSE_TITLE';
 

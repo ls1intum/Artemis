@@ -47,7 +47,7 @@ export class BuildJobStatisticsComponent implements OnInit {
     protected readonly SpanType = SpanType;
 
     /** Currently selected time span for statistics (day, week, or month) */
-    currentSpan: SpanType = SpanType.WEEK;
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
 
     /** Formatted percentage strings for display */
     successfulBuildsPercentage = signal('-%');
@@ -74,7 +74,7 @@ export class BuildJobStatisticsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.getBuildJobStatistics(this.currentSpan);
+        this.getBuildJobStatistics(this.currentSpan());
     }
 
     /** Data array for the pie chart visualization; one entry per segment */
@@ -182,8 +182,8 @@ export class BuildJobStatisticsComponent implements OnInit {
      * @param span The new span
      */
     onTabChange(span: SpanType): void {
-        if (this.currentSpan !== span) {
-            this.currentSpan = span;
+        if (this.currentSpan() !== span) {
+            this.currentSpan.set(span);
             this.getBuildJobStatistics(span);
         }
     }

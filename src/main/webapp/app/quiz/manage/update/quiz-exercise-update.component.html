@@ -56,7 +56,7 @@
                             <jhi-exercise-title-channel-name-primeng
                                 [exercise]="quizExercise()"
                                 [course]="quizExercise().course"
-                                [courseId]="quizExercise().course?.id ?? courseId"
+                                [courseId]="quizExercise().course?.id ?? courseId()"
                                 (onTitleChange)="cacheValidation()"
                                 (onChannelNameChange)="cacheValidation()"
                                 [isExamMode]="isExamMode()"
@@ -288,10 +288,10 @@
                 </div>
 
                 <!-- Questions -->
-                @if (courseId) {
+                @if (courseId()) {
                     <jhi-quiz-question-list-edit
                         #quizQuestionsEdit
-                        [courseId]="courseId!"
+                        [courseId]="courseId()!"
                         [quizQuestions]="quizExercise().quizQuestions ?? []"
                         [hyperionEnabled]="hyperionEnabled && !isImport() && !isExamMode()"
                         (onQuestionAdded)="handleQuestionChanged()"
@@ -451,5 +451,5 @@
             </div>
         }
     </div>
-    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId" (addQuestions)="appendAiGeneratedQuestions($event)" />
+    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId()" (addQuestions)="appendAiGeneratedQuestions($event)" />
 }

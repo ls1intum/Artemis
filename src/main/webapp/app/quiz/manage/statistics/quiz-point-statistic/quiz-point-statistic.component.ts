@@ -36,7 +36,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     readonly round = round;
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
     quizPointStatistic: QuizPointStatistic;
 
     labels: string[] = [];
@@ -44,7 +44,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     label: string[] = [];
     backgroundColor: string[] = [];
 
-    maxScore: number;
+    readonly maxScore = signal<number>(undefined!);
     websocketChannelForData: string;
     quizExerciseChannel: string;
     private quizExerciseSubscription?: Subscription;
@@ -105,8 +105,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (this.quizExercise() && this.quizExercise().dueDate) {
+            const endDate = this.quizExercise().dueDate!;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
                 this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
@@ -171,10 +171,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['courses']);
         }
-        this.quizExercise = quizExercise;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quizExercise);
+        this.waitingForQuizStart = !this.quizExercise().quizStarted;
+        this.quizPointStatistic = this.quizExercise().quizPointStatistic!;
+        this.maxScore.set(calculateMaxScore(this.quizExercise()));
 
         this.loadData();
     }
@@ -199,7 +199,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             (no negative points are achievable and the maximum points are defined by the quiz itself)
             Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
              */
-            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore());
             label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
             this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
@@ -232,7 +232,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
+        this.quizExerciseService.recalculate(this.quizExercise().id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }

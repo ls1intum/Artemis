@@ -306,11 +306,11 @@
                 jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.parseCSVButton"
             ></button>
         </div>
-        @if (isImportDone) {
+        @if (isImportDone()) {
             <hr />
         }
         <!-- Not Imported Filter -->
-        @if (isImportDone) {
+        @if (isImportDone()) {
             <div>
                 <div class="btn-group" role="group">
                     <input
@@ -320,7 +320,7 @@
                         id="only-imported"
                         autocomplete="off"
                         [value]="'onlyImported'"
-                        [ngModel]="selectedFilter"
+                        [ngModel]="selectedFilter()"
                         (ngModelChange)="onFilterChange($event)"
                     />
                     <label class="btn btn-outline-success" for="only-imported" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.showImportedButton"></label>
@@ -331,7 +331,7 @@
                         id="only-not-imported"
                         autocomplete="off"
                         [value]="'onlyNotImported'"
-                        [ngModel]="selectedFilter"
+                        [ngModel]="selectedFilter()"
                         (ngModelChange)="onFilterChange($event)"
                     />
                     <label class="btn btn-outline-danger" for="only-not-imported" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.showNotImportedButton"></label>
@@ -342,7 +342,7 @@
                         id="all"
                         autocomplete="off"
                         [value]="'all'"
-                        [ngModel]="selectedFilter"
+                        [ngModel]="selectedFilter()"
                         (ngModelChange)="onFilterChange($event)"
                     />
                     <label class="btn btn-outline-secondary" for="all" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.showAllButton"></label>
@@ -350,7 +350,7 @@
             </div>
         }
         <!-- Overview Table -->
-        @if (registrationsDisplayedInTable && registrationsDisplayedInTable.length > 0) {
+        @if (registrationsDisplayedInTable() && registrationsDisplayedInTable().length > 0) {
             <div class="form-group mt-4">
                 <div class="table-wrapper-scroll-y scrollbar">
                     <table class="table table-striped table-bordered table-sm table-responsive mt-2">
@@ -367,13 +367,13 @@
                                 <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.additionalInformation"></th>
                                 <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.capacity"></th>
                                 <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.isOnline"></th>
-                                @if (isImportDone && numberOfNotImportedRegistration > 0) {
+                                @if (isImportDone() && numberOfNotImportedRegistration() > 0) {
                                     <th scope="col" jhiTranslate="artemisApp.tutorialGroupImportDialog.table.columns.error"></th>
                                 }
                             </tr>
                         </thead>
                         <tbody class="table-body">
-                            @for (registration of registrationsDisplayedInTable; track registration; let i = $index) {
+                            @for (registration of registrationsDisplayedInTable(); track registration; let i = $index) {
                                 <tr [class.table-success]="wasImported(registration)" [class.table-danger]="wasNotImported(registration)">
                                     <td>
                                         <span class="d-inline-block text-truncate" style="max-width: 200px">{{ i + 1 }} </span>
@@ -408,7 +408,7 @@
                                     <td>
                                         <span class="d-inline-block text-truncate" style="max-width: 100px">{{ registration?.isOnline ?? '' }} </span>
                                     </td>
-                                    @if (isImportDone && numberOfNotImportedRegistration > 0) {
+                                    @if (isImportDone() && numberOfNotImportedRegistration() > 0) {
                                         <td>
                                             <span class="d-inline-block text-truncate" style="max-width: 400px">
                                                 {{
@@ -430,36 +430,39 @@
     </div>
     <ng-template pTemplate="footer">
         <div class="d-flex justify-content-between w-100">
-            @if (allRegistrations && allRegistrations.length > 0) {
+            @if (allRegistrations() && allRegistrations().length > 0) {
                 <div class="flex-shrink-0 me-2 d-flex">
-                    @if (!isImportDone) {
+                    @if (!isImportDone()) {
                         <div>
-                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations.length }"></strong>
+                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.total" [translateValues]="{ count: allRegistrations().length }"></strong>
                         </div>
                     } @else {
                         <div>
-                            <strong jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported" [translateValues]="{ count: numberOfImportedRegistrations }"></strong>
+                            <strong
+                                jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.imported"
+                                [translateValues]="{ count: numberOfImportedRegistrations() }"
+                            ></strong>
                         </div>
                         <div class="ms-2">
                             <strong
                                 jhiTranslate="artemisApp.tutorialGroupImportDialog.table.footer.notImported"
-                                [translateValues]="{ count: numberOfNotImportedRegistration }"
+                                [translateValues]="{ count: numberOfNotImportedRegistration() }"
                             ></strong>
                         </div>
                     }
                 </div>
             }
             <div class="flex-grow-1 d-flex justify-content-end gap-2">
-                @if (!isImportDone) {
+                @if (!isImportDone()) {
                     <button type="button" class="btn btn-secondary cancel" (click)="clear()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
                 }
-                @if (!isImportDone) {
+                @if (!isImportDone()) {
                     <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
                         <fa-icon [icon]="faFileImport" class="me-2" />
                         <span jhiTranslate="entity.action.to-import"></span>
-                        <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
+                        <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                     </button>
                 } @else {
                     <button class="btn btn-success" id="finish-button" (click)="onFinish()">

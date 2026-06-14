@@ -225,7 +225,7 @@ describe('CourseArchiveComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(onSortSpy).toHaveBeenCalled();
-            expect(component.isSortAscending).toBe(false);
+            expect(component.isSortAscending()).toBe(false);
             expect(component.semesters()[4]).toBe('WS23/24');
             expect(component.semesters()[3]).toBe('WS22/23');
             expect(component.semesters()[2]).toBe('SS22');

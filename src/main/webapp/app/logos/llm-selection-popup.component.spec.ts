@@ -80,22 +80,22 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     it('should initialize with isVisible false', () => {
-        expect(component.isVisible).toBe(false);
+        expect(component.isVisible()).toBe(false);
     });
 
     describe('open', () => {
         it('should set isVisible to true', () => {
-            component.isVisible = false;
+            component.isVisible.set(false);
             component.open();
-            expect(component.isVisible).toBe(true);
+            expect(component.isVisible()).toBe(true);
         });
     });
 
     describe('close', () => {
         it('should set isVisible to false', () => {
-            component.isVisible = true;
+            component.isVisible.set(true);
             component.close();
-            expect(component.isVisible).toBe(false);
+            expect(component.isVisible()).toBe(false);
         });
     });
 
@@ -123,11 +123,11 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should set isVisible to false after selection', () => {
-            component.isVisible = true;
+            component.isVisible.set(true);
 
             component.selectCloud();
 
-            expect(component.isVisible).toBe(false);
+            expect(component.isVisible()).toBe(false);
         });
     });
 
@@ -155,11 +155,11 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should set isVisible to false after selection', () => {
-            component.isVisible = true;
+            component.isVisible.set(true);
 
             component.selectLocal();
 
-            expect(component.isVisible).toBe(false);
+            expect(component.isVisible()).toBe(false);
         });
     });
 
@@ -187,11 +187,11 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should set isVisible to false after selection', () => {
-            component.isVisible = true;
+            component.isVisible.set(true);
 
             component.selectNone();
 
-            expect(component.isVisible).toBe(false);
+            expect(component.isVisible()).toBe(false);
         });
     });
 
@@ -295,12 +295,12 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should set isVisible to false after learn more click', () => {
-            component.isVisible = true;
+            component.isVisible.set(true);
             const event = { preventDefault: vi.fn() } as any;
 
             component.onLearnMoreClick(event);
 
-            expect(component.isVisible).toBe(false);
+            expect(component.isVisible()).toBe(false);
         });
     });
 

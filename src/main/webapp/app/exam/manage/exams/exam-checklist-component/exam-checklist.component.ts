@@ -63,13 +63,13 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
 
     readonly examChecklist = signal<ExamChecklist | undefined>(undefined);
     isLoading = false;
-    pointsExercisesEqual = false;
+    readonly pointsExercisesEqual = signal(false);
     readonly allExamsGenerated = signal(false);
-    allGroupsContainExercise = false;
-    totalPoints = false;
-    hasOptionalExercises = false;
-    countMandatoryExercises = 0;
-    isTestExam: boolean;
+    readonly allGroupsContainExercise = signal(false);
+    readonly totalPoints = signal(false);
+    readonly hasOptionalExercises = signal(false);
+    readonly countMandatoryExercises = signal(0);
+    readonly isTestExam = signal<boolean>(undefined!);
     readonly isEvaluatingQuizExercises = signal(false);
     readonly isAssessingUnsubmittedExams = signal(false);
     readonly existsUnfinishedAssessments = signal(false);
@@ -81,7 +81,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly numberOfSubmitted = signal(0);
     readonly numberOfStarted = signal(0);
 
-    disabledExercises: Exercise[] = [];
+    readonly disabledExercises = signal<Exercise[]>([]);
 
     // Icons
     faEye = faEye;
@@ -109,20 +109,21 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
             });
         }
         const profileInfo = this.profileService.getProfileInfo();
-        this.disabledExercises =
+        this.disabledExercises.set(
             this.exam()
                 .exerciseGroups?.flatMap((group) => group.exercises)
                 .filter((exercise) => exercise !== undefined)
-                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
+                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [],
+        );
     }
 
     private updateChecklistState() {
-        this.isTestExam = this.exam().testExam!;
-        this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
-        this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());
-        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
-        this.countMandatoryExercises = this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
-        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam().exerciseGroups?.length ?? 0);
+        this.isTestExam.set(this.exam().testExam!);
+        this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
+        this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
+        this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));
+        this.countMandatoryExercises.set(this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0);
+        this.hasOptionalExercises.set(this.countMandatoryExercises() < (this.exam().exerciseGroups?.length ?? 0));
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist.set(examStats);
             const exam = this.exam();

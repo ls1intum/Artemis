@@ -23,7 +23,7 @@ export class Lti13SelectContentComponent implements OnInit {
 
     jwt: string;
     id: string;
-    actionLink: string;
+    readonly actionLink = signal<string>(undefined!);
     readonly isLinking = signal(true);
 
     readonly deepLinkingForm = viewChild<ElementRef>('deepLinkingForm');
@@ -52,10 +52,10 @@ export class Lti13SelectContentComponent implements OnInit {
      */
     updateFormValues(): void {
         const deepLinkUri = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-        this.actionLink = this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '';
+        this.actionLink.set(this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '');
         this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
         this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
-        if (this.actionLink === '' || this.jwt === '' || this.id === '') {
+        if (this.actionLink() === '' || this.jwt === '' || this.id === '') {
             this.isLinking.set(false);
             return;
         }
@@ -69,7 +69,7 @@ export class Lti13SelectContentComponent implements OnInit {
     autoSubmitForm(): void {
         const form = this.deepLinkingForm()?.nativeElement;
         if (form) {
-            form.action = this.actionLink;
+            form.action = this.actionLink();
             form.submit();
         }
     }

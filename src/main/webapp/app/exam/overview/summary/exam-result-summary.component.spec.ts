@@ -334,7 +334,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam().id).toBe(studentExam.id);
 
         const courseId = 10;
-        component.courseId = courseId;
+        component.courseId.set(courseId);
         plagiarismServiceSpy.mockClear();
 
         // After init, studentExamGradeInfoDTO should be set with the original studentExam
@@ -355,29 +355,29 @@ describe('ExamResultSummaryComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(true);
+        expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
 
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
     });
 
@@ -386,16 +386,16 @@ describe('ExamResultSummaryComponent', () => {
         component.testRunConduction = true;
         expect(component.resultsArePublished).toBe(false);
 
-        component.testExamConduction = true;
+        component.testExamConduction.set(true);
         component.testRunConduction = false;
         expect(component.resultsArePublished).toBe(false);
 
-        component.isTestRun = true;
-        component.testExamConduction = false;
+        component.isTestRun.set(true);
+        component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = true;
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = false;
@@ -423,22 +423,22 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(false);
+        expect(component.isAfterStudentReviewStart()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -449,21 +449,21 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(false);
+        expect(component.isBeforeStudentReviewEnd()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });

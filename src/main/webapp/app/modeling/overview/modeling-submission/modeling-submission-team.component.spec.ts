@@ -307,7 +307,7 @@ describe('ModelingSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('#submit'));
         expect(submitButton).not.toBeNull();
         expect(submitButton.componentInstance.disabled()).toBe(false);
-        expect(comp.examMode).toBe(true);
+        expect(comp.examMode()).toBe(true);
     });
 
     it('should not allow to submit in exam mode if there is a non-automatic result', async () => {

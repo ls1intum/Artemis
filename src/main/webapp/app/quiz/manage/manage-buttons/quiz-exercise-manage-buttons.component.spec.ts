@@ -199,7 +199,7 @@ describe('QuizExercise Management Buttons Component', () => {
 
         expect(comp.courseId).toBe(123);
         expect(comp.isExamMode).toBeFalsy();
-        expect(comp.baseUrl).toBe('/course-management/123');
+        expect(comp.baseUrl()).toBe('/course-management/123');
     });
 });
 
@@ -255,7 +255,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.courseId).toBe(123);
         expect(comp.examId).toBe(789);
         expect(comp.isExamMode).toBe(true);
-        expect(comp.baseUrl).toBe('/course-management/123/exams/789/exercise-groups/111');
+        expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
     it('should navigate after delete in detail page', () => {

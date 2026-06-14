@@ -48,7 +48,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     private ngUnsubscribe = new Subject<void>();
 
     readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
-    disabled = false;
+    readonly disabled = signal(false);
     readonly searchInput = viewChild.required<ElementRef>('searchInput');
     readonly courseId = input.required<number>();
 
@@ -61,27 +61,27 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     readonly showUserList = input(true);
 
-    searchStudents = true;
-    searchTutors = true;
-    searchInstructors = true;
+    readonly searchStudents = signal(true);
+    readonly searchTutors = signal(true);
+    readonly searchInstructors = signal(true);
 
     // icons
     faX = faX;
 
     readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
-    isSearching = false;
-    searchFailed = false;
+    readonly isSearching = signal(false);
+    readonly searchFailed = signal(false);
 
     ngOnInit(): void {
         const rolesToAllowSearchingIn = this.rolesToAllowSearchingIn();
         if (rolesToAllowSearchingIn.includes('students')) {
-            this.searchStudents = true;
+            this.searchStudents.set(true);
         }
         if (rolesToAllowSearchingIn.includes('tutors')) {
-            this.searchTutors = true;
+            this.searchTutors.set(true);
         }
         if (rolesToAllowSearchingIn.includes('instructors')) {
-            this.searchInstructors = true;
+            this.searchInstructors.set(true);
         }
     }
 
@@ -140,33 +140,33 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             distinctUntilChanged(),
             map((term) => (term ? term.trim().toLowerCase() : '')),
             // the three letter minimum is enforced by the server only for searching for students as they are so many
-            filter((term) => term.length >= 3 || !this.searchStudents),
+            filter((term) => term.length >= 3 || !this.searchStudents()),
             switchMap((term) => {
                 const rolesToSearchIn: SearchRoleGroup[] = [];
-                if (this.searchStudents) {
+                if (this.searchStudents()) {
                     rolesToSearchIn.push('students');
                 }
-                if (this.searchTutors) {
+                if (this.searchTutors()) {
                     rolesToSearchIn.push('tutors');
                 }
-                if (this.searchInstructors) {
+                if (this.searchInstructors()) {
                     rolesToSearchIn.push('instructors');
                 }
                 if (rolesToSearchIn.length === 0) {
-                    this.searchFailed = false;
+                    this.searchFailed.set(false);
                     return of([]);
                 } else {
-                    this.isSearching = true;
+                    this.isSearching.set(true);
                     return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
                         map((users) => users.body!),
                         map((users) => users.filter((user) => !this.selectedUsers().find((selectedUser) => selectedUser.id === user.id))),
                         tap(() => {
-                            this.isSearching = false;
-                            this.searchFailed = false;
+                            this.isSearching.set(false);
+                            this.searchFailed.set(false);
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
-                            this.isSearching = false;
+                            this.searchFailed.set(true);
+                            this.isSearching.set(false);
                             return of([]);
                         }),
                         takeUntil(this.ngUnsubscribe),
@@ -179,6 +179,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     // === START CONTROL VALUE ACCESSOR ===
     onChange = (_selectedUsers: UserPublicInfoDTO[]) => {};
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- ControlValueAccessor callback reassigned by registerOnTouched; storing a callback does not affect rendered state, so a signal is unnecessary
     onTouched = () => {};
 
     registerOnChange(fn: (selectedUsers: UserPublicInfoDTO[]) => void): void {
@@ -190,7 +191,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     setDisabledState(isDisabled: boolean): void {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 
     writeValue(selectedUsers: UserPublicInfoDTO[]): void {

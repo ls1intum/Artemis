@@ -52,7 +52,7 @@ export class FaqUpdateComponent implements OnInit {
         this._faq.set(value);
     }
     readonly isSaving = signal(false);
-    isAllowedToSave: boolean;
+    readonly isAllowedToSave = signal(false);
     readonly existingCategories = signal<FaqCategory[]>([]);
     readonly faqCategories = signal<FaqCategory[]>([]);
     courseId: number;
@@ -192,9 +192,9 @@ export class FaqUpdateComponent implements OnInit {
 
     validate() {
         if (this.faq.questionTitle && this.faq.questionAnswer) {
-            this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
+            this.isAllowedToSave.set(this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0);
         } else {
-            this.isAllowedToSave = false;
+            this.isAllowedToSave.set(false);
         }
     }
 

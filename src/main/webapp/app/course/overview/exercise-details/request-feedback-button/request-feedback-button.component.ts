@@ -57,9 +57,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     protected readonly ExerciseType = ExerciseType;
 
-    athenaEnabled = false;
-    requestFeedbackEnabled = false;
-    isExamExercise: boolean;
+    readonly athenaEnabled = signal(false);
+    readonly requestFeedbackEnabled = signal(false);
+    readonly isExamExercise = signal<boolean>(undefined!);
     participation?: StudentParticipation;
     readonly hasUserAcceptedLLMUsage = signal(false);
     currentFeedbackRequestCount = signal(0);
@@ -82,12 +82,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
-        this.isExamExercise = isExamExercise(this.exercise());
-        if (this.isExamExercise || !this.exercise().id) {
+        this.athenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+        this.isExamExercise.set(isExamExercise(this.exercise()));
+        if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
+        this.requestFeedbackEnabled.set(this.exercise().allowFeedbackRequests ?? false);
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
     }

@@ -28,6 +28,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(x)] two-way targets (e.g. [(releaseDate)]="newProgrammingExercise.releaseDate") whose in-place writes come from the child timeline component and cannot be intercepted to commit a signal rebuild
     newProgrammingExercise: ProgrammingExercise;
     selectedProgrammingExercises: ProgrammingExercise[];
 

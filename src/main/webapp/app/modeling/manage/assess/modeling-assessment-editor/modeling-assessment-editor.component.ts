@@ -76,7 +76,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
     feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
-    highlightedElements: Map<string, string>; // map elementId -> highlight color
+    readonly highlightedElements = signal<Map<string, string>>(undefined!); // map elementId -> highlight color
     readonly highlightMissingFeedback = signal(false);
 
     readonly assessmentsAreValid = signal(false);
@@ -596,21 +596,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.highlightedElements = this.highlightedElements
-            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.RED)
+        const updatedHighlights = this.highlightedElements()
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements(), FeedbackHighlightColor.RED)
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
         for (const element of Object.values(this.model()!.nodes)) {
             if (!referenceIds.includes(element.id)) {
-                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+                updatedHighlights.set(element.id, FeedbackHighlightColor.RED);
             }
         }
         for (const element of Object.values(this.model()!.edges)) {
             if (!referenceIds.includes(element.id)) {
-                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+                updatedHighlights.set(element.id, FeedbackHighlightColor.RED);
             }
         }
+        this.highlightedElements.set(updatedHighlights);
     }
 
     /**
@@ -622,15 +623,16 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        this.highlightedElements = this.highlightedElements
-            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.CYAN)
+        const updatedHighlights = this.highlightedElements()
+            ? this.removeHighlightedFeedbackOfColor(this.highlightedElements(), FeedbackHighlightColor.CYAN)
             : new Map<string, string>();
 
         for (const feedbackItem of this.referencedFeedback) {
             if (feedbackItem.type === FeedbackType.AUTOMATIC && feedbackItem.referenceId) {
-                this.highlightedElements.set(feedbackItem.referenceId, FeedbackHighlightColor.CYAN);
+                updatedHighlights.set(feedbackItem.referenceId, FeedbackHighlightColor.CYAN);
             }
         }
+        this.highlightedElements.set(updatedHighlights);
     }
 
     /**

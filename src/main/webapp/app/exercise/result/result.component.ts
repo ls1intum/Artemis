@@ -100,7 +100,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly resultString = signal<string>(undefined!);
     readonly templateStatus = signal<ResultTemplateStatus>(undefined!);
     submission?: Submission;
-    badge: Badge;
+    readonly badge = signal<Badge>(undefined!);
     readonly resultTooltip = signal<string | undefined>(undefined);
     latestDueDate: dayjs.Dayjs | undefined;
 
@@ -186,7 +186,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         this.evaluate();
 
         if (this.showBadge() && this.result()) {
-            this.badge = ResultService.evaluateBadge(this.participation(), this.result()!);
+            this.badge.set(ResultService.evaluateBadge(this.participation(), this.result()!));
         }
     }
 

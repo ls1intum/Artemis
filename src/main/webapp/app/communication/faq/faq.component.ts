@@ -52,7 +52,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     course: Course;
     readonly filteredFaqs = signal<Faq[]>([]);
     readonly existingCategories = signal<FaqCategory[]>([]);
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
     readonly irisEnabled = signal(false);
@@ -94,9 +94,9 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.loadAll();
-        this.loadCourseFaqCategories(this.courseId);
+        this.loadCourseFaqCategories(this.courseId());
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
         });
@@ -109,7 +109,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         });
         const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         if (irisEnabled) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()).subscribe((response) => {
                 this.irisEnabled.set(response?.settings?.enabled || false);
             });
         }
@@ -132,7 +132,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
-        this.loadCourseFaqCategories(this.courseId);
+        this.loadCourseFaqCategories(this.courseId());
     }
 
     toggleFilters(category: string) {
@@ -152,7 +152,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.faqService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseId(this.courseId())
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {
@@ -223,7 +223,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     ingestFaqsInPyris() {
         if (this.faqs.first()) {
-            this.faqService.ingestFaqsInPyris(this.courseId).subscribe({
+            this.faqService.ingestFaqsInPyris(this.courseId()).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
                 error: () => {
                     this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');

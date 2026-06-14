@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
@@ -50,18 +50,34 @@ export class CoursesComponent implements OnInit {
 
     // All written inside the dashboard HTTP subscribe — must be signals under zoneless,
     // otherwise the course list silently never renders after the response arrives.
-    courses: Course[];
+    readonly courses = signal<Course[]>(undefined!);
     public nextRelevantCourse?: Course;
-    nextRelevantCourseForExam?: Course;
     readonly nextRelevantExams = signal<Exam[] | undefined>(undefined);
+
+    /**
+     * The next upcoming exam, derived from {@link nextRelevantExams} (the one with the earliest start date).
+     */
+    readonly nextRelevantExam = computed<Exam | undefined>(() => {
+        // TODO: support multiple relevant exams in the future
+        const nextRelevantExams = this.nextRelevantExams();
+        if (!nextRelevantExams?.length) {
+            return undefined;
+        }
+        if (nextRelevantExams.length === 1) {
+            return nextRelevantExams[0];
+        }
+        return [...nextRelevantExams].sort((a, b) => dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf())[0];
+    });
+
+    readonly nextRelevantCourseForExam = computed<Course | undefined>(() => this.nextRelevantExam()?.course);
 
     public readonly recentlyAccessedCourses = signal<Course[]>([]);
     public readonly regularCourses = signal<Course[]>([]);
 
-    searchCourseText = '';
+    readonly searchCourseText = signal('');
 
     readonly coursesLoaded = signal(false);
-    isSortAscending = true;
+    readonly isSortAscending = signal(true);
 
     async ngOnInit() {
         this.loadAndFilterCourses();
@@ -81,7 +97,7 @@ export class CoursesComponent implements OnInit {
                         courseDto.course.courseIconPath = addPublicFilePrefix(courseDto.course.courseIcon);
                         courses.push(courseDto.course);
                     });
-                    this.courses = sortCourses(courses);
+                    this.courses.set(sortCourses(courses));
 
                     this.nextRelevantExams.set(res.body.activeExams ?? []);
                     this.sortCoursesInRecentlyAccessedAndRegularCourses();
@@ -95,56 +111,35 @@ export class CoursesComponent implements OnInit {
      * If there are less than 5 courses, all courses are displayed in the regular courses section.
      */
     sortCoursesInRecentlyAccessedAndRegularCourses() {
-        if (this.courses.length <= 5) {
-            this.regularCourses.set(this.courses);
+        const courses = this.courses();
+        if (courses.length <= 5) {
+            this.regularCourses.set(courses);
         } else {
             const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
-            this.recentlyAccessedCourses.set(this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!)));
-            this.regularCourses.set(this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!)));
+            this.recentlyAccessedCourses.set(courses.filter((course) => lastAccessedCourseIds.includes(course.id!)));
+            this.regularCourses.set(courses.filter((course) => !lastAccessedCourseIds.includes(course.id!)));
         }
-    }
-
-    /**
-     * Sets the course for the next upcoming exam and returns the next upcoming exam or undefined
-     */
-    get nextRelevantExam(): Exam | undefined {
-        // TODO: support multiple relevant exams in the future
-        let relevantExam: Exam | undefined;
-        const nextRelevantExams = this.nextRelevantExams();
-        if (nextRelevantExams) {
-            if (nextRelevantExams.length === 0) {
-                return undefined;
-            } else if (nextRelevantExams.length === 1) {
-                relevantExam = nextRelevantExams[0];
-            } else {
-                relevantExam = [...nextRelevantExams].sort((a, b) => {
-                    return dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf();
-                })[0];
-            }
-            this.nextRelevantCourseForExam = relevantExam.course!;
-        }
-        return relevantExam;
     }
 
     /**
      * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        void this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+        void this.router.navigate(['courses', this.nextRelevantCourseForExam()?.id, 'exams', this.nextRelevantExam()!.id]);
     }
 
     setSearchValue(searchValue: string): void {
-        this.searchCourseText = searchValue;
+        this.searchCourseText.set(searchValue);
     }
 
     /**
      * Sorts the courses in alphabetical order
      */
     onSort(): void {
-        if (this.courses) {
-            this.isSortAscending = !this.isSortAscending;
-            this.regularCourses.set([...sortCourses(this.regularCourses(), this.isSortAscending)]);
-            this.recentlyAccessedCourses.set([...sortCourses(this.recentlyAccessedCourses(), this.isSortAscending)]);
+        if (this.courses()) {
+            this.isSortAscending.update((value) => !value);
+            this.regularCourses.set([...sortCourses(this.regularCourses(), this.isSortAscending())]);
+            this.recentlyAccessedCourses.set([...sortCourses(this.recentlyAccessedCourses(), this.isSortAscending())]);
         }
     }
 }

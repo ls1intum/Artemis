@@ -23,7 +23,7 @@
                                 <small>
                                     <a
                                         id="plagiarism-detection-link-{{ exercise.id }}"
-                                        [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
+                                        [routerLink]="['/course-management', courseId(), getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
                                         jhiTranslate="artemisApp.plagiarism.plagiarismCases.viewComparisons"
                                     >
                                     </a>
@@ -61,7 +61,7 @@
                         <div class="row mb-3">
                             @if (plagiarismCase.student) {
                                 <div class="col-1 text-center">
-                                    <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
+                                    <a [routerLink]="['/course-management', courseId(), 'plagiarism-cases', plagiarismCase.id]">
                                         {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                                     </a>
                                 </div>

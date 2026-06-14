@@ -112,7 +112,7 @@
                                     <fa-icon [icon]="faTimes" class="text-danger" [title]="'artemisApp.exercise.no' | artemisTranslate" />
                                 }
                             </div>
-                            @if (onlineIdeEnabled) {
+                            @if (onlineIdeEnabled()) {
                                 <div class="d-flex justify-content-between">
                                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
                                     @if (programmingExercise.allowOnlineIde) {
@@ -223,7 +223,7 @@
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
                                             [additionalChecks]="
-                                                localCIEnabled
+                                                localCIEnabled()
                                                     ? {}
                                                     : {
                                                           deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -277,7 +277,7 @@
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises(), $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"
                         [additionalChecks]="
-                            localCIEnabled
+                            localCIEnabled()
                                 ? {}
                                 : {
                                       deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

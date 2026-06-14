@@ -377,7 +377,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -412,7 +412,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(false);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -449,8 +449,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -496,8 +496,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -520,8 +520,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.course).toBeUndefined();
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
@@ -547,8 +547,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();

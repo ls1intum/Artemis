@@ -195,11 +195,11 @@ describe('ForwardMessageDialogComponent', () => {
 
         inputElement.dispatchEvent(new Event('focus'));
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
 
         document.body.click();
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should clear filteredOptions when no matching results are found', async () => {
@@ -271,13 +271,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should toggle showFullForwardedMessage and reflect changes', () => {
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage()).toBe(false);
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(true);
+        expect(component.showFullForwardedMessage()).toBe(true);
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage()).toBe(false);
     });
 
     it('should update newPost.content with the provided value', () => {

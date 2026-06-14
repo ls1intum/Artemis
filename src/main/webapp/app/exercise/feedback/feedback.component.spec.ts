@@ -245,7 +245,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.exercise).toEqual(exercise);
-        expect(comp.course).toEqual(exercise.course);
+        expect(comp.course()).toEqual(exercise.course);
     });
 
     it('should set the exercise type from the exercise if not available otherwise', () => {

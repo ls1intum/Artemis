@@ -40,9 +40,9 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected readonly faEnvelopeOpen = faEnvelopeOpen;
     protected readonly faSpinner = faSpinner;
 
-    protected courseCategories: string[];
+    protected readonly courseCategories = signal<string[]>([]);
 
-    protected isShown = false;
+    protected readonly isShown = signal(false);
     protected selectedCategory = CourseNotificationCategory.GENERAL;
     protected notifications: CourseNotification[];
     protected readonly notificationsForSelectedCategory = signal<CourseNotification[]>([]);
@@ -59,7 +59,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected readonly CourseNotificationViewingStatus = CourseNotificationViewingStatus;
 
     constructor() {
-        this.courseCategories = Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category)));
+        this.courseCategories.set(Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category))));
     }
 
     ngAfterViewInit(): void {
@@ -99,7 +99,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
                 this.isLoading.set(false);
                 this.queryCount = 1;
 
-                if (this.isShown) {
+                if (this.isShown()) {
                     setTimeout(() => {
                         this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
                     });
@@ -124,9 +124,9 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * When hidden, marks visible notifications as seen.
      */
     protected toggleOverlay() {
-        this.isShown = !this.isShown;
+        this.isShown.update((shown) => !shown);
 
-        if (!this.isShown) {
+        if (!this.isShown()) {
             this.updateCurrentCategoryNotificationsToSeenOnClient();
         }
 
@@ -176,8 +176,8 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     @HostListener('document:click', ['$event.target'])
     protected onClickOutside(target: any) {
         const clickedInside = this.elementRef.nativeElement.contains(target);
-        if (!clickedInside && this.isShown) {
-            this.isShown = false;
+        if (!clickedInside && this.isShown()) {
+            this.isShown.set(false);
             this.updateCurrentCategoryNotificationsToSeenOnClient();
         }
     }

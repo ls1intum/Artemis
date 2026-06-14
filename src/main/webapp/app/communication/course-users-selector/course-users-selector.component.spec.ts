@@ -133,7 +133,7 @@ describe('CourseUsersSelectorComponent', () => {
             wrapperComponent.multiSelect = testCase.multiSelect;
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
             userSelectorComponent.selectedUsers.set([exampleUserPublicInfoDTO]);
-            userSelectorComponent.disabled = true;
+            userSelectorComponent.disabled.set(true);
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(1000);
             expect(userSelectorComponent.selectedUsers()).toEqual([exampleUserPublicInfoDTO]);

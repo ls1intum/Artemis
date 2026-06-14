@@ -545,7 +545,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should toggle preview', () => {
         component.shortAnswerQuestion.text = 'This is the text of a question';
-        component.showVisualMode = false;
+        component.showVisualMode.set(false);
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [];
         let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);

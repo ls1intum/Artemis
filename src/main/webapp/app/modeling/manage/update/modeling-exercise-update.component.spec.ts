@@ -389,8 +389,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -437,8 +437,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -468,8 +468,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
@@ -499,8 +499,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
