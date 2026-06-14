@@ -60,7 +60,9 @@
             <div id="toggleAdvancedSearch" class="clickable" (click)="toggleAdvancedSearch()">
                 <fa-icon [icon]="advancedSearchEnabled() ? faChevronUp : faChevronDown" />
                 <span
-                    jhiTranslate="{{ advancedSearchEnabled() ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch' }}"
+                    jhiTranslate="{{
+                        advancedSearchEnabled() ? 'artemisApp.competency.import.search.hideAdvancedSearch' : 'artemisApp.competency.import.search.showAdvancedSearch'
+                    }}"
                 ></span>
             </div>
         </div>

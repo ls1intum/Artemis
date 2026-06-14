@@ -1,6 +1,11 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <h5 *adminTitleBarTitle id="jhi-lecture-heading" class="mb-0" jhiTranslate="{{ !platform()?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"></h5>
+        <h5
+            *adminTitleBarTitle
+            id="jhi-lecture-heading"
+            class="mb-0"
+            jhiTranslate="{{ !platform()?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"
+        ></h5>
         @if (loadFailed()) {
             <div class="alert alert-danger mt-3" jhiTranslate="artemisApp.lti.editConfiguration.loadError"></div>
         } @else {
