@@ -56,6 +56,8 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     exerciseTitle: 'Modeling 123',
                     unitName: 'Modeling 123',
                     groupTitle: 'Grp 123',
+                    chatTitle: 'Exercise 1',
+                    messagePreview: 'Sure! Let me help you with that exercise.',
                 },
                 '/',
             );
