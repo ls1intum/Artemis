@@ -34,16 +34,20 @@ interface ResolvedOptions {
  * Prefixes values that look like spreadsheet formulas with a quote so Excel and similar tools treat
  * them as plain text instead of executing them. Exported fields can contain user-controlled input
  * (e.g. student names), while the CSV is typically opened by instructors or admins.
+ *
+ * A lone leading symbol (e.g. the "-" used as an empty-value placeholder in score exports) cannot
+ * form a formula, so only values with content after the leading "=", "+", "-" or "@" are guarded.
  */
 function sanitizeAgainstCsvInjection(value: string): string {
-    return /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
+    const trimmed = value.trim();
+    return /^[=+\-@]/.test(trimmed) && trimmed.length > 1 ? `'${value}` : value;
 }
 
 /** Wraps a string in quotes when required, escaping embedded double quotes by doubling them. */
 function quoteString(value: string, options: ResolvedOptions): string {
     const needsQuoting =
         options.quoteStrings ||
-        value.includes(options.separator) ||
+        (!!options.separator && value.includes(options.separator)) ||
         (!!options.quoteCharacter && value.includes(options.quoteCharacter)) ||
         value.includes('\n') ||
         value.includes('\r');

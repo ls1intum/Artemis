@@ -69,6 +69,12 @@ describe('csv-download.util', () => {
         expect(content).toContain('" normal"');
     });
 
+    it('does not treat a lone leading symbol (e.g. the "-" empty-value placeholder) as a formula', async () => {
+        downloadCsv([{ score: '-', plus: '+', at: '@', equals: '=' }], { columnHeaders: ['score', 'plus', 'at', 'equals'], fileName: 'f', quoteStrings: false });
+        const { content } = await lastCsv();
+        expect(content).toBe(`${BOM}score;plus;at;equals\r\n-;+;@;=\r\n`);
+    });
+
     it('emits a header row even when there are no data rows', async () => {
         downloadCsv([], { columnHeaders: ['a', 'b'], fileName: 'f', quoteStrings: false });
         const { content } = await lastCsv();
