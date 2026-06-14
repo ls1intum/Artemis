@@ -10,6 +10,7 @@ autoInstallPeers: true
 overrides:
     nodemailer: '8.0.7'
     lodash: '4.18.1'
+    shell-quote: '1.8.4'
 
 allowBuilds:
     esbuild: true

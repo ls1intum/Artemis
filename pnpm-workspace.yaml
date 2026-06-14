@@ -72,7 +72,7 @@ overrides:
     debug: '4.4.3'
     diff: '9.0.0'
     dompurify: '3.4.8'
-    esbuild: '0.28.0'
+    esbuild: '0.28.1'
     express: '5.2.1'
     fast-uri: '3.1.2'
     globals: '17.6.0'
