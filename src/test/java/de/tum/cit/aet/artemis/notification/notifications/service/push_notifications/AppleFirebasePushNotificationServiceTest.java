@@ -63,8 +63,8 @@ class AppleFirebasePushNotificationServiceTest {
         PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
                 new Date(), payload, student, PushNotificationApiType.DEFAULT, "1.0.0");
 
-        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
-        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
 
         applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
         firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);

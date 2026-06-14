@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,8 +48,8 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
-        await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(MailRecipientDTO.from(user)), eq("email.notification.login.title"),
+                eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -60,8 +61,8 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
-        await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(MailRecipientDTO.from(user)), eq("email.notification.login.title"),
+                eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -72,6 +73,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
-        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendSync(any(User.class), anyString(), anyString(), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendSync(any(MailRecipientDTO.class), anyString(), anyString(), anyMap()));
     }
 }
