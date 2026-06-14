@@ -4,7 +4,6 @@ import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/cours
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesRelationGraphComponent', () => {
@@ -42,7 +41,6 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
