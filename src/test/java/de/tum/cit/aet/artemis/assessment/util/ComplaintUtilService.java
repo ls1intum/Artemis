@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -124,8 +125,11 @@ public class ComplaintUtilService {
         if (result != null) {
             result.hasComplaint(true);
             resultTestRepository.save(result);
-            submission.getResults().stream().filter(existingResult -> Objects.equals(existingResult.getId(), result.getId())).findFirst()
-                    .ifPresent(existingResult -> existingResult.hasComplaint(true));
+            var submissionResults = submission.getResults();
+            if (submissionResults != null && Hibernate.isInitialized(submissionResults)) {
+                submissionResults.stream().filter(existingResult -> Objects.equals(existingResult.getId(), result.getId())).findFirst()
+                        .ifPresent(existingResult -> existingResult.hasComplaint(true));
+            }
         }
         Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);

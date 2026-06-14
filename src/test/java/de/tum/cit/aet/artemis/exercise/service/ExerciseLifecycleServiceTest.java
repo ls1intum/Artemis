@@ -28,9 +28,9 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
 
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
-        exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
-        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
+        exercise.setReleaseDate(now.plus(500, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(1500, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(2500, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);

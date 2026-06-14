@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -230,21 +231,20 @@ public class ResultService {
      * (3) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
-     *                                        references via {@code clearAllByResultId}); false during bulk deletion when
-     *                                        participant scores are already handled by the caller
+     * @param shouldClearParticipantScore true when deleting a single result and participant scores must be recalculated; false during bulk deletion when the caller handles
+     *                                        score removal separately. Stale participant-score references to this result are always cleared before deletion.
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         Long resultId = result.getId();
         // Delete references that are NOT cascade-reachable from Result (complaints, ratings, participant scores).
-        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
+        deleteNonCascadedResultReferences(resultId);
 
         if (Hibernate.isInitialized(result.getFeedbacks())) {
             // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks and long feedback texts.
             // Use deleteById (not delete(result)) to load a fresh managed entity into the persistence context,
             // avoiding em.merge() on a potentially detached entity.
-            resultRepository.deleteById(resultId);
+            deleteResultEntity(resultId, () -> resultRepository.deleteById(resultId));
         }
         else {
             // Path 2: Feedbacks are an uninitialized lazy proxy. We MUST NOT touch the feedbacks
@@ -261,25 +261,33 @@ public class ResultService {
                 participantScoreScheduleService.get().scheduleTask(participation.getExercise().getId(), participation.getParticipant().getId(), resultId);
             }
             assessmentNoteRepository.deleteByResultId(resultId);
-            resultRepository.deleteResultById(resultId);
+            deleteResultEntity(resultId, () -> resultRepository.deleteResultById(resultId));
+        }
+    }
+
+    private void deleteResultEntity(Long resultId, Runnable deleteAction) {
+        try {
+            deleteAction.run();
+        }
+        catch (DataIntegrityViolationException ex) {
+            // A concurrent participant-score recalculation can recreate a reference after the initial cleanup.
+            participantScoreRepository.clearAllByResultId(resultId);
+            deleteAction.run();
         }
     }
 
     /**
      * Deletes references to a result that are NOT cascade-deleted by Hibernate.
      * Complaints, complaint responses, ratings, and participant scores have no cascade
-     * relationship from Result and must be explicitly deleted.
+     * relationship from Result and must be explicitly deleted or cleared.
      *
-     * @param resultId                    the id of the result
-     * @param shouldClearParticipantScore whether to clear participant scores
+     * @param resultId the id of the result
      */
-    private void deleteNonCascadedResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+    private void deleteNonCascadedResultReferences(Long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
-        if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(resultId);
-        }
+        participantScoreRepository.clearAllByResultId(resultId);
     }
 
     /**
@@ -299,14 +307,11 @@ public class ResultService {
      * Also used standalone by {@link AssessmentService#deleteAssessment} where the result is deleted implicitly
      * via JPA orphan removal when it is removed from the submission's results list.
      *
-     * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore true when deleting a single result (synchronously nullifies stale references
-     *                                        in the participant_score table); false during bulk deletion when participant
-     *                                        scores are already handled by the caller
+     * @param resultId the id of the result for which all references should be deleted
      */
-    public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+    public void deleteResultReferences(Long resultId) {
         log.debug("Delete result references {}", resultId);
-        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
+        deleteNonCascadedResultReferences(resultId);
         // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
