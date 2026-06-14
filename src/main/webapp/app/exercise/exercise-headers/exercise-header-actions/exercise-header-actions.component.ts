@@ -53,6 +53,7 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -114,6 +115,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly profileService = inject(ProfileService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly athenaService = inject(AthenaService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -208,7 +210,13 @@ export class ExerciseHeaderActionsComponent {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
+    readonly showFeedbackPopover = computed(
+        () =>
+            !this.examMode() &&
+            this.hasUserAcceptedLLM() &&
+            this.athenaService.isAthenaHealthy() &&
+            ((this.athenaEnabled && (this.exercise().course?.athenaAutoFeedbackEnabled ?? false)) || (this.exercise().allowFeedbackRequests ?? false)),
+    );
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
@@ -216,6 +224,8 @@ export class ExerciseHeaderActionsComponent {
     });
 
     constructor() {
+        this.athenaService.checkHealth();
+
         effect(() => {
             const exercise = this.exercise();
             untracked(() => {
@@ -507,7 +517,7 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         this.submitPopoverRef()?.open();

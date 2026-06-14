@@ -25,6 +25,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -52,6 +53,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private readonly userService = inject(UserService);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+    protected readonly athenaService = inject(AthenaService);
 
     protected readonly faPenSquare = faPenSquare;
 
@@ -87,9 +89,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
+        const athenaAutoFeedbackEnabled = this.athenaEnabled && (this.exercise().course?.athenaAutoFeedbackEnabled ?? false);
+        const manualFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
+        this.requestFeedbackEnabled = athenaAutoFeedbackEnabled || manualFeedbackEnabled;
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
+        this.athenaService.checkHealth();
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();

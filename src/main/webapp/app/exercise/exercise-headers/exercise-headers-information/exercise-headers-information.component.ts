@@ -129,7 +129,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.achievedPoints = 0;
             this.updatePointsItem();
         }
-        if (this.athenaEnabled() && this.exercise().allowFeedbackRequests) {
+        if (this.athenaEnabled() && (this.exercise().course?.athenaAutoFeedbackEnabled ?? this.exercise().allowFeedbackRequests)) {
             this.updateAiFeedbackItem();
         }
     }
@@ -385,7 +385,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addAiFeedbackItem() {
-        if (this.athenaEnabled() && this.exercise().allowFeedbackRequests) {
+        if (this.athenaEnabled() && (this.exercise().course?.athenaAutoFeedbackEnabled ?? this.exercise().allowFeedbackRequests)) {
             this.countAiFeedbackRequests();
             this.informationBoxItems.push(this.getAiFeedbackItem());
         }

@@ -1,5 +1,10 @@
 package de.tum.cit.aet.artemis.athena.config;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,6 +62,23 @@ public class AthenaHealthIndicator implements HealthIndicator {
         var healthString = moduleHealth.healthy ? GREEN_CIRCLE : RED_CIRCLE;
         healthString += " " + moduleHealth.url + " (" + moduleHealth.exerciseType + ")";
         return healthString;
+    }
+
+    /**
+     * Returns true if Athena is reachable. Uses a plain HTTP request without auth headers
+     * so Athena responds immediately without triggering its full module health check.
+     */
+    public boolean isHealthy() {
+        try {
+            var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).version(HttpClient.Version.HTTP_1_1).build();
+            var request = HttpRequest.newBuilder().uri(URI.create(athenaUrl + "/")).timeout(Duration.ofSeconds(3)).GET().build();
+            var response = client.send(request, HttpResponse.BodyHandlers.discarding());
+            return response.statusCode() >= 100;
+        }
+        catch (Exception ex) {
+            log.debug("Athena is not reachable at {}: {}", athenaUrl, ex.getMessage());
+            return false;
+        }
     }
 
     /**
