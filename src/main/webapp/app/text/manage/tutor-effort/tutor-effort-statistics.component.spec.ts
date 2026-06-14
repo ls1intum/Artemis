@@ -97,7 +97,7 @@ describe('TutorEffortStatisticsComponent', () => {
         expect(component.numberOfSubmissions).toBe(3);
         expect(component.totalTimeSpent).toBe(51);
         expect(component.averageTimeSpent).toBe(Math.round((component.numberOfSubmissions / component.totalTimeSpent + Number.EPSILON) * 100) / 100);
-        checkNgxData();
+        checkChartEntries();
     });
 
     it('should check tutor effort response handler with empty input', () => {
@@ -108,7 +108,7 @@ describe('TutorEffortStatisticsComponent', () => {
         expect(component.numberOfSubmissions).toBe(0);
         expect(component.totalTimeSpent).toBe(0);
         expect(component.averageTimeSpent).toBe(0);
-        checkNgxData();
+        checkChartEntries();
     });
 
     it('should call loadNumberOfTutorsInvolved', () => {
@@ -182,9 +182,9 @@ describe('TutorEffortStatisticsComponent', () => {
         expect(assessedSubmissionsMedian).toBe(8);
     });
 
-    const checkNgxData = () => {
+    const checkChartEntries = () => {
         for (let i = 0; i < component.effortDistribution.length; i++) {
-            expect(component.ngxData[i].value).toBe(component.effortDistribution[i]);
+            expect(component.chartEntries()[i].value).toBe(component.effortDistribution[i]);
         }
     };
 });

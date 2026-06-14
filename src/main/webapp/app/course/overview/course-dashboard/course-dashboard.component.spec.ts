@@ -31,7 +31,6 @@ import { StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model'
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 
@@ -198,7 +197,6 @@ describe('CourseDashboardComponent', () => {
                         error: vi.fn(),
                     },
                 },
-                provideNoopAnimationsForTests(),
                 MockProvider(DialogService),
             ],
         }).compileComponents();

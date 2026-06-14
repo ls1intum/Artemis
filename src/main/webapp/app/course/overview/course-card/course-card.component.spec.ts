@@ -17,6 +17,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseCardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -44,6 +46,9 @@ describe('CourseCardComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
+        }).overrideComponent(CourseCardComponent, {
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseCardComponent);
