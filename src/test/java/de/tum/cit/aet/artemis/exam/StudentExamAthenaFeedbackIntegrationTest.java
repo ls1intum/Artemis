@@ -317,7 +317,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
             TextExercise textExercise = addTextExerciseToExam(testExam);
-            // intentionally do NOT set feedbackSuggestionModule
+            // intentionally do NOT enable course-level Athena grading feedback
 
             StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
             studentExam.addExercise(textExercise);

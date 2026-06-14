@@ -333,7 +333,7 @@ export class ExamRequestAiFeedbackButtonComponent {
     }
 
     private translationKeyForErrorKey(errorKey: string): string {
-        if (errorKey === 'noFeedbackSuggestionModuleConfigured') {
+        if (errorKey === 'noFeedbackSuggestionModuleConfigured' || errorKey === 'noCourseLevelAthenaGradingEnabled') {
             return `artemisApp.exam.examSummary.${errorKey}`;
         }
         return `artemisApp.exercise.${errorKey}`;
