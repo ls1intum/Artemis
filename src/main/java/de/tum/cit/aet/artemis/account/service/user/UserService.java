@@ -620,7 +620,7 @@ public class UserService {
         // - LazyInitializationException when groupName != null and groups must be mutated
         // outside the original session.
         if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         }
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null && !user.getGroups().contains(groupName)) {
@@ -651,7 +651,7 @@ public class UserService {
         // - LazyInitializationException when groupName != null and groups must be mutated
         // outside the original session.
         if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         }
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null) {
@@ -716,10 +716,7 @@ public class UserService {
         var optionalUser = findUser(registrationNumber, login, email);
 
         if (optionalUser.isPresent()) {
-            var user = optionalUser.get();
-            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
-                this.addUserToCourse(user, course, role);
-            }
+            this.addUserToCourse(optionalUser.get(), course, role);
             return optionalUser;
         }
 

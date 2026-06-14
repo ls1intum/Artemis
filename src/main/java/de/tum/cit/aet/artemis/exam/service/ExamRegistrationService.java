@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -57,8 +56,6 @@ public class ExamRegistrationService {
 
     private final UserService userService;
 
-    private final UserCourseRoleRepository userCourseRoleRepository;
-
     private final ParticipationDeletionService participationDeletionService;
 
     private final StudentExamRepository studentExamRepository;
@@ -79,13 +76,12 @@ public class ExamRegistrationService {
 
     private final StudentExamService studentExamService;
 
-    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, UserCourseRoleRepository userCourseRoleRepository,
+    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
             ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
             StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
             ExamUserService examUserService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
-        this.userCourseRoleRepository = userCourseRoleRepository;
         this.userRepository = userRepository;
         this.participationDeletionService = participationDeletionService;
         this.auditEventRepository = auditEventRepository;
@@ -215,9 +211,7 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)) {
-            userService.addUserToCourse(student, course, CourseRole.STUDENT);
-        }
+        userService.addUserToCourse(student, course, CourseRole.STUDENT);
 
         Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 

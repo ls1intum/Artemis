@@ -187,7 +187,7 @@ public class LtiService {
         // Re-fetch with groups if the caller loaded the user without that entity graph so the legacy
         // write is always correct and saveUser never receives a PersistentSet(sn=null) at flush time.
         if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         }
         String groupName = course.getStudentGroupName();
         if (groupName != null && !user.getGroups().contains(groupName)) {
