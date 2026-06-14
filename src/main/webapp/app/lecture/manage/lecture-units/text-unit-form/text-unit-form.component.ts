@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -42,7 +42,7 @@ export type MarkdownCache = {
         ArtemisTranslatePipe,
     ],
 })
-export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+export class TextUnitFormComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private localStorageService = inject(LocalStorageService);
@@ -59,8 +59,14 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    // not included in reactive form
-    content: string | undefined;
+    // not included in reactive form; backed by a signal so the [(markdown)] two-way binding re-renders under zoneless
+    private readonly _content = signal<string | undefined>(undefined);
+    get content(): string | undefined {
+        return this._content();
+    }
+    set content(content: string | undefined) {
+        this._content.set(content);
+    }
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
 
@@ -78,18 +84,21 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
 
+    constructor() {
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        effect(() => {
+            if (this.isEditMode() && this.formData()) {
+                this.setFormValues(this.formData()!);
+            }
+        });
+    }
+
     get nameControl() {
         return this.form.get('name');
     }
 
     get releaseDateControl() {
         return this.form.get('releaseDate');
-    }
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-        }
     }
 
     ngOnDestroy() {

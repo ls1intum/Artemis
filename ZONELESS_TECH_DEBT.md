@@ -25,9 +25,12 @@ Estimates assume one experienced Angular dev and **include** spec updates + AOT 
 - Removed 2 vestigial `ngOnChanges` hooks that could never fire (no Angular inputs; keyed on
   base-class signals): `quiz-re-evaluate.component.ts`, `quiz-exercise-update.component.ts`
   (+ updated their specs).
-- Converted 2 mechanical `ngOnChanges` → constructor `effect()`:
-  `common-course-competency-form.component.ts`, `online-unit-form.component.ts`
-  (both only `patchValue` a reactive form from a signal input — no template-bound plain field, no loop).
+- Converted 4 `ngOnChanges` → constructor `effect()`:
+  `common-course-competency-form.component.ts` and `online-unit-form.component.ts` (both only
+  `patchValue` a reactive form from a signal input); `text-unit-form.component.ts` (its `content`
+  field became a getter/setter-over-signal facade so the `[(markdown)]` two-way binding re-renders
+  under zoneless); and `doughnut-chart.component.ts` (`receivedStats` became a `signal`, and the
+  `chartEntries` read+write runs inside `untracked()` to avoid a self-triggering effect loop).
 
 ---
 
@@ -37,19 +40,7 @@ Estimates assume one experienced Angular dev and **include** spec updates + AOT 
 
 ### P2.1 — Convert the remaining `ngOnChanges` to reactive primitives
 
-19 components still implement `ngOnChanges`. Breakdown and per-file classification:
-
-**Needs signal-ification of a plain template-bound field (the two reclassified-from-P1 items):**
-- `lecture/manage/lecture-units/text-unit-form/text-unit-form.component.ts` — the hook `patchValue`s
-  the form **and** sets a plain `content` field that is two-way bound via `[(markdown)]="content"`.
-  An effect that sets a plain field won't re-render under zoneless, so `content` must move to a
-  **getter/setter-over-signal facade** (it backs a `[(markdown)]` two-way binding, so a bare signal
-  can't replace it). Moderate, wants E2E.
-- `exercise/statistics/doughnut-chart/doughnut-chart.component.ts` — the hook recomputes
-  `chartEntries` (signal, fine) but also sets a template-bound plain `receivedStats` latch, and
-  `updatePieChartData` **reads and writes** `chartEntries` (an effect would self-loop). Conversion =
-  make `receivedStats` a `signal` (+ template `@if (receivedStats())`) and wrap the side-effect in
-  `untracked()` (read the input triggers `currentAbsolute`/`currentMax`/`course` outside `untracked`).
+15 components still implement `ngOnChanges`. Breakdown and per-file classification:
 
 **Genuinely needs previous-value / `SimpleChanges` (hand-rolled previous-value tracking; some already
 carry a justified `eslint-disable`):**
@@ -78,7 +69,7 @@ carry a justified `eslint-disable`):**
 - `plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component.ts`
 - `plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.ts`
 
-**Estimate:** ~4–6 dev-days total. **Risk:** Low–Medium (each changes a real lifecycle path;
+**Estimate:** ~3–5 dev-days total. **Risk:** Low–Medium (each changes a real lifecycle path;
 the `previousValue` ones are the most behavior-sensitive).
 
 ### P2.2 — `effect()` debt tail (data-fetch & derivation in effects)
@@ -153,7 +144,7 @@ reference; revisit when the API stabilizes.
 | Priority | Scope | Effort | Risk |
 | --- | --- | --- | --- |
 | ✅ P1 | dead RFM imports, vestigial + mechanical `ngOnChanges` | done in #12872 | ~zero |
-| P2.1 | remaining 19 `ngOnChanges` → signals | ~4–6 days | Low–Medium |
+| P2.1 | remaining 15 `ngOnChanges` → signals | ~3–5 days | Low–Medium |
 | P2.2 | `effect()` data-fetch/derivation tail (~8 files) | ~4 days | Medium |
 | P2.3 | harden deep-entity `[(ngModel)]` for zoneless | ~3–5 days | Low–Medium |
 | P3 | forms → Signal Forms (reactive + template-driven) | ~6–10 weeks | High — **defer** until API stabilizes |
