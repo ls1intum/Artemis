@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
@@ -166,7 +167,7 @@ public class ArtemisSuccessfulLoginService {
                 }
             }
 
-            mailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            mailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);

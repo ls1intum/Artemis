@@ -9,9 +9,8 @@
 # directly, without requiring transitive deps at top-level node_modules).
 
 # Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
-# Without this, peer deps such as `@angular/animations` (required by
-# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
-# Angular esbuild bundle fails with "Could not resolve @angular/animations".
+# Without this, peer deps are not installed, and the Angular esbuild bundle
+# fails with "Could not resolve ..." errors.
 autoInstallPeers: true
 
 # Treat the lockfile as authoritative; never silently update it during install.
@@ -22,10 +21,10 @@ enablePrePostScripts: true
 
 # Tell pnpm that Angular 21 is an acceptable peer for packages whose published
 # peerDependencies range still lists only "18.x || 19.x || 20.x".
-# We already pin every relevant @angular/* dep under @swimlane/* and ng-mocks
+# We already pin every relevant @angular/* dep under ng-mocks
 # to ^21.2.0 via the `overrides:` block below; this block just suppresses
 # the cosmetic peer-range warning that overrides do not silence on their own.
-# When @swimlane / ng-mocks publish releases that declare Angular 21 in their
+# When ng-mocks publishes a release that declares Angular 21 in its
 # peer range, this block (and the matching overrides) can be removed.
 peerDependencyRules:
     allowedVersions:
@@ -41,29 +40,9 @@ peerDependencyRules:
 
 # Dependency overrides. pnpm 11 reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
-# transitive packages to CVE-patched versions and force Angular 21 across all
-# @swimlane/* and ng-mocks subtrees (still on older peer ranges).
+# transitive packages to CVE-patched versions and force Angular 21 across the
+# ng-mocks subtree (still on an older peer range).
 overrides:
-    '@swimlane/ngx-charts>@angular/animations': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/cdk': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/common': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/compiler': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/core': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/forms': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/platform-browser': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/platform-browser-dynamic': '^21.2.0'
-    '@swimlane/ngx-charts>@angular/router': '^21.2.0'
-    '@swimlane/ngx-charts>rxjs': '^7.8.2'
-    '@swimlane/ngx-graph>@angular/animations': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/cdk': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/common': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/compiler': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/core': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/forms': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser-dynamic': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/router': '^21.2.0'
-    '@swimlane/ngx-graph>rxjs': '^7.8.2'
     'ng-mocks>@angular/common': '^21.2.0'
     'ng-mocks>@angular/core': '^21.2.0'
     'ng-mocks>@angular/forms': '^21.2.0'
@@ -112,7 +91,6 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
     'eslint@10.4.1': 'patches/eslint+10.4.1.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.

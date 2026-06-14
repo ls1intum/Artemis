@@ -111,18 +111,9 @@ spring:
       memory:
         max-messages: 20
     openai:
-      base-url: http://localhost:1234
+      # The official OpenAI SDK appends /chat/completions itself, so the base URL includes the /v1 prefix
+      base-url: http://localhost:1234/v1
       api-key: dummy-key      # most local servers ignore it
       chat:
-        completions-path: /v1/chat/completions
-        options:
-          model: openai/gpt-oss-20b    # or whatever name your local server expects
-          temperature: 0.7
-    azure:
-      openai:
-        api-key: my-api-key-for-azure-openai
-        endpoint: https://endpoint.openai.azure.com
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            temperature: 1.0
+        model: openai/gpt-oss-20b    # or whatever name your local server expects
+        temperature: 0.7
