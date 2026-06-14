@@ -69,6 +69,8 @@ public class AthenaHealthIndicator implements HealthIndicator {
     /**
      * Returns true if Athena is reachable. Uses a plain HTTP request without auth headers
      * so Athena responds immediately without triggering its full module health check.
+     *
+     * @return true if Athena is reachable, false otherwise
      */
     public boolean isHealthy() {
         try {

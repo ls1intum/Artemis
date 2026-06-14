@@ -218,7 +218,8 @@ describe('Course Management Update Component', () => {
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
+                athenaAutoFeedbackEnabled: new FormControl(entity.athenaAutoFeedbackEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -253,7 +254,8 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(entity.athenaGradingFeedbackEnabled),
+                athenaAutoFeedbackEnabled: new FormControl(entity.athenaAutoFeedbackEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -580,20 +582,20 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('changeRestrictedAthenaModulesEnabled', () => {
-        it('should toggle restricted athena modules access', () => {
+    describe('changeAthenaGradingFeedback', () => {
+        it('should toggle athena grading feedback enabled', () => {
             comp.course = new Course();
-            comp.course.restrictedAthenaModulesAccess = true;
-            comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
+            comp.course.athenaGradingFeedbackEnabled = true;
+            comp.courseForm = new FormGroup({ athenaGradingFeedbackEnabled: new FormControl(true) });
 
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(false);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
+            comp.changeAthenaGradingFeedback();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(false);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeFalsy();
+            comp.changeAthenaGradingFeedback();
+            expect(comp.course.athenaGradingFeedbackEnabled).toBe(true);
+            expect(comp.courseForm.controls['athenaGradingFeedbackEnabled'].value).toBeTruthy();
         });
     });
 

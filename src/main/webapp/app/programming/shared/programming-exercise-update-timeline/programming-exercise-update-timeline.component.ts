@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -25,7 +26,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -52,9 +53,11 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     assessmentDueDate = model<Dayjs | undefined>();
     exampleSolutionPublicationDate = model<Dayjs | undefined>();
     assessmentType = model<AssessmentType>();
+    allowFeedbackRequests = model<boolean>();
     setTestCaseVisibilityToAfterDueDate = model<boolean>();
     allowComplaintsForAutomaticAssessments = model<boolean>();
     releaseTestsWithExampleSolution = model<boolean>();
+    feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
     isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
@@ -66,6 +69,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
     isSemiAutomaticAssessmentToggleEnabled = computed(() => this.isExamMode() || this.isImport() || !!this.dueDate());
     isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
+    isFeedbackRequestsToggleEnabled = computed(() => this.computeIsFeedbackRequestsToggleEnabled());
     isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
     isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
 
@@ -130,9 +134,25 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (this.assessmentType() === AssessmentType.SEMI_AUTOMATIC) {
                 this.allowComplaintsForAutomaticAssessments.set(false);
+                this.allowFeedbackRequests.set(false);
             } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);
+                this.allowFeedbackRequests.set(false);
+                this.feedbackSuggestionModule.set(undefined);
+            }
+        });
+        effect(() => {
+            if (this.allowFeedbackRequests()) {
+                this.assessmentDueDate.set(undefined);
+                if (!this.isLocalCIEnabled) {
+                    this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                }
+            }
+        });
+        effect(() => {
+            if (this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate() && this.allowFeedbackRequests()) {
+                this.allowFeedbackRequests.set(false);
             }
         });
         effect(() => {
@@ -225,7 +245,13 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         const isSemiAutomaticAssessmentToggleVisible = this.isSemiAutomaticAssessmentToggleVisible();
         const isSemiAutomaticAssessmentToggleEnabled = this.isSemiAutomaticAssessmentToggleEnabled();
         const assessmentTypeIsSemiAutomatic = this.assessmentType() === AssessmentType.SEMI_AUTOMATIC;
-        return isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode();
+        return (
+            isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests()
+        );
+    }
+
+    private computeIsFeedbackRequestsToggleEnabled(): boolean {
+        return this.assessmentType() === AssessmentType.SEMI_AUTOMATIC && !(this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate());
     }
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
