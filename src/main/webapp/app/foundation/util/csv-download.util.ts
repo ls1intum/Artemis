@@ -54,7 +54,7 @@ function quoteString(value: string, options: ResolvedOptions): string {
     if (!needsQuoting) {
         return value;
     }
-    const escaped = options.quoteCharacter === '"' && value.includes('"') ? value.replace(/"/g, '""') : value;
+    const escaped = value.includes(options.quoteCharacter) ? value.replaceAll(options.quoteCharacter, options.quoteCharacter + options.quoteCharacter) : value;
     return options.quoteCharacter + escaped + options.quoteCharacter;
 }
 
@@ -107,6 +107,6 @@ export function downloadCsv(rows: readonly CsvRow[], options: CsvDownloadOptions
     const dataLines = rows.map((row) => options.columnHeaders.map((key) => formatCell(row[key], resolved)).join(resolved.separator));
 
     const csv = UTF8_BOM + [headerLine, ...dataLines].join(LINE_ENDING) + LINE_ENDING;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf8;' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     downloadFile(blob, `${options.fileName}.csv`);
 }
