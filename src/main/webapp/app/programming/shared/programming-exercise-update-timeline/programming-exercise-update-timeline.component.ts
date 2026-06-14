@@ -14,7 +14,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -26,7 +25,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
