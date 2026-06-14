@@ -543,6 +543,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddEditorToCourse_withNullEditorGroupName() throws Exception {
+        courseTestService.testAddEditorToCourse_withNullEditorGroupName();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse();
     }

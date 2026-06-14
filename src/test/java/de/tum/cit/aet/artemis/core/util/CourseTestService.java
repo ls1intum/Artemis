@@ -1868,6 +1868,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testAddEditorToCourse_withNullEditorGroupName() throws Exception {
+        // Regression test: courses created before Artemis 4.11.9 may have editorGroupName == null.
+        // The endpoint must auto-populate the default editor group name and persist it so the
+        // legacy dual-write into user_groups still works during the migration period.
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setEditorGroupName(null);
+        course = courseRepo.save(course);
+
+        User editor = userUtilService.getUserByLogin(userPrefix + "editor1");
+        request.postWithoutLocation("/api/course/courses/" + course.getId() + "/editors/" + editor.getLogin(), null, HttpStatus.OK, null);
+
+        // UCR entry must exist regardless of whether editorGroupName was null
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(editor.getId(), course.getId(), CourseRole.EDITOR)).as("editor UCR entry created").isTrue();
+
+        // editorGroupName must have been lazily initialised and persisted
+        Course reloaded = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(reloaded.getEditorGroupName()).as("editor group name persisted").isNotBlank();
+    }
+
+    // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
