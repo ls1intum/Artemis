@@ -150,7 +150,7 @@ export class TextEditorService {
      * neither clearly English nor German (e.g. another language, or no decisive signal).
      * @param   {string} text
      *
-     * @returns {Language} predicted language of the text, or undefined
+     * @returns {Language | undefined} predicted language of the text, or undefined
      */
     predictLanguage(text: string): Language | undefined {
         const words = text.toLowerCase().match(/\p{L}+/gu);

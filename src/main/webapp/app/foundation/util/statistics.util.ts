@@ -65,7 +65,7 @@ export function median(values: number[]): number {
  */
 export function standardDeviation(values: number[]): number {
     if (values.length === 0) {
-        throw new Error('variance requires at least one data point');
+        throw new Error('standardDeviation requires at least one data point');
     }
     if (values.length === 1) {
         return 0;
