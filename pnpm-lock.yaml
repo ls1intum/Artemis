@@ -122,9 +122,6 @@ importers:
       '@fortawesome/angular-fontawesome':
         specifier: 4.0.0
         version: 4.0.0(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
-      '@fortawesome/fontawesome-common-types':
-        specifier: 7.2.0
-        version: 7.2.0
       '@fortawesome/fontawesome-svg-core':
         specifier: 7.2.0
         version: 7.2.0
@@ -138,9 +135,6 @@ importers:
         specifier: 20.0.0
         version: 20.0.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/forms@21.2.16(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2))(@angular/localize@21.2.16(@angular/compiler-cli@21.2.16(@angular/compiler@21.2.16)(typescript@5.9.3))(@angular/compiler@21.2.16))(@popperjs/core@2.11.8)(rxjs@7.8.2)
       '@ngx-translate/core':
-        specifier: 17.0.0
-        version: 17.0.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
-      '@ngx-translate/http-loader':
         specifier: 17.0.0
         version: 17.0.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
       '@primeuix/themes':
@@ -324,9 +318,6 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.4.1(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0))
-      '@sentry/types':
-        specifier: 10.56.0
-        version: 10.56.0
       '@types/emoji-js':
         specifier: 3.5.2
         version: 3.5.2
@@ -358,9 +349,6 @@ importers:
         specifier: 8.60.1
         version: 8.60.1(eslint@10.4.1(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0))(typescript@5.9.3)
       '@vitest/coverage-istanbul':
-        specifier: 4.1.8
-        version: 4.1.8(vitest@4.1.8)
-      '@vitest/coverage-v8':
         specifier: 4.1.8
         version: 4.1.8(vitest@4.1.8)
       angular-eslint:
@@ -417,9 +405,6 @@ importers:
       stylelint-config-html:
         specifier: 1.1.0
         version: 1.1.0(postcss-html@1.8.1)(stylelint@17.12.0(typescript@5.9.3))
-      stylelint-config-standard:
-        specifier: 40.0.0
-        version: 40.0.0(stylelint@17.12.0(typescript@5.9.3))
       stylelint-config-standard-scss:
         specifier: 17.0.0
         version: 17.0.0(postcss@8.5.14)(stylelint@17.12.0(typescript@5.9.3))
@@ -673,6 +658,7 @@ packages:
   '@angular/animations@21.2.16':
     resolution: {integrity: sha512-YPhph/OC1A0vkT95XZW6lXMNmi5ly91JeXi+5yeG8CCxfqscVfRNPsYbRWjSueO0cQT2HJ8U1CLteQ5a1OaoHA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
+    deprecated: '@angular/animations is deprecated. Use `animate.enter` and `animate.leave` instead. For more information see: https://v22.angular.dev/guide/animations.'
     peerDependencies:
       '@angular/core': 21.2.16
 
@@ -2390,12 +2376,6 @@ packages:
       '@angular/common': '>=16'
       '@angular/core': '>=16'
 
-  '@ngx-translate/http-loader@17.0.0':
-    resolution: {integrity: sha512-hgS8sa0ARjH9ll3PhkLTufeVXNI2DNR2uFKDhBgq13siUXzzVr/a31M6zgecrtwbA34iaBV01hsTMbMS8V7iIw==}
-    peerDependencies:
-      '@angular/common': '>=16'
-      '@angular/core': '>=16'
-
   '@noble/hashes@1.4.0':
     resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
     engines: {node: '>= 16'}
@@ -3231,10 +3211,6 @@ packages:
       '@opentelemetry/core': ^1.30.1 || ^2.0.0
       '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.0.0
       '@opentelemetry/semantic-conventions': ^1.34.0
-
-  '@sentry/types@10.56.0':
-    resolution: {integrity: sha512-I9JtS/EtzpV5o9MwLNOKBCTmGU61HRT3E9MS9k68cKxAwexNH2zFW0E9EnQYLDhANXsvHA6moGA+nqt2rbD92Q==}
-    engines: {node: '>=18'}
 
   '@siemens/ngx-datatable@26.1.0':
     resolution: {integrity: sha512-QyY/lDHlNlTkUXfnrZDeR5Uzq4OAdEI0t9aSVm8a/Bt+c/ebvzK+G5dcGftUTMVDKbuIJd+sfYZTJZ7vN6aEwA==}
@@ -8523,7 +8499,8 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@bcoe/v8-coverage@1.0.2': {}
+  '@bcoe/v8-coverage@1.0.2':
+    optional: true
 
   '@bramus/specificity@2.4.2':
     dependencies:
@@ -9341,12 +9318,6 @@ snapshots:
       webpack: 5.106.2(esbuild@0.28.0)(postcss@8.5.14)
 
   '@ngx-translate/core@17.0.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))':
-    dependencies:
-      '@angular/common': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
-      '@angular/core': 21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)
-      tslib: 2.8.1
-
-  '@ngx-translate/http-loader@17.0.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))':
     dependencies:
       '@angular/common': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@angular/core': 21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)
@@ -10178,10 +10149,6 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.41.1
       '@sentry/core': 9.47.1
 
-  '@sentry/types@10.56.0':
-    dependencies:
-      '@sentry/core': 10.56.0
-
   '@siemens/ngx-datatable@26.1.0(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)':
     dependencies:
       '@angular/common': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
@@ -10603,6 +10570,7 @@ snapshots:
       std-env: 4.1.0
       tinyrainbow: 3.1.0
       vitest: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.0)(@vitest/coverage-istanbul@4.1.8)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.13.0)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
+    optional: true
 
   '@vitest/expect@4.1.8':
     dependencies:
@@ -10866,6 +10834,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       estree-walker: 3.0.3
       js-tokens: 10.0.0
+    optional: true
 
   astral-regex@2.0.0: {}
 
@@ -12277,7 +12246,8 @@ snapshots:
 
   js-library-detector@6.7.0: {}
 
-  js-tokens@10.0.0: {}
+  js-tokens@10.0.0:
+    optional: true
 
   js-tokens@4.0.0: {}
 
