@@ -185,7 +185,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission));
+        // Include the student: this is the student's own submission and the client checks participation ownership
+        // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, true));
     }
 
     /**

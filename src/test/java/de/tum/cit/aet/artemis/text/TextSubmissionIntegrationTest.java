@@ -421,6 +421,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         assertThat(submission.submissionDate()).isCloseTo(ZonedDateTime.now(), within(500, ChronoUnit.MILLIS));
         assertThat(submission.participation().initializationState()).isEqualTo(InitializationState.FINISHED);
+        // The save/submit response must carry the (owning) student so the client can verify participation ownership.
+        assertThat(submission.participation().student()).as("submit response includes the owning student").isNotNull();
+        assertThat(submission.participation().student().login()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test
