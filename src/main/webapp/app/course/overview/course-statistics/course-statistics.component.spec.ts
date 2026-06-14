@@ -24,7 +24,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseStatisticsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -346,8 +347,10 @@ describe('CourseStatisticsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideNoopAnimationsForTests(),
             ],
+        }).overrideComponent(CourseStatisticsComponent, {
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseStatisticsComponent);
@@ -475,15 +478,24 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should delegate the user correctly', () => {
-        const clickEvent = { exerciseId: 42 };
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        const courseToAdd = { ...course };
+        courseToAdd.exercises = [...modelingExercises];
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
+        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
         comp.ngOnInit();
 
-        comp.onSelect(clickEvent);
+        // dataset 4 contains the 'Not graded' segments, index 0 is the first bar ('Until 18:20', exercise 191)
+        comp.onSelect({ element: { datasetIndex: 4, index: 0 } }, ExerciseType.MODELING);
 
-        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 191]);
+
+        // clicks that do not hit a data element must not navigate
+        routingStub.mockClear();
+        comp.onSelect({ element: undefined }, ExerciseType.MODELING);
+        expect(routingStub).not.toHaveBeenCalled();
     });
 
     describe('test chart filters', () => {

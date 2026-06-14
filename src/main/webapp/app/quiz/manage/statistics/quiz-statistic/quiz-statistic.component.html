@@ -24,7 +24,7 @@
                             </ol>
                         }
                     </div>
-                    <div #containerRef class="col-md-8 text-center">
+                    <div class="col-md-8 text-center">
                         <p>&nbsp;</p>
                         <div class="row">
                             <div class="col-md-7 text-start">
@@ -43,22 +43,9 @@
                                 </p>
                             </div>
                         </div>
-                        <ngx-charts-bar-vertical
-                            [view]="[containerRef.offsetWidth, 500]"
-                            [results]="ngxData()"
-                            [scheme]="ngxColor"
-                            [showDataLabel]="true"
-                            [showXAxisLabel]="true"
-                            [showYAxisLabel]="true"
-                            [xAxisLabel]="xAxisLabel"
-                            [yAxisLabel]="yAxisLabel"
-                            [xAxis]="true"
-                            [yAxis]="true"
-                            [yScaleMax]="maxScale"
-                            [tooltipDisabled]="true"
-                            [dataLabelFormatting]="bindFormatting"
-                            [roundEdges]="false"
-                        />
+                        <div class="quiz-statistic-chart" style="height: 500px">
+                            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
+                        </div>
                         <div class="col-md-12 text-center button-row">
                             <button (click)="switchRated()" type="button" class="btn btn-primary">
                                 <fa-icon [icon]="faSync" />&nbsp;

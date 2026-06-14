@@ -5,16 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@swimlane/ngx-charts>@angular/animations': ^21.2.0
-  '@swimlane/ngx-charts>@angular/cdk': ^21.2.0
-  '@swimlane/ngx-charts>@angular/common': ^21.2.0
-  '@swimlane/ngx-charts>@angular/compiler': ^21.2.0
-  '@swimlane/ngx-charts>@angular/core': ^21.2.0
-  '@swimlane/ngx-charts>@angular/forms': ^21.2.0
-  '@swimlane/ngx-charts>@angular/platform-browser': ^21.2.0
-  '@swimlane/ngx-charts>@angular/platform-browser-dynamic': ^21.2.0
-  '@swimlane/ngx-charts>@angular/router': ^21.2.0
-  '@swimlane/ngx-charts>rxjs': ^7.8.2
   '@swimlane/ngx-graph>@angular/animations': ^21.2.0
   '@swimlane/ngx-graph>@angular/cdk': ^21.2.0
   '@swimlane/ngx-graph>@angular/common': ^21.2.0
@@ -171,9 +161,6 @@ importers:
       '@stomp/stompjs':
         specifier: 7.3.0
         version: 7.3.0
-      '@swimlane/ngx-charts':
-        specifier: 23.1.0
-        version: 23.1.0(349dadce4ab0ccc288a6337924e936fd)
       '@swimlane/ngx-graph':
         specifier: 11.0.0
         version: 11.0.0(patch_hash=31411831092d63795046e443a0692133ff7d35eafe2aa844a99eb113cae77708)(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/cdk@21.2.14(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
@@ -189,9 +176,12 @@ importers:
       bootstrap:
         specifier: 5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
-      d3-shape:
-        specifier: 3.2.0
-        version: 3.2.0
+      chart.js:
+        specifier: 4.5.1
+        version: 4.5.1
+      chartjs-plugin-datalabels:
+        specifier: 2.2.0
+        version: 2.2.0(chart.js@4.5.1)
       dayjs:
         specifier: 1.11.21
         version: 1.11.21
@@ -334,9 +324,6 @@ importers:
       '@sentry/types':
         specifier: 10.56.0
         version: 10.56.0
-      '@types/d3-shape':
-        specifier: 3.1.8
-        version: 3.1.8
       '@types/emoji-js':
         specifier: 3.5.2
         version: 3.5.2
@@ -2091,6 +2078,9 @@ packages:
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
+  '@kurkle/color@0.3.4':
+    resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
+
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
@@ -3292,18 +3282,6 @@ packages:
   '@stomp/stompjs@7.3.0':
     resolution: {integrity: sha512-nKMLoFfJhrQAqkvvKd1vLq/cVBGCMwPRCD0LqW7UT1fecRx9C3GoKEIR2CYwVuErGeZu8w0kFkl2rlhPlqHVgQ==}
 
-  '@swimlane/ngx-charts@23.1.0':
-    resolution: {integrity: sha512-f2lBc8M9164PtylLDLd98XqO6owSw4LQMT9L/vQovT3nIjMO7t5l9JnytyOB8s5KImo3p+7x+1/HYxBZ5iOVWA==}
-    peerDependencies:
-      '@angular/animations': ^21.2.0
-      '@angular/cdk': ^21.2.0
-      '@angular/common': ^21.2.0
-      '@angular/core': ^21.2.0
-      '@angular/forms': ^21.2.0
-      '@angular/platform-browser': ^21.2.0
-      '@angular/platform-browser-dynamic': ^21.2.0
-      rxjs: ^7.8.2
-
   '@swimlane/ngx-graph@11.0.0':
     resolution: {integrity: sha512-QmJxh97KlC70eDWGCZcyl5vzNGaRo7rGcNeLAB2o0RKSnMPm/kdMzRKFeu40zvmpyWVw2oTEjhwdVQ/08GqIyQ==}
     peerDependencies:
@@ -3383,12 +3361,6 @@ packages:
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
-
-  '@types/d3-path@3.1.1':
-    resolution: {integrity: sha512-VMZBYyQvbGmWyWVea0EHs/BwLgxc+MKi1zLDCONksozI4YJMcTt8ZEuIR4Sb1MMTE8MMW49v0IwI5+b7RmfWlg==}
-
-  '@types/d3-shape@3.1.8':
-    resolution: {integrity: sha512-lae0iWfcDeR7qt7rA88BNiqdvPS5pFVPpo5OfjElwNaT2yyekbM0C9vK+yqBqEmHr6lDkRnYNoTBYlAgJa7a4w==}
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
@@ -3491,9 +3463,6 @@ packages:
 
   '@types/tedious@4.0.14':
     resolution: {integrity: sha512-KHPsfX/FoVbUGbyYvk1q9MMQHLPeRZhRJZdO45Q4YjvFkv4hMNghCWTvy7rdKessBsmtz4euWCWAB6/tVpI1Iw==}
-
-  '@types/tinycolor2@1.4.6':
-    resolution: {integrity: sha512-iEN8J0BoMnsWBqjVbWH/c0G0Hh7O21lpR2/+PrvAVgWdzL7eexIFm4JN/Wn10PTcmNdtS6U67r499mlWMXOxNw==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -4026,6 +3995,15 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
+  chart.js@4.5.1:
+    resolution: {integrity: sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==}
+    engines: {pnpm: '>=8'}
+
+  chartjs-plugin-datalabels@2.2.0:
+    resolution: {integrity: sha512-14ZU30lH7n89oq+A4bWaJPnAG8a7ZTk7dKf48YAzMvJjQtjrgg5Dpk9f+LbjCF6bpx3RAGTeL13IXpKQYyRvlw==}
+    peerDependencies:
+      chart.js: '>=3.0.0'
+
   chokidar@3.6.0:
     resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
     engines: {node: '>= 8.10.0'}
@@ -4236,15 +4214,8 @@ packages:
   cssfontparser@1.2.1:
     resolution: {integrity: sha512-6tun4LoZnj7VN6YeegOVb67KBX/7JJsqvj+pv3ZA7F878/eN33AbGa5b/S/wXxS/tcp8nc40xRUrsPlxIyNUPg==}
 
-  d3-array@2.12.1:
-    resolution: {integrity: sha512-B0ErZK/66mHtEsR1TkPEEkwdy+WDesimkM5gpZr5Dsg54BiTA5RXtYW5qTLIAcekaS9xfZrzBLF/OAkB3Qn1YQ==}
-
   d3-array@3.2.4:
     resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
-    engines: {node: '>=12'}
-
-  d3-brush@3.0.0:
-    resolution: {integrity: sha512-ALnjWlVYkXsVIGlOsuWH1+3udkYFI48Ljihfnh8FZPF2QS9o+PzGLBslO0PjzVoHLZ2KCVgAM8NVkXPJB2aNnQ==}
     engines: {node: '>=12'}
 
   d3-color@3.1.0:
@@ -4261,10 +4232,6 @@ packages:
   d3-drag@1.2.5:
     resolution: {integrity: sha512-rD1ohlkKQwMZYkQlYVCrSFxsWPzI97+W+PaEIBNTMxRuxz9RF0Hi5nJWHGVJ3Om9d2fRTe1yOBINJyy/ahV95w==}
 
-  d3-drag@3.0.0:
-    resolution: {integrity: sha512-pWbUJLdETVA8lQNJecMxoXfH6x+mO2UQo8rSmZ+QqxcbyA3hfeprFgIT//HW2nlHChWeIIMwS2Fq+gEARkhTkg==}
-    engines: {node: '>=12'}
-
   d3-ease@3.0.1:
     resolution: {integrity: sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w==}
     engines: {node: '>=12'}
@@ -4275,10 +4242,6 @@ packages:
 
   d3-format@3.1.2:
     resolution: {integrity: sha512-AJDdYOdnyRDV5b6ArilzCPPwc1ejkHcoyFarqlPqT7zRYjhavcT3uSrqcMvsgh2CgoPbK3RCwyHaVyxYcP2Arg==}
-    engines: {node: '>=12'}
-
-  d3-hierarchy@3.1.2:
-    resolution: {integrity: sha512-FX/9frcub54beBdugHjDCdikxThEqjnR93Qt7PvQTOHxyiNCAlvMrHhclk3cD5VeAaq9fxmfRp+CnWw9rEMBuA==}
     engines: {node: '>=12'}
 
   d3-interpolate@3.0.1:
@@ -4295,9 +4258,6 @@ packages:
   d3-quadtree@3.0.1:
     resolution: {integrity: sha512-04xDrxQTDTCFwP5H6hRhsRcb9xxv2RzkcsygFzmkSIOJy3PeRJP7sNk3VRIbKXcog561P9oU0/rVH6vDROAgUw==}
     engines: {node: '>=12'}
-
-  d3-sankey@0.12.3:
-    resolution: {integrity: sha512-nQhsBRmM19Ax5xEIPLMY9ZmJ/cDvd1BG3UVvt5h3WRxKg5zGRbvnteTyWAbzeSvlh3tW7ZEmq4VwR5mB3tutmQ==}
 
   d3-scale@4.0.2:
     resolution: {integrity: sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==}
@@ -4869,9 +4829,6 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  gradient-path@2.3.0:
-    resolution: {integrity: sha512-vZdF/Z0EpqUztzWXFjFC16lqcialHacYoRonslk/bC6CuujkuIrqx7etlzdYHY4SnUU94LRWESamZKfkGh7yYQ==}
-
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
@@ -5069,9 +5026,6 @@ packages:
 
   interactjs@1.10.27:
     resolution: {integrity: sha512-y/8RcCftGAF24gSp76X2JS3XpHiUvDQyhF8i7ujemBz77hwiHDuJzftHx7thY8cxGogwGiPJ+o97kWB6eAXnsA==}
-
-  internmap@1.0.1:
-    resolution: {integrity: sha512-lDB5YccMydFBtasVtxnZ3MRBHuaoE8GKsppq+EchKL2U4nK/DmEpPHNH8MZe5HkMtpSiTSOZwfN0tzYjO/lJEw==}
 
   internmap@2.0.3:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
@@ -6730,9 +6684,6 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinycolor2@1.6.0:
-    resolution: {integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==}
-
   tinyexec@1.2.4:
     resolution: {integrity: sha512-SHf/r48b7vOrjve9PxJo3MN5v5yuyjHvdUcrQffT3WXMUfnGmHDVbC4k3sHJaJTgZCwpUplIaAo5ANtMyp3YHg==}
     engines: {node: '>=18'}
@@ -6744,9 +6695,6 @@ packages:
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
-
-  tinygradient@1.1.5:
-    resolution: {integrity: sha512-8nIfc2vgQ4TeLnk2lFj4tRLvvJwEfQuabdsmvDdQPT0xlk9TaNtpGd6nNRxXoK6vQhN6RSzj+Cnp5tTQmpxmbw==}
 
   tinyrainbow@3.1.0:
     resolution: {integrity: sha512-Bf+ILmBgretUrdJxzXM0SgXLZ3XfiaUuOj/IKQHuTXip+05Xn+uyEYdVg0kYDipTBcLrCVyUzAPz7QmArb0mmw==}
@@ -9171,6 +9119,8 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
+  '@kurkle/color@0.3.4': {}
+
   '@leichtgewicht/ip-codec@2.0.5': {}
 
   '@listr2/prompt-adapter-inquirer@3.0.5(@inquirer/prompts@7.10.1(@types/node@24.13.0))(@types/node@24.13.0)(listr2@9.0.5)':
@@ -10281,32 +10231,6 @@ snapshots:
 
   '@stomp/stompjs@7.3.0': {}
 
-  '@swimlane/ngx-charts@23.1.0(349dadce4ab0ccc288a6337924e936fd)':
-    dependencies:
-      '@angular/animations': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
-      '@angular/cdk': 21.2.14(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
-      '@angular/common': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
-      '@angular/core': 21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)
-      '@angular/forms': 21.2.16(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
-      '@angular/platform-browser': 21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
-      '@angular/platform-browser-dynamic': 21.2.16(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/compiler@21.2.16)(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))
-      d3-array: 3.2.4
-      d3-brush: 3.0.0
-      d3-color: 3.1.0
-      d3-ease: 3.0.1
-      d3-format: 3.1.2
-      d3-hierarchy: 3.1.2
-      d3-interpolate: 3.0.1
-      d3-sankey: 0.12.3
-      d3-scale: 4.0.2
-      d3-selection: 3.0.0
-      d3-shape: 3.2.0
-      d3-time-format: 4.1.0
-      d3-transition: 3.0.1(d3-selection@3.0.0)
-      gradient-path: 2.3.0
-      rxjs: 7.8.2
-      tslib: 2.8.1
-
   '@swimlane/ngx-graph@11.0.0(patch_hash=31411831092d63795046e443a0692133ff7d35eafe2aa844a99eb113cae77708)(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/cdk@21.2.14(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)':
     dependencies:
       '@angular/animations': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))
@@ -10415,12 +10339,6 @@ snapshots:
   '@types/connect@3.4.38':
     dependencies:
       '@types/node': 24.12.4
-
-  '@types/d3-path@3.1.1': {}
-
-  '@types/d3-shape@3.1.8':
-    dependencies:
-      '@types/d3-path': 3.1.1
 
   '@types/deep-eql@4.0.2': {}
 
@@ -10541,8 +10459,6 @@ snapshots:
   '@types/tedious@4.0.14':
     dependencies:
       '@types/node': 24.13.0
-
-  '@types/tinycolor2@1.4.6': {}
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -11175,6 +11091,14 @@ snapshots:
 
   chardet@2.1.1: {}
 
+  chart.js@4.5.1:
+    dependencies:
+      '@kurkle/color': 0.3.4
+
+  chartjs-plugin-datalabels@2.2.0(chart.js@4.5.1):
+    dependencies:
+      chart.js: 4.5.1
+
   chokidar@3.6.0:
     dependencies:
       anymatch: 3.1.3
@@ -11388,21 +11312,9 @@ snapshots:
 
   cssfontparser@1.2.1: {}
 
-  d3-array@2.12.1:
-    dependencies:
-      internmap: 1.0.1
-
   d3-array@3.2.4:
     dependencies:
       internmap: 2.0.3
-
-  d3-brush@3.0.0:
-    dependencies:
-      d3-dispatch: 3.0.1
-      d3-drag: 3.0.0
-      d3-interpolate: 3.0.1
-      d3-selection: 3.0.0
-      d3-transition: 3.0.1(d3-selection@3.0.0)
 
   d3-color@3.1.0: {}
 
@@ -11415,11 +11327,6 @@ snapshots:
       d3-dispatch: 1.0.6
       d3-selection: 1.4.2
 
-  d3-drag@3.0.0:
-    dependencies:
-      d3-dispatch: 3.0.1
-      d3-selection: 3.0.0
-
   d3-ease@3.0.1: {}
 
   d3-force@3.0.0:
@@ -11430,8 +11337,6 @@ snapshots:
 
   d3-format@3.1.2: {}
 
-  d3-hierarchy@3.1.2: {}
-
   d3-interpolate@3.0.1:
     dependencies:
       d3-color: 3.1.0
@@ -11441,11 +11346,6 @@ snapshots:
   d3-path@3.1.0: {}
 
   d3-quadtree@3.0.1: {}
-
-  d3-sankey@0.12.3:
-    dependencies:
-      d3-array: 2.12.1
-      d3-shape: 1.3.7
 
   d3-scale@4.0.2:
     dependencies:
@@ -12049,10 +11949,6 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  gradient-path@2.3.0:
-    dependencies:
-      tinygradient: 1.1.5
-
   graphemer@1.4.0: {}
 
   graphlib@2.1.8:
@@ -12251,8 +12147,6 @@ snapshots:
   interactjs@1.10.27:
     dependencies:
       '@interactjs/types': 1.10.27
-
-  internmap@1.0.1: {}
 
   internmap@2.0.3: {}
 
@@ -14134,8 +14028,6 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinycolor2@1.6.0: {}
-
   tinyexec@1.2.4: {}
 
   tinyglobby@0.2.15:
@@ -14147,11 +14039,6 @@ snapshots:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
-
-  tinygradient@1.1.5:
-    dependencies:
-      '@types/tinycolor2': 1.4.6
-      tinycolor2: 1.6.0
 
   tinyrainbow@3.1.0: {}
 

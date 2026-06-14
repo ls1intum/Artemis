@@ -101,14 +101,14 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.updateChart();
 
-        expect(component.yScaleMax).toBe(30);
+        expect(component['yScaleMax']()).toBe(30);
         expect(component.height).toBe(500);
-        expect(component.xAxisLabel()).toBe('artemisApp.examScores.xAxes');
-        expect(component.yAxisLabel()).toBe('artemisApp.examScores.yAxes');
+        expect(component['xAxisLabel']()).toBe('artemisApp.examScores.xAxes');
+        expect(component['yAxisLabel']()).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.noGradingScaleExplanation');
-        expect(component.ngxColor.domain).toEqual(expectedColoring);
-        expect(component.ngxData.map((data) => data.name)).toEqual(defaultLabels);
-        expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
+        expect(component['chartColors']()).toEqual(expectedColoring);
+        expect(component.chartEntries().map((data) => data.name)).toEqual(defaultLabels);
+        expect(component.chartEntries().map((data) => data.value)).toEqual(expectedDistribution);
 
         fixture.componentRef.setInput('isCourseScore', false);
 
@@ -127,12 +127,12 @@ describe('ParticipantScoresDistributionComponent', () => {
         component.updateChart();
 
         expect(component.gradingScaleExists).toBe(true);
-        expect(component.xAxisLabel()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
-        expect(component.yAxisLabel()).toBe('artemisApp.examScores.yAxes');
+        expect(component['xAxisLabel']()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
+        expect(component['yAxisLabel']()).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
-        expect(component.ngxColor.domain).toEqual(expectedColoring);
-        expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
-        expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
+        expect(component['chartColors']()).toEqual(expectedColoring);
+        expect(component.chartEntries().map((data) => data.name)).toEqual(expectedLabels);
+        expect(component.chartEntries().map((data) => data.value)).toEqual(expectedDistribution);
 
         fixture.componentRef.setInput('isCourseScore', false);
 
@@ -152,18 +152,18 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         expect(component.gradingScaleExists).toBe(true);
         expect(component.isBonus).toBe(true);
-        expect(component.xAxisLabel()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixBonus');
-        expect(component.yAxisLabel()).toBe('artemisApp.examScores.yAxes');
+        expect(component['xAxisLabel']()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixBonus');
+        expect(component['yAxisLabel']()).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.examScores.gradingScaleExplanationBonus');
-        expect(component.ngxColor.domain).toEqual(expectedColoring);
-        expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
-        expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
+        expect(component['chartColors']()).toEqual(expectedColoring);
+        expect(component.chartEntries().map((data) => data.name)).toEqual(expectedLabels);
+        expect(component.chartEntries().map((data) => data.value)).toEqual(expectedDistribution);
 
         fixture.componentRef.setInput('scoreToHighlight', undefined);
 
         component.updateChart();
 
-        expect(component.ngxColor.domain).toEqual(Array(4).fill(GraphColors.GREY));
+        expect(component['chartColors']()).toEqual(Array(4).fill(GraphColors.GREY));
     });
 
     it('should setup default configuration from gradeNames for bonus grades if nonbonus grading scale with bonus exists', () => {
@@ -177,12 +177,12 @@ describe('ParticipantScoresDistributionComponent', () => {
         component.updateChart();
 
         expect(component.gradingScaleExists).toBe(true);
-        expect(component.xAxisLabel()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
-        expect(component.yAxisLabel()).toBe('artemisApp.examScores.yAxes');
+        expect(component['xAxisLabel']()).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
+        expect(component['yAxisLabel']()).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
-        expect(component.ngxColor.domain).toEqual(expectedColoring);
-        expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
-        expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
+        expect(component['chartColors']()).toEqual(expectedColoring);
+        expect(component.chartEntries().map((data) => data.name)).toEqual(expectedLabels);
+        expect(component.chartEntries().map((data) => data.value)).toEqual(expectedDistribution);
     });
 
     it('should throw when both scores and gradeNames are not given', () => {
@@ -198,12 +198,12 @@ describe('ParticipantScoresDistributionComponent', () => {
         window.dispatchEvent(new Event('resize'));
 
         expect(realignChartSpy).toHaveBeenCalledOnce();
-        expect(component.showYAxisLabel).toBe(true);
+        expect(component.showYAxisLabel()).toBe(true);
 
         window['innerWidth'] = 699;
         window.dispatchEvent(new Event('resize'));
 
         expect(realignChartSpy).toHaveBeenCalledTimes(2);
-        expect(component.showYAxisLabel).toBe(false);
+        expect(component.showYAxisLabel()).toBe(false);
     });
 });

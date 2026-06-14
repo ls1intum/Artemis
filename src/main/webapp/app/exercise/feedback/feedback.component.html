@@ -77,19 +77,8 @@
 
                 @if (showScoreChart && result.submission?.participation?.exercise) {
                     <div class="result-score-chart">
-                        <div id="feedback-chart" #containerRef class="chart-space">
-                            <ngx-charts-bar-horizontal-stacked
-                                [view]="[containerRef.offsetWidth, 80]"
-                                [results]="chartData().results"
-                                [scheme]="chartData().scheme"
-                                [xScaleMax]="chartData().xScaleMax"
-                                [xAxis]="true"
-                                [xAxisTickFormatting]="xAxisFormatting"
-                                [legend]="true"
-                                [legendTitle]="''"
-                                [legendPosition]="legendPosition"
-                                [tooltipDisabled]="true"
-                            />
+                        <div id="feedback-chart" class="chart-space" style="height: 80px">
+                            <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
                         </div>
                     </div>
                 }

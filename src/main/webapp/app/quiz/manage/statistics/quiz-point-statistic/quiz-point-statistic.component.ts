@@ -15,7 +15,7 @@ import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/qui
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
@@ -23,8 +23,8 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    styleUrls: ['./quiz-point-statistic.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, ChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -49,17 +49,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     quizExerciseChannel: string;
     private quizExerciseSubscription?: Subscription;
     private quizDataSubscription?: Subscription;
-
-    // variables for ngx-charts
-    legend = false;
-    showXAxisLabel = true;
-    showYAxisLabel = true;
-    xAxis = true;
-    yAxis = true;
-    roundEdges = true;
-    showDataLabel = true;
-    height = 500;
-    animations = false;
 
     // timer
     waitingForQuizStart = false;
@@ -219,7 +208,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         });
 
         this.chartLabels = this.label;
-        this.ngxColor.domain = this.backgroundColor;
+        this.chartColors.set([...this.backgroundColor]);
 
         // load data into the chart
         this.loadDataInDiagram();
@@ -231,7 +220,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     loadDataInDiagram(): void {
         this.setData(this.quizPointStatistic);
-        this.pushDataToNgxEntry();
+        this.updateChartData();
 
         // add Axes-labels based on selected language
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');

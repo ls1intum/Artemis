@@ -63,19 +63,13 @@
                                 <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
                             </div>
 
-                            @if (ngxDoughnutData() && ngxDoughnutColor()) {
-                                <ngx-charts-pie-chart [view]="[350, 350]" [results]="ngxDoughnutData()" [scheme]="ngxDoughnutColor()" [doughnut]="true">
-                                    <ng-template #tooltipTemplate let-model="model">
-                                        <span>{{ model.name | artemisTranslate }}: {{ model.value }}</span>
-                                    </ng-template>
-                                </ngx-charts-pie-chart>
-                            }
+                            <p-chart type="doughnut" [data]="doughnutData()" [options]="doughnutOptions()" [responsive]="false" width="350px" height="350px" />
                         </div>
                         <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
-                            @for (exerciseType of ngxDoughnutData(); track ngxDoughnutData().indexOf(exerciseType)) {
+                            @for (entry of doughnutChartEntries(); track $index) {
                                 <div class="color-legend-entry">
-                                    <div class="color-indicator" [style.background]="exerciseType.color"></div>
-                                    <h5 class="fw-bolder">{{ exerciseType.name | artemisTranslate }}</h5>
+                                    <div class="color-indicator" [style.background]="entry.color"></div>
+                                    <h5 class="fw-bolder">{{ entry.name | artemisTranslate }}</h5>
                                 </div>
                             }
                         </div>
@@ -194,97 +188,15 @@
                                         [translateValues]="{ number: exerciseGroup.value.length, type: exerciseGroup.key }"
                                     ></h4>
                                 </div>
-                                <div #containerRef class="col-12 col-md-8">
-                                    <ngx-charts-bar-horizontal-stacked
-                                        [view]="[containerRef.offsetWidth, exerciseGroup.value[0].height]"
-                                        [scheme]="ngxBarColor"
-                                        [results]="exerciseGroup.value"
-                                        [xAxis]="true"
-                                        [yAxis]="true"
-                                        [xScaleMax]="exerciseGroup.value[0].xScaleMax"
-                                        [barPadding]="BAR_PADDING"
-                                        [maxXAxisTickLength]="15"
-                                        (select)="onSelect($event)"
-                                    >
-                                        <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
-                                        <ng-template #tooltipTemplate let-model="model">
-                                            @if ([barChartTitle.INCLUDED, barChartTitle.BONUS, barChartTitle.NOT_INCLUDED, barChartTitle.NO_DUE_DATE].includes(model.name)) {
-                                                <div>
-                                                    @if (!model.isProgrammingExercise) {
-                                                        <span
-                                                            jhiTranslate="artemisApp.courseOverview.statistics.exerciseAchievedScore"
-                                                            [translateValues]="{
-                                                                points: model.absoluteValue,
-                                                                percentage: roundScoreSpecifiedByCourseSettings(model.value, course),
-                                                            }"
-                                                        ></span>
-                                                    }
-                                                    @if (model.isProgrammingExercise) {
-                                                        <span
-                                                            jhiTranslate="artemisApp.courseOverview.statistics.programmingExercisePassedTests"
-                                                            [translateValues]="{ tests: model.absoluteValue, percentage: roundScoreSpecifiedByCourseSettings(model.value, course) }"
-                                                        ></span>
-                                                    }
-                                                    @if (model.name === barChartTitle.BONUS) {
-                                                        <span>
-                                                            <span>| {{ 'artemisApp.courseOverview.statistics.bonusPointTooltip' | artemisTranslate }}</span>
-                                                        </span>
-                                                    }
-                                                    @if (model.name === barChartTitle.NOT_INCLUDED) {
-                                                        <span>
-                                                            <span>| {{ 'artemisApp.courseOverview.statistics.notIncludedTooltip' | artemisTranslate }}</span>
-                                                        </span>
-                                                    }
-                                                </div>
-                                            }
-                                            <div>
-                                                @switch (model.name) {
-                                                    @case (barChartTitle.MISSED) {
-                                                        <div>
-                                                            @if (!model.afterDueDate && !model.notParticipated && !model.isProgrammingExercise) {
-                                                                <span
-                                                                    jhiTranslate="artemisApp.courseOverview.statistics.exerciseMissedScore"
-                                                                    [translateValues]="{
-                                                                        points: model.absoluteValue,
-                                                                        percentage: roundScoreSpecifiedByCourseSettings(model.value, course),
-                                                                    }"
-                                                                ></span>
-                                                            }
-                                                            @if (model.notParticipated) {
-                                                                <span
-                                                                    jhiTranslate="artemisApp.courseOverview.statistics.exerciseNotParticipated"
-                                                                    [translateValues]="{ exercise: model.exerciseTitle }"
-                                                                ></span>
-                                                            }
-                                                            @if (model.afterDueDate) {
-                                                                <span
-                                                                    jhiTranslate="artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate"
-                                                                    [translateValues]="{ exercise: model.exerciseTitle }"
-                                                                ></span>
-                                                            }
-                                                            @if (model.isProgrammingExercise && !model.notParticipated) {
-                                                                <span
-                                                                    jhiTranslate="artemisApp.courseOverview.statistics.programmingExerciseFailedTests"
-                                                                    [translateValues]="{
-                                                                        tests: model.absoluteValue,
-                                                                        percentage: roundScoreSpecifiedByCourseSettings(model.value, course),
-                                                                    }"
-                                                                ></span>
-                                                            }
-                                                        </div>
-                                                    }
-                                                    @case (barChartTitle.NOT_GRADED) {
-                                                        <div>
-                                                            <span
-                                                                jhiTranslate="artemisApp.courseOverview.statistics.exerciseNotGraded"
-                                                                [translateValues]="{ exercise: model.exerciseTitle }"
-                                                            ></span>
-                                                        </div>
-                                                    }
-                                                }
-                                            </div>
-                                        </ng-template>
-                                    </ngx-charts-bar-horizontal-stacked>
+                                <div class="col-12 col-md-8">
+                                    <div [style.height.px]="exerciseGroup.value[0].height">
+                                        <p-chart
+                                            type="bar"
+                                            [data]="groupChartData().get(exerciseGroup.key)"
+                                            [options]="groupChartOptions().get(exerciseGroup.key)"
+                                            (onDataSelect)="onSelect($event, exerciseGroup.key)"
+                                        />
+                                    </div>
                                 </div>
                                 @if (exerciseGroup.value && exerciseGroup.value.length) {
                                     <div class="col-12 col-md-3 align-self-top mt-2">

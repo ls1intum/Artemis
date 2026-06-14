@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
+import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -15,7 +16,10 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToStackedBarData, singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, doughnutChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -40,11 +44,12 @@ const MODELING_EXERCISE_COLOR = '#6610f2';
 const TEXT_EXERCISE_COLOR = '#B00B6B';
 const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 
-interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
+interface YourOverallPointsEntry extends ChartSeriesEntry {
     color: string;
 }
 
 export class Series {
+    [extra: string]: unknown;
     name: ChartBarTitle;
     value = 0;
     absoluteValue = 0;
@@ -107,11 +112,10 @@ enum ChartBarTitle {
         TranslateDirective,
         NgbDropdownMenu,
         DocumentationButtonComponent,
-        PieChartModule,
+        ChartModule,
         NgbTooltip,
         RouterLink,
         ExerciseScoresChartComponent,
-        BarChartModule,
         KeyValuePipe,
         ArtemisTranslatePipe,
     ],
@@ -183,8 +187,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
 
-    // ngx-charts
-    readonly ngxDoughnutData = signal<YourOverallPointsEntry[]>([]);
+    // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
+    readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -204,31 +208,66 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.missingPointsLabel,
     ];
 
-    readonly ngxDoughnutColor = signal<Color>({
-        name: 'Your overall points color',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [], // colors: orange, turquoise, violet, bordeaux, green, light_blue, red
-    } as Color);
-
     // flags determining for each exercise group if at least one exercise has presentation score enabled
     presentationScoreEnabled = new Map<ExerciseType, boolean>();
 
-    ngxBarColor = {
-        name: 'Score per exercise group',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED],
-    } as Color;
-
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly barChartTitle = ChartBarTitle;
     readonly CHART_HEIGHT = 25;
     readonly BAR_PADDING = 4;
     readonly DEFAULT_SIZE = 50; // additional space for the x-axis and its labels
 
-    // array containing every non-empty exercise group
-    readonly ngxExerciseGroups = signal<Map<ExerciseType, NgxExercise[]>>(new Map<ExerciseType, NgxExercise[]>());
+    // map containing every non-empty exercise group (one chart per group)
+    readonly ngxExerciseGroups = signal(new Map<ExerciseType, NgxExercise[]>());
+    // working copy that is populated while grouping exercises before it is published to the signal
+    private exerciseGroupsInProgress = new Map<ExerciseType, NgxExercise[]>();
+
+    private readonly chartColorService = inject(ChartColorService);
+    // colors of the doughnut chart slices (depend on the displayed entries)
+    private readonly doughnutColors = this.chartColorService.resolvedColors(() => this.doughnutChartEntries().map((entry) => entry.color));
+    // segment colors of the stacked bar charts: no due date, included, not included, bonus, not graded, missed
+    private readonly barColors = this.chartColorService.resolvedColors(() => [
+        GraphColors.LIGHT_GREY,
+        GraphColors.GREEN,
+        GraphColors.LIGHT_GREY,
+        GraphColors.YELLOW,
+        GraphColors.BLUE,
+        GraphColors.RED,
+    ]);
+
+    readonly doughnutData = computed(() => singleSeriesChartData(this.doughnutChartEntries(), this.doughnutColors()));
+    readonly doughnutOptions = computed(() =>
+        doughnutChartOptions({
+            legend: false,
+            tooltip: { label: (item) => `${this.translateService.instant(item.label)}: ${item.parsed}` },
+        }),
+    );
+
+    readonly groupChartData = computed(() => {
+        const dataPerGroup = new Map<ExerciseType, ChartData<'bar', number[], string>>();
+        for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
+            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(exerciseGroup as unknown as ChartMultiSeriesEntry[], this.barColors()));
+        }
+        return dataPerGroup;
+    });
+    readonly groupChartOptions = computed(() => {
+        const optionsPerGroup = new Map<ExerciseType, ChartOptions<'bar'>>();
+        for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
+            optionsPerGroup.set(
+                exerciseType,
+                barChartOptions({
+                    horizontal: true,
+                    stacked: true,
+                    legend: false,
+                    xAxis: { max: exerciseGroup[0]?.xScaleMax ?? 100 },
+                    tooltip: {
+                        title: () => '',
+                        label: (item) => this.barTooltipLines(item),
+                    },
+                }),
+            );
+        }
+        return optionsPerGroup;
+    });
 
     readonly gradingScaleExists = signal<boolean>(false);
     readonly isBonus = signal<boolean>(false);
@@ -327,9 +366,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private groupExercisesByType(exercises: Exercise[]): void {
         // this reset is now necessary because of the filtering option that triggers the grouping again.
-        const ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
+        this.exerciseGroupsInProgress = new Map<ExerciseType, NgxExercise[]>();
         Object.values(ExerciseType).forEach((exerciseType) => {
-            ngxExerciseGroups.set(exerciseType, []);
+            this.exerciseGroupsInProgress.set(exerciseType, []);
             this.presentationScoreEnabled.set(exerciseType, false);
         });
 
@@ -347,7 +386,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     series[5].notParticipated = true;
                     series[5].exerciseTitle = exercise.title;
                     series[5].exerciseId = exercise.id!;
-                    this.pushToData(ngxExerciseGroups, exercise, series);
+                    this.pushToData(exercise, series);
                 } else {
                     exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         const results = getAllResultsOfAllSubmissions(participation.submissions);
@@ -367,7 +406,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                                 series[5].exerciseId = exercise.id!;
 
                                 this.identifyBar(exercise, series, roundedParticipationScore, roundedParticipationPoints);
-                                this.pushToData(ngxExerciseGroups, exercise, series);
+                                this.pushToData(exercise, series);
                             }
                         } else {
                             if (
@@ -378,7 +417,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                                 series[4].value = 100;
                                 series[4].exerciseTitle = exercise.title;
                                 series[4].exerciseId = exercise.id!;
-                                this.pushToData(ngxExerciseGroups, exercise, series);
+                                this.pushToData(exercise, series);
                             } else {
                                 // 5 = MISSED
                                 series[5].value = 100;
@@ -391,15 +430,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                                 }
                                 series[5].exerciseTitle = exercise.title;
                                 series[5].exerciseId = exercise.id!;
-                                this.pushToData(ngxExerciseGroups, exercise, series);
+                                this.pushToData(exercise, series);
                             }
                         }
                     });
                 }
             }
         });
-        this.pushExerciseGroupsToData(ngxExerciseGroups);
-        this.ngxExerciseGroups.set(ngxExerciseGroups);
+        this.pushExerciseGroupsToData();
+        this.ngxExerciseGroups.set(this.exerciseGroupsInProgress);
     }
 
     toggleNotIncludedInScoreExercises() {
@@ -463,22 +502,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
-        const ngxDoughnutDataTemp: YourOverallPointsEntry[] = [];
-        // Preserve the previous accumulation semantics: the domain is appended to (never reset) across calls.
-        const domain = [...(this.ngxDoughnutColor().domain as string[])];
+        const doughnutEntriesTemp: YourOverallPointsEntry[] = [];
         scores.forEach((score, index) => {
             if (score > 0) {
-                ngxDoughnutDataTemp.push({
+                doughnutEntriesTemp.push({
                     name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
                     value: this.roundScoreSpecifiedByCourseSettings(score, course),
                     color: this.doughnutChartColors[index],
                 });
-                domain.push(this.doughnutChartColors[index]);
             }
         });
 
-        this.ngxDoughnutColor.update((color) => ({ ...color, domain }) as Color);
-        this.ngxDoughnutData.set([...ngxDoughnutDataTemp]);
+        this.doughnutChartEntries.set(doughnutEntriesTemp);
     }
 
     /**
@@ -636,10 +671,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param exercise an arbitrary exercise of a course
      * @param allSeries an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
      */
-    private pushToData(ngxExerciseGroups: Map<ExerciseType, NgxExercise[]>, exercise: Exercise, allSeries: Series[]): void {
+    private pushToData(exercise: Exercise, allSeries: Series[]): void {
         const exerciseType = exercise.type!;
         const ngxExercise = new NgxExercise(exercise.title, allSeries, exerciseType);
-        ngxExerciseGroups.get(exerciseType)!.push(ngxExercise);
+        this.exerciseGroupsInProgress.get(exerciseType)!.push(ngxExercise);
         this.presentationScoreEnabled.set(exerciseType, (this.presentationScoreEnabled.get(exerciseType) ?? false) || (exercise.presentationScoreEnabled ?? false));
         if (exerciseType == ExerciseType.PROGRAMMING) {
             allSeries.forEach((series: Series) => {
@@ -651,9 +686,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      * Adds some metadata to every non-empty exercise group and pushes it to ngxExerciseGroups
      */
-    private pushExerciseGroupsToData(ngxExerciseGroups: Map<ExerciseType, NgxExercise[]>): void {
+    private pushExerciseGroupsToData(): void {
         Object.values(ExerciseType).forEach((exerciseType) => {
-            const exerciseGroup = ngxExerciseGroups.get(exerciseType)!;
+            const exerciseGroup = this.exerciseGroupsInProgress.get(exerciseType)!;
             if (exerciseGroup.length > 0) {
                 const firstExerciseGroup = exerciseGroup[0];
                 firstExerciseGroup.absoluteScore = this.overallPointsPerExercise.get(exerciseType)!;
@@ -667,7 +702,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 firstExerciseGroup.height = this.calculateChartHeight(exerciseGroup.length);
             } else {
                 // prevent an error in html when there is no exercise of one specific type
-                ngxExerciseGroups.delete(exerciseType);
+                this.exerciseGroupsInProgress.delete(exerciseType);
             }
         });
     }
@@ -708,12 +743,74 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Handles the event fired if the user clicks on an arbitrary bar in the vertical bar charts.
+     * Handles the event fired if the user clicks on an arbitrary bar in the stacked bar charts.
      * Delegates the user to the corresponding exercise detail page in a new tab
-     * @param event the event that is fired by ngx-charts
+     * @param event the event that is fired by p-chart
+     * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: any) {
-        this.navigationUtilService.routeInNewTab(['courses', this.course()!.id!, 'exercises', event.exerciseId]);
+    onSelect(event: any, exerciseType: ExerciseType) {
+        const chartData = this.groupChartData().get(exerciseType);
+        if (!chartData) {
+            return;
+        }
+        const selected = toChartSelectEvent(event, chartData);
+        const exerciseId = selected?.meta?.['exerciseId'];
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.navigationUtilService.routeInNewTab(['courses', this.course()!.id!, 'exercises', exerciseId]);
+    }
+
+    /**
+     * Builds the tooltip lines for one segment of a stacked bar chart, depending on the segment type
+     * and the properties of the corresponding exercise (mirrors the former ngx-charts tooltip template).
+     * @param item the hovered tooltip item provided by chart.js
+     */
+    private barTooltipLines(item: TooltipItem<'bar'>): string[] {
+        const series = item.dataset.meta?.[item.dataIndex] as Series | undefined;
+        if (!series) {
+            return [];
+        }
+        const lines: string[] = [];
+        const percentage = this.roundScoreSpecifiedByCourseSettings(series.value, this.course());
+        if ([ChartBarTitle.INCLUDED, ChartBarTitle.BONUS, ChartBarTitle.NOT_INCLUDED, ChartBarTitle.NO_DUE_DATE].includes(series.name)) {
+            let achievedLine: string;
+            if (series.isProgrammingExercise) {
+                achievedLine = this.translateService.instant('artemisApp.courseOverview.statistics.programmingExercisePassedTests', {
+                    tests: series.absoluteValue,
+                    percentage,
+                });
+            } else {
+                achievedLine = this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                    points: series.absoluteValue,
+                    percentage,
+                });
+            }
+            if (series.name === ChartBarTitle.BONUS) {
+                achievedLine += ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.bonusPointTooltip');
+            }
+            if (series.name === ChartBarTitle.NOT_INCLUDED) {
+                achievedLine += ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.notIncludedTooltip');
+            }
+            lines.push(achievedLine);
+        }
+        if (series.name === ChartBarTitle.MISSED) {
+            if (!series.afterDueDate && !series.notParticipated && !series.isProgrammingExercise) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', { points: series.absoluteValue, percentage }));
+            }
+            if (series.notParticipated) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseNotParticipated', { exercise: series.exerciseTitle }));
+            }
+            if (series.afterDueDate) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate', { exercise: series.exerciseTitle }));
+            }
+            if (series.isProgrammingExercise && !series.notParticipated) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.programmingExerciseFailedTests', { tests: series.absoluteValue, percentage }));
+            }
+        } else if (series.name === ChartBarTitle.NOT_GRADED) {
+            lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseNotGraded', { exercise: series.exerciseTitle }));
+        }
+        return lines;
     }
 
     /**

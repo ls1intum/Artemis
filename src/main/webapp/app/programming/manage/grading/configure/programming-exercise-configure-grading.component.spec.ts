@@ -60,7 +60,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -231,7 +230,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 

@@ -49,19 +49,9 @@
 
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
-                        <ngx-charts-pie-chart
-                            class="chart overflow-hidden"
-                            [customColors]="customColors()"
-                            [view]="view"
-                            [results]="assessments()"
-                            [legend]="true"
-                            [legendTitle]="''"
-                            [legendPosition]="legendPosition"
-                            [animations]="false"
-                            [trimLabels]="false"
-                        >
-                            <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions().total).toFixed(2) }}% </ng-template>
-                        </ngx-charts-pie-chart>
+                        <div class="chart overflow-hidden">
+                            <p-chart type="pie" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="330px" height="150px" />
+                        </div>
                     </div>
                 }
 

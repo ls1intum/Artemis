@@ -187,11 +187,10 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
      * check if the rated or unrated, then load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        this.ngxColor.domain = [];
         // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
             // show Solution: use the backgroundColor which shows the solution
-            this.ngxColor.domain = this.backgroundSolutionColors;
+            this.chartColors.set([...this.backgroundSolutionColors]);
 
             this.setData(this.questionStatistic);
             const additionalData = this.rated ? this.ratedCorrectData : this.unratedCorrectData;
@@ -200,14 +199,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution: use the backgroundColor which doesn't show the solution
-            this.ngxColor.domain = this.backgroundColors;
+            this.chartColors.set([...this.backgroundColors]);
 
             this.setData(this.questionStatistic);
             // don't show Solution
             this.chartLabels = this.labels;
         }
 
-        this.pushDataToNgxEntry();
+        this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 }

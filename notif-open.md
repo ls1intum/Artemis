@@ -1,0 +1,125 @@
+- generic [ref=e3]:
+  - generic:
+    - generic:
+      - generic:
+        - generic: Development
+  - generic [ref=e14]:
+    - navigation [ref=e15]:
+      - link "Artemis 9.4" [ref=e17] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e18]: Artemis
+        - generic [ref=e19]: "9.4"
+      - generic [ref=e21]:
+        - list [ref=e22]:
+          - listitem [ref=e23]:
+            - link "Overview" [ref=e24] [cursor=pointer]:
+              - /url: /courses
+              - generic [ref=e25]:
+                - img [ref=e27]
+                - text: Overview
+        - generic [ref=e29]:
+          - img [ref=e34] [cursor=pointer]
+          - generic [ref=e43] [cursor=pointer]:
+            - img [ref=e45]
+            - text: artemis_test_user_1
+    - list [ref=e49]:
+      - listitem [ref=e50]:
+        - link "Courses" [ref=e51] [cursor=pointer]:
+          - /url: /courses
+      - img [ref=e53]
+      - listitem [ref=e55]:
+        - link "E2E General Course" [ref=e56] [cursor=pointer]:
+          - /url: /courses/9015
+      - img [ref=e58]
+      - listitem [ref=e60]:
+        - link "Exercises" [ref=e61] [cursor=pointer]:
+          - /url: /courses/9015/exercises
+  - generic [ref=e67]:
+    - generic [ref=e72]:
+      - generic [ref=e73]:
+        - generic "E2E General Course" [ref=e74]:
+          - generic [ref=e77]: E
+          - generic [ref=e78]: E2E General Course
+        - generic [ref=e79]:
+          - separator [ref=e80]
+          - list [ref=e81]:
+            - listitem [ref=e82]:
+              - link "Exercises" [ref=e83] [cursor=pointer]:
+                - /url: /courses/9015/exercises
+                - img [ref=e85]
+                - text: Exercises
+            - listitem [ref=e87]:
+              - link "Statistics" [ref=e88] [cursor=pointer]:
+                - /url: /courses/9015/statistics
+                - img [ref=e90]
+                - text: Statistics
+            - listitem [ref=e92]:
+              - link "Calendar" [ref=e93] [cursor=pointer]:
+                - /url: /courses/9015/calendar
+                - img [ref=e95]
+                - text: Calendar
+            - listitem [ref=e97]:
+              - link "Communication" [ref=e98] [cursor=pointer]:
+                - /url: /courses/9015/communication
+                - img [ref=e100]
+                - text: Communication
+            - listitem
+      - listitem [ref=e104]:
+        - generic [ref=e105]:
+          - link "Settings" [ref=e106] [cursor=pointer]:
+            - /url: /courses/9015/settings
+            - generic [ref=e107]:
+              - img [ref=e109]
+              - generic [ref=e111]: Settings
+          - generic [ref=e113] [cursor=pointer]:
+            - img [ref=e115]
+            - img [ref=e118]
+    - generic [ref=e121]:
+      - generic [ref=e123]:
+        - generic [ref=e124]:
+          - button [ref=e125] [cursor=pointer]:
+            - img [ref=e127]
+            - generic [ref=e129]:
+              - img [ref=e131]
+              - img [ref=e134]
+          - heading "Exercises" [level=5] [ref=e138]
+        - generic [ref=e139]:
+          - button "Refresh" [ref=e140] [cursor=pointer]:
+            - img [ref=e142]
+            - text: Refresh
+          - 'button "Setting: Default" [ref=e146] [cursor=pointer]':
+            - img [ref=e148]
+            - generic: "Setting: Default"
+          - button "1" [ref=e152] [cursor=pointer]:
+            - img [ref=e154]
+            - generic [ref=e158]: "1"
+      - generic [ref=e159]:
+        - generic [ref=e161]:
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - generic [ref=e170]:
+                - generic [ref=e171]: 
+                - textbox "Filter Search Field" [ref=e172]:
+                  - /placeholder: Search...
+                - text: 
+              - generic [ref=e174] [cursor=pointer]:
+                - img [ref=e176]
+                - text: Filter
+            - generic [ref=e178]: No data found.
+          - generic [ref=e180]: Please select an Exercise.
+        - generic:
+          - generic:
+            - img
+  - contentinfo [ref=e5]:
+    - generic [ref=e6]:
+      - link "About" [ref=e7] [cursor=pointer]:
+        - /url: /about
+      - link "Feedback" [ref=e8] [cursor=pointer]:
+        - /url: https://github.com/ls1intum/Artemis/issues/new/choose
+      - link "Releases" [ref=e9] [cursor=pointer]:
+        - /url: https://github.com/ls1intum/Artemis/releases
+      - link "Privacy" [ref=e10] [cursor=pointer]:
+        - /url: /privacy
+      - link "Imprint" [ref=e11] [cursor=pointer]:
+        - /url: /imprint
+      - generic [ref=e12]: "chore/angular-zoneless • Hash: b941a43 • Date: 2026-06-13 08:54 • Stephan Krusche"

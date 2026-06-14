@@ -45,7 +45,11 @@ import { onError } from 'app/foundation/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -88,7 +92,7 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        PieChartModule,
+        ChartModule,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -216,10 +220,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
 
     // graph (rebuilt in setupGraph, which also runs on the async onLangChange — signals so the chart re-renders under zoneless)
-    view: [number, number] = [330, 150];
-    legendPosition = LegendPosition.Below;
-    readonly assessments = signal<any[]>([]);
-    readonly customColors = signal<any[]>([]);
+    private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    // raw colors (CSS variable references), index-aligned with chartEntries; resolved theme-reactively below
+    private readonly rawChartColors = signal<string[]>([]);
+    private readonly resolvedChartColors = inject(ChartColorService).resolvedColors(() => this.rawChartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 1,
+            legend: { position: 'bottom' },
+            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
+        }),
+    );
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
@@ -268,11 +281,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
             this.isAutomaticAssessedProgrammingExercise.set(true);
-            this.customColors.set([
-                { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
-                { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
-            ]);
-            this.assessments.set([
+            this.rawChartColors.set([GraphColors.YELLOW, GraphColors.GREEN]);
+            this.chartEntries.set([
                 {
                     name: numberOfComplaintsLabel,
                     value: this.statsForDashboard().numberOfOpenComplaints,
@@ -286,12 +296,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
             const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
             const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.customColors.set([
-                { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
-                { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
-                { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
-            ]);
-            this.assessments.set([
+            this.rawChartColors.set([GraphColors.RED, GraphColors.BLUE, GraphColors.YELLOW]);
+            this.chartEntries.set([
                 {
                     name: numberOfUnassessedSubmissionLabel,
                     value: this.numberOfSubmissions().total - this.totalNumberOfAssessments(),
