@@ -302,7 +302,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @throws JsonProcessingException when serialization failed
      */
     private void handleLegacyProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig().getBuildScript() == null) {
+        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig() == null || programmingExercise.getBuildConfig().getBuildScript() == null) {
             return;
         }
 
