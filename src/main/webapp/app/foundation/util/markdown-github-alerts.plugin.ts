@@ -38,8 +38,11 @@ export const markdownItGitHubAlerts: PluginSimple = (md) => {
             }
             const open = tokens[i];
             const startIndex = i;
-            while (tokens[i]?.type !== 'blockquote_close' && i <= tokens.length) {
+            while (i < tokens.length && tokens[i].type !== 'blockquote_close') {
                 i += 1;
+            }
+            if (i >= tokens.length) {
+                continue;
             }
             const close = tokens[i];
             const endIndex = i;
