@@ -217,20 +217,20 @@ public class StudentExamService {
     }
 
     /**
-     * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose exercise
-     * has a feedback suggestion module configured. Called explicitly by the student via the test exam summary button.
+     * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose course
+     * has Athena grading feedback enabled. Called explicitly by the student via the test exam summary button.
      * <p>
      * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
      * results across all of their test-exam attempts for this exam (cross-attempt cap), or if no exercise in the
-     * attempt has a feedback suggestion module configured. Individual submissions that already have an Athena result
-     * are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so
-     * remaining unassessed submissions in the same attempt still get processed.
+     * attempt has Athena grading feedback enabled at the course level. Individual submissions that already have an
+     * Athena result are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync},
+     * so remaining unassessed submissions in the same attempt still get processed.
      *
      * @param studentExam the submitted student exam
      * @param currentUser the user requesting feedback
      * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, the
-     *                                      request limit is reached, or no exercise has a feedback suggestion module
-     *                                      configured
+     *                                      request limit is reached, or no exercise has course-level Athena grading
+     *                                      feedback enabled
      */
     public void requestAthenaFeedbackForTestExam(StudentExam studentExam, User currentUser) {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
@@ -253,7 +253,7 @@ public class StudentExamService {
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && participation.getExercise().areFeedbackSuggestionsEnabled()).toList();
         if (eligibleParticipations.isEmpty()) {
-            throw new BadRequestAlertException("No exam exercises with a configured AI feedback module", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
+            throw new BadRequestAlertException("No exam exercises with course-level Athena grading feedback enabled", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
         }
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();

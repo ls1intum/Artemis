@@ -73,7 +73,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
             var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).version(HttpClient.Version.HTTP_1_1).build();
             var request = HttpRequest.newBuilder().uri(URI.create(athenaUrl + "/")).timeout(Duration.ofSeconds(3)).GET().build();
             var response = client.send(request, HttpResponse.BodyHandlers.discarding());
-            return response.statusCode() >= 100;
+            return response.statusCode() < 400;
         }
         catch (Exception ex) {
             log.debug("Athena is not reachable at {}: {}", athenaUrl, ex.getMessage());

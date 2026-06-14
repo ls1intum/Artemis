@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -122,7 +122,7 @@ public class AthenaResource {
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
-            throw new InternalServerErrorException("Athena grading feedback is not enabled for this course");
+            throw new BadRequestAlertException("Athena grading feedback is not enabled for this course", "Course", "athenaGradingFeedbackNotEnabled");
         }
 
         final var submission = submissionFetcher.apply(submissionId);

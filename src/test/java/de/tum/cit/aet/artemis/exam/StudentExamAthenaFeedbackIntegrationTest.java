@@ -310,7 +310,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        void requestAthenaFeedback_shouldRejectWhenNoExerciseHasFeedbackSuggestionModuleConfigured() {
+        void requestAthenaFeedback_shouldRejectWhenCourseAthenaConfigIsDisabled() {
             Exam testExam = examUtilService.addTestExam(course);
             testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
             testExam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -350,6 +350,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
             TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
 
             for (int i = 0; i < 10; i++) {
                 seedAttemptWithAthenaResult(testExam, textExercise);

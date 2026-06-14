@@ -56,10 +56,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param bonusPoints                            additional bonus points
  * @param includedInOverallScore                 how this exercise counts toward the course grade
  * @param allowComplaintsForAutomaticAssessments whether complaints are allowed
- * @param allowFeedbackRequests                  whether feedback requests are enabled
  * @param presentationScoreEnabled               whether presentation scores are tracked
  * @param secondCorrectionEnabled                whether second correction round is enabled
- * @param feedbackSuggestionModule               the AI feedback suggestion module identifier
  * @param gradingInstructions                    free-text grading instructions for tutors
  * @param releaseDate                            when the exercise becomes visible to students
  * @param startDate                              when students can start working

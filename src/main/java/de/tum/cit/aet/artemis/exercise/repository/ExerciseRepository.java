@@ -640,11 +640,16 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN c.athenaConfig ca
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            LEFT JOIN exam.course ec
+            LEFT JOIN ec.athenaConfig eca
             WHERE e.dueDate > :dueDate
                 AND (
-                    (e.course IS NOT NULL AND e.course.athenaConfig IS NOT NULL AND e.course.athenaConfig.gradingFeedbackEnabled = true)
-                    OR (e.exerciseGroup IS NOT NULL AND e.exerciseGroup.exam.course.athenaConfig IS NOT NULL
-                        AND e.exerciseGroup.exam.course.athenaConfig.gradingFeedbackEnabled = true)
+                    (c IS NOT NULL AND ca IS NOT NULL AND ca.gradingFeedbackEnabled = true)
+                    OR (eg IS NOT NULL AND eca IS NOT NULL AND eca.gradingFeedbackEnabled = true)
                 )
             """)
     Set<Exercise> findAllWithGradingFeedbackEnabledAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);

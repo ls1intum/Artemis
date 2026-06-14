@@ -791,6 +791,9 @@ public class Course extends DomainObject {
 
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
         this.athenaConfig = athenaConfig;
+        if (athenaConfig != null) {
+            athenaConfig.setCourse(this);
+        }
     }
 
     @JsonProperty("athenaGradingFeedbackEnabled")

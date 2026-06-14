@@ -80,6 +80,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         var course = new Course();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setAutoFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);

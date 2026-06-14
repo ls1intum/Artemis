@@ -130,9 +130,7 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (
-                        (exercise().course?.athenaAutoFeedbackEnabled || exercise().allowFeedbackRequests) && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING
-                    ) {
+                    @if (exercise().course?.athenaAutoFeedbackEnabled && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
                         <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
                     }
                     <!--                    </ng-container>-->

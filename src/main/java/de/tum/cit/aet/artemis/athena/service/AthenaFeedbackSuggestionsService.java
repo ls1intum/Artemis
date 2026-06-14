@@ -202,8 +202,11 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
-            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
+        boolean feedbackEnabled = course.getAthenaConfig() != null
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 
@@ -239,8 +242,11 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
-            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
+        boolean feedbackEnabled = course.getAthenaConfig() != null
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 
@@ -266,8 +272,11 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
-            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
+        boolean feedbackEnabled = course.getAthenaConfig() != null
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+        if (!feedbackEnabled) {
+            log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
+                    exercise.getId());
             return List.of();
         }
 
