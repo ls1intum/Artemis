@@ -200,9 +200,6 @@ importers:
       franc-min:
         specifier: 6.2.0
         version: 6.2.0
-      graphemer:
-        specifier: 1.4.0
-        version: 1.4.0
       highlight.js:
         specifier: 11.11.1
         version: 11.11.1
@@ -230,9 +227,6 @@ importers:
       markdown-it-github-alerts:
         specifier: 1.0.1
         version: 1.0.1(markdown-it@14.2.0)
-      markdown-it-highlightjs:
-        specifier: 4.3.0
-        version: 4.3.0
       monaco-editor:
         specifier: 0.55.1
         version: 0.55.1
@@ -673,6 +667,7 @@ packages:
   '@angular/animations@21.2.16':
     resolution: {integrity: sha512-YPhph/OC1A0vkT95XZW6lXMNmi5ly91JeXi+5yeG8CCxfqscVfRNPsYbRWjSueO0cQT2HJ8U1CLteQ5a1OaoHA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
+    deprecated: '@angular/animations is deprecated. Use `animate.enter` and `animate.leave` instead. For more information see: https://v22.angular.dev/guide/animations.'
     peerDependencies:
       '@angular/core': 21.2.16
 
@@ -4832,9 +4827,6 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  graphemer@1.4.0:
-    resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
-
   graphlib@2.1.8:
     resolution: {integrity: sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==}
 
@@ -5430,9 +5422,6 @@ packages:
     resolution: {integrity: sha512-NNATF4QdoGI07hyCitoB2YqJ1YcNVCKT89ut2VtfFY9rkeFCXe/V2lOonKQLpJiq5DjiZZepf97BJx5xOjFIAw==}
     peerDependencies:
       markdown-it: '>= 13.0.0'
-
-  markdown-it-highlightjs@4.3.0:
-    resolution: {integrity: sha512-dTEXpTV2J9WJiO8TA/FJ4DxidrYtTNcfBAdl+CLjQ3UFWj8s4dJyCPTcvoXNLmN5U5ZTCGu7TSkSvBvi4fUqkQ==}
 
   markdown-it@14.2.0:
     resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
@@ -11952,8 +11941,6 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphemer@1.4.0: {}
-
   graphlib@2.1.8:
     dependencies:
       lodash: 4.18.1
@@ -12590,10 +12577,6 @@ snapshots:
   markdown-it-github-alerts@1.0.1(markdown-it@14.2.0):
     dependencies:
       markdown-it: 14.2.0
-
-  markdown-it-highlightjs@4.3.0:
-    dependencies:
-      highlight.js: 11.11.1
 
   markdown-it@14.2.0:
     dependencies:

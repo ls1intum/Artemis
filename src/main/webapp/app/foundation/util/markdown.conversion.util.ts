@@ -3,7 +3,7 @@ import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';
 import MarkdownItKatex from '@vscode/markdown-it-katex';
-import MarkdownItHighlightjs from 'markdown-it-highlightjs';
+import hljs from 'highlight.js';
 import TurndownService from 'turndown';
 import MarkdownIt from 'markdown-it';
 import MarkdownItGitHubAlerts from 'markdown-it-github-alerts';
@@ -30,6 +30,51 @@ class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
 const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
 
 const turndownService = new TurndownService();
+
+type MarkdownRenderRule = NonNullable<MarkdownIt['renderer']['rules']['fence']>;
+
+/**
+ * Highlights a code block with highlight.js, mirroring the behavior of the previously used
+ * `markdown-it-highlightjs` plugin (auto-detect the language when none is given, otherwise
+ * highlight with the explicit language, and fall back to escaped HTML on any error).
+ */
+function highlightWithHljs(md: MarkdownIt, code: string, language: string): string {
+    try {
+        if (language) {
+            return hljs.highlight(code, { language, ignoreIllegals: true }).value;
+        }
+        return hljs.highlightAuto(code).value;
+    } catch {
+        return md.utils.escapeHtml(code);
+    }
+}
+
+/**
+ * Wraps a code renderer so the rendered `<code>` element gains the `hljs` CSS class, matching the
+ * markup `markdown-it-highlightjs` produced. The highlight.js themes (vs.css / monokai.css) target
+ * this class, so preserving it keeps syntax highlighting styled in both the light and dark theme.
+ */
+function addHljsClass(renderer: MarkdownRenderRule): MarkdownRenderRule {
+    return (...args: Parameters<MarkdownRenderRule>) =>
+        renderer(...args)
+            .replace(/<code class="/g, '<code class="hljs ')
+            .replace(/<code>/g, '<code class="hljs">');
+}
+
+/**
+ * Local replacement for the `markdown-it-highlightjs` dependency, configured to match the default
+ * options it was previously used with (auto language detection, highlight fenced and indented code
+ * blocks, ignore illegal sequences). The highlight.js engine itself stays a direct dependency.
+ */
+const markdownItHighlightjs: PluginSimple = (md) => {
+    md.options.highlight = (code, language) => highlightWithHljs(md, code, language);
+    if (md.renderer.rules.fence) {
+        md.renderer.rules.fence = addHljsClass(md.renderer.rules.fence);
+    }
+    if (md.renderer.rules.code_block) {
+        md.renderer.rules.code_block = addHljsClass(md.renderer.rules.code_block);
+    }
+};
 
 /**
  * Cache for MarkdownIt instances to avoid expensive re-initialization on every render.
@@ -62,7 +107,7 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
 
         // Add default extensions (Code Highlight, Latex, Alerts)
         markdownIt
-            .use(MarkdownItHighlightjs)
+            .use(markdownItHighlightjs)
             .use(formulaCompatibilityPlugin.getExtension())
             .use(MarkdownItKatex, {
                 enableMathInlineInHtml: true,
@@ -92,7 +137,7 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
     // Add default extensions (Code Highlight, Latex, Alerts)
     markdownIt
         // Code Highlight
-        .use(MarkdownItHighlightjs)
+        .use(markdownItHighlightjs)
         .use(formulaCompatibilityPlugin.getExtension())
         // Latex formulas
         .use(MarkdownItKatex, {

@@ -9,7 +9,6 @@ import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
-import Graphemer from 'graphemer';
 
 import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
@@ -1054,8 +1053,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                     const lineContent = model.getLineContent(lineNumber);
 
                     const textBeforeCursor = lineContent.substring(0, column - 1);
-                    const splitter = new Graphemer();
-                    const graphemes = splitter.splitGraphemes(textBeforeCursor);
+                    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+                    const graphemes = Array.from(segmenter.segment(textBeforeCursor), (segment) => segment.segment);
 
                     if (textBeforeCursor.length === 0) {
                         editor.trigger('keyboard', 'deleteLeft', null);
