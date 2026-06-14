@@ -471,10 +471,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 finalize(() => this.isGlobalRefining.set(false)),
             )
             .subscribe({
-                next: (results) => {
-                    const previousSnapshots = new Map<MultipleChoiceQuestion, MultipleChoiceQuestion>(
-                        mcQuestions.map((q) => [q, { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion]),
-                    );
+                next: ({ results, previousSnapshots }) => {
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });

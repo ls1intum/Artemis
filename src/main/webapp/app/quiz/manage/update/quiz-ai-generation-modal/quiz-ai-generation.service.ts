@@ -34,7 +34,7 @@ export class QuizAiGenerationService {
         courseId: number,
         question: MultipleChoiceQuestion,
         refinementPrompt: string,
-    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }> {
+    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string; previousQuestion: MultipleChoiceQuestion }> {
         const request = {
             question: {
                 type: (question.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
@@ -56,9 +56,11 @@ export class QuizAiGenerationService {
             map((response: QuizQuestionRefinementResponse) => {
                 if (response.type === 'success') {
                     const success = response as QuizQuestionRefinementResponse & { question: Omit<GeneratedQuestion, 'id'> };
+                    const previousQuestion = this.snapshotQuestion(question);
                     return {
                         refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
                         reasoning: response.reasoning,
+                        previousQuestion,
                     };
                 }
                 throw new Error(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.errors.failed'));
@@ -75,7 +77,11 @@ export class QuizAiGenerationService {
      * @param refinementPrompt user instructions describing how all questions should change
      * @returns an observable that emits a map from each successfully refined question to its reasoning string; failed questions are omitted
      */
-    refineAllMultipleChoiceQuestions(courseId: number, questions: MultipleChoiceQuestion[], refinementPrompt: string): Observable<Map<MultipleChoiceQuestion, string>> {
+    refineAllMultipleChoiceQuestions(
+        courseId: number,
+        questions: MultipleChoiceQuestion[],
+        refinementPrompt: string,
+    ): Observable<{ results: Map<MultipleChoiceQuestion, string>; previousSnapshots: Map<MultipleChoiceQuestion, MultipleChoiceQuestion> }> {
         const request: QuizQuestionBulkRefinementRequest = {
             questions: questions.map((q) => ({
                 type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
@@ -95,16 +101,22 @@ export class QuizAiGenerationService {
         return this.hyperionQuizQuestionGenerationApiService.refineAllQuizQuestions(courseId, request).pipe(
             map((response) => {
                 const results = new Map<MultipleChoiceQuestion, string>();
+                const previousSnapshots = new Map<MultipleChoiceQuestion, MultipleChoiceQuestion>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === 'success') {
                         const success = refinement as QuizQuestionRefinementResponse & { question: Omit<GeneratedQuestion, 'id'> };
+                        previousSnapshots.set(questions[index], this.snapshotQuestion(questions[index]));
                         this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
                         results.set(questions[index], refinement.reasoning);
                     }
                 });
-                return results;
+                return { results, previousSnapshots };
             }),
         );
+    }
+
+    private snapshotQuestion(q: MultipleChoiceQuestion): MultipleChoiceQuestion {
+        return { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion;
     }
 
     private applyRefinedContentToQuestion(original: MultipleChoiceQuestion, refined: GeneratedQuestion): MultipleChoiceQuestion {

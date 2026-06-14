@@ -121,10 +121,6 @@ export class QuizAiQuestionRefinementPanelComponent {
         this.submitSubject.next();
     }
 
-    private snapshotQuestion(q: MultipleChoiceQuestion): MultipleChoiceQuestion {
-        return { ...q, answerOptions: q.answerOptions?.map((opt) => ({ ...opt })) } as MultipleChoiceQuestion;
-    }
-
     private executeRefinement(): void {
         const prompt = this.refinePrompt().trim();
         if (!prompt || this.isRefining()) {
@@ -140,7 +136,7 @@ export class QuizAiQuestionRefinementPanelComponent {
             )
             .subscribe({
                 next: (result) => {
-                    this.previousQuestion.set(this.snapshotQuestion(this.question() as MultipleChoiceQuestion));
+                    this.previousQuestion.set(result.previousQuestion);
                     const reasoning = result.reasoning?.trim() || this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.defaultReasoning');
                     this.refinementExplanation.set(reasoning);
                     this.refinePrompt.set('');

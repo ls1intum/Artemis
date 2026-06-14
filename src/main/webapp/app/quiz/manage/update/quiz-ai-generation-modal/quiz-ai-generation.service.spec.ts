@@ -208,7 +208,7 @@ describe('QuizAiGenerationService', () => {
             q1.title = 'Q1';
             const q2 = buildMultipleChoiceQuestion(false);
             q2.title = 'Q2';
-            let results: Map<MultipleChoiceQuestion, string> | undefined;
+            let results: { results: Map<MultipleChoiceQuestion, string>; previousSnapshots: Map<MultipleChoiceQuestion, MultipleChoiceQuestion> } | undefined;
 
             service.refineAllMultipleChoiceQuestions(1, [q1, q2], 'improve').subscribe((r) => (results = r));
 
@@ -236,11 +236,11 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(results!.size).toBe(2);
+            expect(results!.results.size).toBe(2);
             expect(q1.title).toBe('Refined Q1');
-            expect(results!.get(q1)).toBe('Reasoning 1');
+            expect(results!.results.get(q1)).toBe('Reasoning 1');
             expect(q2.title).toBe('Refined Q2');
-            expect(results!.get(q2)).toBe('Reasoning 2');
+            expect(results!.results.get(q2)).toBe('Reasoning 2');
         });
 
         it('should omit failed refinements and only return successful ones', () => {
@@ -250,7 +250,7 @@ describe('QuizAiGenerationService', () => {
             q2.title = 'Q2';
             const q3 = buildMultipleChoiceQuestion(true);
             q3.title = 'Q3';
-            let results: Map<MultipleChoiceQuestion, string> | undefined;
+            let results: { results: Map<MultipleChoiceQuestion, string>; previousSnapshots: Map<MultipleChoiceQuestion, MultipleChoiceQuestion> } | undefined;
 
             service.refineAllMultipleChoiceQuestions(1, [q1, q2, q3], 'improve').subscribe((r) => (results = r));
 
@@ -271,18 +271,18 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(results!.size).toBe(2);
-            expect(results!.has(q1)).toBe(true);
-            expect(results!.has(q2)).toBe(false);
-            expect(results!.has(q3)).toBe(true);
-            expect(results!.get(q1)).toBe('Reasoning 1');
-            expect(results!.get(q3)).toBe('Reasoning 3');
+            expect(results!.results.size).toBe(2);
+            expect(results!.results.has(q1)).toBe(true);
+            expect(results!.results.has(q2)).toBe(false);
+            expect(results!.results.has(q3)).toBe(true);
+            expect(results!.results.get(q1)).toBe('Reasoning 1');
+            expect(results!.results.get(q3)).toBe('Reasoning 3');
             expect(q2.title).toBe('Q2');
         });
 
         it('should apply refined answer options back to the original question objects', () => {
             const q = buildMultipleChoiceQuestion(false);
-            let result: Map<MultipleChoiceQuestion, string> | undefined;
+            let result: { results: Map<MultipleChoiceQuestion, string>; previousSnapshots: Map<MultipleChoiceQuestion, MultipleChoiceQuestion> } | undefined;
 
             service.refineAllMultipleChoiceQuestions(1, [q], 'improve').subscribe((r) => (result = r));
 
@@ -306,7 +306,7 @@ describe('QuizAiGenerationService', () => {
                 ],
             });
 
-            expect(result!.get(q)).toBe('Some reasoning.');
+            expect(result!.reasonings.get(q)).toBe('Some reasoning.');
             expect(q.title).toBe('New Title');
             expect(q.text).toBe('New text?');
             expect(q.hint).toBe('New hint');

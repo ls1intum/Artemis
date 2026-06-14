@@ -113,7 +113,8 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         const refinedQuestion = new MultipleChoiceQuestion();
         refinedQuestion.title = 'Refined Title';
-        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'Some explanation.' }));
+        const previousQuestion = createMockQuestion();
+        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'Some explanation.', previousQuestion }));
 
         const emittedValues: MultipleChoiceQuestion[] = [];
         component.questionRefined.subscribe((q) => emittedValues.push(q));
@@ -169,7 +170,8 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         const refinedQuestion = new MultipleChoiceQuestion();
         const reasoning = 'Some explanation.';
-        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning }));
+        const previousQuestion = createMockQuestion();
+        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning, previousQuestion }));
 
         component.refinePrompt.set('improve');
         runInInjectionContext(envInjector, () => component.submitRefinement());
@@ -201,7 +203,8 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
             const refinedQuestion = new MultipleChoiceQuestion();
             refinedQuestion.title = 'Refined Title';
-            vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'AI changed it' }));
+            const previousQuestion = createMockQuestion(); // title: 'Test Question'
+            vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'AI changed it', previousQuestion }));
 
             component.refinePrompt.set('make it harder');
             runInInjectionContext(envInjector, () => component.submitRefinement());
