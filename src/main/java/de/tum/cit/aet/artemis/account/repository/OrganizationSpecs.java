@@ -214,6 +214,7 @@ public class OrganizationSpecs {
                     }
                     yield root.get(Organization_.ID);
                 }
+                case "id" -> root.get(Organization_.ID);
                 default -> root.get(Organization_.ID);
             };
 
@@ -250,6 +251,7 @@ public class OrganizationSpecs {
                     orders.add(asc ? builder.asc(nameExpr) : builder.desc(nameExpr));
                 }
                 case "email" -> orders.add(asc ? builder.asc(root.get(User_.EMAIL)) : builder.desc(root.get(User_.EMAIL)));
+                case "id" -> orders.add(asc ? builder.asc(root.get(User_.ID)) : builder.desc(root.get(User_.ID)));
                 default -> {
                     /* fall through to tiebreaker */ }
             }
@@ -279,6 +281,7 @@ public class OrganizationSpecs {
             Expression<?> sortExpr = switch (sortedColumn != null ? sortedColumn : "") {
                 case "title" -> root.get(Course_.TITLE);
                 case "shortName" -> root.get(Course_.SHORT_NAME);
+                case "id" -> root.get(DomainObject_.ID);
                 default -> root.get(DomainObject_.ID);
             };
 

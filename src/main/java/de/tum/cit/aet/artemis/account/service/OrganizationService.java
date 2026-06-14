@@ -139,7 +139,7 @@ public class OrganizationService {
         }
         List<Long> orgIds = orgPage.getContent().stream().map(Organization::getId).toList();
         if (orgIds.isEmpty()) {
-            return Page.empty(pageable);
+            return new PageImpl<>(List.of(), pageable, orgPage.getTotalElements());
         }
         Map<Long, Long> userCounts = organizationRepository.findUserCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
         Map<Long, Long> courseCounts = organizationRepository.findCourseCountsByOrganizationIds(orgIds).stream().collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));

@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
+import de.tum.cit.aet.artemis.admin.dto.LoginListDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -117,12 +118,12 @@ public class AdminOrganizationResource {
      * Users not found or already members are silently skipped.
      *
      * @param organizationId the id of the organization
-     * @param userLogins     the logins of the users to add
+     * @param request        the request body containing the logins of the users to add
      * @return empty ResponseEntity with status 200 (OK)
      */
     @PostMapping("organizations/{organizationId}/users")
-    public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody List<String> userLogins) {
-        organizationService.addUsersToOrganization(organizationId, userLogins);
+    public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody @Valid LoginListDTO request) {
+        organizationService.addUsersToOrganization(organizationId, request.logins());
         return ResponseEntity.ok().build();
     }
 
@@ -271,6 +272,9 @@ public class AdminOrganizationResource {
     @GetMapping("organizations/{organizationId}/users/search")
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForOrganizationRegistration(@PathVariable long organizationId, @RequestParam String loginOrName,
             @RequestParam(defaultValue = "0") int pageIndex, @RequestParam(defaultValue = "10") int pageSize) {
+        if (pageIndex < 0 || pageSize < 1) {
+            throw new BadRequestAlertException("Invalid pagination parameters", ENTITY_NAME, "invalidPagination");
+        }
         organizationRepository.findByIdElseThrow(organizationId);
         Page<UserForRegistrationDTO> page = organizationService.searchUsersForOrganizationRegistration(organizationId, loginOrName, pageIndex, pageSize);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

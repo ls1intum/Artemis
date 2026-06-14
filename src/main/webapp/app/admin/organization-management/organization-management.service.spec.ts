@@ -142,7 +142,7 @@ describe('Organization Service', () => {
         const resultPromise = firstValueFrom(service.addUsersToOrganization(elemDefault.id!, ['user1', 'user2']));
 
         const req = httpMock.expectOne((r) => r.url.endsWith(`${elemDefault.id}/users`) && r.method === 'POST');
-        expect(req.request.body).toEqual(['user1', 'user2']);
+        expect(req.request.body).toEqual({ logins: ['user1', 'user2'] });
         req.flush(null, { status: 200, statusText: 'OK' });
 
         const result = await resultPromise;

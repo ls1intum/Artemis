@@ -161,7 +161,7 @@ export class OrganizationManagementService {
      * @param logins         the logins of the users to add
      */
     addUsersToOrganization(organizationId: number, logins: string[]): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users`, logins, { observe: 'response' });
+        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users`, { logins }, { observe: 'response' });
     }
 
     /**
