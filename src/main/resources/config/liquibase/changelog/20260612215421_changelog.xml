@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Stores the Artemis app a user message was sent from (resolved from the request User-Agent). Used to decide whether
+         the asynchronous Iris response should be delivered as a push notification (currently only for messages sent from
+         the iOS app). Nullable because messages from a web browser / unrecognized client, non-user messages (LLM/artifact)
+         and pre-existing rows have no originating Artemis app.
+         DB-specific type: ENUM on MySQL/H2, TEXT on PostgreSQL (mirrors the ArtemisApp Java enum). -->
+    <changeSet id="20260612215421-1-add-sender-origin-mysql" author="senan-aslan" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="sender_origin"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="sender_origin" type="ENUM('IOS','ANDROID')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260612215421-1-add-sender-origin-postgres" author="senan-aslan" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="sender_origin"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="sender_origin" type="text"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

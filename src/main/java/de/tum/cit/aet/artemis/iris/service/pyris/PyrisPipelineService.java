@@ -149,10 +149,12 @@ public class PyrisPipelineService {
     public void executeChatPipeline(String variant, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+        // Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so they must not
+        // carry a triggering user message id
+        var triggeringUserMessageId = eventVariant.isPresent() || session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
         executePipeline("chat", user.getSelectedLLMUsage(), variant, eventVariant,
-            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
+            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), triggeringUserMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
         // @formatter:on

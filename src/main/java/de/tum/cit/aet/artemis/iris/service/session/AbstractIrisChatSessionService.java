@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -177,6 +179,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
+            ArtemisApp clientOrigin = job.userMessageId() == null ? null : irisMessageRepository.findById(job.userMessageId()).map(IrisMessage::getSenderOrigin).orElse(null);
+            notifyUserOfIrisResponse(session, savedMessage, clientOrigin);
         }
         else {
             savedMessage = null;
@@ -226,6 +230,20 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
         return updatedJob.get();
+    }
+
+    /**
+     * Hook invoked after an assistant (LLM) message has been persisted and pushed over the websocket.
+     * Subclasses with course and user context may override this to react to a finished answer (e.g. to
+     * notify the user when the chat is not open anywhere). Default: no-op.
+     *
+     * @param session      the chat session the message belongs to
+     * @param message      the assistant message that was sent
+     * @param clientOrigin the Artemis app the triggering user message came from, or {@code null} if it came from a web
+     *                         browser / unrecognized client or the response was event-triggered (no user message)
+     */
+    protected void notifyUserOfIrisResponse(S session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
+        // no-op by default
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

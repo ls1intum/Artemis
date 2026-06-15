@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faPersonChalkboard, faRectangleList, faRobot, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -47,6 +47,7 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: faPersonChalkboard,
         deregisteredFromTutorialGroupNotification: faPersonChalkboard,
         tutorialGroupDeletedNotification: faPersonChalkboard,
+        irisResponseNotification: faRobot,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -75,6 +76,8 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: [],
         deregisteredFromTutorialGroupNotification: [],
         tutorialGroupDeletedNotification: [],
+        // Iris responses are delivered to the native app via push only; email and webapp are unsupported (see IrisResponseNotification.getSupportedChannels).
+        irisResponseNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.WEBAPP],
     };
 
     // Parameter keys that should be rendered as markdown

@@ -3,12 +3,20 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.text.LineBreakRendering;
+import org.commonmark.renderer.text.TextContentRenderer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -21,12 +29,14 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -35,6 +45,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -44,12 +56,15 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -73,6 +88,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
+    private static final int MESSAGE_PREVIEW_MAX_LENGTH = 200;
+
+    private static final Parser MESSAGE_PREVIEW_PARSER = Parser.builder().build();
+
+    private static final TextContentRenderer MESSAGE_PREVIEW_RENDERER = TextContentRenderer.builder().lineBreakRendering(LineBreakRendering.STRIP).build();
+
     private final IrisSettingsService irisSettingsService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -95,13 +116,20 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    private final UserRepository userRepository;
+
+    private final CourseNotificationService courseNotificationService;
+
+    private final IrisSessionPresenceService irisSessionPresenceService;
+
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, UserRepository userRepository, CourseNotificationService courseNotificationService,
+            IrisSessionPresenceService irisSessionPresenceService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
@@ -115,6 +143,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
+        this.userRepository = userRepository;
+        this.courseNotificationService = courseNotificationService;
+        this.irisSessionPresenceService = irisSessionPresenceService;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -128,6 +159,75 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     @Override
     public void requestAndHandleResponse(IrisChatSession session) {
         chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+    }
+
+    /**
+     * After an Iris answer is persisted and pushed over the websocket, notify the user if the chat is
+     * not open live anywhere (app backgrounded/closed, or the chat closed in the web client).
+     * <p>
+     * The push notification is only sent when the triggering user message originated from the iOS app
+     * ({@link ArtemisApp#IOS}). Messages sent from other clients (e.g. the web client or the Android app) or
+     * event-triggered Iris responses (which have no client origin) never produce a push notification.
+     */
+    @Override
+    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
+        if (clientOrigin != ArtemisApp.IOS) {
+            // The triggering message did not come from the iOS app — do not send a push notification.
+            return;
+        }
+        try {
+            var user = userRepository.findByIdElseThrow(session.getUserId());
+            if (irisSessionPresenceService.isSessionOpenAnywhere(user.getLogin(), session.getId())) {
+                // The chat is open live somewhere — the websocket already delivered the answer.
+                return;
+            }
+            var course = courseRepository.findByIdElseThrow(session.getCourseId());
+            String preview = buildPreview(message, localizedMessagePreviewFallback(user.getLangKey()));
+            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), preview, session.getTitle());
+            courseNotificationService.sendCourseNotification(notification, List.of(user));
+        }
+        catch (Exception e) {
+            // A notification failure must never interfere with the chat response flow.
+            log.error("Failed to send Iris response notification for session {}", session.getId(), e);
+        }
+    }
+
+    /**
+     * Builds a short single-line plain-text preview of an assistant message for use in notifications.
+     * <p>
+     * Iris answers are Markdown, but neither the push notification banner nor the in-app notification list can
+     * render Markdown. The formatting is therefore flattened to plain text: all text contents are concatenated,
+     * parsed and re-rendered with commonmark's {@link TextContentRenderer} (which drops emphasis, heading, link
+     * and list markup while keeping the readable text), collapsed to a single line and truncated to
+     * {@link #MESSAGE_PREVIEW_MAX_LENGTH} characters. Non-text contents (e.g. JSON tool calls) are skipped.
+     *
+     * @param message  the assistant message to preview
+     * @param fallback the localized text returned if the message has no renderable text content
+     * @return a single-line, length-bounded plain-text preview, or the given fallback if the message has no text
+     */
+    private static String buildPreview(IrisMessage message, String fallback) {
+        String markdown = message.getContent().stream().filter(IrisTextMessageContent.class::isInstance).map(IrisMessageContent::getContentAsString).filter(Objects::nonNull)
+                .collect(Collectors.joining(" ")).strip();
+        if (markdown.isBlank()) {
+            return fallback;
+        }
+        Node document = MESSAGE_PREVIEW_PARSER.parse(markdown);
+        String plainText = MESSAGE_PREVIEW_RENDERER.render(document).replaceAll("\\s+", " ").strip();
+        if (plainText.isBlank()) {
+            return fallback;
+        }
+        return StringUtils.abbreviate(plainText, "…", MESSAGE_PREVIEW_MAX_LENGTH);
+    }
+
+    /**
+     * Resolves the localized fallback preview text shown when an assistant message has no renderable text content.
+     *
+     * @param langKey the user's language key (falls back to English if null or blank)
+     * @return the localized fallback preview text
+     */
+    private String localizedMessagePreviewFallback(String langKey) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.notification.messagePreviewFallback", null, "Iris has answered your message", locale);
     }
 
     /**
