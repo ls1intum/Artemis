@@ -70,7 +70,7 @@ export class QuizQuestionListEditComponent {
     /** Per-question snapshots taken before the last bulk refinement, for restore support. */
     bulkRefinementPreviousQuestions = signal(new Map<QuizQuestion, MultipleChoiceQuestion>());
 
-    showExistingQuestions = false;
+    readonly showExistingQuestions = signal(false);
     fileMap = new Map<string, { path?: string; file: File }>();
 
     /**
@@ -191,7 +191,7 @@ export class QuizQuestionListEditComponent {
      * @param quizQuestions the list of newly added QuizQuestions
      */
     handleExistingQuestionsAdded(quizQuestions: Array<QuizQuestion>) {
-        this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestions.update((show) => !show);
         for (const quizQuestion of quizQuestions) {
             this.addQuestion(quizQuestion);
         }
@@ -320,7 +320,7 @@ export class QuizQuestionListEditComponent {
      * Toggles existing questions view
      */
     showHideExistingQuestions() {
-        this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestions.update((show) => !show);
     }
 
     /**

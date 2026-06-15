@@ -89,7 +89,7 @@
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                     </button>
-                    <button class="add-question-btn" (click)="showHideExistingQuestions()" [class.active]="showExistingQuestions">
+                    <button class="add-question-btn" (click)="showHideExistingQuestions()" [class.active]="showExistingQuestions()">
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
                     </button>
@@ -98,7 +98,7 @@
             @if (!disabled()) {
                 <div class="mt-2 mb-3">
                     <jhi-quiz-question-list-edit-existing
-                        [show]="showExistingQuestions"
+                        [show]="showExistingQuestions()"
                         [courseId]="courseId()"
                         [filePool]="fileMap"
                         (onQuestionsAdded)="handleExistingQuestionsAdded($event)"

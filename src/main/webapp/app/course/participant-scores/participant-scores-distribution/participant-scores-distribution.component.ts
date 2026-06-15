@@ -43,12 +43,12 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly onSelect = output<ChartClickEvent>();
 
-    gradingScaleExists = false;
-    isBonus?: boolean;
+    readonly gradingScaleExists = signal(false);
+    readonly isBonus = signal<boolean | undefined>(undefined);
     private entries: ChartSeriesEntry[] = [];
-    height = 500;
+    readonly height = signal(500);
 
-    helpIconTooltip: string;
+    readonly helpIconTooltip = signal<string>(undefined!);
 
     readonly binWidth = 5;
 
@@ -102,13 +102,13 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         const gradingScale = this.gradingScale();
         // Recompute derived state from scratch on every run so that clearing the grading scale or toggling
         // isCourseScore cannot leave stale flags/height behind (the effect re-runs on any input change).
-        this.gradingScaleExists = !!gradingScale;
-        this.isBonus = gradingScale?.gradeType === GradeType.BONUS;
+        this.gradingScaleExists.set(!!gradingScale);
+        this.isBonus.set(gradingScale?.gradeType === GradeType.BONUS);
         // For course scores we keep the larger height (500px); the exam statistics use the old 400px height.
-        this.height = this.isCourseScore() ? 500 : 400;
+        this.height.set(this.isCourseScore() ? 500 : 400);
         this.createChart();
         this.yScaleMax.set(this.calculateTickMax());
-        this.helpIconTooltip = this.determineHelpIconTooltip();
+        this.helpIconTooltip.set(this.determineHelpIconTooltip());
         this.highlightScore();
     }
 
@@ -134,7 +134,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      */
     private generateDefaultChartSetting(): void {
         this.entries = [];
-        if (this.gradingScaleExists) {
+        if (this.gradingScaleExists()) {
             this.gradingScale()!.gradeSteps.forEach((step) => {
                 this.entries.push({
                     name: step.gradeName,
@@ -157,7 +157,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * Creates the chart labels displaying the intervals each bar covers depending on the existence and state of a grading key
      */
     private createChartLabels(): void {
-        if (this.gradingScaleExists) {
+        if (this.gradingScaleExists()) {
             this.gradingScale()!.gradeSteps.forEach((gradeStep, i) => {
                 let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
                 label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
@@ -192,7 +192,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      */
     findGradeStepIndexByPercentage(percentage: number): number {
         let index = 0;
-        if (this.gradingScaleExists) {
+        if (this.gradingScaleExists()) {
             this.gradingScale()!.gradeSteps.forEach((gradeStep, i) => {
                 if (this.gradingService.matchGradePercentage(gradeStep, percentage)) {
                     index = i;
@@ -256,8 +256,8 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * Determines and returns the translation path for the tooltip that is displayed when hovering over the help icon next to the legend
      */
     private determineHelpIconTooltip(): string {
-        if (this.gradingScaleExists) {
-            if (this.isBonus) {
+        if (this.gradingScaleExists()) {
+            if (this.isBonus()) {
                 return 'artemisApp.examScores.gradingScaleExplanationBonus';
             } else {
                 return this.getHelpIconTooltipNotBonus();
@@ -273,7 +273,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * @returns the color that the given grade step should receive in the chart
      */
     private getGradeStepColor(gradeStep: GradeStep): string {
-        if (this.isBonus) {
+        if (this.isBonus()) {
             if (gradeStep.gradeName === '0') {
                 return GraphColors.YELLOW;
             } else {
@@ -297,7 +297,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      */
     private setupChartColoring(): void {
         const domain: string[] = [];
-        if (!this.gradingScaleExists) {
+        if (!this.gradingScaleExists()) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
                 if (i < 40 / this.binWidth) {
                     domain.push(GraphColors.YELLOW);
@@ -322,9 +322,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         this.yAxisLabel.set(this.translateService.instant('artemisApp.examScores.yAxes'));
         let xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
-        if (this.gradingScaleExists && !this.isBonus) {
+        if (this.gradingScaleExists() && !this.isBonus()) {
             xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
-        } else if (this.gradingScaleExists && this.isBonus) {
+        } else if (this.gradingScaleExists() && this.isBonus()) {
             xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
         }
         this.xAxisLabel.set(xAxisLabel);

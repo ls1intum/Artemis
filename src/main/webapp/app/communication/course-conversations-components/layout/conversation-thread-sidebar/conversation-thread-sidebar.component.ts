@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -41,8 +41,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const conversation = this.activeConversation();
             untracked(() => {
                 if (conversation) {
-                    this.conversation = conversation as ConversationDTO;
-                    this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+                    this.conversation.set(conversation as ConversationDTO);
+                    this.hasChannelModerationRights.set(getAsChannelDTO(this.conversation())?.hasChannelModerationRights ?? false);
                 }
             });
         });
@@ -50,17 +50,17 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const activePost = this.activePost();
             untracked(() => {
                 if (activePost) {
-                    this.post = activePost;
-                    this.createdAnswerPost = this.createEmptyAnswerPost();
+                    this.post.set(activePost);
+                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
                 }
             });
         });
     }
 
-    post?: Post;
-    createdAnswerPost: AnswerPost;
-    conversation: ConversationDTO;
-    hasChannelModerationRights = false;
+    readonly post = signal<Post | undefined>(undefined);
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
+    readonly conversation = signal<ConversationDTO>(undefined!);
+    readonly hasChannelModerationRights = signal(false);
 
     // Icons
     faXmark = faXmark;
@@ -70,7 +70,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     readonly faExpand = faExpand;
     readonly faCompress = faCompress;
 
-    isExpanded = false;
+    readonly isExpanded = signal(false);
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -79,7 +79,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
-        answerPost.post = this.post;
+        answerPost.post = this.post();
         return answerPost;
     }
 
@@ -93,7 +93,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         if (this.threadContainer()) {
             this.threadContainer()!.nativeElement.style.width = '';
         }
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
         this.expandTooltip()?.close();
     }
 

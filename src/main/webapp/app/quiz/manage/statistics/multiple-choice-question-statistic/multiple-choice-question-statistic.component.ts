@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -23,7 +23,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
     private artemisMarkdown = inject(ArtemisMarkdownService);
     declare question: MultipleChoiceQuestion;
 
-    answerTextRendered: SafeHtml[];
+    readonly answerTextRendered = signal<SafeHtml[]>(undefined!);
 
     // Icons
     faSync = faSync;
@@ -40,7 +40,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         if (!refresh) {
             // render Markdown-text
             this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-            this.answerTextRendered = this.question.answerOptions!.map((answer) => this.artemisMarkdown.safeHtmlForMarkdown(answer.text));
+            this.answerTextRendered.set(this.question.answerOptions!.map((answer) => this.artemisMarkdown.safeHtmlForMarkdown(answer.text)));
             this.loadLayout();
         }
         this.loadData();

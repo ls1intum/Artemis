@@ -69,16 +69,16 @@ describe('StandaloneFeedbackComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.exercise).toBe(exercise);
-        expect(component.result).toBe(result);
-        expect(component.latestDueDate).toBe(latestDueDate);
+        expect(component.exercise()).toBe(exercise);
+        expect(component.result()).toBe(result);
+        expect(component.latestDueDate()).toBe(latestDueDate);
     });
 
     it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.showMissingAutomaticFeedbackInformation).toBe(false);
-        expect(component.messageKey).toBeUndefined();
+        expect(component.showMissingAutomaticFeedbackInformation()).toBe(false);
+        expect(component.messageKey()).toBeUndefined();
     });
 });

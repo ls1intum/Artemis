@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -43,24 +43,25 @@ export class ListOfComplaintsComponent implements OnInit {
 
     readonly ComplaintType = ComplaintType;
 
-    public complaints: Complaint[] = [];
-    public complaintType: ComplaintType;
+    // Async-loaded, template-bound state — signals so the list/loading state render under zoneless without markForCheck.
+    readonly complaints = signal<Complaint[]>([]);
+    readonly complaintType = signal<ComplaintType>(undefined!);
 
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
-    course?: Course;
+    readonly course = signal<Course>(undefined!);
     correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
-    complaintsToShow: Complaint[] = [];
-    showAddressedComplaints = false;
-    allComplaintsForTutorLoaded = false;
-    isLoadingAllComplaints = false;
-    filterOption?: number;
+    readonly complaintsToShow = signal<Complaint[]>([]);
+    readonly showAddressedComplaints = signal(false);
+    readonly allComplaintsForTutorLoaded = signal(false);
+    readonly isLoadingAllComplaints = signal(false);
+    readonly filterOption = signal<number | undefined>(undefined);
 
-    loading = true;
+    readonly loading = signal(true);
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
@@ -81,10 +82,10 @@ export class ListOfComplaintsComponent implements OnInit {
             this.tutorId = Number(queryParams['tutorId']);
             this.correctionRound = Number(queryParams['correctionRound']);
             if (queryParams['filterOption']) {
-                this.filterOption = Number(queryParams['filterOption']);
+                this.filterOption.set(Number(queryParams['filterOption']));
             }
 
-            this.complaintType = data.complaintType;
+            this.complaintType.set(data.complaintType);
 
             this.loadComplaints();
         });
@@ -95,47 +96,47 @@ export class ListOfComplaintsComponent implements OnInit {
 
         if (this.tutorId) {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
             } else if (this.examId) {
                 // TODO make exam complaints visible for tutors too
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
             }
         } else {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType());
             } else if (this.examId) {
                 complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
             } else {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
             }
         }
         this.subscribeToComplaintResponse(complaintResponse);
         this.courseManagementService.find(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.course = response?.body!;
+            this.course.set(response?.body!);
         });
     }
 
     subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>) {
         complaintResponse.subscribe({
             next: (res) => {
-                this.complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
-                if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.showAddressedComplaints = true;
+                this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
+                if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+                    this.showAddressedComplaints.set(true);
                 }
 
-                if (!this.showAddressedComplaints) {
-                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
-                } else if (this.filterOption === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
+                if (!this.showAddressedComplaints()) {
+                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
+                } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
                 } else {
-                    this.complaintsToShow = this.complaints;
+                    this.complaintsToShow.set(this.complaints());
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            complete: () => (this.loading = false),
+            complete: () => this.loading.set(false),
         });
     }
 
@@ -151,7 +152,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
         this.correctionRound = this.correctionRound || 0;
-        if (this.complaintType == ComplaintType.COMPLAINT && complaint.accepted) {
+        if (this.complaintType() == ComplaintType.COMPLAINT && complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
@@ -168,23 +169,25 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     sortRows() {
+        const sorted = [...this.complaintsToShow()];
         switch (this.complaintsSortingPredicate) {
             case 'responseTime':
-                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.complaintService.getResponseTimeInSeconds(complaint), this.complaintsReverseOrder);
+                this.sortService.sortByFunction(sorted, (complaint) => this.complaintService.getResponseTimeInSeconds(complaint), this.complaintsReverseOrder);
                 break;
             case 'lockStatus':
-                this.sortService.sortByFunction(this.complaintsToShow, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);
+                this.sortService.sortByFunction(sorted, (complaint) => this.calculateComplaintLockStatus(complaint), this.complaintsReverseOrder);
                 break;
             default:
-                this.sortService.sortByProperty(this.complaintsToShow, this.complaintsSortingPredicate, this.complaintsReverseOrder);
+                this.sortService.sortByProperty(sorted, this.complaintsSortingPredicate, this.complaintsReverseOrder);
         }
+        this.complaintsToShow.set(sorted);
     }
 
     triggerAddressedComplaints() {
-        this.showAddressedComplaints = !this.showAddressedComplaints;
+        this.showAddressedComplaints.update((value) => !value);
 
-        if (this.showAddressedComplaints) {
-            this.complaintsToShow = this.complaints;
+        if (this.showAddressedComplaints()) {
+            this.complaintsToShow.set(this.complaints());
         } else {
             this.resetFilterOptions();
         }
@@ -194,11 +197,11 @@ export class ListOfComplaintsComponent implements OnInit {
      * Used to lazy-load all complaints from the server for a tutor or editor.
      */
     triggerShowAllComplaints() {
-        this.isLoadingAllComplaints = true;
-        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        this.isLoadingAllComplaints.set(true);
+        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
         this.subscribeToComplaintResponse(complaintResponse);
-        this.isLoadingAllComplaints = false;
-        this.allComplaintsForTutorLoaded = true;
+        this.isLoadingAllComplaints.set(false);
+        this.allComplaintsForTutorLoaded.set(true);
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {
@@ -223,12 +226,12 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     updateFilteredComplaints(complaints: Complaint[]) {
-        this.complaintsToShow = complaints.filter((complaint) => complaint.accepted === undefined);
+        this.complaintsToShow.set(complaints.filter((complaint) => complaint.accepted === undefined));
     }
 
     resetFilterOptions(): void {
-        this.updateFilteredComplaints(this.complaints);
-        this.showAddressedComplaints = false;
-        this.filterOption = undefined;
+        this.updateFilteredComplaints(this.complaints());
+        this.showAddressedComplaints.set(false);
+        this.filterOption.set(undefined);
     }
 }

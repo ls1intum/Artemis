@@ -1,10 +1,10 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div class="row">
         <div class="col-lg-12">
-            @if (!quizExercise.isEditable && quizExercise.id) {
+            @if (!quizExercise().isEditable && quizExercise().id) {
                 <div class="mt-3">
                     <div class="alert alert-warning">
-                        @if (quizExercise.quizEnded) {
+                        @if (quizExercise().quizEnded) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
                         } @else {
                             <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
@@ -15,7 +15,7 @@
                             <fa-icon [icon]="faArrowLeft" class="me-1" />
                             <span jhiTranslate="entity.action.back"></span>
                         </button>
-                        @if (quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
+                        @if (quizExercise().quizEnded && quizExercise().isAtLeastInstructor) {
                             <a [routerLink]="reEvaluateUrl" class="btn btn-warning">
                                 <fa-icon [icon]="faWrench" />
                                 <span jhiTranslate="entity.action.re-evaluate"></span>
@@ -24,7 +24,7 @@
                     </div>
                 </div>
             }
-            <div class="edit-quiz pt-3" [hidden]="!quizExercise.isEditable && quizExercise.id">
+            <div class="edit-quiz pt-3" [hidden]="!quizExercise().isEditable && quizExercise().id">
                 <!-- Settings (single card with subsections) -->
                 <div class="section-card section-card--settings mb-3">
                     <div class="section-header">
@@ -54,22 +54,22 @@
                         </div>
                         <form name="editForm" role="form" novalidate>
                             <jhi-exercise-title-channel-name-primeng
-                                [exercise]="quizExercise"
-                                [course]="quizExercise.course"
-                                [courseId]="quizExercise.course?.id ?? courseId"
+                                [exercise]="quizExercise()"
+                                [course]="quizExercise().course"
+                                [courseId]="quizExercise().course?.id ?? courseId()"
                                 (onTitleChange)="cacheValidation()"
                                 (onChannelNameChange)="cacheValidation()"
-                                [isExamMode]="isExamMode"
-                                [isImport]="isImport"
+                                [isExamMode]="isExamMode()"
+                                [isImport]="isImport()"
                             />
                         </form>
-                        @if (!isExamMode) {
+                        @if (!isExamMode()) {
                             <div class="form-group position-relative">
                                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                                 <jhi-category-selector-primeng
-                                    [categories]="exerciseCategories"
-                                    [existingCategories]="existingCategories"
+                                    [categories]="exerciseCategories()"
+                                    [existingCategories]="existingCategories()"
                                     (selectedCategories)="updateCategories($event)"
                                     (ngModelChange)="cacheValidation()"
                                 />
@@ -84,8 +84,8 @@
                                         [options]="difficultyOptions()"
                                         optionLabel="label"
                                         optionValue="value"
-                                        [ngModel]="quizExercise.difficulty ?? null"
-                                        (ngModelChange)="quizExercise.difficulty = $event ?? undefined; cacheValidation()"
+                                        [ngModel]="quizExercise().difficulty ?? null"
+                                        (ngModelChange)="quizExercise().difficulty = $event ?? undefined; cacheValidation()"
                                         name="difficulty"
                                         styleClass="w-100"
                                         appendTo="body"
@@ -97,14 +97,14 @@
                                     <label
                                         for="includedInOverallScore"
                                         class="form-control-label"
-                                        jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}LabelShort"
+                                        jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}LabelShort"
                                     ></label>
                                     <p-select
                                         inputId="includedInOverallScore"
-                                        [options]="isExamMode ? scoreOptionsExam() : scoreOptionsCourse()"
+                                        [options]="isExamMode() ? scoreOptionsExam() : scoreOptionsCourse()"
                                         optionLabel="label"
                                         optionValue="value"
-                                        [(ngModel)]="quizExercise.includedInOverallScore"
+                                        [(ngModel)]="quizExercise().includedInOverallScore"
                                         (ngModelChange)="includedInOverallScoreChange($event)"
                                         name="includedInOverallScore"
                                         styleClass="w-100"
@@ -120,7 +120,7 @@
                                         [options]="randomizeOptions()"
                                         optionLabel="label"
                                         optionValue="value"
-                                        [(ngModel)]="quizExercise.randomizeQuestionOrder"
+                                        [(ngModel)]="quizExercise().randomizeQuestionOrder"
                                         (ngModelChange)="cacheValidation()"
                                         name="randomizeOrder"
                                         styleClass="w-100"
@@ -131,7 +131,7 @@
                         </div>
 
                         <!-- Subsection: Schedule & Mode (course mode only) -->
-                        @if (!isExamMode) {
+                        @if (!isExamMode()) {
                             <div class="subsection-divider"></div>
                             <div class="subsection-header subsection-header--schedule">
                                 <div class="subsection-header-icon">
@@ -174,7 +174,7 @@
                                             [options]="quizModeOptions()"
                                             optionLabel="label"
                                             optionValue="value"
-                                            [(ngModel)]="quizExercise.quizMode"
+                                            [(ngModel)]="quizExercise().quizMode"
                                             (ngModelChange)="cacheValidation()"
                                             name="quizMode"
                                             styleClass="w-100"
@@ -189,27 +189,27 @@
                                             id="pick-releaseDate"
                                             class="form-element"
                                             labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
-                                            labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise.quizMode | artemisTranslate }}"
-                                            [(ngModel)]="quizExercise.releaseDate"
+                                            labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise().quizMode | artemisTranslate }}"
+                                            [(ngModel)]="quizExercise().releaseDate"
                                             (valueChange)="cacheValidation()"
                                             [error]="false"
                                             name="releaseDate"
                                         />
-                                        @if (quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                                        @if (quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
                                             <jhi-date-time-picker
                                                 id="pick-dueDate"
                                                 class="form-element"
                                                 name="dueDate"
-                                                [error]="!!quizExercise.dueDateError"
+                                                [error]="!!quizExercise().dueDateError"
                                                 labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                                                 (valueChange)="cacheValidation()"
-                                                [(ngModel)]="quizExercise.dueDate"
+                                                [(ngModel)]="quizExercise().dueDate"
                                             />
-                                            @if (quizExercise.dueDateError) {
+                                            @if (quizExercise().dueDateError) {
                                                 <span class="invalid-feedback" jhiTranslate="artemisApp.quizExercise.dueDateError"></span>
                                             }
                                         }
-                                        @if (quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
+                                        @if (quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
                                             <div class="d-flex align-items-center gap-2 mt-2">
                                                 <p-checkbox
                                                     inputId="cbScheduleQuizStart"
@@ -222,15 +222,15 @@
                                                 <jhi-help-icon text="artemisApp.quizExercise.startTimeExplanation" />
                                             </div>
                                         }
-                                        @if (quizExercise.quizMode === QuizMode.BATCHED && false) {
+                                        @if (quizExercise().quizMode === QuizMode.BATCHED && false) {
                                             <div class="form-check custom-control custom-checkbox">
                                                 <!-- no scheduled batched mode yet -->
                                                 <jhi-button (click)="addQuizBatch()" [btnType]="ButtonType.DEFAULT" title="artemisApp.quizExercise.addBatch" />
                                             </div>
                                         }
-                                        @if (quizExercise.quizBatches && quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
-                                            <!-- Change "quizExercise.quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise.quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
-                                            @for (quizBatch of quizExercise.quizBatches; track quizBatch; let first = $first) {
+                                        @if (quizExercise().quizBatches && quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
+                                            <!-- Change "quizExercise().quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise().quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
+                                            @for (quizBatch of quizExercise().quizBatches; track quizBatch; let first = $first) {
                                                 <div>
                                                     <!-- startTime works similar to Exam.startDate -->
                                                     <jhi-date-time-picker
@@ -244,14 +244,14 @@
                                                     />
                                                     @if (quizBatch.startTimeError) {
                                                         <span class="invalid-feedback">{{
-                                                            (quizExercise.quizMode === QuizMode.SYNCHRONIZED
+                                                            (quizExercise().quizMode === QuizMode.SYNCHRONIZED
                                                                 ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
                                                                 : 'artemisApp.quizExercise.startTimeError'
                                                             ) | artemisTranslate
                                                         }}</span>
                                                     }
                                                     <!-- no scheduled batched mode yet -->
-                                                    <!-- Change *ngIf="false" below to "quizExercise.quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
+                                                    <!-- Change *ngIf="false" below to "quizExercise().quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
                                                     @if (false) {
                                                         <jhi-button (click)="removeQuizBatch(quizBatch)" [btnType]="ButtonType.ERROR" [icon]="faXmark" />
                                                     }
@@ -264,7 +264,7 @@
                         }
 
                         <!-- Subsection: Competencies (course mode only, hidden when course has none) -->
-                        @if (!isExamMode) {
+                        @if (!isExamMode()) {
                             <div [hidden]="courseCompetenciesCount() === 0">
                                 <div class="subsection-divider"></div>
                                 <div class="subsection-header subsection-header--competencies">
@@ -273,30 +273,30 @@
                                     </div>
                                     <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.competencies"></span>
                                 </div>
-                            </div>
-                            <div class="form-group" [hidden]="courseCompetenciesCount() === 0">
-                                <jhi-competency-selection-primeng
-                                    id="competencies"
-                                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                                    [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                                    [exerciseDescription]="getEnhancedDescriptionForSuggestions()"
-                                    [(ngModel)]="quizExercise.competencyLinks"
-                                    (ngModelChange)="cacheValidation()"
-                                    name="competencyLinks"
-                                    (availableCount)="courseCompetenciesCount.set($event)"
-                                />
+                                <div class="form-group">
+                                    <jhi-competency-selection-primeng
+                                        id="competencies"
+                                        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                                        [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                                        [exerciseDescription]="getEnhancedDescriptionForSuggestions()"
+                                        [(ngModel)]="quizExercise().competencyLinks"
+                                        (ngModelChange)="cacheValidation()"
+                                        name="competencyLinks"
+                                        (availableCount)="courseCompetenciesCount.set($event)"
+                                    />
+                                </div>
                             </div>
                         }
                     </div>
                 </div>
 
                 <!-- Questions -->
-                @if (courseId) {
+                @if (courseId()) {
                     <jhi-quiz-question-list-edit
                         #quizQuestionsEdit
-                        [courseId]="courseId!"
-                        [quizQuestions]="quizExercise.quizQuestions ?? []"
-                        [hyperionEnabled]="hyperionEnabled && !isImport && !isExamMode"
+                        [courseId]="courseId()!"
+                        [quizQuestions]="quizExercise().quizQuestions ?? []"
+                        [hyperionEnabled]="hyperionEnabled && !isImport() && !isExamMode()"
                         (onQuestionAdded)="handleQuestionChanged()"
                         (onQuestionDeleted)="handleQuestionChanged()"
                         (onQuestionUpdated)="handleQuestionChanged()"
@@ -308,17 +308,17 @@
                 <div class="section-card section-card--save mb-3">
                     <div class="section-header">
                         <div class="section-header-text">
-                            @if (!pendingChangesCache && !isSaving) {
+                            @if (!pendingChangesCache() && !isSaving()) {
                                 <span class="save-status save-status--saved" jhiTranslate="artemisApp.quizExercise.edit.saved"></span>
                             }
-                            @if (pendingChangesCache && quizIsValid && !isSaving) {
+                            @if (pendingChangesCache() && quizIsValid() && !isSaving()) {
                                 <span class="save-status save-status--pending" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges"></span>
                             }
-                            @if (isSaving) {
+                            @if (isSaving()) {
                                 <span class="save-status save-status--pending" jhiTranslate="artemisApp.quizExercise.edit.saving"></span>
                             }
                             <ng-template #tooltipTranslate>
-                                @for (reason of invalidReasons; track reason) {
+                                @for (reason of invalidReasons(); track reason) {
                                     <div>
                                         @if ((reason.translateValues | json) !== '{}') {
                                             <p
@@ -333,7 +333,7 @@
                                 }
                             </ng-template>
                             <ng-template #warningTranslate>
-                                @for (warning of invalidWarnings; track warning) {
+                                @for (warning of invalidWarnings(); track warning) {
                                     <div>
                                         @if ((warning.translateValues | json) !== '{}') {
                                             <p jhiTranslate="{{ warning.translateKey }}" [translateValues]="{ index: warning.translateValues.index }"></p>
@@ -344,22 +344,22 @@
                                     </div>
                                 }
                             </ng-template>
-                            @if (!quizIsValid) {
+                            @if (!quizIsValid()) {
                                 <span class="save-status save-status--invalid" [ngbTooltip]="tooltipTranslate" placement="top auto">
                                     <fa-icon [icon]="faExclamationCircle" class="me-1" />
                                     <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                    <span>({{ invalidReasons.length }})</span>
+                                    <span>({{ invalidReasons().length }})</span>
                                 </span>
                             }
-                            @if (warningQuizCache) {
+                            @if (warningQuizCache()) {
                                 <span class="save-status save-status--warning" [ngbTooltip]="warningTranslate" placement="top auto">
                                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
-                                    <span>({{ invalidWarnings.length }})</span>
+                                    <span>({{ invalidWarnings().length }})</span>
                                 </span>
                             }
                         </div>
                         <div class="quiz-save-actions">
-                            @if (!isExamMode && quizExercise.id) {
+                            @if (!isExamMode() && quizExercise().id) {
                                 <input
                                     minlength="3"
                                     type="text"
@@ -371,16 +371,16 @@
                                     [(ngModel)]="notificationText"
                                 />
                             }
-                            @if (quizExercise.course || quizExercise.exerciseGroup) {
+                            @if (quizExercise().course || quizExercise().exerciseGroup) {
                                 <button
                                     id="quiz-cancel-back-button"
                                     class="section-header-action"
-                                    [class.danger]="pendingChangesCache"
+                                    [class.danger]="pendingChangesCache()"
                                     (click)="previousState()"
-                                    jhiTranslate="{{ pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back' }}"
+                                    jhiTranslate="{{ pendingChangesCache() ? 'entity.action.cancel' : 'entity.action.back' }}"
                                 ></button>
                             }
-                            @if (!quizExercise.isEditable && quizExercise.quizEnded && quizExercise.isAtLeastInstructor) {
+                            @if (!quizExercise().isEditable && quizExercise().quizEnded && quizExercise().isAtLeastInstructor) {
                                 <button class="section-header-action" [routerLink]="reEvaluateUrl">
                                     <fa-icon [icon]="faWrench" class="me-1" />
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
@@ -391,7 +391,7 @@
                                 class="footer-save-btn"
                                 (click)="validateItemLimit()"
                                 [disabled]="isSaveDisabled()"
-                                [ngbTooltip]="!quizExercise.isEditable ? saveButtonTooltip : !quizIsValid ? tooltipTranslate : ''"
+                                [ngbTooltip]="!quizExercise().isEditable ? saveButtonTooltip : !quizIsValid() ? tooltipTranslate : ''"
                                 tooltip-placement="top-right auto"
                                 tooltip-class="invalid-reasons-tooltip"
                             >
@@ -454,5 +454,5 @@
             </div>
         }
     </div>
-    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId" (addQuestions)="appendAiGeneratedQuestions($event)" />
+    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId()" (addQuestions)="appendAiGeneratedQuestions($event)" />
 }

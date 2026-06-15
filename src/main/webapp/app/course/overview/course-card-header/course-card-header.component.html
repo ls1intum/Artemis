@@ -3,7 +3,7 @@
     class="card-header text-white px-3"
     [ngClass]="{ 'rounded-bottom-4': archiveMode() }"
     [routerLink]="['/courses', courseId()]"
-    [ngStyle]="{ '--background-color-for-hover': color }"
+    [ngStyle]="{ '--background-color-for-hover': color() }"
 >
     <div class="d-flex align-items-center justify-content-between gap-1">
         <div class="position-relative">
@@ -19,7 +19,7 @@
             }
         </div>
         <div class="text-center px-2">
-            <h5 class="card-title" [ngStyle]="{ color: titleColor }">
+            <h5 class="card-title" [ngStyle]="{ color: titleColor() }">
                 {{ courseTitle() }}
             </h5>
         </div>
