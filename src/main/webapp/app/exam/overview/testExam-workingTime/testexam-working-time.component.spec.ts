@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { round } from 'app/foundation/util/utils';
@@ -30,7 +30,7 @@ describe('TestExamWorkingTimeComponent', () => {
                 exam.startDate = currentDate.subtract(4, 'hour');
                 exam.endDate = currentDate;
                 exam.workingTime = 3 * 3600;
-                exam.examType = ExamType.PRACTICE;
+                exam.testExam = true;
 
                 studentExam = new StudentExam();
                 studentExam.exam = exam;
@@ -55,7 +55,7 @@ describe('TestExamWorkingTimeComponent', () => {
     });
 
     it('should have a difference of 0 if the studentExam is linked to a RealExam', () => {
-        studentExam.exam!.examType = ExamType.REAL;
+        studentExam.exam!.testExam = false;
         fixture.componentRef.setInput('studentExam', studentExam);
         comp.ngOnInit();
         expect(comp.percentUsedWorkingTime()).toBe(0);

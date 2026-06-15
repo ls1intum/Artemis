@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -25,7 +25,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should show the generic missing student exam message for real exams', () => {
         const exam = new Exam();
-        exam.examType = ExamType.REAL;
+        exam.testExam = false;
 
         const message = service.getMessage(exam, 'noStudentExam');
 
@@ -33,20 +33,10 @@ describe('TestExamParticipationMessageService', () => {
         expect(message.translateValues).toEqual({});
     });
 
-    it('should show that a simulation test exam attempt was already used', () => {
-        const exam = new Exam();
-        exam.examType = ExamType.SIMULATION;
-
-        const message = service.getMessage(exam, 'simulationTestExamAttemptAlreadyExists');
-
-        expect(message.translationKey).toBe('artemisApp.examParticipation.testExamAttemptUsed');
-        expect(message.translateValues).toEqual({});
-    });
-
     it('should show that a simulation attempt was already used and when practice opens', () => {
         const now = dayjs();
         const exam = new Exam();
-        exam.examType = ExamType.SIMULATION_AND_PRACTICE;
+        exam.testExam = true;
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         exam.gracePeriod = 0;
@@ -62,7 +52,7 @@ describe('TestExamParticipationMessageService', () => {
     it('should show when the practice phase opens based on the server error key', () => {
         const now = dayjs();
         const exam = new Exam();
-        exam.examType = ExamType.SIMULATION_AND_PRACTICE;
+        exam.testExam = true;
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         const practiceStartDate = now.add(30, 'minutes');
@@ -78,7 +68,7 @@ describe('TestExamParticipationMessageService', () => {
         const now = dayjs();
         vi.spyOn(serverDateService, 'now').mockReturnValue(now);
         const exam = new Exam();
-        exam.examType = ExamType.SIMULATION_AND_PRACTICE;
+        exam.testExam = true;
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         exam.gracePeriod = 0;
@@ -91,24 +81,9 @@ describe('TestExamParticipationMessageService', () => {
         expect(message.translateValues).toEqual({});
     });
 
-    it('should fall back to no further attempts for an unknown simulation error', () => {
-        const now = dayjs();
-        vi.spyOn(serverDateService, 'now').mockReturnValue(now);
-        const exam = new Exam();
-        exam.examType = ExamType.SIMULATION;
-        exam.startDate = now.subtract(2, 'hours');
-        exam.workingTime = 30;
-        exam.gracePeriod = 0;
-
-        const message = service.getMessage(exam, 'unknown');
-
-        expect(message.translationKey).toBe('artemisApp.examParticipation.noFurtherAttempts');
-        expect(message.translateValues).toEqual({});
-    });
-
     it('should show that the test exam has concluded based on the server error key', () => {
         const exam = new Exam();
-        exam.examType = ExamType.PRACTICE;
+        exam.testExam = true;
 
         const message = service.getMessage(exam, 'examHasAlreadyEnded');
 
@@ -116,19 +91,9 @@ describe('TestExamParticipationMessageService', () => {
         expect(message.translateValues).toEqual({});
     });
 
-    it('should show that the simulation phase has concluded based on the server error key', () => {
-        const exam = new Exam();
-        exam.examType = ExamType.SIMULATION;
-
-        const message = service.getMessage(exam, 'simulationTestExamPhaseEnded');
-
-        expect(message.translationKey).toBe('artemisApp.examParticipation.testExamConcluded');
-        expect(message.translateValues).toEqual({});
-    });
-
     it('should fall back to the generic no further attempts message', () => {
         const exam = new Exam();
-        exam.examType = ExamType.PRACTICE;
+        exam.testExam = true;
 
         const message = service.getMessage(exam, 'unknown');
 

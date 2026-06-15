@@ -149,7 +149,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
     readonly isAdmin = signal(false);
-    readonly isTestExam = computed(() => this.exam().testExam === true);
+    readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
 
     readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {

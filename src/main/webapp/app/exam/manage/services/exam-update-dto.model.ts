@@ -9,7 +9,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
 export interface ExamUpdateDTO {
     id?: number;
     title: string;
-    testExam?: boolean;
+    testExam: boolean;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;
@@ -47,7 +47,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
     return {
         id: exam.id,
         title: exam.title!,
-        testExam: exam.testExam,
+        testExam: exam.testExam ?? false,
         examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
         visibleDate: convertDateFromClient(exam.visibleDate),
         startDate: convertDateFromClient(exam.startDate),

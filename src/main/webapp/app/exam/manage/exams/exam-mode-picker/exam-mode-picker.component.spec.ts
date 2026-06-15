@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamModePickerComponent } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.component';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,9 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-const exam = () => ({
+const exam = {
     id: 2,
-});
+};
 describe('ExamModePickerComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -32,8 +31,8 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should be in readonly mode', () => {
-        const examCopy = exam();
-        fixture.componentRef.setInput('exam', examCopy);
+        const examCopy = { ...exam };
+        fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
         component.setExamMode(true);
@@ -41,40 +40,20 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should set exam mode test', () => {
-        fixture.componentRef.setInput('exam', exam());
+        fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
-        expect(component.exam().examType).toBe(ExamType.PRACTICE);
+        expect(component.exam().testExam).toBe(true);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
     it('should set exam mode test false', () => {
-        fixture.componentRef.setInput('exam', { ...exam(), examType: ExamType.PRACTICE });
+        fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
-        expect(component.exam().examType).toBe(ExamType.REAL);
+        expect(component.exam().testExam).toBe(false);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
-    });
-
-    it('should update the active button after changing the exam mode', () => {
-        fixture.componentRef.setInput('exam', exam());
-        fixture.componentRef.setInput('disableInput', false);
-        fixture.detectChanges();
-
-        component.setExamMode(true);
-        fixture.detectChanges();
-
-        const standardMode = fixture.nativeElement.querySelector('#standard-mode') as HTMLElement;
-        const testMode = fixture.nativeElement.querySelector('#test-mode') as HTMLElement;
-        expect(standardMode.classList.contains('btn-success')).toBe(false);
-        expect(testMode.classList.contains('btn-primary')).toBe(true);
-
-        component.setExamMode(false);
-        fixture.detectChanges();
-
-        expect(standardMode.classList.contains('btn-success')).toBe(true);
-        expect(testMode.classList.contains('btn-primary')).toBe(false);
     });
 });

@@ -172,8 +172,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
     private reloadSidebarEventSubscription: Subscription;
-    private scrollToPostObserver?: MutationObserver;
-    private scrollToReplyObserver?: MutationObserver;
     course = signal<Course | undefined>(undefined);
     readonly isLoading = signal(false);
     readonly isServiceSetUp = signal(false);
@@ -453,10 +451,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.reloadSidebarEventSubscription?.unsubscribe();
-        this.scrollToPostObserver?.disconnect();
-        this.scrollToReplyObserver?.disconnect();
-        this.scrollToPostObserver = undefined;
-        this.scrollToReplyObserver = undefined;
     }
 
     private subscribeToActiveConversation() {
@@ -788,21 +782,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         if (tryHighlight()) return;
 
-        this.scrollToPostObserver?.disconnect();
-        this.scrollToPostObserver = new MutationObserver(() => {
+        const observer = new MutationObserver(() => {
             if (tryHighlight()) {
-                this.scrollToPostObserver?.disconnect();
-                this.scrollToPostObserver = undefined;
+                observer.disconnect();
             }
         });
-        this.scrollToPostObserver.observe(document.body, { childList: true, subtree: true });
-        const postObserver = this.scrollToPostObserver;
-        setTimeout(() => {
-            postObserver.disconnect();
-            if (this.scrollToPostObserver === postObserver) {
-                this.scrollToPostObserver = undefined;
-            }
-        }, 5000);
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 5000);
     }
 
     private scrollToAndHighlightReply(replyId: number): void {
@@ -816,25 +802,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
 
         // Watch for the element to appear in the DOM
-        this.scrollToReplyObserver?.disconnect();
-        this.scrollToReplyObserver = new MutationObserver(() => {
+        const observer = new MutationObserver(() => {
             const element = document.getElementById(elementId);
             if (element) {
-                this.scrollToReplyObserver?.disconnect();
-                this.scrollToReplyObserver = undefined;
+                observer.disconnect();
                 this.highlightElement(element);
             }
         });
 
-        this.scrollToReplyObserver.observe(document.body, { childList: true, subtree: true });
-        const replyObserver = this.scrollToReplyObserver;
+        observer.observe(document.body, { childList: true, subtree: true });
 
         // Clean up after 5 seconds if element never appears
         setTimeout(() => {
-            replyObserver.disconnect();
-            if (this.scrollToReplyObserver === replyObserver) {
-                this.scrollToReplyObserver = undefined;
-            }
+            observer.disconnect();
             this.focusReplyId = undefined;
         }, 5000);
     }

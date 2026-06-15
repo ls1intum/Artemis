@@ -858,7 +858,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            this.studentExam.exam.testExam !== true &&
+            !this.studentExam.exam.testExam &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&

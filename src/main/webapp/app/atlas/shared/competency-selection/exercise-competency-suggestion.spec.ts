@@ -8,7 +8,7 @@ import { By } from '@angular/platform-browser';
 import { delay, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
  * This mimics how the competency selection component is used in real exercise forms
  */
 @Component({
-    imports: [FormsModule, CompetencySelectionPrimengComponent],
+    imports: [FormsModule, CompetencySelectionComponent],
     template: `
         <form #exerciseForm="ngForm">
             <div class="form-group">
@@ -42,14 +42,14 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
             </div>
 
             <!-- This is where the competency selection component is integrated -->
-            <jhi-competency-selection-primeng
+            <jhi-competency-selection
                 [exerciseDescription]="exercise.description"
                 [labelName]="'Select Competencies'"
                 [labelTooltip]="'Choose competencies that this exercise will assess'"
                 [(ngModel)]="exercise.competencies"
                 name="competencies"
             >
-            </jhi-competency-selection-primeng>
+            </jhi-competency-selection>
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary" [disabled]="!exerciseForm.valid" (click)="saveExercise()">Save Exercise</button>
@@ -58,7 +58,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
     `,
 })
 class TestExerciseFormComponent {
-    competencySelection = viewChild.required<CompetencySelectionPrimengComponent>(CompetencySelectionPrimengComponent);
+    competencySelection = viewChild.required<CompetencySelectionComponent>(CompetencySelectionComponent);
 
     exercise = {
         title: '',
@@ -163,7 +163,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             fixture.detectChanges(false);
 
             // Step 2: Verify competency selection component is rendered
-            const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionPrimengComponent));
+            const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionComponent));
             expect(competencySelection).toBeTruthy();
 
             // Step 3: Verify lightbulb button host (jhi-button) is present

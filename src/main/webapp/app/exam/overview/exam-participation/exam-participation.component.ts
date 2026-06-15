@@ -307,22 +307,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
     }
 
-    protected get showStartView(): boolean {
-        return this.isVisible() && !this.isGracePeriodOver() && !this.studentExam?.submitted && !this.examStartConfirmed;
-    }
-
-    protected get showParticipationView(): boolean {
-        return this.isVisible() && this.isActive() && !this.isOver() && this.examStartConfirmed;
-    }
-
-    protected get showEndView(): boolean {
-        return !!this.studentExam && !this.studentExam.submitted && ((this.isOver() && this.examStartConfirmed) || this.isGracePeriodOver());
-    }
-
-    protected get showSubmissionSuccess(): boolean {
-        return !!this.studentExam?.submitted && !this.showExamSummary && !this.loadingExam;
-    }
-
     protected get connectionStatusTranslationKey(): string {
         if (!this.connected) {
             return 'artemisApp.examParticipation.disconnected';
@@ -603,18 +587,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get studentFailedToSubmitTranslationKey(): string {
-        if (this.exam?.testExam === true) {
+        if (this.exam()?.testExam === true) {
             return 'artemisApp.examParticipation.testExamAttemptUsed';
         }
         return 'artemisApp.studentExam.submissionNotInTime';
     }
 
     get testExamParticipationMessageKey(): string {
-        return this.testExamParticipationMessageService.getMessage(this.exam, this.testExamParticipationErrorKey).translationKey;
+        return this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translationKey;
     }
 
     get testExamParticipationTranslateValues(): { date?: string } {
-        return this.testExamParticipationMessageService.getMessage(this.exam, this.testExamParticipationErrorKey).translateValues;
+        return this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translateValues;
     }
 
     /**
@@ -920,7 +904,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     protected retryCreateParticipationForActiveExercise(): void {
-        const activeExercise = this.activeExamPage.exercise;
+        const activeExercise = this.activeExamPage().exercise;
         if (activeExercise) {
             this.createParticipationForExercise(activeExercise).subscribe();
         }

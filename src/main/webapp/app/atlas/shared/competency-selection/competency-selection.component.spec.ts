@@ -19,21 +19,21 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencySelection', () => {
     setupTestBed({ zoneless: true });
-    let fixture: ComponentFixture<CompetencySelectionPrimengComponent>;
-    let component: CompetencySelectionPrimengComponent;
+    let fixture: ComponentFixture<CompetencySelectionComponent>;
+    let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
     let httpClient: HttpClient;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencySelectionPrimengComponent],
+            imports: [CompetencySelectionComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -57,7 +57,7 @@ describe('CompetencySelection', () => {
             ],
         });
 
-        fixture = TestBed.createComponent(CompetencySelectionPrimengComponent);
+        fixture = TestBed.createComponent(CompetencySelectionComponent);
         component = fixture.componentInstance;
         courseStorageService = TestBed.inject(CourseStorageService);
         courseCompetencyService = TestBed.inject(CourseCompetencyService);

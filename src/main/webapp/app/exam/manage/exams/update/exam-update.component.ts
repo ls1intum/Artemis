@@ -346,7 +346,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam?.testExam) {
+        if (this.exam.testExam) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain

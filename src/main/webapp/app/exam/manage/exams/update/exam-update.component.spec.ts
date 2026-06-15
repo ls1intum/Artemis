@@ -12,7 +12,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -146,19 +146,8 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.examType).toBe(ExamType.REAL);
+            expect(component.exam.testExam).toBe(false);
             expect(component.exam.workingTime).toBe(0);
-        });
-
-        it('should make the exam type readonly after creation', () => {
-            examWithoutExercises.id = 1;
-            fixture.detectChanges();
-
-            expect(component.isExamTypeReadonly).toBe(true);
-
-            examWithoutExercises.id = undefined;
-
-            expect(component.isExamTypeReadonly).toBe(false);
         });
 
         it('should validate the dates correctly', () => {
@@ -200,7 +189,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should show channel name input for test exams', async () => {
-            examWithoutExercises.examType = ExamType.PRACTICE;
+            examWithoutExercises.testExam = true;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
@@ -331,7 +320,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
-            examWithoutExercises.examType = ExamType.PRACTICE;
+            examWithoutExercises.testExam = true;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 
@@ -343,6 +332,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
+            examWithoutExercises.testExam = false;
+
             examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.changeDetectorRef.detectChanges();
 
@@ -656,6 +647,7 @@ describe('ExamUpdateComponent', () => {
         const examForImport = new Exam();
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
+        examForImport.testExam = false;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
@@ -744,7 +736,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.examType).toBe(ExamType.REAL);
+            expect(component.exam.testExam).toBe(false);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');

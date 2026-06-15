@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -182,9 +182,9 @@ describe('ExamStudentsComponent', () => {
             expect(component.isTestExam()).toBe(false);
         });
 
-        it('isTestExam should be true when exam type is a test exam type', () => {
+        it('isTestExam should be true when exam.testExam is set', () => {
             fixture.detectChanges();
-            component.exam.set({ ...examWithCourse, examType: ExamType.PRACTICE });
+            component.exam.set({ ...examWithCourse, testExam: true });
             expect(component.isTestExam()).toBe(true);
         });
 

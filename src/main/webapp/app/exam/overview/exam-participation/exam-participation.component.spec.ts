@@ -399,46 +399,22 @@ describe('ExamParticipationComponent', () => {
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
-    it('should determine tutor status if no exam was loaded and course was not cached', async () => {
+    it('should determine tutor status if no exam was loaded and course was not cached', () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },
             status: 400,
         });
         const course: Course = { isAtLeastTutor: true };
 
-        comp.courseId = 1;
-        comp.examId = 2;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => httpError));
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
         const courseServiceSpy = vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-
-        await comp.handleNoStudentExam(httpError);
-
+        comp.ngOnInit();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
         expect(comp.isAtLeastTutor()).toBe(true);
-    });
-
-    it('should load the exam for the participation message without loading a student exam', () => {
-        const now = dayjs();
-        const exam = new Exam();
-        exam.id = 2;
-        exam.examType = ExamType.SIMULATION;
-        exam.visibleDate = now.subtract(3, 'hours').toISOString() as any;
-        exam.startDate = now.subtract(2, 'hours').toISOString() as any;
-        exam.workingTime = 1800;
-        exam.gracePeriod = 0;
-        const course: Course = { exams: [exam] };
-        comp.courseId = 1;
-        comp.examId = exam.id;
-        comp.testExam = true;
-        comp.exam = undefined!;
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-
-        comp.handleNoStudentExam(new HttpErrorResponse({ error: { errorKey: 'unknown' } }));
-
-        expect(comp.exam).toBe(exam);
-        expect(comp.studentExam).toBeUndefined();
-        expect(comp.testExamParticipationMessageKey).toBe('artemisApp.examParticipation.testExamConcluded');
     });
 
     const testExamStarted = (studentExam: StudentExam) => {
@@ -510,7 +486,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize test exam', () => {
         const studentExam = new StudentExam();
         const exam = new Exam();
-        exam.examType = ExamType.PRACTICE;
+        exam.testExam = true;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
         comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
@@ -1236,11 +1212,11 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should show the real exam missed submission warning', () => {
-        comp.exam = new Exam();
-        comp.exam.examType = ExamType.REAL;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.submitted = false;
-        comp.examStartConfirmed = true;
+        comp.exam.set(new Exam());
+        comp.exam().testExam = false;
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.examStartConfirmed.set(true);
         vi.spyOn(comp, 'isOver').mockReturnValue(true);
         vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
 
@@ -1252,11 +1228,11 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should show the test exam missed submission warning', () => {
-        comp.exam = new Exam();
-        comp.exam.examType = ExamType.PRACTICE;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.submitted = false;
-        comp.examStartConfirmed = true;
+        comp.exam.set(new Exam());
+        comp.exam().testExam = false;
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.examStartConfirmed.set(true);
         vi.spyOn(comp, 'isOver').mockReturnValue(true);
         vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
 

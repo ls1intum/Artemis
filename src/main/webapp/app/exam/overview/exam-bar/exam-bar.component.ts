@@ -38,7 +38,7 @@ export class ExamBarComponent implements AfterViewInit, OnDestroy {
 
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
-    readonly testExam = computed(() => this.exam().testExam === true);
+    readonly testExam = computed(() => this.exam()?.testExam ?? false);
     readonly isTestRun = computed(() => this.studentExam()?.testRun ?? false);
     readonly examTitle = computed(() => this.exam()?.title ?? '');
     readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);

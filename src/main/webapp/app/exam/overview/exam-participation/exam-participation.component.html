@@ -2,13 +2,12 @@
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
 @if (exam() && !testExamParticipationErrorKey()) {
-    @if (showStartView()) {
-        <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
+    @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
+        <jhi-exam-participation-cover [startView]="true" [exam]="exam()" [studentExam]="studentExam()" [testRunStartTime]="testStartTime()" (onExamStarted)="examStarted($event)" />
     }
     @if (studentExam()) {
-        <!-- exam participation -->
-        @if (showParticipationView()) {
-            @let activeIndex = activePageIndex;
+        <!-- exam() participation -->
+        @if (isVisible() && isActive() && !isOver() && examStartConfirmed()) {
             <div class="exam-background-wrapper hide-scrollbar-unless-scrolling">
                 <jhi-exam-bar
                     [exam]="exam()"
@@ -28,7 +27,7 @@
                             [sidebarData]="sidebarData()"
                             [exercises]="studentExam().exercises!"
                             [exerciseIndex]="exerciseIndex()"
-                            [overviewPageOpen]="activeIndex === -1"
+                            [overviewPageOpen]="activePageIndex === -1"
                             [examSessions]="studentExam().examSessions"
                             [isTestRun]="testRunId()"
                             (onPageChanged)="onPageChange($event)"
@@ -37,7 +36,7 @@
                     <!-- exercises -->
                     <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId(), 'me-3': !testRunId() }">
                         <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
-                            <div [hidden]="activeIndex !== -1">
+                            <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
                             </div>
                             @for (exercise of studentExam().exercises; track exercise; let i = $index) {
@@ -45,7 +44,7 @@
                                     @let participation = exercise.studentParticipations?.[0];
                                     @if (participation && pageComponentVisited()[i]) {
                                         @let submission = participation.submissions?.[0];
-                                        <div [hidden]="i !== activeIndex" [id]="'exercise-' + exercise.id">
+                                        <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                                             @switch (exercise.type) {
                                                 @case (QUIZ) {
                                                     @if (submission) {
@@ -115,7 +114,7 @@
                 </div>
             </div>
         }
-        @if (showEndView()) {
+        @if (!studentExam().submitted && ((isOver() && examStartConfirmed()) || isGracePeriodOver())) {
             @if (!studentFailedToSubmit) {
                 <div class="exam-background-wrapper">
                     <jhi-exam-bar
@@ -157,7 +156,7 @@
                 </div>
             }
         }
-        @if (showSubmissionSuccess()) {
+        @if (this.studentExam()?.submitted && !showExamSummary() && !loadingExam()) {
             <div class="submissionSuccessfulHint pb-3">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>

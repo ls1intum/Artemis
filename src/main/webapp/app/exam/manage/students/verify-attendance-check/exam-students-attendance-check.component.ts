@@ -71,7 +71,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
-            this.isTestExam = this.exam?.testExam === true;
+            this.isTestExam = this.exam.testExam!;
         });
         if (this.hasExamStarted()) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({

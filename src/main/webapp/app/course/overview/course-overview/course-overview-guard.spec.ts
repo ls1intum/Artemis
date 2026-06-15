@@ -32,6 +32,7 @@ describe('CourseOverviewGuard', () => {
         id: 1,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
+        testExam: false,
     } as Exam;
 
     const lecture = new Lecture();

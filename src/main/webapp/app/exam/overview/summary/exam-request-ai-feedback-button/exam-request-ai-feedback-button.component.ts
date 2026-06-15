@@ -66,7 +66,7 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return exam?.exam?.testExam === true && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
+        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
     });
 
     private readonly eligibleExerciseIds = computed(() => {

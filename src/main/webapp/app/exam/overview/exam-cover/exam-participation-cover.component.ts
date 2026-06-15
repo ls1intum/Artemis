@@ -57,7 +57,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly isAttendanceChecked = signal(false);
 
     readonly testRun = computed(() => this.studentExam()?.testRun);
-    readonly testExam = computed(() => this.exam().testExam === true);
+    readonly testExam = computed(() => this.exam()?.testExam);
 
     readonly formattedGeneralInformation = signal<SafeHtml | undefined>(undefined);
     readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
@@ -108,7 +108,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
 
     ngOnInit(): void {
         const exam = this.exam();
-        this.isAttendanceChecked.set(exam?.testExam === true || !exam.examWithAttendanceCheck || this.attendanceChecked());
+        this.isAttendanceChecked.set(exam.testExam || !exam.examWithAttendanceCheck || this.attendanceChecked());
     }
 
     ngOnDestroy() {

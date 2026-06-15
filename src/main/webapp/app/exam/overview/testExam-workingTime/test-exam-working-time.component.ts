@@ -22,7 +22,7 @@ export class TestExamWorkingTimeComponent implements OnInit {
      */
     ngOnInit() {
         if (
-            this.studentExam().exam?.testExam === true &&
+            this.studentExam().exam!.testExam &&
             this.studentExam().started &&
             this.studentExam().submitted &&
             this.studentExam().workingTime &&

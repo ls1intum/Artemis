@@ -507,7 +507,7 @@ export class ExamManagementService {
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
-            testExam: exam.testExam,
+            testExam: exam.testExam ?? false,
             examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
             visibleDate: convertDateFromClient(exam.visibleDate),
             startDate: convertDateFromClient(exam.startDate),
@@ -658,7 +658,7 @@ interface ExerciseGroupImportDTO {
 
 interface ExamImportDTO {
     title?: string;
-    testExam?: boolean;
+    testExam: boolean;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;

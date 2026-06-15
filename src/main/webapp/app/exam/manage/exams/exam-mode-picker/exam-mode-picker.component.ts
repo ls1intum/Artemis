@@ -10,21 +10,17 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [NgClass, TranslateDirective],
 })
 export class ExamModePickerComponent {
-    readonly exam = input.required<Exam>();
-    readonly disableInput = input.required<boolean>();
+    exam = input.required<Exam>();
+    disableInput = input.required<boolean>();
 
     examModeChanged = output();
-
-    protected isTestExam(): boolean {
-        return this.exam().testExam === true;
-    }
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
      * @param testExam
      */
     setExamMode(testExam: boolean) {
-        if (!this.disableInput() && this.isTestExam() !== testExam) {
+        if (!this.disableInput() && this.exam().testExam !== testExam) {
             this.exam().testExam = testExam;
             this.exam().numberOfCorrectionRoundsInExam = testExam ? 0 : 1;
             this.examModeChanged.emit();

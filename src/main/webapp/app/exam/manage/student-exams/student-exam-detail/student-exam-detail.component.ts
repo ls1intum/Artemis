@@ -86,7 +86,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                 this.courseId.set(params.courseId);
                 const studentExamWithGrade = data.studentExam as StudentExamWithGradeDTO;
                 this.setStudentExamWithGrade(studentExamWithGrade);
-                this.isTestExam.set(studentExamWithGrade.studentExam?.exam?.testExam === true);
+                this.isTestExam.set(studentExamWithGrade.studentExam?.exam?.testExam || false);
                 this.isTestRun.set(url[1]?.toString() === 'test-runs');
             });
     }
