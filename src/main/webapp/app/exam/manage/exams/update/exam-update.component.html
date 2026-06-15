@@ -30,7 +30,7 @@
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
                     <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
                 </div>
-                <jhi-exam-mode-picker [exam]="exam" [disableInput]="isExamModeReadonly" (examModeChanged)="onExamModeChange()" />
+                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
             @if (!exam.testExam) {
                 <div class="form-check mb-3">

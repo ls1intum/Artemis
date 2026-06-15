@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -72,8 +72,8 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     readonly round = round;
     readonly Math = Math;
 
-    protected readonly isSimulationAndPracticeExam = isSimulationAndPracticeExam;
-    protected readonly testExamSimulationEndDate = testExamSimulationEndDate;
+    readonly isSimulationAndPracticeExam = computed(() => isSimulationAndPracticeExam(this.exam()));
+    readonly testExamSimulationEndDate = computed(() => testExamSimulationEndDate(this.exam()));
 
     readonly numberOfSubmitted = signal(0);
     readonly numberOfStarted = signal(0);

@@ -16,9 +16,23 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
-const DEFAULT_UNIT_GROUPS: AccordionGroups = { real: { entityData: [] }, test: { entityData: [] }, attempt: { entityData: [] } };
-const DEFAULT_COLLAPSE_STATE: CollapseState = { real: false, test: false, attempt: false };
-const DEFAULT_SHOW_ALWAYS: CollapseState = { real: false, test: false, attempt: false };
+const DEFAULT_UNIT_GROUPS: AccordionGroups = {
+    real: { entityData: [] },
+    test: { entityData: [] },
+    attempt: { entityData: [] },
+};
+
+const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    real: false,
+    test: false,
+    attempt: false,
+};
+
+const DEFAULT_SHOW_ALWAYS: CollapseState = {
+    real: false,
+    test: false,
+    attempt: false,
+};
 
 @Component({
     selector: 'jhi-course-exams',
@@ -182,7 +196,6 @@ export class CourseExamsComponent {
                 });
             }
         });
-
         return groupedExamGroups;
     }
 

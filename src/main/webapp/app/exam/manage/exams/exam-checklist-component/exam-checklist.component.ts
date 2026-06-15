@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -78,8 +78,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly isExamOver = signal(false);
     longestWorkingTime?: number;
 
-    protected readonly isSimulationAndPracticeExam = isSimulationAndPracticeExam;
-    protected readonly testExamSimulationEndDate = testExamSimulationEndDate;
+    readonly isSimulationAndPracticeExam = computed(() => isSimulationAndPracticeExam(this.exam()));
+    readonly testExamSimulationEndDate = computed(() => testExamSimulationEndDate(this.exam()));
 
     readonly numberOfSubmitted = signal(0);
     readonly numberOfStarted = signal(0);

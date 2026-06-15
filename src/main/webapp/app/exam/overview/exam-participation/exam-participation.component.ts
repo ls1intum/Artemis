@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -164,17 +164,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly sidebarData = signal<SidebarData>(undefined!);
     readonly sidebarExercises = signal<SidebarCardElement[]>([]);
 
-    isProgrammingExercise() {
-        return !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING;
-    }
+    readonly isProgrammingExercise = computed(() => !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING);
 
-    isProgrammingExerciseWithCodeEditor(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor === true;
-    }
+    readonly isProgrammingExerciseWithCodeEditor = computed(
+        () => this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor === true,
+    );
 
-    isProgrammingExerciseWithOfflineIDE(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde === true;
-    }
+    readonly isProgrammingExerciseWithOfflineIDE = computed(() => this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde === true);
 
     readonly examStartConfirmed = signal(false);
 
@@ -307,12 +303,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
     }
 
-    protected get connectionStatusTranslationKey(): string {
-        if (!this.connected) {
+    readonly connectionStatusTranslationKey = computed(() => {
+        if (!this.connected()) {
             return 'artemisApp.examParticipation.disconnected';
         }
         return this.isProgrammingExercise() ? 'artemisApp.examParticipation.ideConnected' : 'artemisApp.examParticipation.connected';
-    }
+    });
 
     get activePageIndex(): number {
         if (!this.activeExamPage() || this.activeExamPage().isOverviewPage) {
@@ -586,20 +582,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return individualStudentEndDate.add(this.exam().gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
     }
 
-    get studentFailedToSubmitTranslationKey(): string {
+    readonly studentFailedToSubmitTranslationKey = computed(() => {
         if (this.exam()?.testExam === true) {
             return 'artemisApp.examParticipation.testExamAttemptUsed';
         }
         return 'artemisApp.studentExam.submissionNotInTime';
-    }
+    });
 
-    get testExamParticipationMessageKey(): string {
-        return this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translationKey;
-    }
+    readonly testExamParticipationMessageKey = computed(
+        () => this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translationKey,
+    );
 
-    get testExamParticipationTranslateValues(): { date?: string } {
-        return this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translateValues;
-    }
+    readonly testExamParticipationTranslateValues = computed<{ date?: string }>(
+        () => this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translateValues,
+    );
 
     /**
      * check if exam is over

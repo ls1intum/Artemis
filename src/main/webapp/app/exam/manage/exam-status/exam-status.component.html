@@ -111,11 +111,11 @@
         <div class="status-step-content">
             <div class="text-center mb-1">
                 <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h6>
-                @if (isSimulationAndPracticeExam(exam())) {
+                @if (isSimulationAndPracticeExam()) {
                     <div>
                         <b>
                             {{ 'artemisApp.examStatus.conduction.testExam.simulationPhase' | artemisTranslate }}: {{ exam().startDate | artemisDate }} -
-                            {{ testExamSimulationEndDate(exam()) | artemisDate }}
+                            {{ testExamSimulationEndDate() | artemisDate }}
                         </b>
                         <b>
                             {{ 'artemisApp.examStatus.conduction.testExam.practicePhase' | artemisTranslate }}: {{ exam().testExamPracticeStartDate | artemisDate }} -

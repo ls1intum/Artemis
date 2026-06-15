@@ -42,6 +42,7 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
+        TitleChannelNameComponent,
         HelpIconComponent,
         ExamModePickerComponent,
         NgbTooltip,
@@ -57,7 +58,6 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
         MessageModule,
         SelectButtonModule,
         ExamTimelineComponent,
-        TitleChannelNameComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -187,13 +187,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onExamModeChange() {
-        if (this.exam?.testExam === true) {
+        if (this.exam.testExam) {
             this.exam.examWithAttendanceCheck = false;
         }
-    }
-
-    get isExamModeReadonly(): boolean {
-        return this.exam?.id !== undefined;
     }
 
     /**

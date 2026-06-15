@@ -235,7 +235,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const isTestExamValue = this.exam().testExam ?? false;
+        const isTestExam = this.exam().testExam ?? false;
         const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {
@@ -246,7 +246,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
             'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
             'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.isTestExam': isTestExamValue,
+            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
             'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
         };
     }
