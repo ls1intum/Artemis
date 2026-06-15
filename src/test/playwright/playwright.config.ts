@@ -63,16 +63,6 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
-        /*
-         * Cap every navigation (`goto`/`reload`) and `waitForLoadState` — they all default their
-         * timeout to the context navigation timeout, which is otherwise unset (= infinite). Behind
-         * the multi-node HTTPS load balancer an individual lazy-chunk fetch occasionally stalls (the
-         * `load` event then never fires); without this cap the navigation hangs until the much larger
-         * per-test timeout (observed: a single stalled edit-page chunk burning the full 360s budget).
-         * 60s is far above any healthy navigation but well below the per-test budgets, so a genuine
-         * stall fails fast and is picked up by the test-level retries instead of hanging.
-         */
-        navigationTimeout: parseNumber(process.env.NAVIGATION_TIMEOUT_MS) ?? 60000,
         launchOptions: {
             args: [
                 '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',

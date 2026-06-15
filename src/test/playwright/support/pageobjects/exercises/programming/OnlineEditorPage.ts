@@ -65,13 +65,26 @@ export class OnlineEditorPage {
      * Clicks submit. By default also waits for the build result score to appear (the standard non-exam flow).
      * Pass `waitForResult = false` for exam setup, where the score-producing build only runs after the due
      * date and is verified separately — waiting here would block on a result that is not (yet) produced and
-     * could overrun the enclosing hook/exam window.
+     * could overrun the enclosing hook/exam window. In that case we still wait for the commit to be persisted
+     * server-side (the `#submit_button` click commits via POST .../repository/commit), so the caller can hand
+     * in the exam without risking that the commit lands too late and an empty repository gets built.
      */
     async submit(exerciseID: number, waitForResult = true) {
-        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
+        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first();
         if (waitForResult) {
+            await submitButton.click();
             await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+            return;
         }
+        // Wait for the commit request triggered by the submit click to complete before returning. Tolerant of
+        // a missing response (e.g. nothing to commit) so it never hangs — it degrades to proceeding immediately.
+        const commitResponse = this.page
+            .waitForResponse((response) => /\/programming\/participations\/\d+\/repository\/commit$/.test(response.url()) && response.request().method() === 'POST', {
+                timeout: 30000,
+            })
+            .catch(() => undefined);
+        await submitButton.click();
+        await commitResponse;
     }
 
     async submitPractice(exerciseID: number) {
