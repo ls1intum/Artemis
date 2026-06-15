@@ -14,11 +14,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * the {@code @EventListener} on {@link de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService} still
  * runs, but its early return suppresses the legacy chat pipeline so exactly one proactive path exists.
  */
-@TestPropertySource(properties = "artemis.iris.proactive.legacy-build-triggers=false")
 class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "legacytrigger";
@@ -122,6 +122,18 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
+
+        // Disable the legacy build/progress triggers by setting the @Value flag directly on the shared bean.
+        // A @TestPropertySource would fork a second Spring context, which shuts down the named-singleton Hazelcast
+        // instance and breaks every later Hazelcast-using test in the slice; ReflectionTestUtils is the established
+        // Artemis pattern for toggling a @Value flag without a context fork.
+        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", false);
+    }
+
+    @AfterEach
+    void restoreLegacyTriggerFlag() {
+        // Restore the default so the shared application context is not polluted for subsequent tests.
+        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", true);
     }
 
     private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {
