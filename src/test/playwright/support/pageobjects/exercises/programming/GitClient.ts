@@ -2,7 +2,12 @@ import { simpleGit } from 'simple-git';
 import * as fs from 'fs';
 import path from 'path';
 
-const MAX_CLONE_RETRIES = 3;
+// 5 attempts with exponential backoff (2s + 4s + 8s + 16s ≈ 30s total). Behind the multi-node
+// LB a freshly started participation's repository/auth is occasionally not yet resolvable on the
+// node that serves the clone, surfacing as "Authentication failed". 3 attempts (~6s) sometimes
+// expired before the participation propagated; 5 covers the readiness window without masking a
+// genuinely broken auth (which fails all 5 within ~30s).
+const MAX_CLONE_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 2000;
 
 class GitClient {

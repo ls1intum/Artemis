@@ -63,9 +63,25 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        /*
+         * Cap every navigation (`goto`/`reload`) and `waitForLoadState` — they all default their
+         * timeout to the context navigation timeout, which is otherwise unset (= infinite). Behind
+         * the multi-node HTTPS load balancer an individual lazy-chunk fetch occasionally stalls (the
+         * `load` event then never fires); without this cap the navigation hangs until the much larger
+         * per-test timeout (observed: a single stalled edit-page chunk burning the full 360s budget).
+         * 60s is far above any healthy navigation but well below the per-test budgets, so a genuine
+         * stall fails fast and is picked up by the test-level retries instead of hanging.
+         */
+        navigationTimeout: parseNumber(process.env.NAVIGATION_TIMEOUT_MS) ?? 60000,
         launchOptions: {
             args: [
                 '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
+                // When the app is served over HTTPS with a self-signed cert (multi-node runner), bypass
+                // certificate validation at the browser-process level. The context-level `ignoreHTTPSErrors`
+                // does not reliably cover ES-module / lazy-chunk script fetches, which intermittently failed
+                // with "An SSL certificate error occurred when fetching the script", aborting route bootstraps
+                // (Angular NG05604). No-op when the app is served over plain HTTP (single-node fast runner).
+                ...((process.env.BASE_URL || '').startsWith('https') ? ['--ignore-certificate-errors'] : []),
                 // Optional browser-level host resolver override (e.g. "MAP localhost 127.0.0.1"). The multi-node
                 // runner sets this so the browser reaches the nginx LB over IPv4 (avoiding the historical ::1
                 // ECONNREFUSED cascade) while still using a domain origin (https://localhost) — an IP literal such

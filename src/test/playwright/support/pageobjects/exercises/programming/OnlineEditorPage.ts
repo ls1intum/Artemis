@@ -61,9 +61,17 @@ export class OnlineEditorPage {
         await this.page.waitForTimeout(500);
     }
 
-    async submit(exerciseID: number) {
+    /**
+     * Clicks submit. By default also waits for the build result score to appear (the standard non-exam flow).
+     * Pass `waitForResult = false` for exam setup, where the score-producing build only runs after the due
+     * date and is verified separately — waiting here would block on a result that is not (yet) produced and
+     * could overrun the enclosing hook/exam window.
+     */
+    async submit(exerciseID: number, waitForResult = true) {
         await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
-        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+        if (waitForResult) {
+            await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+        }
     }
 
     async submitPractice(exerciseID: number) {
