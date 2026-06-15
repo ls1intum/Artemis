@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -30,21 +30,21 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
-    open: boolean;
-    onlyViewTestCases: boolean;
-    testCaseVisibilityList: { value: Visibility; name: string }[] = [];
+    readonly open = signal(false);
+    readonly onlyViewTestCases = signal(false);
+    readonly testCaseVisibilityList = signal<{ value: Visibility; name: string }[]>([]);
 
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
     }
 
     ngOnInit(): void {
-        this.openSubject().subscribe((open) => (this.open = open));
+        this.openSubject().subscribe((open) => this.open.set(open));
 
         // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
-            this.onlyViewTestCases = true;
-            this.open = true;
+            this.onlyViewTestCases.set(true);
+            this.open.set(true);
         }
 
         this.updateTestCaseVisibilityList();
@@ -86,17 +86,19 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     }
 
     private updateTestCaseVisibilityList() {
-        this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
-            let displayName = name;
+        this.testCaseVisibilityList.set(
+            Object.entries(Visibility).map(([name, value]) => {
+                let displayName = name;
 
-            if (this.isExamExercise() && value === Visibility.AfterDueDate) {
-                displayName = 'AfterReleaseDateOfResults';
-            }
+                if (this.isExamExercise() && value === Visibility.AfterDueDate) {
+                    displayName = 'AfterReleaseDateOfResults';
+                }
 
-            return {
-                value,
-                name: displayName,
-            };
-        });
+                return {
+                    value,
+                    name: displayName,
+                };
+            }),
+        );
     }
 }

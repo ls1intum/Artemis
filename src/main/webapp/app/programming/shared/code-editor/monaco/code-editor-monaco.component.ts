@@ -1,11 +1,11 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
-    NgZone,
+    Injector,
     OnDestroy,
     ViewContainerRef,
     ViewEncapsulation,
+    afterNextRender,
     computed,
     effect,
     inject,
@@ -77,9 +77,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly ngZone = inject(NgZone);
+    private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
@@ -153,7 +152,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private addFeedbackKeydownListener?: Disposable;
     private renderScheduled = false;
     private renderFocusLine?: number;
-    private renderAnimationFrameId?: number;
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
     private pendingReviewRenderFile?: string;
@@ -320,9 +318,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.fileSyncReadySubscription?.unsubscribe();
         this.fileSyncStateReplacedSubscription?.unsubscribe();
         this.revokeImagePreview();
-        if (this.renderAnimationFrameId !== undefined) {
-            window.cancelAnimationFrame(this.renderAnimationFrameId);
-        }
         if (this.reviewRenderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.reviewRenderAnimationFrameId);
         }
@@ -618,29 +613,30 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.renderScheduled = true;
-        this.renderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
+        // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
+        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
+        afterNextRender(
+            () => {
                 this.renderScheduled = false;
-                this.ngZone.run(() => {
-                    this.changeDetectorRef.detectChanges();
-                    this.editor().disposeWidgetsByPrefix('feedback-');
-                    for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                        this.addLineWidgetWithFeedback(feedback);
-                    }
+                this.editor().disposeWidgetsByPrefix('feedback-');
+                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                    this.addLineWidgetWithFeedback(feedback);
+                }
 
-                    // New, unsaved feedback has no associated object yet.
-                    for (const line of this.newFeedbackLines()) {
-                        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                        this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-                    }
+                // New, unsaved feedback has no associated object yet.
+                for (const line of this.newFeedbackLines()) {
+                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                }
 
-                    const focusLine = this.renderFocusLine;
-                    this.renderFocusLine = undefined;
-                    if (focusLine !== undefined) {
-                        this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-                    }
-                });
-            }),
+                const focusLine = this.renderFocusLine;
+                this.renderFocusLine = undefined;
+                if (focusLine !== undefined) {
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                }
+            },
+            { injector: this.injector },
         );
     }
 
@@ -652,14 +648,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.reviewRenderScheduled = true;
-        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
-                this.reviewRenderScheduled = false;
-                this.ngZone.run(() => {
-                    this.getReviewCommentManager().renderWidgets();
-                });
-            }),
-        );
+        this.reviewRenderAnimationFrameId = requestAnimationFrame(() => {
+            this.reviewRenderScheduled = false;
+            this.getReviewCommentManager().renderWidgets();
+        });
     }
 
     public scheduleReviewCommentRenderForSelectedFile(): void {

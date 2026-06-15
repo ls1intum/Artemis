@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -213,6 +214,24 @@ public abstract class PostingService {
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+    }
+
+    /**
+     * Ensures that the given conversation belongs to the course identified by the (authoritative) path {@code courseId}.
+     * <p>
+     * The course context comes from the URL path and is used for authorization, while the target conversation is resolved
+     * from the request body / loaded entity. If the two diverge, a user authorized for one course could read or write in a
+     * conversation of another course (cross-course injection / broken access control). Reject such inconsistent requests.
+     *
+     * @param conversation the conversation the posting targets
+     * @param courseId     the id of the course taken from the API path
+     * @throws BadRequestAlertException if the conversation does not belong to the given course
+     */
+    protected void ensureConversationBelongsToCourseElseThrow(Conversation conversation, Long courseId) {
+        // Conversation#course is eagerly fetched, so this is a no-DB-cost id comparison
+        if (!Objects.equals(conversation.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("The conversation does not belong to the specified course", getEntityName(), "conversationCourseMismatch");
         }
     }
 

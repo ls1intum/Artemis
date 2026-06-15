@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Directive, inject } from '@angular/core';
+import { Directive, inject, signal } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -21,52 +21,53 @@ export abstract class QuizExerciseValidationDirective {
     readonly QuizMode = QuizMode;
     readonly ButtonType = ButtonType;
 
-    warningQuizCache = false;
-    quizIsValid: boolean;
-    quizExercise: QuizExercise;
+    readonly warningQuizCache = signal(false);
+    readonly quizIsValid = signal<boolean>(false);
+    readonly quizExercise = signal<QuizExercise>(undefined!);
 
     savedEntity: QuizExercise;
-    isExamMode: boolean;
-    isImport: boolean;
+    readonly isExamMode = signal<boolean>(false);
+    readonly isImport = signal<boolean>(false);
 
-    invalidReasons: ValidationReason[] = [];
-    invalidWarnings: ValidationReason[] = [];
+    readonly invalidReasons = signal<ValidationReason[]>([]);
+    readonly invalidWarnings = signal<ValidationReason[]>([]);
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
-    pendingChangesCache: boolean;
+    readonly pendingChangesCache = signal<boolean>(false);
 
     /**
      * 1. Check whether the inputs in the quiz are valid
      * 2. Check if warning are needed for the inputs
      * 3. Display the warnings/invalid reasons in the html file if needed
      */
-    cacheValidation(changeDetector: ChangeDetectorRef): void {
-        this.warningQuizCache = this.computeInvalidWarnings().length > 0;
-        this.quizIsValid = this.isValidQuiz();
-        this.pendingChangesCache = this.pendingChanges();
+    cacheValidation(): void {
+        this.warningQuizCache.set(this.computeInvalidWarnings().length > 0);
+        this.quizIsValid.set(this.isValidQuiz());
+        this.pendingChangesCache.set(this.pendingChanges());
         this.checkForInvalidFlaggedQuestions();
-        this.invalidReasons = this.computeInvalidReasons();
-        this.invalidWarnings = this.computeInvalidWarnings();
-        changeDetector.detectChanges();
+        this.invalidReasons.set(this.computeInvalidReasons());
+        this.invalidWarnings.set(this.computeInvalidWarnings());
     }
 
     isValidQuiz(): boolean {
-        if (!this.quizExercise) {
+        if (!this.quizExercise()) {
             return false;
         }
 
         const isGenerallyValid =
-            this.quizExercise.title != undefined &&
-            this.quizExercise.title !== '' &&
-            this.quizExercise.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
-            this.quizExercise.duration !== 0 &&
-            this.quizExercise.quizQuestions != undefined &&
-            !!this.quizExercise.quizQuestions.length;
+            this.quizExercise().title != undefined &&
+            this.quizExercise().title !== '' &&
+            this.quizExercise().title!.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
+            this.quizExercise().duration !== 0 &&
+            this.quizExercise().quizQuestions != undefined &&
+            !!this.quizExercise().quizQuestions!.length;
 
-        const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
+        const areAllQuestionsValid = this.quizExercise().quizQuestions?.every(function (question) {
             return isQuizQuestionValid(question, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
         }, this);
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
+        const maxPointsReachableInQuiz = this.quizExercise()
+            .quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0)
+            .reduce((a, b) => a + b, 0);
 
         return (
             isGenerallyValid &&
@@ -82,7 +83,7 @@ export abstract class QuizExerciseValidationDirective {
      * @returns {boolean} true if a test run exists for the quiz and should not be ignored
      */
     testRunExistsAndShouldNotBeIgnored(): boolean {
-        return !this.isImport && this.isExamMode && !!this.quizExercise.testRunParticipationsExist;
+        return !this.isImport() && this.isExamMode() && !!this.quizExercise().testRunParticipationsExist;
     }
 
     /**
@@ -90,10 +91,10 @@ export abstract class QuizExerciseValidationDirective {
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     computeInvalidWarnings(): ValidationReason[] {
-        const invalidWarnings = !this.quizExercise
+        const invalidWarnings = !this.quizExercise()
             ? []
-            : this.quizExercise.quizQuestions
-                  ?.map((question, index) => {
+            : this.quizExercise()
+                  .quizQuestions?.map((question, index) => {
                       if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some((option) => !option.explanation)) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
@@ -112,29 +113,29 @@ export abstract class QuizExerciseValidationDirective {
      */
     computeInvalidReasons(): ValidationReason[] {
         const invalidReasons = new Array<ValidationReason>();
-        if (!this.quizExercise) {
+        if (!this.quizExercise()) {
             return [];
         }
 
-        if (!this.quizExercise.title || this.quizExercise.title === '') {
+        if (!this.quizExercise().title || this.quizExercise().title === '') {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitle',
                 translateValues: {},
             });
         }
-        if (this.quizExercise.title!.length >= MAX_QUIZ_QUESTION_LENGTH_THRESHOLD) {
+        if (this.quizExercise().title!.length >= MAX_QUIZ_QUESTION_LENGTH_THRESHOLD) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: { threshold: MAX_QUIZ_QUESTION_LENGTH_THRESHOLD },
             });
         }
-        if (!this.quizExercise.duration) {
+        if (!this.quizExercise().duration) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.quizDuration',
                 translateValues: {},
             });
         }
-        if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
+        if (!this.quizExercise().quizQuestions || this.quizExercise().quizQuestions!.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {},
@@ -149,21 +150,21 @@ export abstract class QuizExerciseValidationDirective {
 
         // TODO: quiz cleanup: properly validate start (and due) date and deduplicate the checks (see isValidQuiz)
         /** We only verify the releaseDate if the checkbox is activated **/
-        // if (this.quizExercise.isPlannedToStart) {
-        //     if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
+        // if (this.quizExercise().isPlannedToStart) {
+        //     if (!this.quizExercise().releaseDate || !dayjs(this.quizExercise().releaseDate).isValid()) {
         //         invalidReasons.push({
         //             translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
         //             translateValues: {},
         //         });
         //     }
         // }
-        this.quizExercise.quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
+        this.quizExercise().quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
             computeQuizQuestionInvalidReason(invalidReasons, question, index, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
         }, this);
-        const invalidFlaggedReasons = !this.quizExercise
+        const invalidFlaggedReasons = !this.quizExercise()
             ? []
-            : this.quizExercise.quizQuestions
-                  ?.map((question, index) => {
+            : this.quizExercise()
+                  .quizQuestions?.map((question, index) => {
                       if (this.invalidFlaggedQuestions[question.id!]) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
@@ -182,17 +183,17 @@ export abstract class QuizExerciseValidationDirective {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
-        if (!this.quizExercise || !this.savedEntity) {
+        if (!this.quizExercise() || !this.savedEntity) {
             return false;
         }
-        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
+        return JSON.stringify(this.quizExercise()) !== JSON.stringify(this.savedEntity);
     }
 
     checkForInvalidFlaggedQuestions() {
-        if (!this.quizExercise) {
+        if (!this.quizExercise()) {
             return;
         }
-        this.invalidFlaggedQuestions = checkForInvalidFlaggedQuestions(this.quizExercise.quizQuestions ?? []);
+        this.invalidFlaggedQuestions = checkForInvalidFlaggedQuestions(this.quizExercise().quizQuestions ?? []);
     }
 
     /**

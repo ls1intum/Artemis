@@ -193,7 +193,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
-            expect(component.hideChannelNameInput).toBe(false);
+            expect(component.hideChannelNameInput()).toBe(false);
         });
 
         it('should validate the example solution publication date correctly', () => {
@@ -239,7 +239,7 @@ describe('ExamUpdateComponent', () => {
             await Promise.resolve();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -451,7 +451,7 @@ describe('ExamUpdateComponent', () => {
             component.save();
             await Promise.resolve();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
 
             updateStub.mockRestore();
         });
@@ -477,7 +477,7 @@ describe('ExamUpdateComponent', () => {
             await Promise.resolve();
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
         });
 
         it('should correctly catch HTTPError when creating the examWithoutExercises', async () => {
@@ -498,7 +498,7 @@ describe('ExamUpdateComponent', () => {
             component.save();
             await Promise.resolve();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
 
             createStub.mockRestore();
         });
@@ -663,13 +663,13 @@ describe('ExamUpdateComponent', () => {
         it('should bind isSaving into jhi-button isLoading', () => {
             fixture.detectChanges();
 
-            component.isSaving = true;
+            component.isSaving.set(true);
             fixture.changeDetectorRef.detectChanges();
 
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.isLoading()).toBe(true);
 
-            component.isSaving = false;
+            component.isSaving.set(false);
             fixture.changeDetectorRef.detectChanges();
 
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -970,7 +970,7 @@ describe('ExamUpdateComponent', () => {
         it('should initialize without id and dates set', () => {
             fixture.detectChanges();
             expect(fixture).not.toBeNull();
-            expect(component.isImport).toBe(true);
+            expect(component.isImport()).toBe(true);
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
