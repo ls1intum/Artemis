@@ -1,0 +1,174 @@
+package de.tum.cit.aet.artemis.iris.service.session;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+
+/**
+ * Orchestrates the proactive struggle-intervention feature (spec §4): the trigger (this task) + the downstream
+ * decision (Task 11). Detection stays in the client engine; this service ships the live code + signal to the
+ * dedicated Pyris pipeline and applies Iris's gated result. The session is materialized only on {@code active}.
+ */
+@Lazy
+@Service
+@Conditional(IrisEnabled.class)
+public class IrisStruggleInterventionService {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final IrisSettingsService irisSettingsService;
+
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final PyrisDTOService pyrisDTOService;
+
+    private final PyrisPipelineService pyrisPipelineService;
+
+    private final PyrisJobService pyrisJobService;
+
+    private final UserRepository userRepository;
+
+    private final IrisChatSessionService irisChatSessionService;
+
+    // + decision-side deps (Task 11): IrisMessageService, IrisChatWebsocketService, confidenceThreshold.
+
+    public IrisStruggleInterventionService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
+            PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.authCheckService = authCheckService;
+        this.irisSettingsService = irisSettingsService;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.pyrisDTOService = pyrisDTOService;
+        this.pyrisPipelineService = pyrisPipelineService;
+        this.pyrisJobService = pyrisJobService;
+        this.userRepository = userRepository;
+        this.irisChatSessionService = irisChatSessionService;
+    }
+
+    /**
+     * Trigger a proactive struggle intervention (spec §5.2). Returns the job token if accepted, or empty if the
+     * course feature is off OR a run is already in flight for this {@code (user, exercise)}. The sync part runs on
+     * the request thread; only the heavy DTO build + POST is off-thread.
+     *
+     * @param exerciseId       the programming exercise id
+     * @param signal           the struggle signal from the client engine
+     * @param uncommittedFiles the student's live (uncommitted) working copy, merged on top of the latest submission
+     * @param user             the requesting student
+     * @return the minted job token if the run was accepted, empty otherwise
+     */
+    public Optional<String> requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, User user) {
+        var prepared = prepareTrigger(exerciseId, user);
+        if (prepared.isEmpty()) {
+            return Optional.empty();
+        }
+        var p = prepared.get();
+        CompletableFuture.runAsync(() -> sendToPyris(p, signal, uncommittedFiles)).exceptionally(e -> {
+            log.error("Error sending struggle intervention to Iris for exercise {} user {}", p.exerciseId(), p.userId(), e);
+            pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+            return null;
+        });
+        return Optional.of(p.jobToken());
+    }
+
+    /**
+     * Synchronous core: light exercise load (id only), STUDENT-role + iris-enabled gate, then reserve the
+     * single-flight slot by minting the job. Returns empty if disabled or already in flight.
+     *
+     * @param exerciseId the programming exercise id
+     * @param user       the requesting student
+     * @return the prepared trigger snapshot if the slot was reserved, empty otherwise
+     */
+    public Optional<PreparedTrigger> prepareTrigger(long exerciseId, User user) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
+            return Optional.empty();
+        }
+        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId);
+        if (tokenOpt.isEmpty()) {
+            log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
+            return Optional.empty();
+        }
+        return Optional.of(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get()));
+    }
+
+    /**
+     * Heavy off-thread work: re-load EVERYTHING by id (no cross-thread entity), build the data DTOs, fire-and-forget to Pyris.
+     * <p>
+     * This deliberately runs OFF the request thread with NO surrounding {@code @Transactional} / open Hibernate session -
+     * it mirrors the proven develop pattern {@code IrisChatPipelineExecutionService.execute(...)}, which the existing
+     * proactive triggers already run via {@code CompletableFuture.runAsync} (see {@code IrisChatSessionService:275/309}).
+     * It is LazyInit-safe because every load uses a fetch-join query that eagerly loads exactly what the DTO conversion
+     * touches: {@code findByIdWithTemplateAndSolutionParticipation...} (template/solution repos), {@code ...WithMessages}
+     * (the chat history), and {@code Exercise.course} is a {@code @ManyToOne} (JPA default EAGER) so navigating
+     * {@code getCourseViaExerciseGroupOrCourseMember()} off-thread is safe. This method captures only ids + the immutable
+     * payload - do NOT "fix" it by wrapping it in {@code @Transactional} (a self-invoked, non-proxied call would be a no-op
+     * anyway) or by passing a request-thread entity across the boundary.
+     *
+     * @param p                the immutable trigger snapshot (ids + payload)
+     * @param signal           the struggle signal from the client engine
+     * @param uncommittedFiles the student's live (uncommitted) working copy
+     */
+    void sendToPyris(PreparedTrigger p, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles) {
+        var user = userRepository.findByIdElseThrow(p.userId());
+        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(p.exerciseId());
+        var exerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise);
+        var submissionDTO = latestSubmission(exercise, user).map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
+        var courseDTO = new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember());
+        var chatHistory = irisChatSessionRepository
+                .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
+                .map(s -> pyrisDTOService.toPyrisMessageDTOList(s.getMessages())).orElse(List.of());
+        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory, p.exerciseId());
+    }
+
+    /**
+     * Latest submission for {@code (exercise, user)} - the same resolution the chat pipeline uses. Delegates to the
+     * package-private {@code getLatestSubmissionIfExists} helper on {@link AbstractIrisChatSessionService} (callable
+     * via the injected {@link IrisChatSessionService}, which lives in this package). Returns empty only when the
+     * student genuinely has no submission yet (then no live code is shipped - accepted v1 limitation; do NOT forge a
+     * submission).
+     *
+     * @param exercise the programming exercise (loaded with template/solution participations)
+     * @param user     the student
+     * @return the latest submission with eager results/feedback/build logs, or empty if none exists
+     */
+    private Optional<ProgrammingSubmission> latestSubmission(ProgrammingExercise exercise, User user) {
+        return irisChatSessionService.getLatestSubmissionIfExists(exercise, user);
+    }
+
+    /** Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads). */
+    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String jobToken) {
+    }
+}
