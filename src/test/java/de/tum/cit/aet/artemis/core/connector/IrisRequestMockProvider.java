@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -166,6 +167,10 @@ public class IrisRequestMockProvider {
 
     public void mockAutonomousTutorResponse(Consumer<PyrisAutonomousTutorPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockStruggleInterventionResponse(Consumer<PyrisStruggleInterventionPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/struggle-intervention/run", PyrisStruggleInterventionPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
