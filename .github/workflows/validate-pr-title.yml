@@ -13,6 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
-      - uses: Slashgear/action-check-pr-title@v5.0.1
+      - uses: Slashgear/action-check-pr-title@161cede0311ec624ae3ee76a2c27522f7b6fa2d8  # v5.0.1
         with:
           regexp: '^`(Administration|Lectures|Tutorial groups|Communication|Notifications|Exercises|Programming exercises|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Team exercises|Exam mode|Integrated code lifecycle|LocalCI|LocalVC|Assessment|Grading|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Iris|Hyperion|Athena|Global search|Integrated markdown editor|Mobile apps|Scalability|Usability|Performance|Infrastructure|Migration|Development|General)`:\s[A-Z].*$'
