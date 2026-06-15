@@ -37,12 +37,16 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecu
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -211,6 +215,34 @@ public class PyrisPipelineService {
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
         // @formatter:on
+    }
+
+    /**
+     * Fires the proactive struggle-intervention pipeline (spec §5.3) with a pre-minted job token and pre-built
+     * data DTOs (the caller loaded them off-thread, by id). Uses a no-op status consumer that releases the
+     * single-flight slot on a preparation/connector ERROR (no callback will then arrive).
+     *
+     * @param variant       resolved Iris variant (e.g. "default")
+     * @param jobToken      the token already registered in the job map (StruggleInterventionJob)
+     * @param user          the student (for the AI selection + user DTO)
+     * @param signal        the struggle signal from the client engine
+     * @param exerciseDTO   the exercise DTO (problem statement + repos)
+     * @param submissionDTO the submission DTO (merged live + committed code), or null if no submission yet
+     * @param courseDTO     the course DTO
+     * @param chatHistory   read-only exercise-chat history (empty if no session exists yet)
+     * @param exerciseId    for the single-flight release key on an ERROR stage
+     */
+    public void executeStruggleInterventionPipeline(String variant, String jobToken, User user, PyrisStruggleSignalDTO signal, PyrisProgrammingExerciseDTO exerciseDTO,
+            PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId) {
+        var pyrisUser = toPyrisUserDTO(user);
+        executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, Optional.empty(), jobToken,
+                executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
+                        executionDto.initialStages()),
+                stages -> {
+                    if (stages.stream().anyMatch(stage -> stage.state() == PyrisStageState.ERROR)) {
+                        pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);
+                    }
+                });
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
