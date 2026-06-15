@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -29,9 +30,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -59,9 +62,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final IrisStruggleInterventionService irisStruggleInterventionService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService,
+            IrisStruggleInterventionService irisStruggleInterventionService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -69,6 +75,36 @@ public class PyrisStatusUpdateService {
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
+        this.irisStruggleInterventionService = irisStruggleInterventionService;
+    }
+
+    /**
+     * Handle a struggle-intervention callback (spec §5.4). Exactly-once: the first callback carrying an
+     * {@code action} removes the job and applies the decision; the trailing duplicate then fails auth (403).
+     * The single-flight in-flight marker is released only AFTER the decision work completes, so a concurrent
+     * second trigger for the same {@code (user, exercise)} cannot race in while the session is being
+     * materialized + the bubble persisted + pushed (spec §11).
+     *
+     * @param job          the struggle-intervention job that is updated
+     * @param statusUpdate the status update received
+     */
+    public void handleStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        if (statusUpdate.action() != null) {
+            pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
+            try {
+                irisStruggleInterventionService.handleDecision(job, statusUpdate);
+            }
+            finally {
+                // ...but free the (userId, exerciseId) in-flight marker only AFTER handleDecision returns —
+                // releasing it earlier reopens the re-trigger race (duplicate session/bubble).
+                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            }
+        }
+        else if (removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job)) {
+            // Non-decision terminal callback (e.g. a Pyris ERROR stage, no action): the job left the map, so
+            // release the marker now (token-conditional) rather than waiting for the map-TTL self-heal.
+            pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+        }
     }
 
     /**
@@ -138,8 +174,9 @@ public class PyrisStatusUpdateService {
      *
      * @param stages the stages of the status update
      * @param job    the job to remove or to update
+     * @return {@code true} if the job was terminal and removed, {@code false} if it was kept alive and updated
      */
-    private void removeJobIfTerminatedElseUpdate(List<PyrisStageDTO> stages, PyrisJob job) {
+    private boolean removeJobIfTerminatedElseUpdate(List<PyrisStageDTO> stages, PyrisJob job) {
         var isDone = stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job);
@@ -147,6 +184,7 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
         }
+        return isDone;   // lets the struggle overload release the in-flight marker on a terminal non-decision callback
     }
 
     /**
