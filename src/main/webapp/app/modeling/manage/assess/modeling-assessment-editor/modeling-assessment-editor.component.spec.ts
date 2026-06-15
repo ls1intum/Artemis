@@ -596,8 +596,9 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should report feedback suggestions enabled', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
+        const courseWithAthena = new Course();
+        courseWithAthena.athenaGradingFeedbackEnabled = true;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, courseWithAthena, undefined));
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
     });

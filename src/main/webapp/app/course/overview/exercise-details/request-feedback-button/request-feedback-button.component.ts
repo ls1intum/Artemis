@@ -87,7 +87,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled.set(this.athenaEnabled() && (this.exercise().course?.athenaAutoFeedbackEnabled ?? false));
+        this.requestFeedbackEnabled.set(this.exercise().allowFeedbackRequests ?? false);
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
     }

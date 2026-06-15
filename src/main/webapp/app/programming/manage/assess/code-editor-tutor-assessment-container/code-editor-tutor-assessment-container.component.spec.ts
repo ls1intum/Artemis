@@ -901,13 +901,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAutomaticFeedback()).toBe(false);
     });
 
-    it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+    it('should return true for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is set on course', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
-    it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+    it('should return false for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is absent', () => {
+        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
