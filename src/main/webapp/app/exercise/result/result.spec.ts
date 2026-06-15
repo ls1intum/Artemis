@@ -121,9 +121,9 @@ describe('ResultComponent', () => {
 
         expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faQuestionCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faQuestionCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
     });
 
     it('should set results for modeling exercise', () => {
@@ -139,10 +139,10 @@ describe('ResultComponent', () => {
 
         expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-danger');
-        expect(component.resultIconClass).toEqual(faTimesCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.textColorClass()).toBe('text-danger');
+        expect(component.resultIconClass()).toEqual(faTimesCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for modeling exercise', () => {
@@ -158,10 +158,10 @@ describe('ResultComponent', () => {
 
         expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for programming exercise', () => {
@@ -177,10 +177,10 @@ describe('ResultComponent', () => {
 
         expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for text exercise', () => {
@@ -196,9 +196,9 @@ describe('ResultComponent', () => {
 
         expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
     });
 
     it.each([

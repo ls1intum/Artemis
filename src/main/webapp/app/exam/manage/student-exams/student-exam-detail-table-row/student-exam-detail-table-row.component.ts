@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -32,8 +32,8 @@ export class StudentExamDetailTableRowComponent {
 
     courseId: number;
     studentParticipation: StudentParticipation;
-    submission: Submission;
-    result: Result;
+    readonly submission = signal<Submission | undefined>(undefined);
+    readonly result = signal<Result | undefined>(undefined);
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
     readonly AssessmentType = AssessmentType;
@@ -49,11 +49,11 @@ export class StudentExamDetailTableRowComponent {
                 this.studentParticipation = exercise.studentParticipations[0];
                 // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 if (this.studentParticipation.submissions?.length! > 0) {
-                    this.submission = this.studentParticipation.submissions![0];
+                    this.submission.set(this.studentParticipation.submissions![0]);
                 }
                 const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
                 if (allResults.length > 0) {
-                    this.result = allResults[0];
+                    this.result.set(allResults[0]);
                 }
             }
             const course = this.course();

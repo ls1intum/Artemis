@@ -1,5 +1,5 @@
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
@@ -35,7 +35,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private submissionService = inject(CodeEditorSubmissionService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
     participation = input.required<Participation>();
     secondaryHeader = input<boolean>(false);
@@ -44,9 +43,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     onToggleCollapse = output<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
     onError = output<string>();
 
-    isBuilding: boolean;
-    rawBuildLogs = new BuildLogEntryArray();
-    result?: Result;
+    readonly isBuilding = signal(false);
+    readonly rawBuildLogs = signal(new BuildLogEntryArray());
+    readonly result = signal<Result | undefined>(undefined);
 
     /** Resizable constants **/
     resizableMinHeight = 150;
@@ -72,18 +71,15 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                     .pipe(
                         switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(participation, result) : of(result))),
                         tap((result) => {
-                            this.result = result;
-                            this.changeDetectorRef.markForCheck();
+                            this.result.set(result);
                         }),
                         switchMap((result) => this.fetchBuildResults(result)),
                         map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                         tap((buildLogsFromServer: BuildLogEntryArray) => {
-                            this.rawBuildLogs = buildLogsFromServer;
-                            this.changeDetectorRef.markForCheck();
+                            this.rawBuildLogs.set(buildLogsFromServer);
                         }),
                         catchError(() => {
-                            this.rawBuildLogs = new BuildLogEntryArray();
-                            this.changeDetectorRef.markForCheck();
+                            this.rawBuildLogs.set(new BuildLogEntryArray());
                             return of();
                         }),
                     )
@@ -115,8 +111,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     private extractAnnotations() {
         const exercise: ProgrammingExercise | undefined = getExercise(this.participation());
-        const buildLogErrors = this.rawBuildLogs.extractErrors(exercise?.programmingLanguage, exercise?.projectType);
-        const codeAnalysisIssues = (this.result!.feedbacks || [])
+        const buildLogErrors = this.rawBuildLogs().extractErrors(exercise?.programmingLanguage, exercise?.projectType);
+        const codeAnalysisIssues = (this.result()!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
             .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
         const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
@@ -126,7 +122,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             row: (issue.startLine || 1) - 1,
             column: (issue.startColumn || 1) - 1,
             type: 'warning', // TODO encode type in feedback
-            timestamp: this.result?.completionDate ? new Date(this.result.completionDate.toString()).valueOf() : 0,
+            timestamp: this.result()?.completionDate ? new Date(this.result()!.completionDate!.toString()).valueOf() : 0,
         }));
         this.onAnnotations.emit([...buildLogErrors, ...codeAnalysisAnnotations]);
     }
@@ -139,8 +135,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .getBuildingState()
             .pipe(
                 tap((isBuilding: boolean) => {
-                    this.isBuilding = isBuilding;
-                    this.changeDetectorRef.markForCheck();
+                    this.isBuilding.set(isBuilding);
                 }),
             )
             .subscribe();
@@ -160,18 +155,15 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                 // Ignore initial null/undefined result from service
                 filter((result) => !!result),
                 tap((result) => {
-                    this.result = result!;
-                    this.changeDetectorRef.markForCheck();
+                    this.result.set(result!);
                 }),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
-                    this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);
-                    this.changeDetectorRef.markForCheck();
+                    this.rawBuildLogs.set(BuildLogEntryArray.fromBuildLogs(buildLogsFromServer));
                 }),
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
-                    this.rawBuildLogs = new BuildLogEntryArray();
-                    this.changeDetectorRef.markForCheck();
+                    this.rawBuildLogs.set(new BuildLogEntryArray());
                     return of(undefined);
                 }),
             )

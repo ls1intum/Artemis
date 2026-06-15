@@ -263,16 +263,16 @@ describe('ChatHistoryItemComponent', () => {
         await fixture.whenStable();
 
         // Menu items are empty before the first toggle
-        expect(component.menuItems).toHaveLength(0);
+        expect(component.menuItems()).toHaveLength(0);
 
         // Simulate menu toggle (stopPropagation on the event, build items, toggle menu)
         const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
         component.onMenuToggle(mockEvent);
 
         // After toggle, menu items should be populated with the delete action
-        expect(component.menuItems).toHaveLength(1);
-        expect(component.menuItems[0].styleClass).toBe('danger');
-        expect(component.menuItems[0].label).toBeTruthy();
+        expect(component.menuItems()).toHaveLength(1);
+        expect(component.menuItems()[0].styleClass).toBe('danger');
+        expect(component.menuItems()[0].label).toBeTruthy();
     });
 
     it('should emit deleteSession when menu item command is invoked', async () => {
@@ -295,7 +295,7 @@ describe('ChatHistoryItemComponent', () => {
         component.onMenuToggle(mockEvent);
 
         // Invoke the command (simulates clicking the menu item)
-        component.menuItems[0].command!({});
+        component.menuItems()[0].command!({});
 
         expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
     });
@@ -319,12 +319,12 @@ describe('ChatHistoryItemComponent', () => {
         vi.spyOn(translateService, 'instant').mockReturnValue('Delete');
         const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
         component.onMenuToggle(mockEvent);
-        expect(component.menuItems[0].label).toBe('Delete');
+        expect(component.menuItems()[0].label).toBe('Delete');
 
         // Simulate language change to German and toggle again
         vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
         component.onMenuToggle(mockEvent);
-        expect(component.menuItems[0].label).toBe('Löschen');
+        expect(component.menuItems()[0].label).toBe('Löschen');
     });
 
     it('should not render related-entity-icon for course session', async () => {

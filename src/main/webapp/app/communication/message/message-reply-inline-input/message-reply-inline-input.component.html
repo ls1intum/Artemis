@@ -8,7 +8,7 @@
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"
             (valueChange)="valueChange.emit()"
-            [isButtonLoading]="isLoading"
+            [isButtonLoading]="isLoading()"
             [isFormGroupValid]="formGroup.valid"
             [editType]="editType"
         />
@@ -22,8 +22,8 @@
                 ></button>
                 <button
                     jhi-posting-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLoading]="isLoading()"
+                    [disabled]="isLoading() || !formGroup.valid"
                     [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
                     class="btn btn-sm btn-outline-primary"
                     id="save"

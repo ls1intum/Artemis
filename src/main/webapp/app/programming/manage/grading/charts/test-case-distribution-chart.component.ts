@@ -40,7 +40,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     // visible test cases (filtered out the ones that are never visible), exposed for templates and tests
     readonly processedTestCases = computed<ProgrammingExerciseTestCase[]>(() => (this.testCases() ?? []).filter((testCase) => testCase.visibility !== Visibility.Never));
 
-    totalWeight: number;
+    readonly totalWeight = signal<number>(undefined!);
 
     // array containing the entries in order to display the weight and bonus chart (one entry per bar)
     private weightEntries: ChartMultiSeriesEntry[] = [
@@ -121,7 +121,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         const exercise = this.exercise();
 
         // sum of all weights
-        this.totalWeight = testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        this.totalWeight.set(testCases.reduce((sum, testCase) => sum + testCase.weight!, 0));
         // max points for the exercise
         const maxPoints = exercise.maxPoints!;
         // exercise max score with bonus in percent
@@ -132,7 +132,8 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
 
         const testCaseScores = testCases.map((testCase) => {
             // calculated score for this test case
-            const testCaseScore = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
+            const totalWeight = this.totalWeight();
+            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
 
             const score = Math.min(testCaseScore, maxScoreInPercent);
             const stats = testCaseStatsMap ? testCaseStatsMap[testCase.testName!] : undefined;
@@ -141,7 +142,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 id: testCase.id,
                 label: testCase.testName!,
                 // relative weight percentage
-                relWeight: this.totalWeight > 0 ? (testCase.weight! / this.totalWeight) * 100 : 0,
+                relWeight: totalWeight > 0 ? (testCase.weight! / totalWeight) * 100 : 0,
                 // relative score percentage
                 relScore: score * 100,
                 // relative points percentage

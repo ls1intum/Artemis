@@ -1,5 +1,5 @@
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -121,17 +121,29 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly CategoryState = StaticCodeAnalysisCategoryState;
     readonly Visibility = Visibility;
 
-    course: Course;
-    programmingExercise: ProgrammingExercise;
+    readonly course = signal<Course>(undefined!);
+    // Backed by a signal but exposed via a getter/setter facade: the template binds `programmingExercise.prop`
+    // directly and several subscribe handlers mutate nested properties in place, so we rebuild the reference
+    // via commitProgrammingExercise() after deep mutations to keep template reads reactive under zoneless CD.
+    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
+    get programmingExercise(): ProgrammingExercise {
+        return this._programmingExercise();
+    }
+    set programmingExercise(value: ProgrammingExercise) {
+        this._programmingExercise.set(value);
+    }
+    private commitProgrammingExercise(): void {
+        this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+    }
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
     paramSub: Subscription;
 
-    testCasesValue: ProgrammingExerciseTestCase[] = [];
-    changedTestCaseIds: number[] = [];
+    readonly testCasesValue = signal<ProgrammingExerciseTestCase[]>([]);
+    readonly changedTestCaseIds = signal<number[]>([]);
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     filteredTestCasesForTable: ProgrammingExerciseTestCase[] = [];
-    filteredTestCasesForCharts: ProgrammingExerciseTestCase[] = [];
+    readonly filteredTestCasesForCharts = signal<ProgrammingExerciseTestCase[]>([]);
     // backup in order to restore the setting before filtering by chart interaction
     backupTestCases: ProgrammingExerciseTestCase[] = [];
 
@@ -145,24 +157,24 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
-    staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];
-    staticCodeAnalysisCategoriesForCharts: StaticCodeAnalysisCategory[] = [];
+    readonly staticCodeAnalysisCategoriesForTable = signal<StaticCodeAnalysisCategory[]>([]);
+    readonly staticCodeAnalysisCategoriesForCharts = signal<StaticCodeAnalysisCategory[]>([]);
     // backup in order to restore the setting before filtering by chart interaction
     backupStaticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
-    changedCategoryIds: number[] = [];
+    readonly changedCategoryIds = signal<number[]>([]);
 
     buildAfterDueDateActive: boolean;
-    isReleasedAndHasResults: boolean;
+    readonly isReleasedAndHasResults = signal<boolean>(undefined!);
     showInactiveValue = false;
-    isSaving = false;
-    isLoading = false;
+    readonly isSaving = signal(false);
+    readonly isLoading = signal(false);
     // This flag means that the grading config were edited, but no submission run was triggered yet.
-    hasUpdatedGradingConfig = false;
-    activeTab: GradingTab;
+    readonly hasUpdatedGradingConfig = signal(false);
+    readonly activeTab = signal<GradingTab>(undefined!);
 
-    gradingStatistics?: ProgrammingExerciseGradingStatistics;
-    gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
-    maxIssuesPerCategory = 0;
+    readonly gradingStatistics = signal<ProgrammingExerciseGradingStatistics | undefined>(undefined);
+    readonly gradingStatisticsObservable = signal<Observable<ProgrammingExerciseGradingStatistics>>(undefined!);
+    readonly maxIssuesPerCategory = signal(0);
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
@@ -171,7 +183,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
-    hadPolicyBefore: boolean;
+    readonly hadPolicyBefore = signal<boolean>(undefined!);
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -181,7 +193,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Returns the value of testcases
      */
     get testCases() {
-        return this.testCasesValue;
+        return this.testCasesValue();
     }
 
     get activeTestCases() {
@@ -197,7 +209,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param testCases the test cases which should be set
      */
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
-        this.testCasesValue = testCases;
+        this.testCasesValue.set(testCases);
         this.updateTestCaseFilter();
         this.updateTestPoints();
     }
@@ -219,9 +231,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
-            this.isLoading = true;
+            this.isLoading.set(true);
             const exerciseId = Number(params['exerciseId']);
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+                this.course.set(courseResponse.body!);
+            });
 
             if (this.programmingExercise == undefined || this.programmingExercise.id !== exerciseId) {
                 this.testCaseSubscription?.unsubscribe();
@@ -234,15 +248,15 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         if (this.programmingExercise.staticCodeAnalysisEnabled) {
                             this.loadStaticCodeAnalysisCategories();
                         }
-                        this.hadPolicyBefore = this.programmingExercise.submissionPolicy !== undefined;
+                        this.hadPolicyBefore.set(this.programmingExercise.submissionPolicy !== undefined);
                     }),
                     catchError(() => of(null)),
                 );
 
                 const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
                     tap((releaseState) => {
-                        this.hasUpdatedGradingConfig = releaseState.testCasesChanged;
-                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                        this.hasUpdatedGradingConfig.set(releaseState.testCasesChanged);
+                        this.isReleasedAndHasResults.set(releaseState.released && releaseState.hasStudentResult);
                         this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
                     }),
                     catchError(() => of(null)),
@@ -257,10 +271,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         this.subscribeForTestCaseUpdates();
                         // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                         this.subscribeForExerciseTestCasesChangedUpdates();
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     });
             } else {
-                this.isLoading = false;
+                this.isLoading.set(false);
             }
 
             const gradingTabs: GradingTab[] = ['test-cases', 'code-analysis', 'submission-policy', 'feedback-analysis'];
@@ -269,6 +283,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             } else {
                 this.selectTab('test-cases');
             }
+            // The route params subscription runs outside Angular change detection; schedule CD so the view reflects isLoading/activeTab.
         });
     }
 
@@ -306,7 +321,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCaseChangedSubscription?.unsubscribe();
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.programmingExercise.id!)
-            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))
+            .pipe(
+                tap((testCasesChanged: boolean) => {
+                    this.hasUpdatedGradingConfig.set(testCasesChanged);
+                }),
+            )
             .subscribe();
     }
 
@@ -329,7 +348,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             newValue = this.checkFieldValue(newValue, editedTestCase[field as keyof ProgrammingExerciseTestCase], field);
             // Only mark the testcase as changed, if the field has changed.
             if (newValue !== editedTestCase[field as keyof ProgrammingExerciseTestCase]) {
-                this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
+                this.changedTestCaseIds.update((ids) => (ids.includes(editedTestCase.id!) ? ids : [...ids, editedTestCase.id!]));
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
                 this.updateTestPoints(editedTestCase, field, newValue);
             }
@@ -349,7 +368,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             newValue = this.checkFieldValue(newValue, editedCategory[field as keyof StaticCodeAnalysisCategory], field);
             // Only mark the category as changed, if the field has changed.
             if (newValue !== editedCategory[field as keyof StaticCodeAnalysisCategory]) {
-                this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
+                this.changedCategoryIds.set(this.changedCategoryIds().includes(editedCategory.id) ? this.changedCategoryIds() : [...this.changedCategoryIds(), editedCategory.id]);
                 this.updateStaticCodeAnalysisCategories(editedCategory, field, newValue);
             }
             return newValue;
@@ -378,7 +397,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     saveCategories() {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map((category) =>
             category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
@@ -386,7 +405,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         const categoriesToUpdate = _intersectionWith(
             this.backupStaticCodeAnalysisCategories,
-            this.changedCategoryIds,
+            this.changedCategoryIds(),
             (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
         );
         const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
@@ -394,14 +413,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.programmingExercise.id!, categoryUpdates).pipe(
             tap((updatedCategories: StaticCodeAnalysisCategory[]) => {
                 // From successfully updated categories from dirty checking list.
-                this.changedCategoryIds = _differenceWith(
-                    this.changedCategoryIds,
-                    updatedCategories,
-                    (categoryId: number, category: StaticCodeAnalysisCategory) => category.id === categoryId,
+                this.changedCategoryIds.set(
+                    _differenceWith(this.changedCategoryIds(), updatedCategories, (categoryId: number, category: StaticCodeAnalysisCategory) => category.id === categoryId),
                 );
 
                 // Generate the new list of categories.
-                this.staticCodeAnalysisCategoriesForTable = _unionBy(updatedCategories, this.backupStaticCodeAnalysisCategories, 'id');
+                this.staticCodeAnalysisCategoriesForTable.set(_unionBy(updatedCategories, this.backupStaticCodeAnalysisCategories, 'id'));
                 this.setChartAndBackupCategoryView();
 
                 // Find out if there are test cases that were not updated, show an error.
@@ -423,18 +440,18 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         );
 
         saveCodeAnalysis.subscribe(() => {
-            this.isSaving = false;
+            this.isSaving.set(false);
         });
     }
 
     importCategories(sourceExerciseId: number) {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         this.gradingService
             .importCategoriesFromExercise(this.programmingExercise.id!, sourceExerciseId)
             .pipe(
                 tap((newConfiguration: StaticCodeAnalysisCategory[]) => {
-                    this.staticCodeAnalysisCategoriesForTable = newConfiguration;
+                    this.staticCodeAnalysisCategoriesForTable.set(newConfiguration);
                     this.setChartAndBackupCategoryView();
 
                     this.alertService.success('artemisApp.programmingExercise.configureGrading.categories.importSuccessful', { exercise: sourceExerciseId });
@@ -444,17 +461,19 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     return of(null);
                 }),
             )
-            .subscribe(() => (this.isSaving = false));
+            .subscribe(() => {
+                this.isSaving.set(false);
+            });
     }
 
     resetCategories() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.gradingService
             .resetCategories(this.programmingExercise.id!)
             .pipe(
                 tap((categories: StaticCodeAnalysisCategory[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.resetSuccessful`);
-                    this.staticCodeAnalysisCategoriesForTable = categories;
+                    this.staticCodeAnalysisCategoriesForTable.set(categories);
                     this.setChartAndBackupCategoryView();
                     this.loadStatistics(this.programmingExercise.id!);
                 }),
@@ -464,8 +483,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 }),
             )
             .subscribe(() => {
-                this.isSaving = false;
-                this.changedCategoryIds = [];
+                this.isSaving.set(false);
+                this.changedCategoryIds.set([]);
             });
     }
 
@@ -473,20 +492,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Removes the submission policy of the programming exercise.
      */
     removeSubmissionPolicy() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.programmingExerciseSubmissionPolicyService
             .removeSubmissionPolicyFromProgrammingExercise(this.programmingExercise.id!)
             .pipe(
                 tap(() => {
                     this.programmingExercise.submissionPolicy = undefined;
-                    this.hadPolicyBefore = false;
+                    this.commitProgrammingExercise();
+                    this.hadPolicyBefore.set(false);
                 }),
                 catchError(() => {
                     return of(null);
                 }),
             )
             .subscribe(() => {
-                this.isSaving = false;
+                this.isSaving.set(false);
             });
     }
 
@@ -494,20 +514,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Adds the submission policy of the programming exercise.
      */
     addSubmissionPolicy() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.programmingExerciseSubmissionPolicyService
             .addSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
             .pipe(
                 tap((submissionPolicy: SubmissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
-                    this.hadPolicyBefore = true;
+                    this.commitProgrammingExercise();
+                    this.hadPolicyBefore.set(true);
                 }),
                 catchError(() => {
                     return of(null);
                 }),
             )
             .subscribe(() => {
-                this.isSaving = false;
+                this.isSaving.set(false);
             });
     }
 
@@ -515,14 +536,14 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Updates the submission policy of the programming exercise.
      */
     updateSubmissionPolicy() {
-        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore) {
+        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.NONE && this.hadPolicyBefore()) {
             this.removeSubmissionPolicy();
             return;
-        } else if (!this.hadPolicyBefore && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
+        } else if (!this.hadPolicyBefore() && this.programmingExercise.submissionPolicy?.type !== SubmissionPolicyType.NONE) {
             this.addSubmissionPolicy();
             return;
         }
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.programmingExerciseSubmissionPolicyService
             .updateSubmissionPolicyToProgrammingExercise(this.programmingExercise.submissionPolicy!, this.programmingExercise.id!)
             .pipe(
@@ -531,7 +552,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 }),
             )
             .subscribe(() => {
-                this.isSaving = false;
+                this.isSaving.set(false);
             });
     }
 
@@ -539,9 +560,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Enable/Disable the submission policy of the programming exercise.
      */
     toggleSubmissionPolicy() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         const deactivateSaving = () => {
-            this.isSaving = false;
+            this.isSaving.set(false);
         };
         if (this.programmingExercise.submissionPolicy!.active) {
             this.programmingExerciseSubmissionPolicyService
@@ -549,6 +570,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .pipe(
                     tap(() => {
                         this.programmingExercise!.submissionPolicy!.active = false;
+                        this.commitProgrammingExercise();
                     }),
                 )
                 .subscribe(deactivateSaving);
@@ -558,6 +580,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .pipe(
                     tap(() => {
                         this.programmingExercise!.submissionPolicy!.active = true;
+                        this.commitProgrammingExercise();
                     }),
                 )
                 .subscribe(deactivateSaving);
@@ -569,7 +592,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateTestCaseFilter() {
         this.filteredTestCasesForTable = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
-        this.filteredTestCasesForCharts = this.filteredTestCasesForTable;
+        this.filteredTestCasesForCharts.set(this.filteredTestCasesForTable);
         this.backupTestCases = this.filteredTestCasesForTable;
     }
 
@@ -588,18 +611,18 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             this.totalWeight = this.activeTestCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
             this.activeTestCases.forEach((testCase) => {
                 const points = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) * maxPoints + (testCase.bonusPoints ?? 0);
-                this.testCasePoints[testCase.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+                this.testCasePoints[testCase.testName!] = roundValueSpecifiedByCourseSettings(points, this.course());
                 const relativePoints = (points / maxPoints) * 100;
-                this.testCasePointsRelative[testCase.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
+                this.testCasePointsRelative[testCase.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course());
             });
         } else {
             const editedTestCaseNewValue = { ...editedTestCase, [field]: newValue };
             const points =
                 (this.totalWeight > 0 ? (editedTestCaseNewValue.weight! * editedTestCaseNewValue.bonusMultiplier!) / this.totalWeight : 0) * maxPoints +
                 (editedTestCaseNewValue.bonusPoints ?? 0);
-            this.testCasePoints[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+            this.testCasePoints[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(points, this.course());
             const relativePoints = (points / maxPoints) * 100;
-            this.testCasePointsRelative[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
+            this.testCasePointsRelative[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course());
         }
     }
 
@@ -608,10 +631,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Provides a fitting text for the confirm.
      */
     canDeactivate() {
-        if (!this.changedTestCaseIds.length && (!this.isReleasedAndHasResults || !this.hasUpdatedGradingConfig)) {
+        if (!this.changedTestCaseIds().length && (!this.isReleasedAndHasResults() || !this.hasUpdatedGradingConfig())) {
             return true;
         }
-        const warning = this.changedTestCaseIds.length
+        const warning = this.changedTestCaseIds().length
             ? this.translateService.instant('pendingChanges')
             : this.translateService.instant('artemisApp.programmingExercise.configureGrading.updatedGradingConfig');
         return confirm(warning);
@@ -624,7 +647,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     selectTab(tab: GradingTab) {
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
-        this.activeTab = tab;
+        this.activeTab.set(tab);
     }
 
     /**
@@ -632,7 +655,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param categoryName The name of the category
      */
     getIssuesMap(categoryName: string): IssuesMap | undefined {
-        return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
+        const categoryIssuesMap = this.gradingStatistics()?.categoryIssuesMap;
+        return categoryIssuesMap ? categoryIssuesMap[categoryName] : undefined;
     }
 
     tableSorts: Record<string, SortPropDir[]> = {
@@ -700,7 +724,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .getCodeAnalysisCategories(this.programmingExercise.id!)
             .pipe(
                 tap((categories) => {
-                    this.staticCodeAnalysisCategoriesForTable = categories;
+                    this.staticCodeAnalysisCategoriesForTable.set(categories);
                     this.setChartAndBackupCategoryView();
                 }),
                 catchError(() => of(null)),
@@ -714,17 +738,17 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param exerciseId The current exercise id
      */
     private loadStatistics(exerciseId: number) {
-        this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId);
+        this.gradingStatisticsObservable.set(this.gradingService.getGradingStatistics(exerciseId));
 
-        this.gradingStatisticsObservable.subscribe((statistics) => {
-            this.gradingStatistics = statistics;
-            this.maxIssuesPerCategory = 0;
+        this.gradingStatisticsObservable().subscribe((statistics) => {
+            this.gradingStatistics.set(statistics);
+            this.maxIssuesPerCategory.set(0);
             if (statistics?.categoryIssuesMap) {
                 // calculate the maximum number of issues in one category
                 for (const issuesMap of Object.values(statistics?.categoryIssuesMap)) {
                     const maxIssues = Object.keys(issuesMap).reduce((max, issues) => Math.max(max, parseInt(issues, 10)), 0);
-                    if (maxIssues > this.maxIssuesPerCategory) {
-                        this.maxIssuesPerCategory = maxIssues;
+                    if (maxIssues > this.maxIssuesPerCategory()) {
+                        this.maxIssuesPerCategory.set(maxIssues);
                     }
                 }
             }
@@ -749,9 +773,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.filter(filterFunction);
             }
         } else {
-            this.staticCodeAnalysisCategoriesForTable = this.backupStaticCodeAnalysisCategories;
+            this.staticCodeAnalysisCategoriesForTable.set(this.backupStaticCodeAnalysisCategories);
             if (testCaseId !== this.RESET_TABLE) {
-                this.staticCodeAnalysisCategoriesForTable = this.staticCodeAnalysisCategoriesForTable.filter(filterFunction);
+                this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().filter(filterFunction));
             }
         }
     }
@@ -781,13 +805,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
                 break;
             case TestCaseView.CHART:
-                this.filteredTestCasesForCharts = this.filteredTestCasesForCharts.map(mapFunction);
+                this.filteredTestCasesForCharts.update((testCases) => testCases.map(mapFunction));
                 break;
             case TestCaseView.BACKUP:
                 this.backupTestCases = this.backupTestCases.map(mapFunction);
                 break;
             case TestCaseView.SAVE_VALUES:
-                this.testCasesValue = this.testCases.map(mapFunction);
+                this.testCasesValue.set(this.testCases.map(mapFunction));
                 break;
         }
     }
@@ -801,16 +825,16 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: any): void {
         const filterFunction = (category: StaticCodeAnalysisCategory) => (category.id !== editedCategory.id ? category : { ...category, [field]: newValue });
 
-        this.staticCodeAnalysisCategoriesForTable = this.staticCodeAnalysisCategoriesForTable.map(filterFunction);
+        this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);
-        this.staticCodeAnalysisCategoriesForCharts = this.backupStaticCodeAnalysisCategories;
+        this.staticCodeAnalysisCategoriesForCharts.set(this.backupStaticCodeAnalysisCategories);
     }
 
     /**
      * Auxiliary method that sets the chart and backup view on the static code analysis categories
      */
     private setChartAndBackupCategoryView(): void {
-        this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;
-        this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable;
+        this.staticCodeAnalysisCategoriesForCharts.set(this.staticCodeAnalysisCategoriesForTable());
+        this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable();
     }
 }

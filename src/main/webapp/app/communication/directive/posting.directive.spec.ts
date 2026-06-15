@@ -127,24 +127,24 @@ describe('PostingDirective', () => {
     });
 
     it('should call editPosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.editPosting();
         expect(mockReactionsBar.editPosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call togglePin on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.togglePin();
         expect(mockReactionsBar.togglePin).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call deletePosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.deletePost();
         expect(mockReactionsBar.deletePosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should return display priority from reactionsBar', () => {
@@ -169,7 +169,7 @@ describe('PostingDirective', () => {
         const preventDefaultSpy = vi.spyOn(mouseEvent, 'preventDefault');
         component.addReaction(mouseEvent);
         expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(component.clickPosition).toEqual({ x: 100, y: 200 });
         expect(component.showReactionSelector).toBe(true);
     });
@@ -287,7 +287,7 @@ describe('PostingDirective', () => {
 
     it('should set delete timer to initial value when delete is true', () => {
         component.onDeleteEvent(true);
-        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+        expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
     it('should call metisService.deletePost for regular post', () => {
@@ -320,10 +320,10 @@ describe('PostingDirective', () => {
         component.onDeleteEvent(true);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(5);
+        expect(component.deleteTimerInSeconds()).toBe(5);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(4);
+        expect(component.deleteTimerInSeconds()).toBe(4);
     });
 
     it('should stop timer at 0 when decrementing', () => {
@@ -333,7 +333,7 @@ describe('PostingDirective', () => {
 
         vi.advanceTimersByTime(7000);
 
-        expect(component.deleteTimerInSeconds).toBe(0);
+        expect(component.deleteTimerInSeconds()).toBe(0);
     });
 
     it('should do nothing if delete event is false', () => {

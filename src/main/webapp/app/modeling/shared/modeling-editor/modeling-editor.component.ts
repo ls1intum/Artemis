@@ -48,7 +48,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private isDestroyed = false;
 
     readonlyApollonDiagram?: SVG;
-    readOnlySVG?: SafeHtml;
+    readonly readOnlySVG = signal<SafeHtml | undefined>(undefined);
 
     constructor() {
         super();
@@ -112,7 +112,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             if (this.apollonEditor) {
                 this.readonlyApollonDiagram = await this.apollonEditor.exportAsSVG();
                 if (this.readonlyApollonDiagram?.svg) {
-                    this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+                    this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg));
                 }
             }
         } else {
