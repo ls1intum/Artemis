@@ -210,6 +210,39 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(ids).toContain(`plantUml-${exerciseC.id}-1`);
     });
 
+    /**
+     * Reproduction attempt for the instructor report that "switching between exercises removes the PlantUML diagram".
+     * Tries two patterns the existing isolation test does not cover:
+     *  1) navigating BACK to an already-visited exercise, and
+     *  2) rapid switching between exercises without waiting for the (async) SVG injection to settle.
+     * After the navigation, every exercise's PlantUML SVG must still be attached to the DOM.
+     */
+    test('PlantUML diagrams survive navigating back and forth and rapid switching', async ({ page, examParticipation, examNavigation }) => {
+        await examParticipation.startParticipation(studentTwo, course, exam);
+
+        // --- Part 1: forward, then BACK navigation ---
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 30000 });
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await expect(page.locator(`#plantUml-${exerciseB.id}-0 svg`)).toBeAttached({ timeout: 30000 });
+        // Navigate BACK to A: its diagram must still be there.
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 15000 });
+
+        // --- Part 2: rapid switching without waiting for the SVG to render in between ---
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+
+        // Every diagram must still be attached (hidden exercises keep their DOM via [hidden]).
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 15000 });
+        await expect(page.locator(`#plantUml-${exerciseB.id}-0 svg`)).toBeAttached({ timeout: 15000 });
+        await expect(page.locator(`#plantUml-${exerciseC.id}-0 svg`)).toBeAttached({ timeout: 15000 });
+        await expect(page.locator(`#plantUml-${exerciseC.id}-1 svg`)).toBeAttached({ timeout: 15000 });
+    });
+
     test.afterEach('Delete exam', async ({ examAPIRequests }) => {
         await examAPIRequests.deleteExam(exam);
     });

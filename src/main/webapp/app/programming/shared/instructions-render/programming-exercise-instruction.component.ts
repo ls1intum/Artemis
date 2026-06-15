@@ -324,6 +324,21 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     }
 
     /**
+     * Forces a re-render of the problem statement, bypassing the "unchanged problem statement" optimization in
+     * {@link updateMarkdown}.
+     *
+     * In exam mode an exercise's change detection is detached while it is hidden. If a render runs during that time
+     * (for example because the student rapidly switches between exercises before the asynchronous PlantUML/task
+     * injection has settled), the injection can target stale or detached DOM and the rendered diagram is lost. Calling
+     * this once the exercise becomes visible again re-runs the render and injection against the live DOM, reliably
+     * restoring the PlantUML diagrams.
+     */
+    forceReRenderProblemStatement() {
+        this.lastRenderedProblemStatement = undefined;
+        this.updateMarkdown();
+    }
+
+    /**
      * Destroy all dynamically created task components to prevent memory leaks.
      */
     private destroyTaskComponents(): void {
