@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -402,12 +403,12 @@ public class TextExerciseCreationUpdateResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+        List<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaList();
 
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+        List<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
             if (criterion == null) {
                 criterion = gcDto.toEntity();
@@ -417,7 +418,7 @@ public class TextExerciseCreationUpdateResource {
                 gcDto.applyTo(criterion);
             }
             return criterion;
-        }).collect(Collectors.toSet());
+        }).toList();
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
@@ -426,7 +427,7 @@ public class TextExerciseCreationUpdateResource {
     /**
      * Clears the given collection if it is initialized.
      */
-    private static <T> void clearInitializedCollection(Set<T> set) {
+    private static <T> void clearInitializedCollection(java.util.Collection<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }

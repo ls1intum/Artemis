@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
+public record GradingCriterionDTO(Long id, String title, List<GradingInstructionDTO> structuredGradingInstructions) {
 
     /**
      * Convert GradingCriterion to GradingCriterionDTO. Used in the exercise DTOs for Athena.
@@ -23,7 +23,7 @@ public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionD
      */
     public static GradingCriterionDTO of(@NotNull GradingCriterion gradingCriterion) {
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
-                gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
+                gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).toList());
     }
 
     /**
@@ -36,7 +36,7 @@ public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionD
         criterion.setId(this.id);
         criterion.setTitle(this.title);
         if (this.structuredGradingInstructions != null && !this.structuredGradingInstructions.isEmpty()) {
-            Set<GradingInstruction> instructions = this.structuredGradingInstructions.stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
+            List<GradingInstruction> instructions = this.structuredGradingInstructions.stream().map(GradingInstructionDTO::toEntity).toList();
             criterion.setStructuredGradingInstructions(instructions);
         }
         return criterion;
@@ -55,14 +55,14 @@ public record GradingCriterionDTO(Long id, String title, Set<GradingInstructionD
             return;
         }
 
-        Set<GradingInstruction> existing = gradingCriterion.getStructuredGradingInstructions();
+        List<GradingInstruction> existing = gradingCriterion.getStructuredGradingInstructions();
         if (existing == null) {
-            existing = new HashSet<>();
+            existing = new ArrayList<>();
         }
 
         Map<Long, GradingInstruction> existingById = existing.stream().filter(i -> i.getId() != null).collect(Collectors.toMap(GradingInstruction::getId, i -> i));
 
-        Set<GradingInstruction> updatedInstructions = new HashSet<>();
+        List<GradingInstruction> updatedInstructions = new ArrayList<>();
 
         for (GradingInstructionDTO instructionDTO : this.structuredGradingInstructions) {
             GradingInstruction instruction = instructionDTO.id() != null ? existingById.get(instructionDTO.id()) : null;

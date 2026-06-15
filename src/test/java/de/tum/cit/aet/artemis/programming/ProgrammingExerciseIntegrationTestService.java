@@ -61,6 +61,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -878,6 +879,44 @@ public class ProgrammingExerciseIntegrationTestService {
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         assertThat(programmingExercise.getProblemStatement()).as("test saved exercise contains test ids").isEqualTo(problemStatementWithId);
+    }
+
+    void updateProgrammingExercise_preservesGradingCriteriaOrder() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        programmingExercise.setGradingCriteria(List.of(createGradingCriterion("first", "first instruction"), createGradingCriterion("second", "second instruction"),
+                createGradingCriterion("third", "third instruction")));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.OK);
+
+        var savedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(savedCriteria).extracting(GradingCriterion::getTitle).containsExactly("first", "second", "third");
+    }
+
+    void updateProgrammingExercise_preservesStructuredGradingInstructionOrder() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        programmingExercise.setGradingCriteria(List.of(createGradingCriterion("criterion", "first instruction", "second instruction", "third instruction")));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.OK);
+
+        var savedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(savedCriteria).hasSize(1);
+        assertThat(savedCriteria.getFirst().getStructuredGradingInstructions()).extracting(GradingInstruction::getInstructionDescription).containsExactly("first instruction",
+                "second instruction", "third instruction");
+    }
+
+    private static GradingCriterion createGradingCriterion(String title, String... instructionDescriptions) {
+        var criterion = new GradingCriterion();
+        criterion.setTitle(title);
+        criterion.setStructuredGradingInstructions(List.of(instructionDescriptions).stream().map(description -> {
+            var instruction = new GradingInstruction();
+            instruction.setCredits(1);
+            instruction.setGradingScale("good");
+            instruction.setInstructionDescription(description);
+            instruction.setFeedback(description + " feedback");
+            instruction.setUsageCount(1);
+            return instruction;
+        }).toList());
+        return criterion;
     }
 
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {

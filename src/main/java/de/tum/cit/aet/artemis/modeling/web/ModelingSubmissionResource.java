@@ -29,7 +29,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -294,7 +293,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (submission != null) {
             // needed to show the grading criteria in the assessment view
-            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);
             // Make sure the exercise is connected to the participation in the json response
             submission.getParticipation().setExercise(modelingExercise);

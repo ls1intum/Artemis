@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -146,8 +148,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
     // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderColumn(name = "grading_criterion_order")
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    private Set<GradingCriterion> gradingCriteria = new HashSet<>();
+    private List<GradingCriterion> gradingCriteria = new ArrayList<>();
 
     // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -680,7 +683,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return feedbackSuggestionModule != null;
     }
 
-    public Set<GradingCriterion> getGradingCriteria() {
+    public List<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
 
@@ -689,12 +692,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         gradingCriterion.setExercise(this);
     }
 
-    public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
+    public void setGradingCriteria(Collection<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
 
-    private void reconnectCriteriaWithExercise(Set<GradingCriterion> gradingCriteria) {
-        this.gradingCriteria = gradingCriteria;
+    private void reconnectCriteriaWithExercise(Collection<GradingCriterion> gradingCriteria) {
+        this.gradingCriteria = gradingCriteria == null ? null : new ArrayList<>(gradingCriteria);
         if (gradingCriteria != null) {
             this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
         }
@@ -760,8 +763,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
-    public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        Set<GradingCriterion> newGradingCriteria = new HashSet<>();
+    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
@@ -781,9 +784,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        Set<GradingInstruction> newGradingInstructions = new HashSet<>();
+        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
@@ -914,15 +917,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Ensures that the exercise has a mutable set for grading criteria.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     * Ensures that the exercise has a mutable list for grading criteria.
+     * Creates and assigns a new {@link ArrayList} if the current list is {@code null}.
      *
-     * @return the non-null mutable set of grading criteria
+     * @return the non-null mutable list of grading criteria
      */
-    public Set<GradingCriterion> ensureGradingCriteriaSet() {
-        Set<GradingCriterion> managedCriteria = getGradingCriteria();
+    public List<GradingCriterion> ensureGradingCriteriaList() {
+        List<GradingCriterion> managedCriteria = getGradingCriteria();
         if (managedCriteria == null) {
-            managedCriteria = new HashSet<>();
+            managedCriteria = new ArrayList<>();
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;

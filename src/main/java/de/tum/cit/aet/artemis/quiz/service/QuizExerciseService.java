@@ -1185,7 +1185,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
         copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
         copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
-        copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));
+        copy.setGradingCriteria(new ArrayList<>(quizExercise.getGradingCriteria()));
         return copy;
     }
 

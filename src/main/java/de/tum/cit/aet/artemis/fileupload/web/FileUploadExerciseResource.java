@@ -545,7 +545,7 @@ public class FileUploadExerciseResource {
             }
         }
 
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, exercise);
         return ResponseEntity.ok().body(exercise);
@@ -683,7 +683,7 @@ public class FileUploadExerciseResource {
      * @param set the set to clear
      * @param <T> element type
      */
-    private static <T> void clearInitializedCollection(Set<T> set) {
+    private static <T> void clearInitializedCollection(java.util.Collection<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }
@@ -705,14 +705,14 @@ public class FileUploadExerciseResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+        List<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaList();
 
         // Build lookup map for existing criteria by ID
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
         // Process each DTO: update existing criteria or create new ones
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+        List<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
             // DTO with id=null means "create new criterion"
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
             if (criterion == null) {
@@ -725,7 +725,7 @@ public class FileUploadExerciseResource {
                 gcDto.applyTo(criterion);
             }
             return criterion;
-        }).collect(Collectors.toSet());
+        }).toList();
 
         // Replace collection contents (criteria not in DTO are removed via orphanRemoval)
         managedCriteria.clear();

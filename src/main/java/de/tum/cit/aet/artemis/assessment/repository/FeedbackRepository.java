@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -76,7 +76,7 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
      * @param gradingCriteria The grading criteria belongs to exercise in a specific course
      * @return list including feedback entries which are associated with the grading instructions
      */
-    default List<Feedback> findFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
+    default List<Feedback> findFeedbackByExerciseGradingCriteria(Collection<GradingCriterion> gradingCriteria) {
         if (gradingCriteria.isEmpty()) {
             return Collections.emptyList();
         }
@@ -92,7 +92,7 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
      * @param gradingCriteria The grading criteria belongs to exercise in a specific course
      * @return true if any grading criteria gets used in any feedback
      */
-    default boolean hasFeedbackByExerciseGradingCriteria(Set<GradingCriterion> gradingCriteria) {
+    default boolean hasFeedbackByExerciseGradingCriteria(Collection<GradingCriterion> gradingCriteria) {
         if (gradingCriteria.isEmpty()) {
             return false;
         }

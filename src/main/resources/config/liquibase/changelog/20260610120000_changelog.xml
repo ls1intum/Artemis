@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260610120000-1" author="artemis">
+        <addColumn tableName="grading_criterion">
+            <column name="grading_criterion_order" type="integer"/>
+        </addColumn>
+        <addColumn tableName="grading_instruction">
+            <column name="grading_instruction_order" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260610120000-2" author="artemis" dbms="postgresql,h2">
+        <sql>
+            UPDATE grading_criterion gc
+            SET grading_criterion_order = ordered.order_index
+            FROM (
+                SELECT id, ROW_NUMBER() OVER (PARTITION BY exercise_id ORDER BY id) - 1 AS order_index
+                FROM grading_criterion
+            ) ordered
+            WHERE gc.id = ordered.id;
+        </sql>
+        <sql>
+            UPDATE grading_instruction gi
+            SET grading_instruction_order = ordered.order_index
+            FROM (
+                SELECT id, ROW_NUMBER() OVER (PARTITION BY grading_criterion_id ORDER BY id) - 1 AS order_index
+                FROM grading_instruction
+            ) ordered
+            WHERE gi.id = ordered.id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260610120000-3" author="artemis" dbms="mysql,mariadb">
+        <sql>
+            UPDATE grading_criterion gc
+                JOIN (
+                    SELECT id, ROW_NUMBER() OVER (PARTITION BY exercise_id ORDER BY id) - 1 AS order_index
+                    FROM grading_criterion
+                ) ordered ON gc.id = ordered.id
+            SET gc.grading_criterion_order = ordered.order_index;
+        </sql>
+        <sql>
+            UPDATE grading_instruction gi
+                JOIN (
+                    SELECT id, ROW_NUMBER() OVER (PARTITION BY grading_criterion_id ORDER BY id) - 1 AS order_index
+                    FROM grading_instruction
+                ) ordered ON gi.id = ordered.id
+            SET gi.grading_instruction_order = ordered.order_index;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

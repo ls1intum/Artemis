@@ -163,7 +163,7 @@ public class ProgrammingExerciseImportBasicService {
         // Hints, tasks, test cases and static code analysis categories
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
 
-        Set<GradingCriterion> oldCriteria = originalProgrammingExercise.getGradingCriteria();
+        List<GradingCriterion> oldCriteria = originalProgrammingExercise.getGradingCriteria();
         if (oldCriteria != null) {
             for (GradingCriterion oldCriterion : oldCriteria) {
                 // 1) Create and copy a new GradingCriterion

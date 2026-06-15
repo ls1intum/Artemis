@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -9,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -27,14 +29,18 @@ public class GradingCriterion extends DomainObject {
 
     // No @Cache here on purpose: mutated while instructors edit grading criteria, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderColumn(name = "grading_instruction_order")
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
-    private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
+    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
     @ManyToOne
     private Exercise exercise;
 
     @Column(name = "title")
     private String title;
+
+    @Column(name = "grading_criterion_order", insertable = false, updatable = false)
+    private Integer orderIndex;
 
     public String getTitle() {
         return title;
@@ -44,7 +50,7 @@ public class GradingCriterion extends DomainObject {
         this.title = title;
     }
 
-    public Set<GradingInstruction> getStructuredGradingInstructions() {
+    public List<GradingInstruction> getStructuredGradingInstructions() {
         return structuredGradingInstructions;
     }
 
@@ -56,8 +62,8 @@ public class GradingCriterion extends DomainObject {
     /**
      * @param structuredGradingInstructions the list of structured grading instructions which belong to the grading criterion
      */
-    public void setStructuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
-        this.structuredGradingInstructions = structuredGradingInstructions;
+    public void setStructuredGradingInstructions(Collection<GradingInstruction> structuredGradingInstructions) {
+        this.structuredGradingInstructions = structuredGradingInstructions == null ? null : new ArrayList<>(structuredGradingInstructions);
         if (structuredGradingInstructions != null) {
             this.structuredGradingInstructions.forEach(structuredGradingInstruction -> structuredGradingInstruction.setGradingCriterion(this));
         }

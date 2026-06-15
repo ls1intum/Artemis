@@ -27,7 +27,6 @@ import org.springframework.util.function.ThrowingBiFunction;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -244,7 +243,7 @@ public class LearningObjectImportService {
             // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
             var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
             programmingExercise.setTasks(new ArrayList<>(templateTasks));
-            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+            var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
@@ -265,7 +264,7 @@ public class LearningObjectImportService {
         programmingExercise.setTestCases(new HashSet<>());
         programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>());
         programmingExercise.setTeams(new HashSet<>());
-        programmingExercise.setGradingCriteria(new HashSet<>());
+        programmingExercise.setGradingCriteria(new ArrayList<>());
         programmingExercise.setStudentParticipations(new HashSet<>());
         programmingExercise.setTutorParticipations(new HashSet<>());
         programmingExercise.setExampleSubmissions(new HashSet<>());

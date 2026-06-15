@@ -47,7 +47,7 @@ public record UpdateProgrammingExerciseDTO(
         Long courseId, Long exerciseGroupId,
 
         // Grading and competencies
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
 
         // Programming exercise specific fields
         String testRepositoryUri, String solutionRepositoryUri, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
@@ -76,15 +76,15 @@ public record UpdateProgrammingExerciseDTO(
                 : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        List<GradingCriterionDTO> gradingCriterionDTOs = null;
         Set<CompetencyLinkDTO> competencyLinkDTOs = null;
         List<AuxiliaryRepositoryDTO> auxiliaryRepositoryDTOs = null;
 
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        List<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
         }
         if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
             competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());

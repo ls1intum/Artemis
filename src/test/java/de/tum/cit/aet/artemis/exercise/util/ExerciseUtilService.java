@@ -153,7 +153,7 @@ public class ExerciseUtilService {
         criteria.add(testCriterion);
         criteria.add(testCriterion2);
         exercise.setGradingCriteria(criteria);
-        return exercise.getGradingCriteria();
+        return new HashSet<>(exercise.getGradingCriteria());
     }
 
     /**

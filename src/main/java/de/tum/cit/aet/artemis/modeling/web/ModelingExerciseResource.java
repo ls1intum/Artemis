@@ -357,7 +357,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
@@ -545,12 +545,12 @@ public class ModelingExerciseResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+        List<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaList();
 
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+        List<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
             if (criterion == null) {
                 criterion = gcDto.toEntity();
@@ -560,7 +560,7 @@ public class ModelingExerciseResource {
                 gcDto.applyTo(criterion);
             }
             return criterion;
-        }).collect(Collectors.toSet());
+        }).toList();
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
@@ -575,7 +575,7 @@ public class ModelingExerciseResource {
      * @param set the set to clear
      * @param <T> element type
      */
-    private static <T> void clearInitializedCollection(Set<T> set) {
+    private static <T> void clearInitializedCollection(java.util.Collection<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }

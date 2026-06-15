@@ -459,18 +459,18 @@ public class ProgrammingExerciseUpdateResource {
      */
     private void updateGradingCriteria(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
         if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
-            Set<GradingCriterion> criteria = exercise.ensureGradingCriteriaSet();
+            List<GradingCriterion> criteria = exercise.ensureGradingCriteriaList();
             criteria.clear();
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+        List<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaList();
 
         // Preserve existing criteria by matching on ID to avoid dangling Feedback.gradingInstruction references
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+        List<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
             if (criterion == null) {
                 criterion = gcDto.toEntity();
@@ -480,7 +480,7 @@ public class ProgrammingExerciseUpdateResource {
                 gcDto.applyTo(criterion);
             }
             return criterion;
-        }).collect(Collectors.toSet());
+        }).toList();
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);

@@ -407,7 +407,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(gradingInstructions1).allMatch(instruction -> instruction.getCredits() == 1);
         final GradingInstruction instruction1a = gradingInstructions1.getFirst();
         final GradingInstruction instruction1b = gradingInstructions1.get(1);
-        final Set<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
+        final List<GradingInstruction> gradingInstructions2 = criterion2.getStructuredGradingInstructions();
         assertThat(gradingInstructions2).hasSize(1);
         final GradingInstruction instruction2 = gradingInstructions2.stream().findFirst().orElseThrow();
 

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.assessment.util;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -22,7 +22,7 @@ public final class GradingCriterionUtil {
      * @param check           A requirement that the returned grading criterion should fulfill.
      * @return A grading criterion, if it could be found.
      */
-    public static Optional<GradingCriterion> findAnyWhere(final Set<GradingCriterion> gradingCriteria, final Predicate<GradingCriterion> check) {
+    public static Optional<GradingCriterion> findAnyWhere(final Collection<GradingCriterion> gradingCriteria, final Predicate<GradingCriterion> check) {
         return gradingCriteria.stream().filter(check).findAny();
     }
 
@@ -44,7 +44,7 @@ public final class GradingCriterionUtil {
      * @param check           A requirement that the returned grading instruction should fulfill.
      * @return A grading instruction, if it could be found.
      */
-    public static Optional<GradingInstruction> findAnyInstructionWhere(final Set<GradingCriterion> gradingCriteria, final Predicate<GradingInstruction> check) {
+    public static Optional<GradingInstruction> findAnyInstructionWhere(final Collection<GradingCriterion> gradingCriteria, final Predicate<GradingInstruction> check) {
         return gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).filter(check).findAny();
     }
 
@@ -55,7 +55,7 @@ public final class GradingCriterionUtil {
      * @param count           The required {@link GradingInstruction#getUsageCount()}.
      * @return A grading instruction, if it could be found.
      */
-    public static GradingInstruction findInstructionByMaxUsageCount(final Set<GradingCriterion> gradingCriteria, final int count) {
+    public static GradingInstruction findInstructionByMaxUsageCount(final Collection<GradingCriterion> gradingCriteria, final int count) {
         return findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getUsageCount() == count).orElseThrow();
     }
 }

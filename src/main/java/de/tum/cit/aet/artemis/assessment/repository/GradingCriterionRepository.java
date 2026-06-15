@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Set;
+import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -26,6 +26,7 @@ public interface GradingCriterionRepository extends ArtemisJpaRepository<Grading
             FROM GradingCriterion criterion
                 LEFT JOIN FETCH criterion.structuredGradingInstructions
             WHERE criterion.exercise.id = :exerciseId
+            ORDER BY CASE WHEN criterion.orderIndex IS NULL THEN 1 ELSE 0 END, criterion.orderIndex ASC, criterion.id ASC
             """)
-    Set<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
+    List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
 }

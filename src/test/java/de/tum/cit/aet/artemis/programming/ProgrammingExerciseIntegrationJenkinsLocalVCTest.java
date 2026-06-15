@@ -303,6 +303,18 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_preservesGradingCriteriaOrder() throws Exception {
+        programmingExerciseIntegrationTestService.updateProgrammingExercise_preservesGradingCriteriaOrder();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_preservesStructuredGradingInstructionOrder() throws Exception {
+        programmingExerciseIntegrationTestService.updateProgrammingExercise_preservesStructuredGradingInstructionOrder();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest();
     }

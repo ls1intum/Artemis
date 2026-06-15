@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -330,7 +329,7 @@ public class ExamImportService {
                     // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
                     var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
-                    Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
+                    var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setGradingCriteria(gradingCriteria);
 
                     ProgrammingExercise newProgrammingExercise = (ProgrammingExercise) exerciseToCopy;
