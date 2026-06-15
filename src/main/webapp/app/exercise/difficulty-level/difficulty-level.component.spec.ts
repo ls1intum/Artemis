@@ -29,32 +29,32 @@ describe('DifficultyLevelComponent', () => {
         fixture.componentRef.setInput('difficultyLevel', 'EASY');
         fixture.detectChanges();
 
-        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.easy');
-        expect(component.coloredDifficultyLevel.color).toEqual(['success', 'body', 'body']);
+        expect(component.coloredDifficultyLevel().label).toBe('artemisApp.exercise.easy');
+        expect(component.coloredDifficultyLevel().color).toEqual(['success', 'body', 'body']);
     });
 
     it('should set coloredDifficultyLevel correctly for MEDIUM', () => {
         fixture.componentRef.setInput('difficultyLevel', 'MEDIUM');
         fixture.detectChanges();
 
-        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.medium');
-        expect(component.coloredDifficultyLevel.color).toEqual(['warning', 'warning', 'body']);
+        expect(component.coloredDifficultyLevel().label).toBe('artemisApp.exercise.medium');
+        expect(component.coloredDifficultyLevel().color).toEqual(['warning', 'warning', 'body']);
     });
 
     it('should set coloredDifficultyLevel correctly for HARD', () => {
         fixture.componentRef.setInput('difficultyLevel', 'HARD');
         fixture.detectChanges();
 
-        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.hard');
-        expect(component.coloredDifficultyLevel.color).toEqual(['danger', 'danger', 'danger']);
+        expect(component.coloredDifficultyLevel().label).toBe('artemisApp.exercise.hard');
+        expect(component.coloredDifficultyLevel().color).toEqual(['danger', 'danger', 'danger']);
     });
 
     it('should set coloredDifficultyLevel correctly for no level', () => {
         fixture.componentRef.setInput('difficultyLevel', 'UNKNOWN');
         fixture.detectChanges();
 
-        expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.noLevel');
-        expect(component.coloredDifficultyLevel.color).toEqual(['body', 'body', 'body']);
+        expect(component.coloredDifficultyLevel().label).toBe('artemisApp.exercise.noLevel');
+        expect(component.coloredDifficultyLevel().color).toEqual(['body', 'body', 'body']);
     });
 
     it('should display the correct tooltip label', async () => {

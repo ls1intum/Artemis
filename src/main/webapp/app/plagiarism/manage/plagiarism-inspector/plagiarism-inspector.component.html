@@ -12,7 +12,7 @@
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
-                @if (chartFilterApplied) {
+                @if (chartFilterApplied()) {
                     <button class="check-plagiarism btn btn-info" (click)="resetFilter()">
                         <span jhiTranslate="artemisApp.plagiarism.resetFilter"></span>
                     </button>
@@ -21,9 +21,9 @@
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                     class="check-plagiarism btn btn-primary"
                     (click)="checkPlagiarism()"
-                    [overwriteDisabled]="detectionInProgress"
+                    [overwriteDisabled]="detectionInProgress()"
                 >
-                    <span jhiTranslate="{{ plagiarismResult ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
+                    <span jhiTranslate="{{ plagiarismResult() ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
                 <p-dialog
                     [(visible)]="cleanUpModalVisible"
@@ -41,12 +41,12 @@
                             id="deleteAllPlagiarismComparisons"
                             class="form-check-input"
                             type="checkbox"
-                            [checked]="deleteAllPlagiarismComparisons"
+                            [checked]="deleteAllPlagiarismComparisons()"
                             (change)="toggleDeleteAllPlagiarismComparisons()"
                         />
                         <label for="deleteAllPlagiarismComparisons" class="form-check-label" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
                     </div>
-                    @if (deleteAllPlagiarismComparisons) {
+                    @if (deleteAllPlagiarismComparisons()) {
                         <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
                     }
                     <ng-template #footer>
@@ -55,17 +55,17 @@
                         </button>
                     </ng-template>
                 </p-dialog>
-                @if (exercise.isAtLeastInstructor && plagiarismResult) {
+                @if (exercise().isAtLeastInstructor && plagiarismResult()) {
                     <button
                         [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                         class="check-plagiarism btn btn-danger"
                         (click)="openCleanUpModal()"
-                        [overwriteDisabled]="detectionInProgress"
+                        [overwriteDisabled]="detectionInProgress()"
                     >
                         <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
                     </button>
                 }
-                @if (plagiarismResult) {
+                @if (plagiarismResult()) {
                     <div ngbDropdown>
                         <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
                             <span>Download</span>
@@ -108,37 +108,39 @@
             }
         </div>
     </div>
-    @if (plagiarismResult && !detectionInProgress) {
-        <div class="plagiarism-body">
-            <jhi-plagiarism-sidebar
-                [showRunDetails]="showRunDetails"
-                (showRunDetailsChange)="showSimilarityDistribution($event)"
-                [comparisons]="visibleComparisons"
-                [offset]="sidebarOffset"
-                (selectIndex)="selectComparisonWithID($event)"
-                [activeID]="selectedComparisonId"
-                [casesFiltered]="chartFilterApplied"
-            />
-            <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined" [exercise]="exercise" />
-            <jhi-plagiarism-run-details
-                [hidden]="!showRunDetails"
-                [plagiarismResult]="plagiarismResult"
-                [plagiarismResultStats]="plagiarismResultStats"
-                (similaritySelected)="filterByChart($event)"
-            />
-        </div>
+    @if (plagiarismResult(); as plagiarismResult) {
+        @if (!detectionInProgress()) {
+            <div class="plagiarism-body">
+                <jhi-plagiarism-sidebar
+                    [showRunDetails]="showRunDetails()"
+                    (showRunDetailsChange)="showSimilarityDistribution($event)"
+                    [comparisons]="visibleComparisons()"
+                    [offset]="sidebarOffset()"
+                    (selectIndex)="selectComparisonWithID($event)"
+                    [activeID]="selectedComparisonId()"
+                    [casesFiltered]="chartFilterApplied()"
+                />
+                <jhi-plagiarism-details [hidden]="showRunDetails()" [comparison]="plagiarismResult.comparisons ? getSelectedComparison() : undefined" [exercise]="exercise()" />
+                <jhi-plagiarism-run-details
+                    [hidden]="!showRunDetails()"
+                    [plagiarismResult]="plagiarismResult"
+                    [plagiarismResultStats]="plagiarismResultStats()"
+                    (similaritySelected)="filterByChart($event)"
+                />
+            </div>
+        }
     }
-    @if (!plagiarismResult || detectionInProgress) {
+    @if (!plagiarismResult() || detectionInProgress()) {
         <div class="plagiarism-empty">
-            @if (detectionInProgress) {
+            @if (detectionInProgress()) {
                 <div class="d-flex flex-column">
                     <div class="spinner-border text-primary align-self-center mb-1" role="status">
                         <span class="visually-hidden" jhiTranslate="loading"></span>
                     </div>
-                    <p>{{ detectionInProgressMessage }}</p>
+                    <p>{{ detectionInProgressMessage() }}</p>
                 </div>
             }
-            @if (!detectionInProgress) {
+            @if (!detectionInProgress()) {
                 <span class="plagiarism-empty-label" jhiTranslate="artemisApp.plagiarism.empty"></span>
             }
         </div>

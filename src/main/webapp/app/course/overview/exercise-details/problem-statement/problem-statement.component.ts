@@ -39,7 +39,7 @@ export class ProblemStatementComponent implements OnInit {
         return ex?.type === ExerciseType.PROGRAMMING ? (ex as ProgrammingExercise) : undefined;
     });
 
-    isStandalone: boolean = false;
+    readonly isStandalone = signal(false);
 
     ngOnInit() {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -64,7 +64,7 @@ export class ProblemStatementComponent implements OnInit {
         const url = this.route.url;
         if (url) {
             url.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((segments) => {
-                this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
+                this.isStandalone.set(segments.some((segment) => segment.path == 'problem-statement'));
             });
         }
     }

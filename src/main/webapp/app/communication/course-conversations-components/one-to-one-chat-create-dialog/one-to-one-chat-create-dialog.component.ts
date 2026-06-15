@@ -16,7 +16,7 @@ export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
 
     isInitialized = false;
-    selectedUsers: UserPublicInfoDTO[] = [];
+    readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
     userToChatWith?: UserPublicInfoDTO;
 
     initialize() {
@@ -33,8 +33,8 @@ export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
 
     onSelectedUsersChange(selectedUsers: UserPublicInfoDTO[]) {
         if (selectedUsers && selectedUsers.length > 0) {
-            this.selectedUsers = selectedUsers;
-            this.userToChatWith = this.selectedUsers[0];
+            this.selectedUsers.set(selectedUsers);
+            this.userToChatWith = this.selectedUsers()[0];
             this.onUserSelected();
         }
     }

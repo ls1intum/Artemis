@@ -1,13 +1,13 @@
-@if (exercise && result && exerciseType) {
+@if (exercise() && exerciseType() && result(); as result) {
     <jhi-result-detail
-        [exercise]="exercise"
+        [exercise]="exercise()"
         [result]="result"
         [showScoreChart]="true"
-        [participation]="participation"
-        [exerciseType]="exerciseType"
-        [latestDueDate]="latestDueDate"
-        [messageKey]="messageKey"
-        [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation"
+        [participation]="participation()"
+        [exerciseType]="exerciseType()"
+        [latestDueDate]="latestDueDate()"
+        [messageKey]="messageKey()"
+        [showMissingAutomaticFeedbackInformation]="showMissingAutomaticFeedbackInformation()"
         class="modal-padding"
     />
 }

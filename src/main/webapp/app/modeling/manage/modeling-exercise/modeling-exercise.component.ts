@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -48,8 +48,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
-    modelingExercises: ModelingExercise[] = [];
-    filteredModelingExercises: ModelingExercise[];
+    readonly modelingExercises = signal<ModelingExercise[]>([]);
+    readonly filteredModelingExercises = signal<ModelingExercise[]>([]);
     // Icons
     faPlus = faPlus;
     faSort = faSort;
@@ -62,29 +62,30 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     faTrash = faTrash;
 
     protected get exercises() {
-        return this.modelingExercises;
+        return this.modelingExercises();
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body!;
+                const modelingExercises = res.body!;
                 // reconnect exercise with course
-                this.modelingExercises.forEach((exercise) => {
-                    exercise.course = this.courseContext;
+                modelingExercises.forEach((exercise) => {
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
-                    this.selectedExercises = [];
                 });
+                this.modelingExercises.set(modelingExercises);
+                this.selectedExercises.set([]);
                 this.applyFilter();
-                this.emitExerciseCount(this.modelingExercises.length);
+                this.emitExerciseCount(modelingExercises.length);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     protected applyFilter(): void {
-        this.filteredModelingExercises = this.modelingExercises.filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredModelingExercises.length);
+        this.filteredModelingExercises.set(this.modelingExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredModelingExercises().length);
     }
 
     /**
@@ -118,7 +119,9 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+        const sortedModelingExercises = [...this.modelingExercises()];
+        this.sortService.sortByProperty(sortedModelingExercises, this.predicate, this.reverse);
+        this.modelingExercises.set(sortedModelingExercises);
         this.applyFilter();
     }
 
