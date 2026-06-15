@@ -436,10 +436,15 @@ public class ExamResource {
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
         // Import Exam with Exercises and create a channel for the exam
-        Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
+        ExamImportService.ExamImportResult importResult = examImportService.importExamWithExercises(examToBeImported, courseId);
+        Exam examCopied = importResult.exam();
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
+        // If some exercises could not be imported, the exam is still created with the remaining exercises and the
+        // instructor is informed which exercises were skipped instead of the whole import failing.
+        HttpHeaders headers = importResult.failedExerciseTitles().isEmpty() ? HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())
+                : HeaderUtil.createAlert(applicationName, "artemisApp.examManagement.import.partialSuccess", String.join(", ", importResult.failedExerciseTitles()));
+
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(examCopied);
     }
 
     /**

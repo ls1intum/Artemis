@@ -546,7 +546,8 @@
                 "workingTimeTooltip": "The working time allowed to the students per run"
             },
             "import": {
-                "search": "Search for exam"
+                "search": "Search for exam",
+                "partialSuccess": "Exam imported. The following exercises could not be imported and were skipped: {{ param }}"
             },
             "testRun": {
                 "testRun": "Test Run",

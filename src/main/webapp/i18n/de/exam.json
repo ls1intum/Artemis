@@ -546,7 +546,8 @@
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
             "import": {
-                "search": "Suche nach einer Klausur"
+                "search": "Suche nach einer Klausur",
+                "partialSuccess": "Klausur importiert. Die folgenden Aufgaben konnten nicht importiert werden und wurden übersprungen: {{ param }}"
             },
             "testRun": {
                 "testRun": "Testlauf",

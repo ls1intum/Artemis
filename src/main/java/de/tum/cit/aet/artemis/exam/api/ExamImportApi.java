@@ -33,6 +33,6 @@ public class ExamImportApi extends AbstractExamApi {
      * @throws IOException if an error occurs during import
      */
     public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
-        return examImportService.importExamWithExercises(examToCopy, targetCourseId);
+        return examImportService.importExamWithExercises(examToCopy, targetCourseId).exam();
     }
 }
