@@ -42,6 +42,12 @@ export class ExamTimelineComponent {
         effect(() => {
             this.workingTime.update((workingTime) => (!this.isTestExam() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
         });
+
+        effect(() => {
+            if (!this.isSimulationPhaseChecked()) {
+                this.startOfPracticeTime.set(undefined);
+            }
+        });
     }
 
     private readonly endOfSimulationTime = computed(() =>

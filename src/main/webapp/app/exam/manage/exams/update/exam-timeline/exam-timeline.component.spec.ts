@@ -4,7 +4,6 @@ import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -27,7 +26,7 @@ describe('ExamTimelineComponent', () => {
         latestValidity = undefined;
         component.examTimelineStatusChange.subscribe((valid) => (latestValidity = valid));
         setInputs({
-            examType: ExamType.REAL,
+            isTestExam: false,
             visibleFrom: undefined,
             startOfWorkingTime: undefined,
             startOfPracticeTime: undefined,
@@ -39,7 +38,7 @@ describe('ExamTimelineComponent', () => {
     });
 
     const setInputs = (inputs: {
-        examType?: ExamType;
+        isTestExam?: boolean;
         visibleFrom?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         startOfPracticeTime?: dayjs.Dayjs;
@@ -77,7 +76,7 @@ describe('ExamTimelineComponent', () => {
 
     it('should not calculate the working time for practice test exams', () => {
         setInputs({
-            examType: ExamType.PRACTICE,
+            isTestExam: true,
             workingTime: 3600,
             startOfWorkingTime: dayjs(),
             endOfWorkingTime: dayjs().add(12, 'hours'),
@@ -85,47 +84,18 @@ describe('ExamTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(component.workingTime()).toBe(3600);
-        expect(component.noWorkingTimeNeeded()).toBe(false);
     });
 
-    it('should calculate the working time for simulation test exams correctly', () => {
-        const start = dayjs();
-        setInputs({
-            examType: ExamType.SIMULATION,
-            workingTime: 3600,
-            startOfWorkingTime: start,
-            endOfWorkingTime: start.add(2, 'hours'),
-        });
-        fixture.detectChanges();
-
-        expect(component.workingTime()).toBe(7200);
-        expect(component.noWorkingTimeNeeded()).toBe(true);
-    });
-
-    it('should not calculate the working time for simulation and practice test exams', () => {
-        const start = dayjs();
-        setInputs({
-            examType: ExamType.SIMULATION_AND_PRACTICE,
-            workingTime: 3600,
-            startOfWorkingTime: start,
-            endOfWorkingTime: start.add(2, 'hours'),
-        });
-        fixture.detectChanges();
-
-        expect(component.workingTime()).toBe(3600);
-        expect(component.noWorkingTimeNeeded()).toBe(false);
-    });
-
-    it('should derive the simulation end date for simulation and practice test exams', () => {
+    it('should include simulation and practice dates when the simulation phase is checked', () => {
         const start = dayjs().startOf('minute');
         setInputs({
-            examType: ExamType.SIMULATION_AND_PRACTICE,
+            isTestExam: true,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
+        component.isSimulationPhaseChecked.set(true);
         fixture.detectChanges();
 
-        expect(component.endOfSimulationTime()?.isSame(start.add(1, 'hour'))).toBe(true);
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
             'artemisApp.examManagement.visibleDate',
             'artemisApp.examManagement.testExam.startDate',
@@ -134,10 +104,31 @@ describe('ExamTimelineComponent', () => {
             'artemisApp.examManagement.testExam.endDate',
         ]);
 
-        component.workingTime.set(7200);
+        component.isSimulationPhaseChecked.set(false);
         fixture.detectChanges();
 
-        expect(component.endOfSimulationTime()?.isSame(start.add(2, 'hours'))).toBe(true);
+        expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
+            'artemisApp.examManagement.visibleDate',
+            'artemisApp.examManagement.testExam.startDate',
+            'artemisApp.examManagement.testExam.endDate',
+        ]);
+    });
+
+    it('should clear the practice start date when the simulation phase is unchecked', () => {
+        const practiceStart = dayjs().add(2, 'hours');
+        setInputs({
+            isTestExam: true,
+            startOfPracticeTime: practiceStart,
+        });
+        component.isSimulationPhaseChecked.set(true);
+        fixture.detectChanges();
+
+        expect(component.startOfPracticeTime()).toBe(practiceStart);
+
+        component.isSimulationPhaseChecked.set(false);
+        fixture.detectChanges();
+
+        expect(component.startOfPracticeTime()).toBeUndefined();
     });
 
     it('should use the correct timeline labels for real and test exams', () => {
@@ -147,7 +138,7 @@ describe('ExamTimelineComponent', () => {
             'artemisApp.examManagement.endDate',
         ]);
 
-        setInputs({ examType: ExamType.PRACTICE });
+        setInputs({ isTestExam: true });
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -158,7 +149,7 @@ describe('ExamTimelineComponent', () => {
     });
 
     it('validates the working time for practice test exams correctly', () => {
-        setInputs({ examType: ExamType.PRACTICE, workingTime: undefined });
+        setInputs({ isTestExam: true, workingTime: undefined });
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(false);
 
@@ -186,7 +177,7 @@ describe('ExamTimelineComponent', () => {
 
     it('should always show the working time validation message when working time is invalid', () => {
         const start = dayjs();
-        setInputs({ examType: ExamType.PRACTICE, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
+        setInputs({ isTestExam: true, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
         fixture.detectChanges();
 
         expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(true);
@@ -195,26 +186,6 @@ describe('ExamTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(false);
-    });
-
-    it('validates the working time for simulation test exams like real exams', () => {
-        setInputs({ examType: ExamType.SIMULATION, workingTime: undefined, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
-        markTimeline({ valid: false, empty: true });
-        expect(latestValidity).toBe(false);
-
-        setInputs({ workingTime: 3600 });
-        markTimeline({ valid: false, empty: true });
-        expect(latestValidity).toBe(false);
-
-        const start = dayjs();
-        setInputs({ visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start });
-        markTimeline({ valid: false, empty: false });
-        expect(latestValidity).toBe(false);
-
-        setInputs({ endOfWorkingTime: start.add(1, 'hour') });
-        markTimeline({ valid: true, empty: false });
-        expect(latestValidity).toBe(true);
-        expect(component.workingTime()).toBe(3600);
     });
 
     it('validates the working time for real exams correctly', () => {
@@ -305,7 +276,7 @@ describe('ExamTimelineComponent', () => {
     });
 
     it('should clamp the maximum working time for practice exams', () => {
-        setInputs({ examType: ExamType.PRACTICE, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
+        setInputs({ isTestExam: true, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
         fixture.detectChanges();
         expect(component.maxWorkingTimeInMinutes()).toBe(43200);
 
@@ -326,7 +297,7 @@ describe('ExamTimelineComponent', () => {
     it('should correctly validate working time with upper limit of 30 days', () => {
         const start = dayjs();
         setInputs({
-            examType: ExamType.PRACTICE,
+            isTestExam: true,
             visibleFrom: start.subtract(1, 'hour'),
             startOfWorkingTime: start,
             endOfWorkingTime: start.add(35, 'days'),
