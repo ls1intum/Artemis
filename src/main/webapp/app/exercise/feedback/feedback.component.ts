@@ -95,7 +95,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private resultValue?: Result;
     private participationValue?: Participation;
     private feedbackFilterValue?: number[];
-    private showScoreChartValue?: boolean;
+    private readonly showScoreChartValue = signal<boolean | undefined>(undefined);
     private exerciseTypeValue?: ExerciseType;
     private messageKeyValue?: string;
     private showMissingAutomaticFeedbackInformationValue?: boolean;
@@ -140,11 +140,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     get showScoreChart(): boolean {
-        return this.showScoreChartValue ?? this.showScoreChartInput();
+        return this.showScoreChartValue() ?? this.showScoreChartInput();
     }
 
     set showScoreChart(showScoreChart: boolean) {
-        this.showScoreChartValue = showScoreChart;
+        this.showScoreChartValue.set(showScoreChart);
     }
 
     get exerciseType(): ExerciseType {
@@ -211,13 +211,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-    isLoading = false;
-    loadingFailed = false;
-    buildLogs: BuildLogEntryArray;
-    course?: Course;
-    isOnlyCompilationTested: boolean;
+    readonly isLoading = signal(false);
+    readonly loadingFailed = signal(false);
+    readonly buildLogs = signal<BuildLogEntryArray | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isOnlyCompilationTested = signal<boolean>(undefined!);
 
-    commitHash?: string;
+    readonly commitHash = signal<string | undefined>(undefined);
 
     readonly chartData = signal<FeedbackChartData>({
         xScaleMax: 100,
@@ -238,15 +238,15 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }),
     );
 
-    badge: Badge;
+    readonly badge = signal<Badge | undefined>(undefined);
 
     feedbackItemService: FeedbackItemService;
-    feedbackItemNodes: FeedbackNode[];
+    readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
     /**
      * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
      * from true to false
      */
-    private feedbackItemNodesBeforePrinting: FeedbackNode[];
+    private feedbackItemNodesBeforePrinting?: FeedbackNode[];
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -270,19 +270,17 @@ export class FeedbackComponent implements OnInit, OnChanges {
             this.numberOfNotExecutedTests = data.numberOfNotExecutedTests ?? this.numberOfNotExecutedTests;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.initializeExerciseInformation();
 
         this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.initFeedbackInformation();
 
-        this.commitHash = this.getCommitHash().slice(0, 11);
+        this.commitHash.set(this.getCommitHash().slice(0, 11));
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(
-            this.result,
-            this.participation,
-            evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false),
+        this.isOnlyCompilationTested.set(
+            isOnlyCompilationTested(this.result, this.participation, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false)),
         );
     }
 
@@ -293,10 +291,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isPrinting) {
             if (changes.isPrinting.currentValue) {
-                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes);
+                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes());
                 this.expandFeedbackItemGroups();
             } else {
-                this.feedbackItemNodes = this.feedbackItemNodesBeforePrinting;
+                this.feedbackItemNodes.set(this.feedbackItemNodesBeforePrinting);
             }
         }
     }
@@ -307,7 +305,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private initializeExerciseInformation() {
         this.exercise ??= this.participation?.exercise;
         if (this.exercise) {
-            this.course = getCourseFromExercise(this.exercise);
+            this.course.set(getCourseFromExercise(this.exercise));
         }
 
         if (!this.exerciseType && this.exercise?.type) {
@@ -346,7 +344,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
+                        this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, this.exercise!));
                         if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
                         }
@@ -361,23 +359,23 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
-                    if (this.showScoreChart) {
-                        this.updateChart(this.feedbackItemNodes);
+                    if (this.showScoreChart && this.feedbackItemNodes() !== undefined) {
+                        this.updateChart(this.feedbackItemNodes()!);
                     }
 
                     if (isStudentParticipation(this.participation)) {
-                        this.badge = ResultService.evaluateBadge(this.participation, this.result);
+                        this.badge.set(ResultService.evaluateBadge(this.participation, this.result));
                     }
 
                     return of(null);
                 }),
                 catchError(() => {
-                    this.loadingFailed = true;
+                    this.loadingFailed.set(true);
                     return of(null);
                 }),
             )
             .subscribe(() => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
     }
 
@@ -389,7 +387,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private fetchAndSetBuildLogs = (participationId: number, resultId?: number) => {
         return this.buildLogService.getBuildLogs(participationId, resultId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
-                this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
+                this.buildLogs.set(BuildLogEntryArray.fromBuildLogs(repoResult));
             }),
             catchError((error: HttpErrorResponse) => {
                 /**
@@ -419,7 +417,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     private expandFeedbackItemGroups() {
-        this.feedbackItemNodes.forEach((feedbackNode) => {
+        this.feedbackItemNodes()?.forEach((feedbackNode) => {
             if (isFeedbackGroup(feedbackNode)) {
                 feedbackNode.open = true;
             }

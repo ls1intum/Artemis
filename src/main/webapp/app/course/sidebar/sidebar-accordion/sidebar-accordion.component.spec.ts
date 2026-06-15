@@ -188,10 +188,10 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should calculate unread messages of each group correctly', () => {
-        expect(component.totalUnreadMessagesPerGroup['current']).toBe(2);
-        expect(component.totalUnreadMessagesPerGroup['past']).toBe(5);
-        expect(component.totalUnreadMessagesPerGroup['future']).toBe(0);
-        expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
+        expect(component.totalUnreadMessagesPerGroup()['current']).toBe(2);
+        expect(component.totalUnreadMessagesPerGroup()['past']).toBe(5);
+        expect(component.totalUnreadMessagesPerGroup()['future']).toBe(0);
+        expect(component.totalUnreadMessagesPerGroup()['noDate']).toBe(0);
     });
 
     it('should use the week grouping utility for grouping items', () => {

@@ -105,11 +105,11 @@ describe('EditOnlineUnitComponent', () => {
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
-        expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
-        expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
-        expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData);
+        expect(editOnlineUnitComponent.formData().name).toEqual(onlineUnitOfResponse.name);
+        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
+        expect(editOnlineUnitComponent.formData().description).toEqual(onlineUnitOfResponse.description);
+        expect(editOnlineUnitComponent.formData().source).toEqual(onlineUnitOfResponse.source);
+        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

@@ -39,7 +39,7 @@ describe('DoughnutChartComponent', () => {
 
     it('should initialize', () => {
         fixture.componentRef.setInput('contentType', DoughnutChartType.AVERAGE_EXERCISE_SCORE);
-        component.ngOnChanges();
+        fixture.detectChanges();
         const expected = [absolute, max - absolute, 0];
         expect(component.stats).toEqual(expected);
         expect(component.chartEntries()[0].value).toBe(expected[0]);
@@ -47,7 +47,7 @@ describe('DoughnutChartComponent', () => {
         expect(component.chartEntries()[2].value).toBe(expected[2]);
 
         fixture.componentRef.setInput('currentMax', 0);
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.chartEntries()[0].value).toBe(0);
         expect(component.chartEntries()[1].value).toBe(0);
@@ -56,9 +56,9 @@ describe('DoughnutChartComponent', () => {
 
     it('should use fallback value when currentAbsolute is undefined and stats are not received', () => {
         fixture.componentRef.setInput('currentAbsolute', undefined);
-        component.receivedStats = false;
+        component.receivedStats.set(false);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.chartEntries()[0].value).toBe(0);
         expect(component.chartEntries()[1].value).toBe(0);
@@ -71,8 +71,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('averageScore');
-            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/scores']);
+            expect(component.doughnutChartTitle()).toBe('averageScore');
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/scores']);
         });
 
         it('should set title for participations', () => {
@@ -80,8 +80,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('participationRate');
-            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/participations']);
+            expect(component.doughnutChartTitle()).toBe('participationRate');
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/participations']);
         });
 
         it('should set title for question chart', () => {
@@ -89,8 +89,8 @@ describe('DoughnutChartComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.doughnutChartTitle).toBe('resolved_posts');
-            expect(component.titleLink).toEqual(['/courses/1/exercises/2']);
+            expect(component.doughnutChartTitle()).toBe('resolved_posts');
+            expect(component.titleLink()).toEqual(['/courses/1/exercises/2']);
         });
     });
 

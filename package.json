@@ -80,8 +80,7 @@
         "turndown": "7.2.4",
         "y-monaco": "0.1.6",
         "y-protocols": "1.0.7",
-        "yjs": "13.6.31",
-        "zone.js": "0.16.2"
+        "yjs": "13.6.31"
     },
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "2.6.1",

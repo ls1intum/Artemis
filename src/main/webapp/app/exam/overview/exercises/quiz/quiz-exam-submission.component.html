@@ -24,8 +24,8 @@
                                 <span
                                     class="btn btn-light btn-circle draganddropcolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
+                                    [ngbTooltip]="!!dragAndDropMappings().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!dragAndDropMappings().get(question.id!)?.length ? 'changed-question' : ''"
                                 >
                                     <b class="fa">DD</b>
                                 </span>
@@ -34,8 +34,8 @@
                                 <span
                                     class="btn btn-light btn-circle multiplechoicecolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
+                                    [ngbTooltip]="!!selectedAnswerOptions().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!selectedAnswerOptions().get(question.id!)?.length ? 'changed-question' : ''"
                                 >
                                     <b class="fa">MC</b>
                                 </span>
@@ -44,8 +44,8 @@
                                 <span
                                     class="btn btn-light btn-circle shortanswercolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
+                                    [ngbTooltip]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? 'changed-question' : ''"
                                 >
                                     <b class="fa">SA</b>
                                 </span>
@@ -66,8 +66,8 @@
                         <jhi-multiple-choice-question
                             id="question{{ question.id }}"
                             [question]="question"
-                            [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
-                            (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
+                            [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
+                            (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(question.id!, $event)"
                             [fnOnSelection]="onSelectionChanged.bind(this)"
                             [quizQuestions]="quizConfiguration().quizQuestions"
                             [questionIndex]="i + 1"
@@ -79,8 +79,8 @@
                         <jhi-drag-and-drop-question
                             id="question{{ question.id }}"
                             [question]="question"
-                            [mappings]="dragAndDropMappings.get(question.id!)!"
-                            (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
+                            [mappings]="dragAndDropMappings().get(question.id!)!"
+                            (mappingsChange)="onDragAndDropMappingsChange(question.id!, $event)"
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
@@ -91,8 +91,8 @@
                         <jhi-short-answer-question
                             id="question{{ question.id }}"
                             [question]="question"
-                            [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
-                            (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
+                            [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
+                            (submittedTextsChange)="onShortAnswerSubmittedTextsChange(question.id!, $event)"
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"

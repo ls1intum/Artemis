@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -35,9 +35,9 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     readonly refresh = output<void>();
 
-    correctionRoundIndices: number[];
+    readonly correctionRoundIndices = signal<number[]>(undefined!);
     cancelConfirmationText: string;
-    newManualResultAllowed = false;
+    readonly newManualResultAllowed = signal(false);
     examMode = false;
 
     readonly faBan = faBan;
@@ -51,14 +51,14 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.newManualResultAllowed = areManualResultsAllowed(this.exercise());
+        this.newManualResultAllowed.set(areManualResultsAllowed(this.exercise()));
         this.examMode = !!this.exercise().exerciseGroup;
         if (isPracticeMode(this.participation()) && !this.examMode) {
             // don't allow manual results for practice mode participations
-            this.newManualResultAllowed = false;
+            this.newManualResultAllowed.set(false);
         }
         // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
-        this.correctionRoundIndices = [...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
+        this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
     getAssessmentLink(correctionRound = 0) {

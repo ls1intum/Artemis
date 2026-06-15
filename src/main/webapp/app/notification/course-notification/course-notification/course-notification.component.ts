@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
@@ -37,31 +37,31 @@ export class CourseNotificationComponent {
     readonly isRedirectToUrl = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
 
-    protected faIcon: IconDefinition;
-    protected notificationParameters: { [key: string]: unknown };
-    protected notificationType: string;
-    protected notificationInitialized: boolean = false;
-    protected notificationUrl: { link: string[]; queryParams: Record<string, string> };
-    protected notificationTimeTranslationKey: string;
-    protected notificationTimeTranslationParameters: { [key: string]: unknown };
+    protected readonly faIcon = signal<IconDefinition>(undefined!);
+    protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);
+    protected readonly notificationType = signal<string>(undefined!);
+    protected readonly notificationInitialized = signal<boolean>(false);
+    protected readonly notificationUrl = signal<{ link: string[]; queryParams: Record<string, string> }>(undefined!);
+    protected readonly notificationTimeTranslationKey = signal<string>(undefined!);
+    protected readonly notificationTimeTranslationParameters = signal<{ [key: string]: unknown }>(undefined!);
 
     // Icons
     protected faTimes = faTimes;
 
     // Needed for communication notifications
-    protected isShowProfilePicture: boolean = false;
-    protected authorName: string | undefined;
-    protected authorId: number | undefined;
-    protected authorImageUrl: string | undefined;
-    protected isAuthorBot: boolean = false;
+    protected readonly isShowProfilePicture = signal<boolean>(false);
+    protected readonly authorName = signal<string | undefined>(undefined);
+    protected readonly authorId = signal<number | undefined>(undefined);
+    protected readonly authorImageUrl = signal<string | undefined>(undefined);
+    protected readonly isAuthorBot = signal<boolean>(false);
 
     constructor() {
         effect(() => {
             const notification = this.courseNotification();
             untracked(() => {
-                this.faIcon = this.courseNotificationService.getIconFromType(notification.notificationType);
+                this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
                 // For translations, we pass all parameters and the course name and id so they can automatically be used.
-                this.notificationParameters = {
+                const notificationParameters: { [key: string]: unknown } = {
                     ...Object.entries(notification.parameters!).reduce(
                         (acc, [key, value]) => {
                             if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
@@ -84,27 +84,28 @@ export class CourseNotificationComponent {
                     courseName: notification.courseName,
                     courseId: notification.courseId,
                 };
-                this.notificationType = notification.notificationType!;
-                this.notificationUrl = this.parseUrlToRouterObject(notification.relativeWebAppUrl!);
-                this.notificationTimeTranslationKey = this.courseNotificationService.getDateTranslationKey(notification);
-                this.notificationTimeTranslationParameters = this.courseNotificationService.getDateTranslationParams(notification);
-                if ('authorName' in this.notificationParameters && 'authorImageUrl' in this.notificationParameters && 'authorId' in this.notificationParameters) {
-                    this.authorName = this.notificationParameters.authorName as string;
-                    this.authorId = this.notificationParameters.authorId as number;
-                    this.authorImageUrl = this.notificationParameters.authorImageUrl as string;
-                    this.isAuthorBot = this.notificationParameters.authorIsBot === true;
-                    this.isShowProfilePicture = true;
-                } else if ('replyAuthorName' in this.notificationParameters && 'replyImageUrl' in this.notificationParameters && 'replyAuthorId' in this.notificationParameters) {
-                    this.authorName = this.notificationParameters.replyAuthorName as string;
-                    this.authorId = this.notificationParameters.replyAuthorId as number;
-                    this.authorImageUrl = this.notificationParameters.replyImageUrl as string;
-                    this.isAuthorBot = this.notificationParameters.replyIsBot === true;
-                    this.isShowProfilePicture = true;
+                this.notificationParameters.set(notificationParameters);
+                this.notificationType.set(notification.notificationType!);
+                this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
+                this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
+                this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));
+                if ('authorName' in notificationParameters && 'authorImageUrl' in notificationParameters && 'authorId' in notificationParameters) {
+                    this.authorName.set(notificationParameters.authorName as string);
+                    this.authorId.set(notificationParameters.authorId as number);
+                    this.authorImageUrl.set(notificationParameters.authorImageUrl as string);
+                    this.isAuthorBot.set(notificationParameters.authorIsBot === true);
+                    this.isShowProfilePicture.set(true);
+                } else if ('replyAuthorName' in notificationParameters && 'replyImageUrl' in notificationParameters && 'replyAuthorId' in notificationParameters) {
+                    this.authorName.set(notificationParameters.replyAuthorName as string);
+                    this.authorId.set(notificationParameters.replyAuthorId as number);
+                    this.authorImageUrl.set(notificationParameters.replyImageUrl as string);
+                    this.isAuthorBot.set(notificationParameters.replyIsBot === true);
+                    this.isShowProfilePicture.set(true);
                 } else {
-                    this.isAuthorBot = false;
-                    this.isShowProfilePicture = false;
+                    this.isAuthorBot.set(false);
+                    this.isShowProfilePicture.set(false);
                 }
-                this.notificationInitialized = true;
+                this.notificationInitialized.set(true);
             });
         });
     }

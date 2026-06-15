@@ -93,7 +93,7 @@ export class CodeButtonComponent implements OnInit {
     sshEnabled = false;
     sshTemplateUrl?: string;
     versionControlUrl: string;
-    readonly isInCourseManagement: boolean;
+    readonly isInCourseManagement = signal<boolean>(undefined!);
     sshSettingsUrl: string;
     vcsTokenSettingsUrl: string;
     user: User;
@@ -158,11 +158,11 @@ export class CodeButtonComponent implements OnInit {
     readonly faLaptopCode = faLaptopCode;
 
     constructor() {
-        this.isInCourseManagement = this.router.url.includes('course-management');
+        this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
-            if (this.isInCourseManagement) {
+            if (this.isInCourseManagement()) {
                 return;
             }
             const participations = this.participations();
@@ -217,7 +217,7 @@ export class CodeButtonComponent implements OnInit {
 
     public useHttpsToken() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        if (this.isInCourseManagement) {
+        if (this.isInCourseManagement()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
             this.userTokenStillValid.set(stillValid);
@@ -339,7 +339,7 @@ export class CodeButtonComponent implements OnInit {
 
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
-            if (this.isInCourseManagement) {
+            if (this.isInCourseManagement()) {
                 return this.user.vcsAccessToken;
             } else {
                 return this.activeParticipation()?.vcsAccessToken;
