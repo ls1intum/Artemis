@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -45,7 +45,11 @@ import { onError } from 'app/foundation/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -88,7 +92,7 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        PieChartModule,
+        ChartModule,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -212,10 +216,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    view: [number, number] = [330, 150];
-    legendPosition = LegendPosition.Below;
-    assessments: any[];
-    customColors: any[];
+    private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    // raw colors (CSS variable references), index-aligned with chartEntries; resolved theme-reactively below
+    private readonly rawChartColors = signal<string[]>([]);
+    private readonly resolvedChartColors = inject(ChartColorService).resolvedColors(() => this.rawChartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 1,
+            legend: { position: 'bottom' },
+            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions.total).toFixed(2)}%` },
+        }),
+    );
     isAutomaticAssessedProgrammingExercise = false;
 
     // links
@@ -260,11 +273,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
             this.isAutomaticAssessedProgrammingExercise = true;
-            this.customColors = [
-                { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
-                { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
-            ];
-            this.assessments = [
+            this.rawChartColors.set([GraphColors.YELLOW, GraphColors.GREEN]);
+            this.chartEntries.set([
                 {
                     name: numberOfComplaintsLabel,
                     value: this.statsForDashboard.numberOfOpenComplaints,
@@ -273,17 +283,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     name: numberOfResolvedComplaintsLabel,
                     value: this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
                 },
-            ];
+            ]);
         } else {
             const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
             const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
             const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.customColors = [
-                { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
-                { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
-                { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
-            ];
-            this.assessments = [
+            this.rawChartColors.set([GraphColors.RED, GraphColors.BLUE, GraphColors.YELLOW]);
+            this.chartEntries.set([
                 {
                     name: numberOfUnassessedSubmissionLabel,
                     value: this.numberOfSubmissions.total - this.totalNumberOfAssessments,
@@ -296,7 +302,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     name: numberOfAutomaticAssistedSubmissionsLabel,
                     value: this.numberOfAutomaticAssistedAssessments.total,
                 },
-            ];
+            ]);
         }
     }
 
