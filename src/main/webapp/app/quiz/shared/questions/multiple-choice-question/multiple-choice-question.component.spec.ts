@@ -191,6 +191,42 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
     });
 
+    it('should keep pre-existing selections when adding another option (multi-select)', () => {
+        // Regression test for answer loss in exams: when the component is initialized with
+        // already-selected options (e.g. a resumed exam, a page reload, or a recreated
+        // component after hand-in-early), selecting a further option must keep the existing
+        // selections instead of replacing them with only the newly clicked one.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
+
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+
+        fixture.componentRef.setInput('question', question);
+        // Pre-existing selections, as if loaded from a previously saved submission.
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        // Add a third option.
+        component.toggleSelection(answerOptions[2]);
+
+        expect(emitted).toBeDefined();
+        const emittedIds = emitted!.map((option) => option.id).sort();
+        expect(emittedIds).toEqual([1, 2, 3]);
+    });
+
     it('should toggle answer options, but only allow one to be selected for single choice questions', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },

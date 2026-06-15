@@ -26,7 +26,6 @@ export class MultipleChoiceQuestionComponent {
     question = input.required<MultipleChoiceQuestion>();
     // TODO: Map vs. Array --> consistency
     selectedAnswerOptions = input.required<AnswerOption[]>();
-    _selectedAnswerOptions: AnswerOption[] = [];
     clickDisabled = input<boolean>(false);
     showResult = input<boolean>(false);
     questionIndex = input<number>(0);
@@ -80,22 +79,27 @@ export class MultipleChoiceQuestionComponent {
     toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled()) {
             // Do nothing
-            this._selectedAnswerOptions = this.selectedAnswerOptions();
             return;
         }
+        // Always derive the new selection from the current input. The input reflects the options
+        // selected so far (including selections loaded from a previously saved submission), so
+        // building on top of it preserves existing answers. Mutating a separate local copy here
+        // used to drop previously selected options after a reload or component recreation,
+        // causing answer loss in exams.
+        let updatedSelection: AnswerOption[];
         if (this.isAnswerOptionSelected(answerOption)) {
-            this._selectedAnswerOptions = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
+            updatedSelection = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id !== answerOption.id;
                 }
                 return selectedAnswerOption !== answerOption;
             });
         } else if (this.isSingleChoice) {
-            this._selectedAnswerOptions = [answerOption];
+            updatedSelection = [answerOption];
         } else {
-            this._selectedAnswerOptions.push(answerOption);
+            updatedSelection = [...this.selectedAnswerOptions(), answerOption];
         }
-        this.selectedAnswerOptionsChange.emit(this._selectedAnswerOptions);
+        this.selectedAnswerOptionsChange.emit(updatedSelection);
         /** Only execute the onSelection function if we received such input **/
         const fnOnSelectionFn = this.fnOnSelection();
         if (fnOnSelectionFn && typeof fnOnSelectionFn === 'function') {
