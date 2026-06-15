@@ -1,4 +1,7 @@
 import { vi } from 'vitest';
+import type { ApollonOptions } from '@tumaet/apollon';
+
+type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration'>;
 
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
@@ -6,7 +9,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
     class MockApollonEditorClass {
         _model: any;
-        _options: any;
+        _options: MockApollonOptions | undefined;
         _subscriptions = new Map<number, (model: any) => void>();
         _subscriptionCounter = 0;
         _broadcastCallback: ((patch: string) => void) | undefined;
@@ -41,7 +44,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         nextRender = Promise.resolve();
 
-        constructor(_container: HTMLElement, options?: { model?: any; collaboration?: any }) {
+        constructor(_container: HTMLElement, options?: MockApollonOptions) {
             this._options = options;
             this._model = options?.model ? deepClone(options.model) : {};
         }
@@ -188,9 +191,9 @@ describe('ModelingEditorComponent', () => {
         fixture.componentRef.setInput('collaborationUser', collaborationUser);
         fixture.detectChanges();
 
-        const editor = component['apollonEditor'] as any;
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
         expect(editor).toBeDefined();
-        expect(editor._options.collaboration).toEqual({
+        expect(editor._options?.collaboration).toEqual({
             enabled: true,
             user: collaborationUser,
             showPresence: true,
