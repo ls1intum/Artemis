@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -70,6 +72,8 @@ public class PyrisJobService {
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);
+        // Crash self-heal backstop: a reservation whose run never completes (node crash) expires with the job TTL.
+        hazelcastInstance.getConfig().getMapConfig("struggle-inflight-map").setTimeToLiveSeconds(jobTimeout);
     }
 
     /**
@@ -83,6 +87,20 @@ public class PyrisJobService {
             this.jobMap = this.hazelcastInstance.getMap("pyris-job-map");
         }
         return this.jobMap;
+    }
+
+    /**
+     * Retrieves the Hazelcast map that holds the single-flight in-flight markers for struggle-intervention runs,
+     * keyed by {@link #struggleInFlightKey(long, long)} (value = the reserving job token).
+     *
+     * @return the IMap of {@code (userId:exerciseId) -> token} reservations
+     */
+    private IMap<String, String> getStruggleInFlightMap() {
+        return hazelcastInstance.getMap("struggle-inflight-map");
+    }
+
+    private static String struggleInFlightKey(long userId, long exerciseId) {
+        return userId + ":" + exerciseId;
     }
 
     /**
@@ -134,6 +152,62 @@ public class PyrisJobService {
         var job = new AutonomousTutorJob(token, postId, courseId);
         getPyrisJobMap().put(token, job);
         return token;
+    }
+
+    /**
+     * Cluster-atomically reserve the single-flight slot for {@code (userId, exerciseId)} and mint a struggle
+     * job (spec §11). Returns the new token, or empty if a run is already in flight for that pair. The reservation
+     * TTL matches the job TTL, so a crashed run self-heals. If writing the job map fails, the reservation is rolled
+     * back (token-conditional) so the slot is never leaked.
+     *
+     * @param courseId   the course the run belongs to
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     * @return the minted job token, or empty if a run is already in flight for {@code (userId, exerciseId)}
+     */
+    public Optional<String> addStruggleInterventionJobIfNonePending(long courseId, long userId, long exerciseId) {
+        var token = generateJobIdToken();
+        var key = struggleInFlightKey(userId, exerciseId);
+        String existing = getStruggleInFlightMap().putIfAbsent(key, token, jobTimeout, TimeUnit.SECONDS);
+        if (existing != null) {
+            return Optional.empty();
+        }
+        try {
+            getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId));
+        }
+        catch (RuntimeException e) {
+            getStruggleInFlightMap().remove(key, token); // roll back OUR reservation only (token-conditional)
+            throw e;
+        }
+        return Optional.of(token);
+    }
+
+    /**
+     * Release a reserved struggle slot + its job on a LOCAL send failure (no callback will arrive). Idempotent
+     * and token-conditional: only clears the in-flight marker if it still holds THIS token, so it cannot wipe a
+     * newer reservation for the same {@code (user, exercise)}.
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void releaseStruggleInFlightJob(String token, long userId, long exerciseId) {
+        getPyrisJobMap().remove(token);
+        getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
+    }
+
+    /**
+     * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
+     * callback AFTER {@code handleDecision} has finished (Task 12): the job-map entry was already removed up front
+     * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
+     * + push, otherwise a concurrent second trigger could race in and create a duplicate session/bubble (spec §11).
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void releaseStruggleInFlightMarker(String token, long userId, long exerciseId) {
+        getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
     }
 
     /**
