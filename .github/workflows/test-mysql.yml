@@ -31,7 +31,9 @@ jobs:
         java-version: |
           17
           ${{ env.java }}
-        cache: 'gradle'
+    - name: Setup Gradle
+      # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See build.yml.
+      uses: gradle/actions/setup-gradle@v6
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |

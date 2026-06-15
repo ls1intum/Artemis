@@ -98,6 +98,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
+      - name: Setup Gradle
+        # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See build.yml.
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build application
         shell: bash

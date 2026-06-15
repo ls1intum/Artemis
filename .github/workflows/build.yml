@@ -115,8 +115,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
-          cache: 'gradle'
       - name: Setup Gradle
+        # gradle/actions/setup-gradle is the sole Gradle dependency-cache mechanism here
+        # (do not also set cache: 'gradle' on setup-java — the two would fight over ~/.gradle).
+        # It prunes unused artifacts before saving, keeping cache entries lean to reduce
+        # GitHub Actions cache eviction and the resulting Maven Central re-downloads (429s).
         uses: gradle/actions/setup-gradle@v6
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile

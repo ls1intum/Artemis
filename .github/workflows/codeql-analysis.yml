@@ -52,7 +52,9 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
-        cache: 'gradle'
+    - name: Setup Gradle
+      # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See build.yml.
+      uses: gradle/actions/setup-gradle@v6
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
