@@ -23,12 +23,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -67,6 +69,12 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Mock
     private IrisChatSessionService irisChatSessionService;
 
+    @Mock
+    private IrisMessageService irisMessageService;
+
+    @Mock
+    private IrisChatWebsocketService irisChatWebsocketService;
+
     private IrisStruggleInterventionService service;
 
     private static final long EX = 42L;
@@ -92,7 +100,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setId(USER_ID);
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService);
         when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 

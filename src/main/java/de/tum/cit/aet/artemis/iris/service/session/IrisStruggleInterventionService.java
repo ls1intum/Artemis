@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
@@ -17,14 +19,23 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -59,11 +70,17 @@ public class IrisStruggleInterventionService {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    // + decision-side deps (Task 11): IrisMessageService, IrisChatWebsocketService, confidenceThreshold.
+    private final IrisMessageService irisMessageService;
+
+    private final IrisChatWebsocketService irisChatWebsocketService;
+
+    @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
+    private double confidenceThreshold;
 
     public IrisStruggleInterventionService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
-            PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService) {
+            PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
+            IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -73,6 +90,8 @@ public class IrisStruggleInterventionService {
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisMessageService = irisMessageService;
+        this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
     /**
@@ -166,6 +185,46 @@ public class IrisStruggleInterventionService {
      */
     private Optional<ProgrammingSubmission> latestSubmission(ProgrammingExercise exercise, User user) {
         return irisChatSessionService.getLatestSubmissionIfExists(exercise, user);
+    }
+
+    /**
+     * Apply Iris's gated decision for a completed run (spec §5.4, §5.5, §11). Called once per run by the status
+     * handler, AFTER the job has been removed (idempotency). Materializes the session only on {@code active}.
+     *
+     * @param job          the struggle-intervention job (ids only; the session is resolved here)
+     * @param statusUpdate the gated decision posted back by Pyris
+     */
+    public void handleDecision(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        var user = userRepository.findByIdElseThrow(job.userId());
+        var action = statusUpdate.action();
+        var confidence = statusUpdate.confidence();
+        boolean belowThreshold = confidence == null || confidence < confidenceThreshold;   // fail-closed on null
+        String finalAction = ("silent".equals(action) || belowThreshold) ? "silent" : action;
+        log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
+
+        if (statusUpdate.result() == null || statusUpdate.result().isEmpty()) {
+            return;   // nothing to surface
+        }
+        switch (finalAction) {
+            case "active" -> {
+                var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, job.exerciseId(), user);
+                if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(session.getEntityId(), job.exerciseId())) {
+                    log.info("Dropping stale struggle intervention: resolved session for exercise {} is not exercise-bound", job.exerciseId());
+                    return;
+                }
+                var message = new IrisMessage();
+                message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+                message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+                var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+                irisChatWebsocketService.sendMessage(session, saved, statusUpdate.stages());
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "active", null, session.getId(), confidence));
+            }
+            case "ambient" ->
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), null, confidence));
+            default -> {
+                // silent (or downgraded): surface nothing, materialize nothing.
+            }
+        }
     }
 
     /** Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads). */
