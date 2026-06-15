@@ -270,9 +270,6 @@ importers:
       yjs:
         specifier: 13.6.31
         version: 13.6.31
-      zone.js:
-        specifier: 0.16.2
-        version: 0.16.2
     devDependencies:
       '@analogjs/vite-plugin-angular':
         specifier: 2.6.1
@@ -14118,7 +14115,8 @@ snapshots:
 
   zod@4.3.6: {}
 
-  zone.js@0.16.2: {}
+  zone.js@0.16.2:
+    optional: true
 
   zustand@5.0.12(react@18.3.1):
     optionalDependencies:

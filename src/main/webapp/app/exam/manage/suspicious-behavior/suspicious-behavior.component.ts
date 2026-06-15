@@ -79,11 +79,17 @@ export class SuspiciousBehaviorComponent implements OnInit {
     private retrievePlagiarismCases = () => {
         this.exercises().forEach((exercise) => {
             this.plagiarismCasesService.getNumberOfPlagiarismCasesForExercise(exercise).subscribe((res) => {
-                this.plagiarismCasesPerExercise().computeIfAbsent(exercise, () => res);
+                // Rebuild the Map so the signal notifies and the (zoneless) view re-renders; computeIfAbsent only adds when the key is absent.
+                const updated = new Map(this.plagiarismCasesPerExercise());
+                updated.computeIfAbsent(exercise, () => res);
+                this.plagiarismCasesPerExercise.set(updated);
                 if (res > 0) this.anyPlagiarismCases.set(true);
             });
             this.plagiarismResultsService.getNumberOfPlagiarismResultsForExercise(exercise.id!).subscribe((res) => {
-                this.plagiarismResultsPerExercise().computeIfAbsent(exercise, () => res);
+                // Rebuild the Map so the signal notifies and the (zoneless) view re-renders; computeIfAbsent only adds when the key is absent.
+                const updated = new Map(this.plagiarismResultsPerExercise());
+                updated.computeIfAbsent(exercise, () => res);
+                this.plagiarismResultsPerExercise.set(updated);
             });
         });
     };

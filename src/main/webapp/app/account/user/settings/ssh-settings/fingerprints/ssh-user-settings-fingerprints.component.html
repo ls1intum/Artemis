@@ -10,46 +10,46 @@
             </p>
         </div>
 
-        @if (sshFingerprints && sshFingerprints['RSA']) {
+        @if (sshFingerprints() && sshFingerprints()!['RSA']) {
             <div class="row small-text">
                 <div class="column left">
                     {{ 'RSA' }}
                 </div>
                 <div class="column right">
-                    {{ sshFingerprints['RSA'] }}
+                    {{ sshFingerprints()!['RSA'] }}
                 </div>
             </div>
         }
 
-        @if (sshFingerprints && sshFingerprints['EdDSA']) {
+        @if (sshFingerprints() && sshFingerprints()!['EdDSA']) {
             <div class="row small-text">
                 <div class="column left">
                     {{ 'ED25519' }}
                 </div>
                 <div class="column right">
-                    {{ sshFingerprints['EdDSA'] }}
+                    {{ sshFingerprints()!['EdDSA'] }}
                 </div>
             </div>
         }
 
-        @if (sshFingerprints && sshFingerprints['ECDSA']) {
+        @if (sshFingerprints() && sshFingerprints()!['ECDSA']) {
             <div class="row">
                 <div class="column left">
                     {{ 'ECDSA' }}
                 </div>
                 <div class="column right">
-                    {{ sshFingerprints['ECDSA'] }}
+                    {{ sshFingerprints()!['ECDSA'] }}
                 </div>
             </div>
         }
 
-        @if (sshFingerprints && sshFingerprints['EC']) {
+        @if (sshFingerprints() && sshFingerprints()!['EC']) {
             <div class="row">
                 <div class="column left">
                     {{ 'ECDSA' }}
                 </div>
                 <div class="column right">
-                    {{ sshFingerprints['EC'] }}
+                    {{ sshFingerprints()!['EC'] }}
                 </div>
             </div>
         }

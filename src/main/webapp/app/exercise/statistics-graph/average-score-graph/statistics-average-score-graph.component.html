@@ -10,7 +10,7 @@
             class="col-1 d-flex align-items-center justify-content-end"
             role="button"
             (click)="switchTimeSpan(LEFT)"
-            [class.hidden]="!(currentSize > MAX_SPAN_SIZE && currentPeriod > 0)"
+            [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
         <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
             <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
@@ -21,7 +21,7 @@
             class="col-1 d-flex align-items-center switch-forward"
             role="button"
             (click)="switchTimeSpan(RIGHT)"
-            [class.hidden]="!(currentSize > MAX_SPAN_SIZE + currentPeriod)"
+            [class.hidden]="!(currentSize() > MAX_SPAN_SIZE + currentPeriod())"
         />
         <ng-template #placeholder>
             <div class="switch-forward-placeholder"></div>

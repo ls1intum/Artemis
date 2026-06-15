@@ -108,10 +108,10 @@ examples.forEach((activeConversation) => {
             if (searchMembersOfConversationSpy.mock.calls.length) {
                 expectSearchPerformed('');
             } else {
-                component.members = [{ id: 1, name: 'user1', login: 'user1' } as ConversationUserDTO, { id: 2, name: 'user2', login: 'user2' } as ConversationUserDTO];
-                component.totalItems = 2;
-                expect(component.members).toHaveLength(2);
-                expect(component.totalItems).toBe(2);
+                component.members.set([{ id: 1, name: 'user1', login: 'user1' } as ConversationUserDTO, { id: 2, name: 'user2', login: 'user2' } as ConversationUserDTO]);
+                component.totalItems.set(2);
+                expect(component.members()).toHaveLength(2);
+                expect(component.totalItems()).toBe(2);
             }
         });
 
@@ -180,8 +180,8 @@ examples.forEach((activeConversation) => {
         function expectSearchPerformed(expectedSearchTerm: string, expectedFilter: ConversationMemberSearchFilter = ConversationMemberSearchFilter.ALL) {
             expect(searchMembersOfConversationSpy).toHaveBeenCalledOnce();
             expect(searchMembersOfConversationSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, expectedSearchTerm, 0, 10, expectedFilter);
-            expect(component.members).toHaveLength(2);
-            expect(component.totalItems).toBe(2);
+            expect(component.members()).toHaveLength(2);
+            expect(component.totalItems()).toBe(2);
         }
     });
 });

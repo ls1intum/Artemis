@@ -110,8 +110,8 @@ describe('ProgrammingExerciseTaskComponent', () => {
         taskService.currentTasks = [{ taskName: 'Not assigned to task', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
 
         comp.ngOnInit();
-        expect(comp.onlyViewTestCases).toBe(true);
-        expect(comp.open).toBe(true);
+        expect(comp.onlyViewTestCases()).toBe(true);
+        expect(comp.open()).toBe(true);
     });
 
     it('should show the tasks if there are more than one', () => {
@@ -121,8 +121,8 @@ describe('ProgrammingExerciseTaskComponent', () => {
         ] as ProgrammingExerciseTask[];
 
         comp.ngOnInit();
-        expect(comp.onlyViewTestCases).toBeFalsy();
-        expect(comp.open).toBeFalsy();
+        expect(comp.onlyViewTestCases()).toBeFalsy();
+        expect(comp.open()).toBeFalsy();
     });
 
     it('should render task name inside a task__field element', () => {
