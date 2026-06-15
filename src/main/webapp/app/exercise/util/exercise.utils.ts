@@ -74,7 +74,7 @@ export class SaveExerciseCommand<T extends Exercise> {
             );
             const reEvaluatedCase = popupRefObs.pipe(
                 mergeMap((ref) =>
-                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
+                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }])),
                 ),
             );
             const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));

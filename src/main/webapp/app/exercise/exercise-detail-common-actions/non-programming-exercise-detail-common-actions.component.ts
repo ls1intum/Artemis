@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable, Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -55,11 +55,11 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    teamBaseResource: string;
-    baseResource: string;
-    shortBaseResource: string;
-    irisEnabled = false;
-    plagiarismEnabled = false;
+    readonly teamBaseResource = signal<string>(undefined!);
+    readonly baseResource = signal<string>(undefined!);
+    readonly shortBaseResource = signal<string>(undefined!);
+    readonly irisEnabled = signal(false);
+    readonly plagiarismEnabled = signal(false);
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
@@ -79,19 +79,21 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         const exercise = this.exercise();
         const course = this.course();
         if (!this.isExamExercise()) {
-            this.baseResource = `/course-management/${course.id!}/${exercise.type}-exercises/${exercise.id}/`;
-            this.teamBaseResource = `/course-management/${course.id!}/exercises/${exercise.id}/`;
-            this.shortBaseResource = `/course-management/${course.id!}/`;
+            this.baseResource.set(`/course-management/${course.id!}/${exercise.type}-exercises/${exercise.id}/`);
+            this.teamBaseResource.set(`/course-management/${course.id!}/exercises/${exercise.id}/`);
+            this.shortBaseResource.set(`/course-management/${course.id!}/`);
         } else {
-            this.baseResource =
+            this.baseResource.set(
                 `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${exercise.exerciseGroup?.id}/${exercise.type}-exercises/${exercise.id}/`;
-            this.teamBaseResource =
-                `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}` + `/exercise-groups/${exercise.exerciseGroup?.id}/exercises/${exercise.id}/`;
-            this.shortBaseResource = `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}/`;
+                    `/exercise-groups/${exercise.exerciseGroup?.id}/${exercise.type}-exercises/${exercise.id}/`,
+            );
+            this.teamBaseResource.set(
+                `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}` + `/exercise-groups/${exercise.exerciseGroup?.id}/exercises/${exercise.id}/`,
+            );
+            this.shortBaseResource.set(`/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}/`);
         }
-        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
     }
 
     deleteExercise() {

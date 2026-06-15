@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -98,34 +98,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
-    inProduction: boolean;
-    testServer: boolean;
-    isNavbarCollapsed: boolean;
-    gitCommitId: string;
-    gitBranchName: string;
-    gitTimestamp: string;
-    gitUsername: string;
-    isBuildAgentDetails = false;
+    readonly inProduction = signal<boolean>(undefined!);
+    readonly testServer = signal<boolean>(undefined!);
+    readonly isNavbarCollapsed = signal<boolean>(undefined!);
+    readonly gitCommitId = signal<string>(undefined!);
+    readonly gitBranchName = signal<string>(undefined!);
+    readonly gitTimestamp = signal<string>(undefined!);
+    readonly gitUsername = signal<string>(undefined!);
+    readonly isBuildAgentDetails = signal(false);
     languages = LANGUAGES;
-    version: string;
-    currAccount?: User;
+    readonly version = signal<string>(undefined!);
+    readonly currAccount = signal<User | undefined>(undefined);
     isRegistrationEnabled = false;
-    passwordResetEnabled = false;
-    breadcrumbs: Breadcrumb[];
+    readonly passwordResetEnabled = signal(false);
+    readonly breadcrumbs = signal<Breadcrumb[]>([]);
     breadcrumbSubscriptions: Subscription[];
-    isCollapsed: boolean;
-    iconsMovedToMenu: boolean;
-    isNavbarNavVertical: boolean;
-    isExamActive = false;
+    readonly isCollapsed = signal<boolean>(undefined!);
+    readonly iconsMovedToMenu = signal<boolean>(undefined!);
+    readonly isNavbarNavVertical = signal<boolean>(undefined!);
+    readonly isExamActive = signal(false);
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
     examEnabled = false;
     localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
-    globalSearchEnabled = false;
-    agentName?: string;
-    isExamStarted = false;
+    readonly globalSearchEnabled = signal(false);
+    readonly agentName = signal<string | undefined>(undefined);
+    readonly isExamStarted = signal(false);
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -144,8 +144,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private lastRouteUrlSegment?: string;
 
     constructor() {
-        this.version = VERSION ? VERSION : '';
-        this.isNavbarCollapsed = true;
+        this.version.set(VERSION ? VERSION : '');
+        this.isNavbarCollapsed.set(true);
         this.subscribeToNavigationEventsForExamId();
         this.onResize();
     }
@@ -156,8 +156,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         let neededWidthToNotRequireCollapse: number;
         let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
         let neededWidthForIconOptionsToBeInMainNavBar: number;
-        if (this.currAccount) {
-            const nameLength = (this.currAccount.login?.length ?? 0) * 8;
+        const currAccount = this.currAccount();
+        if (currAccount) {
+            const nameLength = (currAccount.login?.length ?? 0) * 8;
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
@@ -177,19 +178,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 430;
         }
 
-        this.isCollapsed = window.innerWidth < neededWidthToNotRequireCollapse;
-        this.isNavbarNavVertical = window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480);
-        this.iconsMovedToMenu = window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar;
+        this.isCollapsed.set(window.innerWidth < neededWidthToNotRequireCollapse);
+        this.isNavbarNavVertical.set(window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480));
+        this.iconsMovedToMenu.set(window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar);
     }
 
     ngOnInit() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.inProduction = this.profileService.isProduction();
-        this.testServer = this.profileService.isTestServer();
-        this.gitCommitId = profileInfo.git.commit.id.abbrev;
-        this.gitBranchName = profileInfo.git.branch;
-        this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
-        this.gitUsername = profileInfo.git.commit.user.name;
+        this.inProduction.set(this.profileService.isProduction());
+        this.testServer.set(this.profileService.isTestServer());
+        this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
+        this.gitBranchName.set(profileInfo.git.branch);
+        this.gitTimestamp.set(new Date(profileInfo.git.commit.time).toUTCString());
+        this.gitUsername.set(profileInfo.git.commit.user.name);
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
@@ -200,7 +201,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
 
         this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
-            this.globalSearchEnabled = isActive;
+            this.globalSearchEnabled.set(isActive);
         });
 
         // The current user is needed to hide menu items for not logged-in users.
@@ -208,8 +209,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
-                    this.currAccount = user;
-                    this.passwordResetEnabled = user?.internal || false;
+                    this.currAccount.set(user);
+                    this.passwordResetEnabled.set(user?.internal || false);
                     this.onResize();
                 }),
             )
@@ -220,7 +221,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.checkExamActive();
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
-            this.isExamStarted = isStarted;
+            this.isExamStarted.set(isStarted);
         });
 
         this.buildBreadcrumbs(this.router.url);
@@ -402,7 +403,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Fills the breadcrumbs array with entries for admin and course-management routes
      */
     private buildBreadcrumbs(fullURI: string): void {
-        this.breadcrumbs = [];
+        this.breadcrumbs.set([]);
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];
         this.initTabTitles();
@@ -577,7 +578,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
         const isStudentPath = currentPath.startsWith('/courses');
-        this.isBuildAgentDetails = currentPath.startsWith('/admin/build-agents/') && segment == 'details';
+        this.isBuildAgentDetails.set(currentPath.startsWith('/admin/build-agents/') && segment == 'details');
 
         if (isStudentPath) {
             if (segment === 'repository') {
@@ -589,11 +590,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
         }
 
-        if (this.isBuildAgentDetails) {
+        if (this.isBuildAgentDetails()) {
             this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-                this.agentName = params['agentName'];
-                if (this.agentName) {
-                    segment = decodeURIComponent(this.agentName);
+                this.agentName.set(params['agentName']);
+                const agentName = this.agentName();
+                if (agentName) {
+                    segment = decodeURIComponent(agentName);
                 }
             });
         }
@@ -682,7 +684,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @return the created breadcrumb object
      */
     private addBreadcrumb(uri: string, label: string, translate: boolean): Breadcrumb {
-        return this.setBreadcrumb(uri, label, translate, this.breadcrumbs.length);
+        return this.setBreadcrumb(uri, label, translate, this.breadcrumbs().length);
     }
 
     /**
@@ -699,7 +701,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         crumb.label = label;
         crumb.translate = translate;
         crumb.uri = uri;
-        this.breadcrumbs[index] = crumb;
+        const updatedBreadcrumbs = [...this.breadcrumbs()];
+        updatedBreadcrumbs[index] = crumb;
+        this.breadcrumbs.set(updatedBreadcrumbs);
         return crumb;
     }
 
@@ -719,7 +723,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.breadcrumbSubscriptions.push(
             this.entityTitleService.getTitle(type, ids).subscribe({
                 next: (title: string) => {
-                    crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
+                    crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs().indexOf(crumb));
                     this.setTabTitles(type, title);
                 },
             }),
@@ -739,16 +743,30 @@ export class NavbarComponent implements OnInit, OnDestroy {
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
                 if (!response?.body?.title || !response?.body?.type) {
-                    this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1);
+                    this.removeBreadcrumb(crumb);
                 } else {
                     // If all data is there, overwrite the breadcrumb with the correct link
                     const replaceValue = isStudentPath ? `/exercises/${response.body.type}-exercises/` : `/${response.body.type}-exercises/`;
-                    this.setBreadcrumb(currentPath.replace('/exercises/', replaceValue), response.body.title, false, this.breadcrumbs.indexOf(crumb));
+                    this.setBreadcrumb(currentPath.replace('/exercises/', replaceValue), response.body.title, false, this.breadcrumbs().indexOf(crumb));
                 }
             },
             // Same as if data isn't available
-            error: () => this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1),
+            error: () => this.removeBreadcrumb(crumb),
         });
+    }
+
+    /**
+     * Removes the given breadcrumb from the list of breadcrumbs
+     *
+     * @param crumb the breadcrumb to remove
+     */
+    private removeBreadcrumb(crumb: Breadcrumb): void {
+        const index = this.breadcrumbs().indexOf(crumb);
+        if (index >= 0) {
+            const updatedBreadcrumbs = [...this.breadcrumbs()];
+            updatedBreadcrumbs.splice(index, 1);
+            this.breadcrumbs.set(updatedBreadcrumbs);
+        }
     }
 
     /**
@@ -771,7 +789,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     changeLanguage(languageKey: string) {
-        if (this.currAccount) {
+        if (this.currAccount()) {
             this.accountService.updateLanguage(languageKey).subscribe({
                 next: () => {
                     this.translateService.use(languageKey);
@@ -784,7 +802,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     collapseNavbar() {
-        this.isNavbarCollapsed = true;
+        this.isNavbarCollapsed.set(true);
     }
 
     isAuthenticated() {
@@ -802,7 +820,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     toggleNavbar() {
-        this.isNavbarCollapsed = !this.isNavbarCollapsed;
+        this.isNavbarCollapsed.update((collapsed) => !collapsed);
     }
 
     getImageUrl() {
@@ -853,7 +871,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.studentExam.exam.gracePeriod ?? 0,
                 'seconds',
             );
-            this.isExamActive = serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod);
+            this.isExamActive.set(serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod));
 
             const timeUntilStart = this.studentExam.exam.startDate.diff(serverTime);
             const timeUntilEnd = examEndWithGracePeriod.diff(serverTime);
@@ -862,7 +880,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.examActiveCheckFuture = setTimeout(this.checkExamActive.bind(this), timeUntilNextChange + 100);
             }
         } else {
-            this.isExamActive = false;
+            this.isExamActive.set(false);
         }
     }
 
@@ -873,12 +891,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     buildTabTitles() {
         // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
-        const generalTitle = this.breadcrumbs[this.breadcrumbs.length - 1].translate
-            ? this.translateService.instant(this.breadcrumbs[this.breadcrumbs.length - 1].label)
-            : undefined;
+        const breadcrumbs = this.breadcrumbs();
+        const generalTitle = breadcrumbs[breadcrumbs.length - 1].translate ? this.translateService.instant(breadcrumbs[breadcrumbs.length - 1].label) : undefined;
         const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
         // No need have a dynamic title on the start page -> use the title defined in the Router modules.
-        if (titles && this.breadcrumbs.length > 1) {
+        if (titles && breadcrumbs.length > 1) {
             this.titleService.setTitle(titles);
         }
     }

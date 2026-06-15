@@ -1,6 +1,6 @@
 <span>
-    {{ usedWorkingTime | artemisDurationFromSeconds }}
-    @if (!!percentUsedWorkingTime) {
-        ({{ percentUsedWorkingTime }}&thinsp;%)
+    {{ usedWorkingTime() | artemisDurationFromSeconds }}
+    @if (!!percentUsedWorkingTime()) {
+        ({{ percentUsedWorkingTime() }}&thinsp;%)
     }
 </span>

@@ -113,8 +113,11 @@ export class SubmissionResultStatusComponent {
         if (exercise?.type === ExerciseType.QUIZ) {
             return !!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length;
         } else if (exercise?.type === ExerciseType.PROGRAMMING) {
+            // A practice participation is not bound by the due date — submissions are always possible — so the
+            // live result (queued / building / result) must be shown just like before the due date. Otherwise a
+            // student submitting in practice mode would get no feedback until the first build result arrives.
             return (
-                (!!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length || !this.afterDueDate()) &&
+                (!!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length || !this.afterDueDate() || this.isPractice()) &&
                 !!studentParticipation?.initializationState &&
                 this.initializationStatesToShowProgrammingResult.includes(studentParticipation.initializationState)
             );

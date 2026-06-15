@@ -3,7 +3,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition } from '@fortawesome/fontawesome-common-types';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { Tag } from 'primeng/tag';
 import { ButtonDirective } from 'primeng/button';
 import { Badge } from 'primeng/badge';

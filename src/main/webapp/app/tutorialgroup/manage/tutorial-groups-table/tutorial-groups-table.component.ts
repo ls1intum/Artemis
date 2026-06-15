@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input, signal } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -36,7 +36,7 @@ export class TutorialGroupsTableComponent {
 
     readonly timeZone = input<string>();
 
-    timeZoneUsedForDisplay = dayjs.tz.guess();
+    readonly timeZoneUsedForDisplay = signal<string>(dayjs.tz.guess());
 
     sortingPredicate = 'title';
     ascending = true;
@@ -46,23 +46,23 @@ export class TutorialGroupsTableComponent {
     /**
      * If true we show the campus column
      */
-    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    readonly tutorialGroupsSplitAcrossMultipleCampuses = signal(false);
     /**
      * If true we show the online / offline column
      */
-    mixOfOfflineAndOfflineTutorialGroups = false;
+    readonly mixOfOfflineAndOfflineTutorialGroups = signal(false);
 
     /**
      * If true we show the language column
      */
-    mifOfDifferentLanguages = false;
+    readonly mifOfDifferentLanguages = signal(false);
 
     constructor() {
         // Effect to update timeZone
         effect(() => {
             const tz = this.timeZone();
             if (tz) {
-                this.timeZoneUsedForDisplay = tz;
+                this.timeZoneUsedForDisplay.set(tz);
             }
         });
 
@@ -70,9 +70,9 @@ export class TutorialGroupsTableComponent {
         effect(() => {
             const groups = this.tutorialGroups();
             if (groups && groups.length > 0) {
-                this.tutorialGroupsSplitAcrossMultipleCampuses = groups.some((tutorialGroup) => tutorialGroup.campus !== groups[0].campus);
-                this.mixOfOfflineAndOfflineTutorialGroups = groups.some((tutorialGroup) => tutorialGroup.isOnline !== groups[0].isOnline);
-                this.mifOfDifferentLanguages = groups.some((tutorialGroup) => tutorialGroup.language !== groups[0].language);
+                this.tutorialGroupsSplitAcrossMultipleCampuses.set(groups.some((tutorialGroup) => tutorialGroup.campus !== groups[0].campus));
+                this.mixOfOfflineAndOfflineTutorialGroups.set(groups.some((tutorialGroup) => tutorialGroup.isOnline !== groups[0].isOnline));
+                this.mifOfDifferentLanguages.set(groups.some((tutorialGroup) => tutorialGroup.language !== groups[0].language));
             }
         });
     }

@@ -72,9 +72,9 @@ export class LectureComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private sortService = inject(SortService);
 
-    lectures: Lecture[];
+    readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
-    filteredLectures: Lecture[];
+    readonly filteredLectures = signal<Lecture[]>([]);
     courseId: number;
 
     private dialogErrorSource = new Subject<string>();
@@ -134,7 +134,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     )
                     .subscribe({
                         next: (res: Lecture) => {
-                            this.lectures.push(res);
+                            this.lectures.set([...this.lectures(), res]);
                             this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -145,7 +145,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private deleteLectureFromDisplayedLectures(lectureId: number) {
         this.dialogErrorSource.next('');
-        this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+        this.lectures.set(this.lectures().filter((lecture) => lecture.id !== lectureId));
         this.applyFilters();
     }
 
@@ -172,7 +172,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
+        this.sortService.sortByProperty(this.filteredLectures(), this.predicate, this.ascending);
     }
 
     private loadAll() {
@@ -184,11 +184,13 @@ export class LectureComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: Lecture[]) => {
-                    this.lectures = res.map((lectureData) => {
-                        const lecture = new Lecture();
-                        Object.assign(lecture, lectureData);
-                        return lecture;
-                    });
+                    this.lectures.set(
+                        res.map((lectureData) => {
+                            const lecture = new Lecture();
+                            Object.assign(lecture, lectureData);
+                            return lecture;
+                        }),
+                    );
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -201,7 +203,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     private applyFilters(): void {
         if (this.activeFilters.size === 0) {
             // If no filters selected, show all lectures
-            this.filteredLectures = this.lectures;
+            this.filteredLectures.set(this.lectures());
         } else {
             // Get the current system time
             const now = dayjs();
@@ -209,8 +211,8 @@ export class LectureComponent implements OnInit, OnDestroy {
             let filteredLectures: Array<Lecture> = [];
 
             // update filteredLectures based on the selected filter option checkboxes
-            const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(now));
-            const currentLectures = this.lectures.filter((lecture) => {
+            const pastLectures = this.lectures().filter((lecture) => lecture.endDate?.isBefore(now));
+            const currentLectures = this.lectures().filter((lecture) => {
                 if (lecture.startDate && lecture.endDate) {
                     return lecture.startDate.isSameOrBefore(now) && lecture.endDate.isSameOrAfter(now);
                 } else if (lecture.startDate) {
@@ -220,14 +222,14 @@ export class LectureComponent implements OnInit, OnDestroy {
                 }
                 return false;
             });
-            const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(now));
-            const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
+            const futureLectures = this.lectures().filter((lecture) => lecture.startDate?.isAfter(now));
+            const unspecifiedDatesLectures = this.lectures().filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
 
             filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.CURRENT) ? filteredLectures.concat(currentLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.FUTURE) ? filteredLectures.concat(futureLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.UNSPECIFIED) ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
-            this.filteredLectures = filteredLectures;
+            this.filteredLectures.set(filteredLectures);
         }
 
         this.sortRows();
@@ -235,7 +237,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     navigateToLectureCreationPage(): void {
         this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
-            state: { existingLectures: this.lectures },
+            state: { existingLectures: this.lectures() },
         });
     }
 
@@ -253,7 +255,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             dismissableMask: false,
             draggable: false,
             data: {
-                lectures: this.lectures,
+                lectures: this.lectures(),
                 uploadedFiles: files,
             },
         });
@@ -287,7 +289,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 map((res: HttpResponse<Lecture>) => res.body!),
                 concatMap((createdLecture: Lecture) => {
                     // Add the new lecture to the list
-                    this.lectures.push(createdLecture);
+                    this.lectures.set([...this.lectures(), createdLecture]);
                     this.applyFilters();
 
                     // Create attachment units sequentially to maintain order

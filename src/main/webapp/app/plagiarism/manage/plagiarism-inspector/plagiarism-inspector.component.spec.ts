@@ -117,35 +117,35 @@ describe('Plagiarism Inspector Component', () => {
     it('should return the correct topic url', () => {
         const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT];
         exerciseTypes.forEach((exerciseType) => {
-            comp.exercise = { id: 1, type: exerciseType } as Exercise;
+            comp.exercise.set({ id: 1, type: exerciseType } as Exercise);
             expect(comp.getPlagarismDetectionTopic()).toBe(`/topic/${exerciseType}-exercises/1/plagiarism-check`);
         });
     });
 
     it('should get the minimumSize tooltip for programming', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        comp.exercise.set({ type: ExerciseType.PROGRAMMING } as Exercise);
 
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise');
     });
 
     it('should get the minimumSize tootip for text', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
+        comp.exercise.set({ type: ExerciseType.TEXT } as Exercise);
 
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
     it('should get the minimumSize label for programming', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        comp.exercise.set({ type: ExerciseType.PROGRAMMING } as Exercise);
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumTokenCount');
     });
 
     it('should get the minimumSize label for text', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
+        comp.exercise.set({ type: ExerciseType.TEXT } as Exercise);
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumSize');
     });
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
-        comp.exercise = programmingExercise;
+        comp.exercise.set(programmingExercise);
         vi.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResultDTO));
 
         comp.checkPlagiarism();
@@ -154,7 +154,7 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should fetch the plagiarism detection results for text exercises', () => {
-        comp.exercise = textExercise;
+        comp.exercise.set(textExercise);
         vi.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResultDTO));
 
         comp.checkPlagiarism();
@@ -163,36 +163,36 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should select a comparison at the given index', () => {
-        comp.selectedComparisonId = 0;
+        comp.selectedComparisonId.set(0);
         comp.selectComparisonWithID(1);
 
-        expect(comp.selectedComparisonId).toBe(1);
+        expect(comp.selectedComparisonId()).toBe(1);
     });
 
     it('should download the plagiarism detection results as JSON', () => {
-        comp.exercise = textExercise;
-        comp.plagiarismResult = textPlagiarismResult;
+        comp.exercise.set(textExercise);
+        comp.plagiarismResult.set(textPlagiarismResult);
         comp.downloadPlagiarismResultsJson();
 
         expect(downloadFile).toHaveBeenCalledOnce();
     });
 
     it('should download the plagiarism detection results as CSV', () => {
-        comp.exercise = textExercise;
-        comp.plagiarismResult = textPlagiarismResult;
+        comp.exercise.set(textExercise);
+        comp.plagiarismResult.set(textPlagiarismResult);
         comp.downloadPlagiarismResultsCsv();
 
         expect(generateCsv).toHaveBeenCalledOnce();
     });
 
     it('should get the latest plagiarism result for programming exercise', async () => {
-        comp.exercise = programmingExercise;
+        comp.exercise.set(programmingExercise);
 
         vi.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResultDTO));
         vi.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress()).toBe(false);
 
         await fixture.whenStable();
 
@@ -201,13 +201,13 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should get the latest plagiarism result for text exercise', async () => {
-        comp.exercise = textExercise;
+        comp.exercise.set(textExercise);
 
         vi.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResultDTO));
         vi.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress()).toBe(false);
 
         await fixture.whenStable();
 
@@ -216,13 +216,13 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should be programming exercise', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        comp.exercise.set({ type: ExerciseType.PROGRAMMING } as ProgrammingExercise);
 
         expect(comp.isProgrammingExercise()).toBe(true);
     });
 
     it('should not be programming exercise', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
+        comp.exercise.set({ type: ExerciseType.TEXT } as TextExercise);
 
         expect(comp.isProgrammingExercise()).toBe(false);
     });
@@ -235,33 +235,33 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(resetFilterStub).toHaveBeenCalledOnce();
         expect(getLatestPlagiarismResultStub).toHaveBeenCalledOnce();
-        expect(comp.showRunDetails).toBe(true);
+        expect(comp.showRunDetails()).toBe(true);
     });
 
     describe('test chart interactivity', () => {
         it('should apply filter and reset it', () => {
             const filterComparisonsMock = vi.spyOn(inspectorService, 'filterComparisons').mockReturnValue([]);
             const range = new Range(20, 30);
-            comp.plagiarismResult = textPlagiarismResult;
+            comp.plagiarismResult.set(textPlagiarismResult);
 
             comp.filterByChart(range);
 
             expect(filterComparisonsMock).toHaveBeenCalledOnce();
             expect(filterComparisonsMock).toHaveBeenCalledWith(range, comparisons);
-            expect(comp.visibleComparisons).toEqual([]);
-            expect(comp.sidebarOffset).toBe(0);
-            expect(comp.chartFilterApplied).toBe(true);
+            expect(comp.visibleComparisons()).toEqual([]);
+            expect(comp.sidebarOffset()).toBe(0);
+            expect(comp.chartFilterApplied()).toBe(true);
 
             comp.resetFilter();
 
-            expect(comp.visibleComparisons).toEqual(comparisons);
-            expect(comp.sidebarOffset).toBe(0);
-            expect(comp.chartFilterApplied).toBe(false);
+            expect(comp.visibleComparisons()).toEqual(comparisons);
+            expect(comp.sidebarOffset()).toBe(0);
+            expect(comp.chartFilterApplied()).toBe(false);
         });
 
         it('should return the selected comparison', () => {
-            comp.selectedComparisonId = 2;
-            comp.visibleComparisons = comparisons as PlagiarismComparison[];
+            comp.selectedComparisonId.set(2);
+            comp.visibleComparisons.set(comparisons as PlagiarismComparison[]);
             const expected = {
                 id: 2,
                 submissionA: { studentLogin: 'student2A' },
@@ -279,8 +279,8 @@ describe('Plagiarism Inspector Component', () => {
     it('should clean up plagiarism', async () => {
         const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
         const getLatestPlagiarismResultSpy = vi.spyOn(comp, 'getLatestPlagiarismResult');
-        comp.exercise = textExercise;
-        comp.plagiarismResult = textPlagiarismResult;
+        comp.exercise.set(textExercise);
+        comp.plagiarismResult.set(textPlagiarismResult);
 
         comp.cleanUpPlagiarism();
 
@@ -288,22 +288,22 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, false);
         expect(getLatestPlagiarismResultSpy).toHaveBeenCalledOnce();
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
+        expect(comp.deleteAllPlagiarismComparisons()).toBe(false);
     });
 
     it('should clean up plagiarism and delete all plagiarism comparisons', async () => {
         const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
-        comp.exercise = textExercise;
-        comp.plagiarismResult = textPlagiarismResult;
-        comp.deleteAllPlagiarismComparisons = true;
+        comp.exercise.set(textExercise);
+        comp.plagiarismResult.set(textPlagiarismResult);
+        comp.deleteAllPlagiarismComparisons.set(true);
 
         comp.cleanUpPlagiarism();
 
         await Promise.resolve();
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, true);
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
-        expect(comp.plagiarismResult).toBeUndefined();
+        expect(comp.deleteAllPlagiarismComparisons()).toBe(false);
+        expect(comp.plagiarismResult()).toBeUndefined();
     });
 
     it('should open the clean-up confirmation dialog', () => {
@@ -316,8 +316,8 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should call cleanUpPlagiarism when confirming the clean-up dialog', () => {
         const cleanUpPlagiarismSpy = vi.spyOn(comp, 'cleanUpPlagiarism').mockImplementation(() => {});
-        comp.exercise = textExercise;
-        comp.plagiarismResult = textPlagiarismResult;
+        comp.exercise.set(textExercise);
+        comp.plagiarismResult.set(textPlagiarismResult);
         comp.cleanUpModalVisible.set(true);
 
         comp.confirmCleanUp();
@@ -327,14 +327,14 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should handle plagiarism check state change when completed', () => {
-        comp.exercise = textExercise;
+        comp.exercise.set(textExercise);
         const getLatestPlagiarismResultSpy = vi.spyOn(comp, 'getLatestPlagiarismResult').mockImplementation(() => {});
         const checkState = { state: 'COMPLETED' as const, messages: 'Plagiarism check completed' };
 
         comp.handlePlagiarismCheckStateChange(checkState);
 
-        expect(comp.detectionInProgress).toBeFalsy();
-        expect(comp.detectionInProgressMessage).toBe('artemisApp.plagiarism.fetchingResults');
+        expect(comp.detectionInProgress()).toBeFalsy();
+        expect(comp.detectionInProgressMessage()).toBe('artemisApp.plagiarism.fetchingResults');
         expect(getLatestPlagiarismResultSpy).toHaveBeenCalled();
     });
 
@@ -343,30 +343,30 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.handlePlagiarismCheckStateChange(checkState);
 
-        expect(comp.detectionInProgress).toBeTruthy();
-        expect(comp.detectionInProgressMessage).toBe('Plagiarism check running');
+        expect(comp.detectionInProgress()).toBeTruthy();
+        expect(comp.detectionInProgressMessage()).toBe('Plagiarism check running');
     });
 
     it('should handle error', () => {
         comp.handleError();
 
-        expect(comp.detectionInProgress).toBeFalsy();
+        expect(comp.detectionInProgress()).toBeFalsy();
     });
 
     it('should toggle delete all plagiarism comparisons', () => {
-        comp.deleteAllPlagiarismComparisons = false;
+        comp.deleteAllPlagiarismComparisons.set(false);
 
         comp.toggleDeleteAllPlagiarismComparisons();
 
-        expect(comp.deleteAllPlagiarismComparisons).toBeTruthy();
+        expect(comp.deleteAllPlagiarismComparisons()).toBeTruthy();
 
         comp.toggleDeleteAllPlagiarismComparisons();
 
-        expect(comp.deleteAllPlagiarismComparisons).toBeFalsy();
+        expect(comp.deleteAllPlagiarismComparisons()).toBeFalsy();
     });
 
     it('should check plagiarism JPlag report for programming exercise', () => {
-        comp.exercise = programmingExercise;
+        comp.exercise.set(programmingExercise);
         const checkPlagiarismJPlagReportSpy = vi.spyOn(programmingExerciseService, 'checkPlagiarismJPlagReport').mockReturnValue(of(new HttpResponse<Blob>()));
 
         comp.checkPlagiarismJPlagReport();
@@ -396,15 +396,15 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.handlePlagiarismResult(textPlagiarismResultDTO);
 
-        expect(comp.plagiarismResult).toBe(textPlagiarismResultDTO.plagiarismResult);
-        expect(comp.plagiarismResultStats).toBe(textPlagiarismResultDTO.plagiarismResultStats);
-        expect(comp.visibleComparisons).toBe(textPlagiarismResultDTO.plagiarismResult.comparisons);
+        expect(comp.plagiarismResult()).toBe(textPlagiarismResultDTO.plagiarismResult);
+        expect(comp.plagiarismResultStats()).toBe(textPlagiarismResultDTO.plagiarismResultStats);
+        expect(comp.visibleComparisons()).toBe(textPlagiarismResultDTO.plagiarismResult.comparisons);
         expect(sortComparisonsForResultSpy).toHaveBeenCalledWith(textPlagiarismResultDTO.plagiarismResult);
     });
 
     it('should return undefined when no comparison is selected', () => {
-        comp.selectedComparisonId = -1;
-        comp.visibleComparisons = comparisons as PlagiarismComparison[];
+        comp.selectedComparisonId.set(-1);
+        comp.visibleComparisons.set(comparisons as PlagiarismComparison[]);
 
         const selected = comp.getSelectedComparison();
 

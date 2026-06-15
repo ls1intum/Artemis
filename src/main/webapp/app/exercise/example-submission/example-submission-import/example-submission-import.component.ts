@@ -52,7 +52,7 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
 
     protected override onSearchResult() {
         const exercise = this.exercise();
-        this.content?.resultsOnPage?.forEach((submission) => {
+        this.content()?.resultsOnPage?.forEach((submission) => {
             submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(submission, exercise);
         });
     }

@@ -184,6 +184,18 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Gets the exercise groups (including their exercises) of an exam.
+     * @param exam the exam to get the exercise groups for
+     */
+    async getExerciseGroups(exam: Exam): Promise<ExerciseGroup[]> {
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get exercise groups for exam ${exam.id}: ${response.status()}`);
+        }
+        return (await response.json()) as ExerciseGroup[];
+    }
+
+    /**
      * Prepares individual exercises for exam start
      * @param exam the exam for which the exercises are prepared
      */
