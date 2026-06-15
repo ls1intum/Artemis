@@ -38,7 +38,7 @@ jobs:
           path: build/reports/tests/test
       - name: Notify on failure
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661  # v2.3.3
         env:
           SLACK_WEBHOOK: ${{ secrets.LTI_NIGHTLY_SLACK_WEBHOOK }}
           SLACK_TITLE: "Nightly LTI interop FAILED on develop (moodle)"
