@@ -8,7 +8,6 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { isTestExam } from 'app/exam/shared/entities/exam.model';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
@@ -97,7 +96,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
-    protected readonly isTestExam = isTestExam;
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;

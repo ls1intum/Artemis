@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { combineLatest, filter, of } from 'rxjs';
-import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -46,10 +46,10 @@ export class CourseExamsComponent {
                 .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
     );
 
-    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isTestExam(exam)));
+    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !exam?.testExam));
     protected readonly realExamWorkingTimeByExamId = signal<Map<number, number>>(new Map());
 
-    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
+    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => exam?.testExam === true));
     private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
 
     readonly sidebarData = computed<SidebarData | undefined>(() => this.buildSidebarData());

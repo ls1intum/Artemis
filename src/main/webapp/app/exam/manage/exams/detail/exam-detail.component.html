@@ -3,7 +3,7 @@
         @if (exam) {
             <div>
                 <h2 id="exam-detail-title">
-                    <jhi-exam-mode-badge [examType]="exam.examType" size="large" />
+                    <jhi-exam-mode-badge [exam]="exam" size="large" />
                     {{ exam.title }}
                 </h2>
                 <hr />
@@ -21,13 +21,13 @@
                             <fa-icon [icon]="faFlaskVial" />
                             <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                         </a>
-                        @if (!isTestExam(exam)) {
+                        @if (!exam?.testExam) {
                             <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
                                 <fa-icon [icon]="faThList" />
                                 <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                             </a>
                         }
-                        @if (!isTestExam(exam)) {
+                        @if (!exam?.testExam) {
                             <a [routerLink]="getExamRoutesByIdentifier('grading')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faClipboard" />
                                 <span jhiTranslate="artemisApp.examManagement.gradingSystem"></span>

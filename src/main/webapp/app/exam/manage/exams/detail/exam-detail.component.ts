@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, isSimulationAndPracticeExam, isTestExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -55,7 +55,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
-    protected readonly isTestExam = isTestExam;
 
     exam: Exam;
     formattedStartText?: SafeHtml;
@@ -123,7 +122,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     getExamDetailSections() {
         const exam = this.exam;
-        const isTestExamValue = isTestExam(exam);
+        const isTestExamValue = exam?.testExam === true;
 
         const conductionDateDetails: DateDetail[] = [];
         conductionDateDetails.push({
@@ -236,7 +235,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam.exerciseGroups?.length ?? 0;
-        const isTestExamValue = isTestExam(this.exam);
+        const isTestExamValue = this.exam?.testExam === true;
         const isTestCourse = this.exam.course?.testCourse ?? false;
 
         return {

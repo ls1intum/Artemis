@@ -44,7 +44,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
@@ -89,7 +88,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';
-    protected readonly isTestExam = isTestExam;
 
     editForm = viewChild<NgForm>('editForm');
     bonusPoints = viewChild<NgModel>('bonusPoints');

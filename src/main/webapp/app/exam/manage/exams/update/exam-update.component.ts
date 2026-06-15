@@ -183,7 +183,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         }
     }
 
-    get isExamTypeReadonly(): boolean {
+    get isExamModeReadonly(): boolean {
         return this.exam?.id !== undefined;
     }
 

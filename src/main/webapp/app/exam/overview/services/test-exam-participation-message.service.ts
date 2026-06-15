@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export interface TestExamParticipationMessage {
@@ -24,7 +24,7 @@ export class TestExamParticipationMessageService {
     }
 
     private getMessageKey(exam: Exam | undefined, errorKey?: string): string {
-        if (!isTestExam(exam)) {
+        if (!exam?.testExam) {
             return this.fullTranslationKey('noStudentExam');
         }
         switch (errorKey) {

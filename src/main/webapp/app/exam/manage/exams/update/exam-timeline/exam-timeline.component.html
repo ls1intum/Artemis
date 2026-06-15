@@ -8,7 +8,7 @@
         <div class="d-flex flex-column">
             <div>
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                <jhi-help-icon [text]="noWorkingTimeNeeded() ? 'artemisApp.examManagement.workingTimeTooltip' : 'artemisApp.examManagement.testExam.workingTimeTooltip'" />
+                <jhi-help-icon [text]="isTestExam() ? 'artemisApp.examManagement.testExam.workingTimeTooltip' : 'artemisApp.examManagement.workingTimeTooltip'" />
             </div>
             <p-input-number
                 inputId="workingTimeInMinutes"

@@ -5,7 +5,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -507,7 +507,7 @@ export class ExamManagementService {
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
-            examType: exam.examType,
+            testExam: exam.testExam,
             examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
             visibleDate: convertDateFromClient(exam.visibleDate),
             startDate: convertDateFromClient(exam.startDate),
@@ -658,7 +658,7 @@ interface ExerciseGroupImportDTO {
 
 interface ExamImportDTO {
     title?: string;
-    examType?: ExamType;
+    testExam?: boolean;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;
