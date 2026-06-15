@@ -162,7 +162,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
     }
 
     constructor() {

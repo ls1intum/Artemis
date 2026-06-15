@@ -258,7 +258,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
     }
 
     private checkPermissions(result?: Result): void {

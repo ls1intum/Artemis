@@ -206,10 +206,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     lastResult?.successful !== undefined;
                 if (isNewAthenaResult) {
-                    this.isGeneratingFeedback = false;
                     if (lastResult?.successful === false) {
+                        this.isGeneratingFeedback = false;
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                    } else {
+                    } else if (lastResult?.successful === true) {
+                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                         if (this.isExamSummary() && this.participation?.id !== undefined) {

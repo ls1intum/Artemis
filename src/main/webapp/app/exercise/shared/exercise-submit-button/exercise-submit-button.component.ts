@@ -29,7 +29,7 @@ export class ExerciseSubmitButtonComponent {
 
     readonly popover = viewChild<NgbPopover>('popoverRef');
 
-    readonly isAiFeedbackEnabled = computed(() => !!(this.exercise().course?.athenaAutoFeedbackEnabled ?? this.exercise().feedbackSuggestionModule));
+    readonly isAiFeedbackEnabled = computed(() => !!this.exercise().course?.athenaAutoFeedbackEnabled);
 
     readonly faRobot = faRobot;
 

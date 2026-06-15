@@ -58,25 +58,26 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     readonly receivedAthenaResultExerciseIds = signal<ReadonlySet<number>>(new Set());
 
-    readonly hasExerciseWithFeedbackSuggestionModule = computed(() => {
-        return (this.studentExam()?.exercises ?? []).some(
-            (exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && !!exercise.feedbackSuggestionModule,
-        );
+    readonly hasAthenaFeedbackSupportedExercise = computed(() => {
+        const exam = this.studentExam();
+        if (!exam?.exam?.course?.athenaAutoFeedbackEnabled) {
+            return false;
+        }
+        return (exam?.exercises ?? []).some((exercise) => exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING);
     });
 
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
+        return !!exam?.exam?.testExam && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasAthenaFeedbackSupportedExercise();
     });
 
     private readonly eligibleExerciseIds = computed(() => {
-        return (this.studentExam()?.exercises ?? [])
-            .filter(
-                (exercise) =>
-                    (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) &&
-                    !!exercise.feedbackSuggestionModule &&
-                    this.hasNonEmptyLatestSubmission(exercise),
-            )
+        const exam = this.studentExam();
+        if (!exam?.exam?.course?.athenaAutoFeedbackEnabled) {
+            return [];
+        }
+        return (exam?.exercises ?? [])
+            .filter((exercise) => (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && this.hasNonEmptyLatestSubmission(exercise))
             .map((exercise) => exercise.id)
             .filter((id): id is number => id !== undefined);
     });

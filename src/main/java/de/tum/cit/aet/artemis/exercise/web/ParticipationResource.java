@@ -284,7 +284,7 @@ public class ParticipationResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to request feedback for exercise {} and participation {}", exerciseId, participationId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findWithCourseAthenaConfigByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         if (!participation.getExercise().getId().equals(exerciseId)) {
