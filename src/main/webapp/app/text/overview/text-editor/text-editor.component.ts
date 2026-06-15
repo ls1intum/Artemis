@@ -197,6 +197,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                // subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject, so every
+                // text-editor instance receives every participation change (including the ones emitted by other
+                // instances when they call addParticipation()). Without this guard, multiple editors rendered
+                // together - e.g. several text exercises in the exam result summary - would all overwrite their
+                // own exercise/submission state with whichever participation was added last, making every text
+                // summary display the last exercise. Only react to changes for our own participation.
+                if (changedParticipation?.id !== this.participation()?.id) {
+                    return;
+                }
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const lastResult = results?.last();

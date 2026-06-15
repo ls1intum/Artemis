@@ -21,6 +21,7 @@ import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.c
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
@@ -179,6 +180,34 @@ describe('TextEditorComponent', () => {
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
         expect(comp.answer()).toBeDefined();
+    });
+
+    it('should ignore participation changes that belong to a different participation', () => {
+        // Regression test: subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject.
+        // When several text editors are rendered together (e.g. multiple text exercises in the exam summary),
+        // an emission for another participation must not overwrite this instance's state.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = { id: 2 } as TextExercise;
+        otherParticipation.submissions = [new TextSubmission()];
+        participationSubject.next(otherParticipation);
+
+        expect(updateParticipationSpy).not.toHaveBeenCalled();
+
+        // an emission for our own participation must still be applied
+        participationSubject.next(participation);
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(participation, undefined, undefined);
+
+        fixture.destroy();
     });
 
     it('should not allow to submit after the due date if there is no due date', async () => {
