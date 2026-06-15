@@ -69,11 +69,21 @@ export class OnlineUnitFormComponent {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: OnlineUnitFormData;
+
     constructor() {
         // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
+        // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
+        // write reschedules the reactive flush, which re-runs this effect, which patches again — an
+        // infinite change-detection loop that leaves the edit form stuck behind the loading spinner.
+        // Guarding on the formData reference breaks the cycle and avoids clobbering in-progress edits.
         effect(() => {
-            if (this.isEditMode() && this.formData()) {
-                this.setFormValues(this.formData()!);
+            const data = this.formData();
+            if (this.isEditMode() && data && data !== this.appliedFormData) {
+                this.appliedFormData = data;
+                this.setFormValues(data);
             }
         });
     }

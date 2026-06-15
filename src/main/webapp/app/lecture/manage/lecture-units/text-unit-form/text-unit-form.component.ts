@@ -84,11 +84,22 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
 
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: TextUnitFormData;
+
     constructor() {
         // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        // Patch ONCE per distinct formData value: `form.patchValue()` synchronously emits the form's
+        // statusChanges, which is mirrored into the `statusChanges` signal via `toSignal(...)`. Under
+        // zoneless that signal write reschedules the reactive flush, which re-runs this effect, which
+        // patches again — an infinite change-detection loop that pegged the main thread and left the
+        // edit form permanently stuck behind the loading spinner. Guarding on the formData reference
+        // breaks the cycle and also avoids clobbering in-progress user edits on later flushes.
         effect(() => {
-            if (this.isEditMode() && this.formData()) {
-                this.setFormValues(this.formData()!);
+            const data = this.formData();
+            if (this.isEditMode() && data && data !== this.appliedFormData) {
+                this.appliedFormData = data;
+                this.setFormValues(data);
             }
         });
     }
