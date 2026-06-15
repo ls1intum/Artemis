@@ -6,9 +6,10 @@
     }
 
     &__field {
-        display: flex;
-        align-items: center;
-        overflow-wrap: anywhere;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     &__row {
