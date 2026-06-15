@@ -5,26 +5,11 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 
-export enum ExamType {
-    REAL = 'REAL',
-    SIMULATION = 'SIMULATION',
-    PRACTICE = 'PRACTICE',
-    SIMULATION_AND_PRACTICE = 'SIMULATION_AND_PRACTICE',
+export function isSimulationAndPracticeExam(exam?: Pick<Exam, 'testExam' | 'testExamPracticeStartDate'>): boolean {
+    return exam?.testExam === true && exam?.testExamPracticeStartDate !== undefined;
 }
 
-export function isTestExam(exam?: { examType?: ExamType }): boolean {
-    return isTestExamType(exam?.examType);
-}
-
-export function isTestExamType(examType?: ExamType): boolean {
-    return examType !== undefined && examType !== ExamType.REAL;
-}
-
-export function isSimulationAndPracticeExam(exam?: { examType?: ExamType }): boolean {
-    return exam?.examType === ExamType.SIMULATION_AND_PRACTICE;
-}
-
-export function testExamSimulationEndDate(exam?: { examType?: ExamType; startDate?: dayjs.Dayjs; workingTime?: number }): dayjs.Dayjs | undefined {
+export function testExamSimulationEndDate(exam?: Pick<Exam, 'testExam' | 'testExamPracticeStartDate' | 'workingTime' | 'startDate'>): dayjs.Dayjs | undefined {
     if (!isSimulationAndPracticeExam(exam) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;
     }
@@ -34,7 +19,7 @@ export function testExamSimulationEndDate(exam?: { examType?: ExamType; startDat
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
-    public examType?: ExamType;
+    public testExam?: boolean;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
@@ -81,7 +66,7 @@ export class Exam implements BaseEntity {
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
-        this.examType = ExamType.REAL; // default value
+        this.testExam = false; // default value
         this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)

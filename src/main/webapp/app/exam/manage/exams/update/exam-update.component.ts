@@ -10,7 +10,7 @@ import { Dialog } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam, ExamType, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -33,7 +33,6 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
-import { TranslateService } from '@ngx-translate/core';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
 
 @Component({
@@ -68,7 +67,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
-    private translateService = inject(TranslateService);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -76,9 +74,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly documentationType: DocumentationType = 'Exams';
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
-    protected readonly ExamType = ExamType;
-    protected readonly isTestExam = isTestExam;
-    protected testExamTypeOptions = this.buildTestExamTypeOptions();
 
     exam: Exam;
     course: Course;
@@ -109,10 +104,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private viewInitialized = false;
 
     ngOnInit(): void {
-        this.translateService.onLangChange.pipe(takeWhile(() => this.componentActive)).subscribe(() => {
-            this.testExamTypeOptions = this.buildTestExamTypeOptions();
-        });
-
         combineLatest([this.route.url, this.route.data])
             .pipe(takeWhile(() => this.componentActive))
             .subscribe(([segments, data]) => {
@@ -124,7 +115,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 // test exam only feature automatic assessment
-                if (isTestExam(exam)) {
+                if (exam.testExam) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -150,14 +141,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
                 this.refreshDatePickerValidation();
             });
-    }
-
-    private buildTestExamTypeOptions() {
-        return [
-            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.simulation'), value: ExamType.SIMULATION },
-            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.practice'), value: ExamType.PRACTICE },
-            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.simulationAndPractice'), value: ExamType.SIMULATION_AND_PRACTICE },
-        ];
     }
 
     ngAfterViewInit() {
@@ -195,13 +178,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onExamModeChange() {
-        if (isTestExam(this.exam)) {
+        if (this.exam?.testExam === true) {
             this.exam.examWithAttendanceCheck = false;
-            if (this.exam.examType === ExamType.REAL) {
-                this.exam.examType = ExamType.PRACTICE;
-            }
-        } else {
-            this.exam.examType = ExamType.REAL;
         }
     }
 
@@ -359,7 +337,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (isTestExam(this.exam)) {
+        if (this.exam?.testExam) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain

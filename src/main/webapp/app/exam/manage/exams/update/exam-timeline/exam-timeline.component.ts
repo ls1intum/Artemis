@@ -1,5 +1,4 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
-import { ExamType, isTestExamType } from 'app/exam/shared/entities/exam.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 import { InputNumber } from 'primeng/inputnumber';
@@ -10,17 +9,18 @@ import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
+import { Checkbox } from 'primeng/checkbox';
 
 @Component({
     selector: 'jhi-exam-timeline',
-    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message],
+    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message, Checkbox],
     templateUrl: './exam-timeline.component.html',
 })
 export class ExamTimelineComponent {
     readonly max_working_time_in_minutes = 43200 as const;
     readonly max_grace_period_in_seconds = 3600 as const;
 
-    readonly examType = input.required<ExamType>();
+    readonly isTestExam = input.required<boolean>();
 
     readonly visibleFrom = model.required<Dayjs | undefined>();
     readonly startOfWorkingTime = model.required<Dayjs | undefined>();
@@ -30,6 +30,8 @@ export class ExamTimelineComponent {
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
+    readonly isSimulationPhaseChecked = signal(false);
+
     readonly examTimelineStatusChange = output<boolean>();
 
     constructor() {
@@ -38,21 +40,20 @@ export class ExamTimelineComponent {
         });
 
         effect(() => {
-            this.workingTime.update((workingTime) => (this.noWorkingTimeNeeded() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
+            this.workingTime.update((workingTime) => (!this.isTestExam() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
         });
     }
 
     private readonly endOfSimulationTime = computed(() =>
-        this.examType() === 'SIMULATION_AND_PRACTICE' ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined,
+        this.isTestExam() && this.isSimulationPhaseChecked() ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined,
     );
     readonly debouncedEndOfSimulationTime = toSignal(toObservable(this.endOfSimulationTime).pipe(debounceTime(300)));
 
     readonly timelineItems = computed(() => {
-        const examType = this.examType();
-        const isTestExam = isTestExamType(examType);
+        const isTestExam = this.isTestExam();
 
         const simulationEndAndPracticeStart: TimelineItem[] =
-            this.examType() === 'SIMULATION_AND_PRACTICE'
+            isTestExam && this.isSimulationPhaseChecked()
                 ? [
                       {
                           kind: 'derived',
@@ -96,15 +97,10 @@ export class ExamTimelineComponent {
         return items;
     });
 
-    readonly noWorkingTimeNeeded = computed(() => {
-        const examType = this.examType();
-        return !isTestExamType(examType) || examType === ExamType.SIMULATION;
-    });
-
     readonly maxWorkingTimeInMinutes = computed(() => {
         const startOfWorkingTime = this.startOfWorkingTime();
         const endOfWorkingTime = this.endOfWorkingTime();
-        if (this.noWorkingTimeNeeded() || !startOfWorkingTime || !endOfWorkingTime) {
+        if (!this.isTestExam() || !startOfWorkingTime || !endOfWorkingTime) {
             return this.max_working_time_in_minutes;
         }
         return Math.max(0, Math.min(this.max_working_time_in_minutes, endOfWorkingTime.diff(startOfWorkingTime, 'minute', true)));
@@ -115,7 +111,7 @@ export class ExamTimelineComponent {
         if (workingTime > this.maxWorkingTimeInMinutes() * 60) {
             return false;
         }
-        if (this.noWorkingTimeNeeded()) {
+        if (!this.isTestExam()) {
             return true;
         }
         const startOfWorkingTime = this.startOfWorkingTime();

@@ -32,38 +32,7 @@
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="isExamTypeReadonly" (examModeChanged)="onExamModeChange()" />
             </div>
-            @if (isTestExam(exam)) {
-                <div class="form-group mb-3">
-                    <div>
-                        <label class="form-check-label" for="examType" jhiTranslate="artemisApp.examManagement.testExam.modeLabel"></label>
-                    </div>
-                    <p-select-button
-                        id="examType"
-                        name="examType"
-                        [options]="testExamTypeOptions"
-                        [(ngModel)]="exam.examType"
-                        [allowEmpty]="false"
-                        [disabled]="isExamTypeReadonly"
-                        optionLabel="label"
-                        optionValue="value"
-                        size="small"
-                    />
-                    <p-message severity="info" size="small" class="mt-1" [closable]="false">
-                        @switch (exam.examType) {
-                            @case (ExamType.SIMULATION) {
-                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.simulation"></span>
-                            }
-                            @case (ExamType.SIMULATION_AND_PRACTICE) {
-                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.simulationAndPractice"></span>
-                            }
-                            @default {
-                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.practice"></span>
-                            }
-                        }
-                    </p-message>
-                </div>
-            }
-            @if (!isTestExam(exam)) {
+            @if (!exam.testExam) {
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
                     <label class="form-check-label" for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck"
@@ -132,7 +101,7 @@
                 </p-dialog>
             }
             <jhi-exam-timeline
-                [examType]="exam.examType!"
+                [isTestExam]="exam.testExam!"
                 [(visibleFrom)]="exam.visibleDate"
                 [(startOfWorkingTime)]="exam.startDate"
                 [(startOfPracticeTime)]="exam.testExamPracticeStartDate"
@@ -196,12 +165,12 @@
             }
             <!-- Section exam assessment and student review
         Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
-            @if (!isTestExam(exam)) {
+            @if (!exam.testExam) {
                 <div>
                     <hr />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    @if (!isTestExam(exam)) {
+                    @if (!exam.testExam) {
                         <div class="row mb-3">
                             <div class="col-sm-6">
                                 <label
