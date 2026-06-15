@@ -82,6 +82,19 @@ export class ImportTableComponent<T extends BaseEntity> {
                 pageSize: this.pageSize(),
             };
             const result = await lastValueFrom(this.pagingService.search(searchState));
+            // Discard stale / out-of-order responses. Several searches can be in flight at once: the initial
+            // unfiltered load triggered by the constructor effect plus debounced loads issued as the user types.
+            // Their responses can return out of order, and a slower earlier (e.g. unfiltered) response must not
+            // overwrite the results for the current search term. Only apply a response whose request still
+            // matches the current search state; otherwise a newer request has already superseded it.
+            if (
+                searchState.searchTerm !== this.searchTerm() ||
+                searchState.page !== this.page() ||
+                searchState.sortedColumn !== this.sortedColumn() ||
+                searchState.sortingOrder !== this.sortingOrder()
+            ) {
+                return;
+            }
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {
