@@ -463,7 +463,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
-        expect(comp.course).toBeUndefined();
+        expect(comp.course()).toBeUndefined();
 
         const courseToSubscribeTo = { ...course };
         courseToSubscribeTo.exercises = [...modelingExercises];
@@ -473,7 +473,7 @@ describe('CourseStatisticsComponent', () => {
 
         courseStorageService.updateCourse(courseToSubscribeTo);
 
-        expect(comp.course).toEqual(courseToSubscribeTo);
+        expect(comp.course()).toEqual(courseToSubscribeTo);
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
     });
 
@@ -510,7 +510,7 @@ describe('CourseStatisticsComponent', () => {
             vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
-            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
+            expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
             expect(comp.ngxExerciseGroups().size).toBe(3);
             const modelingExercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
             expect(modelingExercises).toHaveLength(5);

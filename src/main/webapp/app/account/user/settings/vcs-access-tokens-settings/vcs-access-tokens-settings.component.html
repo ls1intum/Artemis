@@ -1,14 +1,14 @@
 <h2 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h2>
-@if (currentUser) {
+@if (currentUser(); as currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
             </dt>
         </div>
-        @if (!edit) {
+        @if (!edit()) {
             <div class="list-group-item">
-                @if (this.currentUser?.vcsAccessToken) {
+                @if (currentUser.vcsAccessToken) {
                     <table class="table table-striped flex">
                         <thead class="thead-dark">
                             <tr>
@@ -31,7 +31,7 @@
                                 <td>
                                     <jhi-copy-to-clipboard-button [copyText]="currentUser.vcsAccessToken ?? ''" [class]="'btn-secondary btn-sm me-2'" />
                                 </td>
-                                <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
+                                <td>{{ currentUser.vcsAccessTokenExpiryDate | artemisDate }}</td>
                                 <td>
                                     <button
                                         class="btn btn-md flex-grow-1 d-flex align-items-center"
@@ -53,7 +53,7 @@
                     <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
                 }
             </div>
-            @if (!this.currentUser?.vcsAccessToken) {
+            @if (!currentUser.vcsAccessToken) {
                 <div class="list-group-item">
                     <div class="btn-group" role="group" aria-label="Actions">
                         <jhi-button
@@ -79,7 +79,7 @@
                             labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
                             [(ngModel)]="expiryDate"
                             (valueChange)="validateDate()"
-                            [error]="!!expiryDate && !validExpiryDate"
+                            [error]="!!expiryDate && !validExpiryDate()"
                             name="expiryDate"
                             id="expiryDate"
                         />
@@ -92,7 +92,7 @@
                         id="create-vcs-token-button"
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.SMALL"
-                        [disabled]="!validExpiryDate"
+                        [disabled]="!validExpiryDate()"
                         [icon]="faSave"
                         [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
                         (onClick)="sendTokenCreationRequest()"

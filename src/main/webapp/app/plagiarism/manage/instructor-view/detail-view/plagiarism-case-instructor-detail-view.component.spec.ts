@@ -78,16 +78,16 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should set plagiarism case and exercises on initialization', async () => {
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
-        expect(component.plagiarismCase).toEqual(plagiarismCase);
+        expect(component.plagiarismCase()).toEqual(plagiarismCase);
         expect(component.currentAccount?.id).toBe(99);
     });
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
-        component.courseId = 1;
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
-        component.plagiarismCase = { id: 1 };
+        component.plagiarismCase.set({ id: 1 });
         expect(() => component.saveVerdict()).toThrow(Error);
         expect(() => component.savePointDeductionVerdict()).toThrow(Error);
         expect(() => component.saveWarningVerdict()).toThrow(Error);
@@ -96,60 +96,60 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should save plagiarism case plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
-        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
-        component.courseId = 1;
+        component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
-        component.plagiarismCase = { id: 1 };
+        component.plagiarismCase.set({ id: 1 });
         component.saveVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
     });
 
     it('should save plagiarism case warning verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
-        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
-        component.courseId = 1;
+        component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
-        component.plagiarismCase = { id: 1 };
-        component.verdictMessage = 'message';
+        component.plagiarismCase.set({ id: 1 });
+        component.verdictMessage.set('message');
         component.saveWarningVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' });
     });
 
     it('should save plagiarism case point deduction verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>);
-        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
-        component.courseId = 1;
+        component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
-        component.plagiarismCase = { id: 1 };
-        component.verdictPointDeduction = 80;
+        component.plagiarismCase.set({ id: 1 });
+        component.verdictPointDeduction.set(80);
         component.savePointDeductionVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 });
     });
 
     it('should save plagiarism case no plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.NO_PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
-        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
-        component.courseId = 1;
+        component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
+        component.courseId.set(1);
         component.plagiarismCaseId = 1;
-        component.plagiarismCase = { id: 1 };
+        component.plagiarismCase.set({ id: 1 });
         component.saveNoPlagiarismVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
     });
 
     it('should create student notification for course exercise', () => {
         const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
-        component.plagiarismCase = plagiarismCase;
+        component.plagiarismCase.set(plagiarismCase);
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
-        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
-        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+        expect(component.createdPost().plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost().title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost().content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
         expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
@@ -173,12 +173,12 @@ describe('Plagiarism Cases Instructor View Component', () => {
             ...plagiarismCase,
             exercise: { ...exercise, course: undefined, exerciseGroup: { exam: { id: 3, title: examTitle } } },
         };
-        component.plagiarismCase = examPlagiarismCase;
+        component.plagiarismCase.set(examPlagiarismCase);
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
-        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
-        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+        expect(component.createdPost().plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost().title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost().content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
         expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
@@ -197,17 +197,17 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
-        component.plagiarismCase = {
+        component.plagiarismCase.set({
             ...plagiarismCase,
             student: undefined,
             exercise: undefined,
-        } as PlagiarismCase;
+        } as PlagiarismCase);
         component.currentAccount = { id: 99, name: 'user' } as User;
 
         component.createEmptyPost();
-        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
-        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
-        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+        expect(component.createdPost().plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost().title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost().content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
         expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
@@ -224,12 +224,12 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should notify student', () => {
         const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
 
-        component.courseId = 1;
+        component.courseId.set(1);
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
         component.onStudentNotified(newPost);
 
-        expect(component.posts).toHaveLength(1);
-        expect(component.posts[0].id).toBe(newPost.id);
+        expect(component.posts()).toHaveLength(1);
+        expect(component.posts()![0].id).toBe(newPost.id);
 
         expect(successSpy).toHaveBeenCalledOnce();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.plagiarism.plagiarismCases.studentNotified');
@@ -245,21 +245,21 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts()).toHaveLength(0);
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
         await Promise.resolve();
 
-        expect(component.posts).toHaveLength(1);
-        expect(component.posts[0].id).toBe(relevantPost.id);
+        expect(component.posts()).toHaveLength(1);
+        expect(component.posts()![0].id).toBe(relevantPost.id);
 
         const irrelevantPost = { id: 2 };
         postsSubject.next([irrelevantPost]);
         await Promise.resolve();
 
-        expect(component.posts).toHaveLength(1);
-        expect(component.posts[0].id).toBe(relevantPost.id);
+        expect(component.posts()).toHaveLength(1);
+        expect(component.posts()![0].id).toBe(relevantPost.id);
     });
 
     it('should delete post successfully', async () => {
@@ -272,16 +272,16 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts()).toHaveLength(0);
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
         await Promise.resolve();
 
-        expect(component.posts).toHaveLength(1);
-        expect(component.posts[0].id).toBe(relevantPost.id);
+        expect(component.posts()).toHaveLength(1);
+        expect(component.posts()![0].id).toBe(relevantPost.id);
 
         postsSubject.next([]);
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts()).toHaveLength(0);
     });
 });

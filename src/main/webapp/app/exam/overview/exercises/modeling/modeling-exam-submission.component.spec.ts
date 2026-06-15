@@ -214,7 +214,7 @@ describe('ModelingExamSubmissionComponent', () => {
             // Mock the viewChild to return the stub
             vi.spyOn(comp, 'modelingEditor').mockReturnValue(stubModelingEditor as unknown as ModelingEditorComponent);
             const explanationText = 'New explanation text';
-            comp.explanationText = explanationText;
+            comp.explanationText.set(explanationText);
             comp.updateSubmissionFromView();
             expect(comp.studentSubmission().model).toEqual(JSON.stringify(newModel));
             expect(currentModelStub).toHaveBeenCalledTimes(2);
@@ -247,7 +247,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.studentSubmission().isSynced = true;
             comp.explanationChanged(explanationText);
             expect(comp.studentSubmission().isSynced).toBe(false);
-            expect(comp.explanationText).toEqual(explanationText);
+            expect(comp.explanationText()).toEqual(explanationText);
         });
     });
 
@@ -262,9 +262,9 @@ describe('ModelingExamSubmissionComponent', () => {
         await comp.setSubmissionVersion(submissionVersion);
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
-        expect(comp.umlModel).toBeDefined();
-        expect(comp.umlModel!.version).toBe('4.0.0');
-        expect(comp.umlModel!.type).toBe('ClassDiagram');
-        expect(comp.explanationText).toBe('explanation');
+        expect(comp.umlModel()).toBeDefined();
+        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.type).toBe('ClassDiagram');
+        expect(comp.explanationText()).toBe('explanation');
     });
 });

@@ -130,7 +130,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         expect(component).toBeTruthy();
-        expect(component.commitHash).toBe('123456789ab');
+        expect(component.commitHash()).toBe('123456789ab');
     });
 
     it('should show result if present and results are published', () => {
@@ -138,9 +138,9 @@ describe('ProgrammingExamSummaryComponent', () => {
         programmingSubmission.results = [result];
         fixture.detectChanges();
 
-        expect(component.feedbackComponentParameters.exercise).toEqual(programmingExercise);
-        expect(component.feedbackComponentParameters.result).toEqual(result);
-        expect(component.feedbackComponentParameters.exerciseType).toEqual(programmingExercise.type);
+        expect(component.feedbackComponentParameters().exercise).toEqual(programmingExercise);
+        expect(component.feedbackComponentParameters().result).toEqual(result);
+        expect(component.feedbackComponentParameters().exerciseType).toEqual(programmingExercise.type);
 
         const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
         expect(feedbackComponent).toBeTruthy();

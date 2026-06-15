@@ -44,7 +44,7 @@
             [pattern]="pattern()"
         />
     }
-    @if (!formValid) {
+    @if (!formValid()) {
         <div class="alert alert-danger mt-2" role="alert">
             <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.alert"></strong>
         </div>

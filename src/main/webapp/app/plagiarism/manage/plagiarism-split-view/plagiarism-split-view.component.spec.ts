@@ -64,7 +64,7 @@ describe('Plagiarism Split View Component', () => {
         comp = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
 
-        comp.plagiarismComparison = comparison;
+        comp.plagiarismComparison.set(comparison);
         fixture.componentRef.setInput('comparison', {
             submissionA,
             submissionB,
@@ -82,7 +82,7 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
     });
 
     it('should parse text matches for comparison', async () => {
@@ -96,7 +96,7 @@ describe('Plagiarism Split View Component', () => {
 
         await Promise.resolve();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     });
 
@@ -287,7 +287,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
 
         const originalPlagComp = createPlagiarismComparison();
-        const plagComp = comp.plagiarismComparison;
+        const plagComp = comp.plagiarismComparison()!;
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 

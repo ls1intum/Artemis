@@ -36,13 +36,13 @@ export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent
         this.prerequisiteToCreate.masteryThreshold = masteryThreshold;
         this.prerequisiteToCreate.optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.prerequisiteService
             .create(this.prerequisiteToCreate, this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
