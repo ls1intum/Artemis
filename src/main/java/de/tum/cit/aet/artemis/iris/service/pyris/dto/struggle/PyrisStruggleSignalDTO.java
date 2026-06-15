@@ -1,4 +1,3 @@
-// src/main/java/de/tum/cit/aet/artemis/iris/service/pyris/dto/struggle/PyrisStruggleSignalDTO.java
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle;
 
 import java.util.List;

@@ -1,4 +1,3 @@
-// src/test/java/de/tum/cit/aet/artemis/iris/struggle/PyrisStruggleSignalDTOTest.java
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;

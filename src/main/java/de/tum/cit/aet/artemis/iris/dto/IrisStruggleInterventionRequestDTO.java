@@ -1,4 +1,3 @@
-// src/main/java/de/tum/cit/aet/artemis/iris/dto/IrisStruggleInterventionRequestDTO.java
 package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.Map;
