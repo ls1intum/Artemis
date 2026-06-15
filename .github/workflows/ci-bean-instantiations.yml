@@ -1,21 +1,26 @@
 name: Check Bean Instantiations on Startup and with deferred eager Initialization
 
 on:
-  push:
-    branches: [ develop ]
-    paths:
-      - src/main/java/**
-  pull_request:
-    paths:
-      - src/main/java/**
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions: {}
+
+# Workflow-level java pin is drift-checked by ci-workflows.yml.
+env:
+  java: 25
 
 jobs:
   bean-instantiation-check:
+    name: Bean Instantiation Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
 
     env:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
@@ -27,6 +32,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
 
       - name: Validate threshold consistency between BeanInstantiationTracer and GitHub Action
         shell: bash
@@ -93,14 +100,14 @@ jobs:
 
           echo "✅ All thresholds match between Java file and GitHub Action"
 
-      - name: Set up JDK 25
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '${{ env.java }}'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See build.yml.
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6.1.0
 
       - name: Build application
         shell: bash
