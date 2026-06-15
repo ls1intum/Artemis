@@ -18,7 +18,7 @@ class FileUploadEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 10;
+        return 7;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
@@ -27,9 +27,8 @@ class FileUploadEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return 2;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 1;
+        return 0;
     }
 }
