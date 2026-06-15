@@ -318,17 +318,11 @@ public class ParticipationResource {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
-        if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
+        if (exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) {
             var submissions = submissionRepository.findAllByParticipationId(participation.getId());
             // Only count real submitted entries, not auto-created placeholders
             boolean hasSubmittedOnce = submissions.stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
-                throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
-            }
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            var latestSubmission = submissionRepository.findLatestSubmissionByParticipationId(participation.getId());
-            if (latestSubmission.isEmpty() || !latestSubmission.get().isSubmitted()) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
