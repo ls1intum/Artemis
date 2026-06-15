@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionServi
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * Plain Mockito unit test for the trigger side of {@link IrisStruggleInterventionService#prepareTrigger}. The three
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 class IrisStruggleInterventionServiceTriggerTest {
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private AuthorizationCheckService authCheckService;
@@ -64,7 +64,7 @@ class IrisStruggleInterventionServiceTriggerTest {
     private PyrisJobService pyrisJobService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private IrisChatSessionService irisChatSessionService;

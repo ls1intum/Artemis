@@ -23,7 +23,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
     @Test
     void serializesTopLevelSettingsInitialStagesAndSignal() throws Exception {
         var settings = new PyrisPipelineExecutionSettingsDTO("job-1", null, "http://localhost:8080", "default");
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.Alert(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
         var stage = new PyrisStageDTO("Init", 10, PyrisStageState.NOT_STARTED, null, false, null);
         // Non-empty initialStages so NON_EMPTY keeps it: this proves it is hoisted as a top-level sibling of
         // settings (not nested). empty chatHistory + null exercise are dropped by NON_EMPTY (Pyris defaults them).

@@ -69,8 +69,8 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisStruggleInterventionRequestDTO requestBody() {
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.Alert(540, "FM", List.of("FM"), 0.72, "armed", false, false),
-                List.of(new PyrisStruggleSignalDTO.Tick(530, 0.6, 0.7)), List.of(new PyrisStruggleSignalDTO.Component("feedbackViewing", 0.8)), 540);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6, 0.7)), List.of(new PyrisStruggleSignalDTO.ComponentDTO("feedbackViewing", 0.8)), 540);
         return new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"));
     }
 

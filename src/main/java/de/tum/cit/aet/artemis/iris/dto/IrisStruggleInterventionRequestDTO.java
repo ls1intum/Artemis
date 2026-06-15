@@ -4,6 +4,8 @@ import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 
 /**
@@ -11,10 +13,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  * exercise is the path key; the body carries the struggle signal + the exercise-scoped uncommitted-files
  * snapshot collected by the extension (spec §7).
  * <p>
- * This DTO is inbound (deserialization) only, so it carries NO {@code @JsonInclude} — that annotation governs
- * serialization and would be dead noise here. (It would also contradict Task 1's must-keep note for the nested
- * signal, where {@code NON_EMPTY} must NOT be used so empty inner collections still serialize for Pyris.)
+ * This DTO is inbound (deserialization) only, so {@code @JsonInclude} has no functional effect here; it is
+ * present to satisfy the iris-DTO {@code @JsonInclude} architecture rule. The nested signal keeps its own
+ * {@code @JsonInclude(ALWAYS)} so its empty inner collections still serialize for Pyris.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisStruggleInterventionRequestDTO(PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles) {
 
     public IrisStruggleInterventionRequestDTO {

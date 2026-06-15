@@ -17,9 +17,9 @@ class PyrisStruggleSignalDTOTest {
 
     @Test
     void serializesToCamelCaseWireShape() throws Exception {
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.Alert(540, "FM", List.of("FM", "STATE"), 0.72, "armed", false, false),
-                List.of(new PyrisStruggleSignalDTO.Tick(520, 0.5, 0.6), new PyrisStruggleSignalDTO.Tick(530, 0.6, 0.7)),
-                List.of(new PyrisStruggleSignalDTO.Component("feedbackViewing", 0.8)), 540);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM", "STATE"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(520, 0.5, 0.6), new PyrisStruggleSignalDTO.TickDTO(530, 0.6, 0.7)),
+                List.of(new PyrisStruggleSignalDTO.ComponentDTO("feedbackViewing", 0.8)), 540);
         JsonNode node = mapper.valueToTree(signal);
         assertThat(node.get("alert").get("tSessionS").asInt()).isEqualTo(540);
         assertThat(node.get("alert").get("primaryBoundary").asText()).isEqualTo("FM");
@@ -32,7 +32,7 @@ class PyrisStruggleSignalDTOTest {
 
     @Test
     void emptyCollectionsAreNotDroppedFromWire() throws Exception {
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.Alert(1, "STATE", List.of("STATE"), 0.6, "armed", true, false), List.of(), List.of(), 1);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "STATE", List.of("STATE"), 0.6, "armed", true, false), List.of(), List.of(), 1);
         JsonNode node = mapper.valueToTree(signal);
         assertThat(node.has("trajectory")).isTrue();
         assertThat(node.has("dominantComponents")).isTrue();
