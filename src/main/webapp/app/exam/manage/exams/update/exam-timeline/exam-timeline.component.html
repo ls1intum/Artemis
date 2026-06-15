@@ -1,10 +1,12 @@
 <div class="d-flex flex-column flex-md-row gap-3 gap-lg-5">
     <jhi-exercise-timeline [timelineItems]="timelineItems()" [showInvalidBeforeTouched]="true" (timelineStatusChange)="timelineStatus.set($event)" />
     <div class="d-flex flex-column gap-2 align-items-start">
-        <div class="flex items-center">
-            <p-checkbox inputId="simulation-phase-checkbox" [(ngModel)]="isSimulationPhaseChecked" />
-            <label for="simulation-phase-checkbox" class="ml-2"> Simulation phase checkbox </label>
-        </div>
+        @if (isTestExam()) {
+            <div class="flex items-center">
+                <p-checkbox inputId="simulation-phase-checkbox" name="simulation-phase-checkbox" [(ngModel)]="isSimulationPhaseChecked" [binary]="true" />
+                <label for="simulation-phase-checkbox" class="ml-2"> Simulation phase checkbox </label>
+            </div>
+        }
         <div class="d-flex flex-column">
             <div>
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>

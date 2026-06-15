@@ -44,7 +44,10 @@ export class ExamTimelineComponent {
         });
 
         effect(() => {
-            if (!this.isSimulationPhaseChecked()) {
+            const isTestExam = this.isTestExam();
+            const isSimulationPhaseChecked = this.isSimulationPhaseChecked();
+            if (!isTestExam || !isSimulationPhaseChecked) {
+                this.isSimulationPhaseChecked.set(false);
                 this.startOfPracticeTime.set(undefined);
             }
         });
@@ -57,9 +60,10 @@ export class ExamTimelineComponent {
 
     readonly timelineItems = computed(() => {
         const isTestExam = this.isTestExam();
+        const isSimulationPhaseChecked = this.isSimulationPhaseChecked();
 
         const simulationEndAndPracticeStart: TimelineItem[] =
-            isTestExam && this.isSimulationPhaseChecked()
+            isTestExam && isSimulationPhaseChecked
                 ? [
                       {
                           kind: 'derived',
