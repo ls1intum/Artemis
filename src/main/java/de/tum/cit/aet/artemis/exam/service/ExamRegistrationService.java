@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -94,18 +95,22 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Add multiple users to the students of the exam so that they can access the exam
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
+     * Add multiple users to the students of the exam so that they can access the exam.
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * <p>
+     * Users who hold a staff role (instructor, editor, tutor, or admin) in the course are rejected and reported back
+     * in {@link ExamRegistrationResultDTO#rejectedStaffStudents()}. Such users are NOT added to the course student group,
+     * so a failed registration leaves no side effect on the user's course membership.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
-     * @param examUserDTOs the list of students (with at least registration number) who should get access to the exam
-     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @param examUserDTOs the list of students (with at least one unique identifier) who should get access to the exam
+     * @return a result containing the students who could not be found and the staff members who were rejected
      */
-    public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
+    public ExamRegistrationResultDTO registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
@@ -114,44 +119,57 @@ public class ExamRegistrationService {
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
-                    course.getStudentGroupName());
+            // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
+            Optional<User> optionalStudent = userService.findUserWithoutAddingToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
+                continue;
+            }
+
+            User student = optionalStudent.get();
+
+            // Reject staff (instructor, editor, tutor, admin) BEFORE granting any course access
+            if (isStaffMemberOfCourse(course, student)) {
+                rejectedStaffDTOs.add(examUserDto);
+                continue;
+            }
+
+            // Only users who will actually be registered get added to the course student group
+            if (!student.getGroups().contains(course.getStudentGroupName())) {
+                userService.addUserToGroup(student, course.getStudentGroupName());
+            }
+
+            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+
+            if (examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) {
+                ExamUser registeredExamUser = new ExamUser();
+                registeredExamUser.setUser(student);
+                registeredExamUser.setExam(exam);
+
+                if (StringUtils.hasText(examUserDto.room())) {
+                    registeredExamUser.setPlannedRoom(examUserDto.room());
+                }
+                if (StringUtils.hasText(examUserDto.seat())) {
+                    registeredExamUser.setPlannedSeat(examUserDto.seat());
+                }
+                registeredExamUser = examUserRepository.save(registeredExamUser);
+                exam.addExamUser(registeredExamUser);
+                usersAddedToExam.add(registeredExamUser.getUser().getLogin());
             }
             else {
-                User student = optionalStudent.get();
-                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-
-                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !authorizationCheckService.isInstructorInCourse(course, student)
-                        && !authorizationCheckService.isAdmin(student)) {
-                    ExamUser registeredExamUser = new ExamUser();
-                    registeredExamUser.setUser(optionalStudent.get());
-                    registeredExamUser.setExam(exam);
-
-                    if (StringUtils.hasText(examUserDto.room())) {
-                        registeredExamUser.setPlannedRoom(examUserDto.room());
-                    }
-                    if (StringUtils.hasText(examUserDto.seat())) {
-                        registeredExamUser.setPlannedSeat(examUserDto.seat());
-                    }
-                    registeredExamUser = examUserRepository.save(registeredExamUser);
-                    exam.addExamUser(registeredExamUser);
-                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
-                }
-
-                if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
-                    ExamUser examUser = examUserOptional.get();
-                    examUser.setPlannedRoom(examUserDto.room());
-                    examUser.setPlannedSeat(examUserDto.seat());
-                    examUser = examUserRepository.save(examUser);
-                    exam.addExamUser(examUser);
-                    usersAddedToExam.add(examUser.getUser().getLogin());
-                }
+                // Update room/seat of an already registered exam user
+                ExamUser examUser = examUserOptional.get();
+                examUser.setPlannedRoom(examUserDto.room());
+                examUser.setPlannedSeat(examUserDto.seat());
+                examUser = examUserRepository.save(examUser);
+                exam.addExamUser(examUser);
+                usersAddedToExam.add(examUser.getUser().getLogin());
             }
         }
+
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
@@ -171,7 +189,7 @@ public class ExamRegistrationService {
             log.warn("Could not add audit event to audit log", ex);
         }
 
-        return notFoundStudentsDTOs;
+        return new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs);
     }
 
     /**
@@ -359,7 +377,7 @@ public class ExamRegistrationService {
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
             Optional<ExamUser> registeredExamUserCheckOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-            if (registeredExamUserCheckOptional.isEmpty() && !authorizationCheckService.isInstructorInCourse(course, student) && !authorizationCheckService.isAdmin(student)) {
+            if (registeredExamUserCheckOptional.isEmpty() && !isStaffMemberOfCourse(course, student)) {
                 ExamUser registeredExamUser = createExamUser(exam, student);
                 exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
@@ -377,5 +395,19 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
+    }
+
+    /**
+     * Checks whether the given user holds a staff role (instructor, editor, tutor, or admin) in the course
+     * and therefore must not be registered as an exam student.
+     *
+     * @param course the course the exam belongs to
+     * @param user   the user to check (must have groups loaded)
+     * @return true if the user is course staff and may not be registered as an exam student
+     */
+    public boolean isStaffMemberOfCourse(Course course, User user) {
+        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getEditorGroupName())
+                || user.getGroups().contains(course.getTeachingAssistantGroupName()) || authorizationCheckService.isAdmin(user)
+                || authorizationCheckService.isEditorInCourse(course, user) || authorizationCheckService.isTeachingAssistantInCourse(course, user);
     }
 }

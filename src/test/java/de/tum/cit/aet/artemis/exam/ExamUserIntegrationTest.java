@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -129,9 +130,10 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         examUserDTOs.add(examUserDTO1);
         examUserDTOs.add(examUserDTO2);
 
-        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students",
-                examUserDTOs, ExamUserDTO.class, OK);
-        assertThat(responseNotFoundExamUsers).isEmpty();
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
+                ExamRegistrationResultDTO.class, OK);
+        assertThat(result.notFoundStudents()).isEmpty();
+        assertThat(result.rejectedStaffStudents()).isEmpty();
         Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
         assertThat(examUsers).hasSize(2);
@@ -152,9 +154,10 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         final var examUserDTOs = getExamUserDTOS();
 
         // add students to exam with respective registration numbers, same as in pdf test file
-        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students",
-                examUserDTOs, ExamUserDTO.class, OK);
-        assertThat(responseNotFoundExamUsers).isEmpty();
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
+                ExamRegistrationResultDTO.class, OK);
+        assertThat(result.notFoundStudents()).isEmpty();
+        assertThat(result.rejectedStaffStudents()).isEmpty();
 
         // upload exam user images
         var imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
@@ -697,7 +700,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportExamUsers() throws Exception {
         List<ExamUserDTO> examUserDTOs = getExamUserDTOS();
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs, ExamUserDTO.class, OK);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs, ExamRegistrationResultDTO.class, OK);
 
         List<ExportExamUserDTO> exportedUsers = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/export-students", HttpStatus.OK,
                 ExportExamUserDTO.class);

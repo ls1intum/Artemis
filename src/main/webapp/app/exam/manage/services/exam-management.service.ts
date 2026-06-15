@@ -247,8 +247,8 @@ export class ExamManagementService {
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<ExamRegistrationResultDTO>> {
+        return this.http.post<ExamRegistrationResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -681,4 +681,9 @@ interface ExamImportDTO {
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
+}
+
+export interface ExamRegistrationResultDTO {
+    notFoundStudents?: ExamUserDTO[];
+    rejectedStaffStudents?: ExamUserDTO[];
 }

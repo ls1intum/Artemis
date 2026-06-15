@@ -211,6 +211,8 @@
             },
             "error": {
                 "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden.",
+                "cannotRegisterEditor": "Du kannst keine Editor:innen oder Tutor:innen zu Klausuren anmelden.",
+                "cannotRegisterStaffBulk": "{{ number }} Person(en) wurden nicht angemeldet, da sie aus der Lehr- oder Administrationsgruppe des Kurses sind.",
                 "cannotShowExampleSolution": "Beispiellösung wurde nicht gefunden",
                 "cannotDisplayExerciseDetails": "Aufgabe {{ exerciseGroupTitle }} kann nicht angezeigt werden"
             },

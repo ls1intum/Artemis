@@ -15,6 +15,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exam-add-students-dialog',
@@ -118,8 +119,19 @@ export class ExamAddStudentsDialogComponent {
                 this.currentlyRegisteringLogins.update((currentLogins) => this.copyAndDelete(currentLogins, login));
                 this.studentsChanged.emit();
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
                 this.currentlyRegisteringLogins.update((currentLogins) => this.copyAndDelete(currentLogins, login));
+
+                if (error.error?.errorKey === 'cannotRegisterInstructor') {
+                    this.alertService.error('artemisApp.exam.error.cannotRegisterInstructor');
+                    return;
+                }
+
+                if (error.error?.errorKey === 'cannotRegisterEditor') {
+                    this.alertService.error('artemisApp.exam.error.cannotRegisterEditor');
+                    return;
+                }
+
                 this.alertService.error('artemisApp.examManagement.examStudents.addDialog.errorRegisterStudent');
             },
         });

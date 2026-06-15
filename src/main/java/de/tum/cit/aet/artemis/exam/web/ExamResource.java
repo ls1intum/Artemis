@@ -96,6 +96,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
@@ -951,8 +952,19 @@ public class ExamResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
-        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
+        var studentGroups = student.getGroups();
+
+        var instructorGroupName = course.getInstructorGroupName();
+        var editorGroupName = course.getEditorGroupName();
+        var teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+
+        if (studentGroups.contains(instructorGroupName) || authCheckService.isAdmin(student)) {
             throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
+        }
+
+        if (studentGroups.contains(editorGroupName) || studentGroups.contains(teachingAssistantGroupName) || authCheckService.isEditorInCourse(course, student)
+                || authCheckService.isTeachingAssistantInCourse(course, student)) {
+            throw new AccessForbiddenAlertException("You cannot register editors or tutors to exams.", ENTITY_NAME, "cannotRegisterEditor");
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
@@ -1077,12 +1089,12 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<ExamUserDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
+    public ResponseEntity<ExamRegistrationResultDTO> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        List<ExamUserDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
+        ExamRegistrationResultDTO notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
