@@ -24,7 +24,6 @@ import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { TitleChannelNamePrimengComponent } from 'app/shared-ui/form/title-channel-name-primeng/title-channel-name-primeng.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,6 +33,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -42,7 +42,6 @@ import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timelin
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
-        TitleChannelNamePrimengComponent,
         HelpIconComponent,
         ExamModePickerComponent,
         NgbTooltip,
@@ -58,6 +57,7 @@ import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timelin
         MessageModule,
         SelectButtonModule,
         ExamTimelineComponent,
+        TitleChannelNameComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
