@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * pydantic {@code StruggleInterventionPipelineExecutionDTO}. {@code chatHistory} is empty when no exercise
  * session exists yet (deferred materialization, §11).
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionPipelineExecutionDTO(PyrisStruggleSignalDTO struggleSignal, @Nullable PyrisProgrammingExerciseDTO programmingExercise,
         @Nullable PyrisSubmissionDTO programmingExerciseSubmission, List<PyrisMessageDTO> chatHistory, @Nullable PyrisCourseDTO course, @Nullable PyrisUserDTO user,
         PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
