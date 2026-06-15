@@ -35,7 +35,7 @@ jobs:
           ${{ env.java }}
     - name: Setup Gradle
       # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See ci-build.yml.
-      uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6.1.0
+      uses: gradle/actions/setup-gradle@v6
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |
