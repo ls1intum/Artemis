@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -122,14 +122,15 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     readonly studentExam = input.required<StudentExam>();
 
-    plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
-    exampleSolutionPublished = false;
+    readonly plagiarismCaseInfos = signal<{ [exerciseId: number]: PlagiarismCaseInfo }>({});
+    readonly exampleSolutionPublished = signal(false);
 
     constructor() {
         effect(() => {
             const se = this.studentExam();
-            if (this.studentExamGradeInfoDTO) {
-                this.studentExamGradeInfoDTO.studentExam = se;
+            const gradeInfo = this.studentExamGradeInfoDTO();
+            if (gradeInfo) {
+                gradeInfo.studentExam = se;
             }
             this.tryLoadPlagiarismCaseInfosForStudent();
         });
@@ -138,43 +139,43 @@ export class ExamResultSummaryComponent implements OnInit {
     /**
      * Grade info for current student's exam.
      */
-    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
+    readonly studentExamGradeInfoDTO = signal<StudentExamWithGradeDTO | undefined>(undefined);
 
-    isGradingKeyCollapsed = true;
-    isBonusGradingKeyCollapsed = true;
+    readonly isGradingKeyCollapsed = signal(true);
+    readonly isBonusGradingKeyCollapsed = signal(true);
 
     readonly instructorView = input(false);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
-    isTestRun = false;
+    readonly isTestRun = signal(false);
     isTestExam = false;
 
     testRunConduction = false;
-    testExamConduction = false;
+    readonly testExamConduction = signal(false);
 
-    examWithOnlyIdAndStudentReviewPeriod: Exam;
+    readonly examWithOnlyIdAndStudentReviewPeriod = signal<Exam>(undefined!);
 
-    isBeforeStudentReviewEnd = false;
+    readonly isBeforeStudentReviewEnd = signal(false);
     /**
      * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
      * the review dates are set and the review start date has passed.
      */
-    isAfterStudentReviewStart = false;
+    readonly isAfterStudentReviewStart = signal(false);
 
-    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    readonly exerciseInfos = signal<Record<number, ResultSummaryExerciseInfo>>({});
 
     /**
      * Passed to components with overlapping elements to ensure that the overlapping
      * elements are displayed in a different order for printing.
      */
-    isPrinting = false;
+    readonly isPrinting = signal(false);
 
     /**
      * Passed to components where the problem statement might be expanded or collapsed to ensure that
      * the problem statement is expanded while printing
      */
-    expandProblemStatement = false;
+    readonly expandProblemStatement = signal(false);
 
     /**
      * Initialise the courseId from the current url
@@ -182,11 +183,11 @@ export class ExamResultSummaryComponent implements OnInit {
     ngOnInit(): void {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
-        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.isTestExam = studentExam.exam?.testExam === true;
-        this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction = this.isTestExam && !studentExam.submitted;
-        this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
+        this.isTestExam = studentExam.exam!.testExam!;
+        this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
+        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }
@@ -197,32 +198,32 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (isExamResultPublished(this.isTestRun, studentExam.exam, this.serverDateService)) {
+        if (isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, studentExam.exam.id, studentExam.id, studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id, studentExam.user.id)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam();
-                    this.studentExamGradeInfoDTO = studentExamWithGrade;
-                    this.exerciseInfos = this.getExerciseInfos(studentExamWithGrade);
+                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
                 });
         }
 
-        this.exampleSolutionPublished = !!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate);
+        this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));
 
-        this.exerciseInfos = this.getExerciseInfos();
+        this.exerciseInfos.set(this.getExerciseInfos());
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
 
-        this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
-        this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+        this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
+        this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
     get resultsArePublished(): boolean | any {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
 
-        if (this.testRunConduction || this.testExamConduction) {
+        if (this.testRunConduction || this.testExamConduction()) {
             return false;
         }
 
@@ -246,9 +247,9 @@ export class ExamResultSummaryComponent implements OnInit {
         }
 
         const exerciseIds = studentExam?.exercises?.map((exercise) => exercise.id!);
-        if (exerciseIds?.length && this.courseId) {
-            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
-                this.plagiarismCaseInfos = res.body ?? {};
+        if (exerciseIds?.length && this.courseId()) {
+            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId(), exerciseIds).subscribe((res) => {
+                this.plagiarismCaseInfos.set(res.body ?? {});
             });
         }
     }
@@ -259,13 +260,13 @@ export class ExamResultSummaryComponent implements OnInit {
     async printPDF() {
         const stateBeforeResetting = this.expandExercisesAndGradingKeysBeforePrinting();
 
-        this.isPrinting = true;
-        this.expandProblemStatement = true;
+        this.isPrinting.set(true);
+        this.expandProblemStatement.set(true);
 
         await this.themeService.print();
 
-        this.isPrinting = false;
-        this.expandProblemStatement = false;
+        this.isPrinting.set(false);
+        this.expandProblemStatement.set(false);
 
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
@@ -286,34 +287,34 @@ export class ExamResultSummaryComponent implements OnInit {
 
     private expandExercisesAndGradingKeysBeforePrinting() {
         const stateBeforeResetting = {
-            exerciseInfos: cloneDeep(this.exerciseInfos),
-            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed),
-            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed),
+            exerciseInfos: cloneDeep(this.exerciseInfos()),
+            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed()),
+            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed()),
         };
 
         this.expandExercises();
 
-        this.isGradingKeyCollapsed = false;
-        this.isBonusGradingKeyCollapsed = false;
+        this.isGradingKeyCollapsed.set(false);
+        this.isBonusGradingKeyCollapsed.set(false);
 
         return stateBeforeResetting;
     }
 
     private resetExpandingExercisesAndGradingKeys(stateBeforeResetting: StateBeforeResetting) {
-        this.exerciseInfos = stateBeforeResetting.exerciseInfos;
-        this.isGradingKeyCollapsed = stateBeforeResetting.isGradingKeyCollapsed;
-        this.isBonusGradingKeyCollapsed = stateBeforeResetting.isBonusGradingKeyCollapsed;
+        this.exerciseInfos.set(stateBeforeResetting.exerciseInfos);
+        this.isGradingKeyCollapsed.set(stateBeforeResetting.isGradingKeyCollapsed);
+        this.isBonusGradingKeyCollapsed.set(stateBeforeResetting.isBonusGradingKeyCollapsed);
     }
 
     private expandExercises() {
-        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
+        Object.entries(this.exerciseInfos()).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
             exerciseInfo[1].isCollapsed = false;
         });
     }
 
     public generateLink(exercise: Exercise) {
         if (exercise?.studentParticipations?.length) {
-            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+            return ['/courses', this.courseId(), `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
         return undefined;
     }
@@ -344,11 +345,11 @@ export class ExamResultSummaryComponent implements OnInit {
         exam.examStudentReviewStart = studentExam?.exam?.examStudentReviewStart;
         exam.examStudentReviewEnd = studentExam?.exam?.examStudentReviewEnd;
         exam.course = studentExam?.exam?.course;
-        this.examWithOnlyIdAndStudentReviewPeriod = exam;
+        this.examWithOnlyIdAndStudentReviewPeriod.set(exam);
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -359,7 +360,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -407,9 +408,10 @@ export class ExamResultSummaryComponent implements OnInit {
             return undefined;
         }
 
-        for (const achievedPointsPerExerciseKey in this.studentExamGradeInfoDTO?.achievedPointsPerExercise) {
+        const studentExamGradeInfoDTO = this.studentExamGradeInfoDTO();
+        for (const achievedPointsPerExerciseKey in studentExamGradeInfoDTO?.achievedPointsPerExercise) {
             if (Number(achievedPointsPerExerciseKey) === exerciseId) {
-                return this.studentExamGradeInfoDTO.achievedPointsPerExercise[achievedPointsPerExerciseKey];
+                return studentExamGradeInfoDTO.achievedPointsPerExercise[Number(achievedPointsPerExerciseKey)];
             }
         }
 
@@ -421,12 +423,12 @@ export class ExamResultSummaryComponent implements OnInit {
             return undefined;
         }
 
-        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO?.studentResult?.exerciseGroupIdToExerciseResult;
+        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO()?.studentResult?.exerciseGroupIdToExerciseResult;
         let exerciseResult = undefined;
 
         for (const key in exerciseGroupResultMapping) {
-            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
-                exerciseResult = exerciseGroupResultMapping[key];
+            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[Number(key)].exerciseId === exerciseId) {
+                exerciseResult = exerciseGroupResultMapping[Number(key)];
                 break;
             }
         }
@@ -447,7 +449,8 @@ export class ExamResultSummaryComponent implements OnInit {
             return;
         }
 
-        this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
+        const exerciseInfos = this.exerciseInfos();
+        exerciseInfos[exerciseId].displayExampleSolution = !exerciseInfos[exerciseId].displayExampleSolution;
     }
 
     private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
@@ -483,7 +486,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     getAchievedPercentageByExerciseId(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined): number | undefined {
         const result = this.getExerciseResultByExerciseId(exerciseId);
-        const course = this.studentExamGradeInfoDTO?.studentExam?.exam?.course;
+        const course = this.studentExamGradeInfoDTO()?.studentExam?.exam?.course;
 
         if (result === undefined) {
             return this.getAchievedPercentageFromExamResults(exerciseId, studentExamWithGrade, course);

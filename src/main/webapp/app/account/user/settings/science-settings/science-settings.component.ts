@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -32,11 +32,11 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
     private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
-    featureToggleActive = false;
+    readonly featureToggleActive = signal(false);
     private lastConfirmedValues = new Map<string, boolean>();
 
-    declare userSettings: UserSettingsStructure<ScienceSetting>;
-    declare settings: Array<ScienceSetting>;
+    declare userSettings: WritableSignal<UserSettingsStructure<ScienceSetting>>;
+    declare settings: WritableSignal<Array<ScienceSetting>>;
 
     ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
@@ -48,15 +48,14 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             super.ngOnInit();
         } else {
             // else reuse the already available/loaded ones
-            this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory);
-            this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+            this.userSettings.set(this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestScienceSettings, this.userSettingsCategory));
+            this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
             this.storeConfirmedValues();
-            this.changeDetector.detectChanges();
         }
 
         // subscribe to feature toggle changes
         this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
-            this.featureToggleActive = active;
+            this.featureToggleActive.set(active);
         });
     }
 
@@ -71,7 +70,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
      */
     toggleSetting(event: MouseEvent) {
         const settingId = (event.currentTarget as HTMLElement | undefined)?.id;
-        const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
+        const settingToUpdate = this.settings().find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {
             return;
         }
@@ -81,13 +80,13 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
         // Cancel any in-flight save to prevent race conditions on rapid toggles
         this.saveSubscription?.unsubscribe();
-        this.saveSubscription = this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
+        this.saveSubscription = this.userSettingsService.saveSettings(this.settings(), this.userSettingsCategory).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
-                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body);
-                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                this.userSettings.set(this.userSettingsService.saveSettingsSuccess(this.userSettings(), res.body));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.storeConfirmedValues();
                 this.finishSaving();
             },
@@ -101,10 +100,10 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     }
 
     private storeConfirmedValues(): void {
-        if (!this.settings) {
+        if (!this.settings()) {
             return;
         }
-        for (const setting of this.settings) {
+        for (const setting of this.settings()) {
             this.lastConfirmedValues.set(setting.settingId, !!setting.active);
         }
     }

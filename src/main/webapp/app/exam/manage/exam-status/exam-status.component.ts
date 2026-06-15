@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -48,24 +48,24 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         });
     }
 
-    examChecklist: ExamChecklist;
-    numberOfGeneratedStudentExams: number;
+    readonly examChecklist = signal<ExamChecklist>(undefined!);
+    readonly numberOfGeneratedStudentExams = signal<number>(0);
 
-    configuredExercises: boolean;
-    registeredStudents: boolean;
-    generatedStudentExams: boolean;
-    preparedExerciseStart: boolean;
+    readonly configuredExercises = signal<boolean>(false);
+    readonly registeredStudents = signal<boolean>(false);
+    readonly generatedStudentExams = signal<boolean>(false);
+    readonly preparedExerciseStart = signal<boolean>(false);
 
     // all steps for the preparation finished
-    examPreparationFinished = false;
+    readonly examPreparationFinished = signal(false);
     // All mandatory steps for the preparation finished
-    mandatoryPreparationFinished = false;
-    examConductionState: ExamConductionState;
-    examReviewState: ExamReviewState;
-    examCorrectionState: ExamReviewState;
+    readonly mandatoryPreparationFinished = signal(false);
+    readonly examConductionState = signal<ExamConductionState>(undefined!);
+    readonly examReviewState = signal<ExamReviewState>(undefined!);
+    readonly examCorrectionState = signal<ExamReviewState>(undefined!);
 
-    isTestExam: boolean;
-    maxPointExercises: number;
+    readonly isTestExam = signal<boolean>(false);
+    readonly maxPointExercises = signal<number>(0);
 
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
@@ -75,8 +75,8 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     protected readonly isSimulationAndPracticeExam = isSimulationAndPracticeExam;
     protected readonly testExamSimulationEndDate = testExamSimulationEndDate;
 
-    numberOfSubmitted = 0;
-    numberOfStarted = 0;
+    readonly numberOfSubmitted = signal(0);
+    readonly numberOfStarted = signal(0);
     private submittedSubscription?: Subscription;
     private startedSubscription?: Subscription;
 
@@ -90,16 +90,16 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((count) => count + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((count) => count + 1));
     }
 
     private updateChecklistState() {
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
-            this.examChecklist = examStats;
-            this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
-            this.isTestExam = this.exam().testExam === true;
+            this.examChecklist.set(examStats);
+            this.numberOfGeneratedStudentExams.set(this.examChecklist().numberOfGeneratedStudentExams ?? 0);
+            this.isTestExam.set(this.exam().testExam!);
 
             if (this.course()?.isAtLeastInstructor) {
                 // Step 1:
@@ -109,14 +109,14 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
             // Step 2: Exam conduction
             this.setConductionState();
 
-            if (!this.isTestExam) {
+            if (!this.isTestExam()) {
                 // Step 3: Exam correction
                 this.setReviewState();
                 this.setCorrectionState();
             }
 
-            this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
-            this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
+            this.numberOfStarted.set(this.examChecklist().numberOfExamsStarted);
+            this.numberOfSubmitted.set(this.examChecklist().numberOfExamsSubmitted);
         });
     }
 
@@ -135,10 +135,10 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         let examPointsReachable;
-        if (this.isTestExam) {
+        if (this.isTestExam()) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
-            this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam());
-            examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises;
+            this.maxPointExercises.set(this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam()));
+            examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises();
         } else {
             examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam());
         }
@@ -150,11 +150,11 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      * Auxiliary method indicating whether all steps of Exam preparation are done
      */
     private isExamPreparationFinished(): boolean {
-        if (this.isTestExam) {
+        if (this.isTestExam()) {
             // For test exam, only the exerciseConfiguration needs to be performed by the instructor
-            return this.configuredExercises;
+            return this.configuredExercises();
         } else {
-            return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
+            return this.configuredExercises() && this.registeredStudents() && this.generatedStudentExams() && this.preparedExerciseStart();
         }
     }
 
@@ -163,10 +163,10 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      * (PrepareExerciseStart is not mandatory, but highly recommended)
      */
     private isMandatoryPreparationFinished(): boolean {
-        if (this.isTestExam) {
-            return this.configuredExercises;
+        if (this.isTestExam()) {
+            return this.configuredExercises();
         } else {
-            return this.configuredExercises && this.registeredStudents && this.generatedStudentExams;
+            return this.configuredExercises() && this.registeredStudents() && this.generatedStudentExams();
         }
     }
 
@@ -176,14 +176,14 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         // The ERROR-State should only be visible to Instructors, as editors & TAs have no access to the required data to determine if the preparation is finished
-        if (this.course()?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
-            this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && ((this.course() && !this.course().isAtLeastInstructor) || this.examPreparationFinished)) {
-            this.examConductionState = ExamConductionState.FINISHED;
+        if (this.course()?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished()) {
+            this.examConductionState.set(ExamConductionState.ERROR);
+        } else if (this.examAlreadyEnded() && ((this.course() && !this.course().isAtLeastInstructor) || this.examPreparationFinished())) {
+            this.examConductionState.set(ExamConductionState.FINISHED);
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
-            this.examConductionState = ExamConductionState.RUNNING;
+            this.examConductionState.set(ExamConductionState.RUNNING);
         } else {
-            this.examConductionState = ExamConductionState.PLANNED;
+            this.examConductionState.set(ExamConductionState.PLANNED);
         }
     }
 
@@ -192,13 +192,13 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      */
     private setReviewState(): void {
         if (!this.exam().examStudentReviewEnd) {
-            this.examReviewState = ExamReviewState.UNSET;
+            this.examReviewState.set(ExamReviewState.UNSET);
         } else if (this.isExamReviewPlanned()) {
-            this.examReviewState = ExamReviewState.PLANNED;
+            this.examReviewState.set(ExamReviewState.PLANNED);
         } else if (this.isExamReviewRunning()) {
-            this.examReviewState = ExamReviewState.RUNNING;
+            this.examReviewState.set(ExamReviewState.RUNNING);
         } else {
-            this.examReviewState = ExamReviewState.FINISHED;
+            this.examReviewState.set(ExamReviewState.FINISHED);
         }
     }
 
@@ -206,16 +206,16 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      * Auxiliary method that sets the state for the whole Exam correction section
      */
     private setCorrectionState(): void {
-        if (this.examReviewState === ExamReviewState.RUNNING) {
-            this.examCorrectionState = ExamReviewState.RUNNING;
-        } else if (!this.exam().publishResultsDate || this.examReviewState === ExamReviewState.UNSET) {
-            this.examCorrectionState = ExamReviewState.UNSET;
-        } else if (this.exam().publishResultsDate && this.examReviewState === ExamReviewState.PLANNED) {
-            this.examCorrectionState = ExamReviewState.PLANNED;
-        } else if (this.examReviewState === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
-            this.examCorrectionState = ExamReviewState.FINISHED;
+        if (this.examReviewState() === ExamReviewState.RUNNING) {
+            this.examCorrectionState.set(ExamReviewState.RUNNING);
+        } else if (!this.exam().publishResultsDate || this.examReviewState() === ExamReviewState.UNSET) {
+            this.examCorrectionState.set(ExamReviewState.UNSET);
+        } else if (this.exam().publishResultsDate && this.examReviewState() === ExamReviewState.PLANNED) {
+            this.examCorrectionState.set(ExamReviewState.PLANNED);
+        } else if (this.examReviewState() === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
+            this.examCorrectionState.set(ExamReviewState.FINISHED);
         } else {
-            this.examCorrectionState = ExamReviewState.RUNNING;
+            this.examCorrectionState.set(ExamReviewState.RUNNING);
         }
     }
 
@@ -225,22 +225,22 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      */
     private setExamPreparation(): void {
         // Step 1.1:
-        this.configuredExercises = this.areAllExercisesConfigured();
+        this.configuredExercises.set(this.areAllExercisesConfigured());
         // For test exam, only the exerciseConfiguration needs to be performed by the instructor
-        if (!this.isTestExam) {
+        if (!this.isTestExam()) {
             // Step 1.2
-            this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam());
+            this.registeredStudents.set(this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam()));
             // Step 1.3:
-            this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam(), this.examChecklist) && this.registeredStudents;
+            this.generatedStudentExams.set(this.examChecklistService.checkAllExamsGenerated(this.exam(), this.examChecklist()) && this.registeredStudents());
             // Step 1.4:
-            this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
+            this.preparedExerciseStart.set(!!this.examChecklist().allExamExercisesAllStudentsPrepared && this.generatedStudentExams());
         } else {
-            this.registeredStudents = false;
-            this.generatedStudentExams = false;
-            this.preparedExerciseStart = false;
+            this.registeredStudents.set(false);
+            this.generatedStudentExams.set(false);
+            this.preparedExerciseStart.set(false);
         }
-        this.examPreparationFinished = this.isExamPreparationFinished();
-        this.mandatoryPreparationFinished = this.isMandatoryPreparationFinished();
+        this.examPreparationFinished.set(this.isExamPreparationFinished());
+        this.mandatoryPreparationFinished.set(this.isMandatoryPreparationFinished());
     }
 
     /**
@@ -283,6 +283,6 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
      * Indicates whether all complaints are resolved
      */
     private allComplaintsResolved(): boolean {
-        return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;
+        return this.examChecklist().numberOfAllComplaints === this.examChecklist().numberOfAllComplaintsDone;
     }
 }

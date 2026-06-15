@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -61,30 +61,30 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     }
     private longestWorkingTimeSub: Subscription | undefined = undefined;
 
-    examChecklist: ExamChecklist;
+    readonly examChecklist = signal<ExamChecklist | undefined>(undefined);
     isLoading = false;
-    pointsExercisesEqual = false;
-    allExamsGenerated = false;
-    allGroupsContainExercise = false;
-    totalPoints = false;
-    hasOptionalExercises = false;
-    countMandatoryExercises = 0;
-    isTestExam: boolean;
-    isEvaluatingQuizExercises: boolean;
-    isAssessingUnsubmittedExams: boolean;
-    existsUnfinishedAssessments = false;
-    existsUnassessedQuizzes = false;
-    existsUnsubmittedExercises = false;
-    isExamOver = false;
+    readonly pointsExercisesEqual = signal(false);
+    readonly allExamsGenerated = signal(false);
+    readonly allGroupsContainExercise = signal(false);
+    readonly totalPoints = signal(false);
+    readonly hasOptionalExercises = signal(false);
+    readonly countMandatoryExercises = signal(0);
+    readonly isTestExam = signal<boolean>(undefined!);
+    readonly isEvaluatingQuizExercises = signal(false);
+    readonly isAssessingUnsubmittedExams = signal(false);
+    readonly existsUnfinishedAssessments = signal(false);
+    readonly existsUnassessedQuizzes = signal(false);
+    readonly existsUnsubmittedExercises = signal(false);
+    readonly isExamOver = signal(false);
     longestWorkingTime?: number;
 
     protected readonly isSimulationAndPracticeExam = isSimulationAndPracticeExam;
     protected readonly testExamSimulationEndDate = testExamSimulationEndDate;
 
-    numberOfSubmitted = 0;
-    numberOfStarted = 0;
+    readonly numberOfSubmitted = signal(0);
+    readonly numberOfStarted = signal(0);
 
-    disabledExercises: Exercise[] = [];
+    readonly disabledExercises = signal<Exercise[]>([]);
 
     // Icons
     faEye = faEye;
@@ -101,9 +101,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((value) => value + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((value) => value + 1));
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
@@ -112,34 +112,35 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
             });
         }
         const profileInfo = this.profileService.getProfileInfo();
-        this.disabledExercises =
+        this.disabledExercises.set(
             this.exam()
                 .exerciseGroups?.flatMap((group) => group.exercises)
                 .filter((exercise) => exercise !== undefined)
-                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
+                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [],
+        );
     }
 
     private updateChecklistState() {
-        this.isTestExam = this.exam().testExam === true;
-        this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
-        this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());
-        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
-        this.countMandatoryExercises = this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
-        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam().exerciseGroups?.length ?? 0);
+        this.isTestExam.set(this.exam().testExam!);
+        this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
+        this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
+        this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));
+        this.countMandatoryExercises.set(this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0);
+        this.hasOptionalExercises.set(this.countMandatoryExercises() < (this.exam().exerciseGroups?.length ?? 0));
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
-            this.examChecklist = examStats;
+            this.examChecklist.set(examStats);
             const exam = this.exam();
-            this.allExamsGenerated = !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, this.examChecklist);
-            this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
-            this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
-            if (this.isExamOver) {
-                if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
-                    const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
-                    this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
+            this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
+            this.numberOfStarted.set(examStats.numberOfExamsStarted);
+            this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
+            if (this.isExamOver()) {
+                if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
+                    const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
+                    this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
                 }
             }
-            this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
-            this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
+            this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
+            this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
         });
     }
 
@@ -155,19 +156,19 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
      * Evaluates all the quiz exercises that belong to the exam
      */
     evaluateQuizExercises() {
-        this.isEvaluatingQuizExercises = true;
+        this.isEvaluatingQuizExercises.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
             this.examManagementService.evaluateQuizExercises(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                    this.existsUnassessedQuizzes = false;
-                    this.isEvaluatingQuizExercises = false;
+                    this.existsUnassessedQuizzes.set(false);
+                    this.isEvaluatingQuizExercises.set(false);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.dialogErrorSource.next(error.message);
                     this.alertService.error('artemisApp.studentExams.evaluateQuizExerciseFailure');
-                    this.isEvaluatingQuizExercises = false;
+                    this.isEvaluatingQuizExercises.set(false);
                 },
             });
         } else {
@@ -179,19 +180,19 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
      * Evaluates all the unsubmitted Text and Modelling submissions to 0
      */
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isAssessingUnsubmittedExams = true;
+        this.isAssessingUnsubmittedExams.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
             this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                    this.existsUnsubmittedExercises = false;
-                    this.isAssessingUnsubmittedExams = false;
+                    this.existsUnsubmittedExercises.set(false);
+                    this.isAssessingUnsubmittedExams.set(false);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.dialogErrorSource.next(error.message);
                     this.alertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
-                    this.isAssessingUnsubmittedExams = false;
+                    this.isAssessingUnsubmittedExams.set(false);
                 },
             });
         } else {
@@ -206,7 +207,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
             if (this.exam().gracePeriod) {
                 endDate = endDate.add(this.exam().gracePeriod!, 'seconds');
             }
-            this.isExamOver = endDate.isBefore(dayjs());
+            this.isExamOver.set(endDate.isBefore(dayjs()));
         }
     }
 

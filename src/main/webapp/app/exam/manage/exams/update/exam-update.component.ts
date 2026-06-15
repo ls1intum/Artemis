@@ -24,7 +24,7 @@ import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { TitleChannelNamePrimengComponent } from 'app/shared-ui/form/title-channel-name-primeng/title-channel-name-primeng.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,7 +42,7 @@ import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timelin
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
-        TitleChannelNameComponent,
+        TitleChannelNamePrimengComponent,
         HelpIconComponent,
         ExamModePickerComponent,
         NgbTooltip,
@@ -75,13 +75,22 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
-    exam: Exam;
+    // exam is template-bound (directly and through many getters) and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
+    // many synchronous reads/writes (getters, [(ngModel)] bindings) unchanged.
+    private readonly _exam = signal<Exam>(undefined!);
+    get exam(): Exam {
+        return this._exam();
+    }
+    set exam(value: Exam) {
+        this._exam.set(value);
+    }
     course: Course;
-    isSaving: boolean;
-    isImport = false;
-    isImportInSameCourse = false;
+    readonly isSaving = signal(false);
+    readonly isImport = signal(false);
+    readonly isImportInSameCourse = signal(false);
 
-    hideChannelNameInput = false;
+    readonly hideChannelNameInput = signal(false);
     private originalStartDate?: dayjs.Dayjs;
 
     private originalEndDate?: dayjs.Dayjs;
@@ -122,8 +131,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 this.exam = exam;
-                this.isImport = isImport;
-                this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
+                this.isImport.set(isImport);
+                this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
                 this.originalStartDate = exam.startDate?.clone();
                 this.originalEndDate = exam.endDate?.clone();
 
@@ -138,7 +147,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 if (!this.exam.startText) {
                     this.exam.startText = this.examDefaultStartText;
                 }
-                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
+                this.hideChannelNameInput.set((!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course));
                 this.refreshDatePickerValidation();
             });
     }
@@ -226,7 +235,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         this.createOrUpdateOrImportExam()
             ?.pipe(
@@ -244,11 +253,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @private
      */
     private createOrUpdateOrImportExam() {
-        if (this.isImport && this.exam?.exerciseGroups) {
+        if (this.isImport() && this.exam?.exerciseGroups) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
             if (!this.examExerciseImportComponent().validateUserInput()) {
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving = false;
+                this.isSaving.set(false);
                 return;
             }
             this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
@@ -266,7 +275,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @private
      */
     private async onSaveSuccess(exam: Exam) {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
@@ -296,7 +305,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 onError(this.alertService, httpErrorResponse);
             }
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 
     /**
@@ -424,7 +433,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * @returns {string} The translation key for the save button title.
      */
     get saveTitle(): string {
-        return this.isImport ? 'entity.action.import' : 'entity.action.save';
+        return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
 }
 

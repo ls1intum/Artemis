@@ -8,7 +8,7 @@ import { By } from '@angular/platform-browser';
 import { delay, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
  * This mimics how the competency selection component is used in real exercise forms
  */
 @Component({
-    imports: [FormsModule, CompetencySelectionComponent],
+    imports: [FormsModule, CompetencySelectionPrimengComponent],
     template: `
         <form #exerciseForm="ngForm">
             <div class="form-group">
@@ -42,14 +42,14 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
             </div>
 
             <!-- This is where the competency selection component is integrated -->
-            <jhi-competency-selection
+            <jhi-competency-selection-primeng
                 [exerciseDescription]="exercise.description"
                 [labelName]="'Select Competencies'"
                 [labelTooltip]="'Choose competencies that this exercise will assess'"
                 [(ngModel)]="exercise.competencies"
                 name="competencies"
             >
-            </jhi-competency-selection>
+            </jhi-competency-selection-primeng>
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary" [disabled]="!exerciseForm.valid" (click)="saveExercise()">Save Exercise</button>
@@ -58,7 +58,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
     `,
 })
 class TestExerciseFormComponent {
-    competencySelection = viewChild.required<CompetencySelectionComponent>(CompetencySelectionComponent);
+    competencySelection = viewChild.required<CompetencySelectionPrimengComponent>(CompetencySelectionPrimengComponent);
 
     exercise = {
         title: '',
@@ -163,7 +163,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             fixture.detectChanges(false);
 
             // Step 2: Verify competency selection component is rendered
-            const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionComponent));
+            const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionPrimengComponent));
             expect(competencySelection).toBeTruthy();
 
             // Step 3: Verify lightbulb button host (jhi-button) is present
@@ -185,6 +185,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 // Step 5: Trigger suggestions via component API to avoid jhi-button internals
                 component.competencySelection().suggestCompetencies();
                 vi.runAllTimers();
+                fixture.detectChanges();
 
                 // Step 6: Verify API was called with correct parameters
                 expect(httpSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
@@ -204,8 +205,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Step 9: Select suggested competencies via component API for reliability
                 const compForSelect = component.competencySelection();
-                const linkJava = compForSelect.competencyLinks?.find((l) => l.competency?.id === 1);
-                const linkDS = compForSelect.competencyLinks?.find((l) => l.competency?.id === 2);
+                const linkJava = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 1);
+                const linkDS = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 2);
                 expect(linkJava).toBeTruthy();
                 expect(linkDS).toBeTruthy();
                 if (linkJava) {
@@ -253,8 +254,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Select both suggested and non-suggested via component API
                 const compMixed = component.competencySelection();
-                const linkTesting = compMixed.competencyLinks?.find((l) => l.competency?.id === 4);
-                const linkPatterns = compMixed.competencyLinks?.find((l) => l.competency?.id === 5);
+                const linkTesting = compMixed.competencyLinks()?.find((l) => l.competency?.id === 4);
+                const linkPatterns = compMixed.competencyLinks()?.find((l) => l.competency?.id === 5);
                 expect(linkTesting).toBeTruthy();
                 expect(linkPatterns).toBeTruthy();
                 if (linkTesting) {
@@ -358,7 +359,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             // No suggestions should be shown, but component should still function
             const competencyComponent = component.competencySelection();
             expect(competencyComponent.suggestedCompetencyIds.size).toBe(0);
-            expect(competencyComponent.isSuggesting).toBeFalsy();
+            expect(competencyComponent.isSuggesting()).toBeFalsy();
 
             // User should still be able to manually select competencies
             const checkboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));

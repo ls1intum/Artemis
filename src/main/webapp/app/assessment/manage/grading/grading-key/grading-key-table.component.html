@@ -3,48 +3,48 @@
         <table class="table table-striped w-auto mx-auto">
             <thead>
                 <tr>
-                    <th jhiTranslate="{{ isBonus ? 'artemisApp.exam.examSummary.bonus' : 'artemisApp.exam.examSummary.grade' }}"></th>
+                    <th jhiTranslate="{{ isBonus() ? 'artemisApp.exam.examSummary.bonus' : 'artemisApp.exam.examSummary.grade' }}"></th>
                     <th jhiTranslate="artemisApp.exam.examSummary.interval"></th>
-                    @if (hasPointsSet) {
+                    @if (hasPointsSet()) {
                         <th jhiTranslate="artemisApp.exam.examSummary.intervalPoints"></th>
                     }
                 </tr>
             </thead>
             <tbody>
                 @let studentGradeOrBonusPointsOrGradeBonus = this.studentGradeOrBonusPointsOrGradeBonus();
-                @if (plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus) {
-                    <tr [class.highlighted]="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus">
+                @if (plagiarismGrade() === studentGradeOrBonusPointsOrGradeBonus) {
+                    <tr [class.highlighted]="plagiarismGrade() === studentGradeOrBonusPointsOrGradeBonus">
                         <td>
-                            {{ plagiarismGrade }}
+                            {{ plagiarismGrade() }}
                             <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp" />
                         </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>&mdash;</td>
                         }
                     </tr>
                 }
-                @if (noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus) {
-                    <tr [class.highlighted]="noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus">
+                @if (noParticipationGrade() === studentGradeOrBonusPointsOrGradeBonus) {
+                    <tr [class.highlighted]="noParticipationGrade() === studentGradeOrBonusPointsOrGradeBonus">
                         <td>
-                            {{ noParticipationGrade }}
+                            {{ noParticipationGrade() }}
                             <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp" />
                         </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>&mdash;</td>
                         }
                     </tr>
                 }
-                @for (gradeStep of gradeSteps; track gradeStep; let last = $last) {
+                @for (gradeStep of gradeSteps(); track gradeStep; let last = $last) {
                     <tr [class.highlighted]="gradeStep.gradeName === studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
                             <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                         </td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>
                                 <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
                             </td>

@@ -102,7 +102,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     createPosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -110,12 +110,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup('');
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.clearDraft();
                 this.onCreate.emit(answerPost);
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -127,18 +127,18 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
         payload.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(payload).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.clearDraft();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

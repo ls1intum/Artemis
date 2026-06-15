@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -12,17 +12,17 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
 export class StudentExamWorkingTimeComponent implements OnInit {
     studentExam = input.required<StudentExam>();
 
-    percentDifference = 0;
-    isTestRun = false;
-    isTestExam = false;
+    readonly percentDifference = signal<number>(0);
+    readonly isTestRun = signal<boolean>(false);
+    readonly isTestExam = signal<boolean>(false);
 
     ngOnInit() {
-        this.isTestRun = this.studentExam().testRun ?? false;
-        this.isTestExam = this.studentExam().exam?.testExam === true;
+        this.isTestRun.set(this.studentExam().testRun ?? false);
+        this.isTestExam.set(this.studentExam().exam?.testExam ?? false);
         const workingTime = this.studentExam().workingTime;
         const exam = this.studentExam().exam;
-        if (exam && workingTime && !this.isTestRun && !this.isTestExam) {
-            this.percentDifference = getRelativeWorkingTimeExtension(exam, workingTime);
+        if (exam && workingTime && !this.isTestRun() && !this.isTestExam()) {
+            this.percentDifference.set(getRelativeWorkingTimeExtension(exam, workingTime));
         }
     }
 }

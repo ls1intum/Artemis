@@ -2,22 +2,22 @@
     <div class="d-flex align-items-center gap-2">
         @if (!textExercise.id) {
             <h2 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel"></h2>
-        } @else if (!isImport && textExercise.id) {
+        } @else if (!isImport() && textExercise.id) {
             <h2 id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel"></h2>
-        } @else if (isImport) {
+        } @else if (isImport()) {
             <h2 id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
-    <jhi-form-status-bar [formStatusSections]="formSectionStatus" />
+    <jhi-form-status-bar [formStatusSections]="formSectionStatus()" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
-        <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport" [isExamMode]="isExamMode" />
-        @if (!isExamMode) {
+        <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport()" [isExamMode]="isExamMode()" />
+        @if (!isExamMode()) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-                <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
             </div>
         }
         <hr class="mb-5" />
@@ -28,7 +28,7 @@
                 <jhi-difficulty-picker [exercise]="textExercise" />
             </div>
         </div>
-        <jhi-team-config-form-group #teamConfigFormGroup class="form-element" [exercise]="textExercise" [isImport]="isImport" />
+        <jhi-team-config-form-group #teamConfigFormGroup class="form-element" [exercise]="textExercise" [isImport]="isImport()" />
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group">
@@ -41,7 +41,7 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode) {
+        @if (!isExamMode()) {
             <div class="form-group">
                 <jhi-competency-selection
                     id="competencies"
@@ -65,7 +65,7 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode) {
+        @if (!isExamMode()) {
             <div class="form-group">
                 <jhi-date-time-picker
                     #solutionPublicationDate
@@ -75,9 +75,9 @@
                     [(ngModel)]="textExercise.exampleSolutionPublicationDate"
                     [error]="textExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
-                    [disabled]="isImport"
+                    [disabled]="isImport()"
                 />
-                @if (isImport) {
+                @if (isImport()) {
                     <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
                 }
                 @if (textExercise.exampleSolutionPublicationDateError) {
@@ -87,7 +87,7 @@
         }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
-        @if (!isExamMode) {
+        @if (!isExamMode()) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
                     <jhi-date-time-picker
@@ -162,7 +162,7 @@
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
                     (includedInOverallScoreChange)="validateDate()"
-                    [allowNotIncluded]="!isExamMode"
+                    [allowNotIncluded]="!isExamMode()"
                 />
             </div>
         </div>
@@ -200,11 +200,11 @@
                 </div>
             </div>
         </div>
-        @if (!isExamMode || textExercise.exerciseGroup?.exam?.testExam === true) {
+        @if (!isExamMode() || textExercise.exerciseGroup?.exam?.testExam) {
             <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
         }
-        @if (!isExamMode) {
-            <jhi-feature-overlay [enabled]="isPlagiarismEnabled" placement="right">
+        @if (!isExamMode()) {
+            <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
                 <jhi-exercise-update-plagiarism [(exercise)]="textExercise" />
             </jhi-feature-overlay>
         }
@@ -216,8 +216,8 @@
     </div>
     <jhi-form-footer
         [isCreation]="!textExercise.id"
-        [isImport]="isImport"
-        [isSaving]="isSaving"
+        [isImport]="isImport()"
+        [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError)"
         (onCancel)="previousState()"
         (save)="save()"

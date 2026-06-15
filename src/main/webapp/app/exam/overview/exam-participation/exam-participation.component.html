@@ -1,49 +1,49 @@
-@if (!!testRunId) {
+@if (!!testRunId()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
-@if (exam && !testExamParticipationErrorKey) {
-    @if (showStartView) {
+@if (exam() && !testExamParticipationErrorKey()) {
+    @if (showStartView()) {
         <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
     }
-    @if (studentExam) {
+    @if (studentExam()) {
         <!-- exam participation -->
-        @if (showParticipationView) {
+        @if (showParticipationView()) {
             @let activeIndex = activePageIndex;
             <div class="exam-background-wrapper hide-scrollbar-unless-scrolling">
                 <jhi-exam-bar
-                    [exam]="exam"
-                    [studentExam]="studentExam"
-                    [endDate]="individualStudentEndDate"
-                    [exerciseIndex]="exerciseIndex"
+                    [exam]="exam()"
+                    [studentExam]="studentExam()"
+                    [endDate]="individualStudentEndDate()"
+                    [exerciseIndex]="exerciseIndex()"
                     [isEndView]="false"
-                    [examStartDate]="exam.startDate!"
+                    [examStartDate]="exam().startDate!"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
                     (heightChange)="updateHeight($event)"
                 />
 
                 <div class="d-flex justify-content-between gap-3">
-                    <div class="bg-body" [class.ms-3]="!testRunId">
+                    <div class="bg-body" [class.ms-3]="!testRunId()">
                         <jhi-exam-navigation-sidebar
-                            [sidebarData]="sidebarData"
-                            [exercises]="studentExam.exercises!"
-                            [exerciseIndex]="exerciseIndex"
+                            [sidebarData]="sidebarData()"
+                            [exercises]="studentExam().exercises!"
+                            [exerciseIndex]="exerciseIndex()"
                             [overviewPageOpen]="activeIndex === -1"
-                            [examSessions]="studentExam.examSessions"
-                            [isTestRun]="testRunId"
+                            [examSessions]="studentExam().examSessions"
+                            [isTestRun]="testRunId()"
                             (onPageChanged)="onPageChange($event)"
                         />
                     </div>
                     <!-- exercises -->
-                    <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId, 'me-3': !testRunId }">
+                    <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId(), 'me-3': !testRunId() }">
                         <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
                             <div [hidden]="activeIndex !== -1">
-                                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
+                                <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
                             </div>
-                            @for (exercise of studentExam.exercises; track exercise; let i = $index) {
+                            @for (exercise of studentExam().exercises; track exercise; let i = $index) {
                                 @if (exercise) {
                                     @let participation = exercise.studentParticipations?.[0];
-                                    @if (participation && pageComponentVisited[i]) {
+                                    @if (participation && pageComponentVisited()[i]) {
                                         @let submission = participation.submissions?.[0];
                                         <div [hidden]="i !== activeIndex" [id]="'exercise-' + exercise.id">
                                             @switch (exercise.type) {
@@ -77,7 +77,7 @@
                                                     }
                                                 }
                                                 @case (PROGRAMMING) {
-                                                    <jhi-programming-submission-exam [exercise]="exercise" [studentParticipation]="participation" [courseId]="courseId" />
+                                                    <jhi-programming-submission-exam [exercise]="exercise" [studentParticipation]="participation" [courseId]="courseId()" />
                                                 }
                                             }
                                         </div>
@@ -104,9 +104,9 @@
                             }
 
                             <!-- exam connection status footer bar -->
-                            <div class="update-footer gap-4" [class.disconnected]="!connected">
+                            <div class="update-footer gap-4" [class.disconnected]="!connected()">
                                 <div class="exam-footer-content">
-                                    <p [jhiTranslate]="connectionStatusTranslationKey" class="mb-0"></p>
+                                    <p [jhiTranslate]="connectionStatusTranslationKey()" class="mb-0"></p>
                                     <jhi-connection-status [isExamMode]="true" class="mx-3 connection-status-exam-participation" />
                                 </div>
                             </div>
@@ -115,31 +115,31 @@
                 </div>
             </div>
         }
-        @if (showEndView) {
+        @if (showEndView()) {
             @if (!studentFailedToSubmit) {
                 <div class="exam-background-wrapper">
                     <jhi-exam-bar
-                        [endDate]="individualStudentEndDateWithGracePeriod"
-                        [exerciseIndex]="exerciseIndex"
+                        [endDate]="individualStudentEndDateWithGracePeriod()"
+                        [exerciseIndex]="exerciseIndex()"
                         [isEndView]="true"
-                        [examStartDate]="exam.startDate!"
-                        [exam]="exam"
-                        [studentExam]="studentExam"
-                        [testRunStartTime]="testStartTime"
+                        [examStartDate]="exam().startDate!"
+                        [exam]="exam()"
+                        [studentExam]="studentExam()"
+                        [testRunStartTime]="testStartTime()"
                         (examAboutToEnd)="examEnded()"
                         (onExamHandInEarly)="toggleHandInEarly()"
                         (heightChange)="updateHeight($event)"
                     />
 
-                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId }">
+                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId() }">
                         <jhi-exam-participation-cover
                             [startView]="false"
-                            [exam]="exam"
-                            [studentExam]="studentExam"
-                            [handInEarly]="handInEarly"
-                            [handInPossible]="handInPossible"
-                            [submitInProgress]="submitInProgress"
-                            [attendanceChecked]="attendanceChecked"
+                            [exam]="exam()"
+                            [studentExam]="studentExam()"
+                            [handInEarly]="handInEarly()"
+                            [handInPossible]="handInPossible()"
+                            [submitInProgress]="submitInProgress()"
+                            [attendanceChecked]="attendanceChecked()"
                             (onExamEnded)="onExamEndConfirmed()"
                             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
                         />
@@ -149,7 +149,7 @@
                 <!-- Display submission not in time view -->
                 <div class="d-flex justify-content-between">
                     <div class="col-12 text-center my-auto">
-                        <h3 class="mt-2">{{ exam.title }}</h3>
+                        <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
                             <span [jhiTranslate]="studentFailedToSubmitTranslationKey"></span>
                         </div>
@@ -157,7 +157,7 @@
                 </div>
             }
         }
-        @if (showSubmissionSuccess) {
+        @if (showSubmissionSuccess()) {
             <div class="submissionSuccessfulHint pb-3">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
@@ -167,39 +167,39 @@
                     type="button"
                     id="showExamSummaryButton"
                     class="btn btn-primary"
-                    [disabled]="examSummaryButtonSecondsLeft"
+                    [disabled]="examSummaryButtonSecondsLeft()"
                     (click)="loadAndDisplaySummary()"
                     jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
-                    [translateValues]="{ countdown: examSummaryButtonSecondsLeft ? ' (' + examSummaryButtonSecondsLeft + ')' : '' }"
+                    [translateValues]="{ countdown: examSummaryButtonSecondsLeft() ? ' (' + examSummaryButtonSecondsLeft() + ')' : '' }"
                 ></button>
             </div>
         }
-        @if (showExamSummary) {
-            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId }">
-                <jhi-exam-participation-summary [studentExam]="studentExam" />
+        @if (showExamSummary()) {
+            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId() }">
+                <jhi-exam-participation-summary [studentExam]="studentExam()" />
             </div>
         }
     }
-} @else if (!loadingExam) {
-    @if (isAtLeastTutor && !testRunId) {
+} @else if (!loadingExam()) {
+    @if (isAtLeastTutor() && !testRunId()) {
         <div class="alert alert-warning">
             <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
-            @if (isAtLeastInstructor) {
-                <a [routerLink]="['/course-management', courseId, 'exams', examId]" class="btn btn-primary">
+            @if (isAtLeastInstructor()) {
+                <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
                     <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
                 </a>
             } @else {
-                <a [routerLink]="['/course-management', courseId, 'exams']" class="btn btn-primary">
+                <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
                     <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
                 </a>
             }
         </div>
-    } @else if (exam) {
+    } @else if (exam()) {
         <div class="d-flex justify-content-between">
             <div class="col-12 text-center my-auto">
-                <h3 class="mt-2">{{ exam.title }}</h3>
+                <h3 class="mt-2">{{ exam().title }}</h3>
                 <div class="mb-2 font-weight-bold text-danger">
-                    <span [jhiTranslate]="testExamParticipationMessageKey" [translateValues]="testExamParticipationTranslateValues"></span>
+                    <span [jhiTranslate]="testExamParticipationMessageKey()" [translateValues]="testExamParticipationTranslateValues"></span>
                 </div>
             </div>
         </div>

@@ -277,8 +277,8 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.currentCommit).toEqual(commit2);
-        expect(component.previousCommit).toEqual(commit1);
+        expect(component.currentCommit()).toEqual(commit2);
+        expect(component.previousCommit()).toEqual(commit1);
         expect(component.commits).toEqual([commit3, commit2, commit1]);
 
         // Trigger ngOnDestroy
@@ -295,8 +295,8 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.currentCommit).toEqual(mockTemplateCommit2);
-        expect(component.previousCommit).toEqual(mockTemplateCommit1);
+        expect(component.currentCommit()).toEqual(mockTemplateCommit2);
+        expect(component.previousCommit()).toEqual(mockTemplateCommit1);
         expect(component.commits).toEqual(mockTemplateCommits);
 
         // Trigger ngOnDestroy
@@ -316,16 +316,16 @@ describe('CommitDetailsViewComponent', () => {
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
         component.exerciseId = 1;
-        component.repositoryId = 2;
+        component.repositoryId.set(2);
         component.repositoryType = RepositoryType.USER;
-        component.previousCommit = commit1;
-        component.currentCommit = commit2;
+        component.previousCommit.set(commit1);
+        component.currentCommit.set(commit2);
 
         internals(component).fetchParticipationRepoFiles();
 
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(component.repositoryDiffInformation).toEqual(mockRepositoryDiffInformation);
+        expect(component.repositoryDiffInformation()).toEqual(mockRepositoryDiffInformation);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -343,9 +343,9 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.currentCommit).toEqual(commit1);
-        expect(component.previousCommit).toEqual(commit1);
-        expect(component.isTemplate).toBe(true);
+        expect(component.currentCommit()).toEqual(commit1);
+        expect(component.previousCommit()).toEqual(commit1);
+        expect(component.isTemplate()).toBe(true);
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
 
         // Trigger ngOnDestroy

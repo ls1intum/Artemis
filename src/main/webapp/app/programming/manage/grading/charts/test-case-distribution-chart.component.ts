@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -6,18 +6,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
-import { NgxChartsMultiSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToNormalizedStackedBarData, multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-
-enum TestCaseBarTitle {
-    WEIGHT_EN = 'Weight',
-    WEIGHT_DE = 'Gewichtung',
-    WEIGHT_AND_BONUS_EN = 'Weight & Bonus',
-    WEIGHT_AND_BONUS_DE = 'Gewichtung & Bonus',
-}
 
 type TestCaseColors = {
     [label: string]: string;
@@ -27,7 +23,7 @@ type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
-    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -41,21 +37,68 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     readonly testCaseColorsChange = output<any>();
     readonly testCaseRowFilter = output<number>();
 
-    readonly testCaseBarTitle = TestCaseBarTitle;
-
     // visible test cases (filtered out the ones that are never visible), exposed for templates and tests
     readonly processedTestCases = computed<ProgrammingExerciseTestCase[]>(() => (this.testCases() ?? []).filter((testCase) => testCase.visibility !== Visibility.Never));
 
-    totalWeight: number;
+    readonly totalWeight = signal<number>(undefined!);
 
-    // ngx
-    // array containing the ngx-dedicated objects in order to display the weight and bonus chart
-    ngxWeightData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: '', series: [] as any[] },
-        { name: '', series: [] as any[] },
+    // array containing the entries in order to display the weight and bonus chart (one entry per bar)
+    private weightEntries: ChartMultiSeriesEntry[] = [
+        { name: '', series: [] },
+        { name: '', series: [] },
     ];
-    // array containing the ngx-dedicated objects in order to display the points chart
-    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] as any[] }];
+    // array containing the entries in order to display the points chart
+    private pointsEntries: ChartMultiSeriesEntry[] = [{ name: '', series: [] }];
+
+    readonly weightData = signal<ChartMultiSeriesEntry[]>([]);
+    readonly pointsData = signal<ChartMultiSeriesEntry[]>([]);
+
+    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
+
+    readonly weightChartData = computed(() => multiSeriesToNormalizedStackedBarData(this.weightData(), this.resolvedColors()));
+    readonly pointsChartData = computed(() => multiSeriesToStackedBarData(this.pointsData(), this.resolvedColors()));
+
+    readonly weightChartOptions = computed(() =>
+        barChartOptions({
+            horizontal: true,
+            stacked: true,
+            percentScale: true,
+            xAxis: { tickFormatter: this.xAxisFormatting },
+            tooltip: {
+                title: (items) => items[0]?.dataset.label ?? '',
+                label: (item) => {
+                    const meta = item.dataset.meta?.[item.dataIndex];
+                    if (!meta) {
+                        return '';
+                    }
+                    // bar 0 carries the weight as value and the bonus as extra, bar 1 vice versa
+                    const isWeightBar = item.datasetIndex === 0;
+                    const weightPercentage = ((isWeightBar ? meta.value : (meta.weight as number)) ?? 0).toFixed(2);
+                    const bonusPercentage = ((isWeightBar ? (meta.bonus as number) : meta.value) ?? 0).toFixed(2);
+                    return [
+                        this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip', { percentage: weightPercentage }),
+                        this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip', {
+                            percentage: bonusPercentage,
+                        }),
+                    ];
+                },
+            },
+        }),
+    );
+    readonly pointsChartOptions = computed(() =>
+        barChartOptions({
+            horizontal: true,
+            stacked: true,
+            xAxis: { max: 100, tickFormatter: this.xAxisFormatting },
+            tooltip: {
+                title: (items) => items[0]?.dataset.label ?? '',
+                label: (item) => {
+                    const value = ((item.dataset.meta?.[item.dataIndex]?.value as number) ?? 0).toFixed(2);
+                    return this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip', { percentage: value });
+                },
+            },
+        }),
+    );
 
     constructor() {
         super();
@@ -78,7 +121,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         const exercise = this.exercise();
 
         // sum of all weights
-        this.totalWeight = testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        this.totalWeight.set(testCases.reduce((sum, testCase) => sum + testCase.weight!, 0));
         // max points for the exercise
         const maxPoints = exercise.maxPoints!;
         // exercise max score with bonus in percent
@@ -89,7 +132,8 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
 
         const testCaseScores = testCases.map((testCase) => {
             // calculated score for this test case
-            const testCaseScore = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
+            const totalWeight = this.totalWeight();
+            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
 
             const score = Math.min(testCaseScore, maxScoreInPercent);
             const stats = testCaseStatsMap ? testCaseStatsMap[testCase.testName!] : undefined;
@@ -98,7 +142,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 id: testCase.id,
                 label: testCase.testName!,
                 // relative weight percentage
-                relWeight: this.totalWeight > 0 ? (testCase.weight! / this.totalWeight) * 100 : 0,
+                relWeight: totalWeight > 0 ? (testCase.weight! / totalWeight) * 100 : 0,
                 // relative score percentage
                 relScore: score * 100,
                 // relative points percentage
@@ -106,19 +150,26 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             };
         });
 
-        if (this.ngxWeightData[0].series.length !== testCaseScores.length) {
+        if (this.weightEntries[0].series.length !== testCaseScores.length) {
             const testCaseColors: TestCaseColors = {};
 
-            this.ngxWeightData = [];
-            this.ngxPointsData = [];
+            this.weightEntries = [];
+            this.pointsEntries = [];
+            const colors: string[] = [];
 
-            const weight = { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] };
-            const weightAndBonus = {
+            const weight: ChartMultiSeriesEntry = {
+                name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'),
+                series: [],
+            };
+            const weightAndBonus: ChartMultiSeriesEntry = {
                 name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'),
-                series: [] as any[],
+                series: [],
             };
 
-            const points = { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] };
+            const points: ChartMultiSeriesEntry = {
+                name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'),
+                series: [],
+            };
 
             for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];
@@ -127,39 +178,40 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 const color = getColor(i / testCases.length, 50);
 
                 weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0), id: element.id });
-                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0), id: element.id });
+                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relWeight, 0), id: element.id });
 
                 points.series.push({ name: label, value: Math.max(element.relPoints, 0) });
 
                 testCaseColors[label] = color;
-                this.ngxColors.domain.push(color);
+                colors.push(color);
             }
 
-            this.ngxWeightData.push(weight);
-            this.ngxWeightData.push(weightAndBonus);
+            this.weightEntries.push(weight);
+            this.weightEntries.push(weightAndBonus);
 
-            this.ngxPointsData.push(points);
+            this.pointsEntries.push(points);
+            this.chartColors.set(colors);
 
             // update colors for test case table
             this.testCaseColorsChange.emit(testCaseColors);
         } else {
             // update values in-place
             testCaseScores.forEach((score) => {
-                this.ngxWeightData[0].series.forEach((weight, index) => {
+                this.weightEntries[0].series.forEach((weight, index) => {
                     if (weight.id === score.id) {
                         weight.value = Math.max(score.relWeight, 0);
                         weight.bonus = Math.max(score.relScore, 0);
                         // the bars are set up symmetrically, which means if we have the index of the corresponding test case in one bar, it is the same for all other bars
-                        this.ngxWeightData[1].series[index].value = Math.max(score.relScore, 0);
-                        this.ngxWeightData[1].series[index].weight = Math.max(score.relWeight, 0);
-                        this.ngxPointsData[0].series[index].value = Math.max(score.relPoints, 0);
+                        this.weightEntries[1].series[index].value = Math.max(score.relScore, 0);
+                        this.weightEntries[1].series[index].weight = Math.max(score.relWeight, 0);
+                        this.pointsEntries[0].series[index].value = Math.max(score.relPoints, 0);
                     }
                 });
             });
         }
 
-        this.ngxWeightData = [...this.ngxWeightData];
-        this.ngxPointsData = [...this.ngxPointsData];
+        this.weightData.set([...this.weightEntries]);
+        this.pointsData.set([...this.pointsEntries]);
     }
 
     /**
@@ -174,11 +226,16 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     /**
      * Auxiliary method that handles the click on the weight and bonus chart
      * Filters the table left to the charts in order to display only the test case that is clicked
-     * @param event event that is delegated by ngx-charts and contains the test case ID
+     * @param event event that is delegated by p-chart and identifies the clicked segment
      */
     onSelectWeight(event: any): void {
+        const selected = toChartSelectEvent(event, this.weightChartData());
+        const testCaseId = selected?.meta?.['id'];
+        if (testCaseId === undefined) {
+            return;
+        }
         this.tableFiltered = true;
-        this.testCaseRowFilter.emit(event.id as number);
+        this.testCaseRowFilter.emit(testCaseId as number);
     }
 
     /**
@@ -197,11 +254,11 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         const weightAndBonusLabel = this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus');
         const pointsLabel = this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points');
 
-        this.ngxWeightData[0].name = weightLabel;
-        this.ngxWeightData[1].name = weightAndBonusLabel;
-        this.ngxPointsData[0].name = pointsLabel;
+        this.weightEntries[0].name = weightLabel;
+        this.weightEntries[1].name = weightAndBonusLabel;
+        this.pointsEntries[0].name = pointsLabel;
 
-        this.ngxWeightData = [...this.ngxWeightData];
-        this.ngxPointsData = [...this.ngxPointsData];
+        this.weightData.set([...this.weightEntries]);
+        this.pointsData.set([...this.pointsEntries]);
     }
 }

@@ -53,13 +53,13 @@ describe('MultipleChoiceQuestionComponent', () => {
         fixture.componentRef.setInput('question', question);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
-        expect(component.renderedQuestion.hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
-        expect(component.renderedQuestion.explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
-        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
+        expect(component.renderedQuestion().text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
+        expect(component.renderedQuestion().hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
+        expect(component.renderedQuestion().explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
+        expect(component.renderedQuestion().renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
-        const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
+        const renderedAnswer = component.renderedQuestion().renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
         expect(safeHtmlToString(renderedAnswer.hint)).toEqual(toHtml(expectedAnswer.hint!));
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
@@ -80,13 +80,13 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', question);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
-        expect(component.renderedQuestion.hint).toBe('');
-        expect(component.renderedQuestion.explanation).toBe('');
-        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
+        expect(component.renderedQuestion().text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
+        expect(component.renderedQuestion().hint).toBe('');
+        expect(component.renderedQuestion().explanation).toBe('');
+        expect(component.renderedQuestion().renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
-        const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
+        const renderedAnswer = component.renderedQuestion().renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
         expect(safeHtmlToString(renderedAnswer.hint)).toBe('');

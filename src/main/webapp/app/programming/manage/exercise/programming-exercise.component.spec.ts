@@ -100,7 +100,7 @@ describe('ProgrammingExercise Management Component', () => {
         // THEN
         expect(courseExerciseService.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
         expect(comp.programmingExercises()[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
-        expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+        expect(comp.filteredProgrammingExercises()[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
     it('should delete exercise', () => {
@@ -171,7 +171,7 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.programmingExercises()).toHaveLength(3);
-            expect(comp.filteredProgrammingExercises).toHaveLength(3);
+            expect(comp.filteredProgrammingExercises()).toHaveLength(3);
         });
 
         it('should show no exercises', () => {
@@ -181,7 +181,7 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.programmingExercises()).toHaveLength(3);
-            expect(comp.filteredProgrammingExercises).toHaveLength(0);
+            expect(comp.filteredProgrammingExercises()).toHaveLength(0);
         });
 
         it('should show first exercise', () => {
@@ -191,7 +191,7 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.programmingExercises()).toHaveLength(3);
-            expect(comp.filteredProgrammingExercises).toHaveLength(1);
+            expect(comp.filteredProgrammingExercises()).toHaveLength(1);
         });
 
         it('should show last 2 exercises', () => {
@@ -201,7 +201,7 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.programmingExercises()).toHaveLength(3);
-            expect(comp.filteredProgrammingExercises).toHaveLength(2);
+            expect(comp.filteredProgrammingExercises()).toHaveLength(2);
         });
     });
 
@@ -211,7 +211,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+            expect(comp.selectedExercises()[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         });
 
         it('should remove selected exercise to list', () => {
@@ -220,7 +220,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedExercises).toHaveLength(0);
+            expect(comp.selectedExercises()).toHaveLength(0);
         });
 
         it('should select all', () => {
@@ -228,7 +228,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleMultipleExercises(comp.programmingExercises());
 
             // THEN
-            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises().length);
+            expect(comp.selectedExercises()).toHaveLength(comp.programmingExercises().length);
         });
 
         it('should deselect all', () => {
@@ -237,7 +237,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleMultipleExercises(comp.programmingExercises()); // Deselect all
 
             // THEN
-            expect(comp.selectedExercises).toHaveLength(0);
+            expect(comp.selectedExercises()).toHaveLength(0);
         });
 
         it('should check correctly if selected', () => {

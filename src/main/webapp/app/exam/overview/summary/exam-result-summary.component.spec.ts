@@ -251,17 +251,17 @@ describe('ExamResultSummaryComponent', () => {
 
         expect(exportToPDFButton).not.toBeNull();
 
-        component.exerciseInfos[1].isCollapsed = true;
-        component.exerciseInfos[2].isCollapsed = true;
-        component.exerciseInfos[3].isCollapsed = true;
-        component.exerciseInfos[4].isCollapsed = true;
+        component.exerciseInfos()[1].isCollapsed = true;
+        component.exerciseInfos()[2].isCollapsed = true;
+        component.exerciseInfos()[3].isCollapsed = true;
+        component.exerciseInfos()[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
 
-        expect(component.exerciseInfos[1].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[2].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[3].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[4].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[1].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[2].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[3].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[4].isCollapsed).toBe(false);
 
         await fixture.whenStable();
         expect(printStub).toHaveBeenCalledOnce();
@@ -277,7 +277,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
-        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
     it.each([
@@ -333,18 +333,18 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam().id).toBe(studentExam.id);
 
         const courseId = 10;
-        component.courseId = courseId;
+        component.courseId.set(courseId);
         plagiarismServiceSpy.mockClear();
 
         // After init, studentExamGradeInfoDTO should be set with the original studentExam
-        component.studentExamGradeInfoDTO = {} as StudentExamWithGradeDTO;
+        component.studentExamGradeInfoDTO.set({} as StudentExamWithGradeDTO);
 
         // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
         const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
         fixture.componentRef.setInput('studentExam', studentExam3);
         fixture.detectChanges();
         await Promise.resolve();
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExamGradeInfoDTO()!.studentExam).toEqual(studentExam3);
         expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
@@ -354,29 +354,29 @@ describe('ExamResultSummaryComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(true);
+        expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
 
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
     });
 
@@ -385,16 +385,16 @@ describe('ExamResultSummaryComponent', () => {
         component.testRunConduction = true;
         expect(component.resultsArePublished).toBe(false);
 
-        component.testExamConduction = true;
+        component.testExamConduction.set(true);
         component.testRunConduction = false;
         expect(component.resultsArePublished).toBe(false);
 
-        component.isTestRun = true;
-        component.testExamConduction = false;
+        component.isTestRun.set(true);
+        component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = true;
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = false;
@@ -422,22 +422,22 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(false);
+        expect(component.isAfterStudentReviewStart()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -448,21 +448,21 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(false);
+        expect(component.isBeforeStudentReviewEnd()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -481,11 +481,11 @@ describe('ExamResultSummaryComponent', () => {
                 },
             } as StudentResult;
 
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam, studentResult });
         });
 
         it('should return undefined if exercise result is undefined', () => {
-            component.studentExamGradeInfoDTO.studentResult.exerciseGroupIdToExerciseResult = {};
+            component.studentExamGradeInfoDTO()!.studentResult.exerciseGroupIdToExerciseResult = {};
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
@@ -503,7 +503,7 @@ describe('ExamResultSummaryComponent', () => {
             textExerciseResult.achievedScore = undefined;
             textExerciseResult.maxScore = 10;
             textExerciseResult.achievedPoints = 6.066666;
-            component.studentExamGradeInfoDTO.studentExam!.exam!.course!.accuracyOfScores = 3;
+            component.studentExamGradeInfoDTO()!.studentExam!.exam!.course!.accuracyOfScores = 3;
 
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
@@ -555,7 +555,7 @@ describe('ExamResultSummaryComponent', () => {
             const scrollIntoViewSpy = vi.fn();
 
             fixture.componentRef.setInput('studentExam', studentExam);
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam });
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
@@ -574,9 +574,9 @@ describe('ExamResultSummaryComponent', () => {
 
     describe('toggleShowSampleSolution', () => {
         it('should be called on button click', () => {
-            component.exerciseInfos = {
+            component.exerciseInfos.set({
                 1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
-            };
+            });
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
             const toggleShowSampleSolutionSpy = vi.spyOn(component, 'toggleShowSampleSolution');
 
