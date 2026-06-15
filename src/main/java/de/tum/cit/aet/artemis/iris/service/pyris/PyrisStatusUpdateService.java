@@ -100,9 +100,11 @@ public class PyrisStatusUpdateService {
                 pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
             }
         }
-        else if (removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job)) {
+        else if (!statusUpdate.stages().isEmpty() && removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job)) {
             // Non-decision terminal callback (e.g. a Pyris ERROR stage, no action): the job left the map, so
             // release the marker now (token-conditional) rather than waiting for the map-TTL self-heal.
+            // The !isEmpty() guard is essential: an empty stages list is vacuously "all terminal", which would
+            // otherwise drop the job before the real decision callback arrives and silently lose the intervention.
             pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
         }
     }

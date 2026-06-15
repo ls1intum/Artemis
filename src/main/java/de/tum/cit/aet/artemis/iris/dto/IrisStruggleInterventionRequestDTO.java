@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.Map;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,7 +20,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  * {@code @JsonInclude(ALWAYS)} so its empty inner collections still serialize for Pyris.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisStruggleInterventionRequestDTO(PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles) {
+public record IrisStruggleInterventionRequestDTO(@NotNull PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles) {
 
     public IrisStruggleInterventionRequestDTO {
         uncommittedFiles = uncommittedFiles != null ? uncommittedFiles : Map.of();

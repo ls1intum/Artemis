@@ -94,4 +94,13 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     void optedOutUser_isForbidden() throws Exception {
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void missingStruggleSignal_isBadRequest() throws Exception {
+        // @Valid + @NotNull on the request body rejects a null struggleSignal synchronously (400) instead of
+        // returning 202 and only failing later in the async send (which would leak the single-flight slot).
+        var invalid = new IrisStruggleInterventionRequestDTO(null, Map.of("src/Sum.java", "class Sum {}"));
+        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
+    }
 }

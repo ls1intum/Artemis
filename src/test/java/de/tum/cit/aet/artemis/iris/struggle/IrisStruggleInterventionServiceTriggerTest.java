@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -101,7 +106,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService);
-        when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 
     @Test
@@ -132,6 +137,20 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong())).thenReturn(Optional.empty());
 
         assertThat(service.prepareTrigger(EX, user)).isEmpty();
+    }
+
+    @Test
+    void sendToPyris_userOptedOut_skipsEgressAndReleasesSlot() {
+        // The user reloaded on the async thread is no longer opted into LLM usage (aiSelectionDecision == null) -
+        // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "tok");
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+        verifyNoInteractions(pyrisPipelineService);
     }
 
     private static IrisCourseSettings enabledSettings() {

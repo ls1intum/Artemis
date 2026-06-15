@@ -32,11 +32,12 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
  * Plain Mockito unit test for the idempotent struggle-intervention dispatch in
  * {@link PyrisStatusUpdateService#handleStatusUpdate(StruggleInterventionJob, PyrisStruggleInterventionStatusUpdateDTO)}.
  * <p>
- * The three scenarios encode the exactly-once contract (spec §5.4 / §11):
+ * The scenarios encode the exactly-once contract (spec §5.4 / §11):
  * <ol>
  * <li>decision callback ({@code action != null}): job removed, decision dispatched, marker released last;</li>
  * <li>non-decision keep-alive ({@code action == null}, an {@code IN_PROGRESS} stage): job updated, marker held;</li>
- * <li>non-decision terminal ({@code action == null}, an {@code ERROR} stage): job removed, marker released.</li>
+ * <li>non-decision terminal ({@code action == null}, an {@code ERROR} stage): job removed, marker released;</li>
+ * <li>non-decision with empty stages: vacuously-terminal guard holds the job for the real decision callback.</li>
  * </ol>
  */
 class PyrisStatusUpdateStruggleTest {
@@ -95,5 +96,19 @@ class PyrisStatusUpdateStruggleTest {
         verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
         verify(pyrisJobService).removeJob(job);
         verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);
+    }
+
+    @Test
+    void nonDecisionCallback_emptyStages_doesNotTerminateNorReleaseMarker() {
+        // An empty stages list is vacuously "all terminal"; the !isEmpty() guard must NOT let it drop the job,
+        // otherwise the real decision callback would 403 and the intervention would be silently lost.
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of());
+
+        service.handleStatusUpdate(job, update);
+
+        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
+        verify(pyrisJobService, never()).removeJob(any());
+        verify(pyrisJobService, never()).updateJob(any());
+        verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());
     }
 }

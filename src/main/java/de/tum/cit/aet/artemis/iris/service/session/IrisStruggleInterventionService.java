@@ -160,8 +160,15 @@ public class IrisStruggleInterventionService {
      * @param signal           the struggle signal from the client engine
      * @param uncommittedFiles the student's live (uncommitted) working copy
      */
-    void sendToPyris(PreparedTrigger p, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles) {
+    public void sendToPyris(PreparedTrigger p, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles) {
         var user = userRepository.findByIdElseThrow(p.userId());
+        // Re-check LLM consent on the async thread: the student may have revoked their opt-in between the 202 and now.
+        // Bail BEFORE any egress to Pyris and release the reserved slot (no callback will then arrive).
+        if (!user.hasOptedIntoLLMUsage()) {
+            log.info("Struggle intervention skipped: user {} is no longer opted into LLM usage", p.userId());
+            pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+            return;
+        }
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(p.exerciseId());
         var exerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise);
         var submissionDTO = latestSubmission(exercise, user).map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);

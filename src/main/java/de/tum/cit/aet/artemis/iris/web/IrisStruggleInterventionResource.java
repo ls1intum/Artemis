@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import jakarta.validation.Valid;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +51,8 @@ public class IrisStruggleInterventionResource {
     @PostMapping("exercises/{exerciseId}/struggle-intervention")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId, @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
+    public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId,
+            @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
         user.hasOptedIntoLLMUsageElseThrow();
