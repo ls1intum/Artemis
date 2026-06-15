@@ -25,20 +25,33 @@ export class ExamScoresPage {
         await expect(row.locator('td').nth(2).getByText(examStat.total)).toBeVisible({ timeout: 10000 });
     }
 
-    async checkGradeDistributionChart(gradeDistribution: any[]) {
-        const gradeChart = this.page.locator('jhi-participant-scores-distribution').locator('.bar-chart');
+    async checkGradeDistributionChart() {
+        // The grade distribution is rendered by chart.js on a canvas, so the individual axis ticks and
+        // bar labels are no longer part of the DOM. Verify that the chart is present and actually painted
+        // (the bars draw non-transparent pixels onto the canvas). The underlying numbers are still
+        // asserted via checkExamStatistics and checkStudentResults.
+        const gradeChart = this.page.locator('jhi-participant-scores-distribution').locator('canvas');
         await expect(gradeChart).toBeVisible({ timeout: 30000 });
-        const chartTicks = gradeChart.locator('g').first().locator('.tick');
-        const chartLabels = gradeChart.locator('> g:nth-child(3) > g:nth-child(2)');
-
-        for (let index = 0; index < gradeDistribution.length; index++) {
-            const grade = gradeDistribution[index];
-            const chartTick = chartTicks.nth(index);
-            const chartLabel = chartLabels.locator('g').nth(index);
-
-            await expect(chartTick.locator('text', { hasText: grade.name })).toBeVisible({ timeout: 10000 });
-            await expect(chartLabel.locator('text', { hasText: grade.count })).toBeVisible({ timeout: 10000 });
-        }
+        await expect
+            .poll(
+                () =>
+                    gradeChart.evaluate((canvas: HTMLCanvasElement) => {
+                        const context = canvas.getContext('2d');
+                        if (!context || canvas.width === 0 || canvas.height === 0) {
+                            return 0;
+                        }
+                        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+                        let paintedPixels = 0;
+                        for (let i = 3; i < pixels.length; i += 4) {
+                            if (pixels[i] > 0) {
+                                paintedPixels++;
+                            }
+                        }
+                        return paintedPixels;
+                    }),
+                { timeout: 10000 },
+            )
+            .toBeGreaterThan(0);
     }
 
     async checkStudentResults(studentResults: StudentResult[]) {
