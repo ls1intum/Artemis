@@ -151,7 +151,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.loadDataInDiagram();
 
-            expect(comp.ngxColor.domain).toEqual(backgroundColors);
+            expect(comp['chartColors']()).toEqual(backgroundColors);
             expect(comp.data).toEqual([42]);
             expect(comp.chartLabels).toEqual(labels);
         });

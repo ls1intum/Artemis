@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, output, viewChild } from '@angular/core';
+import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -41,10 +41,10 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     readonly instance = viewChild<NgbTypeahead>('categoriesFilterSelection');
 
-    selectedCategoryOptions: ExerciseCategoryFilterOption[] = [];
-    selectableCategoryOptions: ExerciseCategoryFilterOption[] = [];
+    readonly selectedCategoryOptions = signal<ExerciseCategoryFilterOption[]>([]);
+    readonly selectableCategoryOptions = signal<ExerciseCategoryFilterOption[]>([]);
 
-    noFiltersAvailable = false;
+    readonly noFiltersAvailable = signal(false);
 
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -56,26 +56,45 @@ export class ExerciseFilterModalComponent implements OnInit {
     sidebarData?: SidebarData;
 
     categoryFilter?: FilterOption<ExerciseCategoryFilterOption>;
-    typeFilter?: FilterOption<ExerciseTypeFilterOption>;
-    difficultyFilter?: FilterOption<DifficultyFilterOption>;
-    achievablePoints?: RangeFilter;
-    achievedScore?: RangeFilter;
+    readonly typeFilter = signal<FilterOption<ExerciseTypeFilterOption> | undefined>(undefined);
+    readonly difficultyFilter = signal<FilterOption<DifficultyFilterOption> | undefined>(undefined);
+
+    // achievablePoints / achievedScore are deep two-way binding targets (jhi-range-slider writes back to
+    // achievablePoints.filter.selectedMin/Max etc.), so they are backed by a signal via a getter/setter
+    // facade. Reads stay reactive while the slider can still mutate the backing object in place.
+    private readonly _achievablePoints = signal<RangeFilter | undefined>(undefined);
+    get achievablePoints(): RangeFilter | undefined {
+        return this._achievablePoints();
+    }
+    set achievablePoints(value: RangeFilter | undefined) {
+        this._achievablePoints.set(value);
+    }
+
+    private readonly _achievedScore = signal<RangeFilter | undefined>(undefined);
+    get achievedScore(): RangeFilter | undefined {
+        return this._achievedScore();
+    }
+    set achievedScore(value: RangeFilter | undefined) {
+        this._achievedScore.set(value);
+    }
 
     exerciseFilters?: ExerciseFilterOptions;
 
     ngOnInit() {
         this.categoryFilter = this.exerciseFilters?.categoryFilter;
-        this.typeFilter = this.exerciseFilters?.exerciseTypesFilter;
-        this.difficultyFilter = this.exerciseFilters?.difficultyFilter;
+        this.typeFilter.set(this.exerciseFilters?.exerciseTypesFilter);
+        this.difficultyFilter.set(this.exerciseFilters?.difficultyFilter);
         this.achievablePoints = this.exerciseFilters?.achievablePoints;
         this.achievedScore = this.exerciseFilters?.achievedScore;
 
-        this.noFiltersAvailable = !(
-            this.categoryFilter?.isDisplayed ||
-            this.typeFilter?.isDisplayed ||
-            this.difficultyFilter?.isDisplayed ||
-            this.achievedScore?.isDisplayed ||
-            this.achievablePoints?.isDisplayed
+        this.noFiltersAvailable.set(
+            !(
+                this.categoryFilter?.isDisplayed ||
+                this.typeFilter()?.isDisplayed ||
+                this.difficultyFilter()?.isDisplayed ||
+                this.achievedScore?.isDisplayed ||
+                this.achievablePoints?.isDisplayed
+            ),
         );
 
         this.updateCategoryOptionsStates();
@@ -93,8 +112,8 @@ export class ExerciseFilterModalComponent implements OnInit {
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
             map((term) =>
                 term === ''
-                    ? this.selectableCategoryOptions
-                    : this.selectableCategoryOptions.filter((categoryFilter: ExerciseCategoryFilterOption) => {
+                    ? this.selectableCategoryOptions()
+                    : this.selectableCategoryOptions().filter((categoryFilter: ExerciseCategoryFilterOption) => {
                           if (categoryFilter.category.category !== undefined) {
                               return categoryFilter.category.category?.toLowerCase().indexOf(term.toLowerCase()) > -1;
                           }
@@ -163,17 +182,21 @@ export class ExerciseFilterModalComponent implements OnInit {
     }
 
     private getSearchedTypes(): ExerciseType[] | undefined {
-        return this.typeFilter?.options.filter((type) => type.checked).map((type) => type.value);
+        return this.typeFilter()
+            ?.options.filter((type) => type.checked)
+            .map((type) => type.value);
     }
 
     private getSelectedCategories(): ExerciseCategory[] {
-        return this.selectedCategoryOptions
+        return this.selectedCategoryOptions()
             .filter((categoryOption: ExerciseCategoryFilterOption) => categoryOption.searched)
             .map((categoryOption: ExerciseCategoryFilterOption) => categoryOption.category);
     }
 
     private getSearchedDifficulties(): DifficultyLevel[] | undefined {
-        return this.difficultyFilter?.options.filter((difficulty) => difficulty.checked).map((difficulty) => difficulty.value);
+        return this.difficultyFilter()
+            ?.options.filter((difficulty) => difficulty.checked)
+            .map((difficulty) => difficulty.value);
     }
 
     private isFilterActive(filterDetails: FilterDetails): boolean {
@@ -188,8 +211,8 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     clearFilter() {
         this.categoryFilter?.options.forEach((categoryOption) => (categoryOption.searched = false));
-        this.typeFilter?.options.forEach((typeOption) => (typeOption.checked = false));
-        this.difficultyFilter?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
+        this.typeFilter()?.options.forEach((typeOption) => (typeOption.checked = false));
+        this.difficultyFilter()?.options.forEach((difficultyOption) => (difficultyOption.checked = false));
 
         this.resetRangeFilter(this.achievedScore);
         this.resetRangeFilter(this.achievablePoints);
@@ -208,8 +231,8 @@ export class ExerciseFilterModalComponent implements OnInit {
     }
 
     private updateCategoryOptionsStates() {
-        this.selectedCategoryOptions = this.getUpdatedSelectedCategoryOptions();
-        this.selectableCategoryOptions = this.getSelectableCategoryOptions();
+        this.selectedCategoryOptions.set(this.getUpdatedSelectedCategoryOptions());
+        this.selectableCategoryOptions.set(this.getSelectableCategoryOptions());
     }
 
     private getUpdatedSelectedCategoryOptions(): ExerciseCategoryFilterOption[] {

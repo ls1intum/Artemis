@@ -15,7 +15,7 @@
                     jhiTranslate="artemisApp.plagiarism.viewCases"
                     [routerLink]="['/course-management', exercise()?.course?.id, 'plagiarism-cases']"
                     [queryParams]="{ exerciseId: exercise()?.id }"
-                    [disabled]="isLoading"
+                    [disabled]="isLoading()"
                 ></button>
             } @else {
                 <button
@@ -23,7 +23,7 @@
                     (click)="confirmPlagiarism()"
                     data-qa="confirm-plagiarism-button"
                     jhiTranslate="artemisApp.plagiarism.confirm"
-                    [disabled]="isLoading"
+                    [disabled]="isLoading()"
                 ></button>
             }
 
@@ -32,7 +32,7 @@
                 (click)="denyPlagiarism()"
                 data-qa="deny-plagiarism-button"
                 jhiTranslate="artemisApp.plagiarism.deny"
-                [disabled]="comparison()?.status === plagiarismStatus.DENIED || isLoading"
+                [disabled]="comparison()?.status === plagiarismStatus.DENIED || isLoading()"
             ></button>
         } @else {
             <fa-icon [icon]="faCircleInfo" class="fa-light text-secondary" />

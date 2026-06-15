@@ -240,8 +240,8 @@ describe('ExampleTextSubmissionComponent', () => {
         await comp.ngOnInit();
 
         // THEN
-        expect(comp.result).not.toBeNull();
-        expect(comp.result!.submission).toBe(comp.submission);
+        expect(comp.result()).not.toBeNull();
+        expect(comp.result()!.submission).toBe(comp.submission);
     });
 
     it('should only fetch exercise for new example submission and stay in new state', async () => {
@@ -309,7 +309,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state.edit();
@@ -349,7 +349,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state = State.forExistingAssessmentWithContext(comp);
@@ -369,7 +369,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.submission?.blocks).toBeUndefined();
         expect(comp.submission?.results).toBeUndefined();
         expect(comp.submission?.latestResult).toBeUndefined();
-        expect(comp.result).toBeUndefined();
+        expect(comp.result()).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     });
@@ -542,11 +542,11 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         await comp.ngOnInit();
 
-        comp.toComplete = true;
+        comp.toComplete.set(true);
 
         await comp.back();
 
-        comp.toComplete = false;
+        comp.toComplete.set(false);
 
         await comp.back();
 
@@ -572,7 +572,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
         const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
         exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
-        comp.unsavedSubmissionChanges = true;
+        comp.unsavedSubmissionChanges.set(true);
 
         // WHEN
         comp.updateExampleTextSubmission();
@@ -580,7 +580,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleSubmission).toEqual(exampleSubmission);
-        expect(comp.unsavedSubmissionChanges).toBe(false);
+        expect(comp.unsavedSubmissionChanges()).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });
