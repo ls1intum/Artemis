@@ -98,14 +98,11 @@ patchedDependencies:
 # (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
 # polyfill setup (core-js), or our own dev-time hooks (husky).
 allowBuilds:
-  '@parcel/watcher': true
-  '@swc/core': true
-  core-js: true
-  esbuild: true
-  husky: true
-  lmdb: true
-  msgpackr-extract: true
-  unrs-resolver: true
-
-minimumReleaseAgeExclude:
-  - '@tumaet/apollon@4.5.0'
+    '@parcel/watcher': true
+    '@swc/core': true
+    core-js: true
+    esbuild: true
+    husky: true
+    lmdb: true
+    msgpackr-extract: true
+    unrs-resolver: true
