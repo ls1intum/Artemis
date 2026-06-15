@@ -71,6 +71,6 @@ describe('CompetencyPopoverComponent', () => {
         competencyPopoverComponentFixture.componentRef.setInput('competencyLinks', competencyLinks);
         competencyPopoverComponentFixture.componentRef.setInput('courseId', 1);
         competencyPopoverComponentFixture.detectChanges();
-        expect(competencyPopoverComponent.navigationArray).toEqual(expectedNavigation);
+        expect(competencyPopoverComponent.navigationArray()).toEqual(expectedNavigation);
     });
 });

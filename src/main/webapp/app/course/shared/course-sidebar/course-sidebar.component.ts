@@ -84,7 +84,10 @@ export class CourseSidebarComponent {
     courseActionItemClick = output<CourseActionItem>();
     toggleCollapseState = output<void>();
     activeBreakpoints: Signal<string[]>;
-    canExpand: Signal<boolean>;
+    readonly canExpand = computed(() => {
+        this.activeBreakpoints();
+        return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
+    });
 
     readonly itemsDrop = viewChild.required<NgbDropdown>('itemsDrop');
 
@@ -94,10 +97,6 @@ export class CourseSidebarComponent {
 
     constructor() {
         this.activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
-        this.canExpand = computed(() => {
-            this.activeBreakpoints();
-            return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
-        });
 
         effect(() => {
             this.course();

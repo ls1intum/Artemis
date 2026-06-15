@@ -30,7 +30,12 @@ test.beforeAll('Get student name', async ({ browser }) => {
 
 test.describe('Exam assessment', () => {
     test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
-        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs.
+        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs
+        // (the C template repository clone dominates). The submission step itself no longer waits
+        // for a build result during setup — `prepareExam` passes `skipBuildResultCheck: true` and
+        // `OnlineEditorPage.submit` now honours it — so the build queue can no longer push the hook
+        // past its budget; the score-producing build is triggered later via
+        // `waitForExamBuildAndTestAfterDueDate`.
         test.describe.configure({ timeout: 180_000 });
         let exam: Exam;
         let examEnd: Dayjs;

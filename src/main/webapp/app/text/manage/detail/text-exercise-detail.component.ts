@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -47,15 +47,15 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    textExercise: TextExercise;
-    course?: Course;
-    isExamExercise: boolean;
+    readonly textExercise = signal<TextExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isExamExercise = signal<boolean>(false);
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
-    doughnutStats: ExerciseManagementStatisticsDto;
-    detailOverviewSections: DetailOverviewSection[];
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -78,25 +78,25 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     load(exerciseId: number) {
         // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
         this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-            this.textExercise = textExerciseResponse.body!;
-            this.isExamExercise = !!this.textExercise.exerciseGroup;
-            this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
+            this.textExercise.set(textExerciseResponse.body!);
+            this.isExamExercise.set(!!this.textExercise().exerciseGroup);
+            this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
 
-            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.problemStatement);
-            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.exampleSolution);
-            this.detailOverviewSections = this.getExerciseDetailSections();
+            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
+            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
+            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-            this.doughnutStats = statistics;
+            this.doughnutStats.set(statistics);
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.textExercise;
+        const exercise = this.textExercise();
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise());
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
@@ -135,6 +135,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes of the text exercise.
      */
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id!));
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise().id!));
     }
 }

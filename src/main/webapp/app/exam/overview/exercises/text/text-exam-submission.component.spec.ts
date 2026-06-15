@@ -52,7 +52,7 @@ describe('TextExamSubmissionComponent', () => {
         fixture.detectChanges();
         component.onDeactivate();
 
-        expect(component.answer).toBe('Hello World');
+        expect(component.answer()).toBe('Hello World');
         expect(component.wordCount).toBe(2);
         expect(component.characterCount).toBe(11);
         expect(component.getExerciseId()).toEqual(exercise.id);
@@ -65,7 +65,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.answer).toBe('');
+        expect(component.answer()).toBe('');
         expect(component.wordCount).toBe(0);
         expect(component.characterCount).toBe(0);
     });
@@ -99,7 +99,7 @@ describe('TextExamSubmissionComponent', () => {
 
         component.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
 
-        expect((component.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
+        expect((component.problemStatementHtml() as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
     });
 
     it('should trigger text editor events', async () => {
@@ -109,7 +109,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
         fixture.whenStable().then(() => {
-            expect(component.answer).toBe('Hello World');
+            expect(component.answer()).toBe('Hello World');
             const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor'));
             expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
@@ -127,7 +127,7 @@ describe('TextExamSubmissionComponent', () => {
     it('should update the answer if the submission version changes', () => {
         const submissionVersion = { id: 1, content: 'submission version', submission: textSubmission, createdDate: dayjs('2021-01-01') };
         component.setSubmissionVersion(submissionVersion);
-        expect(component.answer).toBe('submission version');
+        expect(component.answer()).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
     });
 

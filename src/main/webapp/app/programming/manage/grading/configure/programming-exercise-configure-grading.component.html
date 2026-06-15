@@ -1,5 +1,5 @@
 <ng-template #tabTemplate let-type="type" let-translation="translation">
-    <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab === type ? 'active' : ''">
+    <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab() === type ? 'active' : ''">
         <b [jhiTranslate]="translation"></b>
     </div>
 </ng-template>
@@ -7,7 +7,7 @@
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
     </div>
-    @if (!isLoading) {
+    @if (!isLoading()) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
                 <ng-container *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }" />
@@ -30,30 +30,30 @@
                 <div></div>
             </ng-template>
             <div class="d-flex align-items-center">
-                @if (activeTab === 'test-cases' || activeTab === 'code-analysis') {
+                @if (activeTab() === 'test-cases' || activeTab() === 'code-analysis') {
                     <jhi-programming-exercise-configure-grading-status
-                        [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
+                        [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults()"
                         [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
-                        [hasUnsavedCategoryChanges]="!!changedCategoryIds.length"
-                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
+                        [hasUnsavedCategoryChanges]="!!changedCategoryIds().length"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig()"
                     />
                 }
-                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'feedback-analysis') {
+                @if (programmingExercise.isAtLeastInstructor && activeTab() !== 'feedback-analysis') {
                     <jhi-programming-exercise-configure-grading-actions
                         [exercise]="programmingExercise"
-                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
-                        [isSaving]="isSaving"
+                        [hasUpdatedGradingConfig]="hasUpdatedGradingConfig()"
+                        [isSaving]="isSaving()"
                     />
                 }
             </div>
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab === 'submission-policy') {
+            @if (activeTab() === 'submission-policy') {
                 <div>
                     <jhi-programming-exercise-grading-submission-policy-configuration-actions
                         [exercise]="programmingExercise"
-                        [isSaving]="isSaving"
-                        [hadPolicyBefore]="hadPolicyBefore"
+                        [isSaving]="isSaving()"
+                        [hadPolicyBefore]="hadPolicyBefore()"
                         [formInvalid]="policyUpdate.invalid"
                         (onUpdate)="updateSubmissionPolicy()"
                         (onToggle)="toggleSubmissionPolicy()"
@@ -68,27 +68,27 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (activeTab === 'test-cases') {
+            @if (activeTab() === 'test-cases') {
                 <div>
                     <div class="grading-table-layout">
                         <div class="col-7">
                             <jhi-programming-exercise-grading-tasks-table
                                 [exercise]="programmingExercise"
-                                [course]="course"
-                                [gradingStatisticsObservable]="gradingStatisticsObservable"
+                                [course]="course()"
+                                [gradingStatisticsObservable]="gradingStatisticsObservable()"
                             />
                         </div>
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
-                                @if (!!changedTestCaseIds.length) {
+                                @if (!!changedTestCaseIds().length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }
                             </h2>
                             <jhi-test-case-distribution-chart
-                                [testCases]="filteredTestCasesForCharts"
-                                [testCaseStatsMap]="gradingStatistics?.testCaseStatsMap"
-                                [totalParticipations]="gradingStatistics?.numParticipations"
+                                [testCases]="filteredTestCasesForCharts()"
+                                [testCaseStatsMap]="gradingStatistics()?.testCaseStatsMap"
+                                [totalParticipations]="gradingStatistics()?.numParticipations"
                                 [exercise]="programmingExercise"
                                 (testCaseColorsChange)="testCaseColors = $event"
                                 (testCaseRowFilter)="filterByChart($event, chartFilterType.TEST_CASES)"
@@ -97,7 +97,7 @@
                     </div>
                 </div>
             }
-            @if (activeTab === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled) {
+            @if (activeTab() === 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled) {
                 <div>
                     <div class="grading-table-layout">
                         <div class="col-7">
@@ -105,9 +105,9 @@
                                 <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title"></h2>
                                 <jhi-programming-exercise-grading-table-actions
                                     [exercise]="programmingExercise"
-                                    [hasUnsavedChanges]="!!changedCategoryIds.length"
-                                    [isSaving]="isSaving"
-                                    [activeTab]="activeTab"
+                                    [hasUnsavedChanges]="!!changedCategoryIds().length"
+                                    [isSaving]="isSaving()"
+                                    [activeTab]="activeTab()"
                                     (onReset)="resetCategories()"
                                     (onSave)="saveCategories()"
                                     (onCategoryImport)="importCategories($event)"
@@ -122,7 +122,7 @@
                                 [columnMode]="'force'"
                                 [footerHeight]="50"
                                 [rowHeight]="'auto'"
-                                [rows]="staticCodeAnalysisCategoriesForTable"
+                                [rows]="staticCodeAnalysisCategoriesForTable()"
                                 [sorts]="tableSorts.codeAnalysis"
                                 (sort)="onSort('codeAnalysis', $event)"
                             >
@@ -239,8 +239,8 @@
                                         <jhi-category-issues-chart
                                             [category]="row"
                                             [issuesMap]="getIssuesMap(row.name)"
-                                            [totalStudents]="gradingStatistics?.numParticipations || 0"
-                                            [maxNumberOfIssues]="maxIssuesPerCategory"
+                                            [totalStudents]="gradingStatistics()?.numParticipations || 0"
+                                            [maxNumberOfIssues]="maxIssuesPerCategory()"
                                         />
                                     </ng-template>
                                 </ngx-datatable-column>
@@ -249,13 +249,13 @@
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
-                                @if (!!changedCategoryIds.length) {
+                                @if (!!changedCategoryIds().length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }
                             </h2>
                             <jhi-sca-category-distribution-chart
-                                [categories]="staticCodeAnalysisCategoriesForCharts"
-                                [categoryIssuesMap]="gradingStatistics?.categoryIssuesMap"
+                                [categories]="staticCodeAnalysisCategoriesForCharts()"
+                                [categoryIssuesMap]="gradingStatistics()?.categoryIssuesMap"
                                 [exercise]="programmingExercise"
                                 (categoryColorsChange)="categoryColors = $event"
                                 (scaCategoryFilter)="filterByChart($event, chartFilterType.CATEGORIES)"
@@ -266,13 +266,13 @@
             }
         </div>
         <div class="grading-body-container mt-3">
-            @if (programmingExercise.isAtLeastEditor && activeTab === 'feedback-analysis' && programmingExercise.title && programmingExercise.id && course.id) {
+            @if (programmingExercise.isAtLeastEditor && activeTab() === 'feedback-analysis' && programmingExercise.title && programmingExercise.id && course().id) {
                 <jhi-feedback-analysis
                     [exerciseTitle]="programmingExercise.title"
                     [exerciseId]="programmingExercise.id"
                     [exerciseDueDate]="programmingExercise.dueDate"
-                    [courseId]="course.id"
-                    [isCommunicationEnabled]="isCommunicationEnabled(course)"
+                    [courseId]="course().id!"
+                    [isCommunicationEnabled]="isCommunicationEnabled(course())"
                 />
             }
         </div>

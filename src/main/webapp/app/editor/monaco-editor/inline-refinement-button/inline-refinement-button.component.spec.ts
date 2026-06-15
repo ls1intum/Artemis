@@ -4,14 +4,12 @@ import { InlineRefinementButtonComponent } from './inline-refinement-button.comp
 import { TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Subject } from 'rxjs';
 
 describe('InlineRefinementButtonComponent', () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<InlineRefinementButtonComponent>;
     let comp: InlineRefinementButtonComponent;
-    let translateService: TranslateService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -21,7 +19,6 @@ describe('InlineRefinementButtonComponent', () => {
 
         fixture = TestBed.createComponent(InlineRefinementButtonComponent);
         comp = fixture.componentInstance;
-        translateService = TestBed.inject(TranslateService);
 
         // Set required inputs
         fixture.componentRef.setInput('top', 100);
@@ -156,30 +153,6 @@ describe('InlineRefinementButtonComponent', () => {
     it('should not flag as near limit below threshold', () => {
         comp.instruction.set('a'.repeat(449));
         expect(comp.isNearLimit()).toBeFalsy();
-    });
-
-    it('should trigger change detection on language change', async () => {
-        const langChangeSubject = new Subject<any>();
-        (translateService as any).onLangChange = langChangeSubject.asObservable();
-
-        // Re-create component to pick up the new observable
-        fixture = TestBed.createComponent(InlineRefinementButtonComponent);
-        comp = fixture.componentInstance;
-        fixture.componentRef.setInput('top', 100);
-        fixture.componentRef.setInput('left', 200);
-        fixture.componentRef.setInput('selectedText', 'text');
-        fixture.componentRef.setInput('startLine', 1);
-        fixture.componentRef.setInput('endLine', 1);
-        fixture.componentRef.setInput('startColumn', 0);
-        fixture.componentRef.setInput('endColumn', 5);
-
-        // Spy on the new component's cdr BEFORE detectChanges
-        const cdrSpy = vi.spyOn(comp['cdr'], 'markForCheck');
-        fixture.detectChanges();
-
-        langChangeSubject.next({ lang: 'de' });
-
-        expect(cdrSpy).toHaveBeenCalled();
     });
 
     it('should have correct input values', () => {

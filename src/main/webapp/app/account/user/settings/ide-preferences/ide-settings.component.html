@@ -9,7 +9,7 @@
         <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }" />
     </div>
     <!-- Display each customized Programming Language -->
-    @for (programmingLanguage of assignedProgrammingLanguages; track programmingLanguage) {
+    @for (programmingLanguage of assignedProgrammingLanguages(); track programmingLanguage) {
         <div class="list-group-item pb-3">
             <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
                 <h5>
@@ -23,7 +23,7 @@
         </div>
     }
     <!-- Display plus button to add Programming Language with drop down menu -->
-    @if (remainingProgrammingLanguages.length) {
+    @if (remainingProgrammingLanguages().length) {
         <div class="list-group-item">
             <div ngbDropdown class="d-inline-block">
                 <button type="button" class="btn btn-primary btn-sm" id="dropdown" ngbDropdownToggle>
@@ -31,7 +31,7 @@
                     <span class="ms-1" jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="dropdown">
-                    @for (programmingLanguage of remainingProgrammingLanguages; track programmingLanguage) {
+                    @for (programmingLanguage of remainingProgrammingLanguages(); track programmingLanguage) {
                         <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
                             {{ programmingLanguage }}
                         </button>
@@ -44,7 +44,7 @@
 
 <ng-template #ideButtonRow let-programmingLanguage="language">
     <div class="btn-group">
-        @for (ide of PREDEFINED_IDE; track ide) {
+        @for (ide of PREDEFINED_IDE(); track ide) {
             <div
                 class="btn"
                 [ngClass]="isIdeOfProgrammingLanguage(programmingLanguage, ide) ? 'btn-primary selected' : 'btn-default'"

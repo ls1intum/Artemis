@@ -90,7 +90,7 @@ describe('GradingKeyOverviewComponent', () => {
 
         component.courseId = courseId;
         component.examId = examId;
-        component.isExam = examId !== undefined;
+        component.isExam.set(examId !== undefined);
 
         component.previousState();
 

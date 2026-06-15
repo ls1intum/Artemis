@@ -96,7 +96,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Use signals for reactive state
     public learningPathMode = false;
     public exerciseId: number;
-    public courseId: number;
+
+    // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
+    // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
+    private readonly _courseId = signal<number>(undefined as unknown as number);
+    public get courseId(): number {
+        return this._courseId();
+    }
+    public set courseId(value: number) {
+        this._courseId.set(value);
+    }
 
     // Main exercise signal
     private readonly _exercise = signal<Exercise | undefined>(undefined);

@@ -28,11 +28,11 @@ export class ActivateComponent implements OnInit {
     /** Indicates whether the account was successfully activated */
     readonly success = signal(false);
     /** Whether user registration is enabled on this Artemis instance */
-    readonly isRegistrationEnabled: boolean;
+    readonly isRegistrationEnabled = signal<boolean>(false);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
     }
 
     /**
@@ -40,7 +40,7 @@ export class ActivateComponent implements OnInit {
      * Only attempts activation if registration is enabled on the server.
      */
     ngOnInit() {
-        if (this.isRegistrationEnabled) {
+        if (this.isRegistrationEnabled()) {
             this.activateAccount();
         }
     }
