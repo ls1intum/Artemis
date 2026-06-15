@@ -68,7 +68,7 @@ public record GradingScaleForBonusDTO(Long id, GradeType gradeType, BonusStrateg
         Objects.requireNonNull(scale, "grading scale must exist");
 
         Set<GradeStepDTO> gradeSteps = Set.of();
-        if (includeGradeSteps && Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {
+        if (includeGradeSteps && scale.getGradeSteps() != null && Hibernate.isInitialized(scale.getGradeSteps())) {
             gradeSteps = scale.getGradeSteps().stream().map(GradeStepDTO::of).collect(Collectors.toSet());
         }
 
