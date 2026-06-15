@@ -1,10 +1,13 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
-import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
@@ -36,10 +39,9 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    styleUrls: ['./assessment-dashboard-information.component.scss'],
-    imports: [TranslateDirective, PieChartModule, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
+    imports: [TranslateDirective, ChartModule, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
 })
-export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
+export class AssessmentDashboardInformationComponent {
     private translateService = inject(TranslateService);
 
     readonly isExamMode = input.required<boolean>();
@@ -63,74 +65,51 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     readonly assessmentLocks = input.required<AssessmentDashboardInformationEntry>();
     readonly ratings = input.required<AssessmentDashboardInformationEntry>();
 
+    // Re-evaluate language-dependent computeds whenever the active language changes.
+    private readonly currentLang = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+
     // Graph data.
-    completedAssessmentsTitle: string;
-    openedAssessmentsTitle: string;
-    assessments: any[];
-    customColors: any[];
-    view: [number, number] = [320, 150];
-    legendPosition = LegendPosition.Below;
+    readonly completedAssessmentsTitle = computed(() => {
+        this.currentLang();
+        return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+    });
+    readonly openedAssessmentsTitle = computed(() => {
+        this.currentLang();
+        return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
+    });
+    readonly assessments = computed(() => [
+        {
+            name: this.openedAssessmentsTitle(),
+            value: this.numberOfSubmissions().total - this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
+        },
+        {
+            name: this.completedAssessmentsTitle(),
+            value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
+        },
+    ]);
+    // The colors are index-aligned with the entries of the assessments computed (open, completed).
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.RED, GraphColors.BLUE]);
 
-    complaintsLink: any[];
-    moreFeedbackRequestsLink: any[];
-    assessmentLocksLink: any[];
-    ratingsLink: any[];
+    readonly chartData = computed(() => singleSeriesChartData(this.assessments(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 1,
+            legend: { position: 'bottom' },
+            tooltip: { label: (item) => `${(this.numberOfSubmissions().total > 0 ? (item.parsed * 100) / this.numberOfSubmissions().total : 0).toFixed(2)}%` },
+        }),
+    );
 
-    themeSubscription: Subscription;
-
-    ngOnInit(): void {
-        this.setup();
-        this.translateService.onLangChange.subscribe(() => {
-            this.setupGraph();
-        });
-
-        this.customColors = [
-            {
-                name: this.openedAssessmentsTitle,
-                value: GraphColors.RED,
-            },
-            {
-                name: this.completedAssessmentsTitle,
-                value: GraphColors.BLUE,
-            },
-        ];
-    }
-
-    ngOnChanges() {
-        this.setup();
-    }
-
-    ngOnDestroy() {
-        this.themeSubscription?.unsubscribe();
-    }
-
-    setup() {
-        this.setupLinks();
-        this.setupGraph();
-    }
-
-    setupLinks() {
+    readonly complaintsLink = computed(() => {
         const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
-
-        this.complaintsLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['complaints']);
-        this.moreFeedbackRequestsLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
-        this.assessmentLocksLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['assessment-locks']);
-        this.ratingsLink = ['/course-management', this.course().id, 'ratings'];
-    }
-
-    setupGraph() {
-        this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
-
-        this.assessments = [
-            {
-                name: this.openedAssessmentsTitle,
-                value: this.numberOfSubmissions().total - this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
-            },
-            {
-                name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
-            },
-        ];
-    }
+        return ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['complaints']);
+    });
+    readonly moreFeedbackRequestsLink = computed(() => {
+        const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
+        return ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+    });
+    readonly assessmentLocksLink = computed(() => {
+        const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
+        return ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['assessment-locks']);
+    });
+    readonly ratingsLink = computed(() => ['/course-management', this.course().id, 'ratings']);
 }

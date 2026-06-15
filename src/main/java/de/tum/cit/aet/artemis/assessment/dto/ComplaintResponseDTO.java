@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
  * @param complaintId         the ID of the associated complaint
  * @param reviewer            the id, name and login of the reviewer who submitted the response
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedDateTime submittedTime, Boolean isCurrentlyLocked, ZonedDateTime lockEndDate,
         Boolean complaintIsAccepted, @NotNull Long complaintId, UserPublicInfoDTO reviewer) {
 

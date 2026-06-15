@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,13 +38,14 @@ export class AssessmentLocksComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
 
     course: Course;
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     tutorId: number;
     examId?: number;
-    showAll = false;
+    readonly showAll = signal(false);
     exercises: Exercise[] = [];
 
-    submissions: Submission[] = [];
+    // Locked submissions load asynchronously and the exam branch flips showAll — signals so they render under zoneless.
+    readonly submissions = signal<Submission[]>([]);
 
     private cancelConfirmationText: string;
 
@@ -62,7 +63,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     public ngOnInit() {
         combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
-            this.courseId = Number(params['courseId']);
+            this.courseId.set(Number(params['courseId']));
             this.examId = Number(params['examId']);
             this.tutorId = Number(queryParams['tutorId']);
 
@@ -76,14 +77,14 @@ export class AssessmentLocksComponent implements OnInit {
     getAllLockedSubmissions() {
         let lockedSubmissionsObservable;
         if (this.examId) {
-            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
-            this.showAll = true;
+            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId(), this.examId);
+            this.showAll.set(true);
         } else {
-            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
+            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId());
         }
         lockedSubmissionsObservable.subscribe({
             next: (response: HttpResponse<Submission[]>) => {
-                this.submissions.push(...(response.body ?? []));
+                this.submissions.update((submissions) => [...submissions, ...(response.body ?? [])]);
             },
             error: (response: string) => this.onError(response),
         });
@@ -114,7 +115,7 @@ export class AssessmentLocksComponent implements OnInit {
                 default:
                     break;
             }
-            this.submissions = this.submissions.filter((submission) => submission !== canceledSubmission);
+            this.submissions.set(this.submissions().filter((submission) => submission !== canceledSubmission));
         }
     }
 

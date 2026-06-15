@@ -145,6 +145,7 @@ class ModelingExerciseFeedbackServiceTest {
         participationWithAthenaResult.setExercise(modelingExercise);
         participationWithAthenaResult.addSubmission(submission);
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participationWithAthenaResult);
+        when(athenaFeedbackApi.submissionHasAthenaResult(submission)).thenReturn(true);
 
         ModelingExerciseFeedbackService service = newService(Optional.of(athenaFeedbackApi));
         service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);

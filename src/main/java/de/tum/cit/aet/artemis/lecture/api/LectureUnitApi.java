@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.NonNull;
@@ -58,5 +59,15 @@ public class LectureUnitApi extends AbstractLectureApi {
 
     public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit, Lecture newLecture) {
         return lectureUnitImportService.importLectureUnit(sourceLectureUnit, newLecture);
+    }
+
+    /**
+     * Finds all lecture units for the given IDs.
+     *
+     * @param ids the lecture unit IDs to fetch
+     * @return list of lecture units
+     */
+    public List<LectureUnit> findAllByIds(Collection<Long> ids) {
+        return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 }

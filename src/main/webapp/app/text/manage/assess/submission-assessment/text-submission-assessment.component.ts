@@ -44,6 +44,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -59,6 +60,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -79,24 +81,26 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
 
     participation?: StudentParticipation;
-    result?: Result;
-    unreferencedFeedback: Feedback[];
-    complaint?: Complaint;
-    totalScore: number;
-    isTestRun = false;
+    readonly result = signal<Result | undefined>(undefined);
+    readonly unreferencedFeedback = signal<Feedback[]>([]);
+    readonly complaint = signal<Complaint | undefined>(undefined);
+    readonly totalScore = signal<number>(0);
+    readonly isTestRun = signal(false);
     isLoading = signal(true);
-    saveBusy: boolean;
-    submitBusy: boolean;
-    cancelBusy: boolean;
-    nextSubmissionBusy: boolean;
-    isAssessor: boolean;
-    assessmentsAreValid: boolean;
-    noNewSubmissions: boolean;
-    hasAssessmentDueDatePassed: boolean;
-    correctionRound: number = 0;
-    resultId: number;
-    loadingInitialSubmission = true;
-    highlightDifferences = false;
+    readonly loadingFeedbackSuggestions = signal(false);
+    readonly saveBusy = signal<boolean>(false);
+    readonly submitBusy = signal<boolean>(false);
+    readonly cancelBusy = signal<boolean>(false);
+    readonly nextSubmissionBusy = signal<boolean>(false);
+    readonly isAssessor = signal<boolean>(false);
+    readonly assessmentsAreValid = signal<boolean>(false);
+    readonly noNewSubmissions = signal<boolean>(false);
+    readonly hasAutomaticFeedback = signal(false);
+    readonly hasAssessmentDueDatePassed = signal<boolean>(false);
+    readonly correctionRound = signal<number>(0);
+    readonly resultId = signal<number>(0);
+    readonly loadingInitialSubmission = signal(true);
+    readonly highlightDifferences = signal(false);
 
     /*
      * Non-reset properties:
@@ -107,10 +111,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
     courseId: number;
-    course?: Course;
+    readonly course = signal<Course | undefined>(undefined);
     examId = 0;
     exerciseGroupId: number;
-    exerciseDashboardLink: string[];
+    readonly exerciseDashboardLink = signal<string[]>([]);
     isExamMode = false;
 
     private feedbackSuggestionsObservable?: Subscription;
@@ -120,7 +124,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private get assessments(): Feedback[] {
-        return [...this.referencedFeedback, ...this.unreferencedFeedback];
+        return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
     // Icons
@@ -140,22 +144,24 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.participation = undefined;
         this.submission = undefined;
         this.exercise = undefined;
-        this.result = undefined;
-        this.unreferencedFeedback = [];
+        this.result.set(undefined);
+        this.unreferencedFeedback.set([]);
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
-        this.complaint = undefined;
-        this.totalScore = 0;
+        this.complaint.set(undefined);
+        this.totalScore.set(0);
 
         this.isLoading.set(true);
-        this.saveBusy = false;
-        this.submitBusy = false;
-        this.cancelBusy = false;
-        this.nextSubmissionBusy = false;
-        this.isAssessor = false;
-        this.assessmentsAreValid = false;
-        this.noNewSubmissions = false;
-        this.highlightDifferences = false;
+        this.loadingFeedbackSuggestions.set(false);
+        this.saveBusy.set(false);
+        this.submitBusy.set(false);
+        this.cancelBusy.set(false);
+        this.nextSubmissionBusy.set(false);
+        this.isAssessor.set(false);
+        this.assessmentsAreValid.set(false);
+        this.noNewSubmissions.set(false);
+        this.hasAutomaticFeedback.set(false);
+        this.highlightDifferences.set(false);
     }
 
     /**
@@ -164,20 +170,20 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     async ngOnInit(): Promise<void> {
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
-            this.isTestRun = queryParams.get('testRun') === 'true';
-            this.correctionRound = Number(queryParams.get('correction-round'));
+            this.isTestRun.set(queryParams.get('testRun') === 'true');
+            this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
-            this.resultId = Number(paramMap.get('resultId')) || 0;
+            this.resultId.set(Number(paramMap.get('resultId')) || 0);
             this.courseId = Number(paramMap.get('courseId'));
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
                 this.exerciseGroupId = Number(paramMap.get('exerciseGroupId'));
                 this.isExamMode = true;
             }
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+            this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
         });
         this.activatedRoute.data.subscribe(({ studentParticipation }) => {
             this.setPropertiesFromServerResponse(studentParticipation);
@@ -191,40 +197,40 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
         this.resetComponent();
-        this.loadingInitialSubmission = false;
+        this.loadingInitialSubmission.set(false);
         if (!studentParticipation) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
-            this.noNewSubmissions = this.isNewAssessmentRoute;
+            this.noNewSubmissions.set(this.isNewAssessmentRoute);
             return;
         }
 
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions?.last() as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
-        this.course = getCourseFromExercise(this.exercise);
+        this.course.set(getCourseFromExercise(this.exercise));
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
-        if (this.resultId > 0) {
-            this.result = getSubmissionResultById(this.submission, this.resultId);
+        if (this.resultId() > 0) {
+            this.result.set(getSubmissionResultById(this.submission, this.resultId()));
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+            this.correctionRound.set(this.submission.results?.findIndex((result) => result.id === this.resultId())!);
         } else {
-            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+            this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
 
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed.set(!!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs()));
 
         this.prepareTextBlocksAndFeedbacks();
         this.getComplaint();
         this.updateUrlIfNeeded();
 
-        this.checkPermissions(this.result);
-        this.totalScore = this.computeTotalScore(this.assessments);
+        this.checkPermissions(this.result());
+        this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
         this.loadFeedbackSuggestions();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -251,8 +257,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
+    }
+
     private checkPermissions(result?: Result): void {
-        this.isAssessor = result?.assessor?.id === this.userId;
+        this.isAssessor.set(result?.assessor?.id === this.userId);
     }
 
     /**
@@ -336,7 +346,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.textBlockRefs = newTextBlockRefs;
         this.submission!.blocks = this.textBlockRefs.map((blockRef) => blockRef.block!);
-        this.result!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined) as Feedback[];
+        this.result()!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined) as Feedback[];
     }
 
     /**
@@ -347,20 +357,27 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
-            feedbackSuggestions.forEach((suggestion) => {
-                if (suggestion instanceof TextBlockRef) {
-                    // referenced feedback suggestion - add to existing text blocks but avoid conflicts
-                    this.addAutomaticTextBlockRef(suggestion);
-                } else {
-                    // unreferenced feedback suggestion - we can just add it
-                    this.result!.feedbacks ??= [];
-                    this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
-                    // the unreferencedFeedback variable does not auto-update and needs to be updated manually
-                    this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
-                }
-            });
-            this.validateFeedback();
+        this.loadingFeedbackSuggestions.set(true);
+
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
+            next: (feedbackSuggestions) => {
+                feedbackSuggestions.forEach((suggestion) => {
+                    if (suggestion instanceof TextBlockRef) {
+                        // referenced feedback suggestion - add to existing text blocks but avoid conflicts
+                        this.addAutomaticTextBlockRef(suggestion);
+                    } else {
+                        // unreferenced feedback suggestion - we can just add it
+                        this.result()!.feedbacks ??= [];
+                        this.result()!.feedbacks = [...(this.result()!.feedbacks ?? []), suggestion];
+                        // the unreferencedFeedback variable does not auto-update and needs to be updated manually
+                        this.unreferencedFeedback.set([...this.unreferencedFeedback(), suggestion]);
+                    }
+                });
+                this.validateFeedback();
+                this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
+                this.loadingFeedbackSuggestions.set(false);
+            },
+            error: () => this.loadingFeedbackSuggestions.set(false),
         });
     }
 
@@ -368,8 +385,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Save the assessment
      */
     save(): void {
-        this.saveBusy = true;
-        this.assessmentsService.save(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
+        this.saveBusy.set(true);
+        this.assessmentsService.save(this.participation!.id!, this.result()!.id!, this.assessments, this.textBlocksWithFeedback, this.result()!.assessmentNote?.note).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
@@ -379,17 +396,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Submit the assessment
      */
     submit(): void {
-        if (!this.result?.id) {
+        if (!this.result()?.id) {
             return; // We need to have saved the result before
         }
 
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
-        this.submitBusy = true;
-        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback, this.result!.assessmentNote?.note).subscribe({
+        this.submitBusy.set(true);
+        this.assessmentsService.submit(this.participation!.id!, this.result()!.id!, this.assessments, this.textBlocksWithFeedback, this.result()!.assessmentNote?.note).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
@@ -397,9 +414,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
-        this.result = response.body!;
-        setSubmissionResultByCorrectionRound(this.submission!, this.result, this.correctionRound);
-        this.saveBusy = this.submitBusy = false;
+        this.result.set(response.body!);
+        setSubmissionResultByCorrectionRound(this.submission!, this.result()!, this.correctionRound());
+        this.saveBusy.set(false);
+        this.submitBusy.set(false);
     }
 
     /**
@@ -407,7 +425,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     cancel(): void {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
-        this.cancelBusy = true;
+        this.cancelBusy.set(true);
         if (confirmCancel && this.exercise && this.submission) {
             this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
         }
@@ -418,8 +436,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async nextSubmission(): Promise<void> {
         const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id!, 'new', this.examId, this.exerciseGroupId);
-        this.nextSubmissionBusy = true;
-        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+        this.nextSubmissionBusy.set(true);
+        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
     }
 
     /**
@@ -430,7 +448,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     updateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateFeedback();
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.textAssessment.error.invalidAssessments');
             assessmentAfterComplaint.onError();
             return;
@@ -446,7 +464,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 complaintResponse,
                 this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
-                this.result?.assessmentNote?.note,
+                this.result()?.assessmentNote?.note,
             )
             .subscribe({
                 next: (response) => {
@@ -467,7 +485,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise!, this.submission!, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise!, this.submission!, this.isTestRun());
     }
 
     /**
@@ -475,23 +493,23 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     validateFeedback(updatedFeedbacks?: Feedback[]): void {
         if (updatedFeedbacks) {
-            this.unreferencedFeedback = updatedFeedbacks;
+            this.unreferencedFeedback.set(updatedFeedbacks);
         }
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
 
-        this.totalScore = this.computeTotalScore(this.assessments);
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+        this.totalScore.set(this.computeTotalScore(this.assessments));
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {
-        if (!this.result) {
+        if (!this.result()) {
             return;
         }
-        const feedbacks = this.result.feedbacks || [];
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        const feedbacks = this.result()?.feedbacks || [];
+        this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
 
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
@@ -508,7 +526,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {
@@ -531,7 +549,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 // Instructors can override any assessment at any time.
                 return true;
             }
-            if (this.complaint && this.isAssessor) {
+            if (this.complaint() && this.isAssessor()) {
                 // If there is a complaint, the original assessor cannot override the result anymore.
                 return false;
             }
@@ -541,18 +559,19 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.exercise);
     }
 
     protected handleError(error: HttpErrorResponse): void {
         super.handleError(error);
-        this.saveBusy = this.submitBusy = false;
+        this.saveBusy.set(false);
+        this.submitBusy.set(false);
     }
 
     /**

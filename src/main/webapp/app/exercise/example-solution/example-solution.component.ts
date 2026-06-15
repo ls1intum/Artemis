@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,16 +20,16 @@ export class ExampleSolutionComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    private displayedExerciseId: number;
-    public exercise?: Exercise;
-    public exampleSolutionInfo?: ExampleSolutionInfo;
+    private displayedExerciseId?: number;
+    public readonly exercise = signal<Exercise | undefined>(undefined);
+    public readonly exampleSolutionInfo = signal<ExampleSolutionInfo | undefined>(undefined);
 
-    @Input() exerciseId?: number;
-    @Input() displayHeader = true;
+    readonly exerciseId = input<number>();
+    readonly displayHeader = input(true);
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            const exerciseId = this.exerciseId || parseInt(params['exerciseId'], 10);
+            const exerciseId = this.exerciseId() ?? parseInt(params['exerciseId'], 10);
 
             const didExerciseChange = this.displayedExerciseId !== exerciseId;
             this.displayedExerciseId = exerciseId;
@@ -40,11 +40,11 @@ export class ExampleSolutionComponent implements OnInit {
     }
 
     loadExercise() {
-        this.exercise = undefined;
-        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        this.exercise.set(undefined);
+        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId!).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const newExercise = exerciseResponse.body!;
-            this.exercise = newExercise;
-            this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
+            this.exercise.set(newExercise);
+            this.exampleSolutionInfo.set(ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown));
         });
     }
 }

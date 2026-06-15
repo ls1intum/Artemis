@@ -53,51 +53,44 @@ describe('AssessmentDashboardInformationComponent', () => {
         fixture.componentRef.setInput('totalNumberOfAssessments', 150);
         fixture.componentRef.setInput('numberOfSubmissions', submissions);
         fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
-        const setupSpy = vi.spyOn(component, 'setup');
-        const setupLinksSpy = vi.spyOn(component, 'setupLinks');
-        const setupGraphSpy = vi.spyOn(component, 'setupGraph');
 
-        component.ngOnInit();
-
-        expect(setupSpy).toHaveBeenCalledTimes(1);
-        expect(setupLinksSpy).toHaveBeenCalledTimes(1);
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
-
-        expect(component.customColors[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
-        expect(component.customColors[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        expect(component.assessments[0].value).toBe(600);
-        expect(component.assessments[1].value).toBe(150);
+        expect(component.assessments()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
+        expect(component.assessments()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        expect(component.assessments()[0].value).toBe(600);
+        expect(component.assessments()[1].value).toBe(150);
+        expect(component.chartData().labels).toEqual(['artemisApp.exerciseAssessmentDashboard.openAssessments', 'artemisApp.exerciseAssessmentDashboard.closedAssessments']);
+        expect(component.chartData().datasets[0].data).toEqual([600, 150]);
     });
 
     it('should set up links correctly', () => {
         fixture.componentRef.setInput('isExamMode', false);
         fixture.componentRef.setInput('examId', 42);
 
-        vi.spyOn(component, 'setupGraph').mockImplementation(() => {});
-
-        component.ngOnInit();
-
-        expect(component.complaintsLink).toEqual(['/course-management', 10, 'complaints']);
-        expect(component.moreFeedbackRequestsLink).toEqual(['/course-management', 10, 'more-feedback-requests']);
-        expect(component.assessmentLocksLink).toEqual(['/course-management', 10, 'assessment-locks']);
-        expect(component.ratingsLink).toEqual(['/course-management', 10, 'ratings']);
+        expect(component.complaintsLink()).toEqual(['/course-management', 10, 'complaints']);
+        expect(component.moreFeedbackRequestsLink()).toEqual(['/course-management', 10, 'more-feedback-requests']);
+        expect(component.assessmentLocksLink()).toEqual(['/course-management', 10, 'assessment-locks']);
+        expect(component.ratingsLink()).toEqual(['/course-management', 10, 'ratings']);
 
         fixture.componentRef.setInput('isExamMode', true);
 
-        component.ngOnChanges();
-
-        expect(component.complaintsLink).toEqual(['/course-management', 10, 'exams', 42, 'complaints']);
-        expect(component.moreFeedbackRequestsLink).toEqual(['/course-management', 10, 'exams', 42, 'more-feedback-requests']);
-        expect(component.assessmentLocksLink).toEqual(['/course-management', 10, 'exams', 42, 'assessment-locks']);
+        expect(component.complaintsLink()).toEqual(['/course-management', 10, 'exams', 42, 'complaints']);
+        expect(component.moreFeedbackRequestsLink()).toEqual(['/course-management', 10, 'exams', 42, 'more-feedback-requests']);
+        expect(component.assessmentLocksLink()).toEqual(['/course-management', 10, 'exams', 42, 'assessment-locks']);
     });
 
     it('should handle language changes', () => {
         const translateService = TestBed.inject(TranslateService);
-        const setupGraphStub = vi.spyOn(component, 'setupGraph').mockImplementation(() => {});
-        component.ngOnInit();
+        const instantSpy = vi.spyOn(translateService, 'instant');
+
+        // Initial evaluation of the language-dependent computed.
+        expect(component.completedAssessmentsTitle()).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        expect(instantSpy).toHaveBeenCalledTimes(1);
+
+        // A language change must invalidate the computed so it re-evaluates on the next read.
         translateService.use('de');
 
-        expect(setupGraphStub).toHaveBeenCalledTimes(2);
+        expect(component.completedAssessmentsTitle()).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        expect(instantSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should compute the right total/missing ratio', () => {

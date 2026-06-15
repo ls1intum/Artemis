@@ -1,7 +1,7 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -25,6 +25,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;

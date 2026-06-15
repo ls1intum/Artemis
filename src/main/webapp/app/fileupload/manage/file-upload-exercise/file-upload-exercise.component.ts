@@ -69,16 +69,16 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     protected async loadExercises() {
         try {
-            const res = await firstValueFrom(this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId).pipe(filter((res) => !!res.body)));
+            const res = await firstValueFrom(this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId()).pipe(filter((res) => !!res.body)));
             const exercises = res.body ?? [];
             this.fileUploadExercises.set(exercises);
 
             // reconnect exercise with course
             exercises.forEach((exercise) => {
-                exercise.course = this.course;
+                exercise.course = this.courseContext();
                 this.accountService.setAccessRightsForExercise(exercise);
             });
-            this.selectedExercises = [];
+            this.selectedExercises.set([]);
             this.emitExerciseCount(exercises.length);
             this.applyFilter();
         } catch (error: unknown) {

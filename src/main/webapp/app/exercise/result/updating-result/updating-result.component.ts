@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output, signal } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
@@ -35,31 +35,31 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     private submissionService = inject(ProgrammingSubmissionService);
     private profileService = inject(ProfileService);
 
-    @Input() exercise: Exercise;
-    @Input() participation: StudentParticipation;
-    @Input() short = true;
-    @Input() showUngradedResults = false;
-    @Input() showBadge = false;
-    @Input() showIcon = true;
-    @Input() isInSidebarCard = false;
-    @Input() showCompletion = true;
-    @Input() showProgressBar = false;
-    @Input() showProgressBarBorder = false;
-    @Output() showResult = new EventEmitter<void>();
+    readonly exercise = input<Exercise>(undefined!);
+    readonly participation = input<StudentParticipation>(undefined!);
+    readonly short = input(true);
+    readonly showUngradedResults = input(false);
+    readonly showBadge = input(false);
+    readonly showIcon = input(true);
+    readonly isInSidebarCard = input(false);
+    readonly showCompletion = input(true);
+    readonly showProgressBar = input(false);
+    readonly showProgressBarBorder = input(false);
+    readonly showResult = output<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
      */
-    @Input() personalParticipation = true;
+    readonly personalParticipation = input(true);
 
-    @Output() onParticipationChange = new EventEmitter<void>();
+    readonly onParticipationChange = output<void>();
 
-    result?: Result;
-    isBuilding: boolean;
-    isQueued: boolean;
-    estimatedCompletionDate?: dayjs.Dayjs;
-    buildStartDate?: dayjs.Dayjs;
-    showProgressBarInResult = false;
-    missingResultInfo = MissingResultInformation.NONE;
+    readonly result = signal<Result | undefined>(undefined);
+    readonly isBuilding = signal(false);
+    readonly isQueued = signal(false);
+    readonly estimatedCompletionDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly buildStartDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly showProgressBarInResult = signal(false);
+    readonly missingResultInfo = signal(MissingResultInformation.NONE);
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
@@ -72,23 +72,33 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
      * @param changes The hashtable of occurred changes represented as SimpleChanges object.
+     *
+     * NOTE (signal migration): intentionally NOT migrated to computed()/effect() yet — blocked by:
+     *   1. It is gated on {@code hasParticipationChanged(changes)}, which reads {@code changes.participation.previousValue.id}
+     *      and only re-subscribes when the participation *id* actually changes (ignoring same-id object replacements). Signal
+     *      inputs expose no previousValue, so an effect() would re-open the result/submission WebSocket subscriptions on every
+     *      same-id change unless we manually shadow the previous id.
+     *   2. The body depends on {@code isLocalCIEnabled}, set in ngOnInit; an effect() runs after ngOnInit/CD, shifting the
+     *      timing of subscribeForNewResults()/subscribeForNewSubmissions().
+     * Tracked for future removal once a signal-friendly approach exists.
      */
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue via hasParticipationChanged() and stable subscription timing.
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, true);
-            this.missingResultInfo = MissingResultInformation.NONE;
+            this.result.set(getLatestResultOfStudentParticipation(this.participation(), this.showUngradedResults(), true));
+            this.missingResultInfo.set(MissingResultInformation.NONE);
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
 
             if (this.isLocalCIEnabled) {
-                this.showProgressBarInResult = this.showProgressBar;
+                this.showProgressBarInResult.set(this.showProgressBar());
             }
 
-            if (this.result) {
+            if (this.result()) {
                 this.showResult.emit();
             }
         }
@@ -98,13 +108,17 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
      * On component close, unsubscribe from all previous subscriptions.
      */
     ngOnDestroy() {
+        const participation = this.participation();
         if (this.resultSubscription) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise);
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise());
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
-            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.participation.id!);
+            // Release this component's subscription first, so the service only sees remaining observers
+            // (e.g. the exercise header and the code editor show the same participation simultaneously)
+            // when deciding whether the shared websocket state may be torn down.
             this.submissionSubscription.unsubscribe();
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(participation.id!);
         }
     }
 
@@ -115,22 +129,24 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
+        const exercise = this.exercise();
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise ? this.exercise.id : undefined)
+            .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), exercise ? exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 // If the result is a preliminary feedback(being generated), show it
-                filter((result: Result) => this.showUngradedResults || result.rated === true || isAthenaAIResult(result)),
+                filter((result: Result) => this.showUngradedResults() || result.rated === true || isAthenaAIResult(result)),
                 map((result): Result => ({ ...result, completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
+                    const showUngradedResults = this.showUngradedResults();
                     if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
-                        this.result = result;
-                    } else if (result.rated === false && this.showUngradedResults) {
-                        this.result = result;
+                        this.result.set(result);
+                    } else if (result.rated === false && showUngradedResults) {
+                        this.result.set(result);
                     } else {
-                        this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, false);
+                        this.result.set(getLatestResultOfStudentParticipation(this.participation(), showUngradedResults, false));
                     }
                     this.onParticipationChange.emit();
                     if (result) {
@@ -150,7 +166,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             this.submissionSubscription.unsubscribe();
         }
         this.submissionSubscription = this.submissionService
-            .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
+            .getLatestPendingSubmissionByParticipationId(this.participation().id!, this.exercise().id!, this.personalParticipation())
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
                 tap(({ submissionState, buildTimingInfo, submission }) => this.updateSubmissionState(submissionState, buildTimingInfo, submission?.submissionDate)),
@@ -160,7 +176,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
 
     private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
         // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
-        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+        if ((this.exercise() as ProgrammingExercise).allowOfflineIde) {
             return MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         }
         return MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
@@ -174,13 +190,14 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     private shouldUpdateSubmissionState(submission?: Submission): boolean {
         // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
         // (otherwise the building animation will be shown even though not relevant).
+        const exercise = this.exercise();
         return (
-            this.showUngradedResults ||
+            this.showUngradedResults() ||
             !submission ||
-            !this.exercise.dueDate ||
+            !exercise.dueDate ||
             submission.type === SubmissionType.INSTRUCTOR ||
             submission.type === SubmissionType.TEST ||
-            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise, this.participation))
+            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(exercise, this.participation()))
         );
     }
 
@@ -192,18 +209,18 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
      * @param submissionDate the date when the submission was created.
      */
     private updateSubmissionState(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
-        this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
-        this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+        this.isQueued.set(submissionState === ProgrammingSubmissionState.IS_QUEUED);
+        this.isBuilding.set(submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
 
         if (this.isLocalCIEnabled) {
             this.updateBuildTimingInfo(submissionState, buildTimingInfo, submissionDate);
         }
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
-            this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
+            this.missingResultInfo.set(this.generateMissingResultInfoForFailedProgrammingExerciseSubmission());
         } else {
             // everything ok, remove the warning
-            this.missingResultInfo = MissingResultInformation.NONE;
+            this.missingResultInfo.set(MissingResultInformation.NONE);
         }
     }
 
@@ -216,10 +233,10 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     private updateBuildTimingInfo(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
         if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
-            this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
-                if (releaseDate && !this.isBuilding) {
-                    this.estimatedCompletionDate = releaseDate;
-                    this.buildStartDate = submissionDate;
+            this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation().id!).subscribe((releaseDate) => {
+                if (releaseDate && !this.isBuilding()) {
+                    this.estimatedCompletionDate.set(releaseDate);
+                    this.buildStartDate.set(submissionDate);
                 }
             });
         } else if (
@@ -227,11 +244,11 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             buildTimingInfo &&
             dayjs(buildTimingInfo?.estimatedCompletionDate).isAfter(dayjs())
         ) {
-            this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
-            this.buildStartDate = buildTimingInfo?.buildStartDate;
+            this.estimatedCompletionDate.set(buildTimingInfo?.estimatedCompletionDate);
+            this.buildStartDate.set(buildTimingInfo?.buildStartDate);
         } else {
-            this.estimatedCompletionDate = undefined;
-            this.buildStartDate = undefined;
+            this.estimatedCompletionDate.set(undefined);
+            this.buildStartDate.set(undefined);
         }
     }
 }

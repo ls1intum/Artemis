@@ -62,7 +62,7 @@ describe('ModelingExercise Management Component', () => {
 
         eventManager = TestBed.inject(EventManager);
 
-        comp.modelingExercises = [modelingExercise];
+        comp.modelingExercises.set([modelingExercise]);
     });
 
     afterEach(() => {
@@ -82,18 +82,18 @@ describe('ModelingExercise Management Component', () => {
         );
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
         // THEN
         expect(findStub).toHaveBeenCalledOnce();
-        expect(comp.modelingExercises[0]).toEqual(modelingExercise);
+        expect(comp.modelingExercises()[0]).toEqual(modelingExercise);
     });
 
     it('should delete exercise', () => {
         vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
@@ -107,20 +107,22 @@ describe('ModelingExercise Management Component', () => {
     describe('ModelingExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('UML', '', 'modeling'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(1);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(0);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(0);
         });
     });
 
@@ -146,12 +148,13 @@ describe('ModelingExercise Management Component', () => {
 
     it('should sort rows', () => {
         const sortSpy = vi.spyOn(sortService, 'sortByProperty');
-        comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
+        comp.modelingExercises.set([new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)]);
         comp.predicate = 'testPredicate';
         comp.reverse = true;
-        comp.exerciseFilter = new ExerciseFilter();
+        fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter());
+        fixture.detectChanges();
         comp.sortRows();
-        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises(), comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledOnce();
     });
 
@@ -160,7 +163,7 @@ describe('ModelingExercise Management Component', () => {
         comp.toggleExercise(modelingExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: modelingExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises.length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: modelingExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.modelingExercises().length);
     });
 });

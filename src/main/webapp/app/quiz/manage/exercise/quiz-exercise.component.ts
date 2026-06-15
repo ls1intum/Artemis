@@ -1,4 +1,4 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -52,7 +52,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizMode = QuizMode;
 
     readonly quizExercises = model<QuizExercise[]>([]);
-    filteredQuizExercises: QuizExercise[] = [];
+    readonly filteredQuizExercises = signal<QuizExercise[]>([]);
 
     // Icons
     faSort = faSort;
@@ -63,13 +63,13 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.quizExerciseService.findForCourse(this.courseId).subscribe({
+        this.quizExerciseService.findForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<QuizExercise[]>) => {
                 const quizExercises = res.body!;
                 // reconnect exercise with course
                 quizExercises.forEach((exercise) => {
                     exercise.type = ExerciseType.QUIZ;
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext();
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
@@ -83,7 +83,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                             exercise.startDate = exercise.quizBatches[0].startTime;
                         }
                     }
-                    this.selectedExercises = [];
+                    this.selectedExercises.set([]);
                 });
                 this.quizExercises.set(quizExercises);
                 this.emitExerciseCount(quizExercises.length);
@@ -94,8 +94,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredQuizExercises = this.quizExercises().filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredQuizExercises.length);
+        this.filteredQuizExercises.set(this.quizExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredQuizExercises().length);
     }
 
     /**

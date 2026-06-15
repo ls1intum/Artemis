@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
@@ -15,6 +15,7 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -42,6 +43,7 @@ export enum DetailType {
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
     ProgrammingCheckoutDirectories = 'detail-checkout-directories',
+    ProgrammingBuildPhases = 'detail-build-phases',
     ExerciseCategories = 'detail-exercise-categories',
 }
 
@@ -59,6 +61,7 @@ export enum DetailType {
         TranslateDirective,
         ModelingEditorComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
+        BuildPhasesEditorComponent,
         NgStyle,
         ExerciseDetailDirective,
         NoDataComponent,
@@ -66,7 +69,7 @@ export enum DetailType {
         ProgrammingExerciseTimelineComponent,
     ],
 })
-export class DetailOverviewListComponent implements OnInit {
+export class DetailOverviewListComponent {
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -78,21 +81,20 @@ export class DetailOverviewListComponent implements OnInit {
     sections = input.required<DetailOverviewSection[]>();
 
     // headline list for navigation bar
-    headlines: { id: string; translationKey: string }[];
-    // headline record to avoid function call in html
-    headlinesRecord: Record<string, string>;
-
-    ngOnInit() {
-        this.headlines = this.sections().map((section) => {
+    readonly headlines = computed<{ id: string; translationKey: string }[]>(() =>
+        this.sections().map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
-        });
-        this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
+        }),
+    );
+    // headline record to avoid function call in html
+    readonly headlinesRecord = computed<Record<string, string>>(() =>
+        this.headlines().reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
-        }, {});
-    }
+        }, {}),
+    );
 
     downloadApollonDiagramAsPDf(umlModel?: UMLModel, title?: string) {
         if (umlModel) {

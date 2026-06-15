@@ -49,24 +49,18 @@
                             <div class="chart-text">
                                 <h4 class="mb-0">{{ totalRelativeScore() }}%</h4>
                             </div>
-                            <ngx-charts-pie-chart
+                            <p-chart
                                 id="score-chart"
                                 class="chart-level"
                                 style="position: absolute"
-                                [view]="[160, 160]"
-                                [results]="ngxDoughnutData()"
-                                [arcWidth]="0.3"
-                                [scheme]="ngxColor"
-                                [doughnut]="true"
-                                [animations]="false"
-                                (select)="onSelect()"
+                                type="doughnut"
+                                [data]="chartData()"
+                                [options]="chartOptions()"
+                                [responsive]="false"
+                                width="160px"
+                                height="160px"
                                 (click)="onSelect()"
-                            >
-                                <ng-template #tooltipTemplate let-model="model">
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
-                                    <span>: {{ model.value }}</span>
-                                </ng-template>
-                            </ngx-charts-pie-chart>
+                            />
                         </div>
                     }
                 </div>

@@ -54,7 +54,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     textExercises = input<TextExercise[]>([]);
     internalTextExercises = signal<TextExercise[]>([]);
-    filteredTextExercises: TextExercise[] = [];
+    readonly filteredTextExercises = signal<TextExercise[]>([]);
 
     // Icons
     faSort = faSort;
@@ -75,15 +75,15 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllTextExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<TextExercise[]>) => {
                 const exercises = res.body ?? [];
 
                 // reconnect exercise with course
                 exercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
-                    this.selectedExercises = [];
+                    this.selectedExercises.set([]);
                 });
                 this.internalTextExercises.set(exercises);
                 this.applyFilter();
@@ -94,8 +94,8 @@ export class TextExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredTextExercises = this.internalTextExercises().filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredTextExercises.length);
+        this.filteredTextExercises.set(this.internalTextExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredTextExercises().length);
     }
 
     /**
@@ -138,7 +138,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
         dialogRef?.onClose.subscribe((result: TextExercise | undefined) => {
             if (result?.id) {
-                this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
+                this.router.navigate(['course-management', this.courseId(), 'text-exercises', result.id, 'import']);
             }
         });
     }

@@ -57,7 +57,7 @@ describe('QuizExercise Management Component', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
         accountService = TestBed.inject(AccountService);
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.quizExercises.set([quizExercise]);
         comp.filter = new ExerciseFilter();
     });
@@ -101,20 +101,22 @@ describe('QuizExercise Management Component', () => {
     describe('QuizExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Quiz', '', 'quiz'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
-            expect(comp.filteredQuizExercises).toHaveLength(1);
+            expect(comp.filteredQuizExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
-            expect(comp.filteredQuizExercises).toHaveLength(0);
+            expect(comp.filteredQuizExercises()).toHaveLength(0);
         });
     });
 
@@ -123,8 +125,8 @@ describe('QuizExercise Management Component', () => {
         comp.toggleExercise(quizExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: quizExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises().length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: quizExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.quizExercises().length);
     });
 
     it('should load one', () => {

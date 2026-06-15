@@ -27,28 +27,28 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
  * to be used for serialization over the API.
  * </p>
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submittedTime, ComplaintType complaintType, Boolean complaintIsAccepted,
         ComplaintResponseDTO complaintResponse, ResultSimpleDTO result, ParticipantDTO participant) {
 
     /**
      * DTO containing the minimal information of the participant needed in the complaint.
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipantDTO(Long id, String name, String login, Boolean isStudent) {
     }
 
     /**
      * DTO containing the minimal information of {@link Result} needed in complaint.
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ResultSimpleDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, AssessmentType assessmentType, SubmissionWithParticipationDTO submission,
             UserPublicInfoDTO assessor, List<FeedbackDTO> feedbacks, String exerciseTitle) {
 
         /**
          * DTO containing the {@link Feedback} information needed in the result.
          */
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public record FeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
                 Visibility visibility, String testCaseName, GradingInstructionDTO gradingInstruction) {
 

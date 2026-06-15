@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit, inject } from '@angular/core';
+import { Component, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -34,17 +34,21 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private injector = inject(Injector);
     readonly ExerciseType = ExerciseType;
 
-    @Input() exerciseType?: ExerciseType;
+    exerciseType = input<ExerciseType | undefined>();
 
     /**
      * The programming language is only set when filtering for exercises with SCA enabled.
      * In this case we only want to display exercises with the given language
      */
-    @Input()
-    programmingLanguage?: ProgrammingLanguage;
+    programmingLanguage = input<ProgrammingLanguage | undefined>();
 
-    isCourseFilter = true;
-    isExamFilter = true;
+    protected readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
+    private readonly selectedProgrammingLanguage = computed(
+        () => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.programmingLanguage ?? this.programmingLanguage(),
+    );
+
+    readonly isCourseFilter = signal(true);
+    readonly isExamFilter = signal(true);
 
     titleKey: string;
 
@@ -56,34 +60,29 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     ngOnInit(): void {
-        // Get data from DynamicDialogConfig if available (when opened via DialogService)
-        const dialogData = this.dialogConfig?.data as ExerciseImportDialogData | undefined;
-        if (dialogData) {
-            this.exerciseType = dialogData.exerciseType;
-            this.programmingLanguage = dialogData.programmingLanguage;
-        }
-
-        if (!this.exerciseType) {
+        const exerciseType = this.selectedExerciseType();
+        if (!exerciseType) {
             return;
         }
-        this.pagingService = this.getPagingService();
-        if (this.programmingLanguage) {
+
+        const programmingLanguage = this.selectedProgrammingLanguage();
+        this.pagingService = this.getPagingService(exerciseType, programmingLanguage);
+        if (programmingLanguage) {
             this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
         } else {
-            this.titleKey =
-                this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+            this.titleKey = exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${exerciseType}Exercise.home.importLabel`;
         }
 
         super.ngOnInit();
         this.search.next();
     }
 
-    private getPagingService(): ExercisePagingService<Exercise> {
-        switch (this.exerciseType) {
+    private getPagingService(exerciseType: ExerciseType, programmingLanguage?: ProgrammingLanguage): ExercisePagingService<Exercise> {
+        switch (exerciseType) {
             case ExerciseType.MODELING:
                 return this.injector.get(ModelingExercisePagingService);
             case ExerciseType.PROGRAMMING:
-                if (this.programmingLanguage) {
+                if (programmingLanguage) {
                     return this.injector.get(CodeAnalysisPagingService);
                 }
                 return this.injector.get(ProgrammingExercisePagingService);
@@ -94,17 +93,17 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             case ExerciseType.FILE_UPLOAD:
                 return this.injector.get(FileUploadExercisePagingService);
             default:
-                throw new Error('Unsupported exercise type: ' + this.exerciseType);
+                throw new Error('Unsupported exercise type: ' + exerciseType);
         }
     }
 
     protected createOptions(): object {
-        return { isCourseFilter: this.isCourseFilter, isExamFilter: this.isExamFilter, programmingLanguage: this.programmingLanguage };
+        return { isCourseFilter: this.isCourseFilter(), isExamFilter: this.isExamFilter(), programmingLanguage: this.selectedProgrammingLanguage() };
     }
 
     override set sortedColumn(sortedColumn: string) {
         if (sortedColumn === 'COURSE_TITLE') {
-            if (this.isExamFilter && !this.isCourseFilter) {
+            if (this.isExamFilter() && !this.isCourseFilter()) {
                 sortedColumn = 'EXAM_TITLE';
             }
             // sort by course / exam title is not possible if course and exam exercises are mixed
@@ -119,13 +118,13 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     onCourseFilterChange() {
-        this.isCourseFilter = !this.isCourseFilter;
+        this.isCourseFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }
 
     onExamFilterChange() {
-        this.isExamFilter = !this.isExamFilter;
+        this.isExamFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }

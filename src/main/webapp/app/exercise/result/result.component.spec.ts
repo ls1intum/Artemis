@@ -1,21 +1,24 @@
-import { Mock, expect, vi } from 'vitest';
-import { ResultComponent } from 'app/exercise/result/result.component';
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { SimpleChange } from '@angular/core';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import * as utils from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -81,13 +84,13 @@ describe('ResultComponent', () => {
     setupTestBed({ zoneless: true });
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let router: Router;
 
     beforeEach(async () => {
-        participationServiceMock.downloadArtifact = vi.fn() as Mock;
-        global.URL.createObjectURL = vi.fn(() => 'blob:test-url');
-        global.URL.revokeObjectURL = vi.fn();
+        participationServiceMock.downloadArtifact = vi.fn();
+        (global as any).URL.createObjectURL = vi.fn(() => 'blob:test-url');
+        (global as any).URL.revokeObjectURL = vi.fn();
 
         mockParticipation.submissions = [
             {
@@ -97,15 +100,10 @@ describe('ResultComponent', () => {
             },
         ];
 
-        TestBed.overrideComponent(ResultComponent, {
-            remove: { imports: [ArtemisDatePipe, ArtemisTimeAgoPipe, TranslateDirective] },
-            add: { imports: [MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)] },
-        });
-
         await TestBed.configureTestingModule({
-            imports: [TranslatePipeMock, ResultComponent],
+            imports: [ResultComponent],
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: ParticipationService, useValue: participationServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -113,65 +111,77 @@ describe('ResultComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ResultComponent);
-                comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-                router = TestBed.inject(Router);
+            .overrideComponent(ResultComponent, {
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, TranslateDirective] },
+                add: {
+                    imports: [
+                        MockComponent(ResultProgressBarComponent),
+                        TranslatePipeMock,
+                        MockPipe(ArtemisDatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisDurationFromSecondsPipe),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
 
-                participationServiceMock.downloadArtifact = vi.fn() as Mock;
+        fixture = TestBed.createComponent(ResultComponent);
+        comp = fixture.componentInstance;
+        dialogService = TestBed.inject(DialogService);
+        router = TestBed.inject(Router);
 
-                comp.badge = {
-                    tooltip: 'Example Tooltip',
-                    class: 'Example Class',
-                    text: 'Example Test',
-                };
-                fixture.detectChanges();
-            });
+        participationServiceMock.downloadArtifact = vi.fn();
+
+        comp.badge.set({
+            tooltip: 'Example Tooltip',
+            class: 'Example Class',
+            text: 'Example Test',
+        });
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        global.URL.revokeObjectURL = vi.fn();
+        (global as any).URL.revokeObjectURL = vi.fn();
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {
-        comp.participation = {
+        comp.participation.set({
             results: [],
-        } as any as StudentParticipation;
+        } as any as StudentParticipation);
 
-        comp.isBuilding = false;
+        fixture.componentRef.setInput('isBuilding', false);
         comp.ngOnInit();
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.NO_RESULT);
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.NO_RESULT);
 
         const newParticipation = {
             results: [],
         } as any as StudentParticipation;
 
-        comp.isBuilding = true;
-        comp.participation = newParticipation;
+        fixture.componentRef.setInput('isBuilding', true);
+        comp.participation.set(newParticipation);
         comp.ngOnChanges({
             isBuilding: { currentValue: true, previousValue: false } as any as SimpleChange,
             participation: { currentValue: newParticipation } as any as SimpleChange,
         });
 
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.IS_BUILDING);
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.IS_BUILDING);
     });
 
     describe('should display HAS_RESULT status properly', () => {
         const RESULT_SCORE_SELECTOR = '#result-score';
 
         it('should not display if result is not present', () => {
-            comp.resultIconClass = faTimesCircle;
+            comp.resultIconClass.set(faTimesCircle);
             const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
             expect(button).not.toBeTruthy();
         });
 
         it('should display result if present', () => {
-            comp.resultIconClass = faTimesCircle;
-            comp.result = mockResult;
-            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+            comp.resultIconClass.set(faTimesCircle);
+            comp.result.set(mockResult);
+            comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -180,17 +190,14 @@ describe('ResultComponent', () => {
         });
 
         it('should display modal onClick and initialize results modal', () => {
-            const mockModalRef: NgbModalRef = { componentInstance: {} } as NgbModalRef;
-            const modalComponentInstance: FeedbackComponent = mockModalRef.componentInstance;
-
             const showDetailsSpy = vi.spyOn(comp, 'showDetails');
-            const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const openModalSpy = vi.spyOn(dialogService, 'open');
             const prepareFeedbackSpy = vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
 
-            comp.exercise = preparedFeedback.exercise;
-            comp.result = mockResult;
-            comp.resultIconClass = faTimesCircle;
-            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+            comp.exercise.set(preparedFeedback.exercise);
+            comp.result.set(mockResult);
+            comp.resultIconClass.set(faTimesCircle);
+            comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -200,21 +207,38 @@ describe('ResultComponent', () => {
             button.dispatchEvent(new Event('click'));
 
             expect(showDetailsSpy).toHaveBeenCalled();
-            expect(openModalSpy).toHaveBeenCalled();
+            expect(openModalSpy).toHaveBeenCalledWith(
+                FeedbackComponent,
+                expect.objectContaining({
+                    header: 'artemisApp.result.detail.feedback',
+                    width: '80rem',
+                    breakpoints: {
+                        '1400px': '75vw',
+                        '1200px': '85vw',
+                        '992px': '95vw',
+                    },
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    data: expect.objectContaining({
+                        exercise: preparedFeedback.exercise,
+                        result: preparedFeedback.result,
+                        exerciseType: preparedFeedback.exerciseType,
+                        showScoreChart: preparedFeedback.showScoreChart,
+                        messageKey: preparedFeedback.messageKey,
+                        latestDueDate: preparedFeedback.latestDueDate,
+                        showMissingAutomaticFeedbackInformation: preparedFeedback.showMissingAutomaticFeedbackInformation,
+                    }),
+                }),
+            );
             expect(prepareFeedbackSpy).toHaveBeenCalledOnce();
-            expect(modalComponentInstance.exercise).toEqual(preparedFeedback.exercise);
-            expect(modalComponentInstance.result).toEqual(preparedFeedback.result);
-            expect(modalComponentInstance.exerciseType).toEqual(preparedFeedback.exerciseType);
-            expect(modalComponentInstance.showScoreChart).toEqual(preparedFeedback.showScoreChart);
-            expect(modalComponentInstance.messageKey).toEqual(preparedFeedback.messageKey);
-            expect(modalComponentInstance.latestDueDate).toEqual(preparedFeedback.latestDueDate);
-            expect(modalComponentInstance.showMissingAutomaticFeedbackInformation).toEqual(preparedFeedback.showMissingAutomaticFeedbackInformation);
         });
     });
 
     it('should navigate to text exercise details when exercise type is TEXT', () => {
-        comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
-        comp.participation = mockParticipation;
+        comp.exercise.set({ ...mockExercise, type: ExerciseType.TEXT });
+        comp.participation.set(mockParticipation);
         const navigateSpy = vi.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
@@ -224,7 +248,7 @@ describe('ResultComponent', () => {
             courseId,
             'exercises',
             'text-exercises',
-            comp.exercise.id,
+            comp.exercise()!.id,
             'participate',
             mockParticipation.id,
             'submission',
@@ -235,8 +259,8 @@ describe('ResultComponent', () => {
     });
 
     it('should navigate to modeling exercise details when exercise type is MODELING', () => {
-        comp.exercise = { ...mockExercise, type: ExerciseType.MODELING };
-        comp.participation = mockParticipation;
+        comp.exercise.set({ ...mockExercise, type: ExerciseType.MODELING });
+        comp.participation.set(mockParticipation);
         const navigateSpy = vi.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
@@ -246,7 +270,7 @@ describe('ResultComponent', () => {
             courseId,
             'exercises',
             'modeling-exercises',
-            comp.exercise.id,
+            comp.exercise()!.id,
             'participate',
             mockParticipation.id,
             'submission',
@@ -257,49 +281,50 @@ describe('ResultComponent', () => {
     });
 
     it('should call showDetails only when isInSidebarCard is false', () => {
-        comp.result = mockResult;
+        comp.result.set(mockResult);
         const detailsSpy = vi.spyOn(comp, 'showDetails');
 
-        comp.isInSidebarCard = false;
-        comp.resultIconClass = faTimesCircle;
-        comp.exercise = { type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
-        comp.result = mockResult;
-        comp.resultIconClass = faTimesCircle;
-        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+        fixture.componentRef.setInput('isInSidebarCard', false);
+        comp.resultIconClass.set(faTimesCircle);
+        comp.exercise.set({ type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false });
+        comp.result.set(mockResult);
+        comp.resultIconClass.set(faTimesCircle);
+        comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
         fixture.changeDetectorRef.detectChanges();
         const resultElement = fixture.debugElement.query(By.css('#result-score'));
         resultElement.triggerEventHandler('click', null);
         expect(detailsSpy).toHaveBeenCalledWith(mockResult);
 
         detailsSpy.mockClear();
-        comp.isInSidebarCard = true;
+        fixture.componentRef.setInput('isInSidebarCard', true);
         fixture.changeDetectorRef.detectChanges();
         resultElement.triggerEventHandler('click', null);
         expect(detailsSpy).not.toHaveBeenCalled();
     });
 
     it('should display building message for IS_BUILDING status', () => {
-        comp.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        comp.templateStatus.set(ResultTemplateStatus.IS_BUILDING);
         fixture.changeDetectorRef.detectChanges();
         const compiled = fixture.debugElement.query(By.css('[jhiTranslate$=building]'));
         expect(compiled).toBeTruthy();
     });
 
     it('should display badge when showBadge is true', () => {
-        comp.showBadge = true;
-        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
-        comp.result = mockResult;
-        comp.resultIconClass = faTimesCircle;
+        fixture.componentRef.setInput('showBadge', true);
+        comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
+        comp.result.set(mockResult);
+        comp.resultIconClass.set(faTimesCircle);
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.nativeElement.querySelector('#result-score-badge');
         expect(badge).toBeTruthy();
     });
 
     it('should display the correct message for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE and FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE', () => {
-        comp.templateStatus = ResultTemplateStatus.MISSING;
-
-        // Test for FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+        // setInput triggers ngOnChanges which calls evaluate() and may reset templateStatus,
+        // so we set MISSING after the input change and force re-render.
+        fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        fixture.changeDetectorRef.detectChanges();
+        comp.templateStatus.set(ResultTemplateStatus.MISSING);
         fixture.changeDetectorRef.detectChanges();
         let compiled = fixture.nativeElement;
         let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -307,7 +332,9 @@ describe('ResultComponent', () => {
         expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.result.missing.programmingFailedSubmission.message');
 
         // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
-        comp.missingResultInfo = MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
+        fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+        fixture.changeDetectorRef.detectChanges();
+        comp.templateStatus.set(ResultTemplateStatus.MISSING);
         fixture.changeDetectorRef.detectChanges();
         compiled = fixture.nativeElement;
         spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -316,28 +343,28 @@ describe('ResultComponent', () => {
     });
 
     it('should display the submitted text for SUBMITTED template status', () => {
-        comp.templateStatus = ResultTemplateStatus.SUBMITTED;
+        comp.templateStatus.set(ResultTemplateStatus.SUBMITTED);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for SUBMITTED_WAITING_FOR_GRADING template status', () => {
-        comp.templateStatus = ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+        comp.templateStatus.set(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted-waiting-grading');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for LATE_NO_FEEDBACK template status', () => {
-        comp.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
+        comp.templateStatus.set(ResultTemplateStatus.LATE_NO_FEEDBACK);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late-no-feedback');
         expect(submittedSpan).toBeTruthy();
     });
     it('should display the submitted text for LATE template status', () => {
-        comp.resultIconClass = faTimesCircle;
-        comp.templateStatus = ResultTemplateStatus.LATE;
+        comp.resultIconClass.set(faTimesCircle);
+        comp.templateStatus.set(ResultTemplateStatus.LATE);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late');
         expect(submittedSpan).toBeTruthy();
@@ -345,40 +372,40 @@ describe('ResultComponent', () => {
 
     describe('ResultComponent - Graded Results', () => {
         beforeEach(() => {
-            comp.participation = mockParticipation;
+            comp.participation.set(mockParticipation);
         });
 
         it('should display the first rated result if showUngradedResults is false', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
-            comp.showUngradedResults = false;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
+            fixture.componentRef.setInput('showUngradedResults', false);
             comp.ngOnInit();
 
-            expect(comp.result).toEqual(mockResult);
+            expect(comp.result()).toEqual(mockResult);
         });
 
         it('should display the first result if showUngradedResults is true', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
-            comp.showUngradedResults = true;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
+            fixture.componentRef.setInput('showUngradedResults', true);
             comp.ngOnInit();
 
-            expect(comp.result).toEqual(comp.participation.submissions![0].results[0]);
+            expect(comp.result()).toEqual(comp.participation()!.submissions![0].results![0]);
         });
 
         it('should not have a result if there are no rated results and showUngradedResults is false', () => {
-            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
-            comp.showUngradedResults = false;
+            comp.participation()!.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
+            fixture.componentRef.setInput('showUngradedResults', false);
             comp.ngOnInit();
 
-            expect(comp.result).toBeUndefined();
+            expect(comp.result()).toBeUndefined();
         });
     });
 
     describe('ResultComponent - Feedback Generation', () => {
         beforeEach(() => {
             vi.useFakeTimers();
-            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
-            comp.exercise = mockExercise;
-            comp.participation = mockParticipation;
+            comp.result.set({ ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') });
+            comp.exercise.set(mockExercise);
+            comp.participation.set(mockParticipation);
         });
 
         afterEach(() => {
@@ -386,46 +413,51 @@ describe('ResultComponent', () => {
         });
 
         it('should call evaluate again after the specified due time', () => {
-            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.result.set({ ...comp.result()!, completionDate: dayjs().add(2, 'seconds') });
+            comp.templateStatus.set(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
             comp.evaluate();
 
-            comp.result.completionDate = dayjs().subtract(2, 'seconds');
+            comp.result()!.completionDate = dayjs().subtract(2, 'seconds');
             vi.runOnlyPendingTimers();
 
-            expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+            expect(comp.templateStatus()).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
         });
 
         it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            // Note: we assert on the component's own feedback-recheck timeout rather than vi.getTimerCount(),
+            // because under zoneless the signal writes in evaluate() also schedule the change-detection scheduler's
+            // internal timers, which would otherwise pollute a global timer count.
+            const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+            comp.templateStatus.set(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
             comp.evaluate();
-            expect(vi.getTimerCount()).toBe(1);
+            const timeoutId = (comp as unknown as { resultUpdateSubscription?: ReturnType<typeof setTimeout> }).resultUpdateSubscription;
+            expect(timeoutId).toBeDefined();
 
             comp.ngOnDestroy();
-            expect(vi.getTimerCount()).toBe(0);
+            expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutId);
         });
     });
 
     it('should use special handling if result is an automatic AI result', () => {
-        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        comp.result.set({ ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA });
 
         comp.evaluate();
 
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
-        expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(comp.resultTooltip()).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
 
     it('should trigger Interval creation on estimatedCompletionDate change', () => {
         vi.useFakeTimers();
-        comp.buildStartDate = dayjs().subtract(20, 'seconds');
-        comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
+        fixture.componentRef.setInput('buildStartDate', dayjs().subtract(20, 'seconds'));
+        fixture.componentRef.setInput('estimatedCompletionDate', dayjs().add(20, 'seconds'));
         comp.ngOnChanges({});
 
         vi.advanceTimersByTime(1200);
         expect(comp.estimatedDurationInterval).toBeDefined();
-        expect(comp.estimatedRemaining).toBeGreaterThan(0);
-        expect(comp.estimatedRemaining).toBeLessThan(40);
-        expect(comp.estimatedDuration).toBe(40);
+        expect(comp.estimatedRemaining()).toBeGreaterThan(0);
+        expect(comp.estimatedRemaining()).toBeLessThan(40);
+        expect(comp.estimatedDuration()).toBe(40);
 
         vi.clearAllTimers();
         vi.useRealTimers();

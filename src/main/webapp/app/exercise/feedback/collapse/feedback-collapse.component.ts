@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, input, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,18 +23,16 @@ export class FeedbackCollapseComponent implements OnInit {
      */
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
-    @Input() feedback: FeedbackItem;
-    previewText?: string;
-    isCollapsed = true;
+    readonly feedback = input<FeedbackItem>(undefined!);
+    readonly previewText = signal<string | undefined>(undefined);
+    readonly isCollapsed = signal(true);
 
     // Icons
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
-
     ngOnInit(): void {
-        this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
+        this.previewText.set(this.computeFeedbackPreviewText(this.feedback().text));
     }
 
     /**
@@ -43,7 +41,7 @@ export class FeedbackCollapseComponent implements OnInit {
      * @return One line of text with at most {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.
      */
     private computeFeedbackPreviewText(text?: string): string | undefined {
-        if (this.feedback.feedbackReference.hasLongFeedbackText) {
+        if (this.feedback().feedbackReference.hasLongFeedbackText) {
             return text?.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
         }
 
@@ -61,7 +59,6 @@ export class FeedbackCollapseComponent implements OnInit {
     }
 
     toggleCollapse(): void {
-        this.isCollapsed = !this.isCollapsed;
-        this.changeDetectorRef.markForCheck();
+        this.isCollapsed.update((collapsed) => !collapsed);
     }
 }

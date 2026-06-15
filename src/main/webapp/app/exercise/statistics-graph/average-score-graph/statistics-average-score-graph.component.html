@@ -1,7 +1,7 @@
 <div class="row mb-3 d-flex justify-content-center">
     <div class="col-xl-1 d-flex flex-column">
         <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
-        <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
+        <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage() }}%</h4>
     </div>
     <div class="row col-xl-11 chart-row">
         <fa-icon
@@ -10,31 +10,10 @@
             class="col-1 d-flex align-items-center justify-content-end"
             role="button"
             (click)="switchTimeSpan(LEFT)"
-            [class.hidden]="!(currentSize > MAX_SPAN_SIZE && currentPeriod > 0)"
+            [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
-        <div #containerRef class="col-lg-8 ps-0 chart-container">
-            <ngx-charts-bar-vertical
-                [roundEdges]="false"
-                [view]="[containerRef.offsetWidth, 300]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [yScaleMax]="100"
-                [xAxis]="true"
-                [yAxis]="true"
-                [yAxisTickFormatting]="yAxisTickFormatting"
-                [dataLabelFormatting]="formatDataLabel"
-                [showDataLabel]="true"
-                (select)="onSelect($event)"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ model.name }}</b> <br />
-                    <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span> <br />
-                    <b
-                        >{{ 'artemisApp.courseStatistics.exerciseType' | artemisTranslate }}:
-                        {{ 'artemisApp.courseStatistics.' + convertTypeForTooltip(model.name, model.value) | artemisTranslate }}</b
-                    >
-                </ng-template>
-            </ngx-charts-bar-vertical>
+        <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
+            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
         </div>
         <fa-icon
             [icon]="faArrowRight"
@@ -42,7 +21,7 @@
             class="col-1 d-flex align-items-center switch-forward"
             role="button"
             (click)="switchTimeSpan(RIGHT)"
-            [class.hidden]="!(currentSize > MAX_SPAN_SIZE + currentPeriod)"
+            [class.hidden]="!(currentSize() > MAX_SPAN_SIZE + currentPeriod())"
         />
         <ng-template #placeholder>
             <div class="switch-forward-placeholder"></div>
@@ -78,7 +57,7 @@
                                         [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))"
                                         type="checkbox"
                                     />
-                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
+                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase().replace('-', '_') + 'Plural' | artemisTranslate }}</span>
                                 </label>
                             </li>
                         }

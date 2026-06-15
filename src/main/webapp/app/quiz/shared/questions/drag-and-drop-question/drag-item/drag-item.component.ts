@@ -1,6 +1,5 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ViewEncapsulation, inject, input } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
@@ -8,7 +7,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { map } from 'rxjs';
+import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-drag-item',
@@ -19,7 +18,7 @@ import { map } from 'rxjs';
 })
 export class DragItemComponent {
     private breakpointObserver = inject(BreakpointObserver);
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
 
     minWidth = input<string>();
     dragItem = input.required<DragItem>();

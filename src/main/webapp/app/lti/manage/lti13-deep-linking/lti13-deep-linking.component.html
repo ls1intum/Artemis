@@ -1,8 +1,8 @@
-<div [hidden]="!isLinking" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
+<div [hidden]="!isLinking()" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
     <div class="modal-header">
         <div class="col d-flex flex-row pt-3 pb-1">
-            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
-                Select content from course {{ course?.title }}
+            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
+                Select content from course {{ course()?.title }}
             </h4>
             <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip" />
         </div>
@@ -37,7 +37,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (exercise of exercises; track exercise) {
+                                @for (exercise of exercises(); track exercise) {
                                     <tr id="exercise-{{ exercise.id }}">
                                         <td class="d-md-table-cell">
                                             <input class="form-check-input" type="checkbox" (change)="selectExercise(exercise.id)" [ngModel]="isExerciseSelected(exercise.id)" />
@@ -60,7 +60,7 @@
                     <div class="checkbox-container">
                         <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header"></span>
                         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.selector" />
-                        <input class="form-check-input" type="checkbox" (change)="activateExerciseGrouping()" [ngModel]="isExerciseGroupingActive" />
+                        <input class="form-check-input" type="checkbox" (change)="activateExerciseGrouping()" [ngModel]="isExerciseGroupingActive()" />
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (lecture of lectures; track lecture) {
+                                @for (lecture of lectures(); track lecture) {
                                     <tr id="lecture-{{ lecture.id }}">
                                         <td class="d-md-table-cell">
                                             <input class="form-check-input" type="checkbox" (change)="selectLecture(lecture.id)" [ngModel]="isLectureSelected(lecture.id)" />
@@ -102,7 +102,7 @@
                     <div class="checkbox-container">
                         <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header"></span>
                         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.selector" />
-                        <input class="form-check-input" type="checkbox" (change)="activateLectureGrouping()" [ngModel]="isLectureGroupingActive" />
+                        <input class="form-check-input" type="checkbox" (change)="activateLectureGrouping()" [ngModel]="isLectureGroupingActive()" />
                     </div>
                 </div>
             </div>
@@ -112,24 +112,24 @@
     <div class="lti-competency-selector">
         <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
+        <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected()" />
     </div>
 
     <div class="lti-learning-path-selector">
         <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
+        <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected()" />
     </div>
 
     <div class="lti-iris-selector">
         <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected" />
+        <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected()" />
     </div>
 
     <div class="modal-footer">
         <div>
-            @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected || isLearningPathSelected || isIrisSelected) {
+            @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected() || isLearningPathSelected() || isIrisSelected()) {
                 <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
                     <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
                 </button>
@@ -141,4 +141,4 @@
         </div>
     </div>
 </div>
-<h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>
+<h2 [hidden]="isLinking()" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>

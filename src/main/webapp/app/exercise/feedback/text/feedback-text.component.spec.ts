@@ -1,5 +1,5 @@
-import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.component';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
@@ -13,6 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 describe('FeedbackTextComponent', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeedbackTextComponent>;
     let comp: FeedbackTextComponent;
 
@@ -22,15 +23,13 @@ describe('FeedbackTextComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
             providers: [MockProvider(LongFeedbackTextService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FeedbackTextComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
-                getLongFeedbackStub = vi.spyOn(longFeedbackTextService, 'find');
-            });
+        fixture = TestBed.createComponent(FeedbackTextComponent);
+        comp = fixture.componentInstance;
+
+        const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
+        getLongFeedbackStub = vi.spyOn(longFeedbackTextService, 'find');
     });
 
     afterEach(() => {
@@ -42,7 +41,7 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        expect(comp.text).toBe('');
+        expect(comp.text()).toBe('');
     });
 
     it('should set the text to the feedback text', () => {
@@ -50,37 +49,44 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        expect(comp.text).toBe(text);
+        expect(comp.text()).toBe(text);
     });
 
-    it('should not fetch long feedback if it does not exist', () => {
+    it('should not fetch long feedback if it does not exist', async () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(getLongFeedbackStub).not.toHaveBeenCalled();
     });
 
-    it('should fetch long feedback', () => {
+    it('should fetch long feedback', async () => {
         const longFeedbackText: string = 'long feedback text';
         getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
         fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, true)));
         fixture.detectChanges();
-        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(2);
-        expect(comp.text).toBe(longFeedbackText);
-        expect(comp.downloadText).toBeDefined();
-        expect(comp.downloadFilename).toBeDefined();
+        await fixture.whenStable();
+
+        expect(getLongFeedbackStub).toHaveBeenCalledOnce();
+        expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
+        expect(comp.text()).toBe(longFeedbackText);
+        expect(comp.downloadText()).toBeDefined();
+        expect(comp.downloadFilename()).toBeDefined();
     });
 
-    it('should create a download link for very long feedback', () => {
+    it('should create a download link for very long feedback', async () => {
         const longFeedbackText = '0'.repeat(100_000);
         getLongFeedbackStub.mockReturnValue(of(new HttpResponse<string>({ body: longFeedbackText })));
 
         fixture.componentRef.setInput('feedback', getFeedbackItem('short version', getFeedbackReference(1, 2, true)));
         fixture.detectChanges();
-        expect(comp.text).toBe(longFeedbackText);
-        expect(comp.downloadFilename).toBe('feedback_2.txt');
-        expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
-        expect(comp.downloadText).toContain(longFeedbackText);
+        await fixture.whenStable();
+
+        expect(comp.text()).toBe(longFeedbackText);
+        expect(comp.downloadFilename()).toBe('feedback_2.txt');
+        expect(comp.downloadText()).toContain('data:text/plain;charset=utf-8,');
+        expect(comp.downloadText()).toContain(longFeedbackText);
     });
 
     const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedbackText: boolean): Feedback => {

@@ -1,7 +1,7 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
@@ -18,6 +18,7 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 
 describe('Submission Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -65,6 +66,7 @@ describe('Submission Service', () => {
         service.delete(187).subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
+
         expect(expectedResult).toBe(true);
     });
 

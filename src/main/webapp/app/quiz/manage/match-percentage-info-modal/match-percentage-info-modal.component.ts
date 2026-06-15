@@ -1,25 +1,25 @@
-import { Component, inject } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-match-percentage-info-modal',
     templateUrl: './match-percentage-info-modal.component.html',
-    imports: [TranslateDirective, FaIconComponent],
+    imports: [TranslateDirective, FaIconComponent, DialogModule, ArtemisTranslatePipe],
 })
 export class MatchPercentageInfoModalComponent {
-    private modalService = inject(NgbModal);
-
     // Icons
     farQuestionCircle = faQuestionCircle;
 
+    readonly isVisible = signal(false);
+
     /**
-     * Open a large modal with the given content.
-     * @param content the content to display
+     * Open the info dialog.
      */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+    open() {
+        this.isVisible.set(true);
     }
 }

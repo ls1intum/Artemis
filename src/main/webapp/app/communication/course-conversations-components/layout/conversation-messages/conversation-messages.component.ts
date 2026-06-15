@@ -1,7 +1,6 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
     AfterViewInit,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     OnDestroy,
@@ -11,14 +10,14 @@ import {
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
+import { Observable, Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/metis.util';
@@ -43,6 +42,7 @@ import { Posting, PostingType } from 'app/communication/shared/entities/posting.
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 interface PostGroup {
     author: User | undefined;
@@ -70,12 +70,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private breakpointObserver = inject(BreakpointObserver);
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
-    cdr = inject(ChangeDetectorRef);
 
     private ngUnsubscribe = new Subject<void>();
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
-        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
-    });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;
@@ -95,7 +92,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
-    pinnedPosts: Post[] = [];
+    readonly pinnedPosts = signal<Post[]>([]);
 
     readonly focusPostId = input<number | undefined>(undefined);
     readonly openThreadOnFocus = input<boolean>(false);
@@ -110,22 +107,22 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
-    _activeConversation?: ConversationDTO;
+    readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
     elementsAtScrollPosition: PostingThreadComponent[];
-    newPost?: Post;
-    posts: Post[] = [];
-    allPosts: Post[] = [];
+    readonly newPost = signal<Post | undefined>(undefined);
+    readonly posts = signal<Post[]>([]);
+    readonly allPosts = signal<Post[]>([]);
     unreadPosts: Post[] = [];
-    groupedPosts: PostGroup[] = [];
+    readonly groupedPosts = signal<PostGroup[]>([]);
     totalNumberOfPosts = 0;
     page = 1;
-    public isFetchingPosts = true;
+    readonly isFetchingPosts = signal(true);
     currentUser: User;
-    firstUnreadPostId: number | undefined;
-    unreadPostsCount: number = 0;
-    atNewPostPosition = false;
+    readonly firstUnreadPostId = signal<number | undefined>(undefined);
+    readonly unreadPostsCount = signal<number>(0);
+    readonly atNewPostPosition = signal(false);
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -133,8 +130,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faArrowDown = faArrowDown;
 
-    isHiddenInputWithCallToAction = false;
-    isHiddenInputFull = false;
+    readonly isHiddenInputWithCallToAction = signal(false);
+    readonly isHiddenInputFull = signal(false);
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
 
@@ -171,7 +168,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // Read the signal to track changes
             void this.messages();
             untracked(() => {
-                if (!this.createdNewMessage && this.posts.length > 0) {
+                if (!this.createdNewMessage && this.posts().length > 0) {
                     this.scrollToStoredId();
                 }
             });
@@ -195,11 +192,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     applyPinnedMessageFilter(): void {
         if (this.showOnlyPinned()) {
-            this.posts = this.pinnedPosts;
+            this.posts.set(this.pinnedPosts());
         } else {
-            this.posts = [...this.allPosts];
+            this.posts.set([...this.allPosts()]);
         }
-        this.cdr.detectChanges();
     }
 
     ngOnInit(): void {
@@ -213,9 +209,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             .getPinnedPosts()
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe((pinnedPosts) => {
-                this.pinnedPosts = pinnedPosts;
+                this.pinnedPosts.set(pinnedPosts);
                 this.pinnedCount.emit(pinnedPosts.length);
-                this.cdr.detectChanges();
             });
 
         this.accountService.identity().then((user: User) => {
@@ -223,18 +218,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
 
         // Ensure that all pinned posts are fetched when the component is initialized
-        this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
-        this.cdr.detectChanges();
+        this.metisService.fetchAllPinnedPosts(this._activeConversation()!.id!).subscribe();
         this.initialized = true;
     }
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
-            if (conversation && this._activeConversation?.id === conversation.id) {
+            if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;
             }
-            this._activeConversation = conversation;
+            this._activeConversation.set(conversation);
             this.onActiveConversationChange();
         });
     }
@@ -287,7 +281,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.focusOnPostId) {
             savedScrollId = this.focusOnPostId;
         } else {
-            const activeConversationId = this._activeConversation?.id;
+            const activeConversationId = this._activeConversation()?.id;
             savedScrollId = activeConversationId ? this.sessionStorageService.retrieve<number>(this.sessionStorageKey + activeConversationId) : undefined;
         }
         if (savedScrollId) {
@@ -296,21 +290,22 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
-        if (this._activeConversation !== undefined && this.getAsChannel(this._activeConversation)?.isAnnouncementChannel) {
-            this.isHiddenInputFull = !canCreateNewMessageInConversation(this._activeConversation);
-            this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(this._activeConversation);
+        const activeConversation = this._activeConversation();
+        if (activeConversation !== undefined && this.getAsChannel(activeConversation)?.isAnnouncementChannel) {
+            this.isHiddenInputFull.set(!canCreateNewMessageInConversation(activeConversation));
+            this.isHiddenInputWithCallToAction.set(canCreateNewMessageInConversation(activeConversation));
         } else {
-            this.isHiddenInputFull = false;
-            this.isHiddenInputWithCallToAction = false;
+            this.isHiddenInputFull.set(false);
+            this.isHiddenInputWithCallToAction.set(false);
         }
 
-        if (this.course() && this._activeConversation) {
+        if (this.course() && activeConversation) {
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
-            this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe({
+            this.metisService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
                 next: (pinnedPosts: Post[]) => {
-                    this.pinnedPosts = pinnedPosts;
+                    this.pinnedPosts.set(pinnedPosts);
                     this.pinnedCount.emit(pinnedPosts.length);
                 },
             });
@@ -319,9 +314,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
-            this.allPosts = posts;
+            this.allPosts.set(posts);
             this.setPosts();
-            this.isFetchingPosts = false;
+            this.isFetchingPosts.set(false);
             this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -330,9 +325,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private refreshMetisConversationPostContextFilter(): void {
+        const activeConversationId = this._activeConversation()?.id;
         this.currentPostContextFilter = {
             courseId: this.course()?.id,
-            conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
+            conversationIds: activeConversationId ? [activeConversationId] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
@@ -348,13 +344,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     private groupPosts(): void {
         // If there are no posts, clear groupedPosts and exit.
-        if (!this.posts || this.posts.length === 0) {
-            this.groupedPosts = [];
+        if (!this.posts() || this.posts().length === 0) {
+            this.groupedPosts.set([]);
             return;
         }
 
         // Sort posts by the creation date
-        const sortedPosts = [...this.posts].sort((a, b) => {
+        const sortedPosts = [...this.posts()].sort((a, b) => {
             return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
@@ -390,22 +386,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         // Update existing groups in place if possible.
-        if (this.groupedPosts.length === computedGroups.length) {
+        if (this.groupedPosts().length === computedGroups.length) {
             computedGroups.forEach((g, i) => {
-                if (this.groupedPosts[i].author?.id === g.author?.id) {
+                if (this.groupedPosts()[i].author?.id === g.author?.id) {
                     // If the group belongs to the same author, update its posts array in place.
-                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...g.posts);
+                    this.groupedPosts()[i].posts.splice(0, this.groupedPosts()[i].posts.length, ...g.posts);
                 } else {
                     // If group identity has changed, replace the group.
-                    this.groupedPosts[i] = g;
+                    this.groupedPosts()[i] = g;
                 }
             });
+            // Notify the signal after the in-place group updates so the list re-renders independently of sibling writes.
+            this.groupedPosts.set([...this.groupedPosts()]);
         } else {
-            this.groupedPosts = computedGroups;
+            this.groupedPosts.set(computedGroups);
         }
-
-        // Trigger Angular change detection.
-        this.cdr.detectChanges();
     }
 
     private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
@@ -463,10 +458,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             forkJoin(requests).subscribe((responses) => {
                 const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
 
-                this.posts = this.attachForwardedMessages(this.posts, forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts);
+                this.posts.set(this.attachForwardedMessages(this.posts(), forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts));
 
                 this.groupPosts();
-                this.cdr.markForCheck();
                 if (this.createdNewMessage) {
                     this.scrollToBottomOfMessages();
                     this.createdNewMessage = false;
@@ -479,14 +473,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Reverses the posts array to maintain chronological order.
      */
     private reversePosts(): void {
-        this.posts = this.posts.slice().reverse();
+        this.posts.set(this.posts().slice().reverse());
     }
 
     /**
      * Filters posts that contain forwarded messages and have a valid ID.
      */
     private getPostIdsWithForwardedMessages(): number[] {
-        return this.posts.filter((post) => post.hasForwardedMessages && post.id !== undefined).map((post) => post.id!) as number[];
+        return this.posts()
+            .filter((post) => post.hasForwardedMessages && post.id !== undefined)
+            .map((post) => post.id!) as number[];
     }
 
     /**
@@ -526,12 +522,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private buildSourceRequests(sourcePostIds: number[], sourceAnswerIds: number[]): Observable<Posting[] | undefined>[] {
         const requests: Observable<Posting[] | undefined>[] = [];
 
+        // forwarded-source previews are non-critical: a source may live in a conversation the viewer cannot access (403),
+        // or the fetch may otherwise fail. Swallow any error to undefined so one bad source does not break rendering of the
+        // whole message list (extractFetchedSources tolerates undefined).
         if (sourcePostIds.length > 0) {
-            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds));
+            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds).pipe(catchError(() => of(undefined))));
         }
 
         if (sourceAnswerIds.length > 0) {
-            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds));
+            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds).pipe(catchError(() => of(undefined))));
         }
 
         return requests;
@@ -584,7 +583,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
+        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
         let addBuffer = 0;
         if (morePostsAvailable) {
             this.page += 1;
@@ -599,8 +598,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public commandMetisToFetchPosts(forceUpdate = false) {
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts = true; // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation);
+            this.isFetchingPosts.set(true); // will be set to false in subscription
+            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
         }
     }
 
@@ -610,26 +609,27 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     createEmptyPost(): void {
-        this.newPost = this.createEmptyPostInMetis();
+        this.newPost.set(this.createEmptyPostInMetis());
     }
 
     private createEmptyPostInMetis() {
-        if (!this._activeConversation) {
+        const activeConversation = this._activeConversation();
+        if (!activeConversation) {
             return undefined;
         }
         let conversation: Conversation;
-        if (isChannelDTO(this._activeConversation)) {
+        if (isChannelDTO(activeConversation)) {
             const channel = new Channel();
-            channel.isAnnouncementChannel = this._activeConversation.isAnnouncementChannel;
+            channel.isAnnouncementChannel = activeConversation.isAnnouncementChannel;
             conversation = channel;
-        } else if (isGroupChatDTO(this._activeConversation)) {
+        } else if (isGroupChatDTO(activeConversation)) {
             conversation = new GroupChat();
-        } else if (isOneToOneChatDTO(this._activeConversation)) {
+        } else if (isOneToOneChatDTO(activeConversation)) {
             conversation = new OneToOneChat();
         } else {
             throw new Error('Conversation type not supported');
         }
-        conversation.id = this._activeConversation.id;
+        conversation.id = activeConversation.id;
         this.refreshMetisConversationPostContextFilter();
         return this.metisService.createEmptyPostForContext(conversation);
     }
@@ -643,7 +643,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content().nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts().length > 0 && this.content().nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
@@ -657,7 +657,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private setupScrollDebounce(): void {
         this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((postId) => {
-            const activeConversationId = this._activeConversation?.id;
+            const activeConversationId = this._activeConversation()?.id;
             if (activeConversationId) {
                 this.sessionStorageService.store<number>(this.sessionStorageKey + activeConversationId, postId);
             }
@@ -721,8 +721,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post().id!);
         }
         this.setFirstUnreadPostId();
-        this.atNewPostPosition = this.isAnyUnreadPostVisible();
-        this.cdr.detectChanges();
+        this.atNewPostPosition.set(this.isAnyUnreadPostVisible());
     }
 
     /**
@@ -734,7 +733,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private computeLastReadState(): void {
         this.unreadPosts = this.getUnreadPosts();
-        this.unreadPostsCount = this.unreadPosts.length;
+        this.unreadPostsCount.set(this.unreadPosts.length);
         this.setFirstUnreadPostId();
     }
 
@@ -743,12 +742,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * and were not authored by the current user (i.e. true unread posts).
      */
     private getUnreadPosts(): Post[] {
-        const lastReadDate = this._activeConversation?.lastReadDate;
-        if (!lastReadDate || !this.allPosts?.length) {
+        const lastReadDate = this._activeConversation()?.lastReadDate;
+        if (!lastReadDate || !this.allPosts()?.length) {
             return [];
         }
 
-        return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts, lastReadDate);
+        return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts(), lastReadDate);
     }
 
     /**
@@ -762,7 +761,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const component = this.messages().find((m) => m.post().id === this.firstUnreadPostId);
+        const component = this.messages().find((m) => m.post().id === this.firstUnreadPostId());
         if (!component?.elementRef?.nativeElement) {
             return;
         }
@@ -809,11 +808,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Returns `undefined` if the post or container is not available in the DOM.
      */
     private getBoundingRectsForFirstUnreadPost(): { postRect: DOMRect; containerRect: DOMRect } | undefined {
-        if (!this.unreadPosts.length || !this.firstUnreadPostId) {
+        if (!this.unreadPosts.length || !this.firstUnreadPostId()) {
             return undefined;
         }
 
-        return this.getBoundingRectsForPost(this.firstUnreadPostId);
+        return this.getBoundingRectsForPost(this.firstUnreadPostId()!);
     }
 
     private isPostVisible(postId: number): boolean {
@@ -837,9 +836,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private setFirstUnreadPostId(): void {
         if (this.unreadPosts.length > 0) {
-            this.firstUnreadPostId = this.unreadPosts[0].id;
+            this.firstUnreadPostId.set(this.unreadPosts[0].id);
         } else {
-            this.firstUnreadPostId = undefined;
+            this.firstUnreadPostId.set(undefined);
         }
     }
 }

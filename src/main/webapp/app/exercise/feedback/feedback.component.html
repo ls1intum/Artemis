@@ -1,15 +1,9 @@
-@if (!isExamReviewPage) {
+@if (!isExamReviewPage() && !dialogRef) {
     <div class="modal-header feedback-header">
         @if (taskName) {
             <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
         } @else {
             <h3 class="modal-title" jhiTranslate="artemisApp.result.detail.feedback"></h3>
-        }
-
-        @if (activeModal) {
-            <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-                <fa-icon [icon]="faXmark" size="xl" />
-            </button>
         }
     </div>
 }
@@ -26,14 +20,14 @@
     }
 
     <!-- Loading state -->
-    @if (isLoading) {
+    @if (isLoading()) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
-        @if (!loadingFailed && feedbackItemNodes?.length) {
+        @if (!loadingFailed() && feedbackItemNodes()?.length) {
             <div class="result-detail-container">
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
@@ -43,15 +37,15 @@
                                     @if (!exercise?.maxPoints) {
                                         <span
                                             jhiTranslate="artemisApp.result.score"
-                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course) }"
+                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course()) }"
                                         ></span>
                                     } @else {
                                         @if (exercise && exercise.maxPoints) {
                                             <span
                                                 jhiTranslate="artemisApp.result.scoreWithPoints"
                                                 [translateValues]="{
-                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course),
+                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course()),
+                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course()),
                                                 }"
                                             ></span>
                                         }
@@ -59,7 +53,7 @@
                                 }
                             </h4>
 
-                            @if (badge) {
+                            @if (badge(); as badge) {
                                 <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                                     {{ badge.text | artemisTranslate | uppercase }}
                                 </span>
@@ -75,7 +69,7 @@
                                 </span>
                                 - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
                                 <!-- TODO Link to repository view -->
-                                {{ commitHash }}
+                                {{ commitHash() }}
                             </p>
                         }
                     </div>
@@ -83,35 +77,24 @@
 
                 @if (showScoreChart && result.submission?.participation?.exercise) {
                     <div class="result-score-chart">
-                        <div id="feedback-chart" #containerRef class="chart-space">
-                            <ngx-charts-bar-horizontal-stacked
-                                [view]="[containerRef.offsetWidth, 80]"
-                                [results]="chartData.results"
-                                [scheme]="chartData.scheme"
-                                [xScaleMax]="chartData.xScaleMax"
-                                [xAxis]="true"
-                                [xAxisTickFormatting]="xAxisFormatting"
-                                [legend]="true"
-                                [legendTitle]="''"
-                                [legendPosition]="legendPosition"
-                                [tooltipDisabled]="true"
-                            />
+                        <div id="feedback-chart" class="chart-space" style="height: 80px">
+                            <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
                         </div>
                     </div>
                 }
 
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <hr />
                 }
 
                 <!-- Always show failed build logs first -->
-                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null" />
+                <ng-container *ngTemplateOutlet="buildLogs()?.length ? buildLogsContainer : null" />
 
-                @if (buildLogs?.length) {
+                @if (buildLogs()?.length) {
                     <hr />
                 }
 
-                @if (!loadingFailed && resultIsPreliminary(result, participation)) {
+                @if (!loadingFailed() && resultIsPreliminary(result, participation)) {
                     <div>
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
@@ -130,37 +113,37 @@
                 }
 
                 <div class="feedback-list">
-                    @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
-                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course" />
+                    @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
+                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" />
                     }
                 </div>
             </div>
         } @else {
-            @if (buildLogs?.length) {
+            @if (buildLogs()?.length) {
                 <h4 jhiTranslate="artemisApp.result.buildError"></h4>
                 <dl class="buildoutput dl-horizontal">
-                    @for (logEntry of buildLogs; track logEntry; let i = $index) {
+                    @for (logEntry of buildLogs(); track logEntry; let i = $index) {
                         <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                        @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                        @if (i === 0 || logEntry.time !== buildLogs()![i - 1].time) {
                             <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                         }
                         <dd
                             [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                             [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
                             [class.text-warning]="logEntry.type === BuildLogType.WARNING"
-                            [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                            [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                         >
                             {{ logEntry.log }}
                         </dd>
                     }
                 </dl>
             } @else {
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
                 } @else {
                     <span jhiTranslate="artemisApp.result.noResultDetails"></span>
                 }
-                @if (isOnlyCompilationTested) {
+                @if (isOnlyCompilationTested()) {
                     <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
                 }
             }
@@ -171,19 +154,19 @@
 
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
-        @if (buildLogs?.length) {
+        @if (buildLogs()?.length) {
             <h4 jhiTranslate="artemisApp.result.buildError"></h4>
             <dl class="buildoutput dl-horizontal">
-                @for (logEntry of buildLogs; track logEntry; let i = $index) {
+                @for (logEntry of buildLogs(); track logEntry; let i = $index) {
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                    @if (i === 0 || logEntry.time !== buildLogs()![i - 1].time) {
                         <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                     }
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
                         [class.text-warning]="logEntry.type === BuildLogType.WARNING"
-                        [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                        [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                     >
                         {{ logEntry.log }}
                     </dd>
@@ -191,19 +174,19 @@
             </dl>
         } @else {
             <!-- No content fallback -->
-            @if (!isExamReviewPage) {
+            @if (!isExamReviewPage()) {
                 <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
             } @else {
                 <span jhiTranslate="artemisApp.result.noResultDetails"></span>
             }
-            @if (isOnlyCompilationTested) {
+            @if (isOnlyCompilationTested()) {
                 <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
             }
         }
     </ng-template>
 </div>
 <div class="modal-footer">
-    @if (activeModal) {
-        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    @if (dialogRef) {
+        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="dialogRef.close()" jhiTranslate="entity.action.close">Close</button>
     }
 </div>

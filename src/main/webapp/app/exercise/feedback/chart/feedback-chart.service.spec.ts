@@ -1,8 +1,7 @@
-import { expect } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 describe('FeedbackChartService', () => {
     let service: FeedbackChartService;
@@ -24,17 +23,12 @@ describe('FeedbackChartService', () => {
         expect(service.create(feedbackNodes, exercise).xScaleMax).toEqual(expected);
     });
 
-    it('extracts color scheme correctly', () => {
+    it('extracts colors correctly', () => {
         const exercise = getExercise();
         const feedbackNodes: FeedbackNode[] = [{ color: 'secondary' } as FeedbackNode, { color: 'success' } as FeedbackNode, { color: 'primary' } as FeedbackNode];
-        const expected = {
-            name: 'Feedback Detail',
-            selectable: true,
-            group: ScaleType.Ordinal,
-            domain: ['var(--bs-secondary)', 'var(--bs-success)', 'var(--bs-primary)'],
-        } as Color;
+        const expected = ['var(--bs-secondary)', 'var(--bs-success)', 'var(--bs-primary)'];
 
-        expect(service.create(feedbackNodes, exercise).scheme).toEqual(expected);
+        expect(service.create(feedbackNodes, exercise).colors).toEqual(expected);
     });
 
     it('should show correct results when only positive credits', () => {

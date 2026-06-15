@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -147,8 +147,8 @@ export class DataTableComponent implements OnInit {
      * @property entityCriteria Contains a list of search terms
      */
     isRendering: boolean;
-    entities: (BaseEntity | StringBaseEntity)[];
-    pagingValue: PagingValue;
+    readonly entities = signal<(BaseEntity | StringBaseEntity)[]>([]);
+    readonly pagingValue = signal<PagingValue>(this.DEFAULT_PAGING_VALUE);
     entityCriteria: {
         textSearch: string[];
         sortProp: SortProp;
@@ -158,14 +158,13 @@ export class DataTableComponent implements OnInit {
      * @property searchQueryTooShort Whether the entered search term
      * @property MIN_SEARCH_QUERY_LENGTH Minimum number of characters before a search is triggered
      */
-    searchQueryTooShort: boolean;
+    readonly searchQueryTooShort = signal<boolean>(undefined!);
     readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
     // Icons
     faCircleNotch = faCircleNotch;
 
     constructor() {
-        this.entities = [];
         this.entityCriteria = {
             textSearch: [],
             sortProp: { field: 'id', order: SortOrder.ASC },
@@ -184,7 +183,7 @@ export class DataTableComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit() {
-        this.pagingValue = this.getCachedEntitiesPerPage();
+        this.pagingValue.set(this.getCachedEntitiesPerPage());
 
         // explicitly bind these callbacks to their current context
         // so that they can be used from child components
@@ -206,7 +205,7 @@ export class DataTableComponent implements OnInit {
                 headerHeight: 50,
                 footerHeight: 50,
                 rowHeight: 'auto',
-                rows: this.entities,
+                rows: this.entities(),
                 rowClass: '',
                 scrollbarH: true,
             },
@@ -229,7 +228,8 @@ export class DataTableComponent implements OnInit {
      * Number of entities displayed per page. Can be undefined to show all entities without pagination.
      */
     get pageLimit() {
-        return isNumber(this.pagingValue) ? this.pagingValue : undefined;
+        const pagingValue = this.pagingValue();
+        return isNumber(pagingValue) ? pagingValue : undefined;
     }
 
     /**
@@ -271,7 +271,7 @@ export class DataTableComponent implements OnInit {
     setEntitiesPerPage = (paging: PagingValue) => {
         this.isRendering = true;
         setTimeout(() => {
-            this.pagingValue = paging;
+            this.pagingValue.set(paging);
             this.isRendering = false;
         }, 500);
         this.localStorageService.store(this.perPageCacheKey, paging.toString());
@@ -286,9 +286,9 @@ export class DataTableComponent implements OnInit {
             return !this.searchEntityFilterEnabled() || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields());
         };
         const filteredEntities = this.allEntities().filter((entity) => this.customFilter()(entity) && searchPredicate(entity));
-        this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
+        this.entities.set(this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC));
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
-        setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
+        setTimeout(() => this.entitiesSizeChange.emit(this.entities().length));
     }
 
     /**
@@ -390,7 +390,7 @@ export class DataTableComponent implements OnInit {
                 debounceTime(200),
                 distinctUntilChanged(),
                 tap(() => {
-                    this.searchQueryTooShort = false;
+                    this.searchQueryTooShort.set(false);
                 }),
                 map((text) => {
                     const searchWords = text.split(',').map((word) => word.trim());
@@ -408,12 +408,12 @@ export class DataTableComponent implements OnInit {
                     const lastSearchWord = searchWords.last();
                     // Don't execute autocomplete for less than two inputted characters.
                     if (!lastSearchWord || lastSearchWord.length < this.MIN_SEARCH_QUERY_LENGTH) {
-                        this.searchQueryTooShort = true;
+                        this.searchQueryTooShort.set(true);
                         return { text, entities: [] };
                     }
                     return {
                         text,
-                        entities: this.entities.filter((entity) => {
+                        entities: this.entities().filter((entity) => {
                             const fieldValues = this.entityFieldValues(entity, this.searchFields());
                             return fieldValues.some((fieldValue) => this.foundIn(fieldValue)(lastSearchWord));
                         }),
@@ -428,7 +428,7 @@ export class DataTableComponent implements OnInit {
      * Can be used to clear up search-related info messages.
      */
     onSearchInputBlur() {
-        this.searchQueryTooShort = false;
+        this.searchQueryTooShort.set(false);
     }
 
     /**

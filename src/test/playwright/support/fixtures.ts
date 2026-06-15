@@ -76,7 +76,7 @@ import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/prog
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<StudentParticipation>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -214,8 +214,12 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                     if (Commands.isNoNavbarRoute(urlAfterWait) || isUnauthenticatedRoute(urlAfterWait)) {
                         return response;
                     }
-                    await page.reload();
-                    await page.waitForLoadState('load');
+                    // Recover from a failed lazy-chunk bootstrap by re-fetching the shell. Wait only
+                    // for `domcontentloaded`, NOT the full `load` event: when a lazy chunk stalls (an
+                    // intermittent TLS/module-fetch failure behind the multi-node HTTPS LB) the `load`
+                    // event may never fire, and waiting on it would hang the navigation until the
+                    // per-test timeout. The `#account-menu` wait below is the real recovery signal.
+                    await page.reload({ waitUntil: 'domcontentloaded' });
                     await page
                         .locator('#account-menu')
                         .waitFor({ state: 'attached', timeout: 10_000 })
@@ -256,8 +260,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         });
     },
     waitForParticipationBuildToFinish: async ({ exerciseAPIRequests }, use) => {
-        await use(async (participationId: number, interval?, timeout?) => {
-            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout);
+        await use(async (participationId: number, interval?, timeout?, initialResultId?) => {
+            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout, initialResultId);
         });
     },
     navigationBar: async ({ page }, use) => {

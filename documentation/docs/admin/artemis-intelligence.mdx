@@ -35,23 +35,38 @@ Artemis Intelligence is the collection of AI-assisted capabilities layered on to
    - Atlas: `artemis.atlas.enabled=true` (defaults to `true` in `application-core.yml`).
    Both flags participate in `SpringAIAutoConfigurationFilter`, so at least one must be true for Spring AI autoconfiguration to load.
 
-2. **Choose exactly one Spring AI provider** (OpenAI or Azure OpenAI are pre-bundled). Example (OpenAI-compatible):
+2. **Configure the Spring AI OpenAI module** — since Spring AI 2.0 the single `spring.ai.openai.*` tree serves OpenAI, Azure OpenAI / Microsoft Foundry, and OpenAI-compatible local servers. Example (OpenAI):
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        open-ai-api-key: <openai-api-key> # sets endpoint to https://api.openai.com/v1
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            temperature: 1.0
+    model:
+      chat: openai
+    openai:
+      api-key: <openai-api-key>
+      chat:
+        model: gpt-5-mini
+        temperature: 1.0
 ```
+
+For Azure OpenAI, set `base-url: https://<your-resource>.openai.azure.com` and put the Azure deployment name in `chat.model` — see the [Hyperion Admin Setup](/admin/hyperion) for a complete example.
 
 <Callout variant={CalloutVariant.info}>
     For local testing with LM Studio or Ollama, follow the [Spring AI Development Guide](/developer/spring-ai).
 </Callout>
+
+3. **Atlas-specific configuration** — Atlas sets the request model per call, so its agents do **not** use `spring.ai.openai.chat.model`. Point these at models your provider actually serves; the defaults are Azure deployment aliases:
+
+```yaml
+artemis:
+  atlas:
+    chat-model: gpt-5.4-mini   # agent delegation (default gpt-5.4-mini)
+    orchestrator:
+      model: gpt-5.4           # competency orchestrator (default gpt-5.4)
+      reasoning-effort: medium # default medium
+```
+
+   The Atlas agent UI (orchestrator button and competency-assistant chat) is additionally gated behind the `AtlasAgent` feature toggle, which is **off by default** — enable it under Admin → Feature Toggles.
 
 ## EduTelligence services
 
