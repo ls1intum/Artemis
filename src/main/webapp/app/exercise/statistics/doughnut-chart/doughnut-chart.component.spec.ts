@@ -42,16 +42,16 @@ describe('DoughnutChartComponent', () => {
         component.ngOnChanges();
         const expected = [absolute, max - absolute, 0];
         expect(component.stats).toEqual(expected);
-        expect(component.ngxDoughnutData[0].value).toBe(expected[0]);
-        expect(component.ngxDoughnutData[1].value).toBe(expected[1]);
-        expect(component.ngxDoughnutData[2].value).toBe(expected[2]);
+        expect(component.chartEntries()[0].value).toBe(expected[0]);
+        expect(component.chartEntries()[1].value).toBe(expected[1]);
+        expect(component.chartEntries()[2].value).toBe(expected[2]);
 
         fixture.componentRef.setInput('currentMax', 0);
         component.ngOnChanges();
 
-        expect(component.ngxDoughnutData[0].value).toBe(0);
-        expect(component.ngxDoughnutData[1].value).toBe(0);
-        expect(component.ngxDoughnutData[2].value).toBe(1);
+        expect(component.chartEntries()[0].value).toBe(0);
+        expect(component.chartEntries()[1].value).toBe(0);
+        expect(component.chartEntries()[2].value).toBe(1);
     });
 
     it('should use fallback value when currentAbsolute is undefined and stats are not received', () => {
@@ -60,9 +60,9 @@ describe('DoughnutChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.ngxDoughnutData[0].value).toBe(0);
-        expect(component.ngxDoughnutData[1].value).toBe(0);
-        expect(component.ngxDoughnutData[2].value).toBe(1);
+        expect(component.chartEntries()[0].value).toBe(0);
+        expect(component.chartEntries()[1].value).toBe(0);
+        expect(component.chartEntries()[2].value).toBe(1);
     });
 
     describe('setting titles for different chart types', () => {
