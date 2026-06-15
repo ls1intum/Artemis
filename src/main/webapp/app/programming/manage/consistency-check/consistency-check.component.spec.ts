@@ -78,7 +78,7 @@ describe('ConsistencyCheckComponent', () => {
 
         // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledOnce();
-        expect(component.inconsistencies).toEqual(consistencyErrors);
+        expect(component.inconsistencies()).toEqual(consistencyErrors);
     });
 
     it('should call checks for multiple programming exercises', () => {
@@ -92,7 +92,7 @@ describe('ConsistencyCheckComponent', () => {
 
         // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(2);
-        expect(component.inconsistencies).toEqual(consistencyErrors.concat(consistencyErrors));
+        expect(component.inconsistencies()).toEqual(consistencyErrors.concat(consistencyErrors));
     });
 
     it('should close the dialog', () => {

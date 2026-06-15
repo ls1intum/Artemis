@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -61,16 +61,16 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
     readonly effectiveCourse = computed(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
-    public exerciseCategories: ExerciseCategory[];
-    public dueDate?: dayjs.Dayjs;
+    public readonly exerciseCategories = signal<ExerciseCategory[]>(undefined!);
+    public readonly dueDate = signal<dayjs.Dayjs | undefined>(undefined);
     public isBeforeStartDate: boolean;
     public programmingExercise?: ProgrammingExercise;
     public individualComplaintDueDate?: dayjs.Dayjs;
-    public nextRelevantDate?: dayjs.Dayjs;
-    public nextRelevantDateLabel?: string;
-    public nextRelevantDateStatusBadge?: string;
-    public dueDateStatusBadge?: string;
-    public canComplainLaterOn: boolean;
+    public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
+    public readonly nextRelevantDateLabel = signal<string | undefined>(undefined);
+    public readonly nextRelevantDateStatusBadge = signal<string | undefined>(undefined);
+    public readonly dueDateStatusBadge = signal<string | undefined>(undefined);
+    public readonly canComplainLaterOn = signal<boolean>(undefined!);
 
     readonly achievedPoints = computed<number | undefined>(() => {
         const studentParticipation = this.studentParticipation();
@@ -109,7 +109,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         const course = this.effectiveCourse();
         const exam = this.exam();
 
-        this.exerciseCategories = exercise.categories || [];
+        this.exerciseCategories.set(exercise.categories || []);
 
         if (exercise.type) {
             this.icon = getIcon(exercise.type);
@@ -120,7 +120,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         if (exam) {
             this.determineNextRelevantDateExamMode();
         } else {
-            this.dueDate = getExerciseDueDate(exercise, studentParticipation);
+            this.dueDate.set(getExerciseDueDate(exercise, studentParticipation));
             this.isBeforeStartDate = exercise.startDate ? exercise.startDate.isAfter(dayjs()) : !!exercise.releaseDate?.isAfter(dayjs());
             if (course?.maxComplaintTimeDays) {
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
@@ -131,16 +131,18 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
                 );
             }
             // There is a submission where the student did not have the chance to complain yet
-            this.canComplainLaterOn =
+            this.canComplainLaterOn.set(
                 !!studentParticipation?.submissionCount &&
-                !this.individualComplaintDueDate &&
-                (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC);
+                    !this.individualComplaintDueDate &&
+                    (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC),
+            );
 
             this.determineNextRelevantDateCourseMode();
         }
 
-        if (this.dueDate) {
-            this.dueDateStatusBadge = dayjs().isBefore(this.dueDate) ? 'bg-success' : 'bg-danger';
+        const dueDate = this.dueDate();
+        if (dueDate) {
+            this.dueDateStatusBadge.set(dayjs().isBefore(dueDate) ? 'bg-success' : 'bg-danger');
         }
     }
 
@@ -175,30 +177,31 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
      * @param now the current date and time
      */
     private determineNextDate(dates: (dayjs.Dayjs | undefined)[], dateLabels: string[], now: dayjs.Dayjs) {
-        this.nextRelevantDate = undefined;
-        this.nextRelevantDateLabel = undefined;
-        this.nextRelevantDateStatusBadge = undefined;
+        this.nextRelevantDate.set(undefined);
+        this.nextRelevantDateLabel.set(undefined);
+        this.nextRelevantDateStatusBadge.set(undefined);
 
         for (let i = 0; i < dates.length; i++) {
             if (dates[i] && now.isBefore(dates[i])) {
-                this.nextRelevantDate = dates[i]!;
-                this.nextRelevantDateLabel = dateLabels[i];
-                this.nextRelevantDateStatusBadge = 'bg-success';
+                this.nextRelevantDate.set(dates[i]!);
+                this.nextRelevantDateLabel.set(dateLabels[i]);
+                this.nextRelevantDateStatusBadge.set('bg-success');
                 return;
             }
         }
-        if (this.canComplainLaterOn) {
+        if (this.canComplainLaterOn()) {
             return;
         }
+        const dueDate = this.dueDate();
         for (let i = dates.length - 1; i >= 0; i--) {
             if (dates[i]) {
-                if (this.dueDate && this.dueDate.isAfter(dates[i])) {
+                if (dueDate && dueDate.isAfter(dates[i])) {
                     return;
                 }
 
-                this.nextRelevantDate = dates[i]!;
-                this.nextRelevantDateLabel = dateLabels[i];
-                this.nextRelevantDateStatusBadge = 'bg-danger';
+                this.nextRelevantDate.set(dates[i]!);
+                this.nextRelevantDateLabel.set(dateLabels[i]);
+                this.nextRelevantDateStatusBadge.set('bg-danger');
                 return;
             }
         }

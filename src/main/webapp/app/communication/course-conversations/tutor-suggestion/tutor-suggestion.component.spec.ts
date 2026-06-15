@@ -178,7 +178,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']()).toBe(false);
         });
 
         it('false if settings are not available', () => {
@@ -196,7 +196,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']()).toBe(false);
         });
 
         it('false if course id is not available', () => {
@@ -213,7 +213,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']()).toBe(false);
         });
 
         it('false if post id is not available', () => {
@@ -230,7 +230,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']()).toBe(false);
         });
 
         it('true if all conditions are met', () => {
@@ -241,14 +241,14 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(component['irisEnabled']).toBe(true);
+            expect(component['irisEnabled']()).toBe(true);
         });
 
         it('should set irisEnabled to false if feature toggle is disabled', () => {
             vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(false));
             fixture.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']()).toBe(false);
         });
     });
 
@@ -304,8 +304,8 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());
         component['fetchMessages']();
         vi.advanceTimersByTime(0);
-        expect(component.suggestion).toEqual(mockMessages[1]);
-        expect(component.messages).toEqual(mockMessages);
+        expect(component.suggestion()).toEqual(mockMessages[1]);
+        expect(component.messages()).toEqual(mockMessages);
     });
 
     describe('requestSuggestion', () => {
@@ -355,7 +355,7 @@ describe('TutorSuggestionComponent', () => {
             const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
-            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+            expect(component['error']()).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         });
 
@@ -407,7 +407,7 @@ describe('TutorSuggestionComponent', () => {
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
 
-            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+            expect(component['error']()).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         });
 
@@ -419,7 +419,7 @@ describe('TutorSuggestionComponent', () => {
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
 
-            expect(component['error']).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
+            expect(component['error']()).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         });
 
         it('should not request suggestion when student is not tutor in course', () => {
@@ -439,7 +439,7 @@ describe('TutorSuggestionComponent', () => {
 
         // --- Additional tests for requestSuggestion branch coverage ---
         it('should not request suggestion if irisEnabled is false', () => {
-            component['irisEnabled'] = false;
+            component['irisEnabled'].set(false);
             const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
@@ -459,7 +459,7 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 2, sender: 'ARTIFACT' } as IrisMessage]));
             vi.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(false);
             const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
-            component['irisEnabled'] = true;
+            component['irisEnabled'].set(true);
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
@@ -469,7 +469,7 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([{ id: 1, sender: 'USER' } as IrisMessage])));
             const spy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-            component['irisEnabled'] = true;
+            component['irisEnabled'].set(true);
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).toHaveBeenCalled();
@@ -484,7 +484,7 @@ describe('TutorSuggestionComponent', () => {
                 ),
             );
             const spy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-            component['irisEnabled'] = true;
+            component['irisEnabled'].set(true);
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).toHaveBeenCalled();
@@ -496,14 +496,14 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
-            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+            expect(component['error']()).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
         });
 
         it('should not request suggestion if messages are only from LLM', () => {
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 1, sender: 'LLM' } as IrisMessage]));
             const spy = vi.spyOn(chatService, 'requestTutorSuggestion');
-            component['irisEnabled'] = true;
+            component['irisEnabled'].set(true);
             component['requestSuggestion']();
             vi.advanceTimersByTime(0);
             expect(spy).not.toHaveBeenCalled();
@@ -513,82 +513,82 @@ describe('TutorSuggestionComponent', () => {
     describe('switchSuggestion and updateArrowDisabled', () => {
         beforeEach(() => {
             // Simulate a list of suggestions (id: 1, 2, 3)
-            component.suggestions = [{ id: 1, sender: 'ARTIFACT' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage, { id: 3, sender: 'ARTIFACT' } as IrisMessage];
+            component.suggestions.set([{ id: 1, sender: 'ARTIFACT' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage, { id: 3, sender: 'ARTIFACT' } as IrisMessage]);
         });
 
         it('should not switch if suggestion or suggestions is undefined', () => {
-            component.suggestion = undefined;
-            component.suggestions = undefined as any;
-            const initialUp = component.upDisabled;
-            const initialDown = component.downDisabled;
+            component.suggestion.set(undefined);
+            component.suggestions.set(undefined as any);
+            const initialUp = component.upDisabled();
+            const initialDown = component.downDisabled();
             component.switchSuggestion(true);
-            expect(component.suggestion).toBeUndefined();
-            expect(component.upDisabled).toBe(initialUp);
-            expect(component.downDisabled).toBe(initialDown);
+            expect(component.suggestion()).toBeUndefined();
+            expect(component.upDisabled()).toBe(initialUp);
+            expect(component.downDisabled()).toBe(initialDown);
         });
 
         it('should not switch if currentIndex is -1', () => {
-            component.suggestion = { id: 99, sender: 'ARTIFACT' } as IrisMessage;
+            component.suggestion.set({ id: 99, sender: 'ARTIFACT' } as IrisMessage);
             component.switchSuggestion(true);
-            expect(component.suggestion.id).toBe(99);
+            expect(component.suggestion()!.id).toBe(99);
         });
 
         it('should switch to next suggestion when up=true', () => {
-            component.suggestion = component.suggestions[0]; // id: 1
+            component.suggestion.set(component.suggestions()[0]); // id: 1
             component.switchSuggestion(true);
-            expect(component.suggestion.id).toBe(2);
-            expect(component.downDisabled).toBe(false); // index 1
-            expect(component.upDisabled).toBe(false);
+            expect(component.suggestion()!.id).toBe(2);
+            expect(component.downDisabled()).toBe(false); // index 1
+            expect(component.upDisabled()).toBe(false);
         });
 
         it('should switch to previous suggestion when up=false', () => {
-            component.suggestion = component.suggestions[2]; // id: 3
+            component.suggestion.set(component.suggestions()[2]); // id: 3
             component.switchSuggestion(false);
-            expect(component.suggestion.id).toBe(2);
-            expect(component.downDisabled).toBe(false);
-            expect(component.upDisabled).toBe(false);
+            expect(component.suggestion()!.id).toBe(2);
+            expect(component.downDisabled()).toBe(false);
+            expect(component.upDisabled()).toBe(false);
         });
 
         it('should not switch when at first element and up=false', () => {
-            component.suggestion = component.suggestions[0];
+            component.suggestion.set(component.suggestions()[0]);
             component.switchSuggestion(false);
-            expect(component.suggestion.id).toBe(1);
-            expect(component.downDisabled).toBe(true);
-            expect(component.upDisabled).toBe(false);
+            expect(component.suggestion()!.id).toBe(1);
+            expect(component.downDisabled()).toBe(true);
+            expect(component.upDisabled()).toBe(false);
         });
 
         it('should not switch when at last element and up=true', () => {
-            component.suggestion = component.suggestions[2];
+            component.suggestion.set(component.suggestions()[2]);
             component.switchSuggestion(true);
-            expect(component.suggestion.id).toBe(3);
-            expect(component.downDisabled).toBe(false);
-            expect(component.upDisabled).toBe(true);
+            expect(component.suggestion()!.id).toBe(3);
+            expect(component.downDisabled()).toBe(false);
+            expect(component.upDisabled()).toBe(true);
         });
 
         it('should update arrow states for a single-element suggestions list', () => {
-            component.suggestions = [{ id: 10, sender: 'ARTIFACT' } as IrisMessage];
-            component.suggestion = component.suggestions[0];
+            component.suggestions.set([{ id: 10, sender: 'ARTIFACT' } as IrisMessage]);
+            component.suggestion.set(component.suggestions()[0]);
             component['updateArrowDisabled'](0);
-            expect(component.downDisabled).toBe(true);
-            expect(component.upDisabled).toBe(true);
+            expect(component.downDisabled()).toBe(true);
+            expect(component.upDisabled()).toBe(true);
         });
 
         it('should update arrow states for the first index', () => {
             component['updateArrowDisabled'](0);
-            expect(component.downDisabled).toBe(true);
-            expect(component.upDisabled).toBe(false);
+            expect(component.downDisabled()).toBe(true);
+            expect(component.upDisabled()).toBe(false);
         });
 
         it('should update arrow states for a middle index', () => {
             component['updateArrowDisabled'](1);
-            expect(component.downDisabled).toBe(false);
-            expect(component.upDisabled).toBe(false);
+            expect(component.downDisabled()).toBe(false);
+            expect(component.upDisabled()).toBe(false);
         });
 
         it('should update arrow states for the last index', () => {
             component['updateArrowDisabled'](2);
-            expect(component.downDisabled).toBe(false);
-            expect(component.upDisabled).toBe(true);
+            expect(component.downDisabled()).toBe(false);
+            expect(component.upDisabled()).toBe(true);
         });
     });
 
@@ -604,29 +604,29 @@ describe('TutorSuggestionComponent', () => {
         });
 
         it('should return false if no suggestions', () => {
-            component.suggestions = [];
+            component.suggestions.set([]);
             expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBe(false);
         });
 
         it('should return false if lastSuggestion or lastSuggestion.sentAt is missing', () => {
-            component.suggestions = [{} as any];
+            component.suggestions.set([{} as any]);
             expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBe(false);
         });
 
         it('should return false if latest answer is before last suggestion', () => {
-            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            component.suggestions.set([{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any]);
             componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T09:00:00Z').toISOString() }] } as any);
             expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBe(false);
         });
 
         it('should return true if latest answer is after last suggestion', () => {
-            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            component.suggestions.set([{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any]);
             componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T11:00:00Z').toISOString() }] } as any);
             expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBe(true);
         });
 
         it('should compare latest answer when there are multiple answers', () => {
-            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            component.suggestions.set([{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any]);
             componentRef.setInput('post', {
                 id: 1,
                 answers: [
@@ -642,7 +642,7 @@ describe('TutorSuggestionComponent', () => {
     describe('requestSuggestion integration with checkForNewAnswerAndRequestSuggestion', () => {
         beforeEach(() => {
             componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T12:00:00Z').toISOString() }] } as any);
-            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            component.suggestions.set([{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any]);
             vi.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(true);
             vi.spyOn(component['chatService'], 'currentSessionId').mockReturnValue(of(123));
             vi.spyOn(component['chatService'], 'currentMessages').mockReturnValue(of([]));
@@ -685,7 +685,7 @@ describe('TutorSuggestionComponent', () => {
         it('should set error when requestTutorSuggestion fails', () => {
             vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('fail')));
             component.userRequestedNewSuggestion();
-            expect(component['error']).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
+            expect(component['error']()).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         });
     });
 
@@ -706,7 +706,7 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());
         vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-        component['irisEnabled'] = true;
+        component['irisEnabled'].set(true);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
     }

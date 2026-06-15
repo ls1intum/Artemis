@@ -1,37 +1,39 @@
-@if (feedbackItem) {
-    <div class="alert feedback-item" [ngClass]="'alert-' + feedbackItem.color">
+@if (feedbackItem()) {
+    <div class="alert feedback-item" [ngClass]="'alert-' + feedbackItem()!.color">
         <div class="feedback-item__header">
-            <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '· ' + feedbackItem.title }}</h4>
-            @if (feedbackItem.credits) {
+            <h4 class="feedback-item__category">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
+            @if (feedbackItem()!.credits) {
                 <span class="fw-bold feedback-item__credits">
-                    {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course()) }}P
-                    @if (feedbackItem.type === 'Subsequent') {
+                    {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
+                    @if (feedbackItem()!.type === 'Subsequent') {
                         <fa-icon [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                     }
                 </span>
             }
         </div>
-        @if (feedbackItem.text) {
-            <jhi-feedback-collapse class="d-block mt-3" [feedback]="feedbackItem" />
+        @if (feedbackItem()!.text) {
+            <jhi-feedback-collapse class="d-block mt-3" [feedback]="feedbackItem()!" />
         } @else {
             <p jhiTranslate="artemisApp.result.noFeedback"></p>
         }
     </div>
 }
-@if (feedbackItemGroup) {
+@if (feedbackItemGroup()) {
     <div class="feedback-item-group">
-        <div class="feedback-group" [ngClass]="'bg-' + feedbackItemGroup.color" (click)="feedbackItemGroup.open = !feedbackItemGroup.open">
+        <div class="feedback-group" [ngClass]="'bg-' + feedbackItemGroup()!.color" (click)="toggleFeedbackItemGroupOpen()">
             <div class="feedback-group__left">
-                <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown" />
-                <h4 class="feedback-item__category">{{ 'artemisApp.feedback.group.' + feedbackItemGroup.name | artemisTranslate }} ({{ feedbackItemGroup.members.length }})</h4>
+                <fa-icon class="me-2" [icon]="feedbackItemGroup()!.open ? faAngleUp : faAngleDown" />
+                <h4 class="feedback-item__category">
+                    {{ 'artemisApp.feedback.group.' + feedbackItemGroup()!.name | artemisTranslate }} ({{ feedbackItemGroup()!.members.length }})
+                </h4>
             </div>
-            @if (feedbackItemGroup.credits !== 0) {
-                <span class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course()) }}P </span>
+            @if (feedbackItemGroup()!.credits !== 0) {
+                <span class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup()!.credits, course()) }}P </span>
             }
         </div>
-        @if (feedbackItemGroup.open) {
+        @if (feedbackItemGroup()!.open) {
             <div class="mx-3">
-                @for (feedbackItem of feedbackItemGroup.members; track feedbackItem) {
+                @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem) {
                     <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" />
                 }
             </div>

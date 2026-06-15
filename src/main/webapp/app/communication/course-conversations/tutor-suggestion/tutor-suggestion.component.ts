@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
@@ -46,7 +46,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             const post = this.post();
             this.course();
             untracked(() => {
-                if (this.initialized && this.irisEnabled) {
+                if (this.initialized && this.irisEnabled()) {
                     if (post?.id) {
                         this.chatService.openTutorSuggestionChat(post.id);
                         this.messagesSubscription?.unsubscribe();
@@ -74,7 +74,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
 
     irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
 
-    irisIsActive = false;
+    readonly irisIsActive = signal(false);
 
     messagesSubscription: Subscription;
     irisSettingsSubscription: Subscription;
@@ -84,17 +84,17 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
     irisActivationSubscription: Subscription;
     featureToggleSubscription: Subscription;
 
-    messages: IrisMessage[];
-    suggestion: IrisMessage | undefined;
-    suggestions: IrisMessage[] = [];
+    readonly messages = signal<IrisMessage[] | undefined>(undefined);
+    readonly suggestion = signal<IrisMessage | undefined>(undefined);
+    readonly suggestions = signal<IrisMessage[]>([]);
 
-    upDisabled = true;
-    downDisabled = true;
+    readonly upDisabled = signal(true);
+    readonly downDisabled = signal(true);
 
     stages?: IrisStageDTO[] = [];
-    error?: IrisErrorMessageKey;
+    readonly error = signal<IrisErrorMessageKey | undefined>(undefined);
 
-    irisEnabled = false;
+    readonly irisEnabled = signal(false);
     isAtLeastTutor = false;
 
     post = input<Post>();
@@ -114,8 +114,8 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 }
                 if (course?.id && post?.id) {
                     this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
-                        this.irisEnabled = !!response?.settings?.enabled;
-                        if (this.irisEnabled) {
+                        this.irisEnabled.set(!!response?.settings?.enabled);
+                        if (this.irisEnabled()) {
                             this.chatService.openTutorSuggestionChat(post.id!);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
@@ -123,7 +123,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                     });
                 }
             } else {
-                this.irisEnabled = false;
+                this.irisEnabled.set(false);
             }
         });
         this.initialized = true;
@@ -157,7 +157,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                     skip(1), // The initial message is not relevant as the system is sending an empty array first
                     take(1),
                     catchError((err) => {
-                        this.error = IrisErrorMessageKey.SESSION_LOAD_FAILED;
+                        this.error.set(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                         return of([]);
                     }),
                 ),
@@ -174,7 +174,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                     .requestTutorSuggestion()
                     .pipe(
                         catchError((err) => {
-                            this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                            this.error.set(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
                             return of(undefined);
                         }),
                     )
@@ -192,7 +192,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             .requestTutorSuggestion()
             .pipe(
                 catchError((err) => {
-                    this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                    this.error.set(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
                     return of(undefined);
                 }),
             )
@@ -207,19 +207,20 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
         this.stagesSubscription?.unsubscribe();
         this.errorSubscription?.unsubscribe();
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
-            if (messages.length !== this.messages?.length) {
-                this.suggestions = messages.filter((message) => message.sender === IrisSender.ARTIFACT);
-                this.suggestion = this.suggestions.last();
-                if (this.suggestions.length > 0) {
-                    this.updateArrowDisabled(this.suggestions.length - 1);
+            if (messages.length !== this.messages()?.length) {
+                const suggestions = messages.filter((message) => message.sender === IrisSender.ARTIFACT);
+                this.suggestions.set(suggestions);
+                this.suggestion.set(suggestions.last());
+                if (suggestions.length > 0) {
+                    this.updateArrowDisabled(suggestions.length - 1);
                 }
             }
-            this.messages = messages;
+            this.messages.set(messages);
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
         });
-        this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
+        this.errorSubscription = this.chatService.currentError().subscribe((error) => this.error.set(error));
     }
 
     /**
@@ -230,7 +231,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
         this.irisActivationSubscription?.unsubscribe();
         this.irisActivationSubscription = this.irisActive$
             .pipe(
-                tap((active) => (this.irisIsActive = active)),
+                tap((active) => this.irisIsActive.set(active)),
                 distinctUntilChanged(),
                 switchMap((active) => {
                     if (!active) {
@@ -253,29 +254,31 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
      * @param up
      */
     switchSuggestion(up: boolean) {
-        if (!this.suggestion || !this.suggestions) {
+        const suggestion = this.suggestion();
+        const suggestions = this.suggestions();
+        if (!suggestion || !suggestions) {
             return;
         }
 
-        const currentIndex = this.suggestions.findIndex((message) => message.id === this.suggestion?.id);
+        const currentIndex = suggestions.findIndex((message) => message.id === suggestion.id);
         if (currentIndex === -1) {
             return;
         }
 
         const newIndex = up ? currentIndex + 1 : currentIndex - 1;
 
-        if (newIndex < 0 || newIndex >= this.suggestions.length) {
+        if (newIndex < 0 || newIndex >= suggestions.length) {
             this.updateArrowDisabled(currentIndex);
             return;
         }
 
-        this.suggestion = this.suggestions[newIndex];
+        this.suggestion.set(suggestions[newIndex]);
         this.updateArrowDisabled(newIndex);
     }
 
     private updateArrowDisabled(currentIndex: number) {
-        this.downDisabled = currentIndex === 0;
-        this.upDisabled = currentIndex === this.suggestions.length - 1;
+        this.downDisabled.set(currentIndex === 0);
+        this.upDisabled.set(currentIndex === this.suggestions().length - 1);
     }
 
     /**
@@ -284,7 +287,8 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
      */
     private checkForNewAnswerAndRequestSuggestion(): boolean {
         const post = this.post();
-        if (!post || !post.answers || post.answers.length === 0 || this.suggestions.length === 0) {
+        const suggestions = this.suggestions();
+        if (!post || !post.answers || post.answers.length === 0 || suggestions.length === 0) {
             return false;
         }
 
@@ -294,7 +298,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
         });
 
         // Get latest suggestion
-        const lastSuggestion = this.suggestions[this.suggestions.length - 1];
+        const lastSuggestion = suggestions[suggestions.length - 1];
         if (!lastSuggestion || !lastSuggestion.sentAt) {
             return false;
         }

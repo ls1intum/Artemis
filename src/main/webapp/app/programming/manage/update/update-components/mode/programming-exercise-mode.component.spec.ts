@@ -61,6 +61,6 @@ describe('ProgrammingExerciseModeComponent', () => {
         getProfileInfoSpy.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_THEIA] } as ProfileInfo);
 
         fixture.detectChanges();
-        expect(comp.theiaEnabled).toBe(true);
+        expect(comp.theiaEnabled()).toBe(true);
     });
 });

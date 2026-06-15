@@ -3,7 +3,6 @@ import {
     Component,
     Directive,
     ElementRef,
-    NgZone,
     OnDestroy,
     TemplateRef,
     computed,
@@ -45,7 +44,6 @@ export class SplitPaneDirective {
     imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
-    private readonly ngZone = inject(NgZone);
     private readonly elementRef = inject(ElementRef);
 
     /** Width in px below which the split collapses into a single tabbed panel */
@@ -126,7 +124,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                     this.splitInstance = undefined;
                 }
                 if (panes.length >= 2) {
-                    this.ngZone.runOutsideAngular(() => this.initSplit(panes.map((p) => p.elementRef.nativeElement)));
+                    this.initSplit(panes.map((p) => p.elementRef.nativeElement));
                 }
             });
         });
@@ -135,7 +133,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     ngAfterViewInit(): void {
         this.resizeObserver = new ResizeObserver((entries) => {
             const width = entries[0].contentRect.width;
-            this.ngZone.run(() => this._isNarrow.set(width < this.collapseBelowPx()));
+            this._isNarrow.set(width < this.collapseBelowPx());
         });
         this.resizeObserver.observe(this.elementRef.nativeElement);
     }

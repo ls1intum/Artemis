@@ -43,19 +43,19 @@ describe('FeedbackOnboardingModalComponent', () => {
     it('should create', () => {
         expect(component).toBeTruthy();
         expect(component.selected).toEqual([undefined, undefined]);
-        expect(component.step).toBe(0);
+        expect(component.step()).toBe(0);
     });
 
     it('should navigate steps with next and back', () => {
-        expect(component.step).toBe(0);
+        expect(component.step()).toBe(0);
         component.next();
-        expect(component.step).toBe(1);
+        expect(component.step()).toBe(1);
         component.next();
-        expect(component.step).toBe(1); // should not exceed max
+        expect(component.step()).toBe(1); // should not exceed max
         component.back();
-        expect(component.step).toBe(0);
+        expect(component.step()).toBe(0);
         component.back();
-        expect(component.step).toBe(0); // should not go below 0
+        expect(component.step()).toBe(0); // should not go below 0
     });
 
     it('should select and deselect choices', () => {

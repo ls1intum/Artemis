@@ -100,7 +100,7 @@ describe('Exam Import Component', () => {
     it('should correctly open the exercise selection', () => {
         vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
         component.openExerciseSelection(exam1);
-        expect(component.exam).toEqual(exam1WithExercises);
+        expect(component.exam()).toEqual(exam1WithExercises);
     });
 
     it('should correctly show an error for the exercise selection, if the server throws an error', () => {
@@ -110,7 +110,7 @@ describe('Exam Import Component', () => {
         vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(throwError(() => error));
         const alertSpy = vi.spyOn(alertService, 'error');
         component.openExerciseSelection(exam1);
-        expect(component.exam).toBeUndefined();
+        expect(component.exam()).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
     });
 
@@ -121,10 +121,10 @@ describe('Exam Import Component', () => {
         component.performImportOfExerciseGroups();
 
         component.subsequentExerciseGroupSelection.set(true);
-        component.exam = undefined;
+        component.exam.set(undefined);
         component.performImportOfExerciseGroups();
 
-        component.exam = exam1WithExercises;
+        component.exam.set(exam1WithExercises);
         component.targetExamId.set(undefined);
         component.performImportOfExerciseGroups();
 
@@ -170,7 +170,7 @@ describe('Exam Import Component', () => {
         const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
-        component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
+        component.exam.set({ id: 1, exerciseGroups: [exerciseGroup2] } as Exam);
         component.targetCourseId.set(1);
         component.targetExamId.set(3);
         fixture.detectChanges();
@@ -213,7 +213,7 @@ describe('Exam Import Component', () => {
     });
 
     function performImport(importSpy: ReturnType<typeof vi.spyOn>): void {
-        component.exam = exam1WithExercises;
+        component.exam.set(exam1WithExercises);
         component.subsequentExerciseGroupSelection.set(true);
         component.targetCourseId.set(1);
         component.targetExamId.set(2);
