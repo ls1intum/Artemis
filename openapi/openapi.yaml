@@ -236,24 +236,24 @@ paths:
               schema: {type: integer, format: int64}
   /api/quiz/leaderboard-settings:
     get:
-      tags: [ quiz-training ]
+      tags: [quiz-training]
       operationId: getLeaderboardSettings
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LeaderboardSetting' }
+              schema: {$ref: '#/components/schemas/LeaderboardSetting'}
     put:
-      tags: [ quiz-training ]
+      tags: [quiz-training]
       operationId: updateLeaderboardSettings
       requestBody:
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/LeaderboardSetting' }
+            schema: {$ref: '#/components/schemas/LeaderboardSetting'}
         required: true
       responses:
-        '200': { description: OK }
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions:
     post:
       tags: [tutorial-group-session]
@@ -433,41 +433,41 @@ paths:
               schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
   /api/quiz/courses/{courseId}/training-questions:
     post:
-      tags: [ quiz-training ]
+      tags: [quiz-training]
       operationId: getQuizQuestionsForPractice
       parameters:
-        - name: courseId
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
-        - name: page
-          in: query
-          description: Zero-based page index (0..N)
-          required: false
-          schema: { type: integer, default: 0, minimum: 0 }
-        - name: size
-          in: query
-          description: The size of the page to be returned
-          required: false
-          schema: { type: integer, default: 20, minimum: 1 }
-        - name: sort
-          in: query
-          description: 'Sorting criteria in the format: property,(asc|desc). Default
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
           sort order is ascending. Multiple sort criteria are supported.'
-          required: false
-          schema:
-            type: array
-            items: { type: string }
-        - name: isNewSession
-          in: query
-          required: true
-          schema: { type: boolean }
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      - name: isNewSession
+        in: query
+        required: true
+        schema: {type: boolean}
       requestBody:
         content:
           application/json:
             schema:
               type: array
-              items: { type: integer, format: int64 }
+              items: {type: integer, format: int64}
               uniqueItems: true
         required: true
       responses:
@@ -477,55 +477,55 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/QuizQuestionTraining' }
+                items: {$ref: '#/components/schemas/QuizQuestionTraining'}
   /api/quiz/courses/{courseId}/training-questions/{trainingQuestionId}/submit:
     post:
-      tags: [ quiz-training ]
+      tags: [quiz-training]
       operationId: submitForTraining
       parameters:
-        - name: courseId
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
-        - name: trainingQuestionId
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
-        - name: isRated
-          in: query
-          required: true
-          schema: { type: boolean }
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: trainingQuestionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: isRated
+        in: query
+        required: true
+        schema: {type: boolean}
       requestBody:
         content:
           application/json:
             schema:
               oneOf:
-                - { $ref: '#/components/schemas/DragAndDropSubmittedAnswerFromLiveClient' }
-                - { $ref: '#/components/schemas/MultipleChoiceSubmittedAnswerFromLiveClient' }
-                - { $ref: '#/components/schemas/ShortAnswerSubmittedAnswerFromLiveClient' }
+              - {$ref: '#/components/schemas/DragAndDropSubmittedAnswerFromLiveClient'}
+              - {$ref: '#/components/schemas/MultipleChoiceSubmittedAnswerFromLiveClient'}
+              - {$ref: '#/components/schemas/ShortAnswerSubmittedAnswerFromLiveClient'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/SubmittedAnswerAfterEvaluation' }
+              schema: {$ref: '#/components/schemas/SubmittedAnswerAfterEvaluation'}
   /api/quiz/courses/{courseId}/leaderboard-entry:
     post:
-      tags: [ quiz-training ]
+      tags: [quiz-training]
       operationId: initializeLeaderboardEntry
       parameters:
-        - name: courseId
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
       requestBody:
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/LeaderboardSetting' }
+            schema: {$ref: '#/components/schemas/LeaderboardSetting'}
         required: true
       responses:
-        '200': { description: OK }
+        '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/consistency-check:
     post:
       tags: [hyperion-problem-statement]
