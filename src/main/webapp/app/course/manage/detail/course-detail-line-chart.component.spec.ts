@@ -188,4 +188,11 @@ describe('CourseDetailLineChartComponent', () => {
             expect(component.data()[0].series[week].value).toBe(0);
         }
     });
+
+    it('should keep the week label in the tooltip title and not repeat it in the body', () => {
+        component.absoluteSeries = [{ name: '42', absoluteValue: 11 }];
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.label({ dataset: { label: 'Students' }, label: '42', parsed: { y: 22 } })).toBe('Students: 11 (22%)');
+    });
 });

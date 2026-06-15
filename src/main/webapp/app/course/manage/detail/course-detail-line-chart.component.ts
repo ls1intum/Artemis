@@ -82,7 +82,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
             xAxis: { label: this.xAxisLabel() },
             yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
             tooltip: {
-                label: (item) => `${item.dataset.label} in ${item.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
+                label: (item) => `${item.dataset.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
             },
         }),
     );
