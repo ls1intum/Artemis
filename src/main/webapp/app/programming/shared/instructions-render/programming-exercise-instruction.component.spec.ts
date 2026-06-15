@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { DebugElement, VERSION } from '@angular/core';
+import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -66,8 +66,8 @@ type InstructionInternals = Omit<
     lastSeenProblemStatement: string | undefined;
     lastRenderedProblemStatement: string | undefined;
     isInitial: boolean;
-    isLoading: boolean;
-    tasks: TaskArray;
+    isLoading: WritableSignal<boolean>;
+    tasks: WritableSignal<TaskArray>;
     setupMarkdownSubscriptions: () => void;
 };
 
@@ -220,7 +220,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -232,7 +232,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
@@ -322,7 +322,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -333,7 +333,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
@@ -360,14 +360,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
@@ -379,6 +379,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
@@ -434,14 +436,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
@@ -453,6 +455,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         // TODO: make sure to exclude random numbers here that change after updates of dependencies

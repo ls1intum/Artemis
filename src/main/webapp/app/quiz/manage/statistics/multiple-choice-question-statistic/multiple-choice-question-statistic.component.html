@@ -17,7 +17,7 @@
                                 <ol type="A">
                                     @for (answer of question.answerOptions; track answer; let i = $index) {
                                         <li>
-                                            <span class="d-flex" [innerHTML]="answerTextRendered[i]"></span>&nbsp;
+                                            <span class="d-flex" [innerHTML]="answerTextRendered()[i]"></span>&nbsp;
                                             @if (answer.invalid) {
                                                 <span class="invalid-question" jhiTranslate="artemisApp.showStatistic.invalid"></span>
                                             }

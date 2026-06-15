@@ -38,20 +38,20 @@ export class PasswordResetInitComponent implements AfterViewInit {
     showExternalResetModal = signal(false);
 
     /** Whether external authentication (SSO) is enabled on this instance */
-    readonly useExternal: boolean;
+    readonly useExternal = signal<boolean>(false);
     /** Name of the external credential provider (e.g., "TUM", "university SSO") */
-    readonly externalCredentialProvider: string;
+    readonly externalCredentialProvider = signal<string>('');
     /** URL for external password reset, localized to user's language */
-    readonly externalPasswordResetLink?: string;
+    readonly externalPasswordResetLink = signal<string | undefined>(undefined);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.useExternal = profileInfo.useExternal;
-        this.externalCredentialProvider = profileInfo.externalCredentialProvider;
+        this.useExternal.set(profileInfo.useExternal);
+        this.externalCredentialProvider.set(profileInfo.externalCredentialProvider);
 
         // Get password reset link in user's language, falling back to English
         const currentLanguage = this.translateService.getCurrentLang();
-        this.externalPasswordResetLink = profileInfo.externalPasswordResetLinkMap?.[currentLanguage] ?? profileInfo.externalPasswordResetLinkMap?.['en'];
+        this.externalPasswordResetLink.set(profileInfo.externalPasswordResetLinkMap?.[currentLanguage] ?? profileInfo.externalPasswordResetLinkMap?.['en']);
     }
 
     /**
@@ -78,7 +78,7 @@ export class PasswordResetInitComponent implements AfterViewInit {
             },
             error: (errorResponse: HttpErrorResponse) => {
                 // External/SSO users cannot reset passwords through Artemis
-                if (this.useExternal && errorResponse?.error?.errorKey === 'externalUser') {
+                if (this.useExternal() && errorResponse?.error?.errorKey === 'externalUser') {
                     this.showExternalResetModal.set(true);
                 } else {
                     onError(this.alertService, errorResponse);

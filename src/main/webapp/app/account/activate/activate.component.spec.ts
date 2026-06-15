@@ -99,11 +99,11 @@ describe('ActivateComponent', () => {
             compDisabled.ngOnInit();
 
             expect(activateAccountSpy).not.toHaveBeenCalled();
-            expect(compDisabled.isRegistrationEnabled).toBe(false);
+            expect(compDisabled.isRegistrationEnabled()).toBe(false);
         });
 
         it('should set isRegistrationEnabled to false when profile has registrationEnabled false', () => {
-            expect(compDisabled.isRegistrationEnabled).toBe(false);
+            expect(compDisabled.isRegistrationEnabled()).toBe(false);
         });
     });
 });

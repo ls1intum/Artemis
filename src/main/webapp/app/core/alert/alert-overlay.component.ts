@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Alert, AlertService } from 'app/foundation/service/alert.service';
+import { Component, OnDestroy, inject } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,22 +12,17 @@ import { CloseCircleComponent } from 'app/shared-ui/close-circle/close-circle.co
     styleUrls: ['./alert-overlay.component.scss'],
     imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, NgStyle],
 })
-export class AlertOverlayComponent implements OnInit, OnDestroy {
+export class AlertOverlayComponent implements OnDestroy {
     alertService = inject(AlertService);
 
-    alerts: Alert[] = [];
+    // Reactive view of the currently shown alerts. Binding to the signal lets the overlay update
+    // under zoneless change detection when alerts are added or (auto-)dismissed.
+    alerts = this.alertService.alerts;
 
     times = faTimes;
 
     /**
-     * get alerts on init
-     */
-    ngOnInit(): void {
-        this.alerts = this.alertService.get();
-    }
-
-    /**
-     * call clear() for alertService on destroy
+     * call closeAll() for alertService on destroy
      */
     ngOnDestroy(): void {
         this.alertService.closeAll();

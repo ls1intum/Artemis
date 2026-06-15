@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -45,10 +45,10 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
     lectureId: number;
     courseId: number;
-    isLoading: boolean;
+    readonly isLoading = signal(false);
     isProcessingMode: boolean;
-    units: LectureUnitDTOS[] = [];
-    numberOfPages: number;
+    readonly units = signal<LectureUnitDTOS[]>([]);
+    readonly numberOfPages = signal<number>(undefined!);
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
@@ -56,11 +56,11 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faQuestionCircle = faQuestionCircle;
 
-    invalidUnitTableMessage?: string;
+    readonly invalidUnitTableMessage = signal<string | undefined>(undefined);
     //Comma-seperated keyphrases used to detect slides to be removed
     keyphrases: string;
     private search = new Subject<void>();
-    removedSlidesNumbers: number[];
+    readonly removedSlidesNumbers = signal<number[]>([]);
 
     file: File;
     filename: string;
@@ -81,13 +81,13 @@ export class AttachmentVideoUnitsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.keyphrases = '';
-        this.removedSlidesNumbers = [];
-        this.isLoading = true;
+        this.removedSlidesNumbers.set([]);
+        this.isLoading.set(true);
         this.isProcessingMode = true;
 
         if (!this.file) {
             this.alertService.error(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noFile`));
-            this.isLoading = true;
+            this.isLoading.set(true);
             return;
         }
 
@@ -103,7 +103,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
-                            this.isLoading = false;
+                            this.isLoading.set(false);
                         },
                     });
             },
@@ -124,13 +124,13 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             )
             .subscribe({
                 next: (res) => {
-                    this.units = res.body!.units || this.units;
-                    this.numberOfPages = res.body!.numberOfPages;
-                    this.isLoading = false;
+                    this.units.set(res.body!.units || this.units());
+                    this.numberOfPages.set(res.body!.numberOfPages);
+                    this.isLoading.set(false);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
 
@@ -144,7 +144,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             .subscribe({
                 next: (res) => {
                     if (res.body) {
-                        this.removedSlidesNumbers = res.body.map((n) => n + 1);
+                        this.removedSlidesNumbers.set(res.body.map((n) => n + 1));
                     }
                 },
                 error: (res: HttpErrorResponse) => {
@@ -158,17 +158,17 @@ export class AttachmentVideoUnitsComponent implements OnInit {
      */
     createAttachmentVideoUnits(): void {
         if (this.validUnitInformation()) {
-            this.isLoading = true;
+            this.isLoading.set(true);
             const lectureUnitInformation: LectureUnitInformationDTO = {
-                units: this.units,
-                numberOfPages: this.numberOfPages,
+                units: this.units(),
+                numberOfPages: this.numberOfPages(),
                 removeSlidesCommaSeparatedKeyPhrases: this.keyphrases,
             };
 
             this.attachmentVideoUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
@@ -183,7 +183,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             this.keyphrases = searchTerm;
             this.search.next();
         } else {
-            this.removedSlidesNumbers = [];
+            this.removedSlidesNumbers.set([]);
         }
     }
 
@@ -204,69 +204,80 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             startPage: 0,
             endPage: 0,
         };
-        this.units.push(unitDynamic);
+        this.units.update((units) => [...units, unitDynamic]);
         return true;
     }
 
     deleteRow(i: number) {
-        if (this.units.length === 1) {
+        if (this.units().length === 1) {
             return false;
         } else {
-            this.units.splice(i, 1);
+            this.units.update((units) => {
+                const updated = [...units];
+                updated.splice(i, 1);
+                return updated;
+            });
             return true;
         }
     }
 
     validUnitInformation(): boolean {
-        for (const unit of this.units) {
+        const numberOfPages = this.numberOfPages();
+        for (const unit of this.units()) {
             if (!unit.unitName) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.unitName`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.unitName`));
                 return false;
             }
 
             if (unit.startPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.startPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.startPage`));
                 return false;
             }
 
             if (unit.endPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.endPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.endPage`));
                 return false;
             }
 
             if (unit.startPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPage`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPage`));
                 return false;
             }
 
-            if (unit.startPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
-                    max: this.numberOfPages ?? '',
-                });
+            if (unit.startPage > numberOfPages) {
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
+                        max: numberOfPages ?? '',
+                    }),
+                );
                 return false;
             }
 
             if (unit.endPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPageLower`);
+                this.invalidUnitTableMessage.set(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPageLower`));
                 return false;
             }
 
-            if (unit.endPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPage`, {
-                    max: this.numberOfPages ?? '',
-                });
+            if (unit.endPage > numberOfPages) {
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPage`, {
+                        max: numberOfPages ?? '',
+                    }),
+                );
                 return false;
             }
 
             if (unit.startPage > unit.endPage) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.invalidPages`, {
-                    unitName: unit.unitName ?? '',
-                });
+                this.invalidUnitTableMessage.set(
+                    this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.invalidPages`, {
+                        unitName: unit.unitName ?? '',
+                    }),
+                );
                 return false;
             }
         }
 
-        this.invalidUnitTableMessage = undefined;
+        this.invalidUnitTableMessage.set(undefined);
         return true;
     }
 }

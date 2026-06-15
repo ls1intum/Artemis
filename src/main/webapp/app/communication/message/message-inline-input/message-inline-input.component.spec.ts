@@ -91,7 +91,7 @@ describe('MessageInlineInputComponent', () => {
             title: undefined,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
     });
 
@@ -110,7 +110,7 @@ describe('MessageInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(300);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).not.toHaveBeenCalled();
     });
 
@@ -133,7 +133,7 @@ describe('MessageInlineInputComponent', () => {
             title: undefined,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onEditSpy).toHaveBeenCalledOnce();
     });
 
@@ -152,7 +152,7 @@ describe('MessageInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     describe('Draft functionality', () => {

@@ -5,7 +5,7 @@
             <p class="text-secondary mb-4" jhiTranslate="artemisApp.courseRequest.description"></p>
 
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-                <jhi-course-request-form [form]="form" [semesters]="semesters" [dateRangeInvalid]="dateRangeInvalid" [showReasonPlaceholder]="true" />
+                <jhi-course-request-form [form]="form" [semesters]="semesters" [dateRangeInvalid]="dateRangeInvalid()" [showReasonPlaceholder]="true" />
 
                 <div class="d-flex justify-content-end">
                     <jhi-button
@@ -13,7 +13,7 @@
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.MEDIUM"
                         type="submit"
-                        [disabled]="isSubmitting || form.invalid"
+                        [disabled]="isSubmitting() || form.invalid"
                         [icon]="faPaperPlane"
                         [title]="'artemisApp.courseRequest.form.submit'"
                     />

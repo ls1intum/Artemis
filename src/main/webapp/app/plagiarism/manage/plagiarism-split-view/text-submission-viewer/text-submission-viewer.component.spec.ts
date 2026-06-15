@@ -79,7 +79,7 @@ describe('Text Submission Viewer Component', () => {
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
-        expect(comp.isProgrammingExercise).toBe(false);
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('fetches a programming submission', () => {
@@ -91,8 +91,8 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBe(true);
-        expect(comp.cannotLoadFiles).toBe(false);
+        expect(comp.isProgrammingExercise()).toBe(true);
+        expect(comp.cannotLoadFiles()).toBe(false);
     });
 
     it('does not fetch a programming submission', () => {
@@ -115,7 +115,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.cannotLoadFiles).toBe(true);
+        expect(comp.cannotLoadFiles()).toBe(true);
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
@@ -141,7 +141,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBe(true);
+        expect(comp.isProgrammingExercise()).toBe(true);
 
         // files with matches first, then the ones without match; each section ordered lexicographically
         const expectedFiles = [
@@ -150,7 +150,7 @@ describe('Text Submission Viewer Component', () => {
             { file: 'b_file', hasMatch: false },
             { file: 'z', hasMatch: false },
         ];
-        expect(comp.files).toEqual(expectedFiles);
+        expect(comp.files()).toEqual(expectedFiles);
     });
 
     it('filters files of type FILE', () => {
@@ -175,8 +175,8 @@ describe('Text Submission Viewer Component', () => {
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
         expect(repositoryService.getFileForPlagiarismView).toHaveBeenCalledWith(fileName, expectedDomain);
-        expect(comp.currentFile).toEqual(fileName);
-        expect(comp.fileContent).toBe('if(current&gt;max)');
+        expect(comp.currentFile()).toEqual(fileName);
+        expect(comp.fileContent()).toBe('if(current&gt;max)');
     });
 
     it('handles binary file selection', () => {
@@ -189,7 +189,7 @@ describe('Text Submission Viewer Component', () => {
         comp.handleFileSelect(fileName);
 
         expect(repositoryService.getFileForPlagiarismView).not.toHaveBeenCalled();
-        expect(comp.currentFile).toEqual(fileName);
+        expect(comp.currentFile()).toEqual(fileName);
     });
 
     it('should insert exact match tokens', () => {

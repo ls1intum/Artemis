@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -33,13 +33,13 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
 
     programmingExerciseResetOptions: ProgrammingExerciseResetOptions;
-    isLoading = false;
-    resetInProgress: boolean;
+    readonly isLoading = signal(false);
+    readonly resetInProgress = signal(false);
     confirmText: string;
 
     versionControlName?: string;
     continuousIntegrationName?: string;
-    hasCustomizedBuildPlans = false;
+    readonly hasCustomizedBuildPlans = signal(false);
 
     // Icons
     faBan = faBan;
@@ -48,18 +48,18 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     faUndo = faUndo;
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const profileInfo = this.profileService.getProfileInfo();
         this.versionControlName = profileInfo.versionControlName;
         this.continuousIntegrationName = profileInfo.continuousIntegrationName;
-        this.hasCustomizedBuildPlans = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.hasCustomizedBuildPlans.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
-        this.resetInProgress = false;
+        this.resetInProgress.set(false);
         this.programmingExerciseResetOptions = {
             deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: false,
         };
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 
     /**
@@ -77,12 +77,12 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
             return;
         }
 
-        this.resetInProgress = true;
+        this.resetInProgress.set(true);
         this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
             next: this.handleResetResponse,
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');
-                this.resetInProgress = false;
+                this.resetInProgress.set(false);
             },
         });
     }
@@ -92,7 +92,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     handleResetResponse = () => {
         this.alertService.success('artemisApp.programmingExercise.reset.successMessage');
         this.dialogRef.close(true);
-        this.resetInProgress = false;
+        this.resetInProgress.set(false);
     };
 
     /**
@@ -100,7 +100,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
      * @returns {boolean} true if the user can submit, false otherwise
      */
     get canSubmit(): boolean {
-        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress;
+        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress();
     }
 
     /**

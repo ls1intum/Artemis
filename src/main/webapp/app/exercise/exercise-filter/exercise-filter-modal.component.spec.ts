@@ -124,8 +124,8 @@ describe('ExerciseFilterModalComponent', () => {
 
     it('should initialize filters properly', () => {
         expect(component.categoryFilter).toEqual(component.exerciseFilters?.categoryFilter);
-        expect(component.typeFilter).toEqual(component.exerciseFilters?.exerciseTypesFilter);
-        expect(component.difficultyFilter).toEqual(component.exerciseFilters?.difficultyFilter);
+        expect(component.typeFilter()).toEqual(component.exerciseFilters?.exerciseTypesFilter);
+        expect(component.difficultyFilter()).toEqual(component.exerciseFilters?.difficultyFilter);
         expect(component.achievedScore).toEqual(component.exerciseFilters?.achievedScore);
         expect(component.achievablePoints).toEqual(component.exerciseFilters?.achievablePoints);
     });
@@ -164,7 +164,7 @@ describe('ExerciseFilterModalComponent', () => {
             component.model = 'category1';
             // Simulate selecting an item
             const event = {
-                item: component.selectableCategoryOptions[0],
+                item: component.selectableCategoryOptions()[0],
                 preventDefault: vi.fn(),
             };
             component.onSelectItem(event);
@@ -197,10 +197,10 @@ describe('ExerciseFilterModalComponent', () => {
     it('should reset all filters when button is clicked', () => {
         component.categoryFilter!.options[0].searched = true;
         component.categoryFilter!.options[1].searched = true;
-        component.typeFilter!.options[0].checked = true;
-        component.typeFilter!.options[1].checked = true;
-        component.difficultyFilter!.options[0].checked = true;
-        component.difficultyFilter!.options[1].checked = false;
+        component.typeFilter()!.options[0].checked = true;
+        component.typeFilter()!.options[1].checked = true;
+        component.difficultyFilter()!.options[0].checked = true;
+        component.difficultyFilter()!.options[1].checked = false;
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
         const resetFilterSpy = vi.spyOn(component, 'clearFilter');
@@ -212,10 +212,10 @@ describe('ExerciseFilterModalComponent', () => {
         expect(resetFilterSpy).toHaveBeenCalledOnce();
         expect(component.categoryFilter!.options[0].searched).toBe(false);
         expect(component.categoryFilter!.options[1].searched).toBe(false);
-        expect(component.typeFilter!.options[0].checked).toBe(false);
-        expect(component.typeFilter!.options[1].checked).toBe(false);
-        expect(component.difficultyFilter!.options[0].checked).toBe(false);
-        expect(component.difficultyFilter!.options[1].checked).toBe(false);
+        expect(component.typeFilter()!.options[0].checked).toBe(false);
+        expect(component.typeFilter()!.options[1].checked).toBe(false);
+        expect(component.difficultyFilter()!.options[0].checked).toBe(false);
+        expect(component.difficultyFilter()!.options[1].checked).toBe(false);
         expect(component.achievablePoints!.filter.selectedMax).toBe(component.achievablePoints?.filter.generalMax);
         expect(component.achievedScore!.filter.selectedMin).toBe(component.achievedScore?.filter.generalMin);
     });
@@ -230,8 +230,8 @@ describe('ExerciseFilterModalComponent', () => {
             ungroupedData: [SIDEBAR_CARD_ELEMENT_1, SIDEBAR_CARD_ELEMENT_2, SIDEBAR_CARD_ELEMENT_3],
         };
         component.categoryFilter!.options[0].searched = true; // must have 'category1'
-        component.typeFilter!.options[0].checked = true; // must be a programming exercise
-        component.difficultyFilter!.options[0].checked = true; // must be easy
+        component.typeFilter()!.options[0].checked = true; // must be a programming exercise
+        component.difficultyFilter()!.options[0].checked = true; // must be easy
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
 
