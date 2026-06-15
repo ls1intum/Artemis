@@ -1,10 +1,5 @@
 package de.tum.cit.aet.artemis.athena.config;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,8 +37,6 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
 
-    private static final HttpClient HEALTH_HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).version(HttpClient.Version.HTTP_1_1).build();
-
     private final RestTemplate shortTimeoutRestTemplate;
 
     private final ObjectMapper objectMapper;
@@ -64,24 +57,6 @@ public class AthenaHealthIndicator implements HealthIndicator {
         var healthString = moduleHealth.healthy ? GREEN_CIRCLE : RED_CIRCLE;
         healthString += " " + moduleHealth.url + " (" + moduleHealth.exerciseType + ")";
         return healthString;
-    }
-
-    /**
-     * Returns true if Athena is reachable. Uses a plain HTTP request without auth headers
-     * so Athena responds immediately without triggering its full module health check.
-     *
-     * @return true if Athena is reachable, false otherwise
-     */
-    public boolean isHealthy() {
-        try {
-            var request = HttpRequest.newBuilder().uri(URI.create(athenaUrl + "/")).timeout(Duration.ofSeconds(3)).GET().build();
-            var response = HEALTH_HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
-            return response.statusCode() < 400;
-        }
-        catch (Exception ex) {
-            log.debug("Athena is not reachable at {}: {}", athenaUrl, ex.getMessage());
-            return false;
-        }
     }
 
     /**

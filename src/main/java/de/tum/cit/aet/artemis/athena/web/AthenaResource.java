@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
-import de.tum.cit.aet.artemis.athena.config.AthenaHealthIndicator;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -70,15 +68,13 @@ public class AthenaResource {
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
-    private final AthenaHealthIndicator athenaHealthIndicator;
-
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaHealthIndicator athenaHealthIndicator) {
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService) {
         this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -88,18 +84,6 @@ public class AthenaResource {
         this.modelingSubmissionApi = modelingSubmissionApi;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
-        this.athenaHealthIndicator = athenaHealthIndicator;
-    }
-
-    /**
-     * GET athena/health : Check if the Athena service is available.
-     *
-     * @return 200 Ok with true if Athena is healthy, false otherwise
-     */
-    @GetMapping("health")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Boolean> checkAthenaHealth() {
-        return ResponseEntity.ok(athenaHealthIndicator.isHealthy());
     }
 
     @FunctionalInterface

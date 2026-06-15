@@ -1,6 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, map, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -17,20 +17,6 @@ export class AthenaService {
     private profileService = inject(ProfileService);
 
     public resourceUrl = 'api/athena';
-
-    private readonly _isHealthy = signal<boolean>(false);
-
-    readonly isAthenaHealthy = this._isHealthy.asReadonly();
-
-    checkHealth(): void {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
-            return;
-        }
-        this.http
-            .get<boolean>(`${this.resourceUrl}/health`)
-            .pipe(catchError(() => of(false)))
-            .subscribe((healthy) => this._isHealthy.set(healthy));
-    }
 
     /**
      * Get feedback suggestions for the given submission from Athena

@@ -1,5 +1,5 @@
 @if (!isExamExercise && requestFeedbackEnabled) {
-    @if (athenaEnabled && hasUserAcceptedLLMUsage && athenaService.isAthenaHealthy()) {
+    @if (athenaEnabled && hasUserAcceptedLLMUsage) {
         <button
             class="btn btn-primary"
             (click)="requestAIFeedback()"
