@@ -12,6 +12,7 @@ import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -109,6 +110,35 @@ describe('TextAssessmentAreaComponent', () => {
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs()).toHaveLength(5);
+    });
+
+    it('should preserve assessment cards across a re-match that re-wraps the same text blocks', () => {
+        // The parent re-matches blocks with feedback on many occasions (validating feedback, Athena suggestions, etc.),
+        // which creates NEW TextBlockRef wrappers around the SAME TextBlock objects. The cards must be reused rather than
+        // destroyed and recreated, otherwise the assessor's in-progress feedback editing gets churned ("blocks mixed up").
+        const block1 = new TextBlock();
+        block1.startIndex = 0;
+        block1.endIndex = 4;
+        block1.setTextFromSubmission(submission);
+        const block2 = new TextBlock();
+        block2.startIndex = 5;
+        block2.endIndex = 9;
+        block2.setTextFromSubmission(submission);
+
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(block2)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsBefore = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+        expect(cardsBefore).toHaveLength(2);
+
+        // Re-match: brand-new wrappers, but around the same block objects.
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(block2)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsAfter = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+
+        expect(cardsAfter).toHaveLength(2);
+        // Same DOM nodes => Angular reused the cards instead of recreating them (this would fail when tracking by the ref wrapper).
+        expect(cardsAfter[0]).toBe(cardsBefore[0]);
+        expect(cardsAfter[1]).toBe(cardsBefore[1]);
     });
 
     it('should remove TextBlockRef if text block is deleted', () => {
