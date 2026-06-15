@@ -12,6 +12,7 @@ import { FileUploadAssessmentService } from './file-upload-assessment.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 
 describe('FileUploadAssessmentService', () => {
     setupTestBed({ zoneless: true });
@@ -41,6 +42,27 @@ describe('FileUploadAssessmentService', () => {
         result.assessmentNote = { id: 58, note: 'Note Text' };
         return result;
     };
+
+    const createComplaintResponse = (): ComplaintResponse => {
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 1;
+        complaintResponse.responseText = 'That is true';
+        complaintResponse.complaint = new Complaint();
+        complaintResponse.complaint.accepted = true;
+        return complaintResponse;
+    };
+
+    const expectedFeedbackInput = (feedback: Feedback) => ({
+        id: feedback.id,
+        text: feedback.text,
+        detailText: feedback.detailText,
+        reference: feedback.reference,
+        credits: feedback.credits,
+        positive: feedback.positive,
+        type: feedback.type,
+        visibility: feedback.visibility,
+        gradingInstruction: undefined,
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -73,7 +95,7 @@ describe('FileUploadAssessmentService', () => {
             });
 
             expect(req.request.body).toEqual({
-                feedbacks,
+                feedbacks: feedbacks.map(expectedFeedbackInput),
                 assessmentNote: assessmentNoteText,
             });
 
@@ -123,7 +145,7 @@ describe('FileUploadAssessmentService', () => {
             });
 
             expect(req.request.body).toEqual({
-                feedbacks,
+                feedbacks: feedbacks.map(expectedFeedbackInput),
                 assessmentNote: undefined,
             });
 
@@ -161,9 +183,7 @@ describe('FileUploadAssessmentService', () => {
         it('should update assessment after complaint', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3), createFeedback(1, 1)];
-            const complaintResponse = new ComplaintResponse();
-            complaintResponse.id = 1;
-            complaintResponse.responseText = 'That is true';
+            const complaintResponse = createComplaintResponse();
             const expectedResult = createResult();
 
             const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
@@ -178,8 +198,12 @@ describe('FileUploadAssessmentService', () => {
             });
 
             expect(req.request.body).toEqual({
-                feedbacks,
-                complaintResponse,
+                feedbacks: feedbacks.map(expectedFeedbackInput),
+                complaintResponse: {
+                    id: complaintResponse.id,
+                    responseText: complaintResponse.responseText,
+                    complaintIsAccepted: complaintResponse.complaint?.accepted,
+                },
                 assessmentNote: undefined,
             });
 
@@ -192,7 +216,7 @@ describe('FileUploadAssessmentService', () => {
         it('should update assessment after complaint with assessment note', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
-            const complaintResponse = new ComplaintResponse();
+            const complaintResponse = createComplaintResponse();
             const assessmentNote = 'Updated note';
             const expectedResult = createResult();
 
@@ -208,8 +232,12 @@ describe('FileUploadAssessmentService', () => {
             });
 
             expect(req.request.body).toEqual({
-                feedbacks,
-                complaintResponse,
+                feedbacks: feedbacks.map(expectedFeedbackInput),
+                complaintResponse: {
+                    id: complaintResponse.id,
+                    responseText: complaintResponse.responseText,
+                    complaintIsAccepted: complaintResponse.complaint?.accepted,
+                },
                 assessmentNote,
             });
 
@@ -222,7 +250,7 @@ describe('FileUploadAssessmentService', () => {
         it('should convert dates from server response', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
-            const complaintResponse = new ComplaintResponse();
+            const complaintResponse = createComplaintResponse();
             const serverResult = {
                 id: 1,
                 completionDate: '2023-01-01T12:00:00Z',
@@ -256,7 +284,7 @@ describe('FileUploadAssessmentService', () => {
         it('should handle null body in server response', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
-            const complaintResponse = new ComplaintResponse();
+            const complaintResponse = createComplaintResponse();
 
             const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
                 service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId).subscribe((resp) => {
@@ -278,7 +306,7 @@ describe('FileUploadAssessmentService', () => {
         it('should handle response without submission', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
-            const complaintResponse = new ComplaintResponse();
+            const complaintResponse = createComplaintResponse();
             const serverResult = {
                 id: 1,
                 completionDate: '2023-01-01T12:00:00Z',
@@ -306,7 +334,7 @@ describe('FileUploadAssessmentService', () => {
         it('should handle response with submission but no participation', async () => {
             const submissionId = 1;
             const feedbacks = [createFeedback(0, 3)];
-            const complaintResponse = new ComplaintResponse();
+            const complaintResponse = createComplaintResponse();
             const serverResult = {
                 id: 1,
                 completionDate: '2023-01-01T12:00:00Z',
