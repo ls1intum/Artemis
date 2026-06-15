@@ -399,7 +399,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
-    it('should determine tutor status if no exam was loaded and course was not cached', () => {
+    it('should determine tutor status if no exam was loaded and course was not cached', async () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },
             status: 400,
@@ -411,6 +411,7 @@ describe('ExamParticipationComponent', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
         const courseServiceSpy = vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.ngOnInit();
+        await Promise.resolve();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
@@ -1224,12 +1225,12 @@ describe('ExamParticipationComponent', () => {
 
         const warning = fixture.debugElement.query(By.css('.text-danger span'));
         const directiveInstance = warning.injector.get(TranslateDirective);
-        expect(directiveInstance.jhiTranslate).toBe('artemisApp.studentExam.submissionNotInTime');
+        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.studentExam.submissionNotInTime');
     });
 
     it('should show the test exam missed submission warning', () => {
         comp.exam.set(new Exam());
-        comp.exam().testExam = false;
+        comp.exam().testExam = true;
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;
         comp.examStartConfirmed.set(true);
@@ -1240,7 +1241,7 @@ describe('ExamParticipationComponent', () => {
 
         const warning = fixture.debugElement.query(By.css('.text-danger span'));
         const directiveInstance = warning.injector.get(TranslateDirective);
-        expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.testExamAttemptUsed');
+        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.testExamAttemptUsed');
     });
 
     it('should get whether student failed to submit', () => {
