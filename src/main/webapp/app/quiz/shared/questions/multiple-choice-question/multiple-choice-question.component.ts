@@ -24,7 +24,6 @@ export class MultipleChoiceQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
     question = input.required<MultipleChoiceQuestion>();
-    // TODO: Map vs. Array --> consistency
     selectedAnswerOptions = input.required<AnswerOption[]>();
     clickDisabled = input<boolean>(false);
     showResult = input<boolean>(false);
