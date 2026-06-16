@@ -550,6 +550,7 @@
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "simulationEndDate": "Ende der Simulationszeit",
+                "simulationEndDateTooltip": "Dieses Datum ergibt sich aus dem Beginn der Testklausur plus der Arbeitszeit.",
                 "practiceStartDate": "Beginn der Übungszeit",
                 "practiceStartDateTooltip": "Datum und Uhrzeit, ab wann wiederholbare Übungsversuche nach der Simulationsphase verfügbar sind.",
                 "startDate": "Beginn Bearbeitungsfenster",

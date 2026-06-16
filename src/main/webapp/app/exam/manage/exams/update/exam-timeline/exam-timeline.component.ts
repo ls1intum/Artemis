@@ -70,6 +70,7 @@ export class ExamTimelineComponent {
                           labelStringKey: 'artemisApp.examManagement.testExam.simulationEndDate',
                           date: this.debouncedEndOfSimulationTime,
                           mustBeStrictlyAfterPrevious: true,
+                          helpKey: 'artemisApp.examManagement.testExam.simulationEndDateTooltip',
                       },
                       {
                           kind: 'required',
