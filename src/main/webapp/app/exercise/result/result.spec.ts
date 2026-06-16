@@ -103,7 +103,7 @@ describe('ResultComponent', () => {
     });
 
     it('should initialize', () => {
-        component.result.set(result);
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
@@ -115,12 +115,12 @@ describe('ResultComponent', () => {
         submission1.results = [result1];
 
         fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
         fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
         expect(component.textColorClass()).toBe('text-secondary');
         expect(component.resultIconClass()).toEqual(faQuestionCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
@@ -133,12 +133,12 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
         fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
         expect(component.textColorClass()).toBe('text-danger');
         expect(component.resultIconClass()).toEqual(faTimesCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short');
@@ -152,12 +152,12 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
         fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
         expect(component.textColorClass()).toBe('text-secondary');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
@@ -171,12 +171,12 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
         fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
         expect(component.textColorClass()).toBe('text-secondary');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
@@ -190,12 +190,12 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
         fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
         fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
         expect(component.result()).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
         expect(component.textColorClass()).toBe('text-secondary');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
         expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
@@ -229,6 +229,7 @@ describe('ResultComponent', () => {
         participation.submissions = [submission];
         fixture.componentRef.setInput('short', short);
         fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
 
         const warningIcon = fixture.debugElement.nativeElement.querySelector('#code-issue-warnings-icon');
