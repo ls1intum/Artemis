@@ -89,7 +89,18 @@ jobs:
         # UI shows an info banner. The multi-arch docker-release image always builds with -Psbom
         # (see the Dockerfile); docker-pr reuses this WAR via external_builder, inheriting the
         # no-SBOM PR build.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
+        #
+        # Resolve dependencies from the warm Gradle cache only (--offline). The dependency cache
+        # (~426 MB) is restored on nearly every build, so going offline skips the slow per-request
+        # metadata round-trips to the preferred Maven mirror (reposilite — a single, non-CDN server
+        # that is far from the GitHub-hosted runners). Those round-trips happen during resolution
+        # even though every jar is already cached, and they dominated the step (~5-6 min of silent
+        # resolution before the first compile task). If a build legitimately needs an uncached
+        # artifact (e.g. a dependency was added or bumped), the offline run fails fast and we retry
+        # once online to fetch it (and repopulate the cache on develop, the cache writer).
+        run: |
+          ./gradlew -Pprod -Pwar bootWar -x webapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }} \
+            || ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
