@@ -5,9 +5,9 @@
                 @if (pageTitle() || showSidebarToggle()) {
                     <div class="d-flex align-items-center justify-content-between gap-2 py-2">
                         @if (pageTitle()) {
-                            <jhi-course-title-bar-title [title]="pageTitle()" />
+                            <jhi-course-title-bar-title class="py-1" [title]="pageTitle()" />
                         }
-                        @if (showSidebarToggle()) {
+                        @if (showSidebarToggle() && !isSidebarCollapsed()) {
                             <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
                         }
                     </div>
