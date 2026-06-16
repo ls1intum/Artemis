@@ -152,7 +152,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
-        const unsubscribeSpy = vi.spyOn(comp.resultSubscription, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, submissions: [{ results: [{ id: 1, rated: true }] }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).toHaveBeenNthCalledWith(1);
@@ -163,6 +163,18 @@ describe('UpdatingResultComponent', () => {
 
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
         expect(comp.result()!.id).toBe(newGradedResult.id);
+    });
+
+    it('should tear down active subscriptions when the participation becomes undefined', () => {
+        cleanInitializeGraded();
+        expect(comp.resultSubscription).toBeDefined();
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
+
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+        expect(comp.resultSubscription).toBeUndefined();
     });
 
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {

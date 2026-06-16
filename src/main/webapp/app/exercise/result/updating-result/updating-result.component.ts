@@ -60,8 +60,8 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     readonly buildStartDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly showProgressBarInResult = signal(false);
     readonly missingResultInfo = signal(MissingResultInformation.NONE);
-    public resultSubscription: Subscription;
-    public submissionSubscription: Subscription;
+    public resultSubscription?: Subscription;
+    public submissionSubscription?: Subscription;
 
     isLocalCIEnabled = true;
 
@@ -82,6 +82,12 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
             untracked(() => {
                 const participation = this.participation();
                 if (!participation) {
+                    // No participation to display: tear down any active websocket subscriptions so stale updates can no
+                    // longer mutate state, and so ngOnDestroy does not later dereference an undefined participation.
+                    this.resultSubscription?.unsubscribe();
+                    this.resultSubscription = undefined;
+                    this.submissionSubscription?.unsubscribe();
+                    this.submissionSubscription = undefined;
                     return;
                 }
                 this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), true));
