@@ -113,6 +113,11 @@ configurations {
 }
 
 repositories {
+    // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors during dependency resolution)
+    maven {
+        name = "reposiliteRepository"
+        url = "https://reposilite.aet.cit.tum.de/releases"
+    }
     mavenCentral()
     mavenLocal()
     // required for Spring AI milestone releases
@@ -231,7 +236,7 @@ dependencies {
     // Align all Spring AI modules to the same version
     // 2.0.0-M6+ fixes GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-RC2")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
