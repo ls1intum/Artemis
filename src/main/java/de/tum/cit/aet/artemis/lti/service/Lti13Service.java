@@ -305,7 +305,7 @@ public class Lti13Service {
      *
      * @param userId    the LTI sub claim identifying the user
      * @param comment   concatenated feedback detail texts
-     * @param score     relative score in percent (0–100) as stored in {@link Result#getScore()}
+     * @param score     relative score in percent (0–100) as stored in {@link Result#getScore()}; treated as 0 if null
      * @param maxPoints maximum achievable points of the exercise; falls back to 100 if null/≤ 0
      * @return JSON string conforming to {@code application/vnd.ims.lis.v1.score+json}
      */
@@ -319,7 +319,8 @@ public class Lti13Service {
         requestBody.put("comment", comment);
 
         double effectiveMaxPoints = (maxPoints != null && maxPoints > 0) ? maxPoints : 100D;
-        double scoreGiven = score / 100.0 * effectiveMaxPoints;
+        double effectiveScore = (score != null) ? score : 0.0;
+        double scoreGiven = effectiveScore / 100.0 * effectiveMaxPoints;
 
         requestBody.put("scoreGiven", scoreGiven);
         requestBody.put("scoreMaximum", effectiveMaxPoints);
