@@ -137,6 +137,9 @@ public class ExamImportService {
         // import (e.g. a programming-exercise repository copy timing out), that exercise is skipped and its title collected,
         // and the import continues with the remaining exercises. This prevents one problematic exercise from failing the
         // whole import (the previous behaviour surfaced as a 5xx error that left most imported exercises broken).
+        // IMPORTANT: this catch-and-continue is only safe because no transaction spans the import loop (no @Transactional
+        // on this method or its callers, and OSIV is disabled). Adding an outer @Transactional would mark the shared
+        // persistence context rollback-only after the first failed exercise, breaking all subsequent persistence calls.
         List<String> failedExerciseTitles = new ArrayList<>();
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied, failedExerciseTitles);
         channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
@@ -315,6 +318,17 @@ public class ExamImportService {
 
         for (int index = 0; index < exerciseGroupsCopied.size(); index++) {
             addExercisesToExerciseGroup(filteredExerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index), failedExerciseTitles);
+        }
+
+        // Remove exercise groups that ended up empty because all of their exercises failed to import. An empty exercise
+        // group must not survive: student exam generation picks a random exercise per (mandatory) group via
+        // random.nextInt(exercises.size()), which throws for an empty group. The skipped exercises are still reported to
+        // the instructor via failedExerciseTitles, so they can re-import or adjust the exam configuration.
+        List<ExerciseGroup> emptyCopiedGroups = exerciseGroupsCopied.stream().filter(group -> group.getExercises() == null || group.getExercises().isEmpty()).toList();
+        if (!emptyCopiedGroups.isEmpty()) {
+            log.warn("Removing {} exercise group(s) that ended up empty after importing into exam {} (all their exercises failed to import).", emptyCopiedGroups.size(),
+                    targetExam.getId());
+            exerciseGroupRepository.deleteAll(emptyCopiedGroups);
         }
     }
 

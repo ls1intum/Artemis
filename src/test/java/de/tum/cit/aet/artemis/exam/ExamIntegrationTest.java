@@ -2028,8 +2028,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_skipsFailedExerciseAndImportsTheRest() throws Exception {
-        // Source exam has groups in the order modelling, text, file upload, quiz. We make the quiz import fail; the other
-        // three exercises are imported before the failure. The import must still succeed overall (no 5xx) and only skip the quiz.
+        // Source exam has non-empty groups modelling, text, file upload, quiz (plus one empty group that is filtered out).
+        // We make the quiz import fail; the other three exercises are imported before the failure. The import must still
+        // succeed overall (no 5xx) and only skip the quiz.
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("partial-import-channel");
 
@@ -2043,6 +2044,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(received.getId());
         long importedExerciseCount = importedExam.getExerciseGroups().stream().mapToLong(group -> group.getExercises().size()).sum();
         assertThat(importedExerciseCount).isEqualTo(3);
+        // The quiz exercise group ended up empty (its only exercise failed) and MUST have been removed. An empty exercise
+        // group would otherwise crash student exam generation (selectRandomExercise -> random.nextInt(0)).
+        assertThat(importedExam.getExerciseGroups()).hasSize(3);
+        assertThat(importedExam.getExerciseGroups()).as("no empty exercise group must survive the import").noneMatch(group -> group.getExercises().isEmpty());
     }
 
     @Test
