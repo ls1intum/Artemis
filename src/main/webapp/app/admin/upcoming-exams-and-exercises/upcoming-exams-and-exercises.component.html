@@ -24,12 +24,6 @@
                             <span jhiTranslate="artemisApp.examManagement.startDate"></span>
                         </th>
                         <th class="d-md-table-cell date-column">
-                            <span jhiTranslate="artemisApp.examManagement.testExam.simulationEndDate"></span>
-                        </th>
-                        <th class="d-md-table-cell date-column">
-                            <span jhiTranslate="artemisApp.examManagement.testExam.practiceStartDate"></span>
-                        </th>
-                        <th class="d-md-table-cell date-column">
                             <span jhiTranslate="artemisApp.examManagement.endDate"></span>
                         </th>
                     </tr>
@@ -52,20 +46,6 @@
                             }
                             <td>{{ exam.visibleDate | artemisDate }}</td>
                             <td>{{ exam.startDate | artemisDate }}</td>
-                            <td>
-                                @if (isSimulationAndPracticeExam(exam)) {
-                                    {{ testExamSimulationEndDate(exam) | artemisDate }}
-                                } @else {
-                                    -
-                                }
-                            </td>
-                            <td>
-                                @if (isSimulationAndPracticeExam(exam)) {
-                                    {{ exam.testExamPracticeStartDate | artemisDate }}
-                                } @else {
-                                    -
-                                }
-                            </td>
                             <td>{{ exam.endDate | artemisDate }}</td>
                         </tr>
                     }

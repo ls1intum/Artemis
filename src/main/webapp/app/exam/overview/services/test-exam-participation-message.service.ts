@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export interface TestExamParticipationMessage {
@@ -45,15 +44,12 @@ export class TestExamParticipationMessageService {
         if (translationKey !== this.fullTranslationKey('testExamPracticeOpens') && translationKey !== this.fullTranslationKey('testExamAttemptUsedPracticeOpens')) {
             return {};
         }
-        const practiceStartDate = this.getPracticeStartDate(exam);
-        return practiceStartDate ? { date: practiceStartDate.format(ArtemisDatePipe.format(this.translateService.getCurrentLang())) } : {};
+        const practiceOpensAt = this.getPracticeOpensAt(exam);
+        return practiceOpensAt ? { date: practiceOpensAt.format(ArtemisDatePipe.format(this.translateService.getCurrentLang())) } : {};
     }
 
-    private getPracticeStartDate(exam: Exam | undefined): dayjs.Dayjs | undefined {
-        if (exam?.testExamPracticeStartDate === undefined) {
-            return undefined;
-        }
-        return dayjs(exam.testExamPracticeStartDate);
+    private getPracticeOpensAt(exam: Exam | undefined) {
+        return testExamSimulationEndDate(exam);
     }
 
     private fullTranslationKey(key: string) {

@@ -259,38 +259,13 @@
         </div>
         <hr />
         <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h3>
-        @if (isSimulationAndPracticeExam()) {
-            <div class="d-flex flex-column">
-                <b
-                    jhiTranslate="artemisApp.examManagement.checklist.testExam.testExamWithSimulationPlannedFromTo"
-                    [translateValues]="{
-                        mode: 'artemisApp.examManagement.testExam.testExamWithSimulation' | artemisTranslate,
-                        from: exam().startDate! | artemisDate,
-                        to: exam().endDate! | artemisDate,
-                    }"
-                ></b>
-                <b
-                    jhiTranslate="artemisApp.examManagement.checklist.testExam.simulationEndsAt"
-                    [translateValues]="{
-                        date: testExamSimulationEndDate()! | artemisDate,
-                    }"
-                ></b>
-                <b
-                    jhiTranslate="artemisApp.examManagement.checklist.testExam.practiceStartsAt"
-                    [translateValues]="{
-                        date: exam().testExamPracticeStartDate! | artemisDate,
-                    }"
-                ></b>
-            </div>
-        } @else {
-            <b
-                jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
-                [translateValues]="{
-                    from: exam().startDate! | artemisDate,
-                    to: exam().endDate! | artemisDate,
-                }"
-            ></b>
-        }
+        <b
+            jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
+            [translateValues]="{
+                from: exam().startDate! | artemisDate,
+                to: exam().endDate! | artemisDate,
+            }"
+        ></b>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>

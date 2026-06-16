@@ -10,7 +10,7 @@ export type ExamModeBadgeSize = 'default' | 'large';
     imports: [TranslateDirective],
 })
 export class ExamModeBadgeComponent {
-    readonly exam = input.required<Pick<Exam, 'testExam' | 'testExamPracticeStartDate'>>();
+    readonly exam = input.required<Exam>();
 
     readonly size = input<ExamModeBadgeSize>('default');
 
@@ -19,7 +19,7 @@ export class ExamModeBadgeComponent {
         if (exam.testExam === false) {
             return 'artemisApp.examManagement.testExam.realExam';
         }
-        if (exam.testExamPracticeStartDate === undefined) {
+        if (exam.hasSimulation !== true) {
             return 'artemisApp.examManagement.testExam.testExam';
         }
         return 'artemisApp.examManagement.testExam.testExamWithSimulation';

@@ -18,7 +18,7 @@ export interface ExamUpdateDTO {
     examStudentReviewStart?: string;
     examStudentReviewEnd?: string;
     gracePeriod?: number;
-    testExamPracticeStartDate?: string;
+    hasSimulation?: boolean;
     workingTime: number;
     startText?: string;
     endText?: string;
@@ -56,7 +56,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
         examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
         examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
         gracePeriod: exam.gracePeriod,
-        testExamPracticeStartDate: convertDateFromClient(exam.testExamPracticeStartDate),
+        hasSimulation: exam.hasSimulation,
         workingTime: exam.workingTime ?? 0,
         startText: exam.startText,
         endText: exam.endText,

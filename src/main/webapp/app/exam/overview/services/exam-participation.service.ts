@@ -321,7 +321,6 @@ export class ExamParticipationService {
             exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
             exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
             exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
-            exam.testExamPracticeStartDate = exam.testExamPracticeStartDate ? dayjs(exam.testExamPracticeStartDate) : undefined;
         }
         return exam;
     }

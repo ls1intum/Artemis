@@ -27,9 +27,9 @@ describe('ExamConductionComponent', () => {
         component.examTimelineStatusChange.subscribe((valid) => (latestValidity = valid));
         setInputs({
             isTestExam: false,
+            hasSimulation: undefined,
             visibleFrom: undefined,
             startOfWorkingTime: undefined,
-            startOfPracticeTime: undefined,
             endOfWorkingTime: undefined,
             workingTime: 0,
             gracePeriod: 180,
@@ -39,9 +39,9 @@ describe('ExamConductionComponent', () => {
 
     const setInputs = (inputs: {
         isTestExam?: boolean;
+        hasSimulation?: boolean;
         visibleFrom?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
-        startOfPracticeTime?: dayjs.Dayjs;
         endOfWorkingTime?: dayjs.Dayjs;
         workingTime?: number;
         gracePeriod?: number;
@@ -86,25 +86,23 @@ describe('ExamConductionComponent', () => {
         expect(component.workingTime()).toBe(3600);
     });
 
-    it('should include simulation and practice dates when the simulation phase is checked', () => {
+    it('should not include simulation or practice dates when the simulation phase is checked', () => {
         const start = dayjs().startOf('minute');
         setInputs({
             isTestExam: true,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
-        component.isSimulationPhaseChecked.set(true);
+        component.hasSimulation.set(true);
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
             'artemisApp.examManagement.visibleDate',
             'artemisApp.examManagement.testExam.startDate',
-            'artemisApp.examManagement.testExam.simulationEndDate',
-            'artemisApp.examManagement.testExam.practiceStartDate',
             'artemisApp.examManagement.testExam.endDate',
         ]);
 
-        component.isSimulationPhaseChecked.set(false);
+        component.hasSimulation.set(false);
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -114,21 +112,17 @@ describe('ExamConductionComponent', () => {
         ]);
     });
 
-    it('should clear the practice start date when the simulation phase is unchecked', () => {
-        const practiceStart = dayjs().add(2, 'hours');
-        setInputs({
-            isTestExam: true,
-            startOfPracticeTime: practiceStart,
-        });
-        component.isSimulationPhaseChecked.set(true);
+    it('should clear the simulation mode when the exam is no longer a test exam', () => {
+        setInputs({ isTestExam: true });
+        component.hasSimulation.set(true);
         fixture.detectChanges();
 
-        expect(component.startOfPracticeTime()).toBe(practiceStart);
+        expect(component.hasSimulation()).toBe(true);
 
-        component.isSimulationPhaseChecked.set(false);
+        setInputs({ isTestExam: false });
         fixture.detectChanges();
 
-        expect(component.startOfPracticeTime()).toBeUndefined();
+        expect(component.hasSimulation()).toBe(false);
     });
 
     it('should use the correct timeline labels for real and test exams', () => {

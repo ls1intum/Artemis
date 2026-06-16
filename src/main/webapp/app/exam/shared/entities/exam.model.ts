@@ -5,11 +5,11 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 
-export function isSimulationAndPracticeExam(exam?: Pick<Exam, 'testExam' | 'hasSimulation'>): boolean {
+export function isSimulationAndPracticeExam(exam?: Exam): boolean {
     return exam?.testExam === true && exam?.hasSimulation === true;
 }
 
-export function testExamSimulationEndDate(exam?: Pick<Exam, 'testExam' | 'testExamPracticeStartDate' | 'workingTime' | 'startDate'>): dayjs.Dayjs | undefined {
+export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
     if (!isSimulationAndPracticeExam(exam) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;
     }
@@ -20,8 +20,6 @@ export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
     public testExam?: boolean;
-    // if the test exam has a simulation attempt at the start
-    public hasSimulation?: boolean;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
@@ -34,6 +32,8 @@ export class Exam implements BaseEntity {
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
+    // if the test exam has simulation attempt at the start
+    public hasSimulation?: boolean;
     public examiner?: string;
     public moduleNumber?: string;
     public courseName?: string;

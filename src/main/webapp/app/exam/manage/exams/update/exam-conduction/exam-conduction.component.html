@@ -3,34 +3,11 @@
     <div class="d-flex flex-column gap-2 align-items-start">
         @if (isTestExam()) {
             <div class="flex items-center">
-                <p-checkbox inputId="simulation-phase-checkbox" name="simulation-phase-checkbox" [(ngModel)]="isSimulationPhaseChecked" [binary]="true" />
+                <p-checkbox inputId="simulation-phase-checkbox" name="simulation-phase-checkbox" [(ngModel)]="hasSimulation" [binary]="true" />
                 <label for="simulation-phase-checkbox" class="ml-2" jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"></label>
                 <jhi-help-icon class="ml-1" text="artemisApp.examManagement.testExam.testExamWithSimulationCheckboxTooltip" />
             </div>
         }
-        <div class="d-flex flex-column">
-            <div>
-                <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                <jhi-help-icon [text]="isTestExam() ? 'artemisApp.examManagement.testExam.workingTimeTooltip' : 'artemisApp.examManagement.workingTimeTooltip'" />
-            </div>
-            <p-input-number
-                inputId="workingTimeInMinutes"
-                (ngModelChange)="workingTime.set($event * 60)"
-                [ngModel]="(workingTime() ?? 0) / 60"
-                [disabled]="!isTestExam()"
-                [showButtons]="true"
-                [useGrouping]="false"
-                [min]="0"
-                [max]="maxWorkingTimeInMinutes()"
-                [maxFractionDigits]="3"
-                [invalid]="!isWorkingTimeValid()"
-            />
-            @if (!isWorkingTimeValid()) {
-                <p-message severity="error" size="small" variant="simple">
-                    <span jhiTranslate="artemisApp.examManagement.workingTimeInvalid"></span>
-                </p-message>
-            }
-        </div>
         <div class="d-flex flex-column">
             <div>
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>

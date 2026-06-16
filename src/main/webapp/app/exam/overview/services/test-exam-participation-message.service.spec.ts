@@ -37,31 +37,31 @@ describe('TestExamParticipationMessageService', () => {
         const now = dayjs();
         const exam = new Exam();
         exam.testExam = true;
-        exam.startDate = now.subtract(2, 'hours');
-        exam.workingTime = 30;
+        exam.hasSimulation = true;
+        exam.startDate = now;
+        exam.workingTime = 1800;
         exam.gracePeriod = 0;
-        const practiceStartDate = now.add(30, 'minutes');
-        exam.testExamPracticeStartDate = practiceStartDate;
+        const practiceOpensAt = now.add(30, 'minutes');
 
         const message = service.getMessage(exam, 'simulationTestExamAttemptAlreadyExistsBeforePractice');
 
         expect(message.translationKey).toBe('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
-        expect(message.translateValues).toEqual({ date: practiceStartDate.format(ArtemisDatePipe.format()) });
+        expect(message.translateValues).toEqual({ date: practiceOpensAt.format(ArtemisDatePipe.format()) });
     });
 
     it('should show when the practice phase opens based on the server error key', () => {
         const now = dayjs();
         const exam = new Exam();
         exam.testExam = true;
-        exam.startDate = now.subtract(2, 'hours');
-        exam.workingTime = 30;
-        const practiceStartDate = now.add(30, 'minutes');
-        exam.testExamPracticeStartDate = practiceStartDate;
+        exam.hasSimulation = true;
+        exam.startDate = now;
+        exam.workingTime = 1800;
+        const practiceOpensAt = now.add(30, 'minutes');
 
         const message = service.getMessage(exam, 'testExamPracticePhaseNotStarted');
 
         expect(message.translationKey).toBe('artemisApp.examParticipation.testExamPracticeOpens');
-        expect(message.translateValues).toEqual({ date: practiceStartDate.format(ArtemisDatePipe.format()) });
+        expect(message.translateValues).toEqual({ date: practiceOpensAt.format(ArtemisDatePipe.format()) });
     });
 
     it('should fall back to no further attempts for an unknown simulation and practice error', () => {
@@ -72,8 +72,6 @@ describe('TestExamParticipationMessageService', () => {
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         exam.gracePeriod = 0;
-        const practiceStartDate = now.add(30, 'minutes');
-        exam.testExamPracticeStartDate = practiceStartDate;
 
         const message = service.getMessage(exam, 'unknown');
 

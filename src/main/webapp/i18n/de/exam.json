@@ -546,12 +546,9 @@
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
                 "testExamWithSimulation": "Testklausur mit Simulation",
-                "testExamWithSimulationCheckboxTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden zum konfigurierten Beginn der Übungsphase freigeschaltet.",
+                "testExamWithSimulationCheckboxTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden direkt nach Ablauf der Simulationsbearbeitungszeit freigeschaltet. Das ist hilfreich, wenn der erste Versuch für alle Studierenden synchron enden soll.",
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
-                "simulationEndDate": "Ende der Simulationszeit",
-                "practiceStartDate": "Beginn der Übungszeit",
-                "practiceStartDateTooltip": "Datum und Uhrzeit, ab wann wiederholbare Übungsversuche nach der Simulationsphase verfügbar sind.",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
@@ -759,10 +756,7 @@
                     "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
                     "detailsHintForTestExams": "Für Testklausuren gilt",
                     "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
-                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht",
-                    "testExamWithSimulationPlannedFromTo": "{{ mode }} ist vom {{ from }} bis {{ to }} geplant",
-                    "simulationEndsAt": "Die Simulation endet am {{ date }}",
-                    "practiceStartsAt": "Die Übung beginnt am {{ date }}"
+                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",

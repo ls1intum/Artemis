@@ -27,7 +27,7 @@ export class ExamConductionComponent {
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly hasSimulation = signal(false);
+    readonly hasSimulation = model.required<boolean | undefined>();
 
     readonly examTimelineStatusChange = output<boolean>();
 

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, isSimulationAndPracticeExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -130,20 +130,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             title: isTestExamValue ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.exam.startDate',
             data: { date: exam.startDate },
         });
-        if (isSimulationAndPracticeExam(exam)) {
-            conductionDateDetails.push(
-                {
-                    type: DetailType.Date,
-                    title: 'artemisApp.examManagement.testExam.simulationEndDate',
-                    data: { date: testExamSimulationEndDate(exam) },
-                },
-                {
-                    type: DetailType.Date,
-                    title: 'artemisApp.examManagement.testExam.practiceStartDate',
-                    data: { date: exam.testExamPracticeStartDate },
-                },
-            );
-        }
         conductionDateDetails.push({
             type: DetailType.Date,
             title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate',
@@ -159,6 +145,11 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Text, title: 'artemisApp.examManagement.examiner', data: { text: exam.examiner } },
                     { type: DetailType.Text, title: 'artemisApp.examManagement.moduleNumber', data: { text: exam.moduleNumber } },
                     { type: DetailType.Date, title: 'artemisApp.examManagement.visibleDate', data: { date: exam.visibleDate } },
+                    isTestExamValue && {
+                        type: DetailType.Boolean,
+                        title: 'artemisApp.examManagement.testExam.testExamWithSimulation',
+                        data: { boolean: exam.hasSimulation === true },
+                    },
                     ...conductionDateDetails,
                     { type: DetailType.Date, title: 'artemisApp.exam.publishResultsDate', data: { date: exam.publishResultsDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewStart', data: { date: exam.examStudentReviewStart } },

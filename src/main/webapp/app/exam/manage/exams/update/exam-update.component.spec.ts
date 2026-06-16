@@ -648,6 +648,7 @@ describe('ExamUpdateComponent', () => {
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
         examForImport.testExam = false;
+        examForImport.hasSimulation = false;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
