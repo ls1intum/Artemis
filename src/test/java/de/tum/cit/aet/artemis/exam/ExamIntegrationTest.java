@@ -10,11 +10,12 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -44,8 +45,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -105,7 +106,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
@@ -123,9 +123,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Autowired
     private ExamTestRepository examRepository;
-
-    @MockitoSpyBean
-    private QuizExerciseImportService quizExerciseImportService;
 
     @Autowired
     private ExamService examService;
@@ -2029,21 +2026,40 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_skipsFailedExerciseAndImportsTheRest() throws Exception {
         // Source exam has non-empty groups modelling, text, file upload, quiz (plus one empty group that is filtered out).
-        // We make the quiz import fail; the other three exercises are imported before the failure. The import must still
-        // succeed overall (no 5xx) and only skip the quiz.
+        // We make the quiz import fail; the other three exercises are imported. The import must still succeed overall
+        // (no 5xx) and only skip the quiz, reporting it via the partial-success alert header.
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("partial-import-channel");
 
-        doThrow(new RuntimeException("Simulated quiz import failure")).when(quizExerciseImportService).importQuizExercise(any(), any(), any());
-
+        // Make the quiz import fail by removing its source exercise after building the import payload: the quiz import
+        // then cannot resolve the source exercise and yields Optional.empty (a real "source exercise no longer available"
+        // failure). This deliberately avoids @MockitoSpyBean, which an ArchUnit rule forbids on concrete integration test
+        // classes (it would force an extra Spring context). It also exercises the empty-result skip path directly.
+        QuizExercise sourceQuiz = (QuizExercise) exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(QuizExercise.class::isInstance)
+                .findFirst().orElseThrow();
+        String quizTitle = sourceQuiz.getTitle();
         ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
-        Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
+        exerciseRepository.deleteById(sourceQuiz.getId());
 
-        // The exam was created and all exercises except the failing quiz were imported.
-        assertThat(received.getId()).isNotNull();
-        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(received.getId());
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.CREATED, null);
+
+        // The skipped quiz must be reported to the instructor via the partial-success alert header (not silently dropped).
+        assertThat(response.getHeader("X-artemisApp-alert")).isEqualTo("artemisApp.examManagement.import.partialSuccess");
+        assertThat(response.getHeader("X-artemisApp-params")).as("the skipped quiz title must be named in the alert")
+                .contains(URLEncoder.encode(quizTitle, StandardCharsets.UTF_8));
+
+        // Re-fetch the created exam (its id is in the Location header) and verify the persisted state.
+        String location = response.getHeader("Location");
+        assertThat(location).isNotNull();
+        long importedExamId = Long.parseLong(location.substring(location.lastIndexOf('/') + 1));
+        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
+
+        // All exercises except the failing quiz were imported (modelling, text, file upload).
         long importedExerciseCount = importedExam.getExerciseGroups().stream().mapToLong(group -> group.getExercises().size()).sum();
         assertThat(importedExerciseCount).isEqualTo(3);
+        // Lock the behavior to the intended failure path: the quiz (and only the quiz) was skipped.
+        assertThat(importedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())).as("the quiz must be the skipped exercise")
+                .noneMatch(QuizExercise.class::isInstance);
         // The quiz exercise group ended up empty (its only exercise failed) and MUST have been removed. An empty exercise
         // group would otherwise crash student exam generation (selectRandomExercise -> random.nextInt(0)).
         assertThat(importedExam.getExerciseGroups()).hasSize(3);

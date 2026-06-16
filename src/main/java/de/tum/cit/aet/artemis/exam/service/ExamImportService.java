@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,15 @@ public class ExamImportService {
     public record ExamImportResult(Exam exam, List<String> failedExerciseTitles) {
     }
 
+    /**
+     * Result of importing exercise groups into an existing exam.
+     *
+     * @param exerciseGroups       all exercise groups of the target exam after the import
+     * @param failedExerciseTitles the titles of exercises that could not be imported and were skipped
+     */
+    public record ExerciseGroupImportResult(List<ExerciseGroup> exerciseGroups, List<String> failedExerciseTitles) {
+    }
+
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
@@ -167,9 +177,10 @@ public class ExamImportService {
      * @param exerciseGroupsToCopy the Exercise Groups to be imported
      * @param targetExamId         the target exam id
      * @param courseId             the associated course of the exam
-     * @return a List of all Exercise Groups of the target exam
+     * @return the result of the import, containing all Exercise Groups of the target exam and the titles of any exercises that could not be imported
      */
-    public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) throws IOException {
+    public ExerciseGroupImportResult importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId)
+            throws IOException {
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
         preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
@@ -193,7 +204,7 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return examWithExercises.getExerciseGroups();
+        return new ExerciseGroupImportResult(examWithExercises.getExerciseGroups(), failedExerciseTitles);
     }
 
     /**
@@ -324,7 +335,18 @@ public class ExamImportService {
         // group must not survive: student exam generation picks a random exercise per (mandatory) group via
         // random.nextInt(exercises.size()), which throws for an empty group. The skipped exercises are still reported to
         // the instructor via failedExerciseTitles, so they can re-import or adjust the exam configuration.
-        List<ExerciseGroup> emptyCopiedGroups = exerciseGroupsCopied.stream().filter(group -> group.getExercises() == null || group.getExercises().isEmpty()).toList();
+        //
+        // Emptiness is determined from the PERSISTED state (re-read from the DB), not from the in-memory copy: a
+        // programming exercise whose repository copy failed mid-import may already have been committed under its group
+        // (importProgrammingExerciseBasis is @Transactional and runs before the repository copy in importProgrammingExercise).
+        // Such a group is not empty in the database, so deleting it based on the stale in-memory copy would violate the
+        // RESTRICT foreign key on exercise -> exercise_group and abort the whole import with a 5xx. Re-reading also keeps
+        // this safe for the existing-exam path, where the exam already contains other groups: we only ever consider the
+        // groups copied in THIS import (scoped by id) and only delete those that truly have no persisted exercise.
+        Set<Long> copiedGroupIds = exerciseGroupsCopied.stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
+        Exam persistedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId());
+        List<ExerciseGroup> emptyCopiedGroups = persistedExam.getExerciseGroups().stream().filter(group -> copiedGroupIds.contains(group.getId()))
+                .filter(group -> group.getExercises().isEmpty()).toList();
         if (!emptyCopiedGroups.isEmpty()) {
             log.warn("Removing {} exercise group(s) that ended up empty after importing into exam {} (all their exercises failed to import).", emptyCopiedGroups.size(),
                     targetExam.getId());
@@ -415,16 +437,38 @@ public class ExamImportService {
                         yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                     }
                 };
-                // Attach the newly created Exercise to the new Exercise Group only if the importing was successful
-                exerciseCopied.ifPresent(exerciseGroupCopied::addExercise);
+                // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.
+                // An empty result means the exercise could not be imported (e.g. the responsible import module is
+                // unavailable or the source exercise no longer exists). Record it as a failure instead of silently
+                // dropping it, otherwise the caller would report a full success while exercises went missing.
+                if (exerciseCopied.isPresent()) {
+                    exerciseGroupCopied.addExercise(exerciseCopied.get());
+                }
+                else {
+                    log.warn("Could not import exercise '{}' during exam import (source exercise unavailable). Skipping it and continuing with the remaining exercises.",
+                            exerciseTitle);
+                    failedExerciseTitles.add(failedExerciseLabel(exerciseTitle));
+                }
             }
             catch (Exception exception) {
                 // Skip the failing exercise and continue with the rest, so that a single problematic exercise does not abort the whole exam import.
                 log.error("Failed to import exercise '{}' during exam import. Skipping it and continuing with the remaining exercises.", exerciseTitle, exception);
-                failedExerciseTitles.add(exerciseTitle);
+                failedExerciseTitles.add(failedExerciseLabel(exerciseTitle));
             }
         }
         exerciseGroupRepository.save(exerciseGroupCopied);
+    }
+
+    /**
+     * Returns a non-null, human-readable label for a skipped exercise. The title can legitimately be {@code null}
+     * (e.g. a programming exercise whose title was cleared during the uniqueness pre-check), and it is later joined into
+     * a response header, so we never add a raw {@code null} to {@code failedExerciseTitles}.
+     *
+     * @param title the (possibly {@code null}) exercise title
+     * @return the title, or a placeholder when no title is available
+     */
+    private static String failedExerciseLabel(String title) {
+        return (title == null || title.isBlank()) ? "(unnamed exercise)" : title;
     }
 
     /**

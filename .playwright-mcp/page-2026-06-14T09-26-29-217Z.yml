@@ -1,0 +1,355 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic:
+      - generic:
+        - generic:
+          - generic: Development
+    - generic [ref=e14]:
+      - navigation [ref=e15]:
+        - link "Artemis 9.4" [ref=e17] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e18]: Artemis
+          - generic [ref=e19]: "9.4"
+        - generic [ref=e21]:
+          - list [ref=e22]:
+            - listitem [ref=e23]:
+              - link "Overview" [ref=e24] [cursor=pointer]:
+                - /url: /courses
+                - generic [ref=e25]:
+                  - img [ref=e27]
+                  - text: Overview
+            - listitem [ref=e29] [cursor=pointer]:
+              - link "Management" [ref=e30]:
+                - /url: /course-management
+                - generic [ref=e31]:
+                  - img [ref=e33]
+                  - text: Management
+            - listitem [ref=e36] [cursor=pointer]:
+              - link "Administration" [ref=e37]:
+                - /url: /admin
+                - generic [ref=e38]:
+                  - img [ref=e40]
+                  - text: Administration
+          - generic [ref=e42]:
+            - img [ref=e47] [cursor=pointer]
+            - generic [ref=e56] [cursor=pointer]:
+              - img [ref=e58]
+              - text: artemis_admin
+      - list [ref=e62]:
+        - listitem [ref=e63]:
+          - link "Management" [ref=e64] [cursor=pointer]:
+            - /url: /course-management
+        - img [ref=e66]
+        - listitem [ref=e68]:
+          - link "Graph Demo Course" [ref=e69] [cursor=pointer]:
+            - /url: /course-management/9026
+        - img [ref=e71]
+        - listitem [ref=e73]:
+          - link "Competency Management" [ref=e74] [cursor=pointer]:
+            - /url: /course-management/9026/competency-management
+    - generic [ref=e80]:
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - generic "Graph Demo Course" [ref=e87]:
+            - generic [ref=e90]: G
+            - generic [ref=e91]: Graph Demo Course
+          - generic [ref=e92]:
+            - separator [ref=e93]
+            - list [ref=e94]:
+              - listitem [ref=e95]:
+                - link "Overview" [ref=e96] [cursor=pointer]:
+                  - /url: /course-management/9026
+                  - img [ref=e98]
+                  - text: Overview
+              - listitem [ref=e100]:
+                - link "Exercises" [ref=e101] [cursor=pointer]:
+                  - /url: /course-management/9026/exercises
+                  - img [ref=e103]
+                  - text: Exercises
+              - listitem [ref=e105]:
+                - link "Lectures" [ref=e106] [cursor=pointer]:
+                  - /url: /course-management/9026/lectures
+                  - img [ref=e108]
+                  - text: Lectures
+              - listitem [ref=e110]:
+                - link "Tutorials" [ref=e111] [cursor=pointer]:
+                  - /url: /course-management/9026/tutorial-groups
+                  - img [ref=e113]
+                  - text: Tutorials
+              - listitem [ref=e115]:
+                - link "Exams" [ref=e116] [cursor=pointer]:
+                  - /url: /course-management/9026/exams
+                  - img [ref=e118]
+                  - text: Exams
+              - listitem [ref=e120]:
+                - link "Competencies" [ref=e121] [cursor=pointer]:
+                  - /url: /course-management/9026/competency-management
+                  - img [ref=e123]
+                  - text: Competencies
+              - listitem [ref=e125]:
+                - link "FAQ" [ref=e126] [cursor=pointer]:
+                  - /url: /course-management/9026/faqs
+                  - img [ref=e128]
+                  - text: FAQ
+              - listitem [ref=e130]:
+                - link "Communication" [ref=e131] [cursor=pointer]:
+                  - /url: /course-management/9026/communication
+                  - img [ref=e133]
+                  - text: Communication
+              - listitem [ref=e135]:
+                - link "Assessment" [ref=e136] [cursor=pointer]:
+                  - /url: /course-management/9026/assessment-dashboard
+                  - img [ref=e138]
+                  - text: Assessment
+              - listitem [ref=e140]:
+                - link "Learning Path" [ref=e141] [cursor=pointer]:
+                  - /url: /course-management/9026/learning-path-management
+                  - img [ref=e143]
+                  - text: Learning Path
+              - listitem [ref=e145]:
+                - link "Scores" [ref=e146] [cursor=pointer]:
+                  - /url: /course-management/9026/scores
+                  - img [ref=e148]
+                  - text: Scores
+              - listitem [ref=e150]:
+                - link "Statistics" [ref=e151] [cursor=pointer]:
+                  - /url: /course-management/9026/course-statistics
+                  - img [ref=e153]
+                  - text: Statistics
+              - listitem [ref=e155]:
+                - link "Build Overview" [ref=e156] [cursor=pointer]:
+                  - /url: /course-management/9026/build-overview
+                  - img [ref=e158]
+                  - text: Build Overview
+              - listitem
+        - listitem [ref=e162]:
+          - generic [ref=e163]:
+            - link "Settings" [ref=e164] [cursor=pointer]:
+              - /url: /course-management/9026/settings
+              - generic [ref=e165]:
+                - img [ref=e167]
+                - generic [ref=e169]: Settings
+            - generic [ref=e171] [cursor=pointer]:
+              - img [ref=e173]
+              - img [ref=e176]
+      - generic [ref=e179]:
+        - generic [ref=e181]:
+          - generic [ref=e184]:
+            - generic "artemisApp.competency.manage.title" [ref=e185]:
+              - heading "Competency Management" [level=5] [ref=e186]
+            - button "Help" [ref=e187] [cursor=pointer]:
+              - img [ref=e189]
+              - text: Help
+          - generic [ref=e191]:
+            - generic [ref=e192]:
+              - button "Edit relations" [ref=e193] [cursor=pointer]:
+                - img [ref=e195]
+                - text: Edit relations
+              - button "Import all of a course" [ref=e197] [cursor=pointer]:
+                - img [ref=e199]
+                - text: Import all of a course
+            - link "Student view" [ref=e202] [cursor=pointer]:
+              - /url: /courses/9026/competencies
+        - generic [ref=e205]:
+          - generic [ref=e206]:
+            - generic [ref=e207]:
+              - heading "Title" [level=2] [ref=e208]
+              - generic [ref=e209]:
+                - generic [ref=e210]:
+                  - img [ref=e213]
+                  - textbox "Search Competencies" [ref=e215]
+                - button "Import competencies" [ref=e217] [cursor=pointer]:
+                  - img [ref=e219]
+                  - text: Import competencies
+                - link "Create competency" [ref=e221] [cursor=pointer]:
+                  - /url: /course-management/9026/competency-management/create
+                  - img [ref=e223]
+                  - text: Create competency
+            - table [ref=e226]:
+              - rowgroup [ref=e227]:
+                - row "Title Description Taxonomy Recommended until Mastered students Optional" [ref=e228]:
+                  - columnheader "Title" [ref=e229] [cursor=pointer]:
+                    - text: Title
+                    - img [ref=e231]
+                  - columnheader "Description" [ref=e233]
+                  - columnheader "Taxonomy" [ref=e234] [cursor=pointer]:
+                    - text: Taxonomy
+                    - img [ref=e236]
+                  - columnheader "Recommended until" [ref=e238] [cursor=pointer]:
+                    - text: Recommended until
+                    - img [ref=e240]
+                  - columnheader "Mastered students" [ref=e242] [cursor=pointer]:
+                    - text: Mastered students
+                    - img [ref=e244]
+                  - columnheader "Optional" [ref=e246]
+                  - columnheader [ref=e247]
+              - rowgroup [ref=e248]:
+                - row "Functions Defining and calling functions No Taxonomy 0 / 0 No Edit Delete" [ref=e249]:
+                  - cell "Functions" [ref=e250]:
+                    - link "Functions" [ref=e251] [cursor=pointer]:
+                      - /url: /courses/9026/competencies/3
+                  - cell "Defining and calling functions" [ref=e252]:
+                    - paragraph [ref=e253]: Defining and calling functions
+                  - cell "No Taxonomy" [ref=e254]:
+                    - generic [ref=e255]:
+                      - img [ref=e257]
+                      - text: No Taxonomy
+                  - cell [ref=e259]
+                  - cell "0 / 0" [ref=e260]
+                  - cell "No" [ref=e261]
+                  - cell "Edit Delete" [ref=e262]:
+                    - generic [ref=e263]:
+                      - link "Edit" [ref=e264] [cursor=pointer]:
+                        - /url: /course-management/9026/competency-management/3/edit
+                        - img [ref=e266]
+                        - text: Edit
+                      - button "Delete" [ref=e268] [cursor=pointer]:
+                        - img [ref=e270]
+                        - text: Delete
+                - row "Loops for/while iteration No Taxonomy 0 / 0 No Edit Delete" [ref=e272]:
+                  - cell "Loops" [ref=e273]:
+                    - link "Loops" [ref=e274] [cursor=pointer]:
+                      - /url: /courses/9026/competencies/2
+                  - cell "for/while iteration" [ref=e275]:
+                    - paragraph [ref=e276]: for/while iteration
+                  - cell "No Taxonomy" [ref=e277]:
+                    - generic [ref=e278]:
+                      - img [ref=e280]
+                      - text: No Taxonomy
+                  - cell [ref=e282]
+                  - cell "0 / 0" [ref=e283]
+                  - cell "No" [ref=e284]
+                  - cell "Edit Delete" [ref=e285]:
+                    - generic [ref=e286]:
+                      - link "Edit" [ref=e287] [cursor=pointer]:
+                        - /url: /course-management/9026/competency-management/2/edit
+                        - img [ref=e289]
+                        - text: Edit
+                      - button "Delete" [ref=e291] [cursor=pointer]:
+                        - img [ref=e293]
+                        - text: Delete
+                - row "Recursion Functions that call themselves No Taxonomy 0 / 0 No Edit Delete" [ref=e295]:
+                  - cell "Recursion" [ref=e296]:
+                    - link "Recursion" [ref=e297] [cursor=pointer]:
+                      - /url: /courses/9026/competencies/4
+                  - cell "Functions that call themselves" [ref=e298]:
+                    - paragraph [ref=e299]: Functions that call themselves
+                  - cell "No Taxonomy" [ref=e300]:
+                    - generic [ref=e301]:
+                      - img [ref=e303]
+                      - text: No Taxonomy
+                  - cell [ref=e305]
+                  - cell "0 / 0" [ref=e306]
+                  - cell "No" [ref=e307]
+                  - cell "Edit Delete" [ref=e308]:
+                    - generic [ref=e309]:
+                      - link "Edit" [ref=e310] [cursor=pointer]:
+                        - /url: /course-management/9026/competency-management/4/edit
+                        - img [ref=e312]
+                        - text: Edit
+                      - button "Delete" [ref=e314] [cursor=pointer]:
+                        - img [ref=e316]
+                        - text: Delete
+                - row "Variables Declaring and using variables No Taxonomy 0 / 0 No Edit Delete" [ref=e318]:
+                  - cell "Variables" [ref=e319]:
+                    - link "Variables" [ref=e320] [cursor=pointer]:
+                      - /url: /courses/9026/competencies/1
+                  - cell "Declaring and using variables" [ref=e321]:
+                    - paragraph [ref=e322]: Declaring and using variables
+                  - cell "No Taxonomy" [ref=e323]:
+                    - generic [ref=e324]:
+                      - img [ref=e326]
+                      - text: No Taxonomy
+                  - cell [ref=e328]
+                  - cell "0 / 0" [ref=e329]
+                  - cell "No" [ref=e330]
+                  - cell "Edit Delete" [ref=e331]:
+                    - generic [ref=e332]:
+                      - link "Edit" [ref=e333] [cursor=pointer]:
+                        - /url: /course-management/9026/competency-management/1/edit
+                        - img [ref=e335]
+                        - text: Edit
+                      - button "Delete" [ref=e337] [cursor=pointer]:
+                        - img [ref=e339]
+                        - text: Delete
+          - generic [ref=e341]:
+            - generic [ref=e342]:
+              - heading "Prerequisites" [level=2] [ref=e343]
+              - generic [ref=e344]:
+                - button "Import prerequisites" [ref=e346] [cursor=pointer]:
+                  - img [ref=e348]
+                  - text: Import prerequisites
+                - link "Create prerequisite" [ref=e350] [cursor=pointer]:
+                  - /url: /course-management/9026/prerequisite-management/create
+                  - img [ref=e352]
+                  - text: Create prerequisite
+            - generic [ref=e354]: No prerequisites exist for this course
+    - contentinfo [ref=e5]:
+      - generic [ref=e6]:
+        - link "About" [ref=e7] [cursor=pointer]:
+          - /url: /about
+        - link "Feedback" [ref=e8] [cursor=pointer]:
+          - /url: https://github.com/ls1intum/Artemis/issues/new/choose
+        - link "Releases" [ref=e9] [cursor=pointer]:
+          - /url: https://github.com/ls1intum/Artemis/releases
+        - link "Privacy" [ref=e10] [cursor=pointer]:
+          - /url: /privacy
+        - link "Imprint" [ref=e11] [cursor=pointer]:
+          - /url: /imprint
+        - generic [ref=e12]: "chore/angular-zoneless • Hash: f40dae6 • Date: 2026-06-14 10:50 • Stephan Krusche"
+  - dialog [ref=e356]:
+    - generic [ref=e360]:
+      - generic [ref=e362]:
+        - generic [ref=e363]: Introduction to course competencies
+        - img [ref=e365] [cursor=pointer]
+      - separator [ref=e367]
+      - generic [ref=e368]:
+        - generic [ref=e369]:
+          - heading "What is Adaptive Learning?" [level=5] [ref=e370]
+          - paragraph [ref=e371]: Adaptive learning tailors educational content to each student's unique needs, adjusting in real-time based on their performance. By providing personalized support and challenges, it helps students learn more efficiently, stay engaged, and achieve mastery at their own pace.
+          - paragraph [ref=e372]: In Artemis course competencies are the foundation for Adaptive Learning. They are overarching learning objectives that can be obtained by interacting with different lectures and exercises. Based on these competency models Artemis can offer students personalized learning paths that fit their individual needs.
+          - heading "Why?" [level=5] [ref=e373]
+          - paragraph [ref=e374]: Competency-based education empowers students to master skills at their own pace, ensuring real progress and confidence. It creates a personalized, engaging learning experience that leads to better outcomes and long-term success. So, even without enabling learning paths, students benefit from being able to track their progress.
+          - paragraph [ref=e375]: With learning paths, students receive recommendations to support their learning efforts. Making it easier for them to master all the required competencies of a course.
+        - separator [ref=e376]
+        - generic [ref=e377]:
+          - heading "How to create a course competency?" [level=5] [ref=e378]
+          - paragraph [ref=e379]: In general we distinguish between a competency and a prerequisite.
+          - paragraph [ref=e380]: To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should master the connected learning objects.
+          - paragraph [ref=e381]: You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.
+          - paragraph [ref=e382]: Finally, you can directly link lecture content to the competency. While you can also connect exercises to a competency, this must be done in the exercise edit/creation view.
+          - 'generic "Tutorial: Creating course competencies" [ref=e384]'
+          - paragraph [ref=e385]:
+            - text: In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more information on this process, please refer to the user
+            - link "manual for Artemis." [ref=e386] [cursor=pointer]:
+              - /url: https://docs.artemis.tum.de/instructor/adaptive-learning
+        - separator [ref=e387]
+        - generic [ref=e388]:
+          - heading "What are course competency relationships?" [level=5] [ref=e389]
+          - paragraph [ref=e390]: Course competencies can support or rely on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or REQUIRE each other. Detailed descriptions of these relationships are provided below.
+          - strong [ref=e391]:
+            - paragraph [ref=e392]: "In summary:"
+          - paragraph [ref=e393]:
+            - text: MATCH is about equivalency between two skills.
+            - text: EXTEND is about building on an existing skill.
+            - text: REQUIRE means one skill is a prerequisite for another.
+          - paragraph [ref=e394]: To create these relationships, open the 'Edit Relations' window. In this window, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.
+          - 'generic "Tutorial: Creating course competency relations" [ref=e396]'
+          - generic [ref=e397]:
+            - heading "1. MATCH" [level=6] [ref=e398]
+            - paragraph [ref=e399]: This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.
+            - strong [ref=e400]:
+              - paragraph [ref=e401]: "Example:"
+            - paragraph [ref=e402]: "Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might \"MATCH\" with balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core competency (balance) is the same in both scenarios."
+          - generic [ref=e403]:
+            - heading "2. EXTEND" [level=6] [ref=e404]
+            - paragraph [ref=e405]: This relationship means one competency adds complexity or expands on another. In other words, once you have mastered one competency, you can move on to mastering the extended one, which takes that skill further.
+            - strong [ref=e406]:
+              - paragraph [ref=e407]: "Example:"
+            - paragraph [ref=e408]: "Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that \"EXTENDS\" into riding around curves and turns. Competency B builds upon Competency A by adding the need to navigate changes in direction while maintaining balance and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios."
+          - generic [ref=e409]:
+            - heading "3. REQUIRES" [level=6] [ref=e410]
+            - paragraph [ref=e411]: This relationship implies that one competency relies on another being already mastered. To perform the more advanced competency, the learner must first have the underlying skill or knowledge.
+            - strong [ref=e412]:
+              - paragraph [ref=e413]: "Example:"
+            - paragraph [ref=e414]: "Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill \"REQUIRES\" that the learner has already mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill."

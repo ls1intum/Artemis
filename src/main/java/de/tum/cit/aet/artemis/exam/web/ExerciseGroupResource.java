@@ -12,6 +12,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -168,9 +169,14 @@ public class ExerciseGroupResource {
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        List<ExerciseGroup> result = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
+        ExamImportService.ExerciseGroupImportResult importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
 
-        return ResponseEntity.ok(result);
+        // If some exercises could not be imported, the exercise groups are still created with the remaining exercises and
+        // the editor is informed which exercises were skipped instead of the whole import failing.
+        HttpHeaders headers = importResult.failedExerciseTitles().isEmpty() ? new HttpHeaders()
+                : HeaderUtil.createAlert(applicationName, "artemisApp.examManagement.import.partialSuccess", String.join(", ", importResult.failedExerciseTitles()));
+
+        return ResponseEntity.ok().headers(headers).body(importResult.exerciseGroups());
     }
 
     /**
