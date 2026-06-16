@@ -36,10 +36,10 @@
                     </div>
                 </td>
                 <td>{{ quizExamMaxPoints() }}</td>
-                <td>{{ totalParticipants }}</td>
+                <td>{{ totalParticipants() }}</td>
             </tr>
         }
-        @for (column of exerciseGroupVariantColumns; track column; let i = $index) {
+        @for (column of exerciseGroupVariantColumns(); track column; let i = $index) {
             <tr>
                 <td style="max-width: 30px">
                     @if (column.indexExerciseGroup) {

@@ -8,7 +8,7 @@
         </div>
         <p>
             {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.sumOfTestWeights' | artemisTranslate }}
-            {{ totalWeight }}
+            {{ totalWeight() }}
         </p>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>

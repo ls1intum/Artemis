@@ -37,18 +37,18 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private translateService = inject(TranslateService);
     private chartColorService = inject(ChartColorService);
 
-    tutorEfforts: TutorEffort[] = [];
-    numberOfSubmissions: number;
-    totalTimeSpent: number;
-    averageTimeSpent: number;
+    readonly tutorEfforts = signal<TutorEffort[]>([]);
+    readonly numberOfSubmissions = signal<number>(undefined!);
+    readonly totalTimeSpent = signal<number>(undefined!);
+    readonly averageTimeSpent = signal<number>(undefined!);
     currentExerciseId: number;
     currentCourseId: number;
-    numberOfTutorsInvolvedInCourse: number;
+    readonly numberOfTutorsInvolvedInCourse = signal<number>(undefined!);
     effortDistribution: number[];
     readonly yScaleMax = signal(10);
-    medianValue: number;
+    readonly medianValue = signal<number>(undefined!);
 
-    showMedianLegend = false;
+    readonly showMedianLegend = signal(false);
 
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
     readonly bucketSize = 10;
@@ -120,25 +120,28 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * @param tutorEffortData - data to handle
      */
     handleTutorEffortResponse(tutorEffortData: TutorEffort[]) {
-        this.tutorEfforts = tutorEffortData;
-        if (!this.tutorEfforts) {
+        this.tutorEfforts.set(tutorEffortData);
+        if (!tutorEffortData) {
             return;
         }
-        this.numberOfSubmissions = this.tutorEfforts.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
-        const totalTime = this.tutorEfforts.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
-        this.totalTimeSpent = Math.round(totalTime * 10) / 10;
-        const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
-        this.averageTimeSpent = avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0;
+        const numberOfSubmissions = tutorEffortData.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
+        this.numberOfSubmissions.set(numberOfSubmissions);
+        const totalTime = tutorEffortData.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
+        const totalTimeSpent = Math.round(totalTime * 10) / 10;
+        this.totalTimeSpent.set(totalTimeSpent);
+        const avgTemp = totalTimeSpent === 0 ? 0 : numberOfSubmissions / totalTimeSpent;
+        this.averageTimeSpent.set(avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0);
         this.distributeEffortToSets();
         this.chartEntries.set(this.effortDistribution.map((effort, index) => ({ name: this.chartLabels[index], value: effort })));
         this.determineMaxChartHeight(this.effortDistribution);
-        this.medianValue = this.computeEffortMedian();
-        this.highlightMedian(this.medianValue);
+        const medianValue = this.computeEffortMedian();
+        this.medianValue.set(medianValue);
+        this.highlightMedian(medianValue);
     }
 
     loadNumberOfTutorsInvolved() {
         this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe((response: number) => {
-            this.numberOfTutorsInvolvedInCourse = response;
+            this.numberOfTutorsInvolvedInCourse.set(response);
         });
     }
 
@@ -151,7 +154,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      */
     distributeEffortToSets() {
         this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
-        this.tutorEfforts.forEach((effort) => {
+        this.tutorEfforts().forEach((effort) => {
             const BUCKET_INDEX = this.determineIndex(effort.totalTimeSpentMinutes);
             this.effortDistribution[BUCKET_INDEX]++;
         });
@@ -197,10 +200,11 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Auxiliary method that computes and sets the effort median
      */
     private computeEffortMedian(): number {
-        if (this.tutorEfforts.length === 0) {
+        const tutorEfforts = this.tutorEfforts();
+        if (tutorEfforts.length === 0) {
             return 0;
         }
-        const timeSpent = this.tutorEfforts.map((effort) => effort.totalTimeSpentMinutes);
+        const timeSpent = tutorEfforts.map((effort) => effort.totalTimeSpentMinutes);
         return median(timeSpent);
     }
 
@@ -225,9 +229,9 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         const colors: string[] = Array(this.chartLabels.length).fill(GraphColors.LIGHT_BLUE);
         if (this.chartEntries()[index].value > 0) {
             colors[index] = GraphColors.BLUE;
-            this.showMedianLegend = true;
+            this.showMedianLegend.set(true);
         } else {
-            this.showMedianLegend = false;
+            this.showMedianLegend.set(false);
         }
         this.chartColors.set(colors);
     }
@@ -244,7 +248,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         } else {
             filterFunction = (effort: TutorEffort) => effort.totalTimeSpentMinutes >= range.minimumTimeSpent;
         }
-        const filteredEfforts = this.tutorEfforts.filter(filterFunction);
+        const filteredEfforts = this.tutorEfforts().filter(filterFunction);
 
         return round(median(filteredEfforts.map((effort) => effort.numberOfSubmissionsAssessed)), 2);
     }

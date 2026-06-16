@@ -7,9 +7,9 @@
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>
         <div ngbDropdownMenu>
-            @if (conversationAsChannel?.subTypeReferenceId) {
-                <a class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink">
-                    {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
+            @if (conversationAsChannel()?.subTypeReferenceId) {
+                <a class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink()">
+                    {{ channelSubTypeReferenceTranslationKey() | artemisTranslate }}
                 </a>
             }
             @if (!isOneToOneChat(conversation())) {

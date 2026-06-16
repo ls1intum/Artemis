@@ -67,7 +67,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     notFound = signal(false);
 
     /** Course ID (0 for admin view) */
-    courseId = 0;
+    readonly courseId = signal(0);
 
     /** Build job ID from query params */
     buildJobId = '';
@@ -174,14 +174,15 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         const courseIdParam = this.route.snapshot.paramMap.get('courseId');
-        this.courseId = courseIdParam ? Number(courseIdParam) : 0;
+        const courseId = courseIdParam ? Number(courseIdParam) : 0;
+        this.courseId.set(courseId);
         // Guard against NaN from invalid route params
-        if (!Number.isFinite(this.courseId)) {
+        if (!Number.isFinite(courseId)) {
             this.notFound.set(true);
             this.isLoading.set(false);
             return;
         }
-        this.isAdministrationView.set(this.courseId === 0);
+        this.isAdministrationView.set(courseId === 0);
         this.buildJobId = this.route.snapshot.paramMap.get('jobId') || '';
 
         if (!this.buildJobId) {
@@ -216,9 +217,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
     private loadBuildJob() {
         this.isLoading.set(true);
-        const observable = this.courseId
-            ? this.buildQueueService.getBuildJobByIdForCourse(this.courseId, this.buildJobId)
-            : this.buildQueueService.getBuildJobById(this.buildJobId);
+        const courseId = this.courseId();
+        const observable = courseId ? this.buildQueueService.getBuildJobByIdForCourse(courseId, this.buildJobId) : this.buildQueueService.getBuildJobById(this.buildJobId);
 
         observable.subscribe({
             next: (job: any) => {
@@ -241,7 +241,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     }
 
     private initWebsocketSubscription() {
-        const topic = this.courseId ? `/topic/courses/${this.courseId}/build-job/${this.buildJobId}` : `/topic/admin/build-job/${this.buildJobId}`;
+        const courseId = this.courseId();
+        const topic = courseId ? `/topic/courses/${courseId}/build-job/${this.buildJobId}` : `/topic/admin/build-job/${this.buildJobId}`;
 
         this.wsSubscription = this.websocketService.subscribe<BuildJob>(topic).subscribe((update: BuildJob) => {
             const wasFinished = this.isFinished();

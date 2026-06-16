@@ -162,11 +162,11 @@ describe('TextExercise Management Detail Component', () => {
             // THEN
             expect(exerciseServiceStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(comp.isExamExercise).toBe(false);
-            expect(comp.textExercise).toEqual(textExerciseWithCourse);
-            expect(comp.doughnutStats.participationsInPercent).toBe(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+            expect(comp.isExamExercise()).toBe(false);
+            expect(comp.textExercise()).toEqual(textExerciseWithCourse);
+            expect(comp.doughnutStats().participationsInPercent).toBe(100);
+            expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
         });
     });
 
@@ -199,8 +199,8 @@ describe('TextExercise Management Detail Component', () => {
             // THEN
             expect(exerciseServiceStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(comp.isExamExercise).toBe(true);
-            expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
+            expect(comp.isExamExercise()).toBe(true);
+            expect(comp.textExercise()).toEqual(textExerciseWithExerciseGroup);
         });
     });
 
@@ -225,8 +225,8 @@ describe('TextExercise Management Detail Component', () => {
 
             fixture.detectChanges();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeDefined();
@@ -245,8 +245,8 @@ describe('TextExercise Management Detail Component', () => {
 
             fixture.detectChanges();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeUndefined();

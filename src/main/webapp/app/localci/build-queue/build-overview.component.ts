@@ -148,13 +148,13 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     searchTerm?: string = undefined;
 
     /** Filter configuration for finished build jobs */
-    finishedBuildJobFilter: FinishedBuildJobFilter = new FinishedBuildJobFilter();
+    readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
 
     /**
      * Course ID from route params. When 0, operates in admin mode showing all courses.
      * When > 0, filters to show only build jobs for that specific course.
      */
-    courseId = 0;
+    readonly courseId = signal(0);
 
     /** Configuration for the pagination component */
     paginationConfig: PaginationConfig = {
@@ -163,18 +163,18 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     };
 
     /** ID of the build job whose logs are currently displayed in the modal */
-    displayedBuildJobId?: string;
+    readonly displayedBuildJobId = signal<string | undefined>(undefined);
 
     /** Raw build log content as a string for display and download */
-    rawBuildLogsString: string = '';
+    readonly rawBuildLogsString = signal('');
 
     /** Controls the visibility of the inline build logs dialog */
     buildLogsModalVisible = signal(false);
 
     ngOnInit() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
-        this.isAdministrationView.set(this.courseId === 0);
+        this.isAdministrationView.set(this.courseId() === 0);
         this.loadQueue();
         // Only load build agents in admin view - they are not visible in course management view
         if (this.isAdministrationView()) {
@@ -229,11 +229,12 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.forEach((subscription) => subscription.unsubscribe());
         this.websocketSubscriptions = [];
 
-        if (this.courseId) {
+        const courseId = this.courseId();
+        if (courseId) {
             // Course-specific mode: subscribe to course-scoped channels
-            const queuedJobsTopic = `/topic/courses/${this.courseId}/queued-jobs`;
-            const runningJobsTopic = `/topic/courses/${this.courseId}/running-jobs`;
-            const finishedJobsTopic = `/topic/courses/${this.courseId}/finished-jobs`;
+            const queuedJobsTopic = `/topic/courses/${courseId}/queued-jobs`;
+            const runningJobsTopic = `/topic/courses/${courseId}/running-jobs`;
+            const finishedJobsTopic = `/topic/courses/${courseId}/finished-jobs`;
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(queuedJobsTopic).subscribe((queuedBuildJobs: BuildJob[]) => {
                     this.queuedBuildJobs.set(queuedBuildJobs);
@@ -315,7 +316,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @returns true if search term or any filter is applied
      */
     private hasActiveFilters(): boolean {
-        return !!(this.searchTerm && this.searchTerm.length > 0) || (this.finishedBuildJobFilter?.numberOfAppliedFilters ?? 0) > 0;
+        return !!(this.searchTerm && this.searchTerm.length > 0) || (this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0) > 0;
     }
 
     /**
@@ -362,12 +363,13 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * ensuring the table shows data immediately on page load/refresh.
      */
     loadQueue() {
-        if (this.courseId) {
+        const courseId = this.courseId();
+        if (courseId) {
             // Course mode: fetch only jobs for this specific course
-            this.buildQueueService.getQueuedBuildJobsByCourseId(this.courseId).subscribe((queuedBuildJobs) => {
+            this.buildQueueService.getQueuedBuildJobsByCourseId(courseId).subscribe((queuedBuildJobs) => {
                 this.queuedBuildJobs.set(queuedBuildJobs);
             });
-            this.buildQueueService.getRunningBuildJobsByCourseId(this.courseId).subscribe((runningBuildJobs) => {
+            this.buildQueueService.getRunningBuildJobsByCourseId(courseId).subscribe((runningBuildJobs) => {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
             });
         } else {
@@ -386,8 +388,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @param buildJobId    the id of the build job to cancel
      */
     cancelBuildJob(buildJobId: string) {
-        if (this.courseId) {
-            this.buildQueueService.cancelBuildJobInCourse(this.courseId, buildJobId).subscribe();
+        const courseId = this.courseId();
+        if (courseId) {
+            this.buildQueueService.cancelBuildJobInCourse(courseId, buildJobId).subscribe();
         } else {
             this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
         }
@@ -397,8 +400,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * Cancel all queued build jobs
      */
     cancelAllQueuedBuildJobs() {
-        if (this.courseId) {
-            this.buildQueueService.cancelAllQueuedBuildJobsInCourse(this.courseId).subscribe();
+        const courseId = this.courseId();
+        if (courseId) {
+            this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe();
         } else {
             this.buildQueueService.cancelAllQueuedBuildJobs().subscribe();
         }
@@ -408,8 +412,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * Cancel all running build jobs
      */
     cancelAllRunningBuildJobs() {
-        if (this.courseId) {
-            this.buildQueueService.cancelAllRunningBuildJobsInCourse(this.courseId).subscribe();
+        const courseId = this.courseId();
+        if (courseId) {
+            this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe();
         } else {
             this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
         }
@@ -429,12 +434,13 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             searchTerm: this.searchTerm || '',
         };
 
-        if (this.courseId) {
+        const courseId = this.courseId();
+        if (courseId) {
             // Course mode: fetch finished jobs for this specific course
-            return this.buildQueueService.getFinishedBuildJobsByCourseId(this.courseId, paginationOptions, this.finishedBuildJobFilter);
+            return this.buildQueueService.getFinishedBuildJobsByCourseId(courseId, paginationOptions, this.finishedBuildJobFilter());
         } else {
             // Admin mode: fetch all finished jobs across all courses
-            return this.buildQueueService.getFinishedBuildJobs(paginationOptions, this.finishedBuildJobFilter);
+            return this.buildQueueService.getFinishedBuildJobs(paginationOptions, this.finishedBuildJobFilter());
         }
     }
 
@@ -482,14 +488,14 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @param buildJobId The id of the build job
      */
     viewBuildLogs(buildJobId: string | undefined): void {
-        this.rawBuildLogsString = '';
-        this.displayedBuildJobId = undefined;
+        this.rawBuildLogsString.set('');
+        this.displayedBuildJobId.set(undefined);
         if (buildJobId) {
             this.buildLogsModalVisible.set(true);
-            this.displayedBuildJobId = buildJobId;
+            this.displayedBuildJobId.set(buildJobId);
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
                 next: (buildLogs: string) => {
-                    this.rawBuildLogsString = buildLogs;
+                    this.rawBuildLogsString.set(buildLogs);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res, false);
@@ -501,10 +507,12 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * Download the build logs of a specific build job
      */
     downloadBuildLogs(): void {
-        if (this.displayedBuildJobId && this.rawBuildLogsString) {
-            const blob = new Blob([this.rawBuildLogsString], { type: 'text/plain' });
+        const rawBuildLogsString = this.rawBuildLogsString();
+        const displayedBuildJobId = this.displayedBuildJobId();
+        if (displayedBuildJobId && rawBuildLogsString) {
+            const blob = new Blob([rawBuildLogsString], { type: 'text/plain' });
             try {
-                downloadFile(blob, `${this.displayedBuildJobId}.log`);
+                downloadFile(blob, `${displayedBuildJobId}.log`);
             } catch (error) {
                 this.alertService.error('artemisApp.buildQueue.logs.downloadError');
             }
@@ -557,14 +565,14 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             closeOnEscape: true,
             dismissableMask: true,
             data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter,
+                finishedBuildJobFilter: this.finishedBuildJobFilter(),
                 buildAgentFilterable: true,
                 finishedBuildJobs: this.finishedBuildJobs(),
             },
         });
         dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
             if (result) {
-                this.finishedBuildJobFilter = result;
+                this.finishedBuildJobFilter.set(result);
                 this.loadFinishedBuildJobs();
             }
         });
@@ -587,8 +595,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      */
     navigateToJobDetail(jobId: string | undefined) {
         if (!jobId) return;
-        if (this.courseId) {
-            this.router.navigate(['/course-management', this.courseId, 'build-overview', jobId, 'job-details']);
+        const courseId = this.courseId();
+        if (courseId) {
+            this.router.navigate(['/course-management', courseId, 'build-overview', jobId, 'job-details']);
         } else {
             this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
         }
