@@ -3,7 +3,7 @@
         <div
             class="alert alert-info"
             jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation"
-            [translateValues]="{ timeZone: timeZoneUsedForDisplay }"
+            [translateValues]="{ timeZone: timeZoneUsedForDisplay() }"
         ></div>
     </div>
     <table class="table table-sm table-hover">
@@ -35,19 +35,19 @@
                     <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.locationTime"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (mixOfOfflineAndOfflineTutorialGroups) {
+                @if (mixOfOfflineAndOfflineTutorialGroups()) {
                     <th jhiSortBy="isOnline" id="online-column">
                         <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.isOnline"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
-                @if (mifOfDifferentLanguages) {
+                @if (mifOfDifferentLanguages()) {
                     <th jhiSortBy="language" id="language-column">
                         <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.language"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
-                @if (tutorialGroupsSplitAcrossMultipleCampuses) {
+                @if (tutorialGroupsSplitAcrossMultipleCampuses()) {
                     <th jhiSortBy="campus" id="campus-column">
                         <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.campus"></a>
                         <fa-icon [icon]="faSort" />
@@ -83,9 +83,9 @@
                     [showIdColumn]="showIdColumn()"
                     [showChannelColumn]="showChannelColumn()"
                     [timeZone]="timeZone()"
-                    [mifOfDifferentLanguages]="mifOfDifferentLanguages"
-                    [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups"
-                    [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses"
+                    [mifOfDifferentLanguages]="mifOfDifferentLanguages()"
+                    [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups()"
+                    [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses()"
                 ></tr>
             }
         </tbody>

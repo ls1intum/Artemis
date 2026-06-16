@@ -1,6 +1,6 @@
 <div class="legal-document-container">
     <div>
-        <h5 *adminTitleBarTitle id="legal-document-update-heading" class="mb-0" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}"></h5>
+        <h5 *adminTitleBarTitle id="legal-document-update-heading" class="mb-0" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey() }}"></h5>
         <jhi-markdown-editor-monaco
             [markdown]="legalDocument()?.text ?? ''"
             (markdownChange)="onContentChanged($event)"

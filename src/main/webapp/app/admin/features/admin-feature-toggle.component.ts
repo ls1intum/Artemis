@@ -1,6 +1,5 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { faExternalLinkAlt, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -67,8 +66,6 @@ type ModuleFeatureInfo = {
 export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
-    private readonly translateService = inject(TranslateService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
 
     /** Available feature toggles with their current state */
@@ -185,10 +182,6 @@ export class AdminFeatureToggleComponent implements OnInit {
                 documentationLink: this.moduleDocumentationLinks[feature],
             })),
         );
-
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.changeDetectorRef.markForCheck();
-        });
     }
 
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {

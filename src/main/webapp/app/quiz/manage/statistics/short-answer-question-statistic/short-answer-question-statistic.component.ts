@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -26,7 +26,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     declare question: ShortAnswerQuestion;
 
-    textParts: string[][];
+    readonly textParts = signal<string[][]>(undefined!);
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] = [];
@@ -55,7 +55,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     generateShortAnswerStructure() {
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
     }
 
     generateLettersForSolutions() {

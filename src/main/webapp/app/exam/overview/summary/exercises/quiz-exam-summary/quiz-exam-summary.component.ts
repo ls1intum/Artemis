@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -31,16 +31,16 @@ export class QuizExamSummaryComponent {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    selectedAnswerOptions = new Map<number, AnswerOption[]>();
-    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-    shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+    readonly selectedAnswerOptions = signal(new Map<number, AnswerOption[]>());
+    readonly dragAndDropMappings = signal(new Map<number, DragAndDropMapping[]>());
+    readonly shortAnswerSubmittedTexts = signal(new Map<number, ShortAnswerSubmittedText[]>());
 
     readonly quizParticipation = input<QuizParticipation>(undefined!);
     readonly submission = input<QuizSubmission>(undefined!);
     readonly resultsPublished = input<boolean>(undefined!);
     readonly exam = input<Exam>(undefined!);
 
-    result?: Result;
+    readonly result = signal<Result | undefined>(undefined);
 
     constructor() {
         effect(() => {
@@ -54,13 +54,14 @@ export class QuizExamSummaryComponent {
         this.updateViewFromSubmission();
         const quizParticipation = this.quizParticipation();
         if (quizParticipation?.studentParticipations) {
-            this.result =
+            this.result.set(
                 quizParticipation.studentParticipations.length > 0 && quizParticipation?.studentParticipations?.[0]?.submissions?.[0]?.results?.length
                     ? quizParticipation.studentParticipations[0].submissions[0].results[0]
-                    : undefined;
+                    : undefined,
+            );
         } else {
             const submission = this.submission();
-            this.result = submission?.results?.length ? submission.results[0] : undefined;
+            this.result.set(submission?.results?.length ? submission.results[0] : undefined);
         }
     }
 
@@ -73,9 +74,9 @@ export class QuizExamSummaryComponent {
     updateViewFromSubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+        const selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        const dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+        const shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
         const quizParticipation = this.quizParticipation();
         if (quizParticipation.quizQuestions && this.submission()) {
@@ -93,34 +94,39 @@ export class QuizExamSummaryComponent {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        this.selectedAnswerOptions.set(question.id!, selectedOptions ? selectedOptions : []);
+                        selectedAnswerOptions.set(question.id!, selectedOptions ? selectedOptions : []);
                     } else {
                         // not found, set to empty array
-                        this.selectedAnswerOptions.set(question.id!, []);
+                        selectedAnswerOptions.set(question.id!, []);
                     }
                 } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        this.dragAndDropMappings.set(question.id!, mappings ? mappings : []);
+                        dragAndDropMappings.set(question.id!, mappings ? mappings : []);
                     } else {
                         // not found, set to empty array
-                        this.dragAndDropMappings.set(question.id!, []);
+                        dragAndDropMappings.set(question.id!, []);
                     }
                 } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? submittedTexts : []);
+                        shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? submittedTexts : []);
                     } else {
                         // not found, set to empty array
-                        this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        shortAnswerSubmittedTexts.set(question.id!, []);
                     }
                 } else {
                     captureException('Unknown question type: ' + question);
                 }
             }, this);
         }
+
+        // Assign the freshly built Maps once so each signal notifies and the (zoneless) view re-renders.
+        this.selectedAnswerOptions.set(selectedAnswerOptions);
+        this.dragAndDropMappings.set(dragAndDropMappings);
+        this.shortAnswerSubmittedTexts.set(shortAnswerSubmittedTexts);
     }
 
     getScoreForQuizQuestion(quizQuestionId?: number) {
@@ -143,7 +149,7 @@ export class QuizExamSummaryComponent {
         const quizParticipation = this.quizParticipation();
         const exam = this.exam();
         if (exam && exam.publishResultsDate && quizParticipation.studentParticipations && quizParticipation.studentParticipations.length > 0) {
-            return dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
+            return dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result();
         }
         return false;
     }

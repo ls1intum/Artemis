@@ -6,20 +6,20 @@
         </h3>
         <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
     </div>
-    @if (!isBuilding && !rawBuildLogs.length) {
+    @if (!isBuilding() && !rawBuildLogs().length) {
         <div class="card-body">
             <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput"></p>
         </div>
     }
-    @if (isBuilding) {
+    @if (isBuilding()) {
         <div class="card-body">
             <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" animation="spin" /> <span jhiTranslate="artemisApp.editor.building"></span></p>
         </div>
     }
-    @if (!isBuilding && rawBuildLogs.length) {
+    @if (!isBuilding() && rawBuildLogs().length) {
         <div class="card-body build-output__content">
             <div class="buildoutput d-flex flex-column">
-                @for (logEntry of rawBuildLogs; track logEntry) {
+                @for (logEntry of rawBuildLogs(); track logEntry) {
                     <span class="build-output__entry">
                         <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>
                         <span class="build-output__entry-text">{{ logEntry.log }}</span>

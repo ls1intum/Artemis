@@ -77,7 +77,7 @@ export class SidebarComponent implements OnDestroy {
     paramSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
 
-    routeParams: Params;
+    readonly routeParams = signal<Params>({});
     private modalRef?: NgbModalRef;
 
     readonly faFilter = faFilter;
@@ -109,7 +109,7 @@ export class SidebarComponent implements OnDestroy {
             this.sidebarData();
             this.paramSubscription?.unsubscribe();
             this.paramSubscription = this.route.params?.subscribe((params) => {
-                this.routeParams = params;
+                this.routeParams.set(params);
             });
         });
     }

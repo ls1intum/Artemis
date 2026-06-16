@@ -313,8 +313,8 @@ describe('PostingContentPartComponent', () => {
 
             component.processContent();
 
-            expect(component.processedContentBeforeReference).toBe('Line 1\n\nLine 2\n\nLine 3');
-            expect(component.processedContentAfterReference).toBe('A\n\nB');
+            expect(component.processedContentBeforeReference()).toBe('Line 1\n\nLine 2\n\nLine 3');
+            expect(component.processedContentAfterReference()).toBe('A\n\nB');
         });
 
         it('should not alter already correct line spacing', () => {

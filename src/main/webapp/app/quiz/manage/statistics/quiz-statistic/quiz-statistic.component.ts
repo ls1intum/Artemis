@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,7 +28,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
 
     label: string[] = [];
     backgroundColor: string[] = [];
@@ -92,8 +92,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
-        this.quizExercise = quiz;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quiz);
+        this.maxScore = calculateMaxScore(this.quizExercise());
         this.loadData();
     }
 
@@ -110,8 +110,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            const question = this.quizExercise.quizQuestions![i];
+        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
+            const question = this.quizExercise().quizQuestions![i];
             const statistic = question.quizQuestionStatistic!;
             const ratedCounter = statistic.ratedCorrectCounter!;
             const unratedCounter = statistic.unRatedCorrectCounter!;
@@ -124,8 +124,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         }
 
         // set Background for invalid questions = grey
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            if (this.quizExercise.quizQuestions![i].invalid) {
+        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
+            if (this.quizExercise().quizQuestions![i].invalid) {
                 this.backgroundColor[i] = '#949494';
             }
         }
@@ -153,7 +153,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      * updates the chart by setting the data set and re-calculating the height
      */
     loadDataInDiagram(): void {
-        this.setData(this.quizExercise.quizPointStatistic!);
+        this.setData(this.quizExercise().quizPointStatistic!);
         this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }
