@@ -27,6 +27,14 @@ describe('TextAssessmentAreaComponent', () => {
 
     const submission = { id: 1, text: 'Test submission text' } as TextSubmission;
 
+    const newBlock = (startIndex: number, endIndex: number): TextBlock => {
+        const block = new TextBlock();
+        block.startIndex = startIndex;
+        block.endIndex = endIndex;
+        block.setTextFromSubmission(submission);
+        return block;
+    };
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TextAssessmentAreaComponent],
@@ -139,6 +147,46 @@ describe('TextAssessmentAreaComponent', () => {
         // Same DOM nodes => Angular reused the cards instead of recreating them (this would fail when tracking by the ref wrapper).
         expect(cardsAfter[0]).toBe(cardsBefore[0]);
         expect(cardsAfter[1]).toBe(cardsBefore[1]);
+    });
+
+    it('should reuse the existing cards and only add one when a block is inserted via a re-match', () => {
+        const block1 = newBlock(0, 4);
+        const block2 = newBlock(10, 14);
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(block2)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsBefore = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+        expect(cardsBefore).toHaveLength(2);
+
+        // A new block is inserted between the two (e.g. a manual block / split), re-wrapping the same block1/block2.
+        const inserted = newBlock(5, 9);
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(inserted), new TextBlockRef(block2)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsAfter = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+
+        expect(cardsAfter).toHaveLength(3);
+        // The two original cards are reused (same DOM nodes); only the inserted block gets a new card.
+        expect(cardsAfter).toContain(cardsBefore[0]);
+        expect(cardsAfter).toContain(cardsBefore[1]);
+    });
+
+    it('should reuse surviving cards and drop only the removed one when a block is deleted via a re-match', () => {
+        const block1 = newBlock(0, 4);
+        const block2 = newBlock(5, 9);
+        const block3 = newBlock(10, 14);
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(block2), new TextBlockRef(block3)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsBefore = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+        expect(cardsBefore).toHaveLength(3);
+
+        // The middle block is removed; the survivors are re-wrapped in fresh refs.
+        fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(block1), new TextBlockRef(block3)]);
+        fixture.changeDetectorRef.detectChanges();
+        const cardsAfter = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
+
+        expect(cardsAfter).toHaveLength(2);
+        // Both surviving cards are reused (their DOM nodes were among the original ones); the removed block's card is gone.
+        expect(cardsBefore).toContain(cardsAfter[0]);
+        expect(cardsBefore).toContain(cardsAfter[1]);
     });
 
     it('should remove TextBlockRef if text block is deleted', () => {
