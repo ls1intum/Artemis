@@ -116,12 +116,14 @@ hr {
     padding: 0;
     overflow: hidden;
 
-    // 2px outline on right, top, and bottom (left keeps the default 1px alongside the purple stripe).
-    border-right-width: 2px;
-    border-top-width: 2px;
-    border-bottom-width: 2px;
+    // Purple stripe across the TOP of the group — marking it as an exercise with several variants, using the
+    // purple from the instructor variant-generation view. Placed on the container's top border so it spans the
+    // full width and both rounded top corners match (the rest of the outline stays 1px grey).
+    border-top: 5px solid var(--bs-purple, #6f42c1);
 
     // No gap above the exercises; a 2px divider line stands in for the header tile's missing bottom border.
+    // This divider stays at 2px to clearly separate the header from the first exercise; the rest of the
+    // group outline and the tile dividers are 1px.
     .sidebar-group-content {
         margin-top: 0;
         border-top: 2px solid var(--bs-border-color);
@@ -142,11 +144,26 @@ hr {
     }
 }
 
-// Purple stripe down the left of the group header — marking it as an exercise with several variants,
-// mirroring how exercises are marked with a difficulty stripe (same 5px left border, recoloured to the
-// purple used for variant generation in the instructor view). jhiSidebarCard renders the header card as a
-// sibling of the (empty) header anchor, so it is the only medium card that is a *direct* child of the
-// connected group; the nested variant cards keep their own difficulty stripes.
+// The group header card carries the variant-group accent: a very light purple tint, and its 5px left
+// difficulty-stripe slot is hidden (transparent) so the header text stays aligned with the nested exercise
+// tiles while showing no competing left stripe. The purple top stripe itself lives on the connected
+// container's top border above. jhiSidebarCard renders the header card as a sibling of the (empty) header
+// anchor, so it is the only medium card that is a *direct* child of the connected group; the nested variant
+// cards keep their difficulty stripes.
 :host ::ng-deep .sidebar-group--connected > jhi-medium-sidebar-card .border-start.border-secondary {
-    border-left-color: var(--bs-purple, #6f42c1) !important;
+    border-left-color: transparent !important;
+
+    // Very light purple tint as a vertical gradient: a touch stronger just under the top stripe, fading into the
+    // module background. Blended via color-mix so it adapts to light/dark themes (flat tint is the fallback).
+    background-color: color-mix(in srgb, var(--bs-purple, #6f42c1) 4%, var(--module-bg)) !important;
+    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--bs-purple, #6f42c1) 12%, var(--module-bg)), var(--module-bg)) !important;
+
+    // Slightly deeper gradient on hover.
+    &:hover {
+        background-image: linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--bs-purple, #6f42c1) 20%, var(--module-bg)),
+            color-mix(in srgb, var(--bs-purple, #6f42c1) 5%, var(--module-bg))
+        ) !important;
+    }
 }
