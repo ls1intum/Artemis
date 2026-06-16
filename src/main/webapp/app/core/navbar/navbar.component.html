@@ -98,6 +98,13 @@
                 {{ version() }}
             </div>
         </a>
+        @if (currentCourse(); as course) {
+            <div class="mx-2">|</div>
+            <a class="navbar-course-link d-flex gap-2 align-items-center" [routerLink]="getCourseLink(course.id)" (click)="collapseNavbar()" [title]="course.title">
+                <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIconPath, courseTitle: course.title }" />
+                <div id="test-course-title" class="navbar-course-title fs-small fw-medium">{{ course.title }}</div>
+            </a>
+        }
         <div class="indicators">
             <jhi-connection-warning class="align-self-center" />
             <jhi-loading-notification class="align-self-center" />
@@ -124,16 +131,6 @@
             @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
                 <li class="nav-item">
                     <jhi-global-search-navbar />
-                </li>
-            }
-            @if (currAccount() && !isExamActive() && !isExamStarted()) {
-                <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                    <a class="nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
-                        <span>
-                            <fa-icon [icon]="faThLarge" />
-                            <span jhiTranslate="global.menu.overview"></span>
-                        </span>
-                    </a>
                 </li>
             }
             <li *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
@@ -170,6 +167,17 @@
         }
     </div>
 </nav>
+<ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
+    @if (courseImage) {
+        <div class="navbar-course-image d-flex align-items-center justify-content-center">
+            <jhi-image [src]="courseImage" />
+        </div>
+    } @else {
+        <div class="course-circle d-flex align-items-center justify-content-center">
+            <span>{{ courseTitle | slice: 0 : 1 }}</span>
+        </div>
+    }
+</ng-template>
 <jhi-system-notification />
 <div class="breadcrumb-container">
     @if (!isExamStarted() && !isExamActive() && breadcrumbs().length > 0) {
