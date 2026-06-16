@@ -242,17 +242,18 @@ public class Lti13Service {
             }
 
             String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+            Double maxPoints = participation.getExercise().getMaxPoints();
 
             launches.forEach(launch -> {
                 LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
                 ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
-                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
+                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore(), maxPoints);
 
             });
         });
     }
 
-    protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
+    protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score, Double maxPoints) {
         String scoreLineItemUrl = getScoresUrl(launch.getScoreLineItemUrl());
         if (scoreLineItemUrl == null) {
             return;
@@ -269,7 +270,7 @@ public class Lti13Service {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
             headers.setBearerAuth(token);
-            String body = getScoreBody(launch.getSub(), comment, score);
+            String body = getScoreBody(launch.getSub(), comment, score, maxPoints);
             HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
@@ -292,7 +293,23 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
-    private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
+    /**
+     * Builds the LTI AGS score body JSON.
+     * <p>
+     * Per the LTI AGS v2.0 spec (§ scoreGiven and scoreMaximum), {@code scoreGiven} is the
+     * numerator and {@code scoreMaximum} the denominator of the achieved score — neither is a
+     * relative/percentage value on its own. Artemis stores {@code result.score} as a percentage
+     * (0–100), so we convert it to absolute points: {@code scoreGiven = score% / 100 * maxPoints},
+     * {@code scoreMaximum = maxPoints}. This lets LTI platforms (Moodle, OLAT, …) record the
+     * correct absolute grade without misinterpreting a percentage as a raw point value.
+     *
+     * @param userId    the LTI sub claim identifying the user
+     * @param comment   concatenated feedback detail texts
+     * @param score     relative score in percent (0–100) as stored in {@link Result#getScore()}
+     * @param maxPoints maximum achievable points of the exercise; falls back to 100 if null/≤ 0
+     * @return JSON string conforming to {@code application/vnd.ims.lis.v1.score+json}
+     */
+    private String getScoreBody(String userId, String comment, Double score, Double maxPoints) throws JsonProcessingException {
         ObjectMapper objectMapper = JsonObjectMapper.get();
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.put("userId", userId);
@@ -300,8 +317,12 @@ public class Lti13Service {
         requestBody.put("activityProgress", "Submitted");
         requestBody.put("gradingProgress", "FullyGraded");
         requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
+
+        double effectiveMaxPoints = (maxPoints != null && maxPoints > 0) ? maxPoints : 100D;
+        double scoreGiven = score / 100.0 * effectiveMaxPoints;
+
+        requestBody.put("scoreGiven", scoreGiven);
+        requestBody.put("scoreMaximum", effectiveMaxPoints);
         return objectMapper.writeValueAsString(requestBody);
     }
 
