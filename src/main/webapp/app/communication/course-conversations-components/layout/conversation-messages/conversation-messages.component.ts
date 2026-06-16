@@ -138,6 +138,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     accountService = inject(AccountService);
 
     constructor() {
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effect()s: the first three react to
+        // rendered view children / focus inputs to perform DOM side effects (scroll, highlight, requestAnimationFrame)
+        // — exactly what effect() is for. The last one re-runs the imperative setPosts() (which filters, reverses,
+        // re-groups, and may fetch forwarded messages over HTTP, and is also driven from the metis subscription), so it
+        // cannot be expressed as a computed().
         effect(() => {
             const focusPostIdValue = this.focusPostId();
             const openThreadOnFocusValue = this.openThreadOnFocus();

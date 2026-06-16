@@ -88,7 +88,13 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     constructor() {
         super();
         this.course.set(this.metisService.getCourse());
-        // Track posting signal changes (replaces ngOnChanges)
+        // Normalise the bound posting to an AnswerPost instance whenever it changes.
+        //
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
+        // `model()` from PostingDirective, and consumers (and the spec) rely on `posting()` itself being an AnswerPost
+        // instance — so this cannot become a `computed()`/`linkedSignal()` without breaking the two-way contract. The
+        // read+write of the same signal is deliberately defused: the write runs inside `untracked()` and only fires
+        // when the value is not already an AnswerPost, so it self-terminates after one pass (no loop).
         effect(() => {
             this.posting();
             untracked(() => {
