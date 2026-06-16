@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./rating.component.scss'],
     imports: [TranslateDirective, StarRatingComponent],
 })
-export class RatingComponent implements OnInit {
+export class RatingComponent {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
@@ -25,10 +25,11 @@ export class RatingComponent implements OnInit {
     participation = input.required<StudentParticipation>();
 
     constructor() {
-        // Replaces ngOnChanges: reload the rating whenever the result changes to a *different* id. Tracks result();
-        // previousResultId guards against reloading when the result reference changes but its id does not (the same
-        // guard the former hook applied). The reload runs untracked so participation()/account reads inside
-        // loadRating() are not themselves triggers.
+        // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
+        // result changes to a *different* id. The effect's first run handles the initial load (so a separate ngOnInit
+        // is no longer needed — it would only duplicate the request). previousResultId guards against reloading when
+        // the result reference changes but its id does not (the same guard the former hook applied). The reload runs
+        // untracked so participation()/account reads inside loadRating() are not themselves triggers.
         effect(() => {
             const result = this.result();
             untracked(() => {
@@ -38,10 +39,6 @@ export class RatingComponent implements OnInit {
                 }
             });
         });
-    }
-
-    ngOnInit(): void {
-        this.loadRating();
     }
 
     loadRating() {

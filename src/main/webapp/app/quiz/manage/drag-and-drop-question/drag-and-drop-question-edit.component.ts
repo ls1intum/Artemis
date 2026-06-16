@@ -209,10 +209,14 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             });
         });
 
-        // Replaces the ngOnChanges filePool handling: register preview paths for any newly provided files. Tracks
-        // filePool(); the update is idempotent (only adds missing entries), so reacting to filePool() changes suffices.
+        // Replaces the ngOnChanges filePool handling: register preview paths for any newly provided files. The former
+        // hook ran this on *every* ngOnChanges (it was outside the `changes.filePool` guard), which is how it picked up
+        // in-place `fileMap` mutations that co-occur with a question change (e.g. an Apollon import populates the shared
+        // Map without changing its reference). We therefore also track question() so the (idempotent) sync re-runs on
+        // those updates; reacting to filePool() alone would miss same-reference Map mutations.
         effect(() => {
             const filePool = this.filePool();
+            this.question();
             untracked(() => {
                 if (!filePool || filePool.size === 0) {
                     return;

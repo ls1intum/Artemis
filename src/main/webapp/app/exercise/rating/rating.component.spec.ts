@@ -67,7 +67,8 @@ describe('RatingComponent', () => {
     it('should get rating', () => {
         const getRatingSpy = vi.spyOn(ratingService, 'getRating');
 
-        ratingComponent.ngOnInit();
+        // The constructor effect loads the rating on the initial binding (replaces the former ngOnInit).
+        ratingComponentFixture.detectChanges();
 
         expect(getRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.result()?.id).toBe(89);
@@ -77,7 +78,7 @@ describe('RatingComponent', () => {
         const getRatingSpy = vi.spyOn(ratingService, 'getRating');
         ratingComponentFixture.componentRef.setInput('result', undefined);
 
-        ratingComponent.ngOnInit();
+        ratingComponentFixture.detectChanges();
 
         expect(getRatingSpy).not.toHaveBeenCalled();
     });
@@ -86,13 +87,13 @@ describe('RatingComponent', () => {
         const getRatingSpy = vi.spyOn(ratingService, 'getRating');
         ratingComponentFixture.componentRef.setInput('participation', undefined);
 
-        ratingComponent.ngOnInit();
+        ratingComponentFixture.detectChanges();
 
         expect(getRatingSpy).not.toHaveBeenCalled();
     });
 
     it('should create new local rating', () => {
-        ratingComponent.ngOnInit();
+        ratingComponentFixture.detectChanges();
 
         expect(ratingComponent.rating()).toBe(0);
     });
@@ -100,15 +101,15 @@ describe('RatingComponent', () => {
     it('should set rating received from server', () => {
         vi.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
 
-        ratingComponent.ngOnInit();
+        ratingComponentFixture.detectChanges();
 
         expect(ratingComponent.rating()).toBe(1);
     });
 
-    it('should call loadRating on ngOnInit', () => {
+    it('should load the rating on init', () => {
         const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
 
-        ratingComponent.ngOnInit();
+        ratingComponentFixture.detectChanges();
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
     });
