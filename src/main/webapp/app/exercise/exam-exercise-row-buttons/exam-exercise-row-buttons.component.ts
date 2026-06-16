@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -65,10 +65,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
 
-    localCIEnabled = true;
+    readonly localCIEnabled = signal(true);
 
     ngOnInit(): void {
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
     }
 
     /**

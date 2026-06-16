@@ -877,8 +877,8 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
         fixture.detectChanges();
 
-        const selectableSettingPresets = (component as any).selectableSettingPresets;
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectableSettingPresets = (component as any).selectableSettingPresets();
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectableSettingPresets).toBeDefined();
         expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
@@ -894,7 +894,7 @@ describe('CourseOverviewComponent', () => {
 
         component.presetSelected(2);
 
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectedSettingPreset).toBeDefined();
         expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
@@ -907,7 +907,7 @@ describe('CourseOverviewComponent', () => {
 
         component.presetSelected(0);
 
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectedSettingPreset).toBeUndefined();
         expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
@@ -927,7 +927,7 @@ describe('CourseOverviewComponent', () => {
         (component as any).settingInfo = mockSettingInfo;
         (component as any).initializeCourseNotificationValues();
 
-        expect((component as any).selectableSettingPresets).toBeDefined();
-        expect((component as any).selectedSettingPreset).toBeDefined();
+        expect((component as any).selectableSettingPresets()).toBeDefined();
+        expect((component as any).selectedSettingPreset()).toBeDefined();
     });
 });

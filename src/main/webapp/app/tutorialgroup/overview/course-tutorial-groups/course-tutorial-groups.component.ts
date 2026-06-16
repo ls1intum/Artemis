@@ -58,11 +58,11 @@ export class CourseTutorialGroupsComponent {
     tutorialLectures = signal<Lecture[]>([]);
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
     constructor() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
+        this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
 
         effect(() => {
             const courseId = this.courseId();
@@ -86,8 +86,8 @@ export class CourseTutorialGroupsComponent {
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
-        this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed);
+        this.isCollapsed.update((collapsed) => !collapsed);
+        this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
     }
 
     private setTutorialGroupsAndTutorialLectures(courseId: number) {

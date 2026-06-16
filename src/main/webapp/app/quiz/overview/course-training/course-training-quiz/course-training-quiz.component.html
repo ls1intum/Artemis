@@ -1,7 +1,14 @@
 <div>
     @if (questionsLoaded()) {
         @if (!isRated()) {
-            <p-dialog [(visible)]="showUnratedConfirmation" [modal]="true" [closable]="false" [draggable]="false" [style]="{ width: '450px' }">
+            <p-dialog
+                [visible]="showUnratedConfirmation()"
+                (visibleChange)="showUnratedConfirmation.set($event)"
+                [modal]="true"
+                [closable]="false"
+                [draggable]="false"
+                [style]="{ width: '450px' }"
+            >
                 <ng-template pTemplate="header">
                     <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
                 </ng-template>
@@ -23,40 +30,40 @@
             @if (question.type === MULTIPLE_CHOICE) {
                 <jhi-multiple-choice-question
                     [question]="question"
-                    [selectedAnswerOptions]="selectedAnswerOptions"
-                    (selectedAnswerOptionsChange)="selectedAnswerOptions = $event"
+                    [selectedAnswerOptions]="selectedAnswerOptions()"
+                    (selectedAnswerOptionsChange)="selectedAnswerOptions.set($event)"
                     [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
                 />
             }
             @if (question.type === SHORT_ANSWER) {
                 <jhi-short-answer-question
                     [question]="question"
-                    [submittedTexts]="shortAnswerSubmittedTexts"
-                    (submittedTextsChange)="shortAnswerSubmittedTexts = $event"
+                    [submittedTexts]="shortAnswerSubmittedTexts()"
+                    (submittedTextsChange)="shortAnswerSubmittedTexts.set($event)"
                     [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
                     [forceSampleSolution]="false"
                 />
             }
             @if (question.type === DRAG_AND_DROP) {
                 <jhi-drag-and-drop-question
                     [question]="question"
-                    [mappings]="dragAndDropMappings"
-                    (mappingsChange)="dragAndDropMappings = $event"
+                    [mappings]="dragAndDropMappings()"
+                    (mappingsChange)="dragAndDropMappings.set($event)"
                     [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
+                    [showResult]="showingResult()"
+                    [score]="questionScores()"
                     [forceSampleSolution]="false"
                 />
             }
         }
-        @if (!submitted) {
+        @if (!submitted()) {
             <jhi-button id="submit-question" class="ms-2" (onClick)="onSubmit()" [title]="'artemisApp.exercise.submit'" />
         }
-        @if (submitted) {
+        @if (submitted()) {
             @if (isLastQuestion()) {
                 <jhi-button class="ms-2" (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.endTraining'" />
             } @else {

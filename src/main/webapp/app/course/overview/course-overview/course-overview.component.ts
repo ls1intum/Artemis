@@ -86,8 +86,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
 
-    protected selectableSettingPresets: CourseNotificationSettingPreset[];
-    protected selectedSettingPreset?: CourseNotificationSettingPreset;
+    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
+    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
     private info?: CourseNotificationInfo;
     private settingInfo?: CourseNotificationSettingInfo;
 
@@ -178,10 +178,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * Sets up selectable presets, and the currently selected preset.
      */
     private initializeCourseNotificationValues() {
-        this.selectableSettingPresets = this.info!.presets;
+        this.selectableSettingPresets.set(this.info!.presets);
 
-        this.selectedSettingPreset =
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+        this.selectedSettingPreset.set(
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
+        );
     }
 
     /**
@@ -190,9 +191,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * @param presetTypeId - The ID of the selected preset (0 for custom settings)
      */
     presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset);
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
 
-        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
+        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
     protected handleNavigationEndActions() {

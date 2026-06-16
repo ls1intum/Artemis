@@ -588,7 +588,7 @@ describe('BuildQueueComponent', () => {
         const onClose = new Subject<FinishedBuildJobFilter | undefined>();
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         component.finishedBuildJobs.set(mockFinishedJobs);
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
+        component.finishedBuildJobFilter.set(new FinishedBuildJobFilter());
 
         component.openFilterModal();
 
