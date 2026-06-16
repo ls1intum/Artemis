@@ -7,6 +7,7 @@ import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
@@ -19,28 +20,21 @@ export class VcsRepositoryAccessLogViewComponent {
     private readonly alertService = inject(AlertService);
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
-    private readonly participationId = computed(() => {
-        const participationId = this.params().repositoryId;
-        if (participationId) {
-            return Number(participationId);
-        }
-        return undefined;
-    });
     private readonly exerciseId = computed(() => Number(this.params().exerciseId));
-    private readonly repositoryType = computed(() => String(this.params().repositoryType));
+    private readonly repositoryType = computed(() => String(this.params().repositoryType) as RepositoryType);
+    private readonly participationId = computed(() => {
+        if (this.repositoryType() !== RepositoryType.USER) {
+            return undefined;
+        }
+        const id = this.params().repositoryId;
+        return id ? Number(id) : undefined;
+    });
     private readonly fetchParams = computed(() => ({
         participationId: this.participationId(),
         exerciseId: this.exerciseId(),
         repositoryType: this.repositoryType(),
     }));
 
-    /**
-     * Access log entries for the current route. Replaces the former `effect(async … await …)` data fetch (an effect()
-     * misuse): the entries are derived reactively from the route params via a switchMap'd stream — fetching by
-     * participation when a participationId is present, otherwise by repository. On error we surface the alert and keep
-     * the previously loaded entries (`catchError → EMPTY` makes `toSignal` retain its last value), matching the former
-     * try/catch behaviour.
-     */
     protected readonly vcsAccessLogEntries = toSignal(
         toObservable(this.fetchParams).pipe(
             switchMap((params) =>

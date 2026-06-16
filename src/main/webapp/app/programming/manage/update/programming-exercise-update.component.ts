@@ -288,6 +288,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
+
         effect(
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {
@@ -532,12 +535,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Sets the values for the creation/update of a programming exercise
      */
     ngOnInit() {
-        // Restore the initial edit mode from local storage. This is a one-time read with no reactive dependency, so it
-        // lives in ngOnInit (it was previously a no-dependency constructor effect() — an effect() misuse). Runs on the
-        // first change detection, before the isSimpleMode-driven status-bar effect, just like the former init effect.
-        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
-
         this.isSaving.set(false);
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {

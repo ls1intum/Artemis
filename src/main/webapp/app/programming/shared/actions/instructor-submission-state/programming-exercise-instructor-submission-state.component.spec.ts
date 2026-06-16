@@ -174,7 +174,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
@@ -210,7 +210,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
@@ -245,7 +245,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
         getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
@@ -283,7 +283,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges(false);
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();

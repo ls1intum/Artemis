@@ -50,7 +50,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
             switchMap((exerciseId) =>
                 this.programmingSubmissionService.getSubmissionStateOfExercise(exerciseId).pipe(
                     map((buildState) => this.sumSubmissionStates(buildState)),
-                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
+                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 500ms.
                     debounceTime(500),
                 ),
             ),
