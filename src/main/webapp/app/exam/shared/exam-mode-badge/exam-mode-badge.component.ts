@@ -20,9 +20,9 @@ export class ExamModeBadgeComponent {
             return 'artemisApp.examManagement.testExam.realExam';
         }
         if (exam.testExamPracticeStartDate === undefined) {
-            return 'artemisApp.examManagement.testExam.testExamPractice';
+            return 'artemisApp.examManagement.testExam.testExam';
         }
-        return 'artemisApp.examManagement.testExam.testExamSimulationAndPractice';
+        return 'artemisApp.examManagement.testExam.testExamWithSimulation';
     });
 
     protected readonly isRealExam = computed(() => !this.exam().testExam);

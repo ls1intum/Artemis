@@ -262,17 +262,23 @@
         @if (isSimulationAndPracticeExam()) {
             <div class="d-flex flex-column">
                 <b
-                    jhiTranslate="artemisApp.examManagement.checklist.testExam.simulationPlannedFromTo"
+                    jhiTranslate="artemisApp.examManagement.checklist.testExam.testExamWithSimulationPlannedFromTo"
                     [translateValues]="{
+                        mode: 'artemisApp.examManagement.testExam.testExamWithSimulation' | artemisTranslate,
                         from: exam().startDate! | artemisDate,
-                        to: testExamSimulationEndDate()! | artemisDate,
+                        to: exam().endDate! | artemisDate,
                     }"
                 ></b>
                 <b
-                    jhiTranslate="artemisApp.examManagement.checklist.testExam.practicePlannedFromTo"
+                    jhiTranslate="artemisApp.examManagement.checklist.testExam.simulationEndsAt"
                     [translateValues]="{
-                        from: exam().testExamPracticeStartDate! | artemisDate,
-                        to: exam().endDate! | artemisDate,
+                        date: testExamSimulationEndDate()! | artemisDate,
+                    }"
+                ></b>
+                <b
+                    jhiTranslate="artemisApp.examManagement.checklist.testExam.practiceStartsAt"
+                    [translateValues]="{
+                        date: exam().testExamPracticeStartDate! | artemisDate,
                     }"
                 ></b>
             </div>

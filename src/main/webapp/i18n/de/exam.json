@@ -545,22 +545,10 @@
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
-                "testExamSimulation": "Testklausur - Simulation",
-                "testExamPractice": "Testklausur - Übung",
-                "testExamSimulationAndPractice": "Testklausur - Simulation und Übung",
+                "testExamWithSimulation": "Testklausur mit Simulation",
+                "testExamWithSimulationCheckboxTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden zum konfigurierten Beginn der Übungsphase freigeschaltet.",
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
-                "modeLabel": "Art der Testklausur",
-                "modes": {
-                    "simulation": "Simulation",
-                    "practice": "Übung",
-                    "simulationAndPractice": "Simulation und Übung"
-                },
-                "modeExplanation": {
-                    "simulation": "Studierende können während des konfigurierten Bearbeitungsfensters einen Live-Versuch starten. Danach sind keine weiteren Versuche verfügbar.",
-                    "practice": "Studierende können während des konfigurierten Bearbeitungsfensters wiederholt üben.",
-                    "simulationAndPractice": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden zum konfigurierten Beginn der Übungsphase freigeschaltet."
-                },
                 "simulationEndDate": "Ende der Simulationszeit",
                 "practiceStartDate": "Beginn der Übungszeit",
                 "practiceStartDateTooltip": "Datum und Uhrzeit, ab wann wiederholbare Übungsversuche nach der Simulationsphase verfügbar sind.",
@@ -772,8 +760,9 @@
                     "detailsHintForTestExams": "Für Testklausuren gilt",
                     "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
                     "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht",
-                    "simulationPlannedFromTo": "Die Simulationsphase ist vom {{ from }} bis {{ to }} geplant",
-                    "practicePlannedFromTo": "Die Übungsphase ist vom {{ from }} bis {{ to }} geplant"
+                    "testExamWithSimulationPlannedFromTo": "{{ mode }} ist vom {{ from }} bis {{ to }} geplant",
+                    "simulationEndsAt": "Die Simulation endet am {{ date }}",
+                    "practiceStartsAt": "Die Übung beginnt am {{ date }}"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
@@ -975,8 +964,6 @@
                     "numberOfStudents": "Anzahl der Studierenden",
                     "startedExams": "Begonnene Testklausuren",
                     "submittedExams": "Abgegebene Testklausuren",
-                    "simulationPhase": "Simulation",
-                    "practicePhase": "Übung",
                     "conductionSuspended": "Studierende können keine Testklausuren starten!"
                 }
             },

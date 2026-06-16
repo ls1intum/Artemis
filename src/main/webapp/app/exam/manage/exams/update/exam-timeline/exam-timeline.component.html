@@ -4,7 +4,8 @@
         @if (isTestExam()) {
             <div class="flex items-center">
                 <p-checkbox inputId="simulation-phase-checkbox" name="simulation-phase-checkbox" [(ngModel)]="isSimulationPhaseChecked" [binary]="true" />
-                <label for="simulation-phase-checkbox" class="ml-2"> Simulation phase checkbox </label>
+                <label for="simulation-phase-checkbox" class="ml-2" jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"></label>
+                <jhi-help-icon class="ml-1" text="artemisApp.examManagement.testExam.testExamWithSimulationCheckboxTooltip" />
             </div>
         }
         <div class="d-flex flex-column">

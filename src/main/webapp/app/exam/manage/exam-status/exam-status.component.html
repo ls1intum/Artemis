@@ -114,13 +114,11 @@
                 @if (isSimulationAndPracticeExam()) {
                     <div>
                         <b>
-                            {{ 'artemisApp.examStatus.conduction.testExam.simulationPhase' | artemisTranslate }}: {{ exam().startDate | artemisDate }} -
-                            {{ testExamSimulationEndDate() | artemisDate }}
-                        </b>
-                        <b>
-                            {{ 'artemisApp.examStatus.conduction.testExam.practicePhase' | artemisTranslate }}: {{ exam().testExamPracticeStartDate | artemisDate }} -
+                            {{ 'artemisApp.examManagement.testExam.testExamWithSimulation' | artemisTranslate }}: {{ exam().startDate | artemisDate }} -
                             {{ exam().endDate | artemisDate }}
                         </b>
+                        <b>{{ 'artemisApp.examManagement.testExam.simulationEndDate' | artemisTranslate }}: {{ testExamSimulationEndDate() | artemisDate }}</b>
+                        <b>{{ 'artemisApp.examManagement.testExam.practiceStartDate' | artemisTranslate }}: {{ exam().testExamPracticeStartDate | artemisDate }}</b>
                     </div>
                 } @else {
                     <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>

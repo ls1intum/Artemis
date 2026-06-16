@@ -545,22 +545,10 @@
             "testExam": {
                 "realExam": "Exam",
                 "testExam": "Test Exam",
-                "testExamSimulation": "Test Exam - Simulation",
-                "testExamPractice": "Test Exam - Practice",
-                "testExamSimulationAndPractice": "Test Exam - Simulation and Practice",
+                "testExamWithSimulation": "Test Exam with Simulation",
+                "testExamWithSimulationCheckboxTooltip": "Students can start one live attempt first. Repeatable practice attempts open at the configured practice start time.",
                 "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
-                "modeLabel": "Test exam type",
-                "modes": {
-                    "simulation": "Simulation",
-                    "practice": "Practice",
-                    "simulationAndPractice": "Simulation and Practice"
-                },
-                "modeExplanation": {
-                    "simulation": "Students can start one live attempt during the configured working window. No repeat attempts are available afterwards.",
-                    "practice": "Students can start repeatable practice attempts during the configured working window.",
-                    "simulationAndPractice": "Students can start one live attempt first. Repeatable practice attempts open at the configured practice start time."
-                },
                 "simulationEndDate": "End of the simulation time",
                 "practiceStartDate": "Start of practice time",
                 "practiceStartDateTooltip": "The date and time when repeatable practice attempts become available after the simulation phase.",
@@ -772,8 +760,9 @@
                     "detailsHintForTestExams": "For test exams, the following applies",
                     "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
                     "instantResults": "The results are automatically published once a student submits the exam",
-                    "simulationPlannedFromTo": "The simulation phase is planned from {{ from }} to {{ to }}",
-                    "practicePlannedFromTo": "The practice phase is planned from {{ from }} to {{ to }}"
+                    "testExamWithSimulationPlannedFromTo": "{{ mode }} is planned from {{ from }} to {{ to }}",
+                    "simulationEndsAt": "Simulation ends at {{ date }}",
+                    "practiceStartsAt": "Practice starts at {{ date }}"
                 },
                 "tableItem": {
                     "register": "Register students for the exam",
@@ -975,8 +964,6 @@
                     "numberOfStudents": "Number of students",
                     "startedExams": "Started Test Exams",
                     "submittedExams": "Submitted Test Exams",
-                    "simulationPhase": "Simulation",
-                    "practicePhase": "Practice",
                     "conductionSuspended": "Students cannot start a Test Exam!"
                 }
             },
