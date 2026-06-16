@@ -708,6 +708,98 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    describe('resume from local storage after a failed save', () => {
+        const buildResumeStudentExam = () => {
+            const exam = new Exam();
+            exam.startDate = dayjs().subtract(10, 'minutes');
+            exam.gracePeriod = 180;
+
+            const quizExercise = new QuizExercise(new Course(), undefined);
+            quizExercise.id = 11;
+            const quizParticipation = new StudentParticipation();
+            const quizSubmission = new QuizSubmission();
+            quizSubmission.isSynced = false; // entered but not yet saved to the server (e.g. a save failed during an outage)
+            quizParticipation.submissions = [quizSubmission];
+            quizExercise.studentParticipations = [quizParticipation];
+
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 12;
+            const textParticipation = new StudentParticipation();
+            const textSubmission = new TextSubmission();
+            textSubmission.isSynced = false;
+            textParticipation.submissions = [textSubmission];
+            textExercise.studentParticipations = [textParticipation];
+
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            modelingExercise.id = 13;
+            const modelingParticipation = new StudentParticipation();
+            const modelingSubmission = new ModelingSubmission();
+            modelingSubmission.isSynced = false;
+            modelingParticipation.submissions = [modelingSubmission];
+            modelingExercise.studentParticipations = [modelingParticipation];
+
+            const studentExam = new StudentExam();
+            studentExam.exam = exam;
+            studentExam.workingTime = 3600;
+            studentExam.exercises = [quizExercise, textExercise, modelingExercise];
+            return { studentExam, quizSubmission, textSubmission, modelingSubmission };
+        };
+
+        it('should re-send restored but not-yet-saved quiz, text and modeling answers when resuming', async () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+        });
+
+        it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam); // fresh start: resumedFromFailedSave defaults to false
+
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(modelingSpy).not.toHaveBeenCalled();
+            expect(quizSpy).not.toHaveBeenCalled();
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(textSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+        });
+
+        it('should inform the student that restored answers are being saved when resuming from local storage', () => {
+            const studentExam = new StudentExam();
+            studentExam.exam = new Exam();
+            studentExam.id = 1;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+            const localStudentExam = new StudentExam();
+            localStudentExam.exam = studentExam.exam;
+            localStudentExam.exam.startDate = dayjs().subtract(10, 'minutes');
+            localStudentExam.id = 2;
+            localStudentExam.workingTime = 3600;
+            localStudentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localStudentExam));
+            const infoSpy = vi.spyOn(alertService, 'info');
+
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+
+            expect(infoSpy).toHaveBeenCalledWith('artemisApp.examParticipation.answersRestoredFromLocalStorage');
+        });
+    });
+
     it('should submit exam when end confirmed', () => {
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;

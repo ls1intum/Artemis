@@ -318,8 +318,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     /**
      * exam start text confirmed and name entered, start button clicked and exam active
+     *
+     * @param studentExam            the student exam to start
+     * @param resumedFromFailedSave  true when resuming from the locally cached exam after a failed save. In that case the
+     *                               locally cached sync state of each submission is kept (so not-yet-saved answers stay
+     *                               isSynced=false and are re-sent) instead of marking everything as synced.
      */
-    examStarted(studentExam: StudentExam) {
+    examStarted(studentExam: StudentExam, resumedFromFailedSave = false) {
         if (studentExam) {
             // Keep working time
             studentExam.workingTime = this.studentExam()?.workingTime ?? studentExam.workingTime;
@@ -348,7 +353,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
                             participation.submissions.forEach((submission) => {
-                                submission.isSynced = true;
+                                // When resuming from local storage after a failed save, keep the locally cached sync state:
+                                // a submission that was not yet saved to the server must stay isSynced=false so the autosave
+                                // re-sends it. Unconditionally marking everything synced here would silently drop those answers.
+                                if (!resumedFromFailedSave) {
+                                    submission.isSynced = true;
+                                }
                                 if (submission.submitted == undefined) {
                                     // only set submitted to false if the value was not specified before
                                     submission.submitted = false;
@@ -378,6 +388,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.examStartConfirmed.set(true);
         this.startAutoSaveTimer();
+        if (resumedFromFailedSave) {
+            // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
+            // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
+            // retried by the autosave timer.
+            this.triggerSave(false);
+        }
     }
 
     /**
@@ -670,7 +686,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
                         this.studentExam.set(localExam);
                         this.loadingExam.set(false);
-                        this.examStarted(this.studentExam());
+                        // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
+                        this.examStarted(this.studentExam(), true);
+                        // Inform the student that their previously entered answers were restored and are being saved,
+                        // so it is clear that nothing was lost when the page was reloaded.
+                        this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
                     }
                 });
             } else {

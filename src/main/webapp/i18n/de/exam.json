@@ -366,6 +366,7 @@
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
+            "answersRestoredFromLocalStorage": "Deine zuvor eingegebenen Antworten wurden von diesem Gerät wiederhergestellt und werden erneut gespeichert. Bitte überprüfe, ob deine Antworten vollständig sind.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
