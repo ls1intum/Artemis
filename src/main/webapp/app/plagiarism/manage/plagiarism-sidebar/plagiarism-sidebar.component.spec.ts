@@ -5,7 +5,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { SimpleChange } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
@@ -92,25 +91,14 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('should reset pagination on changes', () => {
-        const comparisons = [
-            { id: 1 } as PlagiarismComparison,
-            { id: 2 } as PlagiarismComparison,
-            { id: 3 } as PlagiarismComparison,
-            { id: 4 } as PlagiarismComparison,
-            { id: 5 } as PlagiarismComparison,
-            { id: 6 } as PlagiarismComparison,
-            { id: 7 } as PlagiarismComparison,
-            { id: 8 } as PlagiarismComparison,
-            { id: 9 } as PlagiarismComparison,
-            { id: 10 } as PlagiarismComparison,
-            { id: 11 } as PlagiarismComparison,
-            { id: 12 } as PlagiarismComparison,
-        ];
+        // submissionA/submissionB are populated so the rendered template (driven by detectChanges) can read studentLogin.
+        const comparisons = Array.from({ length: 12 }, (_, index) => ({ id: index + 1, submissionA: {}, submissionB: {} }) as PlagiarismComparison);
         const pagedComparisons = comparisons.slice(0, 10);
+
+        // The constructor effect resets paging whenever comparisons() changes (replaces the former ngOnChanges).
         fixture.componentRef.setInput('comparisons', comparisons);
-        comp.ngOnChanges({
-            comparisons: new SimpleChange([], comparisons, true),
-        });
+        fixture.detectChanges();
+
         expect(comp.currentPage()).toBe(0);
         expect(comp.numberOfPages()).toBe(2);
         expect(comp.pagedComparisons()).toEqual(pagedComparisons);

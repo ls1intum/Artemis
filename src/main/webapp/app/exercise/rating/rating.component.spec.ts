@@ -1,4 +1,4 @@
-import { Component, SimpleChange, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -114,38 +114,46 @@ describe('RatingComponent', () => {
     });
 
     it('should not set rating if result participation is not defined', () => {
-        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         ratingComponentFixture.componentRef.setInput('participation', undefined);
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
         vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        // First CD runs ngOnInit + the constructor effect once for the beforeEach result (id 89).
+        ratingComponentFixture.detectChanges();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
 
-        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+        // Effect reacts to the result id change (replaces the former ngOnChanges); loadRating returns early (no participation).
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+        ratingComponentFixture.detectChanges();
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating()).toBeUndefined();
     });
 
     it('should call loadRating when result changes', () => {
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
-        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        // First CD runs ngOnInit + the constructor effect once for the beforeEach result (id 89).
+        ratingComponentFixture.detectChanges();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
 
-        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+        // Effect reloads when the result id changes (replaces the former ngOnChanges).
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+        ratingComponentFixture.detectChanges();
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating()).toBe(2);
     });
 
     it('should not call loadRating if result ID remains the same', () => {
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
         vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
-        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+        // First CD runs ngOnInit + the effect once for result id 90 (previousResultId becomes 90).
+        ratingComponentFixture.detectChanges();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+
+        // A new result reference with the same id must NOT trigger a reload.
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+        ratingComponentFixture.detectChanges();
 
-        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 90 } as Result, { id: 90 } as Result, false) });
-
-        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
+        expect(loadRatingSpy).not.toHaveBeenCalled();
         expect(ratingComponent.rating()).toBe(2);
     });
 

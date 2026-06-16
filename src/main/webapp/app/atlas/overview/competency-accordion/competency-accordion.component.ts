@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, inject, input, output, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
@@ -28,7 +28,7 @@ export interface CompetencyAccordionToggleEvent {
     styleUrl: './competency-accordion.component.scss',
     imports: [FaIconComponent, NgbTooltip, NgbProgressbar, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe],
 })
-export class CompetencyAccordionComponent implements OnChanges {
+export class CompetencyAccordionComponent {
     private router = inject(Router);
 
     course = input<Course>();
@@ -60,15 +60,29 @@ export class CompetencyAccordionComponent implements OnChanges {
     protected readonly getMastery = getMastery;
     protected readonly round = round;
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.openedIndex && this.index() !== this.openedIndex()) {
-            this.open.set(false);
-        }
-        if (changes.metrics) {
-            this.setNextExercises();
-            this.setNextLessonUnits();
-            this.calculateProgressValues();
-        }
+    constructor() {
+        // Replaces the ngOnChanges 'openedIndex' branch: collapse this accordion whenever another one becomes the
+        // opened one. Tracks only openedIndex(); index() is read untracked so it is not itself a trigger.
+        effect(() => {
+            const openedIndex = this.openedIndex();
+            untracked(() => {
+                if (this.index() !== openedIndex) {
+                    this.open.set(false);
+                }
+            });
+        });
+
+        // Replaces the ngOnChanges 'metrics' branch: recompute the derived next-up lists and progress values whenever
+        // the metrics change. Tracks only metrics() (matching the former `if (changes.metrics)` guard); the
+        // recomputation reads course()/competency() and writes derived signals untracked.
+        effect(() => {
+            this.metrics();
+            untracked(() => {
+                this.setNextExercises();
+                this.setNextLessonUnits();
+                this.calculateProgressValues();
+            });
+        });
     }
 
     setNextExercises() {

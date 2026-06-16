@@ -26,7 +26,7 @@ import { of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { ElementRef, Signal, SimpleChanges, signal } from '@angular/core';
+import { ElementRef, Signal, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -102,18 +102,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should render pages when orderedPages changes', async () => {
         const spyRenderPages = vi.spyOn(component, 'renderPages').mockResolvedValue();
 
+        // The constructor effect re-renders whenever orderedPages() changes (replaces the former ngOnChanges).
         fixture.componentRef.setInput('orderedPages', mockOrderedPages);
-
-        const changes: SimpleChanges = {
-            orderedPages: {
-                currentValue: mockOrderedPages,
-                previousValue: [],
-                firstChange: false,
-                isFirstChange: () => false,
-            },
-        };
-
-        component.ngOnChanges(changes);
+        fixture.detectChanges();
 
         expect(spyRenderPages).toHaveBeenCalled();
     });
@@ -123,18 +114,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
         const spyUpdateCheckboxStates = vi.spyOn(component as any, 'updateCheckboxStates').mockImplementation(() => {});
 
+        // The constructor effect mirrors updatedSelectedPages() into selectedPages (replaces the former ngOnChanges).
         fixture.componentRef.setInput('updatedSelectedPages', updatedSelectedPages);
-
-        const changes: SimpleChanges = {
-            updatedSelectedPages: {
-                currentValue: updatedSelectedPages,
-                previousValue: new Set(),
-                firstChange: false,
-                isFirstChange: () => false,
-            },
-        };
-
-        component.ngOnChanges(changes);
+        fixture.detectChanges();
 
         expect(component.selectedPages()).toEqual(updatedSelectedPages);
         expect(spyUpdateCheckboxStates).toHaveBeenCalled();

@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, ViewEncapsulation, inject, input, signal } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
@@ -28,7 +28,7 @@ type FilesWithType = { [p: string]: FileType };
     encapsulation: ViewEncapsulation.None,
     imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
-export class TextSubmissionViewerComponent implements OnChanges {
+export class TextSubmissionViewerComponent {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
@@ -89,19 +89,24 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
     faExclamationTriangle = faExclamationTriangle;
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.plagiarismSubmission) {
-            const currentPlagiarismSubmission: PlagiarismSubmission = changes.plagiarismSubmission.currentValue;
-            if (!this.hideContent()) {
-                this.loading.set(true);
+    constructor() {
+        // Replaces ngOnChanges: (re)load the submission's files/content whenever the plagiarism submission changes.
+        // The load runs untracked so only plagiarismSubmission() retriggers it (hideContent()/exercise() are read at
+        // load time, not as triggers, mirroring the former `if (changes.plagiarismSubmission)` guard).
+        effect(() => {
+            const plagiarismSubmission = this.plagiarismSubmission();
+            untracked(() => {
+                if (plagiarismSubmission && !this.hideContent()) {
+                    this.loading.set(true);
 
-                if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
-                    this.loadProgrammingExercise(currentPlagiarismSubmission);
-                } else {
-                    this.loadTextExercise(currentPlagiarismSubmission);
+                    if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+                        this.loadProgrammingExercise(plagiarismSubmission);
+                    } else {
+                        this.loadTextExercise(plagiarismSubmission);
+                    }
                 }
-            }
-        }
+            });
+        });
     }
 
     /**

@@ -34,4 +34,29 @@ describe('FeedbackNodeComponent', () => {
 
         expect(component.feedbackItemGroup()).toBeDefined();
     });
+
+    it('should expand a group only when it is open', () => {
+        fixture.componentRef.setInput('feedbackItemNode', { members: [], credits: 0, open: false } as unknown as FeedbackGroup);
+        fixture.detectChanges();
+
+        expect(component.isGroupExpanded()).toBe(false);
+
+        component.toggleFeedbackItemGroupOpen();
+        expect(component.isGroupExpanded()).toBe(true);
+    });
+
+    it('should render every group expanded while printing, regardless of its open flag', () => {
+        // Replaces the former parent-side mutate-then-restore of group.open: printing is now a derived display state.
+        fixture.componentRef.setInput('feedbackItemNode', { members: [], credits: 0, open: false } as unknown as FeedbackGroup);
+        fixture.componentRef.setInput('isPrinting', true);
+        fixture.detectChanges();
+
+        expect(component.isGroupExpanded()).toBe(true);
+        // The underlying open flag is NOT mutated, so it collapses back to its previous state once printing ends.
+        expect(component.feedbackItemGroup().open).toBe(false);
+
+        fixture.componentRef.setInput('isPrinting', false);
+        fixture.detectChanges();
+        expect(component.isGroupExpanded()).toBe(false);
+    });
 });

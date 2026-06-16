@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { Range } from 'app/foundation/util/utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,9 +51,9 @@ describe('Plagiarism Run Details', () => {
         vi.spyOn(comp, 'updateChartDataSet');
         vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
-        comp.ngOnChanges({
-            plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
-        });
+        // The constructor effect rebuilds the chart whenever plagiarismResult() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
 
         expect(comp.updateChartDataSet).toHaveBeenCalledOnce();
         for (let i = 0; i < 10; i++) {
@@ -72,9 +72,9 @@ describe('Plagiarism Run Details', () => {
     it('sets BucketDTOs', () => {
         const filterComparisonsMock = vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
-        comp.ngOnChanges({
-            plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
-        });
+        // The constructor effect rebuilds the buckets whenever plagiarismResult() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
 
         expect(filterComparisonsMock).toHaveBeenCalledTimes(10);
         expect(comp.bucketDTOs).toHaveLength(10);

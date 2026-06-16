@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, computed, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Range, round } from 'app/foundation/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
@@ -31,7 +31,7 @@ interface SimilarityRangeComparisonStateDTO {
     templateUrl: './plagiarism-run-details.component.html',
     imports: [TranslateDirective, HelpIconComponent, ChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })
-export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
+export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective {
     private inspectorService = inject(PlagiarismInspectorService);
     private translateService = inject(TranslateService);
     private chartColorService = inject(ChartColorService);
@@ -92,13 +92,18 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
          */
         this.chartLabels = ['[0%-10%)', '[10%-20%)', '[20%-30%)', '[30%-40%)', '[40%-50%)', '[50%-60%)', '[60%-70%)', '[70%-80%)', '[80%-90%)', '[90%-100%]'];
         this.chartColors.set([...Array(8).fill(GraphColors.LIGHT_BLUE), ...Array(2).fill(GraphColors.RED)]);
-    }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.plagiarismResult) {
-            this.setBucketDTOs(changes.plagiarismResult.currentValue.comparisons || []);
-            this.updateChartDataSet(changes.plagiarismResult.currentValue.similarityDistribution || []);
-        }
+        // Replaces ngOnChanges: rebuild the chart buckets and dataset whenever the plagiarism result changes.
+        // The writes to bucketDTOs/chartEntries run untracked so only plagiarismResult() retriggers the effect.
+        effect(() => {
+            const plagiarismResult = this.plagiarismResult();
+            if (plagiarismResult) {
+                untracked(() => {
+                    this.setBucketDTOs(plagiarismResult.comparisons || []);
+                    this.updateChartDataSet(plagiarismResult.similarityDistribution || []);
+                });
+            }
+        });
     }
 
     /**
