@@ -77,8 +77,8 @@ describe('TeamsComponent', () => {
         // Make sure that all 3 teams were received for exercise
         expect(comp.teams()).toHaveLength(mockTeams.length);
 
-        // Check that ngx-datatable host element is rendered (via NO_ERRORS_SCHEMA)
-        const datatable = debugElement.query(By.css('jhi-data-table'));
+        // Check that jhi-table-view host element is rendered (via NO_ERRORS_SCHEMA)
+        const datatable = debugElement.query(By.css('jhi-table-view'));
         expect(datatable).not.toBeNull();
     });
 });

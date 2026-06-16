@@ -1,12 +1,10 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,16 +12,19 @@ import { FormsModule } from '@angular/forms';
 import { TeamsExportButtonComponent } from '../teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from '../teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from '../team-update-dialog/team-update-button.component';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
 import { TeamDeleteButtonComponent } from '../team-update-dialog/team-delete-button.component';
+import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { SelectButton } from 'primeng/selectbutton';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum FilterProp {
     ALL = 'all',
     OWN = 'own',
 }
+
+/** Team augmented with a pre-computed search string for student names and logins. */
+type TeamRow = Team & { studentsSearchText: string };
 
 @Component({
     selector: 'jhi-teams',
@@ -34,12 +35,12 @@ export enum FilterProp {
         TeamsExportButtonComponent,
         TeamsImportButtonComponent,
         TeamUpdateButtonComponent,
-        DataTableComponent,
-        NgxDatatableModule,
-        FaIconComponent,
         RouterLink,
         TeamStudentsListComponent,
         TeamDeleteButtonComponent,
+        TableViewComponent,
+        SelectButton,
+        ArtemisTranslatePipe,
     ],
 })
 export class TeamsComponent implements OnInit, OnDestroy {
@@ -50,11 +51,20 @@ export class TeamsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
 
     readonly FilterProp = FilterProp;
-    readonly ButtonSize = ButtonSize;
+
+    readonly filterOptions: { labelKey: string; value: FilterProp }[] = [
+        { labelKey: 'artemisApp.team.filters.all', value: FilterProp.ALL },
+        { labelKey: 'artemisApp.team.filters.own', value: FilterProp.OWN },
+    ];
 
     teams = signal<Team[]>([]);
+    readonly teamsForTable = computed<TeamRow[]>(() =>
+        this.teams().map((team) => ({
+            ...team,
+            studentsSearchText: team.students?.map((s) => [s.login, s.name].filter(Boolean)).join(' ') ?? '',
+        })),
+    );
     teamCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
-    filteredTeamsSize = signal(0);
     exercise = signal<Exercise | undefined>(undefined);
 
     private dialogErrorSource = new Subject<string>();
@@ -64,6 +74,26 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     currentUser = signal<User | undefined>(undefined);
     isAdmin = signal(false);
+
+    readonly idTemplate = viewChild<CellTemplateRef<TeamRow>>('idTemplate');
+    readonly shortNameTemplate = viewChild<CellTemplateRef<TeamRow>>('shortNameTemplate');
+    readonly ownerTemplate = viewChild<CellTemplateRef<TeamRow>>('ownerTemplate');
+    readonly studentsTemplate = viewChild<CellTemplateRef<TeamRow>>('studentsTemplate');
+
+    readonly tableOptions: TableViewOptions = {
+        lazy: false,
+        searchPlaceholder: 'artemisApp.exercise.searchForTeams',
+        globalFilterFields: ['name', 'shortName', 'studentsSearchText'],
+        striped: true,
+    };
+
+    readonly columns = computed<ColumnDef<TeamRow>[]>(() => [
+        { field: 'id', headerKey: 'global.field.id', sort: true, width: '4rem', templateRef: this.idTemplate() },
+        { field: 'name', headerKey: 'artemisApp.team.name.label', sort: true, width: '8rem' },
+        { field: 'shortName', headerKey: 'artemisApp.team.shortName.label', sort: true, width: '8rem', templateRef: this.shortNameTemplate() },
+        { field: 'owner.name', headerKey: 'artemisApp.team.tutor', sort: true, width: '10rem', templateRef: this.ownerTemplate() },
+        { field: 'students', headerKey: 'artemisApp.team.students', sort: false, templateRef: this.studentsTemplate() },
+    ]);
 
     constructor() {
         this.accountService.identity().then((user: User) => {
@@ -154,32 +184,6 @@ export class TeamsComponent implements OnInit, OnDestroy {
     onTeamsImport(teams: Team[]) {
         this.teams.set(teams);
     }
-
-    /**
-     * Update the number of filtered teams
-     *
-     * @param filteredTeamsSize Total number of teams after filters have been applied
-     */
-    handleTeamsSizeChange = (filteredTeamsSize: number) => {
-        this.filteredTeamsSize.set(filteredTeamsSize);
-    };
-
-    /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param team
-     */
-    searchResultFormatter = formatTeamAsSearchResult;
-
-    /**
-     * Converts a team object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param team Team that was selected
-     */
-    searchTextFromTeam = (team: Team): string => {
-        return team.shortName!;
-    };
 
     /**
      * If team does not yet exists in teams, it is appended.

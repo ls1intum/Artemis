@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,17 +17,13 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonDirective } from 'primeng/button';
+import { Tooltip } from 'primeng/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-
-const currentExerciseRowClass = 'datatable-row-current-exercise';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 
 enum AssessmentAction {
     START = 'start',
@@ -47,26 +43,13 @@ class ExerciseForTeam extends Exercise {
     templateUrl: './team-participation-table.component.html',
     styleUrls: ['./team-participation-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        AssessmentWarningComponent,
-        DataTableComponent,
-        NgxDatatableModule,
-        TranslateDirective,
-        FaIconComponent,
-        RouterLink,
-        NgbTooltip,
-        ArtemisDatePipe,
-        ArtemisTranslatePipe,
-    ],
+    imports: [AssessmentWarningComponent, TranslateDirective, RouterLink, ButtonDirective, Tooltip, ArtemisDatePipe, ArtemisTranslatePipe, TableViewComponent],
 })
 export class TeamParticipationTableComponent implements OnInit {
     private teamService = inject(TeamService);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private accountService = inject(AccountService);
-
-    readonly ExerciseType = ExerciseType;
-    readonly dayjs = dayjs;
 
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
@@ -78,20 +61,89 @@ export class TeamParticipationTableComponent implements OnInit {
     submissions = signal<Submission[]>([]);
     isLoading = signal<boolean>(false);
 
-    // Icons
-    faFolderOpen = faFolderOpen;
-    faFlag = faFlag;
+    // Cell templates
+    readonly titleTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('titleTemplate');
+    readonly releaseDateTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('releaseDateTemplate');
+    readonly dueDateTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('dueDateTemplate');
+    readonly viewTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('viewTemplate');
+    readonly participationTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('participationTemplate');
+    readonly initDateTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('initDateTemplate');
+    readonly assessmentTemplate = viewChild<CellTemplateRef<ExerciseForTeam>>('assessmentTemplate');
 
     /**
-     * Loads all needed data from the server for this component
+     * Computes the class for a row (used to highlight the exercise to which the current team belongs to)
      */
+    readonly rowClass = computed(() => {
+        const currentId = this.exercise().id;
+        return (row: ExerciseForTeam) => (row.id === currentId ? 'team-participation-current-exercise' : '');
+    });
+
+    readonly tableOptions: TableViewOptions = {
+        lazy: false,
+        paginated: false,
+        showSearch: false,
+        scrollable: true,
+        tableStyle: { 'min-width': '60rem' },
+    };
+
+    readonly columns = computed<ColumnDef<ExerciseForTeam>[]>(() => {
+        const participationCol: ColumnDef<ExerciseForTeam>[] = this.isAdmin()
+            ? [
+                  {
+                      headerKey: 'artemisApp.team.detail.participationsTable.columns.participationId.label',
+                      sort: false,
+                      width: '9rem',
+                      templateRef: this.participationTemplate(),
+                  },
+              ]
+            : [];
+
+        const assessmentCol: ColumnDef<ExerciseForTeam>[] =
+            this.isTeamOwner() || this.exercise().isAtLeastInstructor
+                ? [
+                      {
+                          headerKey: 'artemisApp.team.detail.participationsTable.columns.assessment.label',
+                          sort: false,
+                          width: '14rem',
+                          templateRef: this.assessmentTemplate(),
+                      },
+                  ]
+                : [];
+
+        return [
+            { field: 'title', headerKey: 'artemisApp.exercise.exercise', sort: true, width: '12rem', frozen: true, alignFrozen: 'left', templateRef: this.titleTemplate() },
+            {
+                field: 'releaseDate',
+                headerKey: 'artemisApp.exercise.releaseDate',
+                sort: true,
+                width: '10rem',
+                frozen: true,
+                alignFrozen: 'left',
+                templateRef: this.releaseDateTemplate(),
+            },
+            {
+                field: 'individualDueDate',
+                headerKey: 'artemisApp.exercise.dueDate',
+                sort: true,
+                width: '10rem',
+                frozen: true,
+                alignFrozen: 'left',
+                templateRef: this.dueDateTemplate(),
+            },
+            { header: '', width: '8rem', frozen: true, alignFrozen: 'left', templateRef: this.viewTemplate() },
+            ...participationCol,
+            { headerKey: 'artemisApp.participation.initializationDate', sort: false, width: '12rem', templateRef: this.initDateTemplate() },
+            ...assessmentCol,
+        ];
+    });
+
     ngOnInit(): void {
         this.loadAll();
     }
 
     /**
-     * Fetches the course with all the team exercises (and participations) in which this team is present
-     * For the team owner tutor or instructors, the participations also contains the latest submission (for assessment)
+     * Fetches the course with all the team exercises (and participations) in which this team is present.
+     * For the team owner tutor or instructors, the participations also contain the latest submission (for assessment).
      */
     loadAll() {
         this.isLoading.set(true);
@@ -126,23 +178,11 @@ export class TeamParticipationTableComponent implements OnInit {
             exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
                 exercise.submission.participation = participation;
-
                 setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
             }
             return exercise;
         });
     }
-
-    /**
-     * Computes the class for a row (used to highlight the exercise to which the current team belongs to)
-     *
-     * @param exercise Exercise is passed in from the template (instead of doing this.exercise) to trigger the ngx-datatable change detection
-     */
-    rowClass =
-        (exercise: Exercise) =>
-        (row: Exercise): string => {
-            return exercise.id === row.id ? currentExerciseRowClass : '';
-        };
 
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission

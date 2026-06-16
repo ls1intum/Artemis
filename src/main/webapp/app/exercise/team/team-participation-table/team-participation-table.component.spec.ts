@@ -191,8 +191,8 @@ describe('TeamParticipationTableComponent', () => {
         // Make sure that all 3 exercises were received for exercise
         expect(comp.exercises()).toHaveLength(course.exercises!.length);
 
-        // Check that ngx-datatable is present
-        const datatable = debugElement.query(By.css('jhi-data-table'));
+        // Check that jhi-table-view is present
+        const datatable = debugElement.query(By.css('jhi-table-view'));
         expect(datatable).not.toBeNull();
     });
 
