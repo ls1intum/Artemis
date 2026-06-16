@@ -355,7 +355,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.course.id = :courseId
-                AND se.exam.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
@@ -365,7 +365,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
@@ -388,7 +388,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN s.results r
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
                 AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                 AND r.successful = TRUE
@@ -403,7 +403,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND se.user.id = :userId
                 AND se.submitted = FALSE
                 AND se.testRun = FALSE
-                AND se.exam.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND se.exam.testExam = TRUE
             """)
     List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
 
@@ -576,7 +576,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.testRun = FALSE
-                AND se.exam.examType = de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND se.exam.testExam = FALSE
                 AND se.exam.course.id IN :courseIds
             """)
     Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);

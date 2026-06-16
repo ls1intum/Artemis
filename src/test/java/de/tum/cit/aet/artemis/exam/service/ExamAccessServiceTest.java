@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -470,44 +469,19 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationTestExamAllowsOnlyOneAttempt() {
-        configureExamType(testExam1, ExamType.SIMULATION, ZonedDateTime.now().minusMinutes(10), 3600, 180, 0, ZonedDateTime.now().plusHours(2));
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeAllowsNewAttemptAtDerivedPracticeStartDate() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusHours(1), 1800, 180, true, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class);
-    }
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationTestExamBlocksAfterSimulationPhase() {
-        configureExamType(testExam1, ExamType.SIMULATION, ZonedDateTime.now().minusHours(1), 1800, 180, 0, ZonedDateTime.now().plusHours(2));
-
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
-                .satisfies(exception -> {
-                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
-                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
-                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("simulationTestExamPhaseEnded");
-                });
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeBlocksBeforePracticeStartDate() {
-        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(1), 1800, 180, 60, ZonedDateTime.now().plusHours(2));
-        markStudentExamSubmitted(studentExamForTestExam1);
-
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
-                .satisfies(exception -> {
-                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
-                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
-                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("testExamPracticePhaseNotStarted");
-                });
+        assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCreateStudentExamElseThrow_simulationAndPracticeAllowsOnlyOneAttemptBeforePracticeStart() {
-        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusMinutes(10), 3600, 180, 60, ZonedDateTime.now().plusHours(2));
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
@@ -521,7 +495,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCreateStudentExamElseThrow_simulationAndPracticeCreatesNewAttemptAfterPracticeStart() {
-        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(2), 1800, 180, 30, ZonedDateTime.now().plusHours(2));
+        configureTestExam(testExam1, ZonedDateTime.now().minusHours(2), 1800, 180, true, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
         StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
@@ -529,14 +503,14 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
     }
 
-    private void configureExamType(Exam exam, ExamType examType, ZonedDateTime startDate, int workingTime, int gracePeriod, int minutesUntilPracticeStart, ZonedDateTime endDate) {
+    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean hasSimulation, ZonedDateTime endDate) {
         exam.setVisibleDate(startDate.minusMinutes(10));
         exam.setStartDate(startDate);
         exam.setWorkingTime(workingTime);
         exam.setGracePeriod(gracePeriod);
-        exam.setTestExamPracticeStartDate(startDate.plusSeconds(workingTime).plusMinutes(minutesUntilPracticeStart));
+        exam.setHasSimulation(hasSimulation);
         exam.setEndDate(endDate);
-        exam.setExamType(examType);
+        exam.setTestExam(true);
         examRepository.save(exam);
     }
 

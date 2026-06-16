@@ -88,7 +88,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
@@ -288,8 +287,7 @@ public class ExamResource {
         ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
-        var requestedExamType = examUpdateDTO.examType() != null ? examUpdateDTO.examType() : originalExam.getExamType();
-        if (requestedExamType != originalExam.getExamType()) {
+        if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
 
@@ -451,6 +449,10 @@ public class ExamResource {
      * @param exam     which should be checked.
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
+        if (!exam.isTestExam()) {
+            exam.setHasSimulation(false);
+        }
+
         checkExamCourseIdElseThrow(courseId, exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
@@ -588,11 +590,6 @@ public class ExamResource {
     private void checkExamAttendanceCheckSettings(Exam exam) {
         if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
-        }
-        if (exam.getExamType() == ExamType.SIMULATION_AND_PRACTICE
-                && (exam.getTestExamPracticeStartDate() == null || exam.getTestExamPracticeStartDate().isBefore(exam.getTestExamSimulationEndDate()))) {
-            throw new BadRequestAlertException("A combined test exam practice start date must be set at or after the simulation phase", ENTITY_NAME,
-                    "testExamPracticeStartDateInvalid");
         }
     }
 

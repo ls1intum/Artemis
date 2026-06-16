@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -219,7 +218,6 @@ public class ExamAccessService {
         }
         else if (unfinishedStudentExams.size() == 1) {
             studentExam = unfinishedStudentExams.getFirst();
-            checkCanAccessTestExamAttemptElseThrow(exam, studentExam.isStarted(), now);
         }
         else {
             throw new IllegalStateException(
@@ -231,58 +229,15 @@ public class ExamAccessService {
     }
 
     private void checkCanCreateNewTestExamAttemptElseThrow(Exam exam, boolean userHasAttempt, ZonedDateTime now) {
-        checkIsInPhaseTimeConstraints(exam, now);
-
-        ExamType examType = exam.getExamType();
-        if (examType == ExamType.PRACTICE) {
+        if (!exam.isTestExam() || !exam.hasSimulation()) {
             return;
         }
 
-        if (examType == ExamType.SIMULATION) {
-            if (userHasAttempt) {
-                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed.", ENTITY_NAME, "simulationTestExamAttemptAlreadyExists", true);
-            }
-            return;
-        }
-
-        if (examType == ExamType.SIMULATION_AND_PRACTICE) {
-            final boolean simulationPhaseActive = now.isBefore(exam.getTestExamSimulationEndDate());
-            if (simulationPhaseActive && userHasAttempt) {
-                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed before the practice phase starts.", ENTITY_NAME,
-                        "simulationTestExamAttemptAlreadyExistsBeforePractice", true);
-            }
-        }
-    }
-
-    /**
-     * Validates whether the test exam can be accessed by the user.
-     *
-     * @param exam           the test exam
-     * @param userHasStarted whether the existing test exam attempt has already been started
-     * @param now            the current time
-     */
-    public void checkCanAccessTestExamAttemptElseThrow(Exam exam, Boolean userHasStarted, ZonedDateTime now) {
-        if (Boolean.TRUE.equals(userHasStarted)) {
-            return;
-        }
-
-        checkIsInPhaseTimeConstraints(exam, now);
-    }
-
-    private void checkIsInPhaseTimeConstraints(Exam exam, ZonedDateTime now) {
-        ExamType examType = exam.getExamType();
-        if (examType == ExamType.PRACTICE) {
-            return;
-        }
-
-        final boolean simulationPhaseOver = !now.isBefore(exam.getTestExamSimulationEndDate());
-        if (examType == ExamType.SIMULATION && simulationPhaseOver) {
-            throw new AccessForbiddenAlertException("The simulation test exam phase has ended.", ENTITY_NAME, "simulationTestExamPhaseEnded", true);
-        }
-
-        final boolean bufferPhaseActive = now.isBefore(exam.getEffectiveTestExamPracticeStartDate());
-        if (examType == ExamType.SIMULATION_AND_PRACTICE && simulationPhaseOver && bufferPhaseActive) {
-            throw new AccessForbiddenAlertException("The practice phase of the test exam has not started yet.", ENTITY_NAME, "testExamPracticePhaseNotStarted", true);
+        final ZonedDateTime simulationEndDate = exam.getStartDate().plusSeconds(exam.getWorkingTime());
+        final boolean simulationPhaseActive = now.isBefore(simulationEndDate);
+        if (simulationPhaseActive && userHasAttempt) {
+            throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed before the practice phase starts.", ENTITY_NAME,
+                    "simulationTestExamAttemptAlreadyExistsBeforePractice", true);
         }
     }
 

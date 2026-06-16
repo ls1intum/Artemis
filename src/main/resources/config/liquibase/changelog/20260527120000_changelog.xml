@@ -5,15 +5,9 @@
 
     <changeSet id="20260527120000-1" author="artemis">
         <addColumn tableName="exam">
-            <column name="exam_type" type="varchar(32)" defaultValue="REAL">
+            <column name="has_simulation" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="test_exam_practice_start_date" type="datetime(3)"/>
         </addColumn>
-        <update tableName="exam">
-            <column name="exam_type" value="PRACTICE"/>
-            <where>test_exam = true</where>
-        </update>
-        <dropColumn tableName="exam" columnName="test_exam"/>
     </changeSet>
 </databaseChangeLog>

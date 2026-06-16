@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 
 /**
  * DTO for creating and updating exams.
@@ -18,12 +17,12 @@ import de.tum.cit.aet.artemis.exam.domain.ExamType;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable ExamType examType, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
+public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
-        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, @Nullable ZonedDateTime testExamPracticeStartDate, int workingTime, @Nullable String startText,
-        @Nullable String endText, @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints,
-        @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
-        @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName) {
+        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, boolean hasSimulation, int workingTime, @Nullable String startText, @Nullable String endText,
+        @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
+        @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
+        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName) {
 
     /**
      * Creates an ExamUpdateDTO from the given Exam domain object.
@@ -32,11 +31,11 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
      * @return the corresponding DTO
      */
     public static ExamUpdateDTO of(Exam exam) {
-        return new ExamUpdateDTO(exam.getId(), exam.getTitle(), exam.getExamType(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
-                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getTestExamPracticeStartDate(),
-                exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(),
-                exam.getRandomizeExerciseOrder(), exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(),
-                exam.getCourseName(), exam.getExampleSolutionPublicationDate(), exam.getChannelName());
+        return new ExamUpdateDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
+                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.hasSimulation(), exam.getWorkingTime(),
+                exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
+                exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
+                exam.getExampleSolutionPublicationDate(), exam.getChannelName());
     }
 
     /**
@@ -48,7 +47,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
     public Exam toEntity() {
         Exam exam = new Exam();
         exam.setTitle(title);
-        exam.setExamType(examType);
+        exam.setTestExam(testExam);
         exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
@@ -59,7 +58,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
         if (gracePeriod != null) {
             exam.setGracePeriod(gracePeriod);
         }
-        exam.setTestExamPracticeStartDate(testExamPracticeStartDate);
+        exam.setHasSimulation(exam.isTestExam() && hasSimulation);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
@@ -85,9 +84,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
      */
     public void applyTo(Exam exam) {
         exam.setTitle(title);
-        if (examType != null) {
-            exam.setExamType(examType);
-        }
+        exam.setTestExam(testExam);
         exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
@@ -98,7 +95,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
         if (gracePeriod != null) {
             exam.setGracePeriod(gracePeriod);
         }
-        exam.setTestExamPracticeStartDate(testExamPracticeStartDate);
+        exam.setHasSimulation(exam.isTestExam() && hasSimulation);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
