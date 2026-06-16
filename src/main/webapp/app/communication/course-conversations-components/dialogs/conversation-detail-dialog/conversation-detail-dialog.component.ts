@@ -47,8 +47,8 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
-    isOneToOneChat = false;
-    otherUser?: ConversationUserDTO;
+    readonly isOneToOneChat = signal(false);
+    readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
     readonly faPeopleGroup = faPeopleGroup;
     readonly userNameClicked = output<number>();
 
@@ -58,8 +58,8 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         if (activeConversation) {
             const conversation = getAsOneToOneChatDTO(activeConversation);
             if (conversation) {
-                this.isOneToOneChat = true;
-                this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+                this.isOneToOneChat.set(true);
+                this.otherUser.set(conversation.members?.find((user) => !user.isRequestingUser));
             }
         }
     }
@@ -67,12 +67,12 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
 
-    changesWerePerformed = false;
+    readonly changesWerePerformed = signal(false);
 
     Tabs = ConversationDetailTabs;
 
     clear() {
-        if (this.changesWerePerformed) {
+        if (this.changesWerePerformed()) {
             this.close(true);
         } else {
             this.dismiss();
@@ -99,7 +99,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     }
 
     private markAsChangedAndClose() {
-        this.changesWerePerformed = true;
+        this.changesWerePerformed.set(true);
         this.clear();
     }
 

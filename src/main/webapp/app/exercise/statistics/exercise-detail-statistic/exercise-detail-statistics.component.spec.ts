@@ -53,6 +53,6 @@ describe('ExerciseDetailStatisticsComponent', () => {
         expect(component.doughnutStats()?.absoluteAveragePoints).toBe(5);
         expect(component.doughnutStats()?.participationsInPercent).toBe(100);
         expect(component.doughnutStats()?.resolvedPostsInPercent).toBe(50);
-        expect(component.course.id).toBe(2);
+        expect(component.course().id).toBe(2);
     });
 });

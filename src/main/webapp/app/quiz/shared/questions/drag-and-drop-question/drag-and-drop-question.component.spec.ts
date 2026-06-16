@@ -79,10 +79,10 @@ describe('DragAndDropQuestionComponent', () => {
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
-        expect(comp.renderedQuestion).toBeDefined();
-        expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
-        expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
-        expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
+        expect(comp.renderedQuestion()).toBeDefined();
+        expect(comp.renderedQuestion().text).toBe(`${question.text}markdown`);
+        expect(comp.renderedQuestion().hint).toBe(`${question.hint}markdown`);
+        expect(comp.renderedQuestion().explanation).toBe(`${question.explanation}markdown`);
         expect(comp.hideSampleSolution).toHaveBeenCalledOnce();
         expect(comp.showingSampleSolution()).toBeFalsy();
     });
@@ -91,7 +91,7 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation } = getDropLocationMappingAndItem();
         comp.dragAndDropQuestion().dropLocations = [dropLocation];
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.correctAnswer).toBe(0);
+        expect(comp.correctAnswer()).toBe(0);
     });
 
     it('should count correct mappings on changes', () => {
@@ -110,7 +110,7 @@ describe('DragAndDropQuestionComponent', () => {
          *   without selected items it should not set correct answers to drop locations without valid drag item
          *   as they are excluded from the score calculation as well
          */
-        expect(comp.correctAnswer).toBe(0);
+        expect(comp.correctAnswer()).toBe(0);
 
         // if there is a selected item should count drop locations that have the selected items drag item
         // dropLocation1 and dropLocation3 is selected
@@ -124,7 +124,7 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         comp.dragAndDropQuestion().dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.correctAnswer).toBe(1);
+        expect(comp.correctAnswer()).toBe(1);
     });
 
     it('should return correct drag item for drop location', () => {
@@ -222,13 +222,13 @@ describe('DragAndDropQuestionComponent', () => {
 
     it('should change loading with given value', () => {
         comp.changeLoading('loading');
-        expect(comp.loadingState).toBe('loading');
+        expect(comp.loadingState()).toBe('loading');
     });
 
     it('should set drop allowed to true when dragged', () => {
-        comp.dropAllowed = false;
+        comp.dropAllowed.set(false);
         comp.drag();
-        expect(comp.dropAllowed).toBe(true);
+        expect(comp.dropAllowed()).toBe(true);
     });
 
     const getDropLocationMappingAndItem = () => {

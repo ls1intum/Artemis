@@ -26,7 +26,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 import { MockModule, MockProvider } from 'ng-mocks';
-import { AfterViewInit, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -403,7 +403,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should toggle sidebar for CourseConversationsComponent', () => {
         const mockConversationsComponent = {
-            isCollapsed: false,
+            isCollapsed: signal(false),
             toggleSidebar: vi.fn(),
         } as unknown as CourseConversationsComponent;
         // we have to set this to trick the component into believing it is a CourseConversationsComponent

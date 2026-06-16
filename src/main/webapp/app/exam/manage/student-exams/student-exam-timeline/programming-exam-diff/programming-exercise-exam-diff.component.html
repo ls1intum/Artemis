@@ -59,7 +59,7 @@
                 @if (addedLineCount() > 0 || removedLineCount() > 0) {
                     <jhi-button
                         [featureToggle]="FeatureToggle.ProgrammingExercises"
-                        [isLoading]="isLoadingDiffReport"
+                        [isLoading]="isLoadingDiffReport()"
                         [btnSize]="ButtonSize.SMALL"
                         [icon]="faCodeCompare"
                         [title]="'artemisApp.programmingExercise.diffReport.button'"

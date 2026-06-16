@@ -89,19 +89,19 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         setTimeout(() => {
             const posting = this.posting();
             if (!posting) {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 return;
             }
             const payload = deepClone(posting);
             payload.content = this.formGroup.get('content')?.value;
             this.metisService.createPost(payload).subscribe({
                 next: (post: Post) => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     this.clearDraft();
                     this.onCreate.emit(post);
                 },
                 error: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         }, 250);
@@ -114,7 +114,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -122,11 +122,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         this.isModalOpen.emit();
         this.metisService.updatePost(payload).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.clearDraft();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

@@ -4,7 +4,7 @@
  *
  */
 
-import { Component, ElementRef, OnDestroy, OnInit, Renderer2, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared-ui/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
@@ -87,9 +87,9 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     previousItemsHeight: number[] = [];
 
     public currentScroll = 0;
-    public contentHeight = 0;
+    public readonly contentHeight = signal(0);
 
-    public paddingTop = 0;
+    public readonly paddingTop = signal(0);
     public startIndex = 0;
 
     public endIndex = 0;
@@ -287,8 +287,8 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
-        this.contentHeight = this.currentOriginalItems.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop()) : this.screenHeight / 2;
-        this.paddingTop = dimensions.paddingTop;
+        this.contentHeight.set(this.currentOriginalItems.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop()) : this.screenHeight / 2);
+        this.paddingTop.set(dimensions.paddingTop);
 
         if (dimensions.itemsThatAreGone > this.startIndex) {
             // recalculate height for element to be removed

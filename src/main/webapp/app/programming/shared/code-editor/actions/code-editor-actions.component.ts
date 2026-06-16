@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -39,7 +39,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly submissionService = inject(CodeEditorSubmissionService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
-    private readonly ngZone = inject(NgZone);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -147,17 +146,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
 
         if (!this.disableAutoSave()) {
-            // Tick outside the Angular zone to avoid waking change detection every interval;
-            // re-enter only on the rare save tick.
-            this.ngZone.runOutsideAngular(() => {
-                this.autoSaveInterval = window.setInterval(() => {
-                    this.autoSaveTimer++;
-                    if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                        this.autoSaveTimer = 0;
-                        this.ngZone.run(() => this.onSave());
-                    }
-                }, AUTOSAVE_CHECK_INTERVAL);
-            });
+            this.autoSaveInterval = window.setInterval(() => {
+                this.autoSaveTimer++;
+                if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                    this.autoSaveTimer = 0;
+                    this.onSave();
+                }
+            }, AUTOSAVE_CHECK_INTERVAL);
         }
     }
 

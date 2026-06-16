@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, SecurityContext, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,12 +20,11 @@ import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe
 export class Lti13SelectContentComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private sanitizer = inject(DomSanitizer);
-    private zone = inject(NgZone);
 
     jwt: string;
     id: string;
-    actionLink: string;
-    isLinking = true;
+    readonly actionLink = signal<string>(undefined!);
+    readonly isLinking = signal(true);
 
     readonly deepLinkingForm = viewChild<ElementRef>('deepLinkingForm');
 
@@ -42,9 +41,7 @@ export class Lti13SelectContentComponent implements OnInit {
             // postpone auto-submit until after view updates are completed
             // if not jwt and id is not submitted correctly
             if (this.jwt && this.id) {
-                this.zone.runOutsideAngular(() => {
-                    setTimeout(() => this.autoSubmitForm());
-                });
+                setTimeout(() => this.autoSubmitForm());
             }
         });
     }
@@ -55,11 +52,11 @@ export class Lti13SelectContentComponent implements OnInit {
      */
     updateFormValues(): void {
         const deepLinkUri = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-        this.actionLink = this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '';
+        this.actionLink.set(this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '');
         this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
         this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
-        if (this.actionLink === '' || this.jwt === '' || this.id === '') {
-            this.isLinking = false;
+        if (this.actionLink() === '' || this.jwt === '' || this.id === '') {
+            this.isLinking.set(false);
             return;
         }
     }
@@ -72,7 +69,7 @@ export class Lti13SelectContentComponent implements OnInit {
     autoSubmitForm(): void {
         const form = this.deepLinkingForm()?.nativeElement;
         if (form) {
-            form.action = this.actionLink;
+            form.action = this.actionLink();
             form.submit();
         }
     }

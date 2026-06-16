@@ -34,7 +34,7 @@
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        @if (attachments && attachments.length > 0) {
+                        @if (attachments().length > 0) {
                             <td class="table-responsive">
                                 <table class="table table-striped position-relative">
                                     <thead>
@@ -49,17 +49,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (attachment of attachments; track trackId($index, attachment)) {
+                                        @for (attachment of attachments(); track trackId($index, attachment)) {
                                             <tr [ngClass]="{ 'edit-overlay-container': attachmentToBeUpdatedOrCreated()?.id === attachment?.id }">
                                                 <td>
                                                     {{ attachment.id }}
                                                 </td>
                                                 <td>
-                                                    @if (!isDownloadingAttachmentLink) {
+                                                    @if (!isDownloadingAttachmentLink()) {
                                                         <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.linkUrl || '')">
                                                             {{ attachment.name }}
                                                         </a>
-                                                    } @else if (isDownloadingAttachmentLink === attachment.linkUrl) {
+                                                    } @else if (isDownloadingAttachmentLink() === attachment.linkUrl) {
                                                         <a class="text-primary">
                                                             <fa-icon [icon]="faSpinner" animation="spin" />
                                                             {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
@@ -157,9 +157,9 @@
                                             />
                                         </div>
                                     </div>
-                                    @if (erroredFile) {
+                                    @if (erroredFile()) {
                                         <div id="too-large-file-alert" class="alert alert-danger">
-                                            {{ errorMessage }}
+                                            {{ errorMessage() }}
                                         </div>
                                     }
                                 </div>

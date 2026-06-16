@@ -1,4 +1,4 @@
-import { Component, inject, model, output } from '@angular/core';
+import { Component, inject, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
@@ -23,7 +23,7 @@ export class FeedbackOnboardingModalComponent {
     readonly visible = model<boolean>(false);
     readonly completed = output<void>();
 
-    step = 0;
+    readonly step = signal(0);
     readonly totalSteps = 2;
     selected: (number | undefined)[] = [undefined, undefined];
     feedbackExamples = FEEDBACK_EXAMPLES;
@@ -41,8 +41,8 @@ export class FeedbackOnboardingModalComponent {
      * Navigates to the next step in the onboarding process.
      */
     next() {
-        if (this.step < this.totalSteps - 1) {
-            this.step++;
+        if (this.step() < this.totalSteps - 1) {
+            this.step.update((step) => step + 1);
         }
     }
 
@@ -50,8 +50,8 @@ export class FeedbackOnboardingModalComponent {
      * Navigates to the previous step in the onboarding process.
      */
     back() {
-        if (this.step > 0) {
-            this.step--;
+        if (this.step() > 0) {
+            this.step.update((step) => step - 1);
         }
     }
 

@@ -135,7 +135,7 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
