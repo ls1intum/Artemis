@@ -102,8 +102,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     bestThirdLowerBoundary: number;
 
     // Left arrow -> decrease, right arrow -> increase
-    currentPeriod = 0;
-    currentSize = 0;
+    readonly currentPeriod = signal(0);
+    readonly currentSize = signal(0);
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -123,12 +123,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         this.setupChart(this.orderedScores);
         this.currentlyDisplayableExercises = this.orderedScores;
         this.exerciseScoresFilteredByPerformanceInterval = this.orderedScores;
-        this.currentSize = this.orderedScores.length;
+        this.currentSize.set(this.orderedScores.length);
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
     public switchTimeSpan(forward: boolean): void {
-        this.currentPeriod += forward ? 1 : -1;
+        this.currentPeriod.update((value) => value + (forward ? 1 : -1));
         this.setupChart(this.currentlyDisplayableExercises);
     }
 
@@ -214,9 +214,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * @param exerciseModels the models representing the course exercises
      */
     private setupChart(exerciseModels: CourseManagementStatisticsModel[]): void {
-        this.barChartLabels = exerciseModels.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
+        this.barChartLabels = exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise) => exercise.exerciseName);
         this.chartEntries.set(
-            exerciseModels.slice(this.currentPeriod, 10 + this.currentPeriod).map(
+            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map(
                 (exercise, index) =>
                     ({
                         name: this.barChartLabels[index],
@@ -270,7 +270,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     togglePerformanceInterval(interval: PerformanceInterval): void {
         const currentValue = this.displayColorMap.get(interval);
         // we reset the view of the chart (changed with the arrows) before displaying the filtered exercises
-        this.currentPeriod = 0;
+        this.currentPeriod.set(0);
         let newValue = '';
         // This means an interval is selected that is currently already displayed
         if (currentValue !== '') {
@@ -345,7 +345,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         this.chartCategoryFilter.setupCategoryFilter(this.exerciseScoresFilteredByPerformanceInterval);
         this.setupChart(this.exerciseScoresFilteredByPerformanceInterval);
         this.currentlyDisplayableExercises = this.exerciseScoresFilteredByPerformanceInterval;
-        this.currentSize = this.exerciseScoresFilteredByPerformanceInterval.length;
+        this.currentSize.set(this.exerciseScoresFilteredByPerformanceInterval.length);
     }
 
     /**
@@ -408,9 +408,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      */
     private initializeChartWithFilter(filteredAgainstCategory: CourseManagementStatisticsModel[], filteredAgainstType: CourseManagementStatisticsModel[]): void {
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
-        this.currentPeriod = 0;
+        this.currentPeriod.set(0);
         this.setupChart(this.currentlyDisplayableExercises);
-        this.currentSize = this.currentlyDisplayableExercises.length;
+        this.currentSize.set(this.currentlyDisplayableExercises.length);
     }
 
     /**

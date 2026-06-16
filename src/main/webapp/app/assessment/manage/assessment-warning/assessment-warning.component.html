@@ -1,11 +1,11 @@
 <h6>
-    @if (showWarning) {
+    @if (showWarning()) {
         <div class="card-header">
             <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" />
-            @if (isBeforeExerciseDueDate) {
+            @if (isBeforeExerciseDueDate()) {
                 <span jhiTranslate="artemisApp.assessment.dashboard.warning"></span>
             }
-            @if (!isBeforeExerciseDueDate) {
+            @if (!isBeforeExerciseDueDate()) {
                 <span jhiTranslate="artemisApp.assessment.dashboard.warningIndividual"></span>
             }
         </div>

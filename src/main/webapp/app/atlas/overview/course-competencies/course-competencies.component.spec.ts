@@ -119,6 +119,6 @@ describe('CourseCompetencies', () => {
         courseCompetenciesComponentFixture.detectChanges();
 
         expect(getAllCourseCompetenciesForCourseSpy).toHaveBeenCalledOnce();
-        expect(courseCompetenciesComponent.competencies).toHaveLength(2);
+        expect(courseCompetenciesComponent.competencies()).toHaveLength(2);
     });
 });

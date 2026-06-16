@@ -37,7 +37,7 @@ describe('CalendarContainerComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CalendarContainerComponent, StubCalendarDesktopOverviewComponent, StubCalendarMobileOverviewComponent],
             providers: [
-                { provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable() } },
+                { provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable(), isMatched: () => false } },
                 { provide: ActivatedRoute, useValue: { parent: { paramMap: of({ get: () => '42' }) } } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

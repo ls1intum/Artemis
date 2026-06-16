@@ -95,14 +95,14 @@ describe('DataTableComponent', () => {
         });
 
         it('should initialize with default values', () => {
-            expect(component.entities).toEqual([]);
+            expect(component.entities()).toEqual([]);
             expect(component.entityCriteria.textSearch).toEqual([]);
             expect(component.entityCriteria.sortProp).toEqual({ field: 'id', order: 'asc' });
-            expect(component.pagingValue).toBe(50);
+            expect(component.pagingValue()).toBe(50);
         });
 
         it('should initialize with default paging value when no cached value exists', () => {
-            expect(component.pagingValue).toBe(component.DEFAULT_PAGING_VALUE);
+            expect(component.pagingValue()).toBe(component.DEFAULT_PAGING_VALUE);
         });
 
         it('should initialize with cached paging value from local storage', () => {
@@ -113,7 +113,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe(100);
+            expect(component.pagingValue()).toBe(100);
         });
 
         it('should use default paging value when cached value is invalid', () => {
@@ -123,7 +123,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe(component.DEFAULT_PAGING_VALUE);
+            expect(component.pagingValue()).toBe(component.DEFAULT_PAGING_VALUE);
         });
 
         it('should handle "all" as cached paging value', () => {
@@ -133,7 +133,7 @@ describe('DataTableComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
 
-            expect(component.pagingValue).toBe('all');
+            expect(component.pagingValue()).toBe('all');
         });
     });
 
@@ -171,7 +171,7 @@ describe('DataTableComponent', () => {
 
             expect(context.settings).toBeDefined();
             expect(context.settings.limit).toBe(50);
-            expect(context.settings.rows).toEqual(component.entities);
+            expect(context.settings.rows).toEqual(component.entities());
             expect(context.settings.headerHeight).toBe(50);
             expect(context.settings.footerHeight).toBe(50);
             expect(context.settings.rowHeight).toBe('auto');
@@ -183,7 +183,7 @@ describe('DataTableComponent', () => {
         });
 
         it('should return undefined limit when pagingValue is "all"', () => {
-            component.pagingValue = 'all';
+            component.pagingValue.set('all');
 
             expect(component.context.settings.limit).toBeUndefined();
         });
@@ -214,13 +214,13 @@ describe('DataTableComponent', () => {
 
     describe('pageLimit getter', () => {
         it('should return numeric value when pagingValue is a number', () => {
-            component.pagingValue = 100;
+            component.pagingValue.set(100);
 
             expect(component.pageLimit).toBe(100);
         });
 
         it('should return undefined when pagingValue is "all"', () => {
-            component.pagingValue = 'all';
+            component.pagingValue.set('all');
 
             expect(component.pageLimit).toBeUndefined();
         });
@@ -254,7 +254,7 @@ describe('DataTableComponent', () => {
 
             vi.advanceTimersByTime(500);
 
-            expect(component.pagingValue).toBe(100);
+            expect(component.pagingValue()).toBe(100);
             expect(component.isRendering).toBe(false);
         });
 
@@ -272,7 +272,7 @@ describe('DataTableComponent', () => {
             component.setEntitiesPerPage('all');
             vi.advanceTimersByTime(500);
 
-            expect(component.pagingValue).toBe('all');
+            expect(component.pagingValue()).toBe('all');
             expect(storeSpy).toHaveBeenCalledWith('entity-items-per-page', 'all');
         });
     });
@@ -356,8 +356,8 @@ describe('DataTableComponent', () => {
             setInput('customFilter', (entity: BaseEntity | StringBaseEntity) => (entity as TestUserEntity).active === true);
             updateEntities();
 
-            expect(component.entities).toHaveLength(2);
-            expect(component.entities.map((e) => (e as TestUserEntity).name)).toEqual(['Alice', 'Charlie']);
+            expect(component.entities()).toHaveLength(2);
+            expect(component.entities().map((e) => (e as TestUserEntity).name)).toEqual(['Alice', 'Charlie']);
         });
 
         it('should combine custom filter with text search', () => {
@@ -372,8 +372,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect((component.entities[0] as TestUserEntity).name).toBe('Alice');
+            expect(component.entities()).toHaveLength(1);
+            expect((component.entities()[0] as TestUserEntity).name).toBe('Alice');
         });
     });
 
@@ -396,7 +396,7 @@ describe('DataTableComponent', () => {
             text$.next('');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
 
         it('should filter entities by search term', () => {
@@ -413,8 +413,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should support comma-separated search terms', () => {
@@ -432,7 +432,7 @@ describe('DataTableComponent', () => {
             vi.advanceTimersByTime(250);
 
             // Both Alice and Bob should match (OR logic for comma-separated terms)
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
 
         it('should search in login field as well', () => {
@@ -448,8 +448,8 @@ describe('DataTableComponent', () => {
             text$.next('bjones');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(2);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(2);
         });
 
         it('should support wildcard * for multiple characters', () => {
@@ -466,7 +466,7 @@ describe('DataTableComponent', () => {
             text$.next('Alex*');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
 
         it('should support wildcard ? for single character', () => {
@@ -485,8 +485,8 @@ describe('DataTableComponent', () => {
             text$.next('A?B');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(2);
-            expect(component.entities.map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
+            expect(component.entities()).toHaveLength(2);
+            expect(component.entities().map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
         });
 
         it('should support space-separated search terms (AND logic)', () => {
@@ -503,8 +503,8 @@ describe('DataTableComponent', () => {
             text$.next('Max Mustermann');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(2);
-            expect(component.entities.map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
+            expect(component.entities()).toHaveLength(2);
+            expect(component.entities().map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
         });
 
         it('should set searchQueryTooShort when query is less than MIN_SEARCH_QUERY_LENGTH', () => {
@@ -517,7 +517,7 @@ describe('DataTableComponent', () => {
             text$.next('Al');
             vi.advanceTimersByTime(250);
 
-            expect(component.searchQueryTooShort).toBe(true);
+            expect(component.searchQueryTooShort()).toBe(true);
         });
 
         it('should not set searchQueryTooShort when query meets MIN_SEARCH_QUERY_LENGTH', () => {
@@ -530,7 +530,7 @@ describe('DataTableComponent', () => {
             text$.next('Ali');
             vi.advanceTimersByTime(250);
 
-            expect(component.searchQueryTooShort).toBe(false);
+            expect(component.searchQueryTooShort()).toBe(false);
         });
 
         it('should debounce search input', () => {
@@ -541,7 +541,7 @@ describe('DataTableComponent', () => {
             setTestEntities(entities);
             vi.advanceTimersByTime(0);
 
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
 
             const text$ = new Subject<string>();
             component.onSearch(text$).subscribe();
@@ -550,11 +550,11 @@ describe('DataTableComponent', () => {
             vi.advanceTimersByTime(100); // Before debounce time (200ms)
 
             // Should still have all entities since debounce hasn't fired yet
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
 
             vi.advanceTimersByTime(100); // After debounce time (total 200ms)
 
-            expect(component.entities).toHaveLength(1);
+            expect(component.entities()).toHaveLength(1);
         });
 
         it('should not filter when searchEntityFilterEnabled is false', () => {
@@ -572,7 +572,7 @@ describe('DataTableComponent', () => {
             vi.advanceTimersByTime(250);
 
             // All entities should still be present
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
     });
 
@@ -595,8 +595,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should search in array fields', () => {
@@ -613,8 +613,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should handle missing nested fields gracefully', () => {
@@ -631,8 +631,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
     });
 
@@ -656,8 +656,8 @@ describe('DataTableComponent', () => {
             text$.next('Dogan');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should find users with German umlauts when searching without diacritics', () => {
@@ -674,8 +674,8 @@ describe('DataTableComponent', () => {
             text$.next('Muller');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should find users when searching with diacritics for non-diacritic names', () => {
@@ -692,8 +692,8 @@ describe('DataTableComponent', () => {
             text$.next('Doğan');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should find users with French accents when searching without diacritics', () => {
@@ -709,8 +709,8 @@ describe('DataTableComponent', () => {
             text$.next('Francois');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should still support case-insensitive search', () => {
@@ -726,8 +726,8 @@ describe('DataTableComponent', () => {
             text$.next('MULLER');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should still support wildcard search with diacritics normalization', () => {
@@ -744,7 +744,7 @@ describe('DataTableComponent', () => {
             text$.next('Dog*');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
 
         it('should find users with Spanish characters', () => {
@@ -761,8 +761,8 @@ describe('DataTableComponent', () => {
             text$.next('Jose');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should find users with Nordic characters', () => {
@@ -779,8 +779,8 @@ describe('DataTableComponent', () => {
             text$.next('Bjork');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
     });
 
@@ -854,11 +854,11 @@ describe('DataTableComponent', () => {
 
     describe('onSearchInputBlur', () => {
         it('should set searchQueryTooShort to false', () => {
-            component.searchQueryTooShort = true;
+            component.searchQueryTooShort.set(true);
 
             component.onSearchInputBlur();
 
-            expect(component.searchQueryTooShort).toBe(false);
+            expect(component.searchQueryTooShort()).toBe(false);
         });
     });
 
@@ -900,7 +900,7 @@ describe('DataTableComponent', () => {
         it('should handle empty allEntities', () => {
             setTestEntities([]);
 
-            expect(component.entities).toEqual([]);
+            expect(component.entities()).toEqual([]);
         });
 
         it('should handle entities with undefined fields', () => {
@@ -919,8 +919,8 @@ describe('DataTableComponent', () => {
             text$.next('Alice');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(3);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(3);
         });
 
         it('should handle special regex characters in search', () => {
@@ -940,8 +940,8 @@ describe('DataTableComponent', () => {
             text$.next('Test (1)');
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
-            expect(component.entities[0].id).toBe(1);
+            expect(component.entities()).toHaveLength(1);
+            expect(component.entities()[0].id).toBe(1);
         });
 
         it('should handle very long search terms', () => {
@@ -957,14 +957,14 @@ describe('DataTableComponent', () => {
             text$.next(longName);
             vi.advanceTimersByTime(250);
 
-            expect(component.entities).toHaveLength(1);
+            expect(component.entities()).toHaveLength(1);
         });
 
         it('should handle entities with string IDs', () => {
             const entities: StringBaseEntity[] = [{ id: 'abc-123' }, { id: 'def-456' }];
             setTestEntities(entities);
 
-            expect(component.entities).toHaveLength(2);
+            expect(component.entities()).toHaveLength(2);
         });
     });
 });

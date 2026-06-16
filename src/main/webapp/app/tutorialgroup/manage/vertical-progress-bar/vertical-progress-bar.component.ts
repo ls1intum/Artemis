@@ -41,7 +41,7 @@ export class VerticalProgressBarComponent {
     @HostBinding('style.--progress-bar-width')
     widthCSS = '50px';
     @HostBinding('style.--fill-level')
-    fillLevelCSS = '0%';
+    readonly fillLevelCSS = computed(() => `${this.fillLevelInPercentInternal()}%`);
     @HostBinding('style.--fill-color')
     fillColorCSS = 'green';
     @HostBinding('style.--fill-duration')
@@ -77,8 +77,6 @@ export class VerticalProgressBarComponent {
             const fillLevel = this.fillLevelInPercentInternal();
             const lowerBorder = this.lowerBorderInternal();
             const upperBorder = this.upperBorderInternal();
-
-            this.fillLevelCSS = `${fillLevel}%`;
 
             if (fillLevel <= lowerBorder) {
                 this.fillColorCSS = this.lowerColor();

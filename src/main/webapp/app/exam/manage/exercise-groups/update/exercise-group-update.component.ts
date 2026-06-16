@@ -27,7 +27,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     readonly alertType = 'info';
     courseId!: number;
     exam!: Exam;
-    exerciseGroup!: ExerciseGroup;
+    readonly exerciseGroup = signal<ExerciseGroup>(undefined!);
     isSaving = signal(false);
     // Icons
     faBan = faBan;
@@ -40,7 +40,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ exam, exerciseGroup }) => {
             this.exam = exam;
-            this.exerciseGroup = exerciseGroup;
+            this.exerciseGroup.set(exerciseGroup);
         });
     }
 
@@ -50,11 +50,12 @@ export class ExerciseGroupUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving.set(true);
-        if (this.exerciseGroup.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id!, this.exerciseGroup));
+        const exerciseGroup = this.exerciseGroup();
+        if (exerciseGroup.id !== undefined) {
+            this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id!, exerciseGroup));
         } else {
-            this.exerciseGroup.exam = this.exam;
-            this.subscribeToSaveResponse(this.exerciseGroupService.create(this.courseId, this.exam.id!, this.exerciseGroup));
+            exerciseGroup.exam = this.exam;
+            this.subscribeToSaveResponse(this.exerciseGroupService.create(this.courseId, this.exam.id!, exerciseGroup));
         }
     }
 

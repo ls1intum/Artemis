@@ -203,7 +203,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyCategoryFilterMock).toHaveBeenCalledWith(sortedScores);
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
 
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it.each(categories)('should filter for category correctly if only one category is selected', (category: string) => {
@@ -217,7 +217,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter all categories', () => {
@@ -231,7 +231,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter exercises with no category', () => {
@@ -245,7 +245,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
             expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
-            expect(component.currentPeriod).toBe(0);
+            expect(component.currentPeriod()).toBe(0);
         });
 
         it('should filter correctly if lowest third is selected', () => {
