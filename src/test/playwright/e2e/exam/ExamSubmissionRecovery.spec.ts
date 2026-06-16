@@ -44,15 +44,19 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
 
         // Simulate a failed save (as during an outage): make the quiz exam save endpoint fail.
         await page.route(quizSaveUrl, (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
-        // Force a save attempt. The answer is written to local storage but the server submission stays empty.
+        // Force a save attempt and wait deterministically for the failed (503) save instead of a fixed timeout.
+        // The answer is written to local storage but the server submission stays empty.
+        const failedSave = page.waitForResponse((response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.status() === 503, {
+            timeout: 30000,
+        });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
-        await page.waitForTimeout(1000);
+        await failedSave;
         // Stop failing saves so the post-reload re-send can succeed.
         await page.unroute(quizSaveUrl);
 
-        // On reload the restored answer must be re-sent to the server (successful PUT).
+        // On reload the restored answer must be re-sent to the server (successful PUT for THIS quiz exercise).
         const reSavePromise = page.waitForResponse(
-            (response) => response.url().includes('/submissions/exam') && response.request().method() === 'PUT' && response.status() === 200,
+            (response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200,
             { timeout: 30000 },
         );
         await page.reload();

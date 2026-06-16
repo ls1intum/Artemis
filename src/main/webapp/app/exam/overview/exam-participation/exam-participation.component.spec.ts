@@ -745,20 +745,59 @@ describe('ExamParticipationComponent', () => {
             return { studentExam, quizSubmission, textSubmission, modelingSubmission };
         };
 
-        it('should re-send restored but not-yet-saved quiz, text and modeling answers when resuming', async () => {
+        it('should re-send restored but not-yet-saved quiz, text and modeling answers when resuming', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            // The mocked submission services return synchronous observables, so the re-send happens synchronously.
             const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
-            await new Promise((resolve) => setTimeout(resolve, 500));
 
             // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
             expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+        });
+
+        it('should keep answers unsynced and not send them when offline at resume so the autosave retries later', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(false); // the websocket is not (re)connected yet at resume time
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+
+            // Nothing is sent while offline, but the answers stay unsynced so the autosave re-sends them once reconnected.
+            expect(quizSpy).not.toHaveBeenCalled();
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(modelingSpy).not.toHaveBeenCalled();
+            expect(quizSubmission.isSynced).toBe(false);
+            expect(textSubmission.isSynced).toBe(false);
+            expect(modelingSubmission.isSynced).toBe(false);
+        });
+
+        it('should not show the restore notification on a normal (not failed) start', () => {
+            const studentExam = new StudentExam();
+            studentExam.exam = new Exam();
+            studentExam.exam.startDate = dayjs().subtract(10, 'minutes');
+            studentExam.id = 1;
+            studentExam.workingTime = 3600;
+            studentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false); // no failed save -> no restore
+            const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+            const infoSpy = vi.spyOn(alertService, 'info');
+
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+
+            expect(loadLocalSpy).not.toHaveBeenCalled();
+            expect(infoSpy).not.toHaveBeenCalledWith('artemisApp.examParticipation.answersRestoredFromLocalStorage');
         });
 
         it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
