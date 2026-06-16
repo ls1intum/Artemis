@@ -37,6 +37,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 
 describe('CourseExercisesComponent', () => {
     setupTestBed({ zoneless: true });
@@ -137,7 +138,7 @@ describe('CourseExercisesComponent', () => {
         expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
     });
 
-    it('should toggle sidebar visibility based on isCollapsed property', () => {
+    it('should toggle sidebar collapsed state based on isCollapsed property', () => {
         // Ensure course is set and LTI is not shown
         (component as any)._course.set(course);
         (component as any)._isShownViaLti.set(false);
@@ -163,6 +164,45 @@ describe('CourseExercisesComponent', () => {
         component.toggleSidebar();
         TestBed.tick();
         expect(component.isCollapsed).toBe(false);
+    });
+
+    it('should set the page title for the sidebar header', () => {
+        component.setPageTitle('overview.exercises');
+
+        expect(component.pageTitle()).toBe('overview.exercises');
+    });
+
+    it('should toggle the sidebar from a child sidebar control', () => {
+        (component as any)._isCollapsed.set(false);
+
+        component.toggleSidebarFromChild();
+
+        expect(component.isCollapsed).toBe(true);
+    });
+
+    it('should pass the sidebar toggle state to the sidebar', () => {
+        (component as any)._course.set(course);
+        (component as any)._isShownViaLti.set(false);
+        (component as any)._isCollapsed.set(false);
+        component.setPageTitle('overview.exercises');
+        TestBed.tick();
+        fixture.changeDetectorRef.detectChanges();
+
+        const sidebarComponent = fixture.debugElement.query(By.directive(SidebarComponent)).componentInstance as SidebarComponent;
+
+        expect(sidebarComponent.showSidebarToggle()).toBe(true);
+        expect(sidebarComponent.isSidebarCollapsed()).toBe(false);
+    });
+
+    it('should provide sidebar toggle state to active exercise details', () => {
+        const exerciseDetails = Object.create(CourseExerciseDetailsComponent.prototype) as CourseExerciseDetailsComponent;
+        exerciseDetails.setSidebarToggle = vi.fn();
+        (component as any)._isCollapsed.set(false);
+
+        component.onSubRouteActivate(exerciseDetails);
+        TestBed.tick();
+
+        expect(exerciseDetails.setSidebarToggle).toHaveBeenCalledWith(false, expect.any(Function));
     });
 
     it('should display "Please Select an Exercise" when no exercise is selected', () => {

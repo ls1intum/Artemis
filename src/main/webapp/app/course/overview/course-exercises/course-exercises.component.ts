@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -14,6 +14,7 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -67,6 +68,8 @@ export class CourseExercisesComponent {
     private readonly _isShownViaLti = signal(false);
     private readonly _isMultiLaunch = signal(false);
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
+    private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
+    readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
 
     readonly course = computed(() => this._course());
@@ -107,6 +110,10 @@ export class CourseExercisesComponent {
 
         this.ltiService.isMultiLaunch$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isMultiLaunch) => {
             this._isMultiLaunch.set(isMultiLaunch);
+        });
+
+        effect(() => {
+            this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebarFromChild());
         });
     }
 
@@ -159,6 +166,14 @@ export class CourseExercisesComponent {
         this.courseOverviewService.setSidebarCollapseState('exercise', this._isCollapsed());
     }
 
+    toggleSidebarFromChild(): void {
+        this.toggleSidebar();
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     getLastSelectedExercise(): string | undefined {
         return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exercise.byCourse.' + this._courseId());
     }
@@ -209,9 +224,16 @@ export class CourseExercisesComponent {
     }
 
     onSubRouteDeactivate() {
+        this._activeExerciseDetails.set(undefined);
         if (this.route.firstChild) {
             return;
         }
         this.navigateToExercise();
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseExerciseDetailsComponent) {
+            this._activeExerciseDetails.set(componentRef);
+        }
     }
 }

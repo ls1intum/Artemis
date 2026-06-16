@@ -1,6 +1,9 @@
 <div id="exercise-header" class="d-flex flex-column flex-fill">
     <div class="d-flex align-items-center justify-content-between gap-2">
         <div class="d-flex align-items-center gap-3">
+            @if (showSidebarToggle() && isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+            }
             @if (exerciseIcon()) {
                 <h5 class="mb-0">
                     <fa-icon [icon]="exerciseIcon()!" />

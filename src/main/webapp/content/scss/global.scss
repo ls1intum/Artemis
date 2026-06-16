@@ -967,6 +967,11 @@ body[data-onboarding-active-step='1'] > .p-select-overlay {
     pointer-events: none;
 }
 
+.small-tooltip {
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
 /* Boostrap 5 Print Styles (https://github.com/coliff/bootstrap-print-css/) */
 @media print {
     *,
@@ -1219,7 +1224,12 @@ body.transparent-background {
 }
 
 .scrollable-content {
+    &.no-header-bar-height {
+        --header-height: 16px !important;
+    }
+
     @include dynamic-content-height(--header-height);
+
     overflow-y: auto;
 }
 

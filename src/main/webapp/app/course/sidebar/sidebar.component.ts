@@ -22,6 +22,8 @@ import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -40,6 +42,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
         SidebarAccordionComponent,
         SidebarCardDirective,
         SearchFilterPipe,
+        CourseTitleBarTitleComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy {
@@ -65,8 +69,12 @@ export class SidebarComponent implements OnDestroy {
     readonly showFilter = input<boolean>(false);
     inCommunication = input<boolean>(false);
     readonly searchValue = signal<string>('');
-    isCollapsed = false;
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
+
+    readonly pageTitle = input<string>('');
+    readonly showSidebarToggle = input<boolean>(false);
+    readonly isSidebarCollapsed = input<boolean>(false);
+    readonly toggleSidebar = output<void>();
 
     /** Working copy of the sidebar data, seeded from the {@link sidebarData} input. It is replaced locally when
      *  the user applies exercise filters, without mutating the parent-owned input. */

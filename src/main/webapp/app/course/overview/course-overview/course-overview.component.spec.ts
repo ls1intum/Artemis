@@ -379,6 +379,19 @@ describe('CourseOverviewComponent', () => {
         expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
+    it('should pass the page title to the exercises component and hide the top title bar', () => {
+        const exercisesComponent = Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent;
+        exercisesComponent.setPageTitle = vi.fn();
+        Object.defineProperty(exercisesComponent, 'isCollapsed', { value: true });
+        component.pageTitle.set('overview.exercises');
+
+        (component as any).handleComponentActivation(exercisesComponent);
+
+        expect(exercisesComponent.setPageTitle).toHaveBeenCalledWith('overview.exercises');
+        expect(component.isSidebarCollapsed()).toBe(true);
+        expect((component as any).showCourseTitleBar()).toBe(false);
+    });
+
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);

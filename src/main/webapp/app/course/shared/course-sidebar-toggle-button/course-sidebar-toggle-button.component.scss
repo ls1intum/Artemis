@@ -1,0 +1,74 @@
+:host {
+    display: inline-flex;
+}
+
+.btn-sidebar-collapse {
+    --sidebar-toggle-chevron-rotation: -180deg;
+
+    color: var(--bs-tertiary-color);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--link-item-bg);
+    transition:
+        background-color 0.18s ease-in-out,
+        color 0.18s ease-in-out,
+        transform 0.18s ease-in-out;
+
+    &:focus {
+        border-color: transparent;
+    }
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--sidebar-card-selected-bg);
+    }
+
+    &:active {
+        background-color: var(--sidebar-card-selected-bg);
+    }
+
+    &.is-collapsed {
+        --sidebar-toggle-chevron-rotation: 0deg;
+    }
+}
+
+.btn-sidebar-collapse-chevron-start {
+    margin-right: -0.7rem;
+}
+
+.btn-sidebar-collapse-icon,
+.btn-sidebar-collapse-chevron fa-icon {
+    color: currentcolor;
+    transition:
+        color 0.18s ease-in-out,
+        transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-sidebar-collapse-chevron {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    margin-left: 0.3rem;
+    transform: translateX(0) rotate(var(--sidebar-toggle-chevron-rotation));
+    transform-origin: center;
+    transition:
+        opacity 0.18s ease-in-out,
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-sidebar-collapse:hover .btn-sidebar-collapse-chevron,
+.btn-sidebar-collapse:focus-visible .btn-sidebar-collapse-chevron {
+    transform: rotate(var(--sidebar-toggle-chevron-rotation));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-sidebar-collapse,
+    .btn-sidebar-collapse-icon,
+    .btn-sidebar-collapse-chevron,
+    .btn-sidebar-collapse-chevron fa-icon {
+        transition: none;
+    }
+}

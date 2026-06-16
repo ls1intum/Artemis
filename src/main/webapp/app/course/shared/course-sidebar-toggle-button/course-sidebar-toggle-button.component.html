@@ -1,0 +1,16 @@
+<button
+    type="button"
+    [pTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
+    tooltipPosition="right"
+    [ngClass]="{ 'is-collapsed': isCollapsed(), 'is-communication-module': isCommunicationModule() }"
+    tooltipStyleClass="small-tooltip"
+    class="btn btn-sidebar-collapse btn-sm rounded-3"
+    aria-label="Toggle Sidebar"
+    (click)="toggleSidebar.emit()"
+>
+    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="btn-sidebar-collapse-icon d-flex justify-content-center align-items-center" size="lg" />
+    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center" size="xs" />
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="d-flex justify-content-center align-items-center" size="xs" />
+    </div>
+</button>
