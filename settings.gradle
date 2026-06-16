@@ -3,13 +3,16 @@ import org.apache.tools.ant.DirectoryScanner
 pluginManagement {
     repositories {
         mavenLocal()
-        // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors during plugin resolution)
+        mavenCentral()
+        gradlePluginPortal()
+        // Reposilite mirror kept only as a fallback here: plugin/buildscript resolution is low-volume
+        // (so not the source of Maven Central 429s) and the mirror's latency otherwise dominates the
+        // configuration phase. The mirror stays the PRIMARY repository for the high-volume main
+        // dependency downloads in build.gradle, where the rate-limiting actually occurs.
         maven {
             name = "reposiliteRepository"
             url = "https://reposilite.aet.cit.tum.de/releases"
         }
-        mavenCentral()
-        gradlePluginPortal()
     }
     plugins {
         id "org.liquibase.gradle" version "${liquibase_plugin_version}"

@@ -3,12 +3,13 @@
 
     buildscript {
         repositories {
-            // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors)
+            mavenCentral()
+            // Reposilite mirror as a fallback only (see settings.gradle): keeps the fast Maven Central
+            // path for the openapi-generator buildscript classpath while remaining available if needed.
             maven {
                 name = "reposiliteRepository"
                 url = "https://reposilite.aet.cit.tum.de/releases"
             }
-            mavenCentral()
         }
         dependencies {
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
