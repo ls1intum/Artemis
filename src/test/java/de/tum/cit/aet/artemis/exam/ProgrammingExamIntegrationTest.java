@@ -5,11 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +23,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -206,6 +210,43 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         assertThat(importedProgrammingExercise.getPackageName()).isEqualTo(sourceExercise.getPackageName());
         assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
         assertThat(importedProgrammingExercise.getExerciseGroup().getExam().getCourse()).isEqualTo(course1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithProgrammingExercise_repositoryCopyFailureIsSkippedNotAborted() throws Exception {
+        // Regression test for the resilient exam import: when a programming exercise's repository copy fails mid-import,
+        // its basis entity has already been committed (importProgrammingExerciseBasis is @Transactional, and runs before
+        // the repository copy). The import must skip that exercise and still succeed (no 5xx), reporting it via the
+        // partial-success alert header - rather than the empty-group cleanup hitting the exercise -> exercise_group
+        // RESTRICT foreign key on the committed-but-failed exercise and aborting the whole import with a 5xx.
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
+                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+
+        // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(gitServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+
+        String sourceTitle = sourceExercise.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
+
+        // The import must NOT abort with a 5xx; it succeeds and reports the failing programming exercise as skipped.
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.CREATED, null);
+
+        assertThat(response.getHeader("X-artemisApp-alert")).isEqualTo("artemisApp.examManagement.import.partialSuccess");
+        assertThat(response.getHeader("X-artemisApp-params")).as("the skipped programming exercise must be named in the alert")
+                .contains(URLEncoder.encode(sourceTitle, StandardCharsets.UTF_8));
     }
 
     @Test
