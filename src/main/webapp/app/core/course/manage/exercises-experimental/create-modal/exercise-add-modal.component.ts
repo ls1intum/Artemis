@@ -150,12 +150,7 @@ export class ExerciseAddModalComponent {
      */
     startImport(type: ExerciseType): void {
         this.close();
-        // Wait for this modal's close animation to finish before opening the import dialog, so the two transitions
-        // are sequential rather than an abrupt swap (kept consistent with the export flow).
-        setTimeout(() => this.openImportDialog(type), ExerciseAddModalComponent.MODAL_CLOSE_ANIMATION_MS);
-    }
 
-    private openImportDialog(type: ExerciseType): void {
         const dialogData: ExerciseImportDialogData = { exerciseType: type };
         const headerKey = type === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${type}Exercise.home.importLabel`;
         const componentToOpen: Type<any> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
