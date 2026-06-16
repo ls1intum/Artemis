@@ -32,6 +32,11 @@ function extractId(url: string): number {
     return parseInt(url.match(/\/(\d+)/)?.[1] ?? '', 10);
 }
 
+/** Wraps a list of mock exercises in the {@link SearchResult} shape the import dialog's paging services expect. */
+function mockSearchResult<T>(results: T[]): { resultsOnPage: T[]; numberOfPages: number } {
+    return { resultsOnPage: results, numberOfPages: 1 };
+}
+
 function mockStats(): ExerciseManagementStatisticsDto {
     return {
         averageScoreOfExercise: 0,
@@ -52,6 +57,13 @@ const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: (url: string) => unknown }
     { pattern: /^api\/text\/courses\/\d+\/text-exercises$/, data: () => INTRO_JAVA_TEXT_EXERCISES },
     { pattern: /^api\/fileupload\/courses\/\d+\/file-upload-exercises$/, data: () => INTRO_JAVA_FILE_UPLOAD_EXERCISES },
     { pattern: /^api\/quiz\/courses\/\d+\/quiz-exercises$/, data: () => INTRO_JAVA_QUIZ_EXERCISES },
+    // Import-dialog paging search (the develop import dialog calls these and expects a SearchResult). Query params
+    // (page, search term, filters) live in HttpParams, so req.url is the bare resource URL with no trailing id.
+    { pattern: /^api\/programming\/programming-exercises$/, data: () => mockSearchResult(INTRO_JAVA_PROGRAMMING_EXERCISES) },
+    { pattern: /^api\/modeling\/modeling-exercises$/, data: () => mockSearchResult(INTRO_JAVA_MODELING_EXERCISES) },
+    { pattern: /^api\/text\/text-exercises$/, data: () => mockSearchResult(INTRO_JAVA_TEXT_EXERCISES) },
+    { pattern: /^api\/fileupload\/file-upload-exercises$/, data: () => mockSearchResult(INTRO_JAVA_FILE_UPLOAD_EXERCISES) },
+    { pattern: /^api\/quiz\/quiz-exercises$/, data: () => mockSearchResult(INTRO_JAVA_QUIZ_EXERCISES) },
     // Individual exercise fetches — exact id match, no sub-path
     { pattern: /^api\/programming\/programming-exercises\/\d+$/, data: (url) => INTRO_JAVA_PROGRAMMING_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
     { pattern: /^api\/modeling\/modeling-exercises\/\d+$/, data: (url) => INTRO_JAVA_MODELING_EXERCISES.find((e) => e.id === extractId(url)) ?? null },

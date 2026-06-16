@@ -6,6 +6,8 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -154,6 +156,23 @@ function modeling(id: number, title: string, shortName: string, week: number, po
 
 // ── Quiz exercises ─────────────────────────────────────────────────────────────
 
+// Builds a minimal multiple-choice question so the (real) quiz export page is populated under mock data.
+function mcQuestion(id: number, title: string, points: number, options: Array<[string, boolean]>): MultipleChoiceQuestion {
+    const question = new MultipleChoiceQuestion();
+    question.id = id;
+    question.title = title;
+    question.text = title;
+    question.points = points;
+    question.answerOptions = options.map(([text, isCorrect], index) => {
+        const option = new AnswerOption();
+        option.id = id * 10 + index;
+        option.text = text;
+        option.isCorrect = isCorrect;
+        return option;
+    });
+    return question;
+}
+
 function quiz(id: number, title: string, shortName: string, week: number, points: number, mode = QuizMode.SYNCHRONIZED, status = QuizStatus.VISIBLE): QuizExercise {
     const ex = new QuizExercise(undefined, undefined);
     Object.assign(ex, base(id, title, shortName, week, 1));
@@ -165,6 +184,16 @@ function quiz(id: number, title: string, shortName: string, week: number, points
     ex.randomizeQuestionOrder = true;
     ex.duration = 30;
     ex.categories = [cat('Theory', '#6c757d')];
+    ex.quizQuestions = [
+        mcQuestion(id * 100 + 1, `${title} — Question 1`, 1, [
+            ['Correct answer', true],
+            ['Wrong answer', false],
+        ]),
+        mcQuestion(id * 100 + 2, `${title} — Question 2`, 1, [
+            ['Option A', false],
+            ['Option B', true],
+        ]),
+    ];
     return ex;
 }
 

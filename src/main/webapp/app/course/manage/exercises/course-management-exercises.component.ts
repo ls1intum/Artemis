@@ -1,5 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -123,6 +126,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly mockService = inject(ExerciseManagementMockService);
     private readonly mockDataService = inject(MockDataService);
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     ngOnInit(): void {
         this.route.parent!.data.subscribe(({ course }) => {
@@ -224,9 +229,29 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.addModalVisible.set(true);
     }
 
-    openExportModal(): void {
-        this.addModalMode.set('export');
-        this.addModalVisible.set(true);
+    openQuizExportDialog(): void {
+        // Quiz exercises are the only exportable type. The develop quiz export page is shown as a modal component
+        // (no dedicated route). With mock data enabled it is populated from the mock quiz catalogue via MockCourseInterceptor.
+        const id = this.courseId();
+        if (id === undefined) {
+            return;
+        }
+        const dialogRef = this.dialogService.open(QuizExerciseExportComponent, {
+            header: this.translateService.instant('artemisApp.exercise.exportAction'),
+            width: '60rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            draggable: false,
+            data: { courseId: id },
+        });
+        dialogRef?.onClose.subscribe((result: string | undefined) => {
+            // "Back" in the export dialog returns to the manage-exercises modal (its default Create view).
+            if (result === QUIZ_EXPORT_BACK) {
+                this.addModalMode.set('create');
+                this.addModalVisible.set(true);
+            }
+        });
     }
 
     onAddModalGroupCreate(): void {

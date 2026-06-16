@@ -21,7 +21,7 @@
                 <fa-icon [icon]="faFileImport" />
                 <span class="ms-1">Import</span>
             </p-button>
-            <p-button size="small" severity="secondary" (onClick)="openExportModal()">
+            <p-button size="small" severity="secondary" (onClick)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
                 <span class="ms-1">Export</span>
             </p-button>
@@ -173,6 +173,7 @@
         [courseId]="courseId()"
         (visibleChange)="addModalVisible.set($event)"
         (groupCreate)="onAddModalGroupCreate()"
+        (exportRequested)="openQuizExportDialog()"
     />
     @if (groupEditModalGroup()) {
         <jhi-exercise-group-edit-modal

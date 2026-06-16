@@ -118,6 +118,7 @@
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
+                "loading": "Loading quiz questions…",
                 "questionTitle": "Short question Title",
                 "quizExerciseTitle": "Quiz Exercise Title"
             },
