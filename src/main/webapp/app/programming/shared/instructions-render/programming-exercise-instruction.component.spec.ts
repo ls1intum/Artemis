@@ -808,6 +808,39 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instance.comp.ngOnDestroy();
     });
 
+    it('should force a re-render via forceReRenderProblemStatement even when the problem statement is undefined', () => {
+        // Guards the undefined-problem-statement edge case: forceReRenderProblemStatement must NOT rely on resetting
+        // lastRenderedProblemStatement to undefined, because when the current problem statement is also undefined the
+        // optimization (undefined === undefined) would wrongly skip the re-render. It uses an explicit force flag instead.
+        const instance = createComponentInstance();
+        const exercise = {
+            id: 10,
+            course: { id: 1 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        } as ProgrammingExercise;
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Initial render records lastRenderedProblemStatement = undefined (the exercise has no problem statement).
+        instance.comp.updateMarkdown();
+        internals(instance.comp).isInitial = false;
+
+        const renderSpy = vi.spyOn(instance.comp as unknown as { renderMarkdown: () => void }, 'renderMarkdown');
+
+        // A plain updateMarkdown() early-returns (undefined === undefined, not initial), so it does NOT re-render.
+        instance.comp.updateMarkdown();
+        expect(renderSpy).not.toHaveBeenCalled();
+
+        // forceReRenderProblemStatement() bypasses the optimization and re-renders even with an undefined statement.
+        instance.comp.forceReRenderProblemStatement();
+        expect(renderSpy).toHaveBeenCalledOnce();
+
+        instance.comp.ngOnDestroy();
+    });
+
     it('should not accumulate task components across repeated forceReRenderProblemStatement calls', async () => {
         // Each render destroys the previously created task components before recreating them (destroyTaskComponents at
         // the start of updateMarkdown). forceReRenderProblemStatement() goes through that same path, so repeatedly

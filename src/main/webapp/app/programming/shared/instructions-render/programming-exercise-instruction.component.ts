@@ -299,12 +299,16 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     /**
      * Render the markdown into html.
+     *
+     * @param force when true, re-render even if the problem statement is unchanged (bypasses the live-preview
+     *     optimization). Used when the rendered output must be rebuilt regardless of the problem statement, e.g. when an
+     *     exam exercise becomes visible again and its asynchronously injected PlantUML diagrams must be re-injected.
      */
-    updateMarkdown() {
+    updateMarkdown(force = false) {
         const exercise = this.exercise();
         // Skip re-render if problem statement hasn't changed (optimization for live preview)
         const currentProblemStatement = exercise?.problemStatement?.trim();
-        if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
+        if (!force && currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
             return;
         }
         this.lastRenderedProblemStatement = currentProblemStatement;
@@ -332,10 +336,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      * injection has settled), the injection can target stale or detached DOM and the rendered diagram is lost. Calling
      * this once the exercise becomes visible again re-runs the render and injection against the live DOM, reliably
      * restoring the PlantUML diagrams.
+     *
+     * Uses the explicit force flag rather than resetting {@link lastRenderedProblemStatement}, so it re-renders even
+     * when the problem statement is undefined/empty (in that case resetting to undefined would still equal the current
+     * value and the optimization would wrongly skip the re-render).
      */
     forceReRenderProblemStatement() {
-        this.lastRenderedProblemStatement = undefined;
-        this.updateMarkdown();
+        this.updateMarkdown(true);
     }
 
     /**

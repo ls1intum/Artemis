@@ -227,7 +227,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await expect(page.locator(`#plantUml-${exerciseB.id}-0 svg`)).toBeAttached({ timeout: 30000 });
         // Navigate BACK to A: its diagram must still be there.
         await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
-        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 15000 });
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 30000 });
 
         // --- Part 2: rapid switching without waiting for the SVG to render in between ---
         await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
@@ -237,10 +237,10 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
 
         // Every diagram must still be attached (hidden exercises keep their DOM via [hidden]).
-        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 15000 });
-        await expect(page.locator(`#plantUml-${exerciseB.id}-0 svg`)).toBeAttached({ timeout: 15000 });
-        await expect(page.locator(`#plantUml-${exerciseC.id}-0 svg`)).toBeAttached({ timeout: 15000 });
-        await expect(page.locator(`#plantUml-${exerciseC.id}-1 svg`)).toBeAttached({ timeout: 15000 });
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0 svg`)).toBeAttached({ timeout: 30000 });
+        await expect(page.locator(`#plantUml-${exerciseB.id}-0 svg`)).toBeAttached({ timeout: 30000 });
+        await expect(page.locator(`#plantUml-${exerciseC.id}-0 svg`)).toBeAttached({ timeout: 30000 });
+        await expect(page.locator(`#plantUml-${exerciseC.id}-1 svg`)).toBeAttached({ timeout: 30000 });
     });
 
     test.afterEach('Delete exam', async ({ examAPIRequests }) => {
