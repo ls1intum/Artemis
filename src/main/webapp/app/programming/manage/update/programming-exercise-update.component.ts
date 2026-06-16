@@ -296,18 +296,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }.bind(this),
         );
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
-
-        effect(
-            function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
-            }.bind(this),
-        );
     }
 
     showGenerateWithAi = computed(() => {
@@ -544,6 +532,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Sets the values for the creation/update of a programming exercise
      */
     ngOnInit() {
+        // Restore the initial edit mode from local storage. This is a one-time read with no reactive dependency, so it
+        // lives in ngOnInit (it was previously a no-dependency constructor effect() — an effect() misuse). Runs on the
+        // first change detection, before the isSimpleMode-driven status-bar effect, just like the former init effect.
+        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
+
         this.isSaving.set(false);
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
