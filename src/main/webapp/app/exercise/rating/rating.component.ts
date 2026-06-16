@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -17,8 +17,8 @@ export class RatingComponent implements OnInit, OnChanges {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
-    public rating: number;
-    public disableRating = false;
+    public readonly rating = signal<number>(undefined!);
+    public readonly disableRating = signal(false);
     private previousResultId?: number;
 
     readonly result = input<Result>();
@@ -41,7 +41,7 @@ export class RatingComponent implements OnInit, OnChanges {
             return;
         }
         this.ratingService.getRating(result.id).subscribe((rating) => {
-            this.rating = rating ?? 0;
+            this.rating.set(rating ?? 0);
         });
     }
 
@@ -52,22 +52,22 @@ export class RatingComponent implements OnInit, OnChanges {
     onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
         const result = this.result();
-        if (this.disableRating || !result) {
+        if (this.disableRating() || !result) {
             return;
         }
 
-        const oldRating = this.rating;
-        this.rating = event.newValue;
+        const oldRating = this.rating();
+        this.rating.set(event.newValue);
 
-        this.disableRating = true;
+        this.disableRating.set(true);
         let observable: Observable<number>;
         // set/update feedback on the server
         if (oldRating) {
-            observable = this.ratingService.updateRating(this.rating, result.id!);
+            observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {
-            observable = this.ratingService.createRating(this.rating, result.id!);
+            observable = this.ratingService.createRating(this.rating(), result.id!);
         }
 
-        observable.subscribe((rating) => (this.rating = rating)).add(() => (this.disableRating = false));
+        observable.subscribe((rating) => this.rating.set(rating)).add(() => this.disableRating.set(false));
     }
 }

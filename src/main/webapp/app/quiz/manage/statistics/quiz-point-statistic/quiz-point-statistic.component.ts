@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,7 +15,7 @@ import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/qui
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
@@ -23,8 +23,8 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    styleUrls: ['./quiz-point-statistic.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, ChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -32,12 +32,11 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
     private serverDateService = inject(ArtemisServerDateService);
 
     readonly round = round;
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
     quizPointStatistic: QuizPointStatistic;
 
     labels: string[] = [];
@@ -45,27 +44,16 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     label: string[] = [];
     backgroundColor: string[] = [];
 
-    maxScore: number;
+    readonly maxScore = signal<number>(undefined!);
     websocketChannelForData: string;
     quizExerciseChannel: string;
     private quizExerciseSubscription?: Subscription;
     private quizDataSubscription?: Subscription;
 
-    // variables for ngx-charts
-    legend = false;
-    showXAxisLabel = true;
-    showYAxisLabel = true;
-    xAxis = true;
-    yAxis = true;
-    roundEdges = true;
-    showDataLabel = true;
-    height = 500;
-    animations = false;
-
     // timer
     waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
     interval: any;
 
     // Icons
@@ -109,7 +97,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -118,21 +105,21 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (this.quizExercise() && this.quizExercise().dueDate) {
+            const endDate = this.quizExercise().dueDate!;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -184,10 +171,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['courses']);
         }
-        this.quizExercise = quizExercise;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quizExercise);
+        this.waitingForQuizStart = !this.quizExercise().quizStarted;
+        this.quizPointStatistic = this.quizExercise().quizPointStatistic!;
+        this.maxScore.set(calculateMaxScore(this.quizExercise()));
 
         this.loadData();
     }
@@ -212,7 +199,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             (no negative points are achievable and the maximum points are defined by the quiz itself)
             Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
              */
-            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore());
             label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
             this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
@@ -221,7 +208,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         });
 
         this.chartLabels = this.label;
-        this.ngxColor.domain = this.backgroundColor;
+        this.chartColors.set([...this.backgroundColor]);
 
         // load data into the chart
         this.loadDataInDiagram();
@@ -233,7 +220,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     loadDataInDiagram(): void {
         this.setData(this.quizPointStatistic);
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.updateChartData();
 
         // add Axes-labels based on selected language
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
@@ -245,7 +232,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
+        this.quizExerciseService.recalculate(this.quizExercise().id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }

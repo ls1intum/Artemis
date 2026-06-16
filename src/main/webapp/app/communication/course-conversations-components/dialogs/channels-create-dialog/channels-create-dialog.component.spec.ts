@@ -60,7 +60,7 @@ describe('ChannelsCreateDialogComponent', () => {
     });
 
     it('should change channel type when channel type is changed in channel form', () => {
-        expect(component.isPublicChannel).toBe(true);
+        expect(component.isPublicChannel()).toBe(true);
         const channelTypeChangedEvent = 'PRIVATE';
         const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
         expect(formComponentDebug).toBeTruthy();
@@ -68,24 +68,24 @@ describe('ChannelsCreateDialogComponent', () => {
         const formComponent = formComponentDebug.componentInstance;
         expect(formComponent).toBeTruthy();
         formComponent.channelTypeChanged.emit(channelTypeChangedEvent);
-        expect(component.isPublicChannel).toBe(false);
+        expect(component.isPublicChannel()).toBe(false);
     });
 
     it('should change channel announcement type when channel announcement type is changed in channel form', () => {
-        expect(component.isAnnouncementChannel).toBe(false);
+        expect(component.isAnnouncementChannel()).toBe(false);
         const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
         expect(formComponentDebug).toBeTruthy();
 
         const formComponent = formComponentDebug.componentInstance;
         formComponent.isAnnouncementChannelChanged.emit(true);
-        expect(component.isAnnouncementChannel).toBe(true);
+        expect(component.isAnnouncementChannel()).toBe(true);
     });
 
     it('should change channel scope type when channel scope type is changed in channel form', () => {
-        expect(component.isCourseWideChannel).toBe(false);
+        expect(component.isCourseWideChannel()).toBe(false);
         const form: ChannelFormComponent = fixture.debugElement.query(By.directive(ChannelFormComponent)).componentInstance;
         form.isCourseWideChannelChanged.emit(true);
-        expect(component.isCourseWideChannel).toBe(true);
+        expect(component.isCourseWideChannel()).toBe(true);
     });
 
     it('should close modal with the channel to create when form is submitted', () => {

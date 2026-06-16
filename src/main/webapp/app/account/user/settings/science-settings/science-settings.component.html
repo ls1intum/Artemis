@@ -7,16 +7,16 @@
         <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
         <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
     </div>
-    @if (!featureToggleActive) {
+    @if (!featureToggleActive()) {
         <div class="d-flex mt-2 userSettings-info">
             <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
             <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
         </div>
     }
 </div>
-@if (userSettings) {
+@if (userSettings()) {
     <div class="list-group d-block">
-        @for (settingGroup of userSettings.groups; track settingGroup) {
+        @for (settingGroup of userSettings().groups; track settingGroup) {
             <div *jhiHasAnyAuthority="settingGroup.restrictionLevels">
                 @for (setting of settingGroup.settings; track setting) {
                     <div class="list-group-item">

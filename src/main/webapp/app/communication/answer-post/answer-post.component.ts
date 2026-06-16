@@ -1,6 +1,5 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     HostListener,
     OnDestroy,
@@ -11,6 +10,7 @@ import {
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -56,7 +56,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
-    changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -73,7 +72,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
     isAnswerPost = true;
-    course: Course;
+    readonly course = signal<Course>(undefined!);
 
     // Icons
     faBookmark = faBookmark;
@@ -83,12 +82,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
-    mayEdit = false;
-    mayDelete = false;
+    readonly mayEdit = signal<boolean>(false);
+    readonly mayDelete = signal<boolean>(false);
 
     constructor() {
         super();
-        this.course = this.metisService.getCourse();
+        this.course.set(this.metisService.getCourse());
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
@@ -130,7 +129,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -157,12 +156,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
-        this.mayDelete = value;
+        this.mayDelete.set(value);
     }
 
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
-        this.mayEdit = value;
+        this.mayEdit.set(value);
     }
 
     /**
@@ -189,12 +188,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition = {
+            this.dropdownPosition.set({
                 x: event.clientX,
                 y: event.clientY,
-            };
+            });
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -207,8 +206,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -218,9 +217,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
             AnswerPostComponent.activeDropdownPost = undefined;
         }
     }

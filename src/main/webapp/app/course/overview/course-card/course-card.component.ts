@@ -1,7 +1,13 @@
-import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { Color, NgxChartsModule, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,10 +28,11 @@ import { filter, switchMap } from 'rxjs';
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
-    imports: [CourseCardHeaderComponent, NgxChartsModule, PieChartModule, TranslateDirective, RouterLink, FontAwesomeModule],
+    imports: [CourseCardHeaderComponent, ChartModule, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
 })
 export class CourseCardComponent {
     private router = inject(Router);
+    private translateService = inject(TranslateService);
     private scoresStorageService = inject(ScoresStorageService);
     private exerciseService = inject(ExerciseService);
     private courseNotificationService = inject(CourseNotificationService);
@@ -65,7 +72,7 @@ export class CourseCardComponent {
     private readonly _totalReachableScore = signal<number>(0);
     private readonly _totalAbsoluteScore = signal<number>(0);
     private readonly _courseNotificationCount = signal(0);
-    private readonly _ngxDoughnutData = signal<any[]>([
+    private readonly _doughnutChartEntries = signal<ChartSeriesEntry[]>([
         { name: 'achievedPointsLabel', value: 0 },
         { name: 'missingPointsLabel', value: 0 },
     ]);
@@ -76,14 +83,18 @@ export class CourseCardComponent {
     readonly totalReachableScore = this._totalReachableScore.asReadonly();
     readonly totalAbsoluteScore = this._totalAbsoluteScore.asReadonly();
     readonly courseNotificationCount = this._courseNotificationCount.asReadonly();
-    readonly ngxDoughnutData = this._ngxDoughnutData.asReadonly();
+    readonly doughnutChartEntries = this._doughnutChartEntries.asReadonly();
 
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED],
-    } as Color;
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED]);
+
+    readonly chartData = computed(() => singleSeriesChartData(this.doughnutChartEntries(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 0.3,
+            legend: false,
+            tooltip: { label: (item) => `${this.translateService.instant('artemisApp.courseOverview.statistics.' + item.label)}: ${item.parsed}` },
+        }),
+    );
 
     private processCourseData(course: Course): void {
         if (course.exercises && course.exercises.length > 0) {
@@ -106,7 +117,7 @@ export class CourseCardComponent {
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
             const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this._totalReachableScore() - this._totalAbsoluteScore()), course);
-            this._ngxDoughnutData.set([
+            this._doughnutChartEntries.set([
                 { name: 'achievedPointsLabel', value: this._totalAbsoluteScore() },
                 { name: 'missingPointsLabel', value: scoreNotReached },
             ]);
