@@ -99,8 +99,10 @@ jobs:
         # artifact (e.g. a dependency was added or bumped), the offline run fails fast and we retry
         # once online to fetch it (and repopulate the cache on develop, the cache writer).
         run: |
-          ./gradlew -Pprod -Pwar bootWar -x webapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }} \
-            || ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
+          if ! ./gradlew -Pprod -Pwar bootWar -x webapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }}; then
+            echo "Offline build failed (likely an uncached dependency); retrying online to fetch it and repopulate the cache."
+            ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
+          fi
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
