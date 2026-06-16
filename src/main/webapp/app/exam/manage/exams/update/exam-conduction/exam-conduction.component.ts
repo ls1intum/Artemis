@@ -7,16 +7,14 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime } from 'rxjs';
 import { Checkbox } from 'primeng/checkbox';
 
 @Component({
-    selector: 'jhi-exam-timeline',
+    selector: 'jhi-exam-conduction',
     imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message, Checkbox],
-    templateUrl: './exam-timeline.component.html',
+    templateUrl: './exam-conduction.component.html',
 })
-export class ExamTimelineComponent {
+export class ExamConductionComponent {
     readonly max_working_time_in_minutes = 43200 as const;
     readonly max_grace_period_in_seconds = 3600 as const;
 
@@ -24,13 +22,12 @@ export class ExamTimelineComponent {
 
     readonly visibleFrom = model.required<Dayjs | undefined>();
     readonly startOfWorkingTime = model.required<Dayjs | undefined>();
-    readonly startOfPracticeTime = model.required<Dayjs | undefined>();
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
 
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly isSimulationPhaseChecked = signal(false);
+    readonly hasSimulation = signal(false);
 
     readonly examTimelineStatusChange = output<boolean>();
 
@@ -45,42 +42,14 @@ export class ExamTimelineComponent {
 
         effect(() => {
             const isTestExam = this.isTestExam();
-            const isSimulationPhaseChecked = this.isSimulationPhaseChecked();
-            if (!isTestExam || !isSimulationPhaseChecked) {
-                this.isSimulationPhaseChecked.set(false);
-                this.startOfPracticeTime.set(undefined);
+            if (!isTestExam) {
+                this.hasSimulation.set(false);
             }
         });
     }
 
-    private readonly endOfSimulationTime = computed(() =>
-        this.isTestExam() && this.isSimulationPhaseChecked() ? this.startOfWorkingTime()?.add(this.workingTime() ?? 0, 'seconds') : undefined,
-    );
-    readonly debouncedEndOfSimulationTime = toSignal(toObservable(this.endOfSimulationTime).pipe(debounceTime(300)));
-
     readonly timelineItems = computed(() => {
         const isTestExam = this.isTestExam();
-        const isSimulationPhaseChecked = this.isSimulationPhaseChecked();
-
-        const simulationEndAndPracticeStart: TimelineItem[] =
-            isTestExam && isSimulationPhaseChecked
-                ? [
-                      {
-                          kind: 'derived',
-                          labelStringKey: 'artemisApp.examManagement.testExam.simulationEndDate',
-                          date: this.debouncedEndOfSimulationTime,
-                          mustBeStrictlyAfterPrevious: true,
-                          helpKey: 'artemisApp.examManagement.testExam.simulationEndDateTooltip',
-                      },
-                      {
-                          kind: 'required',
-                          labelStringKey: 'artemisApp.examManagement.testExam.practiceStartDate',
-                          date: this.startOfPracticeTime,
-                          mustBeStrictlyAfterPrevious: true,
-                          helpKey: 'artemisApp.examManagement.testExam.practiceStartDateTooltip',
-                      },
-                  ]
-                : [];
 
         const items: TimelineItem[] = [
             {
@@ -96,7 +65,6 @@ export class ExamTimelineComponent {
                 mustBeStrictlyAfterPrevious: true,
                 helpKey: 'artemisApp.examManagement.startDateTooltip',
             },
-            ...simulationEndAndPracticeStart,
             {
                 kind: 'required',
                 labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.examManagement.endDate',

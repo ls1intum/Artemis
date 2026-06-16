@@ -8,7 +8,7 @@
                 <div
                     class="timeline-graphic-circle"
                     [class.required]="internalItem.kind === 'required'"
-                    [class.optional]="internalItem.kind !== 'required'"
+                    [class.optional]="internalItem.kind === 'optional'"
                     [class.valid]="!isInvalid"
                     [class.invalid]="isInvalid"
                 >
@@ -30,7 +30,7 @@
                     <jhi-time-zone-warning />
                 </div>
                 <div class="datepicker-and-info">
-                    <p-datepicker
+                    <p-date-picker
                         styleClass="timeline-datepicker"
                         [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
                         [inputId]="'datepicker-' + index"
@@ -52,7 +52,7 @@
                         showOnFocus="false"
                         [baseZIndex]="1050"
                         [invalid]="isInvalid"
-                        [disabled]="readonly() || internalItem.kind === 'derived'"
+                        [disabled]="readonly()"
                     />
                     @if (isInvalid) {
                         <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.violationKey" tooltipPosition="right"></i>

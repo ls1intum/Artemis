@@ -1,4 +1,4 @@
-import { Component, Signal, WritableSignal, computed, effect, inject, input, output } from '@angular/core';
+import { Component, WritableSignal, computed, effect, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -9,22 +9,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
-type BaseTimelineItem = {
+export type TimelineItem = {
+    kind: 'required' | 'optional';
     labelStringKey: string;
+    date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
     mustBeStrictlyAfterPrevious?: boolean;
     helpKey?: string;
 };
-
-export type TimelineItem =
-    | (BaseTimelineItem & {
-          kind: 'required' | 'optional';
-          date: WritableSignal<Dayjs | undefined>;
-      })
-    | (BaseTimelineItem & {
-          kind: 'derived';
-          date: Signal<Dayjs | undefined>;
-      });
 
 export interface ExerciseTimelineStatus {
     valid: boolean;
@@ -65,9 +57,6 @@ export class ExerciseTimelineComponent {
     }
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null) {
-        if (item.kind === 'derived') {
-            return;
-        }
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
@@ -99,9 +88,6 @@ export class ExerciseTimelineComponent {
     }
 
     private setDateIfChanged(item: TimelineItem, newDate?: Dayjs) {
-        if (item.kind === 'derived') {
-            return;
-        }
         const currentDate = item.date();
         if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);

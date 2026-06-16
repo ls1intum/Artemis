@@ -3,25 +3,25 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
+import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-conduction/exam-conduction.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-describe('ExamTimelineComponent', () => {
+describe('ExamConductionComponent', () => {
     setupTestBed({ zoneless: true });
 
-    let component: ExamTimelineComponent;
-    let fixture: ComponentFixture<ExamTimelineComponent>;
+    let component: ExamConductionComponent;
+    let fixture: ComponentFixture<ExamConductionComponent>;
     let latestValidity: boolean | undefined;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExamTimelineComponent],
+            imports: [ExamConductionComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExamTimelineComponent);
+        fixture = TestBed.createComponent(ExamConductionComponent);
         component = fixture.componentInstance;
         latestValidity = undefined;
         component.examTimelineStatusChange.subscribe((valid) => (latestValidity = valid));

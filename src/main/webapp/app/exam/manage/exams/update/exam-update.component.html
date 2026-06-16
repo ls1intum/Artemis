@@ -100,11 +100,11 @@
                     </ng-template>
                 </p-dialog>
             }
-            <jhi-exam-timeline
+            <jhi-exam-conduction
                 [isTestExam]="exam.testExam!"
                 [(visibleFrom)]="exam.visibleDate"
                 [(startOfWorkingTime)]="exam.startDate"
-                [(startOfPracticeTime)]="exam.testExamPracticeStartDate"
+                [(hasSimulation)]="exam.hasSimulation"
                 [(endOfWorkingTime)]="exam.endDate"
                 [(workingTime)]="exam.workingTime"
                 [(gracePeriod)]="exam.gracePeriod"

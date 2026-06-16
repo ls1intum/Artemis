@@ -32,7 +32,7 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
-import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
+import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-conduction/exam-conduction.component';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 
 @Component({
@@ -57,7 +57,7 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
         Dialog,
         MessageModule,
         SelectButtonModule,
-        ExamTimelineComponent,
+        ExamConductionComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
