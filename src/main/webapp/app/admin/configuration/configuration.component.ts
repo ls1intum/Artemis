@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
@@ -10,6 +10,8 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 
 /**
  * Component for viewing application configuration.
@@ -18,7 +20,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective, InputTextModule, TagModule],
 })
 export class ConfigurationComponent implements OnInit {
     private readonly configurationService = inject(ConfigurationService);

@@ -1,34 +1,23 @@
-<div class="sidebar-wrapper">
-    <div class="vw-100 bg-body">
-        <mat-sidenav-container
-            class="vw-100"
-            [ngClass]="{
-                'container-closed': isNavbarCollapsed(),
-            }"
-        >
-            <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
-                <jhi-admin-sidebar
-                    [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [localCIActive]="localCIActive()"
-                    [ltiEnabled]="ltiEnabled()"
-                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
-                    [atlasEnabled]="atlasEnabled()"
-                    [examEnabled]="examEnabled()"
-                    [passkeyEnabled]="passkeyEnabled()"
-                    [passkeyRequiredForAdmin]="passkeyRequiredForAdmin()"
-                    [isSuperAdmin]="isSuperAdmin()"
-                    (toggleCollapseState)="toggleCollapseState()"
-                />
-            </mat-sidenav>
+<div class="admin-layout" [class.admin-layout--collapsed]="isNavbarCollapsed()" data-testid="admin-layout">
+    <aside class="admin-sidebar module-bg rounded-lg" data-testid="admin-sidebar-column">
+        <jhi-admin-sidebar
+            [isNavbarCollapsed]="isNavbarCollapsed()"
+            [localCIActive]="localCIActive()"
+            [ltiEnabled]="ltiEnabled()"
+            [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+            [atlasEnabled]="atlasEnabled()"
+            [examEnabled]="examEnabled()"
+            [passkeyEnabled]="passkeyEnabled()"
+            [passkeyRequiredForAdmin]="passkeyRequiredForAdmin()"
+            [isSuperAdmin]="isSuperAdmin()"
+            (toggleCollapseState)="toggleCollapseState()"
+        />
+    </aside>
 
-            <mat-sidenav-content>
-                <div class="admin-content-wrapper ms-2">
-                    <jhi-admin-title-bar />
-                    <div class="admin-body-container module-bg rounded-3 scrollable-content p-3">
-                        <router-outlet />
-                    </div>
-                </div>
-            </mat-sidenav-content>
-        </mat-sidenav-container>
+    <div class="admin-content ms-2" data-testid="admin-content-column">
+        <jhi-admin-title-bar />
+        <div class="admin-body module-bg rounded-lg p-3" data-testid="admin-body">
+            <router-outlet />
+        </div>
     </div>
 </div>

@@ -3,6 +3,8 @@ import enforceSignalApis from './enforce-signal-apis.mjs';
 import enforceCleanupOnDestroy from './enforce-cleanup-on-destroy.mjs';
 import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-over-ngonchanges.mjs';
 import preferSignalTemplateState from './prefer-signal-template-state.mjs';
+import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
+import noBootstrapClasses from './no-bootstrap-classes.mjs';
 
 export default {
     rules: {
@@ -11,5 +13,7 @@ export default {
         'enforce-cleanup-on-destroy': enforceCleanupOnDestroy,
         'prefer-signal-reactivity-over-ngonchanges': preferSignalReactivityOverNgOnChanges,
         'prefer-signal-template-state': preferSignalTemplateState,
+        'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
+        'no-bootstrap-classes': noBootstrapClasses,
     },
 };

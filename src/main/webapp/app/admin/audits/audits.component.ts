@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,6 +17,10 @@ import { ItemCountComponent } from 'app/foundation/pagination/item-count.compone
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Admin component for viewing system audit logs.
@@ -25,7 +29,22 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, PaginatorModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        ItemCountComponent,
+        PaginatorModule,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        InputGroupModule,
+        InputGroupAddonModule,
+        InputTextModule,
+        MessageModule,
+    ],
 })
 export class AuditsComponent implements OnInit {
     private readonly auditsService = inject(AuditsService);

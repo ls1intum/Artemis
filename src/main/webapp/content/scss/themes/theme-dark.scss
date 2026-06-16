@@ -41,7 +41,8 @@ html {
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import 'node_modules/highlight.js/styles/monokai.css';
+// Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file.
+@import 'highlight.js/styles/monokai.css';
 
 .blockquote {
     &-footer {

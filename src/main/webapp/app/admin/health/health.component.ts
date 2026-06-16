@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { HealthService } from './health.service';
@@ -7,11 +7,13 @@ import { Health, HealthDetails, HealthKey, HealthStatus } from 'app/admin/health
 import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { KeyValuePipe, NgClass } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Component for displaying system health status.
@@ -20,16 +22,18 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-health',
     templateUrl: './health.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FaIconComponent,
-        NgClass,
         JhiConnectionStatusComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         HealthModalComponent,
+        TagModule,
+        ButtonModule,
     ],
 })
 export class HealthComponent implements OnInit {
@@ -50,11 +54,11 @@ export class HealthComponent implements OnInit {
         this.refresh();
     }
 
-    getBadgeClass(statusState: HealthStatus) {
+    getBadgeSeverity(statusState: HealthStatus): 'success' | 'danger' {
         if (statusState === 'UP') {
-            return 'bg-success';
+            return 'success';
         }
-        return 'bg-danger';
+        return 'danger';
     }
 
     /**

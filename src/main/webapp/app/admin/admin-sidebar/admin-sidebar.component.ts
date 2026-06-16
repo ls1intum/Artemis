@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { IconDefinition, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import {
     faBell,
@@ -25,7 +25,6 @@ import {
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { TooltipModule } from 'primeng/tooltip';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,7 +50,8 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;

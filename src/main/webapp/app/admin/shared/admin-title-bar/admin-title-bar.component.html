@@ -1,5 +1,5 @@
-<div id="admin-title-bar" class="module-bg mb-2 px-3 py-2 rounded rounded-3 d-flex justify-content-between align-items-center" style="min-height: 44px">
-    <div class="align-self-center">
+<div id="admin-title-bar" class="module-bg mb-2 flex min-h-11 items-center justify-between rounded-lg px-3 py-2">
+    <div class="self-center">
         @if (customTitleTemplate()) {
             <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
         } @else {
@@ -7,7 +7,7 @@
         }
     </div>
 
-    <div class="d-flex gap-2 align-items-center">
+    <div class="flex items-center gap-2" data-testid="admin-title-bar-actions">
         @if (customActionsTemplate()) {
             <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
         }

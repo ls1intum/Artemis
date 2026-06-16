@@ -1,5 +1,4 @@
-import { NgClass } from '@angular/common';
-import { Component, computed, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -8,11 +7,16 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Thread, ThreadState } from '../../metrics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
 
 @Component({
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
-    imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisTranslatePipe, DialogModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FaIconComponent, FormsModule, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule, InputTextModule, TableModule],
 })
 export class MetricsModalThreadsComponent {
     ThreadState = ThreadState;
@@ -50,18 +54,18 @@ export class MetricsModalThreadsComponent {
     // Icons
     faCheck = faCheck;
 
-    getBgClass(threadState: ThreadState): string {
+    getBadgeSeverity(threadState: ThreadState): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         switch (threadState) {
             case ThreadState.Runnable:
-                return 'bg-success';
+                return 'success';
             case ThreadState.Waiting:
-                return 'bg-info';
+                return 'info';
             case ThreadState.TimedWaiting:
-                return 'bg-warning';
+                return 'warn';
             case ThreadState.Blocked:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return '';
+                return 'secondary';
         }
     }
 

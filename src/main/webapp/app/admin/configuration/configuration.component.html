@@ -1,59 +1,78 @@
 @if (beans()) {
     <h5 *adminTitleBarTitle id="configuration-page-heading" class="mb-0" jhiTranslate="configuration.title" data-cy="configurationPageHeading"></h5>
     <div>
-        <span jhiTranslate="configuration.filter"></span>
-        <input type="text" [ngModel]="beansFilter()" (ngModelChange)="updateBeansFilter($event)" class="form-control" />
+        <div class="flex flex-col gap-2 mb-4">
+            <label for="configuration-filter" jhiTranslate="configuration.filter"></label>
+            <input
+                id="configuration-filter"
+                type="text"
+                pInputText
+                [ngModel]="beansFilter()"
+                (ngModelChange)="updateBeansFilter($event)"
+                data-testid="configuration-filter-input"
+            />
+        </div>
         <h3 id="spring-configuration">Spring configuration</h3>
-        <table class="table table-striped table-bordered table-responsive d-table" aria-describedby="spring-configuration">
-            <thead>
-                <tr jhiSort predicate="prefix" [ascending]="beansAscending()" (ascendingChange)="updateBeansAscending($event)">
-                    <th jhiSortBy="prefix" scope="col" class="w-40"><span jhiTranslate="configuration.table.prefix"></span> <fa-icon [icon]="faSort" /></th>
-                    <th scope="col" class="w-60"><span jhiTranslate="configuration.table.properties"></span></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (bean of beans(); track bean) {
-                    <tr>
-                        <td>
-                            <span>{{ bean.prefix }}</span>
-                        </td>
-                        <td>
-                            @for (property of bean.properties | keyvalue; track property) {
-                                <div class="row">
-                                    <div class="col-md-4">{{ property.key }}</div>
-                                    <div class="col-md-8">
-                                        <span class="float-end badge bg-secondary break">{{ property.value | json }}</span>
-                                    </div>
-                                </div>
-                            }
-                        </td>
+        <div class="overflow-x-auto" data-testid="spring-configuration-table">
+            <table class="w-full border-collapse text-sm" aria-describedby="spring-configuration">
+                <thead>
+                    <tr jhiSort predicate="prefix" [ascending]="beansAscending()" (ascendingChange)="updateBeansAscending($event)" class="border-b border-surface-200">
+                        <th jhiSortBy="prefix" scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">
+                            <span jhiTranslate="configuration.table.prefix"></span> <fa-icon [icon]="faSort" />
+                        </th>
+                        <th scope="col" class="w-3/5 px-3 py-2 text-start font-semibold">
+                            <span jhiTranslate="configuration.table.properties"></span>
+                        </th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @for (bean of beans(); track bean) {
+                        <tr class="border-b border-surface-100 odd:bg-surface-50">
+                            <td class="px-3 py-2 break">
+                                <span>{{ bean.prefix }}</span>
+                            </td>
+                            <td class="px-3 py-2">
+                                @for (property of bean.properties | keyvalue; track property) {
+                                    <div class="flex items-start gap-2 py-1">
+                                        <div class="w-2/5">{{ property.key }}</div>
+                                        <div class="w-3/5 flex justify-end">
+                                            <p-tag severity="secondary" [value]="property.value | json" styleClass="break" data-testid="bean-property-value" />
+                                        </div>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
         @for (propertySource of propertySources(); track propertySource; let i = $index) {
-            <div>
+            <div class="mt-4" data-testid="property-source-section">
                 <h4 [id]="'property-source-' + i">
                     <span>{{ propertySource.name }}</span>
                 </h4>
-                <table class="table table-sm table-striped table-bordered table-responsive d-table" [attr.aria-describedby]="'property-source-' + i">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="w-40">Property</th>
-                            <th scope="col" class="w-60">Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (property of propertySource.properties | keyvalue; track property) {
-                            <tr>
-                                <td class="break">{{ property.key }}</td>
-                                <td class="break">
-                                    <span class="float-end badge bg-secondary break">{{ property.value.value }}</span>
-                                </td>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-sm" [attr.aria-describedby]="'property-source-' + i">
+                        <thead>
+                            <tr class="border-b border-surface-200">
+                                <th scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">Property</th>
+                                <th scope="col" class="w-3/5 px-3 py-2 text-start font-semibold">Value</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @for (property of propertySource.properties | keyvalue; track property) {
+                                <tr class="border-b border-surface-100 odd:bg-surface-50">
+                                    <td class="px-3 py-2 break">{{ property.key }}</td>
+                                    <td class="px-3 py-2 break">
+                                        <div class="flex justify-end">
+                                            <p-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
     </div>

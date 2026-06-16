@@ -1,15 +1,20 @@
-import { DatePipe, NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { WebsocketAdminService } from 'app/admin/websocket/websocket-admin.service';
 import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlug, faPowerOff, faSync } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
@@ -23,7 +28,19 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
     standalone: true,
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass, DatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        DatePipe,
+        AdminTitleBarTitleDirective,
+        ButtonModule,
+        ButtonGroupModule,
+        TagModule,
+        MessageModule,
+        TableModule,
+    ],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {
     protected readonly faPlug = faPlug;

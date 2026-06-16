@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -18,7 +18,6 @@ import {
     faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,10 +27,20 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
+import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
 
 type SbomSource = 'all' | 'server' | 'client';
+type PrimeNgSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 /**
  * Admin component for viewing Software Bill of Materials (SBOM).
@@ -41,6 +50,7 @@ type SbomSource = 'all' | 'server' | 'client';
     selector: 'jhi-admin-sbom',
     templateUrl: './admin-sbom.component.html',
     styleUrls: ['./admin-sbom.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FormsModule,
@@ -49,8 +59,15 @@ type SbomSource = 'all' | 'server' | 'client';
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
         SortDirective,
-        NgClass,
         HelpIconComponent,
+        ButtonModule,
+        ButtonGroupModule,
+        TableModule,
+        TagModule,
+        MessageModule,
+        InputTextModule,
+        IconFieldModule,
+        InputIconModule,
     ],
 })
 export class AdminSbomComponent implements OnInit {
@@ -368,21 +385,18 @@ export class AdminSbomComponent implements OnInit {
         return 'UNKNOWN';
     }
 
-    /**
-     * Get CSS class for severity badge.
-     */
-    getSeverityClass(severity: string): string {
+    getSeverityLevel(severity: string): PrimeNgSeverity {
         switch (severity) {
             case 'CRITICAL':
-                return 'bg-danger';
+                return 'danger';
             case 'HIGH':
-                return 'bg-warning text-dark';
+                return 'warn';
             case 'MEDIUM':
-                return 'bg-warning text-dark';
+                return 'warn';
             case 'LOW':
-                return 'bg-info';
+                return 'info';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 
@@ -435,12 +449,5 @@ export class AdminSbomComponent implements OnInit {
         a.download = `${source}-sbom.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }
-
-    /**
-     * Track function for ngFor.
-     */
-    trackByName(_index: number, component: SbomComponent): string {
-        return `${component.group ?? ''}:${component.name}:${component.version}`;
     }
 }

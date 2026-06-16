@@ -4,8 +4,8 @@ import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTri
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { DatePickerModule } from 'primeng/datepicker';
+import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -26,18 +26,7 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [
-        FaStackComponent,
-        NgbTooltip,
-        FaIconComponent,
-        FaStackItemSizeDirective,
-        FormsModule,
-        OwlDateTimeModule,
-        NgClass,
-        NgTemplateOutlet,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, NgClass, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCalendarAlt = faCalendarAlt;
@@ -81,6 +70,17 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return !isInvalid;
     });
 
+    /**
+     * Whether the underlying p-datepicker should render a time picker (hours/minutes).
+     * CALENDAR -> date only, TIMER -> time only, DEFAULT -> date + time.
+     */
+    protected showTime = computed(() => this.pickerType() !== DateTimePickerType.CALENDAR);
+
+    /**
+     * Whether the underlying p-datepicker should render the time picker only (no calendar).
+     */
+    protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
+
     updateSignals(): void {
         const dateInput = this.dateInputRef() ?? this.dateInputOverride;
         this.isInputValid.set(!dateInput?.invalid);
@@ -102,7 +102,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param value as dayjs or date
      */
     writeValue(value: any) {
-        // convert dayjs to date, because owl-date-time only works correctly with date objects
+        // convert dayjs to date, because p-datepicker only works correctly with date objects
         if (dayjs.isDayjs(value)) {
             this.value.set((value as dayjs.Dayjs).toDate());
         } else {
@@ -126,12 +126,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     *
-     * @param newValue
+     * Called when the user picks a new value in the p-datepicker.
+     * p-datepicker emits a JS Date (or null/undefined when cleared); we convert back to a UTC-correct dayjs for consumers.
+     * @param newValue the value emitted by the picker (Date | null | undefined)
      */
-    updateField(newValue: dayjs.Dayjs) {
+    updateField(newValue: dayjs.Dayjs | Date | null | undefined) {
         this.value.set(newValue);
-        this.onChange?.(dayjs(this.value()));
+        this.onChange?.(newValue != undefined ? dayjs(newValue) : undefined);
         this.valueChanged();
     }
 
@@ -168,6 +169,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput?.reset(undefined);
+        this.value.set(undefined);
         if (this.onChange) {
             this.onChange(undefined);
         }

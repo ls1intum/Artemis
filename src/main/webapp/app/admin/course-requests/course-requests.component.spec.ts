@@ -261,21 +261,21 @@ describe('CourseRequestsComponent', () => {
         });
     });
 
-    describe('badgeClass', () => {
-        it('should return bg-success for ACCEPTED status', () => {
-            expect(component.badgeClass(CourseRequestStatus.ACCEPTED)).toBe('bg-success');
+    describe('badgeSeverity', () => {
+        it('should return success for ACCEPTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.ACCEPTED)).toBe('success');
         });
 
-        it('should return bg-danger for REJECTED status', () => {
-            expect(component.badgeClass(CourseRequestStatus.REJECTED)).toBe('bg-danger');
+        it('should return danger for REJECTED status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.REJECTED)).toBe('danger');
         });
 
-        it('should return bg-secondary for PENDING status', () => {
-            expect(component.badgeClass(CourseRequestStatus.PENDING)).toBe('bg-secondary');
+        it('should return secondary for PENDING status', () => {
+            expect(component.badgeSeverity(CourseRequestStatus.PENDING)).toBe('secondary');
         });
 
-        it('should return bg-secondary for undefined status', () => {
-            expect(component.badgeClass(undefined)).toBe('bg-secondary');
+        it('should return secondary for undefined status', () => {
+            expect(component.badgeSeverity(undefined)).toBe('secondary');
         });
     });
 

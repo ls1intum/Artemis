@@ -1,13 +1,13 @@
 <div>
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
-    <div *adminTitleBarActions class="d-flex gap-2 align-items-center flex-wrap">
+    <div *adminTitleBarActions class="flex flex-wrap gap-2 items-center">
         <span class="quick-nav-label">Jump to:</span>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('jvm-metrics')">JVM</button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('gc-metrics')">GC</button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('http-metrics')">HTTP</button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('endpoints-metrics')">Endpoints</button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('cache-metrics')">Cache</button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('datasource-metrics')">Datasource</button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</p-button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</p-button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</p-button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</p-button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</p-button>
+        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('datasource-metrics')" data-testid="nav-datasource">Datasource</p-button>
         @if (nodeOptions().length > 1) {
             <p-select
                 [(ngModel)]="selectedNodeId"
@@ -20,19 +20,22 @@
                 [style]="{ height: '31px', 'font-size': '0.875rem' }"
             />
         }
-        <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="metrics.refresh.button"></span></button>
+        <p-button size="small" (onClick)="refresh()" data-testid="refresh-button">
+            <fa-icon [icon]="faSync" />
+            <span jhiTranslate="metrics.refresh.button"></span>
+        </p-button>
     </div>
 
     @if (!metrics() && updatingMetrics()) {
-        <div class="well well-lg" jhiTranslate="metrics.updating"></div>
+        <div class="py-3 text-muted-color" jhiTranslate="metrics.updating"></div>
     }
 
     @if (metrics()) {
         <h3 id="jvm-metrics" jhiTranslate="metrics.jvm.title"></h3>
-        <div class="row">
-            <jhi-jvm-memory class="col-md-4" [updating]="updatingMetrics()" [jvmMemoryMetrics]="metrics()!.jvm" />
-            <jhi-jvm-threads class="col-md-4" [threads]="threads()" />
-            <jhi-metrics-system class="col-md-4" [updating]="updatingMetrics()" [systemMetrics]="metrics()!.processMetrics" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <jhi-jvm-memory [updating]="updatingMetrics()" [jvmMemoryMetrics]="metrics()!.jvm" />
+            <jhi-jvm-threads [threads]="threads()" />
+            <jhi-metrics-system [updating]="updatingMetrics()" [systemMetrics]="metrics()!.processMetrics" />
         </div>
         @if (metricsKeyExists('garbageCollector')) {
             <div id="gc-metrics">

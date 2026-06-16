@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
-import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -22,11 +23,13 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
         TooltipModule,
+        ButtonModule,
         ModePickerComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -39,7 +42,6 @@ export class LegalDocumentUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
 
     protected readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
-    protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faCheckCircle = faCheckCircle;
@@ -64,9 +66,6 @@ export class LegalDocumentUpdateComponent implements OnInit {
 
     /** Whether the document is currently being saved */
     readonly isSaving = signal(false);
-
-    /** Reference to the markdown editor component */
-    readonly markdownEditor = viewChild(MarkdownEditorMonacoComponent);
 
     /** Current trimmed content from the editor */
     readonly currentContentTrimmed = signal('');

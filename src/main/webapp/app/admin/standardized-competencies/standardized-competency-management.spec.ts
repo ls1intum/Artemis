@@ -4,20 +4,6 @@
  * including CRUD operations, tree navigation, and filtering.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('interactjs', () => {
-    const mockOn = vi.fn((eventName: string, callback: (event: any) => void) => {
-        return { on: mockOn };
-    });
-    const mockResizable = vi.fn(() => ({ on: mockOn }));
-    const mockInteract = Object.assign(
-        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
-        {
-            modifiers: { restrictSize: vi.fn(() => ({})) },
-        },
-    );
-    return { default: mockInteract };
-});
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
@@ -494,19 +480,32 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
     });
 
-    it('should show drag handle when detail panel is visible', () => {
+    it('should show the resizable splitter with the detail panel when a knowledge area is selected', () => {
         component['selectedKnowledgeArea'].set({ id: 1, title: 'test' });
         componentFixture.detectChanges();
 
-        const dragHandle = componentFixture.debugElement.query(By.css('.draggable-left'));
-        expect(dragHandle).not.toBeNull();
+        const splitter = componentFixture.debugElement.query(By.css('[data-testid="sc-splitter"]'));
+        expect(splitter).not.toBeNull();
+        const detailPanel = componentFixture.debugElement.query(By.css('[data-testid="sc-detail-panel"]'));
+        expect(detailPanel).not.toBeNull();
+        const knowledgeAreaDetail = componentFixture.debugElement.query(By.css('[data-testid="knowledge-area-detail"]'));
+        expect(knowledgeAreaDetail).not.toBeNull();
     });
 
     it('should not show detail panel when nothing is selected', () => {
         componentFixture.detectChanges();
 
-        const detailPanel = componentFixture.debugElement.query(By.css('.sc-detail-panel'));
+        const detailPanel = componentFixture.debugElement.query(By.css('[data-testid="sc-detail-panel"]'));
         expect(detailPanel).toBeNull();
+    });
+
+    it('should persist the splitter panel sizes on resize end', () => {
+        component['onSplitterResizeEnd']({ originalEvent: new Event('mouseup'), sizes: [30, 70] });
+        expect(component['splitterPanelSizes']()).toEqual([30, 70]);
+
+        // ignore malformed events (must keep two panel sizes)
+        component['onSplitterResizeEnd']({ originalEvent: new Event('mouseup'), sizes: [50] });
+        expect(component['splitterPanelSizes']()).toEqual([30, 70]);
     });
 
     it('should not deactivate with pending changes', () => {

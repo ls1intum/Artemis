@@ -1,0 +1,42 @@
+/*
+ * Tailwind CSS v4 utility layer for Artemis.
+ *
+ * Preflight (Tailwind's reset) is intentionally NOT imported so Bootstrap's Reboot stays authoritative
+ * during the incremental Bootstrap → PrimeNG/Tailwind migration. Until Bootstrap is removed app-wide,
+ * utilities also sit in their own layer below unlayered Bootstrap; style PrimeNG components via their own
+ * API (props / pass-through), never utility overrides, so no `!important` is needed.
+ *
+ * `tailwindcss-primeui` binds the color utilities (bg-primary, text-surface-*, text-muted-color, ...) to
+ * PrimeNG tokens, which AuraArtemis maps to the Artemis brand — one source of truth, dark-mode aware.
+ * Use those tokens for color; never raw palette (text-green-500), which isn't brand-bound (enforced by
+ * the `no-raw-tailwind-color-palette` ESLint rule).
+ *
+ * EXIT CRITERIA (global Bootstrap removal — tracked separately, see client-development.mdx ### Styling):
+ * once Bootstrap is gone, replace the two scoped imports below with `@import 'tailwindcss';` (re-enables
+ * Preflight), configure PrimeNG cssLayer ordering (`tailwind-base, primeng, tailwind-utilities`) in
+ * app.config.ts, drop `source(none)` + the `@source` allowlist, and (optionally) reintroduce a brand-state
+ * `@theme inline` block once it is no longer shadowed by Bootstrap's `!important` color utilities.
+ */
+@layer theme, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+/*
+ * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit
+ * `@source` below is scanned. Without this, Tailwind scans every template and emits a utility for any
+ * candidate class it finds — including Bootstrap component class names that double as Tailwind utilities
+ * (e.g. `.collapse` -> `visibility: collapse`, which hides expanded Bootstrap collapse panels app-wide).
+ */
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@plugin 'tailwindcss-primeui';
+
+/*
+ * Scope Tailwind's content scanning to the migrated module(s) only. Tailwind generates a utility for every
+ * candidate class it finds in the scanned sources; scanning the whole app would emit utilities whose names
+ * collide with Bootstrap component classes still used elsewhere (e.g. `.collapse` -> `visibility: collapse`
+ * would hide every expanded Bootstrap collapse panel app-wide). Add each module here as it is migrated.
+ */
+@source './app/admin';
+
+/* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
+@custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));

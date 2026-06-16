@@ -1,14 +1,17 @@
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -17,7 +20,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, InputTextModule, ButtonModule, MessageModule, AdminTitleBarTitleDirective],
 })
 export class EditLtiConfigurationComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
@@ -39,7 +43,6 @@ export class EditLtiConfigurationComponent implements OnInit {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly faPlus = faPlus;
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form

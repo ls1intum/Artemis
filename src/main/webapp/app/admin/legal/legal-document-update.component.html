@@ -10,28 +10,35 @@
             [enableFileUpload]="false"
             class="markdown-editor"
         />
-        <div>
+        <div data-testid="save-status">
             @if (!unsavedChanges() && !isSaving()) {
-                <div>
+                <div data-testid="status-saved">
                     <fa-icon [icon]="faCheckCircle" class="text-success me-1" [pTooltip]="'artemisApp.legal.savedTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.saved"></span>
                 </div>
             }
             @if (unsavedChanges() && !isSaving()) {
-                <div>
+                <div data-testid="status-unsaved">
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [pTooltip]="'artemisApp.legal.unsavedTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.unsaved"></span>
                 </div>
             }
             @if (isSaving()) {
-                <div>
+                <div data-testid="status-saving">
                     <fa-icon [icon]="faCircleNotch" class="me-1" [pTooltip]="'artemisApp.legal.savingTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.saving"></span>
                 </div>
             }
         </div>
-        <div class="btn-below-editor">
-            <button type="submit" (click)="updateLegalDocument()" class="btn btn-primary" id="update-legal-document-btn" [disabled]="!currentContentTrimmed() || isSaving()">
+        <div class="flex mt-3 gap-3 items-center">
+            <button
+                type="submit"
+                pButton
+                (click)="updateLegalDocument()"
+                id="update-legal-document-btn"
+                data-testid="save-button"
+                [disabled]="!currentContentTrimmed() || isSaving()"
+            >
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </button>

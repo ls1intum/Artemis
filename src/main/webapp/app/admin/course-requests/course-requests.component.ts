@@ -1,7 +1,11 @@
-import { NgClass } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
@@ -14,7 +18,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { onError } from 'app/foundation/util/global.utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
@@ -30,12 +33,11 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgClass,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
-        ButtonComponent,
         FormsModule,
         ReactiveFormsModule,
         RouterLink,
@@ -45,6 +47,11 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         PaginatorModule,
         CourseRequestFormComponent,
         DialogModule,
+        ButtonModule,
+        TableModule,
+        TagModule,
+        TextareaModule,
+        TooltipModule,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
@@ -52,8 +59,6 @@ export class CourseRequestsComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly fb = inject(FormBuilder);
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
@@ -193,14 +198,14 @@ export class CourseRequestsComponent implements OnInit {
         });
     }
 
-    badgeClass(status?: CourseRequestStatus) {
+    badgeSeverity(status?: CourseRequestStatus): 'success' | 'danger' | 'secondary' {
         switch (status) {
             case CourseRequestStatus.ACCEPTED:
-                return 'bg-success';
+                return 'success';
             case CourseRequestStatus.REJECTED:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 

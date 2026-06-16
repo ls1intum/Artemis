@@ -213,6 +213,13 @@ jobs:
         run: pnpm run compile:tests
       - name: TypeScript Test Without Typechecking
         run: pnpm run test:ci
+      - name: Per-Module Coverage Gate
+        # Enforces the per-module client coverage thresholds (admin, etc.) defined in
+        # supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs.
+        # The global Vitest threshold alone would let an individual module silently regress.
+        # Runs even if the previous step failed so the gate is reported; uploads below still run (!cancelled).
+        if: ${{ !cancelled() }}
+        run: pnpm run coverage:check-module
       - name: Upload Vitest Coverage Report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

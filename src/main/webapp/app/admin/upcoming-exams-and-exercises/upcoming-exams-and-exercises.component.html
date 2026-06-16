@@ -4,110 +4,118 @@
     <!-- Upcoming Exams Section -->
     <h4 id="upcoming-exams-page-heading" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExams"></h4>
     @if (upcomingExams().length) {
-        <div class="table-responsive">
-            <table class="table table-striped" aria-describedby="upcoming-exams-page-heading">
-                <thead>
-                    <tr>
-                        <th class="d-md-table-cell" style="width: 300px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.exam"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 100px">
-                            <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 300px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.course"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 180px">
-                            <span jhiTranslate="artemisApp.examManagement.visibleDate"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 180px">
-                            <span jhiTranslate="artemisApp.examManagement.startDate"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 180px">
-                            <span jhiTranslate="artemisApp.examManagement.endDate"></span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (exam of upcomingExams(); track trackByExam($index, exam)) {
-                        <tr>
-                            <td>
-                                <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
-                            </td>
-                            <td>
-                                @if (exam.testExam) {
-                                    <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                                } @else {
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                                }
-                            </td>
-                            @if (exam.course; as course) {
-                                <td>
-                                    <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
-                                </td>
-                            } @else {
-                                <td>-</td>
-                            }
-                            <td>{{ exam.visibleDate | artemisDate }}</td>
-                            <td>{{ exam.startDate | artemisDate }}</td>
-                            <td>{{ exam.endDate | artemisDate }}</td>
-                        </tr>
+        <p-table
+            [value]="upcomingExams()"
+            [stripedRows]="true"
+            [tableStyle]="{ 'table-layout': 'fixed' }"
+            data-testid="upcoming-exams-table"
+            aria-describedby="upcoming-exams-page-heading"
+        >
+            <ng-template #header>
+                <tr>
+                    <th style="width: 300px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.exam"></span>
+                    </th>
+                    <th style="width: 100px">
+                        <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
+                    </th>
+                    <th style="width: 300px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.course"></span>
+                    </th>
+                    <th style="width: 180px">
+                        <span jhiTranslate="artemisApp.examManagement.visibleDate"></span>
+                    </th>
+                    <th style="width: 180px">
+                        <span jhiTranslate="artemisApp.examManagement.startDate"></span>
+                    </th>
+                    <th style="width: 180px">
+                        <span jhiTranslate="artemisApp.examManagement.endDate"></span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-exam>
+                <tr>
+                    <td>
+                        <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
+                    </td>
+                    <td>
+                        @if (exam.testExam) {
+                            <p-tag severity="info" data-testid="exam-mode-tag">
+                                <span jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                            </p-tag>
+                        } @else {
+                            <p-tag severity="success" data-testid="exam-mode-tag">
+                                <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+                            </p-tag>
+                        }
+                    </td>
+                    @if (exam.course; as course) {
+                        <td>
+                            <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
+                        </td>
+                    } @else {
+                        <td>-</td>
                     }
-                </tbody>
-            </table>
-        </div>
+                    <td>{{ exam.visibleDate | artemisDate }}</td>
+                    <td>{{ exam.startDate | artemisDate }}</td>
+                    <td>{{ exam.endDate | artemisDate }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
     } @else {
-        <p class="text-secondary" jhiTranslate="artemisApp.upcomingExamsAndExercises.noUpcomingExams"></p>
+        <p class="text-muted-color" data-testid="no-upcoming-exams" jhiTranslate="artemisApp.upcomingExamsAndExercises.noUpcomingExams"></p>
     }
 
     <!-- Upcoming Exercises Section -->
     <h4 id="upcoming-exercises-page-heading" class="mt-4" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExercises"></h4>
     @if (upcomingExercises().length) {
-        <div class="table-responsive">
-            <table class="table table-striped" aria-describedby="upcoming-exercises-page-heading">
-                <thead>
-                    <tr>
-                        <th class="d-md-table-cell" style="width: 50px">
-                            <span jhiTranslate="artemisApp.exercise.type"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 300px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.exercise"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 300px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.course"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 180px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.releaseDate"></span>
-                        </th>
-                        <th class="d-md-table-cell" style="width: 180px">
-                            <span jhiTranslate="artemisApp.upcomingExamsAndExercises.dueDate"></span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (exercise of upcomingExercises(); track trackByExercise($index, exercise)) {
-                        <tr>
-                            <td>
-                                <fa-icon [icon]="getIcon(exercise.type)" [pTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
-                            </td>
-                            <td>
-                                <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>
-                            </td>
-                            @if (exercise.course; as course) {
-                                <td>
-                                    <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
-                                </td>
-                            } @else {
-                                <td>-</td>
-                            }
-                            <td>{{ exercise.releaseDate | artemisDate }}</td>
-                            <td>{{ exercise.dueDate | artemisDate }}</td>
-                        </tr>
+        <p-table
+            [value]="upcomingExercises()"
+            [stripedRows]="true"
+            [tableStyle]="{ 'table-layout': 'fixed' }"
+            data-testid="upcoming-exercises-table"
+            aria-describedby="upcoming-exercises-page-heading"
+        >
+            <ng-template #header>
+                <tr>
+                    <th style="width: 50px">
+                        <span jhiTranslate="artemisApp.exercise.type"></span>
+                    </th>
+                    <th style="width: 300px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.exercise"></span>
+                    </th>
+                    <th style="width: 300px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.course"></span>
+                    </th>
+                    <th style="width: 180px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.releaseDate"></span>
+                    </th>
+                    <th style="width: 180px">
+                        <span jhiTranslate="artemisApp.upcomingExamsAndExercises.dueDate"></span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-exercise>
+                <tr>
+                    <td>
+                        <fa-icon [icon]="getIcon(exercise.type)" [pTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                    </td>
+                    <td>
+                        <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>
+                    </td>
+                    @if (exercise.course; as course) {
+                        <td>
+                            <a [routerLink]="['/course-management', course.id]">{{ course.title }}</a>
+                        </td>
+                    } @else {
+                        <td>-</td>
                     }
-                </tbody>
-            </table>
-        </div>
+                    <td>{{ exercise.releaseDate | artemisDate }}</td>
+                    <td>{{ exercise.dueDate | artemisDate }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
     } @else {
-        <p class="text-secondary" jhiTranslate="artemisApp.upcomingExamsAndExercises.noUpcomingExercises"></p>
+        <p class="text-muted-color" data-testid="no-upcoming-exercises" jhiTranslate="artemisApp.upcomingExamsAndExercises.noUpcomingExercises"></p>
     }
 </div>

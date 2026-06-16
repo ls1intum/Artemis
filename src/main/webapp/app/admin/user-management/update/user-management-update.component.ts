@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -7,26 +7,24 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
+import { CheckboxModule } from 'primeng/checkbox';
+import { SelectModule } from 'primeng/select';
+import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
+import { ChipModule } from 'primeng/chip';
+import { ButtonModule } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatOption } from '@angular/material/core';
-import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -41,23 +39,20 @@ import { Authority } from 'app/foundation/constants/authority.constants';
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
     styleUrls: ['./user-management-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
         TooltipModule,
         HelpIconComponent,
-        MatFormField,
-        MatChipGrid,
-        MatChipRow,
-        MatChipRemove,
+        InputTextModule,
+        CheckboxModule,
+        SelectModule,
+        AutoCompleteModule,
+        ChipModule,
+        ButtonModule,
         FaIconComponent,
-        MatAutocompleteTrigger,
-        MatChipInput,
-        MatAutocomplete,
-        MatOption,
-        AsyncPipe,
-        FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
@@ -77,9 +72,9 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     protected readonly faBan = faBan;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
     protected readonly faSave = faSave;
+
+    private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -95,6 +90,12 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Available languages for selection */
     readonly languages = signal<string[]>(undefined!);
+
+    /** Language options ({ label, value }) derived for the PrimeNG select. */
+    readonly languageOptions = computed(() => (this.languages() ?? []).map((language) => ({ label: this.findLanguageFromKeyPipe.transform(language), value: language })));
+
+    /** Whether a random password should be generated (new users) or the old password kept (existing users). */
+    readonly useRandomPassword = signal(true);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -122,14 +123,8 @@ export class UserManagementUpdateComponent implements OnInit {
     /** All available groups for autocomplete */
     allGroups: string[];
 
-    /** Filtered groups based on input */
-    readonly filteredGroups = signal<Observable<string[]>>(undefined!);
-
-    /** Separator key codes for chip input */
-    readonly separatorKeysCodes = [ENTER, COMMA, TAB];
-
-    /** Form control for group autocomplete */
-    readonly groupCtrl = new FormControl();
+    /** Filtered group suggestions shown in the autocomplete dropdown. */
+    readonly groupSuggestions = signal<string[]>([]);
 
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
@@ -175,12 +170,7 @@ export class UserManagementUpdateComponent implements OnInit {
                     }
                 });
             }
-            this.filteredGroups.set(
-                this.groupCtrl.valueChanges.pipe(
-                    startWith(undefined),
-                    map((value) => (value ? this.filter(value) : this.allGroups.slice())),
-                ),
-            );
+            this.groupSuggestions.set(this.availableGroups());
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
@@ -247,7 +237,8 @@ export class UserManagementUpdateComponent implements OnInit {
         }
     }
 
-    shouldRandomizePassword(useRandomPassword: any) {
+    shouldRandomizePassword(useRandomPassword: boolean) {
+        this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
     }
 
@@ -284,36 +275,40 @@ export class UserManagementUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * Adds a group to the user
-     * @param user to add the group to
-     * @param event chip input event
-     */
-    onGroupAdd(user: User, event: MatChipInputEvent) {
-        const groupString = (event.value || '').trim();
-        this.addGroup(user, groupString);
-        this.groupCtrl.setValue('');
-        event.chipInput!.clear();
+    /** Filters the group suggestions shown in the autocomplete dropdown based on the typed query. */
+    filterGroups(event: AutoCompleteCompleteEvent): void {
+        const query = (event.query ?? '').trim();
+        this.groupSuggestions.set(query ? this.filter(query) : this.availableGroups());
+    }
+
+    /** Adds the selected group from the autocomplete to the user. */
+    onGroupSelect(event: AutoCompleteSelectEvent): void {
+        const groupString = (event.value ?? '').toString().trim();
+        this.addGroup(this.user(), groupString);
+    }
+
+    /** Removes the unselected group from the user. */
+    onGroupUnselect(event: AutoCompleteUnselectEvent): void {
+        const group = (event.value ?? '').toString();
+        this.removeGroup(this.user(), group);
     }
 
     /**
-     * Removes a group from the user
+     * Removes a group from the user.
      * @param user to remove the group from
      * @param group to remove
      */
-    onGroupRemove(user: User, group: string) {
+    removeGroup(user: User, group: string) {
         user.groups = user.groups?.filter((userGroup) => userGroup !== group);
         this.commitUser(user);
     }
 
     /**
-     * Adds the selected group from panel to the user
-     * @param event autocomplete event
+     * Groups that are available to be added (all known groups not yet assigned to the user).
      */
-    onSelected(event: MatAutocompleteSelectedEvent): void {
-        const groupString = (event.option.viewValue || '').trim();
-        this.addGroup(this.user(), groupString);
-        this.groupCtrl.setValue('');
+    private availableGroups(): string[] {
+        const assigned = this.user()?.groups ?? [];
+        return (this.allGroups ?? []).filter((group) => group != undefined && !assigned.includes(group));
     }
 
     private initializeForm() {

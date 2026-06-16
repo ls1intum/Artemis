@@ -74,13 +74,13 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-**We are migrating from Bootstrap to PrimeNG.** All new UI elements must be implemented using [PrimeNG](https://primeng.org/) components. Do not introduce new Bootstrap components. Existing Bootstrap usage will be migrated incrementally.
+**We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is migrated module by module.
 </Callout>
 
 * Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
 * For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
-* Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
-* Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete, but prefer PrimeNG's built-in layout capabilities where available.
+* Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
+* In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -507,11 +507,44 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 }
 ```
 
-For new UI elements, use [PrimeNG](https://primeng.org/) components instead of Bootstrap components. Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete:
+We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components)**. Tailwind is wired app-wide (`src/main/webapp/tailwind.css`, see below); apply it module by module.
+
+**Decision rule — what to reach for:**
+
+* **Tailwind utility** for pure presentation: layout, flexbox/grid, spacing, sizing, typography, and color application (`flex`, `grid grid-cols-12`, `gap-2`, `mb-3`, `text-end`, `font-semibold`, `w-full`).
+* **PrimeNG component** for anything with behavior, state, accessibility semantics, or that Bootstrap modeled as a *component*: `p-button`, `p-tag` (badges), `p-message` (alerts), `p-card`, `p-table`, `p-tabs`, `p-paginator`, `p-tooltip`, `p-progressbar`, dialogs (`DialogService`), form inputs (`pInputText`/`p-select`/`p-checkbox`), `p-menu`, `p-datepicker`.
+* **A small owned helper** only when neither fits and it recurs.
+
+**Bootstrap → Tailwind/PrimeNG quick reference** (apply when migrating a module):
+
+| Bootstrap | Replacement |
+| --- | --- |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group` | `p-button` (`severity`, `size="small"`, `[outlined]`, `<p-buttonGroup>`) |
+| `badge` / `bg-success` badge | `p-tag` (`severity`, `[rounded]`) |
+| `alert alert-*` | `p-message` (`severity`) |
+| `card` | `p-card` (or a Tailwind `rounded-lg border p-4` box for a static panel) |
+| `table table-striped table-responsive` | `p-table` |
+| `form-control` / `form-group` / `form-check` | PrimeNG inputs + `<div class="flex flex-col gap-2">` + `p-checkbox`/`p-radiobutton` |
+| `row` + `col-md-*` | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*` (or flex) |
+| `d-flex` / `d-none` | `flex` / `hidden` |
+| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col` |
+| `text-right` / `text-left` | `text-end` / `text-start` (logical) |
+| `text-muted` | `text-muted-color` |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*` | identical Tailwind utilities (the spacing scale matches 1:1) |
+
+**Colors must be brand-bound.** Use the semantic tokens from `tailwindcss-primeui` (`bg-primary`, `text-surface-*`, `text-muted-color`, `text-primary-contrast`) and the Artemis state tokens (`text-success`/`bg-danger`/…), never a raw Tailwind palette (`text-green-500`) or arbitrary hex (`bg-[#f00]`). This is enforced by the `localRules/no-raw-tailwind-color-palette` ESLint rule (all templates) and a stylelint hex/`--bs-` ban (per migrated module). Dark mode resolves automatically via the PrimeNG `darkModeSelector` (the Tailwind `dark:` variant is aligned to it).
 
 ```html
-<div class="d-flex ms-2">some content</div>
+<!-- layout/spacing in Tailwind, the button as a PrimeNG component -->
+<div class="flex items-center justify-between gap-2">
+    <h5 class="mb-0" jhiTranslate="..."></h5>
+    <p-button severity="primary" size="small" (onClick)="save()" [label]="'entity.action.save' | artemisTranslate" />
+</div>
 ```
+
+**Coexistence with Bootstrap (transitional).** Bootstrap is still loaded globally for not-yet-migrated modules. To avoid global breakage during coexistence, `tailwind.css` deliberately does **not** import Tailwind's Preflight (Bootstrap's Reboot stays the authoritative reset) and uses `source(none)` with an explicit `@source` allowlist (one line per migrated module) so Tailwind only emits utilities for migrated code. A migrated module must be **fully** converted — never use a Tailwind utility to override a Bootstrap-styled element, because Tailwind's layer loses the cascade to unlayered Bootstrap. Once a module is Bootstrap-free, lock it with a `localRules/no-bootstrap-classes` ESLint block scoped to its templates (see `eslint.config.mjs`).
+
+**Exit criteria (global Bootstrap removal — separate effort).** Once Bootstrap is removed app-wide: switch `tailwind.css` to `@import 'tailwindcss';` (re-enables Preflight), configure the PrimeNG `cssLayer` ordering (`tailwind-base, primeng, tailwind-utilities`) in `app.config.ts`, drop `source(none)` + the `@source` allowlist, and remove the `bootstrap` dependency.
 
 ### Chart Instantiation
 

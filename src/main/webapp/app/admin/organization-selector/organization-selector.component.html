@@ -9,8 +9,8 @@
         [options]="selectorTableOptions"
     />
 
-    <div class="d-flex justify-content-end mt-3">
-        <button type="button" class="btn btn-secondary" (click)="closeModal(undefined)" jhiTranslate="entity.action.cancel"></button>
+    <div class="flex justify-end mt-3">
+        <button type="button" pButton severity="secondary" (click)="closeModal(undefined)" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
     </div>
 </div>
 
@@ -23,9 +23,11 @@
 <ng-template #selectorActions let-org>
     <button
         type="button"
-        class="btn btn-primary btn-sm"
+        pButton
+        size="small"
         [disabled]="isAlreadyAssigned()(org)"
         (click)="selectOrganization(org); $event.stopPropagation()"
         jhiTranslate="artemisApp.organizationManagement.modalSelector.select"
+        data-testid="select-organization-btn"
     ></button>
 </ng-template>

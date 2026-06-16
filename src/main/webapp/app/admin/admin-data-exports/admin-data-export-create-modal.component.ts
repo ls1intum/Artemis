@@ -1,7 +1,8 @@
-import { Component, inject, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  */
 @Component({
     selector: 'jhi-admin-data-export-create-modal',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <p-dialog
             [header]="'artemisApp.dataExport.admin.createExport' | artemisTranslate"
@@ -38,23 +40,23 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                 <jhi-type-ahead-user-search-field [(loginOrName)]="selectedUserLogin" />
             </div>
             <div class="mb-3">
-                <div class="form-check">
-                    <input type="radio" class="form-check-input" id="executeScheduled" name="executeOption" [value]="false" [(ngModel)]="executeNow" />
-                    <label class="form-check-label" for="executeScheduled" jhiTranslate="artemisApp.dataExport.admin.schedule"></label>
+                <div class="flex items-center gap-2">
+                    <p-radiobutton inputId="executeScheduled" name="executeOption" [value]="false" [(ngModel)]="executeNow" data-testid="schedule-radio" />
+                    <label for="executeScheduled" jhiTranslate="artemisApp.dataExport.admin.schedule"></label>
                 </div>
-                <small class="text-muted" jhiTranslate="artemisApp.dataExport.admin.scheduleDescription"></small>
+                <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.scheduleDescription"></small>
             </div>
             <div class="mb-3">
-                <div class="form-check">
-                    <input type="radio" class="form-check-input" id="executeNow" name="executeOption" [value]="true" [(ngModel)]="executeNow" />
-                    <label class="form-check-label" for="executeNow" jhiTranslate="artemisApp.dataExport.admin.executeNow"></label>
+                <div class="flex items-center gap-2">
+                    <p-radiobutton inputId="executeNow" name="executeOption" [value]="true" [(ngModel)]="executeNow" data-testid="execute-now-radio" />
+                    <label for="executeNow" jhiTranslate="artemisApp.dataExport.admin.executeNow"></label>
                 </div>
-                <small class="text-muted" jhiTranslate="artemisApp.dataExport.admin.executeNowDescription"></small>
+                <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.executeNowDescription"></small>
             </div>
             <ng-template pTemplate="footer">
-                <div class="d-flex justify-content-end gap-2">
-                    <button pButton severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-                    <button pButton [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()">
+                <div class="flex justify-end gap-2">
+                    <button pButton severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
+                    <button pButton [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
                         @if (isSubmitting()) {
                             <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
                         }
@@ -64,7 +66,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             </ng-template>
         </p-dialog>
     `,
-    imports: [DialogModule, ButtonModule, TranslateDirective, FormsModule, FaIconComponent, TypeAheadUserSearchFieldComponent, ArtemisTranslatePipe],
+    imports: [DialogModule, ButtonModule, RadioButtonModule, TranslateDirective, FormsModule, FaIconComponent, TypeAheadUserSearchFieldComponent, ArtemisTranslatePipe],
 })
 export class AdminDataExportCreateModalComponent {
     private readonly adminDataExportsService = inject(AdminDataExportsService);

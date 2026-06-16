@@ -18,7 +18,7 @@ describe('JvmThreadsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [JvmThreadsComponent],
         })
-            .overrideTemplate(JvmThreadsComponent, '<button class="hand btn btn-primary btn-sm" (click)="open()">Expand</button>')
+            .overrideTemplate(JvmThreadsComponent, '<button (click)="open()" data-testid="expand-threads-button">Expand</button>')
             .compileComponents();
 
         fixture = TestBed.createComponent(JvmThreadsComponent);

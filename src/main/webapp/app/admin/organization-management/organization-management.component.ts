@@ -1,11 +1,12 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TableLazyLoadEvent } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -23,12 +24,11 @@ import { onError } from 'app/foundation/util/global.utils';
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableViewComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, TableViewComponent, ButtonModule],
 })
 export class OrganizationManagementComponent {
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly router = inject(Router);
-    private readonly route = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
 
     readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: 'flex' };
@@ -98,11 +98,5 @@ export class OrganizationManagementComponent {
                 onError(this.alertService, error);
             },
         });
-    }
-
-    onOrganizationSelect(organization: Organization | Organization[] | undefined): void {
-        if (!Array.isArray(organization) && organization?.id != null) {
-            this.router.navigate([organization.id], { relativeTo: this.route });
-        }
     }
 }

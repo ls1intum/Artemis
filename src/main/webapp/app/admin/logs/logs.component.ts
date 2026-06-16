@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -7,8 +7,12 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 
 /**
  * Component for managing application log levels.
@@ -18,7 +22,20 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
     styleUrls: ['./logs.component.scss'],
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        SlicePipe,
+        AdminTitleBarTitleDirective,
+        ButtonModule,
+        ButtonGroupModule,
+        TableModule,
+        InputTextModule,
+    ],
 })
 export class LogsComponent implements OnInit {
     private readonly logsService = inject(LogsService);

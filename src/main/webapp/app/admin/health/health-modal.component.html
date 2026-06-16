@@ -9,29 +9,29 @@
     @if (health(); as h) {
         <div>
             <h5 jhiTranslate="health.details.properties"></h5>
-            <div class="table-responsive">
-                <table class="table table-striped" aria-describedby="showHealthLabel">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse" aria-describedby="showHealthLabel">
                     <thead>
-                        <tr>
-                            <th scope="col" class="text-left" jhiTranslate="health.details.name"></th>
-                            <th scope="col" class="text-left" jhiTranslate="health.details.value"></th>
+                        <tr class="border-b border-surface-200">
+                            <th scope="col" class="py-2 px-3 text-start" jhiTranslate="health.details.name"></th>
+                            <th scope="col" class="py-2 px-3 text-start" jhiTranslate="health.details.value"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @for (healthDetail of h.value.details! | keyvalue; track healthDetail) {
-                            <tr>
-                                <td class="text-left align-top">{{ healthDetail.key }}</td>
-                                <td class="text-left">
+                            <tr class="border-b border-surface-100">
+                                <td class="py-2 px-3 align-top">{{ healthDetail.key }}</td>
+                                <td class="py-2 px-3">
                                     @if (isBuildAgentsArray(healthDetail.value, healthDetail.key)) {
                                         <!-- Special formatting for LocalCI build agents -->
                                         <div class="build-agents-health">
                                             @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.name) {
-                                                <div class="build-agent-card mb-3 p-2 border rounded">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="mb-3 rounded-lg border border-surface-200 p-2">
+                                                    <div class="mb-1 flex items-center justify-between">
                                                         <strong>{{ agent.displayName }}</strong>
-                                                        <span class="badge" [ngClass]="getStatusBadgeClass(agent.status)">{{ agent.status }}</span>
+                                                        <p-tag [severity]="getStatusBadgeSeverity(agent.status)" [value]="agent.status" data-testid="agent-status-tag" />
                                                     </div>
-                                                    <div class="small text-muted mb-1">
+                                                    <div class="mb-1 text-sm text-muted-color">
                                                         <span class="me-3">{{ agent.name }}</span>
                                                         <span>{{ agent.memberAddress }}</span>
                                                     </div>
@@ -40,15 +40,15 @@
                                                         <strong>{{ agent.currentJobs }}</strong> / {{ agent.maxJobs }}
                                                     </div>
                                                     @if (agent.runningJobNames.length > 0) {
-                                                        <div class="small">
-                                                            <span class="text-muted" jhiTranslate="health.details.running"></span>
+                                                        <div class="text-sm">
+                                                            <span class="text-muted-color" jhiTranslate="health.details.running"></span>
                                                             @for (jobName of agent.runningJobNames; track jobName; let last = $last) {
                                                                 <span class="ms-1">{{ jobName }}{{ last ? '' : ',' }}</span>
                                                             }
                                                         </div>
                                                     }
                                                     @if (agent.gitRevision) {
-                                                        <div class="small text-muted mt-1">
+                                                        <div class="mt-1 text-sm text-muted-color">
                                                             <span jhiTranslate="health.details.version"></span> <span>{{ agent.gitRevision }}</span>
                                                             @if (agent.startDate) {
                                                                 <span class="ms-2">| </span>
@@ -59,7 +59,7 @@
                                                     }
                                                 </div>
                                             } @empty {
-                                                <div class="text-muted small" jhiTranslate="health.details.noBuildAgents"></div>
+                                                <div class="text-muted-color text-sm" jhiTranslate="health.details.noBuildAgents"></div>
                                             }
                                         </div>
                                     } @else {
@@ -74,6 +74,6 @@
         </div>
     }
     <ng-template #footer>
-        <button class="btn btn-secondary float-left" type="button" (click)="dismiss()">Done</button>
+        <p-button severity="secondary" label="Done" (onClick)="dismiss()" data-testid="dismiss-button" />
     </ng-template>
 </p-dialog>

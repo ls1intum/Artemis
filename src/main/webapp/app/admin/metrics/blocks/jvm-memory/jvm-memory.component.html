@@ -1,8 +1,8 @@
 <h4 jhiTranslate="metrics.jvm.memory.title"></h4>
 @if (!updating() && jvmMemoryMetrics()) {
-    <div>
+    <div class="flex flex-col gap-3">
         @for (entry of jvmMemoryMetrics() | keyvalue; track entry) {
-            <div>
+            <div class="flex flex-col gap-1">
                 @if (entry.value.max !== -1) {
                     <span>
                         <span>{{ entry.key }}</span>
@@ -13,9 +13,9 @@
                         ><span>{{ entry.key }}</span> {{ entry.value.used / 1048576 | number: '1.0-0' }}M</span
                     >
                 }
-                <div>Committed : {{ entry.value.committed / 1048576 | number: '1.0-0' }}M</div>
+                <div class="text-sm text-muted-color">Committed : {{ entry.value.committed / 1048576 | number: '1.0-0' }}M</div>
                 @if (entry.value.max !== -1) {
-                    <p-progressbar [value]="toPercentage(entry.value.used, entry.value.max)" [showValue]="false" color="var(--bs-success, #28a745)">
+                    <p-progressbar [value]="toPercentage(entry.value.used, entry.value.max)" [showValue]="false">
                         <ng-template #content>{{ toPercentage(entry.value.used, entry.value.max) | number: '1.0-0' }}%</ng-template>
                     </p-progressbar>
                 }

@@ -1,31 +1,83 @@
 @if (loggers()) {
     <h5 *adminTitleBarTitle id="logs-page-heading" class="mb-0" jhiTranslate="logs.title" data-cy="logsPageHeading"></h5>
-    <div class="table-responsive">
+    <div class="flex flex-col gap-3">
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
-        <span jhiTranslate="logs.filter"></span>
-        <input type="text" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" class="form-control" />
-        <table class="table table-sm table-striped table-bordered" aria-describedby="logs-page-heading">
-            <thead>
+        <div class="flex flex-col gap-2">
+            <label for="logs-filter" jhiTranslate="logs.filter"></label>
+            <input id="logs-filter" data-testid="logs-filter-input" type="text" pInputText class="w-full" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" />
+        </div>
+        <p-table [value]="filteredAndOrderedLoggers()" [tableStyle]="{ 'min-width': '30rem' }" aria-describedby="logs-page-heading" data-testid="logs-table">
+            <ng-template #header>
                 <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event!)" (ascendingChange)="ascending.set($event)">
                     <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="level" scope="col"><span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" /></th>
                 </tr>
-            </thead>
-            @for (logger of filteredAndOrderedLoggers(); track logger) {
+            </ng-template>
+            <ng-template #body let-logger>
                 <tr>
                     <td>
                         <small>{{ logger.name | slice: 0 : 140 }}</small>
                     </td>
                     <td>
-                        <button (click)="changeLevel(logger.name, 'TRACE')" [ngClass]="logger.level === 'TRACE' ? 'btn-primary' : 'btn-light'" class="btn btn-sm">TRACE</button>
-                        <button (click)="changeLevel(logger.name, 'DEBUG')" [ngClass]="logger.level === 'DEBUG' ? 'btn-success' : 'btn-light'" class="btn btn-sm">DEBUG</button>
-                        <button (click)="changeLevel(logger.name, 'INFO')" [ngClass]="logger.level === 'INFO' ? 'btn-info' : 'btn-light'" class="btn btn-sm">INFO</button>
-                        <button (click)="changeLevel(logger.name, 'WARN')" [ngClass]="logger.level === 'WARN' ? 'btn-warning' : 'btn-light'" class="btn btn-sm">WARN</button>
-                        <button (click)="changeLevel(logger.name, 'ERROR')" [ngClass]="logger.level === 'ERROR' ? 'btn-danger' : 'btn-light'" class="btn btn-sm">ERROR</button>
-                        <button (click)="changeLevel(logger.name, 'OFF')" [ngClass]="logger.level === 'OFF' ? 'btn-secondary' : 'btn-light'" class="btn btn-sm">OFF</button>
+                        <p-buttongroup>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-trace"
+                                [severity]="logger.level === 'TRACE' ? null : 'secondary'"
+                                (click)="changeLevel(logger.name, 'TRACE')"
+                            >
+                                TRACE
+                            </button>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-debug"
+                                [severity]="logger.level === 'DEBUG' ? 'success' : 'secondary'"
+                                (click)="changeLevel(logger.name, 'DEBUG')"
+                            >
+                                DEBUG
+                            </button>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-info"
+                                [severity]="logger.level === 'INFO' ? 'info' : 'secondary'"
+                                (click)="changeLevel(logger.name, 'INFO')"
+                            >
+                                INFO
+                            </button>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-warn"
+                                [severity]="logger.level === 'WARN' ? 'warn' : 'secondary'"
+                                (click)="changeLevel(logger.name, 'WARN')"
+                            >
+                                WARN
+                            </button>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-error"
+                                [severity]="logger.level === 'ERROR' ? 'danger' : 'secondary'"
+                                (click)="changeLevel(logger.name, 'ERROR')"
+                            >
+                                ERROR
+                            </button>
+                            <button
+                                pButton
+                                size="small"
+                                data-testid="log-level-off"
+                                [severity]="logger.level === 'OFF' ? 'contrast' : 'secondary'"
+                                (click)="changeLevel(logger.name, 'OFF')"
+                            >
+                                OFF
+                            </button>
+                        </p-buttongroup>
                     </td>
                 </tr>
-            }
-        </table>
+            </ng-template>
+        </p-table>
     </div>
 }

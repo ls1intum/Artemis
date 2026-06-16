@@ -338,21 +338,21 @@ describe('AdminSbomComponent', () => {
         });
     });
 
-    describe('getSeverityClass', () => {
-        it('should return bg-danger for CRITICAL', () => {
-            expect(component.getSeverityClass('CRITICAL')).toBe('bg-danger');
+    describe('getSeverityLevel', () => {
+        it('should return danger for CRITICAL', () => {
+            expect(component.getSeverityLevel('CRITICAL')).toBe('danger');
         });
 
-        it('should return bg-warning for HIGH', () => {
-            expect(component.getSeverityClass('HIGH')).toBe('bg-warning text-dark');
+        it('should return warn for HIGH', () => {
+            expect(component.getSeverityLevel('HIGH')).toBe('warn');
         });
 
-        it('should return bg-info for LOW', () => {
-            expect(component.getSeverityClass('LOW')).toBe('bg-info');
+        it('should return info for LOW', () => {
+            expect(component.getSeverityLevel('LOW')).toBe('info');
         });
 
-        it('should return bg-secondary for unknown', () => {
-            expect(component.getSeverityClass('UNKNOWN')).toBe('bg-secondary');
+        it('should return secondary for unknown', () => {
+            expect(component.getSeverityLevel('UNKNOWN')).toBe('secondary');
         });
     });
 
@@ -601,31 +601,6 @@ describe('AdminSbomComponent', () => {
         });
     });
 
-    describe('trackByName', () => {
-        it('should return unique key for component', () => {
-            const mockComponent: SbomComponent = {
-                name: 'test-lib',
-                version: '1.0.0',
-                group: 'com.example',
-            };
-
-            const result = component.trackByName(0, mockComponent);
-
-            expect(result).toBe('com.example:test-lib:1.0.0');
-        });
-
-        it('should handle component without group', () => {
-            const mockComponent: SbomComponent = {
-                name: 'test-lib',
-                version: '1.0.0',
-            };
-
-            const result = component.trackByName(0, mockComponent);
-
-            expect(result).toBe(':test-lib:1.0.0');
-        });
-    });
-
     describe('getHighestSeverity additional cases', () => {
         it('should return MEDIUM when no CRITICAL or HIGH', () => {
             const vulns: Vulnerability[] = [{ severity: 'MEDIUM' } as Vulnerability, { severity: 'LOW' } as Vulnerability];
@@ -648,9 +623,9 @@ describe('AdminSbomComponent', () => {
         });
     });
 
-    describe('getSeverityClass additional cases', () => {
-        it('should return bg-warning for MEDIUM', () => {
-            expect(component.getSeverityClass('MEDIUM')).toBe('bg-warning text-dark');
+    describe('getSeverityLevel additional cases', () => {
+        it('should return warn for MEDIUM', () => {
+            expect(component.getSeverityLevel('MEDIUM')).toBe('warn');
         });
     });
 

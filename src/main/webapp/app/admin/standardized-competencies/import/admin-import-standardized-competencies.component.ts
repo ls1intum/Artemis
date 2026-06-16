@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
-    KnowledgeAreaForTree,
     KnowledgeAreaValidators,
     KnowledgeAreasForImportDTO,
     Source,
@@ -20,7 +19,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
@@ -29,8 +27,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { MessageModule } from 'primeng/message';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -44,6 +43,8 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
+    styleUrls: ['./admin-import-standardized-competencies.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FontAwesomeModule,
         TooltipModule,
@@ -54,6 +55,7 @@ interface ImportCount {
         KnowledgeAreaTreeComponent,
         ButtonComponent,
         AdminTitleBarTitleDirective,
+        MessageModule,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
@@ -73,7 +75,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importCount = signal<ImportCount | undefined>(undefined);
     /** Validation errors found in the parsed import data */
     protected readonly validationErrors = signal<string[]>([]);
-    protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
+    protected readonly dataSource = signal<KnowledgeAreaTreeDataSource>({ data: [] });
     private fileReader: FileReader = new FileReader();
     private readonly validationTranslationBase = 'artemisApp.standardizedCompetency.manage.import.error.validation';
     private readonly labelsBase = `${this.validationTranslationBase}.labels`;
@@ -121,7 +123,7 @@ export class AdminImportStandardizedCompetenciesComponent {
      * @param event the event triggered by changing the file
      */
     onFileChange(event: Event) {
-        this.dataSource.data = [];
+        this.dataSource.set({ data: [] });
         const input = event.target as HTMLInputElement;
         if (input.files?.length) {
             const fileList: FileList = input.files;
@@ -200,7 +202,7 @@ export class AdminImportStandardizedCompetenciesComponent {
                 const count = this.countKnowledgeAreasAndCompetencies({ children: parsedData.knowledgeAreas });
                 count.knowledgeAreas -= 1;
                 this.importCount.set(count);
-                this.dataSource.data = parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
+                this.dataSource.set({ data: parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea)) });
             }
         } catch (e) {
             parsedData = undefined;
@@ -213,7 +215,7 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.validationErrors.set(errors);
                 this.importData.set(undefined);
                 this.importCount.set(undefined);
-                this.dataSource.data = [];
+                this.dataSource.set({ data: [] });
             } else {
                 this.validationErrors.set([]);
             }

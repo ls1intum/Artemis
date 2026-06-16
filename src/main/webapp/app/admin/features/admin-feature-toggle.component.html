@@ -1,141 +1,162 @@
-<div class="feature-toggle-container">
+<div class="mx-auto max-w-[1200px] p-4">
     <h5 *adminTitleBarTitle id="features-heading" class="mb-0" jhiTranslate="artemisApp.features.title"></h5>
 
     <!-- Quick Navigation in Title Bar -->
-    <div *adminTitleBarActions class="quick-nav-actions">
-        <span class="quick-nav-label" jhiTranslate="artemisApp.features.jumpTo"></span>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('profile-features')">
-            {{ 'artemisApp.features.profileFeatures.shortTitle' | artemisTranslate }}
-        </button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('module-features')">
-            {{ 'artemisApp.features.moduleFeatures.shortTitle' | artemisTranslate }}
-        </button>
-        <button class="btn btn-sm btn-outline-primary" (click)="scrollToSection('runtime-toggles')">
-            {{ 'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate }}
-        </button>
+    <div *adminTitleBarActions class="flex flex-wrap items-center gap-2" data-testid="feature-toggle-nav-actions">
+        <span class="me-1 font-medium text-muted-color" jhiTranslate="artemisApp.features.jumpTo"></span>
+        <p-button
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            [label]="'artemisApp.features.profileFeatures.shortTitle' | artemisTranslate"
+            (onClick)="scrollToSection('profile-features')"
+            data-testid="nav-profile-features"
+        />
+        <p-button
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            [label]="'artemisApp.features.moduleFeatures.shortTitle' | artemisTranslate"
+            (onClick)="scrollToSection('module-features')"
+            data-testid="nav-module-features"
+        />
+        <p-button
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            [label]="'artemisApp.features.dynamicToggles.shortTitle' | artemisTranslate"
+            (onClick)="scrollToSection('runtime-toggles')"
+            data-testid="nav-runtime-toggles"
+        />
     </div>
 
     <!-- Section 1: Profile-Based Features -->
-    <section id="profile-features" class="feature-section">
-        <h4 class="section-title" jhiTranslate="artemisApp.features.profileFeatures.title"></h4>
-        <p class="section-description text-muted" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
+    <section id="profile-features" class="mb-8">
+        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.profileFeatures.title"></h4>
+        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
 
-        <div class="feature-grid">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @for (profileInfo of profileFeatures(); track profileInfo.profile) {
-                <div class="feature-card readonly" [class.active]="profileInfo.isActive" [class.inactive]="!profileInfo.isActive">
-                    <div class="feature-header">
-                        <div class="feature-title-row">
-                            <h5 class="feature-name">{{ getProfileNameKey(profileInfo.profile) | artemisTranslate }}</h5>
+                <div
+                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    [class.bg-surface-50]="profileInfo.isActive"
+                    [class.bg-surface-100]="!profileInfo.isActive"
+                    data-testid="profile-feature-card"
+                >
+                    <div class="mb-3 flex items-start justify-between">
+                        <div class="flex items-center gap-2">
+                            <h5 class="m-0 text-base font-semibold">{{ getProfileNameKey(profileInfo.profile) | artemisTranslate }}</h5>
                             @if (profileInfo.documentationLink) {
                                 <a
                                     [href]="profileInfo.documentationLink"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="documentation-link"
+                                    class="text-sm text-primary hover:text-primary"
                                     [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    data-testid="profile-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
                                 </a>
                             }
                         </div>
-                        <div class="status-indicator">
+                        <div class="flex items-center">
                             @if (profileInfo.isActive) {
-                                <span class="badge bg-success" jhiTranslate="artemisApp.features.active"></span>
+                                <p-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
                             } @else {
-                                <span class="badge bg-secondary" jhiTranslate="artemisApp.features.inactive"></span>
+                                <p-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
                             }
                         </div>
                     </div>
-                    <p class="feature-description">{{ getProfileDescriptionKey(profileInfo.profile) | artemisTranslate }}</p>
+                    <p class="mb-2 text-sm leading-snug text-muted-color">{{ getProfileDescriptionKey(profileInfo.profile) | artemisTranslate }}</p>
                 </div>
             }
         </div>
     </section>
 
     <!-- Section 2: Module Features -->
-    <section id="module-features" class="feature-section">
-        <h4 class="section-title" jhiTranslate="artemisApp.features.moduleFeatures.title"></h4>
-        <p class="section-description text-muted" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
+    <section id="module-features" class="mb-8">
+        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.moduleFeatures.title"></h4>
+        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
 
-        <div class="feature-grid">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
-                <div class="feature-card readonly" [class.active]="moduleInfo.isActive" [class.inactive]="!moduleInfo.isActive">
-                    <div class="feature-header">
-                        <div class="feature-title-row">
-                            <h5 class="feature-name">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
+                <div
+                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    [class.bg-surface-50]="moduleInfo.isActive"
+                    [class.bg-surface-100]="!moduleInfo.isActive"
+                    data-testid="module-feature-card"
+                >
+                    <div class="mb-3 flex items-start justify-between">
+                        <div class="flex items-center gap-2">
+                            <h5 class="m-0 text-base font-semibold">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
                             @if (moduleInfo.documentationLink) {
                                 <a
                                     [href]="moduleInfo.documentationLink"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="documentation-link"
+                                    class="text-sm text-primary hover:text-primary"
                                     [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    data-testid="module-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
                                 </a>
                             }
                         </div>
-                        <div class="status-indicator">
+                        <div class="flex items-center">
                             @if (moduleInfo.isActive) {
-                                <span class="badge bg-success" jhiTranslate="artemisApp.features.active"></span>
+                                <p-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
                             } @else {
-                                <span class="badge bg-secondary" jhiTranslate="artemisApp.features.inactive"></span>
+                                <p-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
                             }
                         </div>
                     </div>
-                    <p class="feature-description">{{ getModuleFeatureDescriptionKey(moduleInfo.feature) | artemisTranslate }}</p>
+                    <p class="mb-2 text-sm leading-snug text-muted-color">{{ getModuleFeatureDescriptionKey(moduleInfo.feature) | artemisTranslate }}</p>
                 </div>
             }
         </div>
     </section>
 
     <!-- Section 3: Runtime Feature Toggles -->
-    <section id="runtime-toggles" class="feature-section">
-        <h4 class="section-title" jhiTranslate="artemisApp.features.dynamicToggles.title"></h4>
-        <p class="section-description text-muted" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
+    <section id="runtime-toggles" class="mb-8">
+        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.dynamicToggles.title"></h4>
+        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
 
-        <div class="feature-grid">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @for (featureInfo of featureToggles(); track featureInfo.feature) {
-                <div class="feature-card" [class.disabled]="!featureInfo.isActive">
-                    <div class="feature-header">
-                        <div class="feature-title-row">
-                            <h5 class="feature-name">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
+                <div
+                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    [class.bg-surface-100]="!featureInfo.isActive"
+                    data-testid="runtime-toggle-card"
+                >
+                    <div class="mb-3 flex items-start justify-between">
+                        <div class="flex items-center gap-2">
+                            <h5 class="m-0 text-base font-semibold">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
                             @if (featureInfo.documentationLink) {
                                 <a
                                     [href]="featureInfo.documentationLink"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="documentation-link"
+                                    class="text-sm text-primary hover:text-primary"
                                     [pTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    data-testid="toggle-doc-link"
                                 >
                                     <fa-icon [icon]="faExternalLinkAlt" />
                                 </a>
                             }
                         </div>
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                role="switch"
-                                [id]="'toggle-' + featureInfo.feature"
-                                [checked]="featureInfo.isActive"
-                                (change)="onFeatureToggle(featureInfo)"
+                        <div class="flex items-center gap-2">
+                            <p-toggleswitch
+                                [ngModel]="featureInfo.isActive"
+                                [inputId]="'toggle-' + featureInfo.feature"
+                                (onChange)="onFeatureToggle(featureInfo)"
+                                data-testid="feature-toggle-switch"
+                                [attr.aria-label]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
                             />
-                            <label class="form-check-label ms-2" [for]="'toggle-' + featureInfo.feature">
-                                @if (featureInfo.isActive) {
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.features.enabled"></span>
-                                } @else {
-                                    <span class="badge bg-danger" jhiTranslate="artemisApp.features.disabled"></span>
-                                }
-                            </label>
                         </div>
                     </div>
-                    <p class="feature-description">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
+                    <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <div class="feature-warning">
-                            <fa-icon [icon]="faQuestionCircle" class="me-1" />
-                            <span>{{ getFeatureWarningKey(featureInfo.feature) | artemisTranslate }}</span>
-                        </div>
+                        <p-message severity="warn" [text]="getFeatureWarningKey(featureInfo.feature) | artemisTranslate" styleClass="w-full" data-testid="feature-warning" />
                     }
                 </div>
             }

@@ -41,7 +41,8 @@ html {
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import 'node_modules/highlight.js/styles/vs.css';
+// Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file.
+@import 'highlight.js/styles/vs.css';
 
 // Added to match the already existing style in theme-dark.scss
 .btn-outline-primary:not(.list-group-item) {

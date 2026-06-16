@@ -44,11 +44,17 @@
             }
         </ul>
         @if (!hasEntriesToDelete()) {
-            <p class="text-muted" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
+            <p class="text-muted-color" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
         }
     </div>
     <ng-template #footer>
-        <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
-        <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+        <div class="flex justify-end gap-2">
+            <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="close()" data-testid="close-button">
+                <span jhiTranslate="cleanupService.button.close"></span>
+            </button>
+            <button pButton type="button" severity="danger" size="small" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" data-testid="execute-button">
+                <span jhiTranslate="cleanupService.button.execute"></span>
+            </button>
+        </div>
     </ng-template>
 </p-dialog>

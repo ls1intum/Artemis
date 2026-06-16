@@ -1,5 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { MessageModule } from 'primeng/message';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -11,7 +15,8 @@ import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 @Component({
     selector: 'jhi-admin-passkey-management',
     templateUrl: './admin-passkey-management.component.html',
-    imports: [NgxDatatableModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TableModule, ToggleSwitchModule, MessageModule, ProgressSpinnerModule, FormsModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
 })
 export class AdminPasskeyManagementComponent implements OnInit {
     private readonly adminPasskeyService = inject(AdminPasskeyManagementService);

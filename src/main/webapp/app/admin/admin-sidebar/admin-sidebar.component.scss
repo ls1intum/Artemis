@@ -44,7 +44,7 @@ $transition-color-length: 0.2s;
     background-color: var(--course-image-bg);
     border-radius: 50%;
     display: inline-block;
-    color: var(--bs-body-color);
+    color: var(--p-text-color);
 }
 
 .admin-title {
@@ -52,7 +52,7 @@ $transition-color-length: 0.2s;
 }
 
 .nav-group-header {
-    padding: 0.5rem 0 0.25rem 0;
+    padding: 0.5rem 0 0.25rem;
 
     .group-label {
         font-size: 0.7rem;
@@ -79,6 +79,7 @@ $transition-color-length: 0.2s;
     justify-content: flex-end;
     cursor: pointer;
     padding-right: 10px;
+
     // Reset button styles
     background: none;
     border: none;
@@ -121,9 +122,9 @@ $transition-color-length: 0.2s;
     }
 }
 
-.nav-link {
+.nav-link-sidebar {
     white-space: nowrap;
-    color: var(--bs-body-color);
+    color: var(--p-text-color);
 }
 
 .nav-link-sidebar:hover,

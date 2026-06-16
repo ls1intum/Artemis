@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,6 +17,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ButtonComponent],
 })
 export class DeleteUsersButtonComponent {

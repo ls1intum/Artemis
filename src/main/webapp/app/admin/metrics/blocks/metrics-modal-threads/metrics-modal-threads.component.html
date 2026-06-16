@@ -2,72 +2,63 @@
     <ng-template #header>
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
-    <div class="mb-3">
-        <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
+    <div class="flex flex-wrap gap-2 mb-3">
+        <p-tag class="cursor-pointer" severity="secondary" (click)="selectedThreadState = undefined" data-testid="filter-all">
             @if (selectedThreadState === undefined) {
-                <fa-icon [icon]="faCheck" />
+                <fa-icon [icon]="faCheck" class="me-1" />
             }
-            All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll() }}</span>
-        </span>
-        <span class="badge bg-success hand" (click)="selectedThreadState = ThreadState.Runnable">
+            All <span class="ms-1">{{ threadDumpAll() }}</span>
+        </p-tag>
+        <p-tag class="cursor-pointer" severity="success" (click)="selectedThreadState = ThreadState.Runnable" data-testid="filter-runnable">
             @if (selectedThreadState === ThreadState.Runnable) {
-                <fa-icon [icon]="faCheck" />
+                <fa-icon [icon]="faCheck" class="me-1" />
             }
-            Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable() }}</span>
-        </span>
-        <span class="badge bg-info hand" (click)="selectedThreadState = ThreadState.Waiting">
+            Runnable <span class="ms-1">{{ threadDumpRunnable() }}</span>
+        </p-tag>
+        <p-tag class="cursor-pointer" severity="info" (click)="selectedThreadState = ThreadState.Waiting" data-testid="filter-waiting">
             @if (selectedThreadState === ThreadState.Waiting) {
-                <fa-icon [icon]="faCheck" />
+                <fa-icon [icon]="faCheck" class="me-1" />
             }
-            Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting() }}</span>
-        </span>
-        <span class="badge bg-warning hand" (click)="selectedThreadState = ThreadState.TimedWaiting">
+            Waiting <span class="ms-1">{{ threadDumpWaiting() }}</span>
+        </p-tag>
+        <p-tag class="cursor-pointer" severity="warn" (click)="selectedThreadState = ThreadState.TimedWaiting" data-testid="filter-timed-waiting">
             @if (selectedThreadState === ThreadState.TimedWaiting) {
-                <fa-icon [icon]="faCheck" />
+                <fa-icon [icon]="faCheck" class="me-1" />
             }
-            Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting() }}</span>
-        </span>
-        <span class="badge bg-danger hand" (click)="selectedThreadState = ThreadState.Blocked">
+            Timed Waiting <span class="ms-1">{{ threadDumpTimedWaiting() }}</span>
+        </p-tag>
+        <p-tag class="cursor-pointer" severity="danger" (click)="selectedThreadState = ThreadState.Blocked" data-testid="filter-blocked">
             @if (selectedThreadState === ThreadState.Blocked) {
-                <fa-icon [icon]="faCheck" />
+                <fa-icon [icon]="faCheck" class="me-1" />
             }
-            Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked() }}</span>
-        </span>
+            Blocked <span class="ms-1">{{ threadDumpBlocked() }}</span>
+        </p-tag>
     </div>
-    <div class="mt-2">&nbsp;</div>
-    {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}
-    <input type="text" [(ngModel)]="threadFilter" class="form-control" />
+    <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
+    <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {
-        <div class="pad">
-            <h6>
-                <span class="badge" [ngClass]="getBgClass(thread.threadState)">{{ thread.threadState }}</span>
-                &nbsp;{{ thread.threadName }} (ID {{ thread.threadId }})
-                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);">
+        <div class="py-2 border-b border-surface-200">
+            <h6 class="flex items-center gap-2 flex-wrap">
+                <p-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
+                {{ thread.threadName }} (ID {{ thread.threadId }})
+                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary">
                     <span [hidden]="thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.show"></span>
                     <span [hidden]="!thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.hide"></span>
                 </a>
             </h6>
-            <div class="card" [hidden]="!thread.showThreadDump">
-                <div class="card-body">
-                    @for (st of thread.stackTrace; track st) {
-                        <div class="break">
-                            <samp
-                                >{{ st.className }}.{{ st.methodName }}(<code>{{ st.fileName }}:{{ st.lineNumber }}</code
-                                >)</samp
-                            >
-                            <span class="mt-1"></span>
-                        </div>
-                    }
-                </div>
+            <div class="rounded-lg border border-surface-200 p-3 font-mono text-sm" [hidden]="!thread.showThreadDump">
+                @for (st of thread.stackTrace; track st) {
+                    <div class="mb-1">
+                        <samp
+                            >{{ st.className }}.{{ st.methodName }}(<code>{{ st.fileName }}:{{ st.lineNumber }}</code
+                            >)</samp
+                        >
+                    </div>
+                }
             </div>
-            <table class="table table-sm table-responsive">
-                <caption>
-                    Threads dump:
-                    {{
-                        thread.threadName
-                    }}
-                </caption>
-                <thead>
+            <p-table [value]="[thread]" [tableStyle]="{ 'min-width': '30rem' }">
+                <ng-template #caption>Threads dump: {{ thread.threadName }}</ng-template>
+                <ng-template #header>
                     <tr>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedtime"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedcount"></th>
@@ -75,22 +66,22 @@
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.waitedcount"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.lockname"></th>
                     </tr>
-                </thead>
-                <tbody>
+                </ng-template>
+                <ng-template #body let-t>
                     <tr>
-                        <td>{{ thread.blockedTime }}</td>
-                        <td>{{ thread.blockedCount }}</td>
-                        <td>{{ thread.waitedTime }}</td>
-                        <td>{{ thread.waitedCount }}</td>
-                        <td class="thread-dump-modal-lock" title="{{ thread.lockName }}">
-                            <code>{{ thread.lockName }}</code>
+                        <td>{{ t.blockedTime }}</td>
+                        <td>{{ t.blockedCount }}</td>
+                        <td>{{ t.waitedTime }}</td>
+                        <td>{{ t.waitedCount }}</td>
+                        <td class="max-w-xs truncate" [title]="t.lockName">
+                            <code>{{ t.lockName }}</code>
                         </td>
                     </tr>
-                </tbody>
-            </table>
+                </ng-template>
+            </p-table>
         </div>
     }
     <ng-template #footer>
-        <button type="button" class="btn btn-secondary float-left" (click)="dismiss()">Done</button>
+        <p-button severity="secondary" (onClick)="dismiss()" data-testid="dismiss-button">Done</p-button>
     </ng-template>
 </p-dialog>

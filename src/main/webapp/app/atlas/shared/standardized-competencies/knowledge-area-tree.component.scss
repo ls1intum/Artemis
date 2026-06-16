@@ -1,19 +1,10 @@
-.tree-indent {
-    padding-left: 3rem;
+.knowledge-area-tree {
+    display: block;
+    width: 100%;
 }
 
-.tree-card {
+// Give each tree node a subtle brand-bound background so knowledge areas and competencies remain visually grouped,
+// matching the previous card-based layout.
+:host ::ng-deep .knowledge-area-tree .p-tree-node-content {
     background-color: var(--overview-light-background-color);
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    overflow: hidden;
-    flex-wrap: wrap;
-    padding: 0.5rem;
-    border-radius: 0;
-}
-
-.tree-card-row {
-    display: flex;
-    align-items: center;
 }
