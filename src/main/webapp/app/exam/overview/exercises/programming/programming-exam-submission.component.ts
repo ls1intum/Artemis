@@ -115,7 +115,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     onActivate() {
         super.onActivate();
-        this.instructions().updateMarkdown();
+        // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
+        // hidden its change detection was detached, so a render that happened in the meantime may have injected the
+        // PlantUML diagrams into stale DOM. Re-rendering now that the exercise is visible restores them reliably.
+        this.instructions().forceReRenderProblemStatement();
         this.updateDomain();
     }
 
