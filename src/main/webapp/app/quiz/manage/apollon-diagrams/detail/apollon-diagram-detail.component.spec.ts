@@ -376,7 +376,7 @@ describe('ApollonDiagramDetail Component', () => {
             expect(result).toBe(true);
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(successSpy).toHaveBeenCalledWith('artemisApp.apollonDiagram.updated', { title: diagram.title });
-            expect(fixture.componentInstance.isSaved).toBe(true);
+            expect(fixture.componentInstance.isSaved()).toBe(true);
 
             fixture.componentInstance.ngOnDestroy();
         });
@@ -528,7 +528,7 @@ describe('ApollonDiagramDetail Component', () => {
         it('should emit closeModal directly when saved', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
-            fixture.componentInstance.isSaved = true;
+            fixture.componentInstance.isSaved.set(true);
             fixture.componentInstance.confirmExitDetailView(true);
 
             expect(emitSpy).toHaveBeenCalledOnce();
@@ -537,14 +537,14 @@ describe('ApollonDiagramDetail Component', () => {
         it('should emit closeEdit directly when saved', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
-            fixture.componentInstance.isSaved = true;
+            fixture.componentInstance.isSaved.set(true);
             fixture.componentInstance.confirmExitDetailView(false);
 
             expect(emitSpy).toHaveBeenCalledOnce();
         });
 
         it('should open confirmation modal when not saved', () => {
-            fixture.componentInstance.isSaved = false;
+            fixture.componentInstance.isSaved.set(false);
             fixture.componentInstance.confirmExitDetailView(true);
 
             expect(mockDialogService.open).toHaveBeenCalledOnce();
@@ -553,7 +553,7 @@ describe('ApollonDiagramDetail Component', () => {
         it('should emit closeModal after dialog confirmation', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
-            fixture.componentInstance.isSaved = false;
+            fixture.componentInstance.isSaved.set(false);
             fixture.componentInstance.confirmExitDetailView(true);
 
             dialogClose.next({ confirmed: true });
@@ -595,7 +595,7 @@ describe('ApollonDiagramDetail Component', () => {
 
             // Timer should be reset to 0 in setAutoSaveTimer
             // (We can't directly test internal timer reset, but save should succeed)
-            expect(fixture.componentInstance.isSaved).toBe(true);
+            expect(fixture.componentInstance.isSaved()).toBe(true);
 
             fixture.componentInstance.ngOnDestroy();
         });
@@ -667,7 +667,7 @@ describe('ApollonDiagramDetail Component', () => {
             await fixture.componentInstance.initializeApollonEditor(v3Model);
 
             // Initial state should be saved (model matches jsonRepresentation)
-            expect(fixture.componentInstance.isSaved).toBe(true);
+            expect(fixture.componentInstance.isSaved()).toBe(true);
 
             fixture.componentInstance.ngOnDestroy();
         });

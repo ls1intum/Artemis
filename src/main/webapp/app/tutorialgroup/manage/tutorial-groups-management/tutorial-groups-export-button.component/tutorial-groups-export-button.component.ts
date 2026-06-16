@@ -28,9 +28,9 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     readonly exportFinished = output<void>();
 
-    selectAll = false;
+    readonly selectAll = signal(false);
 
-    selectedFields: string[] = [];
+    readonly selectedFields = signal<string[]>([]);
     availableFields = [
         { value: 'ID', selected: false },
         { value: 'Title', selected: false },
@@ -57,19 +57,19 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     toggleSelectAll() {
-        this.selectAll = !this.selectAll;
-        this.availableFields.forEach((field) => (field.selected = this.selectAll));
+        this.selectAll.update((value) => !value);
+        this.availableFields.forEach((field) => (field.selected = this.selectAll()));
         this.updateSelectedFields();
     }
 
     onFieldSelectionChange(field: any) {
         field.selected = !field.selected;
-        this.selectAll = this.areAllFieldsSelected();
+        this.selectAll.set(this.areAllFieldsSelected());
         this.updateSelectedFields();
     }
 
     updateSelectedFields() {
-        this.selectedFields = this.availableFields.filter((field) => field.selected).map((field) => field.value);
+        this.selectedFields.set(this.availableFields.filter((field) => field.selected).map((field) => field.value));
     }
 
     areAllFieldsSelected(): boolean {
@@ -77,7 +77,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV() {
-        this.tutorialGroupApiService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
+        this.tutorialGroupApiService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields()).subscribe({
             next: (blob: Blob) => {
                 const a = document.createElement('a');
                 const objectUrl = URL.createObjectURL(blob);
@@ -99,7 +99,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     exportJSON() {
         this.tutorialGroupApiService
-            .exportTutorialGroupsToJSON(this.courseId(), this.selectedFields)
+            .exportTutorialGroupsToJSON(this.courseId(), this.selectedFields())
             .pipe(map((data: TutorialGroupExportData[]) => JSON.stringify(data)))
             .subscribe({
                 next: (response) => {
@@ -123,9 +123,9 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     private resetSelections() {
-        this.selectedFields = [];
+        this.selectedFields.set([]);
         this.availableFields.forEach((field) => (field.selected = false));
-        this.selectAll = false;
+        this.selectAll.set(false);
     }
 
     ngOnDestroy(): void {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -57,8 +57,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'Exams';
 
-    course: Course;
-    exams: Exam[];
+    readonly course = signal<Course>(undefined!);
+    readonly exams = signal<Exam[]>(undefined!);
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -91,7 +91,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
             next: (res: HttpResponse<Course>) => {
-                this.course = res.body!;
+                this.course.set(res.body!);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
                 this.currentTime = dayjs();
@@ -114,15 +114,17 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe({
+        this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
             next: (res: HttpResponse<Exam[]>) => {
-                this.exams = res.body!;
-                this.exams.forEach((exam) => {
+                this.exams.set(res.body!);
+                this.exams().forEach((exam) => {
                     this.examManagementService
-                        .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
-                        .subscribe(
-                            (examInformationDTORes: HttpResponse<ExamInformationDTO>) => (exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate),
-                        );
+                        .getLatestIndividualEndDateOfExam(this.course().id!, exam.id!)
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => {
+                            exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate;
+                            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders with the updated end date.
+                            this.exams.set([...this.exams()]);
+                        });
                 });
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -149,7 +151,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
+        // sortByProperty sorts in place; re-set a new array reference so the signal notifies and the (zoneless) view re-renders.
+        this.exams.set([...this.sortService.sortByProperty(this.exams(), this.predicate, this.ascending)]);
     }
 
     examHasFinished(exam: Exam): boolean {
@@ -178,7 +181,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             data: dialogData,
         });
 
-        const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
+        const importBaseRoute = ['/course-management', this.course().id, 'exams', 'import'];
 
         dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
             if (exam) {

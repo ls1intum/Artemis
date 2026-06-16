@@ -61,14 +61,14 @@ describe('OrganizationManagementUpdateComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.organization.id).toEqual(organization1.id);
+            expect(component.organization().id).toEqual(organization1.id);
         });
     });
 
     describe('Save', () => {
         it('should update the current edited organization', () => {
             organization1.name = 'updatedName';
-            component.organization = organization1;
+            component.organization.set(organization1);
             vi.spyOn(organizationService, 'update').mockReturnValue(of(new HttpResponse<Organization>({ body: organization1 })));
 
             component.save();
@@ -83,7 +83,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             newOrganization.shortName = 'newO';
             newOrganization.emailPattern = '.*';
 
-            component.organization = newOrganization;
+            component.organization.set(newOrganization);
             vi.spyOn(organizationService, 'add').mockReturnValue(of(new HttpResponse<Organization>({ body: newOrganization })));
 
             component.save();

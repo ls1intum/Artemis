@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,7 +23,7 @@ export class CreateTextUnitComponent implements OnInit {
     private alertService = inject(AlertService);
 
     textUnitToCreate: TextUnit = new TextUnit();
-    isLoading: boolean;
+    readonly isLoading = signal<boolean>(undefined!);
     lectureId: number;
     courseId: number;
 
@@ -48,13 +48,13 @@ export class CreateTextUnitComponent implements OnInit {
         this.textUnitToCreate.content = content;
         this.textUnitToCreate.competencyLinks = competencyLinks || [];
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.textUnitService
             .create(this.textUnitToCreate!, this.lectureId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({

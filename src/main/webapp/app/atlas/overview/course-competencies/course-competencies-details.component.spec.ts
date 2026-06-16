@@ -131,7 +131,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(2);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -149,7 +149,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(1);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 
@@ -174,21 +174,21 @@ describe('CourseCompetenciesDetails', () => {
             component.showFireworksIfMastered();
 
             vi.advanceTimersByTime(1000);
-            expect(component.showFireworks).toBeTruthy();
+            expect(component.showFireworks()).toBeTruthy();
 
             vi.advanceTimersByTime(5000);
-            expect(component.showFireworks).toBeFalsy();
+            expect(component.showFireworks()).toBeFalsy();
         } finally {
             vi.useRealTimers();
         }
     });
 
     it('should detect if due date is passed', () => {
-        component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().add(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeFalsy();
 
-        component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().subtract(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeTruthy();
     });
@@ -197,7 +197,7 @@ describe('CourseCompetenciesDetails', () => {
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
-        component.competency = competency;
+        component.competency.set(competency);
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
@@ -205,7 +205,7 @@ describe('CourseCompetenciesDetails', () => {
 
     it('should update progress after lecture unit completion', () => {
         component.competencyId = 42;
-        component.courseId = 21;
+        component.courseId.set(21);
 
         setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
         const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;

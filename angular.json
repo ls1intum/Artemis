@@ -61,7 +61,7 @@
                         },
                         "index": "src/main/webapp/index.html",
                         "browser": "src/main/webapp/app/app.main.ts",
-                        "polyfills": ["src/main/webapp/app/polyfills.ts", "@angular/localize/init"],
+                        "polyfills": ["@angular/localize/init"],
                         "tsConfig": "tsconfig.json",
                         "inlineStyleLanguage": "scss",
                         "stylePreprocessorOptions": {

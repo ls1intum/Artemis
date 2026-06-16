@@ -825,10 +825,9 @@ export class CourseMessagesPage {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
             }
         }
-        // The reply's context-menu dropdown is a sibling of `#item-${replyId}` (it lives on the
-        // <jhi-answer-post> host, outside the `#item-` root div), unlike top-level posts where `item-` wraps
-        // both. Scope the click to the open thread, not to the reply item, or it matches zero elements.
-        await this.page.locator('.expanded-thread .dropdown-menu.show .forward').click();
+        // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
+        // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
         await this.completeForwardDialog(destinationName, extraContent);
     }
 
