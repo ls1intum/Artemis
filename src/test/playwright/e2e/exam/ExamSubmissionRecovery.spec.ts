@@ -54,13 +54,16 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // Stop failing saves so the post-reload re-send can succeed.
         await page.unroute(quizSaveUrl);
 
-        // On reload the restored answer must be re-sent to the server (successful PUT for THIS quiz exercise).
-        const reSavePromise = page.waitForResponse(
-            (response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200,
-            { timeout: 30000 },
-        );
-        await page.reload();
-        await reSavePromise;
+        // On reload the restored answer must be re-sent to the server (successful PUT for THIS quiz exercise). Wait for
+        // the response and the reload together via Promise.all so only a POST-reload re-send can satisfy this; setting up
+        // the wait before reload (without Promise.all) could otherwise be satisfied by a pre-reload autosave retry.
+        await Promise.all([
+            page.waitForResponse(
+                (response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200,
+                { timeout: 30000 },
+            ),
+            page.reload(),
+        ]);
 
         // The restored answer is still selected in the UI.
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
