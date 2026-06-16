@@ -98,17 +98,17 @@
                 {{ version() }}
             </div>
         </a>
+        <div class="indicators">
+            <jhi-connection-warning class="align-self-center" />
+            <jhi-loading-notification class="align-self-center" />
+        </div>
         @if (currentCourse(); as course) {
-            <div class="mx-2">|</div>
+            <div class="me-2">|</div>
             <a class="navbar-course-link d-flex gap-2 align-items-center" [routerLink]="getCourseLink(course.id)" (click)="collapseNavbar()" [title]="course.title">
                 <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIconPath, courseTitle: course.title }" />
                 <div id="test-course-title" class="navbar-course-title fs-small fw-medium">{{ course.title }}</div>
             </a>
         }
-        <div class="indicators">
-            <jhi-connection-warning class="align-self-center" />
-            <jhi-loading-notification class="align-self-center" />
-        </div>
         @if (!iconsMovedToMenu() && isCollapsed()) {
             <ng-container *ngTemplateOutlet="iconMenu" />
         }

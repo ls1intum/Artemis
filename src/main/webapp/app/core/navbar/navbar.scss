@@ -18,6 +18,7 @@ a:not(.btn):hover {
     align-items: center;
     transition: color 0.2s;
     padding: 0 10px 0 20px;
+    flex: 1;
 
     > *:hover {
         color: var(--bs-body-color);
@@ -82,6 +83,7 @@ a:not(.btn):hover {
     @media screen and (min-width: 480px) {
         ul.navbar-nav:not(.vertical) {
             justify-content: flex-end;
+            flex-grow: 4;
 
             .nav-item:first-child {
                 margin-left: 0;
@@ -153,10 +155,6 @@ a:not(.btn):hover {
                 min-width: 0;
                 max-width: 100%;
             }
-
-            &:hover {
-                color: var(--link-color);
-            }
         }
 
         .navbar-course-image,
@@ -187,15 +185,14 @@ a:not(.btn):hover {
             flex-wrap: nowrap;
             font-size: 18px;
             height: 50px;
-            gap: 10px;
             justify-content: flex-start;
-            flex: 1;
         }
 
         .toggler-wrapper {
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            margin-left: auto;
 
             .toggler {
                 color: var(--navbar-foreground);
