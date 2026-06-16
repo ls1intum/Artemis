@@ -30,10 +30,17 @@ public class StringUtil {
      * extraction when exercise/exam titles contain international letters. Display contexts (e.g. notifications) must use
      * the raw title instead of this method, so users still see the original characters.
      *
-     * @param input String to sanitize
-     * @return sanitized, ASCII-only string safe for use in file names
+     * Note: the result may be empty (e.g. for an input consisting only of non-ASCII letters such as "テスト"). Callers
+     * that use the result as a standalone file or directory name must guard against this to avoid name collisions
+     * (see e.g. {@code BaseExercise#getSanitizedExerciseTitle()}).
+     *
+     * @param input String to sanitize (may be {@code null})
+     * @return sanitized, ASCII-only string safe for use in file names, or an empty string if the input is {@code null}
      */
     public static String sanitizeStringForFileName(String input) {
+        if (input == null) {
+            return "";
+        }
         String asciiReduced = Normalizer.normalize(input, Normalizer.Form.NFD).replaceAll("[^\\x00-\\x7F]", "");
         return asciiReduced.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?#+%$§\"<>|]", "");
     }

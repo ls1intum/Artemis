@@ -53,4 +53,20 @@ class StringUtilTest {
         // even letters without an ASCII decomposition (e.g. ß, ø) must not leave non-ASCII characters in a file name
         assertThat(sanitizeStringForFileName("Maß Sørensen")).containsPattern("^[\\x00-\\x7F]*$");
     }
+
+    @Test
+    void sanitizeStringForFileNameReturnsEmptyForNullOrOnlyNonAsciiInput() {
+        // a title with no ASCII representation sanitizes to empty; callers must add a uniqueness fallback
+        // (see BaseExercise#getSanitizedExerciseTitle) so export directories cannot collide
+        assertThat(sanitizeStringForFileName(null)).isEmpty();
+        assertThat(sanitizeStringForFileName("テスト")).isEmpty();
+        assertThat(sanitizeStringForFileName("Σθμ")).isEmpty();
+        assertThat(sanitizeStringForFileName("😀")).isEmpty();
+    }
+
+    @Test
+    void sanitizeStringForFileNameKeepsAsciiPartsOfMixedInput() {
+        // non-ASCII letters are dropped while surrounding ASCII content is preserved and whitespace collapses to underscores
+        assertThat(sanitizeStringForFileName("A テスト B")).isEqualTo("A_B");
+    }
 }
