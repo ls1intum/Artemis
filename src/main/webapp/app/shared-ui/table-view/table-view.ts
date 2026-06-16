@@ -1,5 +1,6 @@
-import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { get } from 'lodash-es';
 import { Tooltip } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,7 +9,8 @@ import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
 
 export interface ColumnDef<T> {
-    field?: keyof T;
+    /** Top-level key of T (e.g. `'name'`) or dot-path to a nested field (e.g. `'owner.name'`). Dot-paths are resolved via lodash `get` for value resolution and passed as-is to PrimeNG for sorting and filtering. */
+    field?: string;
     header?: string;
     headerKey?: string;
     /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
@@ -31,7 +33,8 @@ export interface ColumnDef<T> {
 export interface CellRendererParams<T> {
     data: T;
     col: ColumnDef<T>;
-    value: T[keyof T] | undefined;
+    /** Resolved value of `col.field` on this row. Supports dot-paths (e.g. `'owner.name'`). Type is `unknown` because nested paths yield arbitrary types. */
+    value: unknown;
     rowIndex: number;
 }
 
@@ -72,6 +75,13 @@ export interface TableConfig {
     scrollHeight: string | undefined;
     /** Freeze the implicit row-actions column to the right edge. Requires `scrollable: true`. Default: false. */
     rowActionsFrozen: boolean;
+    /**
+     * Fields used for the global search filter. When set, PrimeNG searches only these dot-path fields
+     * instead of all column fields. Use this to include virtual fields (e.g. pre-computed search strings)
+     * that have no corresponding visible column, or to exclude fields from search. Default: undefined
+     * (PrimeNG falls back to all column `field` values).
+     */
+    globalFilterFields: string[] | undefined;
 }
 
 /**
@@ -98,11 +108,12 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     scrollable: false,
     scrollHeight: undefined,
     rowActionsFrozen: false,
+    globalFilterFields: undefined,
 };
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent, Tooltip],
+    imports: [NgClass, NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent, Tooltip],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
@@ -125,6 +136,8 @@ export class TableViewComponent<T> {
     options = input<TableViewOptions>({});
     /** Optional predicate controlling which rows can be selected. Rows returning true are visually disabled and cannot be selected. */
     isRowDisabled = input<((row: T) => boolean) | null>(null);
+    /** Optional function returning a CSS class string (or ngClass-compatible object) applied to each row's `<tr>`. */
+    rowClass = input<((row: T) => string) | null>(null);
     /** Tooltip text shown on the checkbox cell of disabled rows. Only applies when selectionMode is 'multiple'. */
     disabledRowTooltip = input<string | undefined>(undefined);
     /**
@@ -179,6 +192,7 @@ export class TableViewComponent<T> {
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
+            globalFilterFields: opts.globalFilterFields ?? DEFAULT_TABLE_CONFIG.globalFilterFields,
         };
         return tableConfig;
     });
@@ -228,7 +242,7 @@ export class TableViewComponent<T> {
         const params: CellRendererParams<T> = {
             data,
             col,
-            value: col?.field && (col.field satisfies keyof T) ? data?.[col.field] : undefined,
+            value: col?.field ? get(data, col.field) : undefined,
             rowIndex,
         };
         return params;
