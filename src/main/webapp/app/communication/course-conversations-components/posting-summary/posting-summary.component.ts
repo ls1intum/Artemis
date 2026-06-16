@@ -1,4 +1,4 @@
-import { Component, effect, input, output, untracked } from '@angular/core';
+import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -30,11 +30,11 @@ export class PostingSummaryComponent {
     protected readonly ConversationType = ConversationType;
     protected readonly SavedPostStatus = SavedPostStatus;
 
-    protected isAnswerPost = false;
-    protected postingIsOfToday = false;
-    protected isShowPosting = false;
-    protected isShowSummary = false;
-    protected isShowContent = false;
+    protected readonly isAnswerPost = signal(false);
+    protected readonly postingIsOfToday = signal(false);
+    protected readonly isShowPosting = signal(false);
+    protected readonly isShowSummary = signal(false);
+    protected readonly isShowContent = signal(false);
 
     // Icons
     readonly faLock = faLock;
@@ -49,12 +49,13 @@ export class PostingSummaryComponent {
         effect(() => {
             const post = this.post();
             untracked(() => {
-                this.isShowPosting = post !== undefined;
-                this.isShowSummary = this.isShowPosting && post!.conversation !== undefined && post!.conversation!.type !== undefined && post!.conversation!.title !== undefined;
-                this.isShowContent = this.isShowPosting && post!.author !== undefined && post!.content !== undefined && post!.postingType !== undefined;
-                this.isAnswerPost = post?.postingType === PostingType.ANSWER.valueOf();
+                const isShowPosting = post !== undefined;
+                this.isShowPosting.set(isShowPosting);
+                this.isShowSummary.set(isShowPosting && post!.conversation !== undefined && post!.conversation!.type !== undefined && post!.conversation!.title !== undefined);
+                this.isShowContent.set(isShowPosting && post!.author !== undefined && post!.content !== undefined && post!.postingType !== undefined);
+                this.isAnswerPost.set(post?.postingType === PostingType.ANSWER.valueOf());
                 if (post) {
-                    this.postingIsOfToday = dayjs().isSame(post!.creationDate, 'day');
+                    this.postingIsOfToday.set(dayjs().isSame(post!.creationDate, 'day'));
                 }
             });
         });

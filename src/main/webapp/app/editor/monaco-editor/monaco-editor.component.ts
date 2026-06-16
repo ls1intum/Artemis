@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/editor/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
@@ -122,7 +122,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
-    private readonly ngZone = inject(NgZone);
 
     constructor() {
         /*
@@ -255,21 +254,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.resizeObserver.observe(this.monacoEditorContainerElement);
         this.resizeObserver.observe(this.diffEditorContainerElement);
 
-        this.ngZone.runOutsideAngular(() => {
-            this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
-                if (event.contentHeightChanged) {
-                    this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
-                }
-            });
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
+            }
+        });
 
-            this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
-                // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
-                // See https://github.com/microsoft/monaco-editor/issues/307
-                if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
-                    (document.activeElement as HTMLElement).blur();
-                }
-                this.ngZone.run(() => this.onBlurEditor.emit());
-            });
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+            // See https://github.com/microsoft/monaco-editor/issues/307
+            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                (document.activeElement as HTMLElement).blur();
+            }
+            this.onBlurEditor.emit();
         });
 
         // Wire listeners that depend on the "editable" editor (normal or diff modified).
@@ -417,20 +414,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (this.diffListenersAttached || !this._diffEditor) return;
         this.diffListenersAttached = true;
 
-        this.ngZone.runOutsideAngular(() => {
-            this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
-                const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
-                const lineChange = convertMonacoLineChanges(monacoLineChanges);
-                this.ngZone.run(() => {
-                    this.diffChanged.emit({ ready: true, lineChange });
-                });
-            });
+        this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+            const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
+            const lineChange = convertMonacoLineChanges(monacoLineChanges);
+            this.diffChanged.emit({ ready: true, lineChange });
+        });
 
-            this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
-                this.ngZone.run(() => {
-                    this.diffOriginalPaneLayoutChanged.emit(info.width);
-                });
-            });
+        this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
+            this.diffOriginalPaneLayoutChanged.emit(info.width);
         });
     }
 
@@ -456,16 +447,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private attachEditableEditorListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
-        this.ngZone.runOutsideAngular(() => {
-            this.textChangedListener?.dispose();
-            this.textChangedListener = editor.onDidChangeModelContent(() => {
-                this.ngZone.run(() => this.emitTextChangeEvent());
-            });
+        this.textChangedListener?.dispose();
+        this.textChangedListener = editor.onDidChangeModelContent(() => {
+            this.emitTextChangeEvent();
+        });
 
-            this.focusEditorTextListener?.dispose();
-            this.focusEditorTextListener = editor.onDidFocusEditorText(() => {
-                this.ngZone.run(() => this.registerCustomBackspaceAction(editor));
-            });
+        this.focusEditorTextListener?.dispose();
+        this.focusEditorTextListener = editor.onDidFocusEditorText(() => {
+            this.registerCustomBackspaceAction(editor);
         });
 
         this.registerCustomBackspaceAction(editor);
@@ -538,14 +527,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (existing) {
             clearTimeout(existing);
         }
-        const timeoutId = this.ngZone.runOutsideAngular(() =>
-            setTimeout(() => {
-                this.ngZone.run(() => {
-                    this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-                    this.textChangedEmitTimeouts.delete(modelKey);
-                });
-            }, delay),
-        );
+        const timeoutId = setTimeout(() => {
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            this.textChangedEmitTimeouts.delete(modelKey);
+        }, delay);
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
@@ -913,16 +898,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private registerScrollListenerOnEditors(listener: () => void): Disposable[] {
-        return this.ngZone.runOutsideAngular(() => {
-            const disposables: Disposable[] = [];
-            if (this.mode() === 'diff' && this._diffEditor) {
-                disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => this.ngZone.run(listener)));
-                disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => this.ngZone.run(listener)));
-            } else {
-                disposables.push(this._editor.onDidScrollChange(() => this.ngZone.run(listener)));
-            }
-            return disposables;
-        });
+        const disposables: Disposable[] = [];
+        if (this.mode() === 'diff' && this._diffEditor) {
+            disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => listener()));
+            disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => listener()));
+        } else {
+            disposables.push(this._editor.onDidScrollChange(() => listener()));
+        }
+        return disposables;
     }
 
     /**
@@ -948,22 +931,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {
-        return this.ngZone.runOutsideAngular(() => {
-            return editor.onDidChangeCursorSelection((e) => {
-                const selection = e.selection;
-                if (selection.isEmpty()) {
-                    this.ngZone.run(() => listener(undefined));
-                } else {
-                    this.ngZone.run(() =>
-                        listener({
-                            startLineNumber: selection.startLineNumber,
-                            endLineNumber: selection.endLineNumber,
-                            startColumn: selection.startColumn,
-                            endColumn: selection.endColumn,
-                        }),
-                    );
-                }
-            });
+        return editor.onDidChangeCursorSelection((e) => {
+            const selection = e.selection;
+            if (selection.isEmpty()) {
+                listener(undefined);
+            } else {
+                listener({
+                    startLineNumber: selection.startLineNumber,
+                    endLineNumber: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                });
+            }
         });
     }
 

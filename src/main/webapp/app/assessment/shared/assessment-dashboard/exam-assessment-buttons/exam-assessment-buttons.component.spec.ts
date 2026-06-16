@@ -143,8 +143,8 @@ describe('ExamAssessmentButtons', () => {
         course.isAtLeastInstructor = true;
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toBe(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toBe(true);
+        expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
+        expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(course).toBeTruthy();
         const assessSpy = vi.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
@@ -164,8 +164,8 @@ describe('ExamAssessmentButtons', () => {
 
         examAssessmentButtonsFixture.detectChanges();
         const alertServiceSpy = vi.spyOn(alertService, 'error');
-        expect(examAssessmentButtonsComponent.isLoading).toBe(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toBe(true);
+        expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
+        expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(course).toBeTruthy();
         vi.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(() => httpError));
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
@@ -180,9 +180,9 @@ describe('ExamAssessmentButtons', () => {
         exam.endDate = dayjs().subtract(100, 'seconds');
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toBe(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toBe(true);
-        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toBe(true);
+        expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
+        expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
+        expect(examAssessmentButtonsComponent.course()!.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
         const evaluateQuizExercises = vi.spyOn(examManagementService, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = examAssessmentButtonsFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
@@ -201,9 +201,9 @@ describe('ExamAssessmentButtons', () => {
         const alertService = TestBed.inject(AlertService);
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toBe(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toBe(true);
-        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toBe(true);
+        expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
+        expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
+        expect(examAssessmentButtonsComponent.course()!.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });

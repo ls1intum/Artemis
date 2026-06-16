@@ -74,7 +74,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     });
 
     deleteMessage = '';
-    isDeletingPasskey = false;
+    readonly isDeletingPasskey = signal<boolean>(false);
 
     private authStateSubscription: Subscription;
 
@@ -161,14 +161,14 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     async deletePasskey(passkey: PasskeyDTO) {
-        this.isDeletingPasskey = true;
+        this.isDeletingPasskey.set(true);
         try {
             await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
             await this.updateRegisteredPasskeys();
         } catch (error) {
             this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.delete');
         }
-        this.isDeletingPasskey = false;
+        this.isDeletingPasskey.set(false);
         this.dialogErrorSource.next('');
     }
 }

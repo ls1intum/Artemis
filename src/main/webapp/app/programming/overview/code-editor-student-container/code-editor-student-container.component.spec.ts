@@ -61,7 +61,7 @@ describe('CodeEditorStudentContainerComponent', () => {
         comp.ngOnInit();
 
         expect(getParticipationSubmissionCountSpy).toHaveBeenCalledOnce();
-        expect(comp.numberOfSubmissionsForSubmissionPolicy).toBe(5);
+        expect(comp.numberOfSubmissionsForSubmissionPolicy()).toBe(5);
     });
 
     it.each([undefined, { active: false } as SubmissionPolicy])(

@@ -242,7 +242,7 @@ public class CourseNotificationSettingService {
      * @return Filtered list of users who have enabled notifications for the specified channel
      */
     protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor) {
-        return recipients.stream().filter((recipient) -> {
+        return recipients.stream().filter(recipient -> {
             // Note: We run a single query per user, however, this query is cached, so this should not cause performance issues.
             var preset = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
 

@@ -65,7 +65,7 @@ describe('ScienceSettingsComponent', () => {
     });
 
     it('should toggle setting and save immediately', () => {
-        comp.settings = [scienceSetting];
+        comp.settings.set([scienceSetting]);
         const saveResponse = new HttpResponse<ScienceSetting[]>({ body: [{ ...scienceSetting, active: true, changed: false }] });
         vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(of(saveResponse));
         vi.spyOn(userSettingsServiceMock, 'saveSettingsSuccess').mockReturnValue(scienceSettingsStructure);
@@ -80,7 +80,7 @@ describe('ScienceSettingsComponent', () => {
     });
 
     it('should revert toggle on save failure', () => {
-        comp.settings = [scienceSetting];
+        comp.settings.set([scienceSetting]);
         const errorResponse = new HttpErrorResponse({ error: { message: 'Save failed' }, status: 500 });
         vi.spyOn(userSettingsServiceMock, 'saveSettings').mockReturnValue(throwError(() => errorResponse));
         const event = { currentTarget: { id: settingId } } as unknown as MouseEvent;
@@ -92,7 +92,7 @@ describe('ScienceSettingsComponent', () => {
     });
 
     it('should not save when setting ID is not found', () => {
-        comp.settings = [scienceSetting];
+        comp.settings.set([scienceSetting]);
         const saveSpy = vi.spyOn(userSettingsServiceMock, 'saveSettings');
         const event = { currentTarget: { id: 'NON_EXISTENT_ID' } } as unknown as MouseEvent;
 
@@ -107,6 +107,6 @@ describe('ScienceSettingsComponent', () => {
         comp.ngOnInit();
         expect(settingGetMock).toHaveBeenCalledOnce();
         // check if current settings are not empty
-        expect(comp.userSettings).toEqual(scienceSettingsStructure);
+        expect(comp.userSettings()).toEqual(scienceSettingsStructure);
     });
 });

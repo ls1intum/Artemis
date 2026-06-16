@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -74,7 +74,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
 
     courseId: number;
-    isLoading = false;
+    readonly isLoading = signal(false);
     submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
@@ -106,7 +106,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.getCurrentCompetencies().subscribe((currentCompetencies) => {
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
@@ -125,19 +125,19 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
                             }
                             if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
                                 this.websocketSubscription?.unsubscribe();
-                                this.isLoading = false;
+                                this.isLoading.set(false);
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
                             this.websocketSubscription?.unsubscribe();
-                            this.isLoading = false;
+                            this.isLoading.set(false);
                         },
                     });
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         });
@@ -269,7 +269,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate(): boolean {
-        return this.submitted || (!this.isLoading && this.competencies.length === 0);
+        return this.submitted || (!this.isLoading() && this.competencies.length === 0);
     }
 
     get canDeactivateWarning(): string {

@@ -41,7 +41,7 @@ describe('Exercise Info Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.dueDate).toEqual(expectedDueDate);
+        expect(comp.dueDate()).toEqual(expectedDueDate);
     });
 
     it.each([
@@ -62,8 +62,8 @@ describe('Exercise Info Component', () => {
 
             comp.ngOnInit();
 
-            expect(comp.individualComplaintDueDate).toEqual(expectedComplaintDate);
-            expect(comp.canComplainLaterOn).toBe(canComplainLaterOn);
+            expect(comp.individualComplaintDueDate()).toEqual(expectedComplaintDate);
+            expect(comp.canComplainLaterOn()).toBe(canComplainLaterOn);
         },
     );
 });

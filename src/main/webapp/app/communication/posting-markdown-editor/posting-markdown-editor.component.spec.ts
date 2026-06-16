@@ -169,23 +169,23 @@ describe('PostingsMarkdownEditor', () => {
         fixture.autoDetectChanges();
         mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         component.ngOnInit();
-        component.content = metisPostExerciseUser1.content;
+        component.content.set(metisPostExerciseUser1.content);
 
         mockEmojiSelect.next({ emoji: { native: '\u{1F600}' }, event: new PointerEvent('click') });
     });
 
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
-        containDefaultActions(component.defaultActions);
-        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        containDefaultActions(component.defaultActions());
+        expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
         vi.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
-        containDefaultActions(component.defaultActions);
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        containDefaultActions(component.defaultActions());
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     function containDefaultActions(defaultActions: TextEditorAction[]) {
@@ -207,9 +207,9 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should always include faq reference action in default commands', () => {
         component.ngOnInit();
-        containDefaultActions(component.defaultActions);
-        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        containDefaultActions(component.defaultActions());
+        expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {
@@ -233,24 +233,24 @@ describe('PostingsMarkdownEditor', () => {
     it('should initialize markdown correctly with post content', () => {
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
-        expect(mockMarkdownEditorComponent.markdown).toEqual(component.content);
+        expect(mockMarkdownEditorComponent.markdown).toEqual(component.content());
     });
 
     it('should update value if markdown change is emitted', () => {
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         mockMarkdownEditorComponent.markdownChange.emit('updated text');
-        expect(component.content).toBe('updated text');
+        expect(component.content()).toBe('updated text');
     });
 
     it('should write value of form group in content variable', () => {
         component.writeValue(metisAnswerPostUser2);
-        expect(component.content).toEqual(metisAnswerPostUser2);
+        expect(component.content()).toEqual(metisAnswerPostUser2);
     });
 
     it('should write an empty string into content for undefined values', () => {
         component.writeValue(undefined);
-        expect(component.content).toBe('');
+        expect(component.content()).toBe('');
     });
 
     it('should register onChange', () => {
@@ -292,7 +292,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should attach EmojiPickerComponent to overlay when EmojiAction.run is called', () => {
-        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        const emojiAction = component.defaultActions().find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
         emojiAction.run(mockEditor as unknown as TextEditor);
@@ -302,7 +302,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should create overlay with correct position when EmojiAction.run is called', () => {
-        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        const emojiAction = component.defaultActions().find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
         const localMockPositionStrategy = {
@@ -328,7 +328,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
-        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        const emojiAction = component.defaultActions().find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
         emojiAction.run(mockEditor as unknown as TextEditor);
@@ -372,7 +372,7 @@ describe('PostingsMarkdownEditor', () => {
     };
 
     it('should handle Shift+Enter correctly by inserting a single line break with prefix', () => {
-        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+        const bulletedListAction = component.defaultActions().find((action) => action instanceof BulletedListAction) as BulletedListAction;
 
         mockEditor.getPosition.mockReturnValue({
             getLineNumber: () => 1,
@@ -390,7 +390,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should handle Cmd+Enter correctly without inserting double line breaks', () => {
-        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+        const bulletedListAction = component.defaultActions().find((action) => action instanceof BulletedListAction) as BulletedListAction;
 
         mockEditor.getPosition.mockReturnValue({
             getLineNumber: () => 1,
@@ -452,7 +452,7 @@ describe('PostingsMarkdownEditor', () => {
     };
 
     it('should add bulleted list prefixes correctly', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const selectedText = `First line\nSecond line\nThird line`;
         const expectedText = `- First line\n- Second line\n- Third line`;
 
@@ -460,7 +460,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should remove bulleted list prefixes correctly when toggled', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const selectedText = `- First line\n- Second line\n- Third line`;
         const expectedText = `First line\nSecond line\nThird line`;
 
@@ -468,7 +468,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should add ordered list prefixes correctly starting from 1', () => {
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const selectedText = `First line\nSecond line\nThird line`;
         const expectedText = `1. First line\n2. Second line\n3. Third line`;
 
@@ -476,7 +476,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should remove ordered list prefixes correctly when toggled', () => {
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const selectedText = `1.  First line\n2.  Second line\n3.  Third line`;
         const expectedText = `First line\nSecond line\nThird line`;
 
@@ -484,8 +484,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should switch from bulleted list to ordered list correctly', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const bulletedText = `- First line\n- Second line\n- Third line`;
         const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
 
@@ -496,8 +496,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should switch from ordered list to bulleted list correctly', () => {
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         const orderedText = `1.  First line\n2.  Second line\n3.  Third line`;
         const expectedBulletedText = `- First line\n- Second line\n- Third line`;
 
@@ -508,7 +508,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should start ordered list numbering from 1 regardless of an inline list', () => {
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
         const selectedText = `Some previous text\n1.  First line\n2.  Second line\n3.  Third line`;
         const expectedText = `1. Some previous text\n2. First line\n3. Second line\n4. Third line`;
 
@@ -516,8 +516,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should update prefixes correctly when switching list types', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
 
         const bulletedText = `- First line\n- Second line\n- Third line`;
         const expectedOrderedText = `1. First line\n2. Second line\n3. Third line`;
@@ -529,8 +529,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should toggle list prefixes correctly when pressing the same list button twice', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
 
         const initialText = `First line\nSecond line\nThird line`;
 
@@ -549,8 +549,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should handle pressing different list buttons correctly', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
-        const orderedListAction = component.defaultActions.find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const orderedListAction = component.defaultActions().find((action: any) => action instanceof OrderedListAction) as OrderedListAction;
 
         const initialText = `First line\nSecond line\nThird line`;
 
@@ -568,7 +568,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should handle key down event and invoke the correct action', () => {
         const bulletedListAction = new BulletedListAction();
 
-        component.defaultActions = [bulletedListAction];
+        component.defaultActions.set([bulletedListAction]);
 
         const handleActionClickSpy = vi.spyOn(component.markdownEditor(), 'handleActionClick');
 
@@ -594,7 +594,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should keep the cursor position intact when editing text in a list item', () => {
-        const bulletedListAction = component.defaultActions.find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
+        const bulletedListAction = component.defaultActions().find((action: any) => action instanceof BulletedListAction) as BulletedListAction;
         mockEditor.getPosition.mockReturnValue({
             getLineNumber: () => 1,
             getColumn: () => 5,

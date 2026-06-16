@@ -22,10 +22,10 @@
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
         }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement && !userTokenPresent()) {
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement() && !userTokenPresent()) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip()"></div>
         }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent() && !userTokenStillValid()) {
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement() && userTokenPresent() && !userTokenStillValid()) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip()"></div>
         }
         <h5 [jhiTranslate]="clonedHeadline()"></h5>

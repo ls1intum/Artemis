@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, input, output, signal } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -32,17 +32,17 @@ export class PlagiarismSidebarComponent implements OnChanges {
     /**
      * Index of the currently selected result page.
      */
-    public currentPage = 0;
+    public readonly currentPage = signal(0);
 
     /**
      * Total number of result pages.
      */
-    public numberOfPages = 0;
+    public readonly numberOfPages = signal(0);
 
     /**
      * Subset of currently paged comparisons.
      */
-    public pagedComparisons?: PlagiarismComparison[];
+    public readonly pagedComparisons = signal<PlagiarismComparison[] | undefined>(undefined);
 
     /**
      * Number of comparisons per page.
@@ -58,13 +58,13 @@ export class PlagiarismSidebarComponent implements OnChanges {
         if (changes.comparisons?.currentValue !== changes.comparisons?.previousValue) {
             const comparisons: PlagiarismComparison[] = changes.comparisons.currentValue;
 
-            this.currentPage = 0;
+            this.currentPage.set(0);
             if (!comparisons) {
-                this.numberOfPages = 1;
+                this.numberOfPages.set(1);
             } else {
-                this.numberOfPages = this.computeNumberOfPages(comparisons.length);
+                this.numberOfPages.set(this.computeNumberOfPages(comparisons.length));
             }
-            this.pagedComparisons = this.getPagedComparisons();
+            this.pagedComparisons.set(this.getPagedComparisons());
         }
     }
 
@@ -77,29 +77,29 @@ export class PlagiarismSidebarComponent implements OnChanges {
     }
 
     getPagedComparisons() {
-        const startIndex = this.currentPage * this.pageSize;
+        const startIndex = this.currentPage() * this.pageSize;
         return this.comparisons()?.slice(startIndex, startIndex + this.pageSize);
     }
 
     getPagedIndex(idx: number) {
-        return idx + this.currentPage * this.pageSize;
+        return idx + this.currentPage() * this.pageSize;
     }
 
     handlePageLeft() {
-        if (this.currentPage === 0) {
+        if (this.currentPage() === 0) {
             return;
         }
 
-        this.currentPage--;
-        this.pagedComparisons = this.getPagedComparisons();
+        this.currentPage.update((page) => page - 1);
+        this.pagedComparisons.set(this.getPagedComparisons());
     }
 
     handlePageRight() {
-        if (this.currentPage + 1 >= this.numberOfPages) {
+        if (this.currentPage() + 1 >= this.numberOfPages()) {
             return;
         }
 
-        this.currentPage++;
-        this.pagedComparisons = this.getPagedComparisons();
+        this.currentPage.update((page) => page + 1);
+        this.pagedComparisons.set(this.getPagedComparisons());
     }
 }

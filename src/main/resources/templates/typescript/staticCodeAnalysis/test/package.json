@@ -28,5 +28,8 @@
         "classNameTemplate": "{classname}_{title}",
         "titleTemplate": "{classname}_{title}",
         "ancestorSeparator": "_"
+    },
+    "overrides": {
+        "uuid": "11.1.1"
     }
 }

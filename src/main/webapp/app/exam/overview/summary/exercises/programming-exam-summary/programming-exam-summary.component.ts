@@ -49,9 +49,9 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     result: Result | undefined;
 
-    feedbackComponentParameters: FeedbackComponentPreparedParams;
+    readonly feedbackComponentParameters = signal<FeedbackComponentPreparedParams>(undefined!);
 
-    commitHash: string | undefined;
+    readonly commitHash = signal<string | undefined>(undefined);
 
     routerLink: string;
     isInCourseManagement = false;
@@ -67,7 +67,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
             this.result.submission = latestSubmission;
             this.result.submission.participation = participation;
         }
-        this.commitHash = latestSubmission?.commitHash?.slice(0, 11);
+        this.commitHash.set(latestSubmission?.commitHash?.slice(0, 11));
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
@@ -75,13 +75,15 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         const templateStatus = evaluateTemplateStatus(this.exercise(), participation, this.result, isBuilding, missingResultInfo);
 
         if (this.result) {
-            this.feedbackComponentParameters = prepareFeedbackComponentParameters(
-                this.exercise(),
-                this.result,
-                participation,
-                templateStatus,
-                this.exam().latestIndividualEndDate,
-                this.exerciseCacheService ?? this.exerciseService,
+            this.feedbackComponentParameters.set(
+                prepareFeedbackComponentParameters(
+                    this.exercise(),
+                    this.result,
+                    participation,
+                    templateStatus,
+                    this.exam().latestIndividualEndDate,
+                    this.exerciseCacheService ?? this.exerciseService,
+                ),
             );
         }
     }
