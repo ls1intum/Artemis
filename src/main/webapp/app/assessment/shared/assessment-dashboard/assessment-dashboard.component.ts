@@ -475,7 +475,7 @@ export class AssessmentDashboardComponent implements OnInit {
         }
 
         this.deimosSubmitting.set(true);
-        this.deimosService.triggerCourseBatch(this.courseId, selection.from, selection.to).subscribe({
+        this.deimosService.triggerCourseBatch(this.courseId(), selection.from, selection.to).subscribe({
             next: () => {
                 this.deimosSubmitting.set(false);
                 this.alertService.success('artemisApp.deimos.trigger.success');

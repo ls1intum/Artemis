@@ -787,7 +787,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     triggerExerciseDeimosBatch(selection: DeimosDateRangeSelection): void {
-        const exerciseId = this.programmingExercise.id;
+        const exerciseId = this.programmingExercise().id;
         if (!exerciseId) {
             return;
         }
