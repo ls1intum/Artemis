@@ -3,7 +3,6 @@ import {
     ElementRef,
     HostListener,
     Injector,
-    NgZone,
     OnDestroy,
     ViewEncapsulation,
     afterNextRender,
@@ -44,7 +43,6 @@ interface HorizontalSplitConfig extends SplitConfig {
 export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly injector = inject(Injector);
-    private readonly ngZone = inject(NgZone);
 
     readonly isCollapsed = input<boolean>(true);
     readonly showSidebar = input<boolean>(false);
@@ -103,9 +101,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
             untracked(() => {
                 this.destroySplitter();
                 if (needsSplitter && mainEl && sidebarEl) {
-                    this.ngZone.runOutsideAngular(() => {
-                        this.initSplitter([mainEl, sidebarEl]);
-                    });
+                    this.initSplitter([mainEl, sidebarEl]);
                 }
             });
         });
@@ -120,9 +116,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
             untracked(() => {
                 this.destroyHorizontalSplitter();
                 if (needsSplitter && topEl && bottomEl) {
-                    this.ngZone.runOutsideAngular(() => {
-                        this.initHorizontalSplitter([topEl, bottomEl]);
-                    });
+                    this.initHorizontalSplitter([topEl, bottomEl]);
                 }
             });
         });
@@ -207,9 +201,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
             cursor: 'col-resize',
             direction: 'horizontal',
             onDragEnd: (sizes) => {
-                this.ngZone.run(() => {
-                    this.splitSizesChange.emit([sizes[0], sizes[1]]);
-                });
+                this.splitSizesChange.emit([sizes[0], sizes[1]]);
             },
             gutter: (_index, direction) => this.createSplitGutter(direction),
         });
@@ -240,9 +232,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
             cursor: 'row-resize',
             direction: 'vertical',
             onDragEnd: (sizes) => {
-                this.ngZone.run(() => {
-                    this.horizontalSplitSizesChange.emit([sizes[0], sizes[1]]);
-                });
+                this.horizontalSplitSizesChange.emit([sizes[0], sizes[1]]);
             },
             gutter: (_index, direction) => this.createSplitGutter(direction),
         });

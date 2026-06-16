@@ -3,7 +3,7 @@ import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -205,6 +205,34 @@ describe('ImportTableComponent', () => {
         await fixture.whenStable();
 
         expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should discard a stale out-of-order search response', async () => {
+        // Reproduces the race the guard in loadData() fixes: an earlier request (e.g. the initial unfiltered
+        // load) and a newer request (a search term the user typed) are both in flight. The newer request
+        // resolves first and is applied; the slower earlier request must NOT overwrite it afterwards.
+        const loadData = () => (component as unknown as { loadData: () => Promise<void> }).loadData();
+        const staleResponse = new Subject<SearchResult<Course>>();
+        const currentResponse = new Subject<SearchResult<Course>>();
+        searchSpy.mockReturnValueOnce(staleResponse).mockReturnValueOnce(currentResponse);
+
+        // Earlier request issued with the default empty search term.
+        const stalePromise = loadData();
+        // The user types: a newer request is issued with a different search term.
+        component.searchTerm.set('Object 02');
+        const currentPromise = loadData();
+
+        // The newer request resolves first and is applied.
+        currentResponse.next(<SearchResult<Course>>{ resultsOnPage: [objectList[1]], numberOfPages: 1 });
+        currentResponse.complete();
+        await currentPromise;
+        expect(component.resultsOnPage()).toEqual([objectList[1]]);
+
+        // The slower earlier request resolves afterwards and must be discarded, not applied.
+        staleResponse.next(<SearchResult<Course>>{ resultsOnPage: objectList, numberOfPages: 2 });
+        staleResponse.complete();
+        await stalePromise;
+        expect(component.resultsOnPage()).toEqual([objectList[1]]);
     });
 
     async function loadDataAndClickColumn(columnIndex: number, timesClicking: number, compareSortedColumn: string, compareSortingOrder: SortingOrder, compareCellContent: string) {

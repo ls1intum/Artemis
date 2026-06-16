@@ -92,7 +92,7 @@ describe('ImportComponent', () => {
 
     it('should initialize the content', () => {
         fixture.detectChanges();
-        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+        expect(comp.content()).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
     it('should initialize the subjects', () => {
@@ -109,7 +109,7 @@ describe('ImportComponent', () => {
         comp.state = { ...state };
         comp.ngOnInit();
         middleExpectation();
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
@@ -193,13 +193,13 @@ describe('ImportComponent', () => {
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(0);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(0);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         // Page number should be changed unless it is falsy.
         comp.onPageChange(0);

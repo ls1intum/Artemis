@@ -101,8 +101,8 @@ describe('Edit Course LTI Configuration Component', () => {
         it('should load course with online course configuration', () => {
             comp.ngOnInit();
 
-            expect(comp.course).toEqual(course);
-            expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
+            expect(comp.course()).toEqual(course);
+            expect(comp.onlineCourseConfiguration()).toEqual(course.onlineCourseConfiguration);
             expect(comp.onlineCourseConfigurationForm.get(['id'])?.value).toBe(onlineCourseConfiguration.id);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
             expect(comp.onlineCourseConfigurationForm.get(['requireExistingUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
@@ -147,7 +147,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
             comp.setPlatform(platform);
 
-            expect(comp.onlineCourseConfiguration.ltiPlatformConfiguration).toEqual(platform);
+            expect(comp.onlineCourseConfiguration().ltiPlatformConfiguration).toEqual(platform);
             expect(comp.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.value).toEqual(platform);
         });
 

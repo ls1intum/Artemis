@@ -54,8 +54,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
     it('should set form data correctly for editing free days', () => {
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should set form data correctly for editing free periods', () => {
@@ -68,8 +68,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
         setUpTestComponent(periodToEdit);
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should set form data correctly for editing free periods within a day', () => {
@@ -81,8 +81,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         });
         setUpTestComponent(periodWithinDayToEdit);
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should send PUT request upon form submission and close dialog', () => {
@@ -143,8 +143,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         // Expect formData startTime and endTime hours match the UTC→Berlin hour
         const berlinStartHour = start.tz('Europe/Berlin').hour();
         const berlinEndHour = end.tz('Europe/Berlin').hour();
-        expect(component.formData.startTime!.getHours()).toBe(berlinStartHour);
-        expect(component.formData.endTime!.getHours()).toBe(berlinEndHour);
+        expect(component.formData().startTime!.getHours()).toBe(berlinStartHour);
+        expect(component.formData().endTime!.getHours()).toBe(berlinEndHour);
         expect(component.dialogVisible()).toBe(true);
     });
 

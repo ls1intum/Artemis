@@ -9,12 +9,12 @@
             <div #fileBrowser class="editor-sidebar-left collapsable">
                 <ng-content select="[editorSidebarLeft]" />
                 <!-- Required for resizing; don't remove empty span -->
-                @if (!fileBrowserIsCollapsed) {
+                @if (!fileBrowserIsCollapsed()) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left">
                         <span></span>
                     </fa-icon>
                 }
-                @if (fileBrowserIsCollapsed) {
+                @if (fileBrowserIsCollapsed()) {
                     <span class="separator"></span>
                 }
             </div>
@@ -24,12 +24,12 @@
             </div>
             <!-- Instructions -->
             <div #instructions class="editor-sidebar-right collapsable" [hidden]="!showEditorSidebarRight()">
-                @if (!rightPanelIsCollapsed) {
+                @if (!rightPanelIsCollapsed()) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
                         <span></span>
                     </fa-icon>
                 }
-                @if (rightPanelIsCollapsed) {
+                @if (rightPanelIsCollapsed()) {
                     <span class="separator"></span>
                 }
                 <ng-content select="[editorSidebarRight]" />
@@ -42,7 +42,7 @@
     <div #buildOutput class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
-        @if (!buildOutputIsCollapsed) {
+        @if (!buildOutputIsCollapsed()) {
             <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
         }
     </div>

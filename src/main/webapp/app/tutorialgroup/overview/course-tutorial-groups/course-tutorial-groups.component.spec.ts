@@ -204,11 +204,11 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should toggle isCollapsed', () => {
-        const initialCollapseState = component.isCollapsed;
+        const initialCollapseState = component.isCollapsed();
         vi.spyOn(courseOverviewService, 'setSidebarCollapseState');
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(!initialCollapseState);
-        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed);
+        expect(component.isCollapsed()).toBe(!initialCollapseState);
+        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
     });
 });
 
