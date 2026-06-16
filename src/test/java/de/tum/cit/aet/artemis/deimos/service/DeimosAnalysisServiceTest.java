@@ -17,7 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;

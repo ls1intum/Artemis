@@ -385,6 +385,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
+     * The name of the module feature used for Deimos malicious participation analysis functionality.
+     */
+    public static final String MODULE_FEATURE_DEIMOS = "deimos";
+
+    /**
      * The name of the module feature used for Iris / Pyris functionality.
      */
     public static final String MODULE_FEATURE_IRIS = "iris";

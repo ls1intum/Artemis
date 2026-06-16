@@ -11,7 +11,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.LongStream;
 
@@ -27,10 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosAnalysisCompleteEmailDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
-import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -111,16 +112,18 @@ class DeimosBatchServiceTest {
         assertThat(response.status()).isEqualTo("ACCEPTED");
         var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
         verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
                 contextCaptor.capture());
         assertThat(recipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(triggerUser));
-        @SuppressWarnings("unchecked")
-        List<DeimosMaliciousParticipationLink> links = (List<DeimosMaliciousParticipationLink>) contextCaptor.getValue().get("maliciousParticipationLinks");
-        assertThat(links).hasSize(1);
-        assertThat(links.getFirst().participationId()).isEqualTo(101L);
-        assertThat(links.getFirst().url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/55/participations/101/submissions");
-        assertThat(links.getFirst().rationale()).isEqualTo("bad");
+        var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+        assertThat(emailData).isNotNull();
+        assertThat(emailData.courseTitle()).isEqualTo("Course 7");
+        assertThat(emailData.analyzed()).isEqualTo(2L);
+        assertThat(emailData.maliciousParticipationLinks()).hasSize(1);
+        assertThat(emailData.maliciousParticipationLinks().getFirst().participationId()).isEqualTo(101L);
+        assertThat(emailData.maliciousParticipationLinks().getFirst().url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/55/scores");
+        assertThat(emailData.maliciousParticipationLinks().getFirst().rationale()).isEqualTo("bad");
     }
 
     @Test
@@ -162,11 +165,12 @@ class DeimosBatchServiceTest {
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
         verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
-        assertThat(contextCaptor.getValue().get("analyzed")).isEqualTo(0L);
-        assertThat(contextCaptor.getValue().get("failed")).isEqualTo(2L);
-        assertThat(contextCaptor.getValue().get("maliciousCount")).isEqualTo(0L);
+        var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+        assertThat(emailData.analyzed()).isEqualTo(0L);
+        assertThat(emailData.failed()).isEqualTo(2L);
+        assertThat(emailData.maliciousCount()).isEqualTo(0L);
     }
 
     @Test
@@ -233,10 +237,11 @@ class DeimosBatchServiceTest {
         assertThat(response.status()).isEqualTo("ACCEPTED");
         verify(deimosAnalysisService, Mockito.never()).analyze(any(), any(), any(), any(), any(), any());
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<Map<String, Object>>) (Class<?>) Map.class);
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
         verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
-        assertThat(contextCaptor.getValue().get("analyzed")).isEqualTo(0L);
-        assertThat(contextCaptor.getValue().get("failed")).isEqualTo(1L);
+        var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+        assertThat(emailData.analyzed()).isEqualTo(0L);
+        assertThat(emailData.failed()).isEqualTo(1L);
     }
 
     private static User createTriggerUser() {

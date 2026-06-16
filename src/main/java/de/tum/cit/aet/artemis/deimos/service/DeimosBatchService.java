@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,9 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -30,17 +26,20 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosAnalysisCompleteEmailDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
-@Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
+@Conditional(DeimosEnabled.class)
 @Lazy
 @Service
 public class DeimosBatchService {
@@ -187,31 +186,23 @@ public class DeimosBatchService {
         String notificationUrl = base + "/courses/" + courseId;
 
         List<DeimosMaliciousParticipationLink> maliciousParticipationLinks = new ArrayList<>();
-        for (DeimosBatchSummaryDTO.ParticipationAnalysis analysis : summary.analyzedParticipations()) {
-            if (!analysis.malicious()) {
+        for (DeimosBatchSummaryDTO.ParticipationAnalysis participationAnalysis : summary.analyzedParticipations()) {
+            if (!participationAnalysis.malicious()) {
                 continue;
             }
-            if (analysis.exerciseId() <= 0) {
-                log.warn("Omitting deep link in Deimos completion email: malicious participation {} has no exercise id", analysis.participationId());
+            if (participationAnalysis.exerciseId() <= 0) {
+                log.warn("Omitting deep link in Deimos completion email: malicious participation {} has no exercise id", participationAnalysis.participationId());
                 continue;
             }
-            String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + analysis.exerciseId() + "/participations/" + analysis.participationId()
-                    + "/submissions";
-            String rationale = analysis.rationale() != null ? analysis.rationale().strip() : "";
-            maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, analysis.participationId(), rationale));
+            String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + participationAnalysis.exerciseId() + "/scores";
+            String rationale = participationAnalysis.rationale() != null ? participationAnalysis.rationale().strip() : "";
+            maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
         }
 
-        Map<String, Object> emailContext = new HashMap<>();
-        emailContext.put("courseId", courseId);
-        emailContext.put("courseTitle", courseTitle);
-        emailContext.put("scopeTitle", scopeTitle);
-        emailContext.put("analyzed", summary.analyzed());
-        emailContext.put("maliciousCount", summary.maliciousCount());
-        emailContext.put("benignCount", summary.benignCount());
-        emailContext.put("failed", summary.failed());
-        emailContext.put("notificationUrl", notificationUrl);
-        emailContext.put("maliciousParticipationLinks", maliciousParticipationLinks);
-        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(triggerUser), DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE, emailContext);
+        var emailData = new DeimosAnalysisCompleteEmailDTO(courseId, courseTitle, scopeTitle, summary.analyzed(), summary.maliciousCount(), summary.benignCount(), summary.failed(),
+                notificationUrl, maliciousParticipationLinks);
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(triggerUser), DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE,
+                Map.of("analysis", emailData, "notificationUrl", notificationUrl));
     }
 
     private List<Long> collectParticipationIds(Function<Pageable, Slice<Long>> sliceProvider) {

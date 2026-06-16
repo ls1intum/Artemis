@@ -269,6 +269,9 @@ public class ArtemisConfigHelper {
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
         }
+        if (isDeimosEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
+        }
         if (isIrisEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
         }

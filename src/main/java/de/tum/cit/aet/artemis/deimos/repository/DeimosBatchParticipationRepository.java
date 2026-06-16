@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.deimos.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
@@ -13,12 +11,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
  * Deimos-specific queries for selecting student programming participations in a submission date range.
  */
-@Profile(PROFILE_CORE)
+@Conditional(DeimosEnabled.class)
 @Lazy
 @Repository
 public interface DeimosBatchParticipationRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {

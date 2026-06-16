@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.deimos.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import jakarta.validation.Valid;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,12 +17,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.deimos.api.DeimosBatchApi;
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.service.DeimosBatchService;
 
-@Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
+@Conditional(DeimosEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/deimos/")

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -11,15 +9,16 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 
-@Profile(PROFILE_CORE)
+@Conditional(DeimosEnabled.class)
 @Lazy
 @Service
 public class DeimosPromptTemplateService {

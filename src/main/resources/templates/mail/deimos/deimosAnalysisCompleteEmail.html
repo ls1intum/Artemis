@@ -15,7 +15,7 @@
 
     <p>
         <span
-            th:text="#{email.deimos.analysisComplete.text(${scopeTitle}, ${courseTitle})}"
+            th:text="#{email.deimos.analysisComplete.text(${analysis.scopeTitle}, ${analysis.courseTitle})}"
         >
             Malicious participation analysis finished.
         </span>
@@ -26,23 +26,23 @@
     <p class="bold-text" th:text="#{email.deimos.analysisComplete.summary}">Summary</p>
     <ul>
         <li>
-            <span th:text="#{email.deimos.analysisComplete.analyzed}">Analyzed participations</span>: <span th:text="${analyzed}">0</span>
+            <span th:text="#{email.deimos.analysisComplete.analyzed}">Analyzed participations</span>: <span th:text="${analysis.analyzed}">0</span>
         </li>
         <li>
-            <span th:text="#{email.deimos.analysisComplete.maliciousCount}">Malicious</span>: <span th:text="${maliciousCount}">0</span>
+            <span th:text="#{email.deimos.analysisComplete.maliciousCount}">Malicious</span>: <span th:text="${analysis.maliciousCount}">0</span>
         </li>
         <li>
-            <span th:text="#{email.deimos.analysisComplete.benignCount}">Benign</span>: <span th:text="${benignCount}">0</span>
+            <span th:text="#{email.deimos.analysisComplete.benignCount}">Benign</span>: <span th:text="${analysis.benignCount}">0</span>
         </li>
         <li>
-            <span th:text="#{email.deimos.analysisComplete.failed}">Failed analyses</span>: <span th:text="${failed}">0</span>
+            <span th:text="#{email.deimos.analysisComplete.failed}">Failed analyses</span>: <span th:text="${analysis.failed}">0</span>
         </li>
     </ul>
 
-    <th:block th:if="${maliciousParticipationLinks != null and !maliciousParticipationLinks.isEmpty()}">
+    <th:block th:if="${analysis.maliciousParticipationLinks != null and !analysis.maliciousParticipationLinks.isEmpty()}">
         <p class="bold-text" th:text="#{email.deimos.analysisComplete.maliciousLinksHeading}">Flagged participations</p>
         <ul>
-            <li th:each="link : ${maliciousParticipationLinks}">
+            <li th:each="link : ${analysis.maliciousParticipationLinks}">
                 <div>
                     <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
                 </div>

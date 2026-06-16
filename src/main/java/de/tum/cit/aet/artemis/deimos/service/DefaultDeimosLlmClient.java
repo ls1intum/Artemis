@@ -1,20 +1,20 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-@Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
+
+@Conditional(DeimosEnabled.class)
 @Lazy
 @Service
 public class DefaultDeimosLlmClient implements DeimosLlmClient {

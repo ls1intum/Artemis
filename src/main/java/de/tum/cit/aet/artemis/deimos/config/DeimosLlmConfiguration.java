@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.deimos.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.Duration;
 
 import org.slf4j.Logger;
@@ -11,11 +9,10 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Dedicated Spring AI configuration for the Deimos module.
@@ -26,8 +23,7 @@ import org.springframework.context.annotation.Profile;
  * configured under {@code artemis.deimos.llm.*}.
  */
 @Configuration
-@Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
+@Conditional(DeimosEnabled.class)
 @Lazy
 public class DeimosLlmConfiguration {
 
@@ -35,6 +31,17 @@ public class DeimosLlmConfiguration {
 
     private static final String CHAT_COMPLETIONS_SUFFIX = "/chat/completions";
 
+    /**
+     * Creates a dedicated {@link OpenAiChatModel} for the Deimos module, isolated from the shared Spring AI auto-config.
+     *
+     * @param baseUrl         the LLM endpoint base URL
+     * @param apiKey          the API key for authentication
+     * @param completionsPath the completions path (stripped to a prefix, since the SDK appends {@code /chat/completions})
+     * @param model           the model identifier
+     * @param temperature     the sampling temperature
+     * @param timeoutSeconds  the request timeout in seconds
+     * @return a configured {@link OpenAiChatModel} for Deimos
+     */
     @Bean
     @Qualifier("deimosChatModel")
     @Lazy
@@ -49,6 +56,12 @@ public class DeimosLlmConfiguration {
         return OpenAiChatModel.builder().options(options).build();
     }
 
+    /**
+     * Creates a {@link ChatClient} backed by the Deimos-specific {@link OpenAiChatModel}.
+     *
+     * @param chatModel the Deimos chat model
+     * @return a configured {@link ChatClient} for Deimos
+     */
     @Bean
     @Qualifier("deimosChatClient")
     @Lazy

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 
 import java.time.ZonedDateTime;
@@ -11,12 +10,16 @@ import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -25,8 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
-@Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
+@Conditional(DeimosEnabled.class)
 @Lazy
 @Service
 public class DeimosAnalysisService {
