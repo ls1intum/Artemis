@@ -210,6 +210,60 @@ describe('TextEditorComponent', () => {
         fixture.destroy();
     });
 
+    it('should not be overwritten by a sibling text editor for a different participation (multi-instance)', () => {
+        // The actual reported bug: several text editors render together in the exam summary and share the app-wide
+        // participation-change subject. When a sibling editor initializes (addParticipation), its emission must not
+        // overwrite this editor's exercise/submission.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'A' });
+        fixture.detectChanges();
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        // A second editor for a DIFFERENT text exercise/participation initializes and pushes its participation.
+        const fixture2 = TestBed.createComponent(TextEditorComponent);
+        const otherExercise = { id: 2 } as TextExercise;
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = otherExercise;
+        otherParticipation.submissions = [{ id: 5, text: 'B' } as TextSubmission];
+        fixture2.componentRef.setInput('inputExercise', otherExercise);
+        fixture2.componentRef.setInput('inputParticipation', otherParticipation);
+        fixture2.componentRef.setInput('inputSubmission', { id: 5, text: 'B' });
+        fixture2.detectChanges();
+
+        // This editor must still show its own exercise/submission, not the sibling's.
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        fixture2.destroy();
+        fixture.destroy();
+    });
+
+    it('should apply a participation-change emission with the same id but a different object reference', () => {
+        // Real result updates arrive as a different object (the cached clone) with the same participation id. The guard
+        // must compare by id, not by reference, so such own-participation updates are still applied.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const sameIdDifferentObject = new StudentParticipation();
+        sameIdDifferentObject.id = participation.id; // 42 - same participation, different object
+        sameIdDifferentObject.exercise = textExercise;
+        sameIdDifferentObject.submissions = [new TextSubmission()];
+        participationSubject.next(sameIdDifferentObject);
+
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(sameIdDifferentObject, undefined, undefined);
+
+        fixture.destroy();
+    });
+
     it('should not allow to submit after the due date if there is no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
