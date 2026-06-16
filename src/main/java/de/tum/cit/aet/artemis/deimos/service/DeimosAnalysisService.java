@@ -78,6 +78,7 @@ public class DeimosAnalysisService {
         long maliciousCount = 0;
         long benignCount = 0;
         List<DeimosBatchSummaryDTO.ParticipationAnalysis> analyzedParticipations = new ArrayList<>();
+        List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = new ArrayList<>();
 
         for (Long participationId : participationIds) {
             try {
@@ -85,6 +86,7 @@ public class DeimosAnalysisService {
                 if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
                     log.warn("Participation {} is not a ProgrammingExerciseParticipation, skipping", participationId);
                     failed++;
+                    failedAnalyses.add(new DeimosBatchSummaryDTO.FailedAnalysis(participationId, "Not a programming exercise participation"));
                     continue;
                 }
 
@@ -92,6 +94,7 @@ public class DeimosAnalysisService {
                 if (commitHistory.isBlank()) {
                     log.info("Skipping Deimos analysis for participation {}: no commit history available", participationId);
                     failed++;
+                    failedAnalyses.add(new DeimosBatchSummaryDTO.FailedAnalysis(participationId, "No commit history available"));
                     continue;
                 }
 
@@ -113,12 +116,13 @@ public class DeimosAnalysisService {
             }
             catch (Exception ex) {
                 failed++;
+                failedAnalyses.add(new DeimosBatchSummaryDTO.FailedAnalysis(participationId, ex.getClass().getSimpleName() + ": " + ex.getMessage()));
                 log.warn("Deimos analysis failed for participation {}", participationId, ex);
             }
         }
 
         return new DeimosBatchSummaryDTO(runId, triggerType.name(), scope.name(), from, to, participationIds.size(), analyzed, maliciousCount, benignCount, failed,
-                List.copyOf(analyzedParticipations));
+                List.copyOf(analyzedParticipations), List.copyOf(failedAnalyses));
     }
 
     private DeimosLlmRequest buildPrompt(long participationId, String commitHistory) {

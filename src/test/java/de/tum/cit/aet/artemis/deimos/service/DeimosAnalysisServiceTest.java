@@ -149,6 +149,9 @@ class DeimosAnalysisServiceTest {
         assertThat(summary.failed()).isEqualTo(1);
         assertThat(summary.analyzed()).isZero();
         assertThat(summary.analyzedParticipations()).isEmpty();
+        assertThat(summary.failedAnalyses()).hasSize(1);
+        assertThat(summary.failedAnalyses().getFirst().participationId()).isEqualTo(participationId);
+        assertThat(summary.failedAnalyses().getFirst().reason()).contains("IllegalStateException").contains("ChatClient not configured");
     }
 
     @Test
@@ -203,6 +206,9 @@ class DeimosAnalysisServiceTest {
         assertThat(summary.maliciousCount()).isZero();
         assertThat(summary.benignCount()).isZero();
         assertThat(summary.analyzedParticipations()).isEmpty();
+        assertThat(summary.failedAnalyses()).hasSize(1);
+        assertThat(summary.failedAnalyses().getFirst().participationId()).isEqualTo(participationId);
+        assertThat(summary.failedAnalyses().getFirst().reason()).isEqualTo("No commit history available");
     }
 
     private static ProgrammingSubmission createSubmission(long id, String commitHash, ZonedDateTime submissionDate) {

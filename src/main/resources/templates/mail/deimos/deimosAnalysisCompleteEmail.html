@@ -39,6 +39,20 @@
         </li>
     </ul>
 
+    <th:block th:if="${analysis.failedAnalysisDetails != null and !analysis.failedAnalysisDetails.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.failedDetailsHeading}">Failure details</p>
+        <ul>
+            <li th:each="detail : ${analysis.failedAnalysisDetails}">
+                <span th:if="${detail.participationId > 0}"
+                      th:text="#{email.deimos.analysisComplete.failedParticipationLabel(${detail.participationId})}">Participation</span>
+                <span th:if="${detail.participationId <= 0}"
+                      th:text="#{email.deimos.analysisComplete.failedBatchLabel}">Batch-level failure</span>
+                <p style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0; font-family: monospace; font-size: 0.85em; color: #666;"
+                   th:text="${detail.reason}">Reason</p>
+            </li>
+        </ul>
+    </th:block>
+
     <th:block th:if="${analysis.maliciousParticipationLinks != null and !analysis.maliciousParticipationLinks.isEmpty()}">
         <p class="bold-text" th:text="#{email.deimos.analysisComplete.maliciousLinksHeading}">Flagged participations</p>
         <ul>

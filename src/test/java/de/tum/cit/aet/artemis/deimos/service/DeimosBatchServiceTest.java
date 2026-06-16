@@ -104,7 +104,8 @@ class DeimosBatchServiceTest {
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
                 .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 1, 1, 0,
-                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(101L, 55L, true, "bad"), new DeimosBatchSummaryDTO.ParticipationAnalysis(102L, 55L, false, "ok"))));
+                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(101L, 55L, true, "bad"), new DeimosBatchSummaryDTO.ParticipationAnalysis(102L, 55L, false, "ok")),
+                        List.of()));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
@@ -137,7 +138,7 @@ class DeimosBatchServiceTest {
         when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
                 .thenReturn(java.util.Optional.of(new DeimosExerciseScopeInfoDTO(12L, "Exercise 12", 7L, "Course 7", null)));
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.EXERCISE), eq(from), eq(to), eq(List.of(201L, 202L))))
-                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 1, 1, 0, List.of()));
+                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 1, 1, 0, List.of(), List.of()));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), triggerUser);
@@ -171,6 +172,9 @@ class DeimosBatchServiceTest {
         assertThat(emailData.analyzed()).isEqualTo(0L);
         assertThat(emailData.failed()).isEqualTo(2L);
         assertThat(emailData.maliciousCount()).isEqualTo(0L);
+        assertThat(emailData.failedAnalysisDetails()).hasSize(1);
+        assertThat(emailData.failedAnalysisDetails().getFirst().participationId()).isZero();
+        assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("IllegalStateException").contains("LLM unavailable");
     }
 
     @Test
@@ -242,6 +246,8 @@ class DeimosBatchServiceTest {
         var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
         assertThat(emailData.analyzed()).isEqualTo(0L);
         assertThat(emailData.failed()).isEqualTo(1L);
+        assertThat(emailData.failedAnalysisDetails()).hasSize(1);
+        assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("exceeded");
     }
 
     private static User createTriggerUser() {
