@@ -56,12 +56,12 @@ describe('QuizTrainingSettingsComponent', () => {
         await firstValueFrom(mockService.getSettings());
 
         expect(mockService.getSettings).toHaveBeenCalled();
-        expect(component.isVisibleInLeaderboard).toBe(true);
+        expect(component.isVisibleInLeaderboard()).toBe(true);
     });
 
     it('should update leaderboard settings when toggled', async () => {
         mockService.updateSettings.mockReturnValue(of({}));
-        component.isVisibleInLeaderboard = true;
+        component.isVisibleInLeaderboard.set(true);
 
         vi.spyOn(alertService, 'success');
 
@@ -95,7 +95,7 @@ describe('QuizTrainingSettingsComponent', () => {
 
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));
         expect(toggleElement).toBeTruthy();
-        expect(component.isVisibleInLeaderboard).toBe(true);
+        expect(component.isVisibleInLeaderboard()).toBe(true);
     });
 
     it('should display info message when no settings are available', async () => {
@@ -107,7 +107,7 @@ describe('QuizTrainingSettingsComponent', () => {
 
         const infoMessage = fixture.debugElement.query(By.css('.alert-info'));
         expect(infoMessage).toBeTruthy();
-        expect(component.isVisibleInLeaderboard).toBeUndefined();
+        expect(component.isVisibleInLeaderboard()).toBeUndefined();
     });
 
     it('should call toggleLeaderboardVisibility when toggle is changed', async () => {
@@ -140,6 +140,6 @@ describe('QuizTrainingSettingsComponent', () => {
         toggleElement.nativeElement.checked = false;
         toggleElement.nativeElement.dispatchEvent(new Event('change'));
 
-        expect(component.isVisibleInLeaderboard).toBe(false);
+        expect(component.isVisibleInLeaderboard()).toBe(false);
     });
 });

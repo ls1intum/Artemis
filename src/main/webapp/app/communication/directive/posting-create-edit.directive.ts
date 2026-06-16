@@ -1,4 +1,4 @@
-import { Directive, OnInit, effect, inject, model, output, untracked } from '@angular/core';
+import { Directive, OnInit, effect, inject, model, output, signal, untracked } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -18,7 +18,7 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;
     content: string;
@@ -61,9 +61,9 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
      * set the input content (updated or new; of post and answer post) delegates to the corresponding method
      */
     confirm(): void {
-        if (this.isLoading) return;
+        if (this.isLoading()) return;
         if (this.formGroup.valid) {
-            this.isLoading = true;
+            this.isLoading.set(true);
             if (this.editType === PostingEditType.UPDATE) {
                 this.updatePosting();
             } else if (this.editType === PostingEditType.CREATE) {
