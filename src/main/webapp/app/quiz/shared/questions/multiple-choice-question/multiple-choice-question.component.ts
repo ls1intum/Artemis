@@ -36,9 +36,25 @@ export class MultipleChoiceQuestionComponent {
 
     selectedAnswerOptionsChange = output<AnswerOption[]>();
 
+    /**
+     * Working copy of the current selection that accumulates changes made within a single change-detection frame.
+     * It is reset whenever the authoritative `selectedAnswerOptions` input changes, so it never goes stale (which was
+     * the original answer-loss bug). It exists so that several rapid toggles within the same frame - before the parent
+     * has round-tripped the emitted value back into the input (in zoneless mode the input only updates on the next
+     * change-detection cycle) - build on each other instead of each starting from the same stale input and dropping
+     * the previous selection.
+     */
+    private pendingSelectedAnswerOptions?: AnswerOption[];
+
     constructor() {
         effect(() => {
             this.watchCollection();
+        });
+        effect(() => {
+            // Discard the working copy whenever the authoritative input changes (parent round-trip, reload, recreation),
+            // so the next toggle starts from the up-to-date input rather than a stale local copy.
+            this.selectedAnswerOptions();
+            this.pendingSelectedAnswerOptions = undefined;
         });
     }
 
@@ -75,19 +91,27 @@ export class MultipleChoiceQuestionComponent {
      * Toggles the selection state of a multiple choice answer option
      * @param answerOption The answer option to toggle
      */
+    /**
+     * Returns the current selection, preferring the in-frame working copy over the input so that several toggles in the
+     * same change-detection frame accumulate correctly instead of each reading the same (not-yet-updated) input.
+     */
+    private currentSelectedAnswerOptions(): AnswerOption[] {
+        return this.pendingSelectedAnswerOptions ?? this.selectedAnswerOptions();
+    }
+
     toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled()) {
             // Do nothing
             return;
         }
-        // Always derive the new selection from the current input. The input reflects the options
-        // selected so far (including selections loaded from a previously saved submission), so
-        // building on top of it preserves existing answers. Mutating a separate local copy here
-        // used to drop previously selected options after a reload or component recreation,
-        // causing answer loss in exams.
+        // Always derive the new selection from the current selection (working copy or input). Building on top of it
+        // preserves existing answers - including selections loaded from a previously saved submission and selections
+        // made by earlier toggles in the same frame. Mutating a separate, never-synced local copy used to drop
+        // previously selected options after a reload, recreation, or rapid clicking, causing answer loss in exams.
+        const current = this.currentSelectedAnswerOptions();
         let updatedSelection: AnswerOption[];
         if (this.isAnswerOptionSelected(answerOption)) {
-            updatedSelection = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
+            updatedSelection = current.filter((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id !== answerOption.id;
                 }
@@ -96,8 +120,9 @@ export class MultipleChoiceQuestionComponent {
         } else if (this.isSingleChoice) {
             updatedSelection = [answerOption];
         } else {
-            updatedSelection = [...this.selectedAnswerOptions(), answerOption];
+            updatedSelection = [...current, answerOption];
         }
+        this.pendingSelectedAnswerOptions = updatedSelection;
         this.selectedAnswerOptionsChange.emit(updatedSelection);
         /** Only execute the onSelection function if we received such input **/
         const fnOnSelectionFn = this.fnOnSelection();
@@ -112,7 +137,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions().findIndex((selectedAnswerOption) => {
+            this.currentSelectedAnswerOptions().findIndex((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id === answerOption.id;
                 }
