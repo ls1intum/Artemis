@@ -164,9 +164,13 @@ describe('TextAssessmentAreaComponent', () => {
         const cardsAfter = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
 
         expect(cardsAfter).toHaveLength(3);
-        // The two original cards are reused (same DOM nodes); only the inserted block gets a new card.
-        expect(cardsAfter).toContain(cardsBefore[0]);
-        expect(cardsAfter).toContain(cardsBefore[1]);
+        // Pin the exact reuse: block1's card stays at index 0, block2's card is pushed to index 2, and only the inserted
+        // block gets a fresh card at index 1. (By.directive returns nodes in document order; the sorted blocks
+        // 0-4 / 5-9 / 10-14 keep this positional mapping.) Asserting only membership would still pass under a
+        // track-$index regression that repurposes the wrong card.
+        expect(cardsAfter[0]).toBe(cardsBefore[0]);
+        expect(cardsAfter[2]).toBe(cardsBefore[1]);
+        expect(cardsBefore).not.toContain(cardsAfter[1]);
     });
 
     it('should reuse surviving cards and drop only the removed one when a block is deleted via a re-match', () => {
@@ -184,9 +188,12 @@ describe('TextAssessmentAreaComponent', () => {
         const cardsAfter = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent)).map((card) => card.nativeElement);
 
         expect(cardsAfter).toHaveLength(2);
-        // Both surviving cards are reused (their DOM nodes were among the original ones); the removed block's card is gone.
-        expect(cardsBefore).toContain(cardsAfter[0]);
-        expect(cardsBefore).toContain(cardsAfter[1]);
+        // Pin the exact survivors: block1's and block3's cards are reused (in document order) and block2's (the removed
+        // middle) card is gone. Asserting only membership would still pass if the wrong original card survived (e.g. the
+        // middle card kept and an end card dropped under a track-$index regression).
+        expect(cardsAfter[0]).toBe(cardsBefore[0]);
+        expect(cardsAfter[1]).toBe(cardsBefore[2]);
+        expect(cardsAfter).not.toContain(cardsBefore[1]);
     });
 
     it('should remove TextBlockRef if text block is deleted', () => {
