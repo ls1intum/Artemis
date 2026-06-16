@@ -642,6 +642,12 @@ code.password:hover {
     margin-bottom: 0;
 }
 
+.tiny-icon-button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+}
+
 .assessments {
     width: calc(100% - 30px);
     height: 100vh;

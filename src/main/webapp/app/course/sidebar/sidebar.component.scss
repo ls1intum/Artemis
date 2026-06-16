@@ -8,7 +8,7 @@
     @include dynamic-content-height(--header-height, --search-height, --channel-search-height);
 
     &.no-header-bar-height {
-        --header-height: 66px !important;
+        --header-height: 70px !important;
     }
 
     &.channel-search-height {

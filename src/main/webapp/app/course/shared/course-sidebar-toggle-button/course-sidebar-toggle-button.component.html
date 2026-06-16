@@ -1,11 +1,14 @@
-<button
+<p-button
     type="button"
-    [pTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-    tooltipPosition="right"
+    [pTooltip]="'artemisApp.course.toggleSidebar' | artemisTranslate"
+    tooltipPosition="top"
+    size="small"
+    severity="secondary"
     [ngClass]="{ 'is-collapsed': isCollapsed(), 'is-communication-module': isCommunicationModule() }"
     tooltipStyleClass="small-tooltip"
-    class="btn btn-sidebar-collapse btn-sm rounded-3"
-    aria-label="Toggle Sidebar"
+    class="btn-sidebar-collapse rounded-3"
+    styleClass="tiny-icon-button"
+    [attr.aria-label]="'artemisApp.course.toggleSidebar' | artemisTranslate"
     (click)="toggleSidebar.emit()"
 >
     <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="btn-sidebar-collapse-icon d-flex justify-content-center align-items-center" size="lg" />
@@ -13,4 +16,4 @@
         <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center" size="xs" />
         <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="d-flex justify-content-center align-items-center" size="xs" />
     </div>
-</button>
+</p-button>
