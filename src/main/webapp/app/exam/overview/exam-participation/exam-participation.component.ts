@@ -388,10 +388,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.examStartConfirmed.set(true);
         this.startAutoSaveTimer();
-        if (resumedFromFailedSave) {
+        if (resumedFromFailedSave && studentExam) {
             // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
             // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
-            // retried by the autosave timer.
+            // retried by the autosave timer. Guarded by studentExam because triggerSave dereferences the current exam.
             this.triggerSave(false);
         }
     }

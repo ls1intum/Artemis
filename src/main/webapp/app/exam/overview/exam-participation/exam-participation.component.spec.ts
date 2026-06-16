@@ -837,6 +837,45 @@ describe('ExamParticipationComponent', () => {
 
             expect(infoSpy).toHaveBeenCalledWith('artemisApp.examParticipation.answersRestoredFromLocalStorage');
         });
+
+        it('should keep a failed re-send unsynced and flag the failure so the autosave retries it later', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
+            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+            const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+            comp.examStarted(studentExam, true);
+
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            // the failed answer must stay unsynced so the autosave timer re-sends it later instead of it being silently lost
+            expect(textSubmission.isSynced).toBe(false);
+            expect(setLastSaveFailedSpy).toHaveBeenCalledWith(true, expect.anything(), expect.anything());
+            // the answers that did save are now synced
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+        });
+
+        it('should re-send only not-yet-saved answers and leave already-synced ones untouched when resuming', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            // the text answer had already been saved before the failure; only quiz and modeling are still pending
+            textSubmission.isSynced = true;
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+
+            // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+        });
     });
 
     it('should submit exam when end confirmed', () => {
