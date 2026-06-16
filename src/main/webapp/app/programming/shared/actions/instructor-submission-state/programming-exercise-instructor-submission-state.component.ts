@@ -55,7 +55,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
                 ),
             ),
         ),
-        { initialValue: undefined as { [submissionState: string]: number } | undefined },
+        { initialValue: undefined },
     );
     readonly hasFailedSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
     readonly hasBuildingSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
