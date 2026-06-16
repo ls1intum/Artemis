@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
@@ -74,19 +74,19 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     readonly searchElement = viewChild<ElementRef>('searchInput');
 
     fullSearchTerm = '';
-    searchTermWithoutPrefix = '';
-    selectedConversations: ConversationDTO[] = [];
-    selectedAuthors: UserPublicInfoDTO[] = [];
+    readonly searchTermWithoutPrefix = signal('');
+    readonly selectedConversations = signal<ConversationDTO[]>([]);
+    readonly selectedAuthors = signal<UserPublicInfoDTO[]>([]);
 
-    showDropdown = false;
-    isSearchActive = false;
-    searchMode: SearchMode = SearchMode.NORMAL;
-    userSearchStatus: UserSearchStatus = UserSearchStatus.LOADING;
+    readonly showDropdown = signal(false);
+    readonly isSearchActive = signal(false);
+    readonly searchMode = signal<SearchMode>(SearchMode.NORMAL);
+    readonly userSearchStatus = signal<UserSearchStatus>(UserSearchStatus.LOADING);
 
-    filteredOptions: CombinedOption[] = [];
+    readonly filteredOptions = signal<CombinedOption[]>([]);
     filteredUsers: UserPublicInfoDTO[] = [];
     user: User | undefined;
-    activeDropdownIndex: number = -1;
+    readonly activeDropdownIndex = signal(-1);
     private destroy$ = new Subject<void>();
 
     // Icons
@@ -109,8 +109,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
     clearSearch() {
         this.fullSearchTerm = '';
-        this.selectedConversations = [];
-        this.selectedAuthors = [];
+        this.selectedConversations.set([]);
+        this.selectedAuthors.set([]);
         this.emitSelectionChange();
         this.onClearSearch.emit();
     }
@@ -121,37 +121,37 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     startFiltering(): void {
-        this.activeDropdownIndex = 0;
+        this.activeDropdownIndex.set(0);
 
         // Check if search starts with "in:" for conversations
         if (this.fullSearchTerm.startsWith(CONVERSATION_FILTER.value)) {
             const searchQuery = this.fullSearchTerm.substring(CONVERSATION_FILTER.value.length).toLowerCase();
-            this.searchTermWithoutPrefix = searchQuery;
+            this.searchTermWithoutPrefix.set(searchQuery);
             this.filterConversations(searchQuery);
-            this.searchMode = CONVERSATION_FILTER.mode;
-            this.showDropdown = true;
+            this.searchMode.set(CONVERSATION_FILTER.mode);
+            this.showDropdown.set(true);
         }
         // Check if search starts with "from:" for users
         else if (this.fullSearchTerm.startsWith(USER_FILTER.value)) {
             const searchQuery = this.fullSearchTerm.substring(USER_FILTER.value.length).toLowerCase();
-            this.searchTermWithoutPrefix = searchQuery;
+            this.searchTermWithoutPrefix.set(searchQuery);
             this.filterUsers(searchQuery);
-            this.searchMode = USER_FILTER.mode;
-            this.showDropdown = true;
+            this.searchMode.set(USER_FILTER.mode);
+            this.showDropdown.set(true);
         } else {
-            this.searchMode = SearchMode.NORMAL;
+            this.searchMode.set(SearchMode.NORMAL);
             this.closeDropdown();
         }
     }
 
     closeDropdown(): void {
-        this.showDropdown = false;
-        this.activeDropdownIndex = -1;
+        this.showDropdown.set(false);
+        this.activeDropdownIndex.set(-1);
     }
 
     filterConversations(searchQuery: string): void {
         const notYetSelectedConversations = this.conversations().filter((conversation) => {
-            return !this.selectedConversations.some((selected) => selected.id === conversation.id);
+            return !this.selectedConversations().some((selected) => selected.id === conversation.id);
         });
 
         let matchingConversations = notYetSelectedConversations;
@@ -162,13 +162,15 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.filteredOptions = matchingConversations.map(
-            (conversation) =>
-                ({
-                    id: conversation.id!,
-                    name: this.getConversationName(conversation),
-                    type: 'conversation',
-                }) as CombinedOption,
+        this.filteredOptions.set(
+            matchingConversations.map(
+                (conversation) =>
+                    ({
+                        id: conversation.id!,
+                        name: this.getConversationName(conversation),
+                        type: 'conversation',
+                    }) as CombinedOption,
+            ),
         );
     }
 
@@ -181,35 +183,37 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         }
 
         if (!searchQuery || searchQuery.length < 3 || !courseId) {
-            this.filteredOptions = [];
-            this.userSearchStatus = UserSearchStatus.TOO_SHORT;
+            this.filteredOptions.set([]);
+            this.userSearchStatus.set(UserSearchStatus.TOO_SHORT);
             return;
         }
 
-        this.userSearchStatus = UserSearchStatus.LOADING;
+        this.userSearchStatus.set(UserSearchStatus.LOADING);
         this.courseManagementService
             .searchUsers(courseId, searchQuery, ['students', 'tutors', 'instructors'])
             .pipe(
                 map((response) => response.body || []),
-                map((users) => users.filter((user) => !this.selectedAuthors.some((selected) => selected.id === user.id))),
+                map((users) => users.filter((user) => !this.selectedAuthors().some((selected) => selected.id === user.id))),
                 catchError(() => of([])),
                 takeUntil(this.destroy$),
             )
             .subscribe((users) => {
                 this.filteredUsers = users;
-                this.filteredOptions = users.map((user) => ({
-                    id: user.id!,
-                    name: user.name!,
-                    type: 'user',
-                    img: user.imageUrl,
-                }));
+                this.filteredOptions.set(
+                    users.map((user) => ({
+                        id: user.id!,
+                        name: user.name!,
+                        type: 'user',
+                        img: user.imageUrl,
+                    })),
+                );
                 if (
                     (this.user && this.user.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
                     (this.user && this.user.login?.toLowerCase().includes(searchQuery.toLowerCase()))
                 ) {
                     this.addOwnUserToOptions();
                 }
-                this.userSearchStatus = UserSearchStatus.RESULTS;
+                this.userSearchStatus.set(UserSearchStatus.RESULTS);
             });
     }
 
@@ -230,7 +234,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         if (option.type === 'conversation') {
             const conversation = this.conversations().find((conv) => conv.id === option.id);
             if (conversation) {
-                this.selectedConversations.push(conversation);
+                this.selectedConversations.update((conversations) => [...conversations, conversation]);
                 this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
@@ -239,7 +243,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         } else if (option.type === 'user') {
             const user = this.filteredUsers.find((user) => user.id === option.id);
             if (user) {
-                this.selectedAuthors.push(user);
+                this.selectedAuthors.update((authors) => [...authors, user]);
                 this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
@@ -249,31 +253,31 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     addOwnUserToOptions(): void {
-        const alreadySelected = this.selectedAuthors.some((selected) => selected.id === this.user?.id);
+        const alreadySelected = this.selectedAuthors().some((selected) => selected.id === this.user?.id);
 
         if (this.user && !alreadySelected) {
             this.filteredUsers = [this.user, ...this.filteredUsers];
-            this.filteredOptions = [
+            this.filteredOptions.set([
                 {
                     id: this.user.id!,
                     name: this.user.name!,
                     type: 'user',
                     img: this.user.imageUrl,
                 },
-                ...this.filteredOptions,
-            ];
-            this.userSearchStatus = UserSearchStatus.RESULTS;
+                ...this.filteredOptions(),
+            ]);
+            this.userSearchStatus.set(UserSearchStatus.RESULTS);
         }
     }
 
     removeSelectedChannel(conversation: ConversationDTO): void {
-        this.selectedConversations = this.selectedConversations.filter((conv) => conv.id !== conversation.id);
+        this.selectedConversations.update((conversations) => conversations.filter((conv) => conv.id !== conversation.id));
         this.focusInput();
         this.emitSelectionChange();
     }
 
     removeSelectedAuthor(author: UserPublicInfoDTO): void {
-        this.selectedAuthors = this.selectedAuthors.filter((user) => user.id !== author.id);
+        this.selectedAuthors.update((authors) => authors.filter((user) => user.id !== author.id));
         this.focusInput();
         this.emitSelectionChange();
     }
@@ -292,7 +296,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
      */
     focusWithSelectedConversation(conversation: ConversationDTO | undefined): void {
         if (conversation) {
-            this.selectedConversations = [conversation];
+            this.selectedConversations.set([conversation]);
             this.emitSelectionChange();
         }
         this.focusInput();
@@ -301,19 +305,19 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     private emitSelectionChange(): void {
         this.onSelectionChange.emit({
             searchTerm: this.fullSearchTerm,
-            selectedConversations: this.selectedConversations,
-            selectedAuthors: this.selectedAuthors,
+            selectedConversations: this.selectedConversations(),
+            selectedAuthors: this.selectedAuthors(),
         });
     }
 
     onSearchInputClick(): void {
-        this.isSearchActive = true;
+        this.isSearchActive.set(true);
     }
 
     onPreselectFilter(filter: SearchFilter): void {
         this.fullSearchTerm = filter.value;
-        this.searchMode = filter.mode;
-        this.showDropdown = true;
+        this.searchMode.set(filter.mode);
+        this.showDropdown.set(true);
         this.startFiltering();
         this.focusInput();
     }
@@ -321,22 +325,23 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     onTriggerSearch() {
         this.onSearch.emit({
             searchTerm: this.fullSearchTerm,
-            selectedConversations: this.selectedConversations,
-            selectedAuthors: this.selectedAuthors,
+            selectedConversations: this.selectedConversations(),
+            selectedAuthors: this.selectedAuthors(),
         });
-        this.isSearchActive = false;
+        this.isSearchActive.set(false);
     }
 
     navigateDropdown(step: number, event: Event): void {
-        if (this.showDropdown && this.filteredOptions.length > 0) {
+        const optionsLength = this.filteredOptions().length;
+        if (this.showDropdown() && optionsLength > 0) {
             event.preventDefault();
-            const newIndex = this.activeDropdownIndex + step;
-            this.setActiveDropdownIndex((newIndex + this.filteredOptions.length) % this.filteredOptions.length);
+            const newIndex = this.activeDropdownIndex() + step;
+            this.setActiveDropdownIndex((newIndex + optionsLength) % optionsLength);
         }
     }
 
     setActiveDropdownIndex(index: number): void {
-        this.activeDropdownIndex = index;
+        this.activeDropdownIndex.set(index);
 
         // Allow DOM to update before scrolling
         setTimeout(() => {
@@ -356,8 +361,10 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     selectActiveOption(): void {
-        if (this.fullSearchTerm && this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
-            const selectedOption = this.filteredOptions[this.activeDropdownIndex];
+        const options = this.filteredOptions();
+        const activeDropdownIndex = this.activeDropdownIndex();
+        if (this.fullSearchTerm && activeDropdownIndex >= 0 && activeDropdownIndex < options.length) {
+            const selectedOption = options[activeDropdownIndex];
             this.selectOption(selectedOption);
         }
     }
@@ -367,7 +374,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         // Close dropdown when clicking outside
         if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
             this.closeDropdown();
-            this.isSearchActive = false;
+            this.isSearchActive.set(false);
         }
     }
 

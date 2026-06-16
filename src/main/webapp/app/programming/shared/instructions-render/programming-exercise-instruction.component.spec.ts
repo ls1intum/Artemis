@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { DebugElement, VERSION } from '@angular/core';
+import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -66,9 +66,10 @@ type InstructionInternals = Omit<
     lastSeenProblemStatement: string | undefined;
     lastRenderedProblemStatement: string | undefined;
     isInitial: boolean;
-    isLoading: boolean;
-    tasks: TaskArray;
+    isLoading: WritableSignal<boolean>;
+    tasks: WritableSignal<TaskArray>;
     setupMarkdownSubscriptions: () => void;
+    taskComponentRefs: { destroy: () => void; hostView: { destroyed: boolean } }[];
 };
 
 const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
@@ -220,7 +221,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -232,7 +233,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // No longer emits onNoInstructionsAvailable - shows empty state instead
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
         fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
@@ -322,7 +323,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.componentRef.setInput('exercise', exercise);
         internals(comp).isInitial = true;
-        internals(comp).isLoading = false;
+        internals(comp).isLoading.set(false);
 
         // ngOnInit fires processInputChanges automatically.
         fixture.detectChanges();
@@ -333,7 +334,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(internals(comp).isInitial).toBe(false);
-        expect(internals(comp).isLoading).toBe(false);
+        expect(internals(comp).isLoading()).toBe(false);
     });
 
     // TODO check if this is an issue with the client itself here
@@ -360,14 +361,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
@@ -379,6 +380,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
@@ -434,14 +437,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        expect(internals(comp).tasks).toHaveLength(2);
-        expect(internals(comp).tasks[0]).toEqual({
+        expect(internals(comp).tasks()).toHaveLength(2);
+        expect(internals(comp).tasks()[0]).toEqual({
             id: 0,
             completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
             testIds: [1],
         });
-        expect(internals(comp).tasks[1]).toEqual({
+        expect(internals(comp).tasks()[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
@@ -453,6 +456,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
@@ -751,8 +756,10 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         injectSpy.mockClear();
 
-        internals(instanceA.comp).lastRenderedProblemStatement = undefined;
-        instanceA.comp.updateMarkdown();
+        // Use the production re-render entry point (forceReRenderProblemStatement) rather than poking the private
+        // lastRenderedProblemStatement field: this is exactly the call onActivate() makes when an exam exercise becomes
+        // visible again, so the test guards the real navigation path.
+        instanceA.comp.forceReRenderProblemStatement();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
         const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
@@ -761,6 +768,109 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         instanceA.comp.ngOnDestroy();
         instanceB.comp.ngOnDestroy();
+    });
+
+    it('should re-inject PlantUML diagrams via forceReRenderProblemStatement even when the problem statement is unchanged', async () => {
+        // Regression test for the exam bug where switching between exercises removed already-rendered PlantUML diagrams.
+        // On return to an exercise the problem statement is unchanged, so plain updateMarkdown() skips the re-render and
+        // the diagrams (which may have been injected into stale/detached DOM while hidden) are never restored.
+        // forceReRenderProblemStatement() must bypass that optimization and re-inject the diagrams.
+        const injectSpy = vi.spyOn(plantUmlExtension as any, 'loadAndInjectPlantUml');
+
+        const instance = createComponentInstance();
+        const exercise = createExercise(10, exerciseA_problemStatement);
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Initial render injects both diagrams of exercise A.
+        instance.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        // Mark the component as past its initial render (as it is after the first processInputChanges in production),
+        // so the "unchanged problem statement" optimization in updateMarkdown is active.
+        internals(instance.comp).isInitial = false;
+
+        // A second updateMarkdown() with the SAME problem statement is a no-op (the "unchanged problem statement"
+        // optimization): nothing is re-injected. This is exactly what made the diagrams disappear on navigation.
+        injectSpy.mockClear();
+        instance.comp.updateMarkdown();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(injectSpy).not.toHaveBeenCalled();
+
+        // forceReRenderProblemStatement() bypasses the optimization and re-injects the diagrams, restoring them.
+        injectSpy.mockClear();
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+
+        instance.comp.ngOnDestroy();
+    });
+
+    it('should force a re-render via forceReRenderProblemStatement even when the problem statement is undefined', () => {
+        // Guards the undefined-problem-statement edge case: forceReRenderProblemStatement must NOT rely on resetting
+        // lastRenderedProblemStatement to undefined, because when the current problem statement is also undefined the
+        // optimization (undefined === undefined) would wrongly skip the re-render. It uses an explicit force flag instead.
+        const instance = createComponentInstance();
+        const exercise = {
+            id: 10,
+            course: { id: 1 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        } as ProgrammingExercise;
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Initial render records lastRenderedProblemStatement = undefined (the exercise has no problem statement).
+        instance.comp.updateMarkdown();
+        internals(instance.comp).isInitial = false;
+
+        const renderSpy = vi.spyOn(instance.comp as unknown as { renderMarkdown: () => void }, 'renderMarkdown');
+
+        // A plain updateMarkdown() early-returns (undefined === undefined, not initial), so it does NOT re-render.
+        instance.comp.updateMarkdown();
+        expect(renderSpy).not.toHaveBeenCalled();
+
+        // forceReRenderProblemStatement() bypasses the optimization and re-renders even with an undefined statement.
+        instance.comp.forceReRenderProblemStatement();
+        expect(renderSpy).toHaveBeenCalledOnce();
+
+        instance.comp.ngOnDestroy();
+    });
+
+    it('should not accumulate task components across repeated forceReRenderProblemStatement calls', async () => {
+        // Each render destroys the previously created task components before recreating them (destroyTaskComponents at
+        // the start of updateMarkdown). forceReRenderProblemStatement() goes through that same path, so repeatedly
+        // re-rendering an exam exercise on navigation must not leak/duplicate task components.
+        const instance = createComponentInstance();
+        const exercise = createExercise(10, exerciseA_problemStatement);
+        instance.fixture.componentRef.setInput('exercise', exercise);
+        instance.fixture.componentRef.setInput('participation', { id: 110 });
+        internals(instance.comp).setupMarkdownSubscriptions();
+
+        // Seed stale task component refs as if a previous render had created them. They report their host view as
+        // already destroyed so the cleanup path simply drops them (no real DOM detach needed in the unit test).
+        const destroySpy = vi.fn();
+        internals(instance.comp).taskComponentRefs = [
+            { destroy: destroySpy, hostView: { destroyed: true } },
+            { destroy: destroySpy, hostView: { destroyed: true } },
+        ];
+
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // The stale refs were cleared and, since exercise A has no tasks, none were recreated: the array did not grow.
+        expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
+
+        // A second force re-render still does not accumulate refs.
+        instance.comp.forceReRenderProblemStatement();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
+
+        instance.comp.ngOnDestroy();
     });
 
     it('should call setExerciseId with the exercise ID before each render', async () => {

@@ -4,10 +4,10 @@
     </div>
     <div class="content mx-auto">
         <div class="features-overview">
-            <h2>{{ 'featureOverview.' + targetAudience + '.featureOverview' | artemisTranslate }}</h2>
+            <h2>{{ 'featureOverview.' + targetAudience() + '.featureOverview' | artemisTranslate }}</h2>
         </div>
         <div class="custom-container">
-            @for (feature of features; track feature) {
+            @for (feature of features(); track feature) {
                 <div id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
                     <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true" />
                     <h3 class="title">{{ feature.title | artemisTranslate }}</h3>
@@ -18,7 +18,7 @@
             }
         </div>
         <h2 jhiTranslate="featureOverview.featureDetails"></h2>
-        @for (feature of features; track feature) {
+        @for (feature of features(); track feature) {
             <div id="feature{{ feature.id }}" class="feature-content">
                 <h3>{{ feature.title | artemisTranslate }}</h3>
                 <div class="feature-full-description">

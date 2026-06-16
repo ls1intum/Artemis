@@ -112,7 +112,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let examService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let fileService: FileService;
-    let changeDetector: ChangeDetectorRef;
     let dialogService: DialogService;
 
     beforeEach(async () => {
@@ -141,7 +140,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         quizExerciseService = TestBed.inject(QuizExerciseService);
         fileService = TestBed.inject(FileService);
-        changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         dialogService = fixture.debugElement.injector.get(DialogService);
         component = fixture.componentInstance;
     });
@@ -160,10 +158,10 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
             expect(getAllCoursesWithQuizExercisesSpy).toHaveBeenCalledOnce();
             expect(findAllExamsAccessibleToUserSpy).toHaveBeenCalledWith(123);
-            expect(component.courses).toHaveLength(1);
-            expect(component.courses[0]).toEqual(course);
-            expect(component.exams).toHaveLength(1);
-            expect(component.exams[0]).toEqual(exam);
+            expect(component.courses()).toHaveLength(1);
+            expect(component.courses()[0]).toEqual(course);
+            expect(component.exams()).toHaveLength(1);
+            expect(component.exams()[0]).toEqual(exam);
         });
 
         it('should not load courses and exams when show signal is false', () => {
@@ -173,30 +171,31 @@ describe('QuizQuestionListEditExistingComponent', () => {
             // Set the input signals
             fixture.componentRef.setInput('show', false);
             fixture.componentRef.setInput('courseId', 123);
-            component.exams = [];
-            component.courses = [];
+            component.exams.set([]);
+            component.courses.set([]);
             fixture.changeDetectorRef.detectChanges();
 
             expect(getAllCoursesWithQuizExercisesSpy).not.toHaveBeenCalled();
             expect(findAllExamsAccessibleToUserSpy).not.toHaveBeenCalled();
-            expect(component.courses).toHaveLength(0);
-            expect(component.exams).toHaveLength(0);
+            expect(component.courses()).toHaveLength(0);
+            expect(component.exams()).toHaveLength(0);
         });
     });
 
     it('should set current state', () => {
-        component.currentState = State.COURSE;
+        component.currentState.set(State.COURSE);
         component.setCurrentState(State.EXAM);
-        expect(component.currentState).toEqual(State.EXAM);
+        expect(component.currentState()).toEqual(State.EXAM);
     });
 
     describe('onCourseSelect', () => {
         it('should not set all existing questions when course is not selected', () => {
-            component.existingQuestions = component.allExistingQuestions = [];
+            component.existingQuestions.set([]);
+            component.allExistingQuestions.set([]);
             component.selectedCourseId = undefined;
             component.onCourseSelect();
-            expect(component.existingQuestions).toHaveLength(0);
-            expect(component.allExistingQuestions).toHaveLength(0);
+            expect(component.existingQuestions()).toHaveLength(0);
+            expect(component.allExistingQuestions()).toHaveLength(0);
         });
 
         it('should set all existing questions when course is selected', () => {
@@ -204,9 +203,10 @@ describe('QuizQuestionListEditExistingComponent', () => {
             course0.id = 1;
             const course1 = new Course();
             course1.id = 2;
-            component.existingQuestions = component.allExistingQuestions = [];
+            component.existingQuestions.set([]);
+            component.allExistingQuestions.set([]);
             component.selectedCourseId = course0.id;
-            component.courses = [course0, course1];
+            component.courses.set([course0, course1]);
             const quizExercise = new QuizExercise(course0, undefined);
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
@@ -218,19 +218,20 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(findForCourseSpy).toHaveBeenCalledExactlyOnceWith(course0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
-            expect(component.allExistingQuestions).toHaveLength(1);
-            expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
+            expect(component.allExistingQuestions()).toHaveLength(1);
+            expect(component.allExistingQuestions()[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
         });
     });
 
     describe('onExamSelect', () => {
         it('should not set all existing questions when exam is not selected', () => {
-            component.existingQuestions = component.allExistingQuestions = [];
+            component.existingQuestions.set([]);
+            component.allExistingQuestions.set([]);
             component.selectedExamId = undefined;
             component.onExamSelect();
-            expect(component.existingQuestions).toHaveLength(0);
-            expect(component.allExistingQuestions).toHaveLength(0);
+            expect(component.existingQuestions()).toHaveLength(0);
+            expect(component.allExistingQuestions()).toHaveLength(0);
         });
 
         it('should set all existing questions when exam is selected', () => {
@@ -239,9 +240,10 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const exam1 = new Exam();
             exam1.id = 2;
             const course = new Course();
-            component.existingQuestions = component.allExistingQuestions = [];
+            component.existingQuestions.set([]);
+            component.allExistingQuestions.set([]);
             component.selectedExamId = exam0.id;
-            component.exams = [exam0, exam1];
+            component.exams.set([exam0, exam1]);
             const quizExercise = new QuizExercise(course, undefined);
             quizExercise.id = 1;
             const quizQuestion = new MultipleChoiceQuestion();
@@ -253,8 +255,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(findForExamSpy).toHaveBeenCalledExactlyOnceWith(exam0.id);
             expect(findSpy).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
             expect(quizQuestion.exercise).toEqual(quizExercise);
-            expect(component.allExistingQuestions).toHaveLength(1);
-            expect(component.allExistingQuestions[0]).toEqual(quizQuestion);
+            expect(component.allExistingQuestions()).toHaveLength(1);
+            expect(component.allExistingQuestions()[0]).toEqual(quizQuestion);
             expect(applyFilterSpy).toHaveBeenCalledOnce();
         });
     });
@@ -265,7 +267,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         const { question: shortQuestion } = createValidSAQuestion();
 
         beforeEach(() => {
-            component.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
+            component.allExistingQuestions.set([multiChoiceQuestion, dndQuestion, shortQuestion]);
             component.mcqFilterEnabled = false;
             component.dndFilterEnabled = false;
             component.shortAnswerFilterEnabled = false;
@@ -275,19 +277,19 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should put mc question when mc filter selected', () => {
             component.mcqFilterEnabled = true;
             component.applyFilter();
-            expect(component.existingQuestions).toEqual([multiChoiceQuestion]);
+            expect(component.existingQuestions()).toEqual([multiChoiceQuestion]);
         });
 
         it('should put mc question when dnd filter selected', () => {
             component.dndFilterEnabled = true;
             component.applyFilter();
-            expect(component.existingQuestions).toEqual([dndQuestion]);
+            expect(component.existingQuestions()).toEqual([dndQuestion]);
         });
 
         it('should put mc question when sa filter selected', () => {
             component.shortAnswerFilterEnabled = true;
             component.applyFilter();
-            expect(component.existingQuestions).toEqual([shortQuestion]);
+            expect(component.existingQuestions()).toEqual([shortQuestion]);
         });
 
         it('should put all if all selected', () => {
@@ -295,7 +297,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             component.dndFilterEnabled = true;
             component.shortAnswerFilterEnabled = true;
             component.applyFilter();
-            expect(component.existingQuestions).toEqual(component.allExistingQuestions);
+            expect(component.existingQuestions()).toEqual(component.allExistingQuestions());
         });
     });
 
@@ -303,11 +305,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
-            const changeDetectorDetectChangesStub = vi.spyOn(changeDetector.constructor.prototype, 'detectChanges');
             component.setImportFile(ev);
-            expect(component.importFile).toEqual(file);
-            expect(component.importFileName).toBe('testFileName');
-            expect(changeDetectorDetectChangesStub).toHaveBeenCalledOnce();
+            expect(component.importFile()).toEqual(file);
+            expect(component.importFileName()).toBe('testFileName');
         });
     });
 
@@ -348,7 +348,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         const element = document.createElement('input');
         const control = { ...element, value: 'test' };
         beforeEach(() => {
-            component.importFile = fakeFile;
+            component.importFile.set(fakeFile);
             readAsText = vi.fn();
             reader = new FileReader();
             // @ts-ignore
@@ -371,18 +371,18 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const addQuestionSpy = vi.spyOn(component, 'addQuestions').mockResolvedValue(undefined);
             await component.onFileLoadImport(reader);
             expect(addQuestionSpy).toHaveBeenCalledWith(questions, new Map());
-            expect(component.importFile).toBeUndefined();
-            expect(component.importFileName).toBe('');
+            expect(component.importFile()).toBeUndefined();
+            expect(component.importFileName()).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
             expect(control.value).toBe('');
         });
 
         it('should not call any functions without import file', async () => {
-            component.importFile = undefined;
+            component.importFile.set(undefined);
             await component.importQuiz();
             expect(readAsText).not.toHaveBeenCalled();
             expect(generateFileReaderStub).not.toHaveBeenCalled();
-            expect(component.importFile).toBeUndefined();
+            expect(component.importFile()).toBeUndefined();
         });
 
         it('should alert user when onload throws error', async () => {
@@ -414,7 +414,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             question0.exportQuiz = true;
             const question1 = new MultipleChoiceQuestion();
             question1.exportQuiz = false;
-            component.existingQuestions = [question0, question1];
+            component.existingQuestions.set([question0, question1]);
             const addQuestionsSpy = vi.spyOn(component, 'addQuestions').mockResolvedValue(undefined);
             component.addExistingQuestions();
             expect(addQuestionsSpy).toHaveBeenCalledExactlyOnceWith([question0]);
@@ -501,11 +501,11 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const handleJsonFileSpy = vi.spyOn(component, 'handleJsonFile');
             const handleZipFileSpy = vi.spyOn(component, 'handleZipFile');
             const jsonFile = new File(['{}'], 'quiz.json', { type: 'application/json' });
-            component.importFile = jsonFile;
+            component.importFile.set(jsonFile);
             await component.importQuiz();
             expect(handleJsonFileSpy).toHaveBeenCalledWith();
             const zipFile = new File([], 'quiz.zip', { type: 'application/zip' });
-            component.importFile = zipFile;
+            component.importFile.set(zipFile);
             await component.importQuiz();
             expect(handleZipFileSpy).toHaveBeenCalledWith();
         });
@@ -531,7 +531,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             zip.file('quiz.json', '[]');
             zip.file('image1.png', 'fakeImageData1');
             const zipBlob = await zip.generateBlob();
-            component.importFile = new File([zipBlob], 'quiz.zip', { type: 'application/zip' });
+            component.importFile.set(new File([zipBlob], 'quiz.zip', { type: 'application/zip' }));
 
             await component.handleZipFile();
 

@@ -141,7 +141,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);
@@ -158,7 +158,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);

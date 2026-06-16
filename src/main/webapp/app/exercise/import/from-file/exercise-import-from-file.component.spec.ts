@@ -57,7 +57,7 @@ describe('ExerciseImportFromFileComponent', () => {
         async (exerciseType: ExerciseType) => {
             const alertServiceSpy = vi.spyOn(alertService, 'error');
             fixture.componentRef.setInput('exerciseType', exerciseType);
-            component.fileForImport = (await generateValidTestZipFileWithExerciseType(exerciseType)) as File;
+            component.fileForImport.set((await generateValidTestZipFileWithExerciseType(exerciseType)) as File);
 
             await component.uploadExercise();
 
@@ -70,16 +70,16 @@ describe('ExerciseImportFromFileComponent', () => {
     it('should raise error alert if not one json file at the root level', async () => {
         alertServiceSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
-        component.fileForImport = (await generateTestZipFileWithoutJsonFile()) as File;
+        component.fileForImport.set((await generateTestZipFileWithoutJsonFile()) as File);
         await assertErrorAlertIsRaisedWithoutOneValidJsonFile();
-        component.fileForImport = (await generateTestZipFileWithTwoJsonFiles()) as File;
+        component.fileForImport.set((await generateTestZipFileWithTwoJsonFiles()) as File);
         await assertErrorAlertIsRaisedWithoutOneValidJsonFile();
     });
 
     it('should raise error alert if exercise type does not match exercise type of imported exercise', async () => {
         alertServiceSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
-        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
+        component.fileForImport.set((await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File);
 
         await component.uploadExercise();
 
@@ -90,12 +90,12 @@ describe('ExerciseImportFromFileComponent', () => {
     it('should set exercise attributes and open import dialog', async () => {
         const openImportSpy = vi.spyOn(component, 'openImport');
         fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
-        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
+        component.fileForImport.set((await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File);
 
         await component.uploadExercise();
 
         expect(component.exercise?.id).toBeUndefined();
-        expect(component.exercise?.zipFileForImport).toBe(component.fileForImport);
+        expect(component.exercise?.zipFileForImport).toBe(component.fileForImport());
         expect(component.exercise).toMatchObject({ type: 'programming', id: undefined, title: 'Test exercise' });
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
@@ -103,7 +103,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
     it('should load build configs in the old format', async () => {
         fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
-        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING, true)) as File;
+        component.fileForImport.set((await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING, true)) as File);
 
         await component.uploadExercise();
 
@@ -111,7 +111,7 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 
     it('should disable upload button as long as no file is selected', () => {
-        component.fileForImport = undefined;
+        component.fileForImport.set(undefined);
         fixture.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
@@ -119,7 +119,7 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 
     it('should enable upload button once file is selected', () => {
-        component.fileForImport = new File([''], 'test.zip', { type: 'application/zip' });
+        component.fileForImport.set(new File([''], 'test.zip', { type: 'application/zip' }));
         fixture.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
@@ -148,7 +148,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileCountError');
-        expect(component.fileForImport).toBeUndefined();
+        expect(component.fileForImport()).toBeUndefined();
     });
 
     it('should raise error alert when not a zip file is selected', () => {
@@ -164,7 +164,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
-        expect(component.fileForImport).toBeUndefined();
+        expect(component.fileForImport()).toBeUndefined();
     });
 
     it('should set file for import if no errors occur', () => {
@@ -178,7 +178,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         component.setFileForExerciseImport(event);
 
-        expect(component.fileForImport).toEqual(file);
+        expect(component.fileForImport()).toEqual(file);
     });
 
     it('should correctly parse exercise categories during import', async () => {
@@ -195,7 +195,7 @@ describe('ExerciseImportFromFileComponent', () => {
         zip.file('exercise.json', JSON.stringify(progEx));
         const zipBlob = await zip.generateBlob();
 
-        component.fileForImport = zipBlob as any;
+        component.fileForImport.set(zipBlob as any);
         const openImportSpy = vi.spyOn(component, 'openImport');
 
         await component.uploadExercise();
@@ -232,7 +232,7 @@ describe('ExerciseImportFromFileComponent', () => {
         zip.file('exercise.json', JSON.stringify(progEx));
         const zipBlob = await zip.generateBlob();
 
-        component.fileForImport = zipBlob as any;
+        component.fileForImport.set(zipBlob as any);
         const openImportSpy = vi.spyOn(component, 'openImport');
 
         await component.uploadExercise();

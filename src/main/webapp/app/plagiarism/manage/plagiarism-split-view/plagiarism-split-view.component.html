@@ -1,13 +1,13 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
-        @if (plagiarismComparison) {
-            @if (isProgrammingOrTextExercise) {
+        @if (plagiarismComparison()) {
+            @if (isProgrammingOrTextExercise()) {
                 <jhi-text-submission-viewer
                     [fileSelectedSubject]="this.fileSelectedSubject"
                     [exercise]="exercise()"
-                    [matches]="matchesA"
+                    [matches]="matchesA()"
                     [plagiarismSubmission]="getTextSubmissionA()"
-                    [isLockFilesEnabled]="isLockFilesEnabled"
+                    [isLockFilesEnabled]="isLockFilesEnabled()"
                     [hideContent]="false"
                     [dropdownHoverSubject]="this.dropdownHoverSubject"
                     [showFilesSubject]="this.showFilesSubject"
@@ -16,19 +16,19 @@
         }
     </div>
     <div class="split-pane-header-color">
-        <button class="btn btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled" data-qa="lock-files-toggle-button">
-            <fa-icon [icon]="isLockFilesEnabled ? faLock : faUnlock" aria-label="Synchronize files while navigating on both sides" />
+        <button class="btn btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled()" data-qa="lock-files-toggle-button">
+            <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" aria-label="Synchronize files while navigating on both sides" />
         </button>
     </div>
     <div class="plagiarism-split-pane" jhiPane>
-        @if (plagiarismComparison) {
-            @if (isProgrammingOrTextExercise) {
+        @if (plagiarismComparison()) {
+            @if (isProgrammingOrTextExercise()) {
                 <jhi-text-submission-viewer
                     [fileSelectedSubject]="this.fileSelectedSubject"
                     [exercise]="exercise()"
-                    [matches]="matchesB"
+                    [matches]="matchesB()"
                     [plagiarismSubmission]="getTextSubmissionB()"
-                    [isLockFilesEnabled]="isLockFilesEnabled"
+                    [isLockFilesEnabled]="isLockFilesEnabled()"
                     [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
                     [dropdownHoverSubject]="this.dropdownHoverSubject"
                     [showFilesSubject]="this.showFilesSubject"

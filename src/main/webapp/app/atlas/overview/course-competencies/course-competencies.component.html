@@ -3,7 +3,7 @@
         @if (countCompetencies > 0) {
             <div class="mt-3 position-relative">
                 <div class="exercise-row-container mb-3">
-                    @for (competency of competencies; track identify(i, competency); let i = $index) {
+                    @for (competency of competencies(); track identify(i, competency); let i = $index) {
                         <jhi-competency-card [competency]="competency" [courseId]="resolvedCourseId()" />
                     }
                 </div>
@@ -18,7 +18,7 @@
                     </div>
                     @if (!isCollapsed) {
                         <div>
-                            @for (prerequisite of prerequisites; track identify(i, prerequisite); let i = $index) {
+                            @for (prerequisite of prerequisites(); track identify(i, prerequisite); let i = $index) {
                                 <jhi-competency-card [competency]="prerequisite" [courseId]="prerequisite.linkedCourseCompetency?.course?.id" [isPrerequisite]="true" />
                             }
                         </div>
