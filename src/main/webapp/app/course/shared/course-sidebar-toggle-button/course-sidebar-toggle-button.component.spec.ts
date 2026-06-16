@@ -6,6 +6,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/foundation/icons/icons';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseSidebarToggleButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -15,6 +17,7 @@ describe('CourseSidebarToggleButtonComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CourseSidebarToggleButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(CourseSidebarToggleButtonComponent);

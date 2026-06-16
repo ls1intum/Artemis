@@ -13,7 +13,6 @@ import {
     getExerciseTypeFilterOptions,
 } from 'app/course/sidebar/sidebar.helper';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
-import { NgClass } from '@angular/common';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -30,7 +29,6 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
     imports: [
-        NgClass,
         SearchFilterComponent,
         FaIconComponent,
         TranslateDirective,

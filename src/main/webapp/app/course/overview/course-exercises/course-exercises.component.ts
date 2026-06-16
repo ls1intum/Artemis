@@ -6,7 +6,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
@@ -44,7 +44,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [NgClass, SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent {
     private courseStorageService = inject(CourseStorageService);
@@ -79,10 +79,8 @@ export class CourseExercisesComponent {
     readonly accordionExerciseGroups = computed(() => this._accordionExerciseGroups());
     readonly sidebarData = computed(() => this._sidebarData());
     readonly sidebarExercises = computed(() => this._sidebarExercises());
-    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
-    get isCollapsed(): boolean {
-        return this._isCollapsed();
-    }
+
+    readonly isCollapsed = computed(() => this._isCollapsed());
     readonly isShownViaLti = computed(() => this._isShownViaLti());
     readonly isMultiLaunch = computed(() => this._isMultiLaunch());
     readonly multiLaunchExerciseIDs = computed(() => this._multiLaunchExerciseIDs());

@@ -1,7 +1,7 @@
 <div class="d-flex horizontal-scroll">
     @if (course()) {
         @if (!isShownViaLti()) {
-            <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
                 @if (sidebarData(); as data) {
                     <jhi-sidebar
                         [itemSelected]="exerciseSelected()"
@@ -12,7 +12,7 @@
                         [showFilter]="true"
                         [pageTitle]="pageTitle()"
                         [showSidebarToggle]="true"
-                        [isSidebarCollapsed]="isCollapsed"
+                        [isSidebarCollapsed]="isCollapsed()"
                         (toggleSidebar)="toggleSidebarFromChild()"
                     />
                 }
@@ -32,7 +32,7 @@
 
         @if (exerciseSelected()) {
             <div
-                [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
+                [class]="{ 'content-sidebar-width': !isCollapsed() }"
                 class="content-width scrollable-content no-header-bar-height"
                 [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
             >

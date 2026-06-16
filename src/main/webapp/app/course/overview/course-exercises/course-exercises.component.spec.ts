@@ -159,11 +159,11 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleSidebar();
         TestBed.tick();
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(true);
 
         component.toggleSidebar();
         TestBed.tick();
-        expect(component.isCollapsed).toBe(false);
+        expect(component.isCollapsed()).toBe(false);
     });
 
     it('should set the page title for the sidebar header', () => {
@@ -177,7 +177,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleSidebarFromChild();
 
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(true);
     });
 
     it('should pass the sidebar toggle state to the sidebar', () => {

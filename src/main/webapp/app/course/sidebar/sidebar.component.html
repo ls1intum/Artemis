@@ -79,7 +79,7 @@
                     } @else {
                         <div
                             class="scrollable-item-content my-2"
-                            [ngClass]="{
+                            [class]="{
                                 'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise',
                                 'channel-search-height': sidebarDataInternal()?.sidebarType === 'conversation',
                             }"
@@ -107,7 +107,7 @@
                                     track sidebarItem.id;
                                     let last = $last
                                 ) {
-                                    <div [ngClass]="{ 'mb-2': !last }">
+                                    <div [class]="{ 'mb-2': !last }">
                                         <div
                                             jhiSidebarCard
                                             [size]="sidebarItem.size"
