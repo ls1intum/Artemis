@@ -223,7 +223,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         component.toggleSelection(answerOptions[2]);
 
         expect(emitted).toBeDefined();
-        const emittedIds = emitted!.map((option) => option.id).sort();
+        const emittedIds = emitted!.map((option) => option.id).sort((a, b) => (a ?? 0) - (b ?? 0));
         expect(emittedIds).toEqual([1, 2, 3]);
     });
 
@@ -257,8 +257,8 @@ describe('MultipleChoiceQuestionComponent', () => {
         component.toggleSelection(answerOptions[3]);
 
         expect(emissions).toHaveLength(2);
-        expect(emissions[0].map((o) => o.id).sort()).toEqual([1, 2, 3]);
-        expect(emissions[1].map((o) => o.id).sort()).toEqual([1, 2, 3, 4]);
+        expect(emissions[0].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3]);
+        expect(emissions[1].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3, 4]);
     });
 
     it('should reset the working copy when the input changes, then build on the new input', () => {
@@ -285,13 +285,13 @@ describe('MultipleChoiceQuestionComponent', () => {
         component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
 
         component.toggleSelection(answerOptions[1]);
-        expect(emitted!.map((o) => o.id).sort()).toEqual([1, 2]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2]);
 
         // The authoritative input is replaced (e.g. a reload restoring only option 3); the next toggle must build on it.
         fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[2]]);
         fixture.changeDetectorRef.detectChanges();
         component.toggleSelection(answerOptions[0]);
-        expect(emitted!.map((o) => o.id).sort()).toEqual([1, 3]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 3]);
     });
 
     it('should remove a pre-existing option when toggled off (multi-select)', () => {

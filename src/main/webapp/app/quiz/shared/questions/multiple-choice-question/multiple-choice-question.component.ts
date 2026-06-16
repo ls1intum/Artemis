@@ -88,10 +88,6 @@ export class MultipleChoiceQuestionComponent {
     }
 
     /**
-     * Toggles the selection state of a multiple choice answer option
-     * @param answerOption The answer option to toggle
-     */
-    /**
      * Returns the current selection, preferring the in-frame working copy over the input so that several toggles in the
      * same change-detection frame accumulate correctly instead of each reading the same (not-yet-updated) input.
      */
@@ -99,6 +95,10 @@ export class MultipleChoiceQuestionComponent {
         return this.pendingSelectedAnswerOptions ?? this.selectedAnswerOptions();
     }
 
+    /**
+     * Toggles the selection state of a multiple choice answer option
+     * @param answerOption The answer option to toggle
+     */
     toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled()) {
             // Do nothing
