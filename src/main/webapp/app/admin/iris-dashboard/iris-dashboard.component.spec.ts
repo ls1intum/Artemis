@@ -86,7 +86,7 @@ describe('IrisDashboardComponent', () => {
     it('should reload data on time span change', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        component.onTimeSpanChange(component.timeSpanOptions[0]);
+        component.onTimeSpanChange(component.timeSpanOptions()[0]);
         await fixture.whenStable();
         expect(dashboardService.getOverview).toHaveBeenCalledTimes(2);
     });

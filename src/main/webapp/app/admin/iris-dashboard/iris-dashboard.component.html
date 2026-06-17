@@ -5,7 +5,14 @@
             <h3 class="mb-0" jhiTranslate="artemisApp.irisDashboard.title">Iris Dashboard</h3>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <p-select [ngModel]="selectedTimeSpan()" [options]="timeSpanOptions" optionLabel="label" (ngModelChange)="onTimeSpanChange($event)" size="small" styleClass="w-auto" />
+            <p-select
+                [ngModel]="selectedTimeSpan()"
+                [options]="timeSpanOptions()"
+                optionLabel="label"
+                (ngModelChange)="onTimeSpanChange($event)"
+                size="small"
+                styleClass="w-auto"
+            />
             <p-button
                 severity="secondary"
                 [outlined]="true"

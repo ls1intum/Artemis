@@ -17,6 +17,8 @@ import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
 
+type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
+
 @Component({
     selector: 'jhi-iris-dashboard',
     standalone: true,
@@ -55,9 +57,9 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly courseBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly modelBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
 
-    timeSpanOptions: { label: string; value: IrisDashboardTimeSpan; days: number }[] = [];
+    readonly timeSpanOptions = signal<TimeSpanOption[]>([]);
 
-    readonly selectedTimeSpan = signal<{ label: string; value: IrisDashboardTimeSpan; days: number }>({ label: 'Month', value: 'MONTH', days: 30 });
+    readonly selectedTimeSpan = signal<TimeSpanOption>({ label: 'Month', value: 'MONTH', days: 30 });
 
     private readonly refreshTrigger = signal(0);
 
@@ -72,13 +74,13 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     private dataSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.timeSpanOptions = [
+        this.timeSpanOptions.set([
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.day'), value: 'DAY', days: 1 },
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.week'), value: 'WEEK', days: 7 },
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.month'), value: 'MONTH', days: 30 },
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.quarter'), value: 'QUARTER', days: 90 },
-        ];
-        this.selectedTimeSpan.set(this.timeSpanOptions[2]);
+        ]);
+        this.selectedTimeSpan.set(this.timeSpanOptions()[2]);
         this.loadData();
         this.dashboardService
             .getConfig()
@@ -90,7 +92,7 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
         this.dataSubscription?.unsubscribe();
     }
 
-    onTimeSpanChange(newValue: (typeof this.timeSpanOptions)[0]): void {
+    onTimeSpanChange(newValue: TimeSpanOption): void {
         this.selectedTimeSpan.set(newValue);
         this.refreshTrigger.update((v) => v + 1);
         this.loadData();
