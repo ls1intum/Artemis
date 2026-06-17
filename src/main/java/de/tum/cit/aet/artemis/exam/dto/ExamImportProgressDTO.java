@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exam.domain.ExamImportProgressState;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseImportStatus;
+
 /**
  * Live progress of an exam (or exercise-group) import, sent to the importing user over a websocket so the UI can show a
  * progress bar and a per-exercise status while the (synchronous) import request is still running.

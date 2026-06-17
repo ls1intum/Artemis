@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exam.dto;
+package de.tum.cit.aet.artemis.exam.domain;
 
 /**
  * Overall state of an exam (or exercise-group) import, emitted as live progress over a websocket while the import runs.

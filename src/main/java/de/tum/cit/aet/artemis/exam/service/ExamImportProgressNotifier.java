@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.exam.domain.ExamImportProgressState;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseImportStatus;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportProgressDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamImportProgressState;
-import de.tum.cit.aet.artemis.exam.dto.ExerciseImportStatus;
 
 /**
  * Emits live progress of a single exam (or exercise-group) import to the importing user over a websocket.

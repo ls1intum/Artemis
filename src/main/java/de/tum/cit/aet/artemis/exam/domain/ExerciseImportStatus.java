@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exam.dto;
+package de.tum.cit.aet.artemis.exam.domain;
 
 /**
  * Status of a single exercise during an exam (or exercise-group) import, used in the live progress emitted over a websocket.

@@ -1054,7 +1054,7 @@ describe('ExamUpdateComponent', () => {
                 of(
                     new HttpResponse({
                         status: 200,
-                        body: examForImport,
+                        body: { exam: examForImport },
                     }),
                 ),
             );

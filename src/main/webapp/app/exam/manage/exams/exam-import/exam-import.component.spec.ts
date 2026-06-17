@@ -154,7 +154,7 @@ describe('Exam Import Component', () => {
             of(
                 new HttpResponse({
                     status: 200,
-                    body: [exerciseGroup1],
+                    body: { exerciseGroups: [exerciseGroup1] },
                 }),
             ),
         );
