@@ -142,6 +142,7 @@ export class CourseUpdateComponent implements OnInit {
 
     communicationEnabled = true;
     messagingEnabled = true;
+    readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
@@ -213,6 +214,7 @@ export class CourseUpdateComponent implements OnInit {
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaAutoFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -588,6 +590,16 @@ export class CourseUpdateComponent implements OnInit {
      */
     changeTestCourseEnabled() {
         this.course.testCourse = !this.course.testCourse;
+    }
+
+    changeAthenaFeedbackEnabled() {
+        this.athenaFeedbackEnabled.update((v) => !v);
+        if (!this.athenaFeedbackEnabled()) {
+            this.course.athenaGradingFeedbackEnabled = false;
+            this.course.athenaAutoFeedbackEnabled = false;
+            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
+            this.courseForm.controls['athenaAutoFeedbackEnabled'].setValue(false);
+        }
     }
 
     changeAthenaGradingFeedback() {

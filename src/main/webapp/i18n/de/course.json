@@ -239,6 +239,10 @@
                 "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
             },
             "athenaConfig": {
+                "aiFeedbackEnabled": {
+                    "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
+                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
+                },
                 "gradingFeedbackEnabled": {
                     "label": "Bewertungsfeedback-Vorschläge aktiviert",
                     "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für alle Aufgabentypen vor."
