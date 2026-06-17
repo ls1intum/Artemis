@@ -57,10 +57,8 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @param answerOptions the answer options to persist with this question
      */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        this.answerOptions = answerOptions == null ? new ArrayList<>()
-                : answerOptions.stream().map(AnswerOptionInput::of).map(this::createAnswerOptionPreservingId).collect(Collectors.toCollection(ArrayList::new));
-        setNextComponentId(Math.max(getNextComponentId() == null ? 1L : getNextComponentId(),
-                this.answerOptions.stream().map(AnswerOption::getId).filter(Objects::nonNull).mapToLong(Long::longValue).max().orElse(0L) + 1L));
+        this.answerOptions = copyAnswerOptions(answerOptions);
+        advanceNextComponentIdPastExistingOptionIds();
         assignIdsToNewOptions();
     }
 
@@ -93,7 +91,8 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      */
     public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs) {
         Objects.requireNonNull(inputs);
-        validateAnswerOptions();
+
+        // Index the current JSON components by their stable question-scoped IDs for update/delete detection.
         Map<Long, AnswerOption> existingById = answerOptions.stream().collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
         Set<Long> requestedIds = new HashSet<>();
         Set<Long> addedIds = new LinkedHashSet<>();
@@ -103,74 +102,41 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
         for (AnswerOptionInput input : inputs) {
             validateInput(input);
+
             if (input.id() != null && !requestedIds.add(input.id())) {
                 throw new IllegalArgumentException("Duplicate answer option ID " + input.id());
             }
+
             AnswerOption existing = input.id() == null ? null : existingById.get(input.id());
             if (input.id() != null && existing == null) {
                 throw new IllegalArgumentException("Unknown answer option ID " + input.id());
             }
-            Long id = existing == null ? allocateNextComponentId() : existing.getId();
-            AnswerOption replacement = new AnswerOption(id, input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
-            replacements.add(replacement);
+
+            // New inputs have no ID yet; allocate a fresh one and never reuse deleted IDs.
             if (existing == null) {
-                addedIds.add(id);
+                AnswerOption newOption = createNewAnswerOption(input);
+                replacements.add(newOption);
+                addedIds.add(newOption.getId());
+                continue;
             }
-            else if (!sameContent(existing, replacement)) {
-                updatedIds.add(id);
-                requiresRecalculation |= !Objects.equals(existing.isIsCorrect(), replacement.isIsCorrect()) || !Objects.equals(existing.isInvalid(), replacement.isInvalid());
+
+            // Existing inputs keep their IDs so submissions, counters, and editor payloads remain stable.
+            AnswerOption replacement = createAnswerOption(existing.getId(), input);
+            replacements.add(replacement);
+            if (!sameContent(existing, replacement)) {
+                updatedIds.add(replacement.getId());
+                requiresRecalculation |= isScoringRelevantChange(existing, replacement);
             }
         }
 
+        // Any existing ID that was not requested disappeared from the ordered option list.
         Set<Long> deletedIds = new LinkedHashSet<>(existingById.keySet());
         deletedIds.removeAll(requestedIds);
         requiresRecalculation |= !deletedIds.isEmpty();
+
         answerOptions = replacements;
         validateAnswerOptions();
         return new AnswerOptionChangeSet(Set.copyOf(addedIds), Set.copyOf(updatedIds), Set.copyOf(deletedIds), requiresRecalculation);
-    }
-
-    /**
-     * undo all answer-changes which are not allowed (adding Answers)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
-            undoUnallowedAnswerChanges(mcOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all answer-changes which are not allowed ( adding Answers)
-     *
-     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
-     */
-    private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
-
-        // find added Answers, which are not allowed to be added
-        Set<Long> notAllowedAddedAnswerIds = new HashSet<>();
-        // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
-            // check if the answer were already in the originalQuizExercise -> if not it's an added answer
-            if (originalQuestion.findAnswerOptionById(answer.getId()) != null) {
-                // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
-                // correct invalid = null to invalid = false
-                if (answer.isInvalid() == null) {
-                    answer.setInvalid(false);
-                }
-                // reset invalid answer if it already set to true (it's not possible to set an answer valid again)
-                answer.setInvalid(answer.isInvalid() || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
-            }
-            else {
-                // mark the added Answers (adding answers is not allowed)
-                notAllowedAddedAnswerIds.add(answer.getId());
-            }
-        }
-        // remove the added Answers
-        answerOptions.removeIf(answer -> notAllowedAddedAnswerIds.contains(answer.getId()));
     }
 
     /**
@@ -349,13 +315,37 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         answerOptions.stream().filter(option -> option.getId() == null).forEach(option -> option.setId(allocateNextComponentId()));
     }
 
-    private AnswerOption createAnswerOptionPreservingId(AnswerOptionInput input) {
-        return new AnswerOption(input.id(), input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+    private static List<AnswerOption> copyAnswerOptions(List<AnswerOption> answerOptions) {
+        if (answerOptions == null) {
+            return new ArrayList<>();
+        }
+        return answerOptions.stream().map(AnswerOptionInput::of).map(MultipleChoiceQuestion::createAnswerOptionPreservingId).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private void advanceNextComponentIdPastExistingOptionIds() {
+        long nextIdAfterExistingOptions = answerOptions.stream().map(AnswerOption::getId).filter(Objects::nonNull).mapToLong(Long::longValue).max().orElse(0L) + 1L;
+        setNextComponentId(Math.max(getNextComponentId() == null ? 1L : getNextComponentId(), nextIdAfterExistingOptions));
+    }
+
+    private AnswerOption createNewAnswerOption(AnswerOptionInput input) {
+        return createAnswerOption(allocateNextComponentId(), input);
+    }
+
+    private static AnswerOption createAnswerOptionPreservingId(AnswerOptionInput input) {
+        return createAnswerOption(input.id(), input);
+    }
+
+    private static AnswerOption createAnswerOption(Long id, AnswerOptionInput input) {
+        return new AnswerOption(id, input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
     }
 
     private static boolean sameContent(AnswerOption left, AnswerOption right) {
         return Objects.equals(left.getText(), right.getText()) && Objects.equals(left.getHint(), right.getHint()) && Objects.equals(left.getExplanation(), right.getExplanation())
                 && Objects.equals(left.isIsCorrect(), right.isIsCorrect()) && Objects.equals(left.isInvalid(), right.isInvalid());
+    }
+
+    private static boolean isScoringRelevantChange(AnswerOption existing, AnswerOption replacement) {
+        return !Objects.equals(existing.isIsCorrect(), replacement.isIsCorrect()) || !Objects.equals(existing.isInvalid(), replacement.isInvalid());
     }
 
     private static void validateInput(AnswerOptionInput input) {

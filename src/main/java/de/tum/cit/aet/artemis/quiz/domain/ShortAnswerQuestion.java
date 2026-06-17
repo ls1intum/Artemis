@@ -260,68 +260,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return null;
     }
 
-    /**
-     * undo all solution- and spot-changes which are not allowed ( adding them)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
-            undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
-            checkInvalidSolutions(shortAnswerOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all spot-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original spot-object, which will be compared with this question
-     */
-    private void undoUnallowedSpotChanges(ShortAnswerQuestion originalQuestion) {
-
-        // find added spots, which are not allowed to be added
-        Set<ShortAnswerSpot> notAllowedAddedSpots = new HashSet<>();
-        // check every spot of the question
-        for (ShortAnswerSpot spot : this.getSpots()) {
-            // check if the spot were already in the originalQuestion -> if not it's an added spot
-            if (originalQuestion.getSpots().contains(spot)) {
-                // find original spot
-                ShortAnswerSpot originalSpot = originalQuestion.findSpotById(spot.getId());
-                // correct invalid = null to invalid = false
-                if (spot.isInvalid() == null) {
-                    spot.setInvalid(false);
-                }
-                // reset invalid spot if it already set to true (it's not possible to set a spot valid again)
-                spot.setInvalid(spot.isInvalid() || (originalSpot.isInvalid() != null && originalSpot.isInvalid()));
-            }
-            else {
-                // mark the added spot (adding spots is not allowed)
-                notAllowedAddedSpots.add(spot);
-            }
-        }
-        // remove the added spots
-        this.getSpots().removeAll(notAllowedAddedSpots);
-    }
-
-    /**
-     * check all solutions for unset invalid states or state changes
-     *
-     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
-     */
-    private void checkInvalidSolutions(ShortAnswerQuestion originalQuestion) {
-        // check every solution of the question
-        for (ShortAnswerSolution solution : this.getSolutions()) {
-            // correct invalid = null to invalid = false
-            if (solution.isInvalid() == null) {
-                solution.setInvalid(false);
-            }
-            ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-            // reset invalid solution if it was already set to true (it's not possible to set a solution valid again)
-            solution.setInvalid(solution.isInvalid() || (originalSolution != null && originalSolution.isInvalid() != null && originalSolution.isInvalid()));
-        }
-    }
-
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {

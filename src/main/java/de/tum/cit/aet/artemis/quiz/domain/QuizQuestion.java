@@ -275,13 +275,6 @@ public abstract class QuizQuestion extends DomainObject {
     public abstract QuizQuestion copyQuestionId();
 
     /**
-     * undo all changes which are not allowed
-     *
-     * @param originalQuizQuestion the original not changed QuizQuestion, to detect the changes
-     */
-    public abstract void undoUnallowedChanges(QuizQuestion originalQuizQuestion);
-
-    /**
      * check if an update of the Results and Statistics is necessary
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
