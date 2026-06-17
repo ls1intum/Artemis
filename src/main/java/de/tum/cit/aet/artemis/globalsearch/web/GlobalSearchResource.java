@@ -494,6 +494,9 @@ public class GlobalSearchResource {
      * exam exercises only after the exam ends); students see released regular exercises and exam
      * exercises after the exam starts.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._exercise_filter} - update both when exercise visibility rules change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exercises the user may access, or {@code null} if no courses qualify
      */
@@ -570,6 +573,10 @@ public class GlobalSearchResource {
      * Builds the lecture unit type disjunct. Staff members (editors, instructors, TAs) see all lecture
      * units in their courses; students only see lecture units whose release date has passed or is unset.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by release-date post-filtering in Pyris {@code LectureGlobalSearchRetrieval} - update both when lecture unit visibility rules
+     * change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching lecture units the user may access, or {@code null} if no courses qualify
      */
@@ -617,6 +624,9 @@ public class GlobalSearchResource {
     /**
      * Builds the exam type disjunct. Editors and instructors see all exams in their courses;
      * teaching assistants and students only see exams whose visible date has passed.
+     *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._exam_filter} - update both when exam visibility rules change.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exams the user may access, or {@code null} if no courses qualify
@@ -671,6 +681,9 @@ public class GlobalSearchResource {
      * Builds the FAQ type disjunct. Staff members (editors, instructors, TAs) see all FAQs in their
      * courses; students only see FAQs with state {@code ACCEPTED}.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._faq_filter} - update both when FAQ visibility rules change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching FAQs the user may access, or {@code null} if no courses qualify
      */
@@ -690,6 +703,9 @@ public class GlobalSearchResource {
     /**
      * Builds the channel type disjunct. All users with course access can see channels that are either
      * course-wide or public within their courses.
+     *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._channel_filter} - update both when channel visibility rules change.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching channels the user may access, or {@code null} if no courses qualify
