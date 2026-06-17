@@ -113,6 +113,16 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Returns the sidebar card element for the given exercise (the `#test-sidebar-card-medium` entry whose text
+     * contains the title). Useful for asserting live, websocket-driven state transitions of its result badge
+     * without re-navigating.
+     * @param exerciseTitle The title of the exercise whose sidebar card to locate.
+     */
+    getExerciseSidebarCard(exerciseTitle: string): Locator {
+        return this.page.locator('#test-sidebar-card-medium', { hasText: exerciseTitle }).first();
+    }
+
+    /**
      * Opens an exercise given its name.
      * @param exerciseName The title of the exercise to open.
      */
