@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -72,18 +72,18 @@ export class CourseExercisesComponent {
     readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
 
-    readonly course = computed(() => this._course());
-    readonly courseId = computed(() => this._courseId());
-    readonly sortedExercises = computed(() => this._sortedExercises());
-    readonly exerciseSelected = computed(() => this._exerciseSelected());
-    readonly accordionExerciseGroups = computed(() => this._accordionExerciseGroups());
-    readonly sidebarData = computed(() => this._sidebarData());
-    readonly sidebarExercises = computed(() => this._sidebarExercises());
+    readonly course = this._course.asReadonly();
+    readonly courseId = this._courseId.asReadonly();
+    readonly sortedExercises = this._sortedExercises.asReadonly();
+    readonly exerciseSelected = this._exerciseSelected.asReadonly();
+    readonly accordionExerciseGroups = this._accordionExerciseGroups.asReadonly();
+    readonly sidebarData = this._sidebarData.asReadonly();
+    readonly sidebarExercises = this._sidebarExercises.asReadonly();
 
-    readonly isCollapsed = computed(() => this._isCollapsed());
-    readonly isShownViaLti = computed(() => this._isShownViaLti());
-    readonly isMultiLaunch = computed(() => this._isMultiLaunch());
-    readonly multiLaunchExerciseIDs = computed(() => this._multiLaunchExerciseIDs());
+    readonly isCollapsed = this._isCollapsed.asReadonly();
+    readonly isShownViaLti = this._isShownViaLti.asReadonly();
+    readonly isMultiLaunch = this._isMultiLaunch.asReadonly();
+    readonly multiLaunchExerciseIDs = this._multiLaunchExerciseIDs.asReadonly();
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -111,7 +111,7 @@ export class CourseExercisesComponent {
         });
 
         effect(() => {
-            this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebarFromChild());
+            this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
         });
     }
 
@@ -162,10 +162,6 @@ export class CourseExercisesComponent {
     toggleSidebar() {
         this._isCollapsed.update((value) => !value);
         this.courseOverviewService.setSidebarCollapseState('exercise', this._isCollapsed());
-    }
-
-    toggleSidebarFromChild(): void {
-        this.toggleSidebar();
     }
 
     setPageTitle(pageTitle: string): void {

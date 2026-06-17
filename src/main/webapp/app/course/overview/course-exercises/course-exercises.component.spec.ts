@@ -175,7 +175,7 @@ describe('CourseExercisesComponent', () => {
     it('should toggle the sidebar from a child sidebar control', () => {
         (component as any)._isCollapsed.set(false);
 
-        component.toggleSidebarFromChild();
+        component.toggleSidebar();
 
         expect(component.isCollapsed()).toBe(true);
     });
