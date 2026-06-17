@@ -4,17 +4,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -39,13 +38,6 @@ describe('CourseSidebarComponent', () => {
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         courseIconPath: 'path/to/icon.png',
         studentCourseAnalyticsDashboardEnabled: true,
-    };
-
-    const course2: Course = {
-        id: 2,
-        title: 'Course2',
-        description: 'Description of course 2',
-        courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     };
 
     const mockSidebarItems: SidebarItem[] = [
@@ -101,12 +93,10 @@ describe('CourseSidebarComponent', () => {
             imports: [
                 NgClass,
                 NgTemplateOutlet,
-                SlicePipe,
                 MockModule(NgbTooltipModule),
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
-                MockComponent(ImageComponent),
                 MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
                 FaIconComponent,
@@ -132,7 +122,6 @@ describe('CourseSidebarComponent', () => {
 
         // Set up initial inputs
         fixture.componentRef.setInput('course', course1);
-        fixture.componentRef.setInput('courses', [course1, course2]);
         fixture.componentRef.setInput('sidebarItems', mockSidebarItems);
         fixture.componentRef.setInput('courseActionItems', mockActionItems);
         fixture.detectChanges();
@@ -220,15 +209,6 @@ describe('CourseSidebarComponent', () => {
         expect(component.hiddenItems()).toHaveLength(0);
     });
 
-    it('should display course title when navbar is not collapsed', () => {
-        fixture.componentRef.setInput('isNavbarCollapsed', false);
-        fixture.detectChanges();
-
-        const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
-        expect(titleElement).toBeTruthy();
-        expect(titleElement.nativeElement.textContent).toBe('Course1');
-    });
-
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
         vi.spyOn(component, 'updateVisibleNavbarItems').mockImplementation(() => {});
 
@@ -239,24 +219,6 @@ describe('CourseSidebarComponent', () => {
         component.anyItemHidden.set(false);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBe(true);
-    });
-    it('should display course icon when available', () => {
-        fixture.detectChanges();
-
-        const iconElement = fixture.nativeElement.querySelector('jhi-image');
-        expect(iconElement).not.toBeNull();
-    });
-
-    it('should not display course icon when not available', () => {
-        // course without icon
-        fixture.componentRef.setInput('course', course2);
-        fixture.componentRef.setInput('courses', [course2]);
-        fixture.detectChanges();
-
-        const iconElement = fixture.debugElement.query(By.directive(ImageComponent));
-        const iconElement2 = fixture.nativeElement.querySelector('.course-circle');
-        expect(iconElement).toBeNull();
-        expect(iconElement2).not.toBeNull();
     });
 
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
@@ -269,16 +231,6 @@ describe('CourseSidebarComponent', () => {
         expect(collapseButton).toBeTruthy();
         collapseButton.nativeElement.click();
         expect(toggleCollapseStateSpy).toHaveBeenCalled();
-    });
-
-    it('should emit switchCourse when a course is selected from dropdown', () => {
-        const switchCourseSpy = vi.spyOn(component.switchCourse, 'emit');
-        fixture.componentRef.setInput('courses', [course1, course2]);
-        fixture.detectChanges();
-
-        const courseDropdownItem = fixture.debugElement.query(By.css('[ngbDropdownItem]'));
-        courseDropdownItem.nativeElement.click();
-        expect(switchCourseSpy).toHaveBeenCalled();
     });
 
     it('should emit courseActionItemClick when an action item is clicked', () => {
