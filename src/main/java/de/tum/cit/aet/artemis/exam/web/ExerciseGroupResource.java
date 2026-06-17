@@ -159,17 +159,21 @@ public class ExerciseGroupResource {
      * @param courseId             the course to which the exam belongs
      * @param examId               the exam to which the exercise groups should be added
      * @param updatedExerciseGroup the list of Exercise Groups to be imported
+     * @param importId             an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroup> updatedExerciseGroup) throws IOException {
+            @RequestBody List<ExerciseGroup> updatedExerciseGroup, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        ExerciseGroupImportResultDTO importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
+        // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
+        // can show a progress dialog while this (synchronous) request runs.
+        ExerciseGroupImportResultDTO importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId, importId,
+                userRepository.getUser().getLogin());
 
         // The exercise groups are always created. Any exercises that could not be imported are reported in the response
         // body, split into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the

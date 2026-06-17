@@ -547,8 +547,17 @@
             },
             "import": {
                 "search": "Suche nach einer Klausur",
-                "someExercisesSkipped": "Einige Aufgaben konnten nicht importiert werden und wurden übersprungen: {{ param }}",
-                "someExercisesIncomplete": "Einige Aufgaben konnten nicht vollständig importiert werden und sind möglicherweise unvollständig. Bitte überprüfe sie und entferne sie gegebenenfalls: {{ param }}"
+                "progress": {
+                    "title": "Klausur wird importiert",
+                    "preparing": "Import wird vorbereitet…",
+                    "importing": "{{ title }} wird importiert…",
+                    "counter": "{{ processed }} von {{ total }} Aufgaben",
+                    "success": "Alle {{ count }} Aufgaben wurden erfolgreich importiert.",
+                    "summary": "{{ imported }} von {{ total }} Aufgaben wurden importiert.",
+                    "incompleteHeader": "Konnten nicht vollständig importiert werden. Bitte überprüfe diese Aufgaben und entferne sie gegebenenfalls:",
+                    "skippedHeader": "Übersprungen (nicht importiert):",
+                    "dismiss": "Verstanden"
+                }
             },
             "testRun": {
                 "testRun": "Testlauf",

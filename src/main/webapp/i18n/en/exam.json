@@ -547,8 +547,17 @@
             },
             "import": {
                 "search": "Search for exam",
-                "someExercisesSkipped": "Some exercises could not be imported and were skipped: {{ param }}",
-                "someExercisesIncomplete": "Some exercises could not be fully imported and may be incomplete. Please review them and remove them if necessary: {{ param }}"
+                "progress": {
+                    "title": "Importing exam",
+                    "preparing": "Preparing the import…",
+                    "importing": "Importing {{ title }}…",
+                    "counter": "{{ processed }} of {{ total }} exercises",
+                    "success": "All {{ count }} exercises were imported successfully.",
+                    "summary": "{{ imported }} of {{ total }} exercises were imported.",
+                    "incompleteHeader": "Could not be fully imported. Please review these exercises and remove them if necessary:",
+                    "skippedHeader": "Skipped (not imported):",
+                    "dismiss": "Got it"
+                }
             },
             "testRun": {
                 "testRun": "Test Run",

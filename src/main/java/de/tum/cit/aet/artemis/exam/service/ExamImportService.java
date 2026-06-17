@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -85,13 +86,15 @@ public class ExamImportService {
 
     private final Optional<SearchableEntityWeaviateService> searchableItemWeaviateService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService,
-            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService, WebsocketMessagingService websocketMessagingService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -107,6 +110,20 @@ public class ExamImportService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.channelService = channelService;
         this.searchableItemWeaviateService = searchableItemWeaviateService;
+        this.websocketMessagingService = websocketMessagingService;
+    }
+
+    /**
+     * Counts the total number of exercises across the given exercise groups (used to report import progress).
+     *
+     * @param exerciseGroups the exercise groups to count exercises in
+     * @return the total number of exercises
+     */
+    private static int countExercises(List<ExerciseGroup> exerciseGroups) {
+        if (exerciseGroups == null) {
+            return 0;
+        }
+        return exerciseGroups.stream().mapToInt(group -> group.getExercises() == null ? 0 : group.getExercises().size()).sum();
     }
 
     /**
@@ -117,6 +134,20 @@ public class ExamImportService {
      * @return the result of the import, containing the copied exam and the titles of any exercises that could not be imported
      */
     public ExamImportResultDTO importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
+        return importExamWithExercises(examToCopy, targetCourseId, null, null);
+    }
+
+    /**
+     * Imports the given Exam with ExerciseGroups and Exercises to the given target Course, reporting live progress to the importing user over a websocket.
+     *
+     * @param examToCopy     the exam which should be copied together with exercise groups and exercises
+     * @param targetCourseId the course to which the exam should be imported
+     * @param importId       a client-supplied id identifying this import (used as the websocket progress channel), or {@code null} to disable progress reporting
+     * @param userLogin      the login of the importing user (progress is sent only to them), or {@code null} to disable progress reporting
+     * @return the result of the import, containing the copied exam and the titles of any exercises that could not be imported
+     */
+    public ExamImportResultDTO importExamWithExercises(Exam examToCopy, long targetCourseId, String importId, String userLogin) throws IOException {
+        ExamImportProgressNotifier progressNotifier = new ExamImportProgressNotifier(websocketMessagingService, userLogin, importId);
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
@@ -124,6 +155,7 @@ public class ExamImportService {
 
         // 1st: Save the exam without exercises to the database and create a new channel for the exam
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
+        progressNotifier.start(countExercises(exerciseGroupsToCopy));
         examToCopy.setExerciseGroups(new ArrayList<>());
         Exam examCopied = createCopyOfExamWithoutConductionSpecificAttributes(examToCopy, targetCourse);
 
@@ -136,13 +168,14 @@ public class ExamImportService {
         // persistence context rollback-only after the first failed exercise, breaking all subsequent persistence calls.
         List<String> skippedExerciseTitles = new ArrayList<>();
         List<String> incompleteExerciseTitles = new ArrayList<>();
-        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied, skippedExerciseTitles, incompleteExerciseTitles);
+        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied, skippedExerciseTitles, incompleteExerciseTitles, progressNotifier);
         channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
 
         if (!skippedExerciseTitles.isEmpty() || !incompleteExerciseTitles.isEmpty()) {
             log.warn("Imported exam {} into course {}; skipped exercises (not imported): {}; incomplete exercises (may need review): {}", examCopied.getId(), targetCourseId,
                     skippedExerciseTitles, incompleteExerciseTitles);
         }
+        progressNotifier.finished(skippedExerciseTitles, incompleteExerciseTitles);
 
         Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
 
@@ -166,6 +199,24 @@ public class ExamImportService {
      */
     public ExerciseGroupImportResultDTO importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId)
             throws IOException {
+        return importExerciseGroupsWithExercisesToExistingExam(exerciseGroupsToCopy, targetExamId, courseId, null, null);
+    }
+
+    /**
+     * Imports the given ExerciseGroups with exercises to the given exam, reporting live progress to the importing user over a websocket.
+     *
+     * @param exerciseGroupsToCopy the Exercise Groups to be imported
+     * @param targetExamId         the target exam id
+     * @param courseId             the associated course of the exam
+     * @param importId             a client-supplied id identifying this import (used as the websocket progress channel), or {@code null} to disable progress reporting
+     * @param userLogin            the login of the importing user (progress is sent only to them), or {@code null} to disable progress reporting
+     * @return the result of the import, containing all Exercise Groups of the target exam and the titles of any exercises that could not be imported
+     */
+    public ExerciseGroupImportResultDTO importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId, String importId,
+            String userLogin) throws IOException {
+        ExamImportProgressNotifier progressNotifier = new ExamImportProgressNotifier(websocketMessagingService, userLogin, importId);
+        progressNotifier.start(countExercises(exerciseGroupsToCopy));
+
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
         preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
@@ -177,11 +228,12 @@ public class ExamImportService {
         // as either skipped (nothing persisted) or incomplete (may have left a partial exercise that needs review).
         List<String> skippedExerciseTitles = new ArrayList<>();
         List<String> incompleteExerciseTitles = new ArrayList<>();
-        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam, skippedExerciseTitles, incompleteExerciseTitles);
+        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam, skippedExerciseTitles, incompleteExerciseTitles, progressNotifier);
         if (!skippedExerciseTitles.isEmpty() || !incompleteExerciseTitles.isEmpty()) {
             log.warn("Imported exercise groups into exam {}; skipped exercises (not imported): {}; incomplete exercises (may need review): {}", targetExamId, skippedExerciseTitles,
                     incompleteExerciseTitles);
         }
+        progressNotifier.finished(skippedExerciseTitles, incompleteExerciseTitles);
 
         Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 
@@ -290,9 +342,10 @@ public class ExamImportService {
      * @param targetExam               the new exam to which the new exerciseGroups should be linked
      * @param skippedExerciseTitles    collects titles of exercises that were cleanly skipped (nothing persisted)
      * @param incompleteExerciseTitles collects titles of exercises that failed partway and may be incomplete (need review)
+     * @param progressNotifier         reports live import progress per exercise to the importing user (no-op when nobody is listening)
      */
     private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam, List<String> skippedExerciseTitles,
-            List<String> incompleteExerciseTitles) throws IOException {
+            List<String> incompleteExerciseTitles, ExamImportProgressNotifier progressNotifier) throws IOException {
         // Only exercise groups with at least one exercise should be imported.
         List<ExerciseGroup> filteredExerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
         // If no exercise group is existent, we can aboard the process
@@ -318,7 +371,8 @@ public class ExamImportService {
                 indexTo);
 
         for (int index = 0; index < exerciseGroupsCopied.size(); index++) {
-            addExercisesToExerciseGroup(filteredExerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index), skippedExerciseTitles, incompleteExerciseTitles);
+            addExercisesToExerciseGroup(filteredExerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index), skippedExerciseTitles, incompleteExerciseTitles,
+                    progressNotifier);
         }
 
         // Remove exercise groups that ended up empty because all of their exercises failed to import. An empty exercise
@@ -352,12 +406,14 @@ public class ExamImportService {
      * @param exerciseGroupCopied      the copied exercise group, i.e. the ones attached to the new exam
      * @param skippedExerciseTitles    collects titles of exercises that were cleanly skipped (nothing persisted)
      * @param incompleteExerciseTitles collects titles of exercises that failed partway and may be incomplete (need review)
+     * @param progressNotifier         reports live import progress per exercise to the importing user (no-op when nobody is listening)
      */
     private void addExercisesToExerciseGroup(ExerciseGroup exerciseGroupToCopy, ExerciseGroup exerciseGroupCopied, List<String> skippedExerciseTitles,
-            List<String> incompleteExerciseTitles) {
+            List<String> incompleteExerciseTitles, ExamImportProgressNotifier progressNotifier) {
         // Copy each exercise within the existing Exercise Group
         for (Exercise exerciseToCopy : exerciseGroupToCopy.getExercises()) {
             final String exerciseTitle = exerciseToCopy.getTitle();
+            progressNotifier.importing(exerciseTitle);
             try {
                 // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
                 exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
@@ -435,12 +491,14 @@ public class ExamImportService {
                 // dropping it, otherwise the caller would report a full success while exercises went missing.
                 if (exerciseCopied.isPresent()) {
                     exerciseGroupCopied.addExercise(exerciseCopied.get());
+                    progressNotifier.imported(exerciseTitle);
                 }
                 else {
                     // The import returned no exercise without persisting anything (module unavailable or source exercise deleted): a clean skip.
                     log.warn("Could not import exercise '{}' during exam import (source exercise unavailable). Skipping it and continuing with the remaining exercises.",
                             exerciseTitle);
                     skippedExerciseTitles.add(failedExerciseLabel(exerciseTitle));
+                    progressNotifier.skipped(exerciseTitle);
                 }
             }
             catch (Exception exception) {
@@ -449,6 +507,7 @@ public class ExamImportService {
                 // than as a clean skip, and continue so that a single problematic exercise does not abort the whole exam import.
                 log.error("Failed to import exercise '{}' during exam import. It may be incompletely imported; continuing with the remaining exercises.", exerciseTitle, exception);
                 incompleteExerciseTitles.add(failedExerciseLabel(exerciseTitle));
+                progressNotifier.incomplete(exerciseTitle);
             }
         }
         exerciseGroupRepository.save(exerciseGroupCopied);

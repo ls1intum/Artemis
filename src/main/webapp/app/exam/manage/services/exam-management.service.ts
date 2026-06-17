@@ -28,8 +28,9 @@ import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model'
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
-import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
+import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -39,7 +40,7 @@ export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
-    private alertService = inject(AlertService);
+    private websocketService = inject(WebsocketService);
 
     public resourceUrl = 'api/exam/courses';
     public adminResourceUrl = 'api/exam/admin/courses';
@@ -91,46 +92,55 @@ export class ExamManagementService {
     }
 
     /**
-     * Imports an exam on the server using a POST request.
-     * @param courseId The course id into which the exam should be imported
-     * @param exam The exam with exercises to import.
-     */
-    import(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
-        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { observe: 'response' }).pipe(
-            // surface which exercises were skipped or only partially imported, then unwrap the created exam so callers see the usual response
-            tap((res) => this.showImportFeedback(res.body)),
-            map((res) => this.processExamResponseFromServer(res.clone({ body: res.body?.exam }) as EntityResponseType)),
-        );
-    }
-
-    /**
-     * Imports an exam on the server using a PUT request.
-     * @param courseId The course id into which the exercise groups should be imported
-     * @param examId The exam id to which the exercise groups should be added
-     * @param exerciseGroups the exercise groups to be added to the exam
-     */
-    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' }).pipe(
-            // surface which exercises were skipped or only partially imported, then unwrap the exercise groups so callers see the usual response
-            tap((res) => this.showImportFeedback(res.body)),
-            map((res) => res.clone({ body: res.body?.exerciseGroups ?? [] })),
-        );
-    }
-
-    /**
-     * Shows feedback about exercises that could not be (fully) imported: skipped exercises (nothing persisted) as an info
-     * message, and incomplete exercises (failed partway, may need review/removal) as a warning.
+     * Imports an exam together with its exercises on the server using a POST request.
+     * <p>
+     * The returned response carries the full {@link ExamImportResultDTO}: the created exam plus the titles of any
+     * exercises that were skipped or only incompletely imported. The import progress dialog renders these (and the live
+     * websocket progress for the given {@code importId}) instead of a transient toast.
      *
-     * @param result the import result returned by the server (may be null)
+     * @param courseId the course id into which the exam should be imported
+     * @param exam the exam with exercises to import
+     * @param importId a client-generated id correlating this import with its websocket progress channel
      */
-    private showImportFeedback(result: ExamImportResultDTO | ExerciseGroupImportResultDTO | null): void {
-        if (result?.skippedExercises?.length) {
-            this.alertService.info('artemisApp.examManagement.import.someExercisesSkipped', { param: result.skippedExercises.join(', ') });
-        }
-        if (result?.incompleteExercises?.length) {
-            this.alertService.warning('artemisApp.examManagement.import.someExercisesIncomplete', { param: result.incompleteExercises.join(', ') });
-        }
+    import(courseId: number, exam: Exam, importId: string): Observable<HttpResponse<ExamImportResultDTO>> {
+        const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
+        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { params: { importId }, observe: 'response' });
+    }
+
+    /**
+     * Imports exercise groups into an existing exam on the server using a POST request.
+     * <p>
+     * The response carries the full {@link ExerciseGroupImportResultDTO} (the exam's exercise groups plus the skipped /
+     * incomplete exercise titles) so the import progress dialog can show the outcome.
+     *
+     * @param courseId the course id into which the exercise groups should be imported
+     * @param examId the exam id to which the exercise groups should be added
+     * @param exerciseGroups the exercise groups to be added to the exam
+     * @param importId a client-generated id correlating this import with its websocket progress channel
+     */
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[], importId: string): Observable<HttpResponse<ExerciseGroupImportResultDTO>> {
+        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, {
+            params: { importId },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Generates a unique id for an import operation. The same id is sent to the server (so it emits progress on a matching
+     * channel) and used to subscribe to that channel via {@link subscribeToImportProgress}.
+     */
+    generateImportId(): string {
+        return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    /**
+     * Subscribes to the live progress of the import identified by {@code importId}. The server sends one
+     * {@link ExamImportProgress} message per exercise transition and a terminal message when the import finishes.
+     *
+     * @param importId the id returned by {@link generateImportId} and passed to the import request
+     */
+    subscribeToImportProgress(importId: string): Observable<ExamImportProgress> {
+        return this.websocketService.subscribe<ExamImportProgress>(`/user/topic/exam-import/${importId}`);
     }
 
     /**

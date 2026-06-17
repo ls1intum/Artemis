@@ -3,7 +3,7 @@ import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
@@ -15,6 +15,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
+import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -25,11 +26,24 @@ export interface ExamImportDialogData {
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
-    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        NgbHighlight,
+        ButtonComponent,
+        NgbPagination,
+        ExamExerciseImportComponent,
+        ExamImportProgressDialogComponent,
+    ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
+
+    examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     subsequentExerciseGroupSelection = signal<boolean>(false);
@@ -98,13 +112,18 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
             // The child component provides us with the selected exercise groups and exercises
             const exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
             this.exam.set({ ...currentExam, exerciseGroups });
-            this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!).subscribe({
-                next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
+            // Run the import behind a progress dialog that shows live websocket progress and a persistent, must-dismiss
+            // summary of any skipped or incomplete exercises (so the editor cannot overlook them).
+            const importId = this.examManagementService.generateImportId();
+            const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!, importId);
+            this.examImportProgressDialog()
+                .runImport(importId, request$)
+                .then((response: HttpResponse<ExerciseGroupImportResultDTO>) => {
                     this.isImportingExercises.set(false);
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
-                    this.dialogRef?.close(httpResponse.body!);
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
+                    this.dialogRef?.close(response.body?.exerciseGroups ?? []);
+                })
+                .catch((httpErrorResponse: HttpErrorResponse) => {
                     // Case: Server-Site Validation of the Programming Exercises failed
                     const errorKey = httpErrorResponse.error?.errorKey;
                     if (errorKey === 'invalidKey') {
@@ -122,8 +141,7 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                         onError(this.alertService, httpErrorResponse);
                     }
                     this.isImportingExercises.set(false);
-                },
-            });
+                });
         }
     }
 
