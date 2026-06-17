@@ -7,9 +7,12 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -73,6 +76,27 @@ class IrisAdminDashboardServiceTest {
         assertThat(overview.noResponseRate()).isEqualTo(50.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(1);
         assertThat(overview.noResponseSessionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void mapResults_convertsNativeTemporalTypesFromBothDatabases() {
+        // Native queries bypass JPA conversion and return raw JDBC temporal types that differ per DBMS:
+        // PostgreSQL yields LocalDateTime (timestamp) / OffsetDateTime (timestamptz), MySQL yields java.sql.Timestamp.
+        // All represent the same UTC instant and must map identically (regression test for the dashboard 500 on real data).
+        Instant expected = Instant.parse("2026-05-26T10:00:00Z");
+        LocalDateTime asLocalDateTime = LocalDateTime.ofInstant(expected, ZoneOffset.UTC);
+        Timestamp asTimestamp = Timestamp.from(expected);
+        OffsetDateTime asOffsetDateTime = expected.atOffset(ZoneOffset.UTC);
+
+        var rows = List.<Object[]>of(new Object[] { 1L, 100L, asLocalDateTime, "LLM", asLocalDateTime, "CHAT" }, new Object[] { 2L, 101L, asTimestamp, null, null, "CHAT" },
+                new Object[] { 3L, 102L, asOffsetDateTime, "LLM", asOffsetDateTime, "CHAT" }, new Object[] { 4L, 103L, expected, null, null, "CHAT" });
+
+        var mapped = service.mapResults(rows);
+
+        assertThat(mapped).hasSize(4);
+        assertThat(mapped).allSatisfy(dto -> assertThat(dto.sentAt()).isEqualTo(expected));
+        assertThat(mapped.get(0).nextSentAt()).isEqualTo(expected);
+        assertThat(mapped.get(1).nextSentAt()).isNull();
     }
 
     @Test

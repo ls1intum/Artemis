@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -245,7 +247,8 @@ public class IrisAdminDashboardService {
 
     /**
      * Maps native query result rows to {@link IrisDashboardUserMessageResultDTO}.
-     * Handles both {@link java.sql.Timestamp} and {@link Instant} for date columns (cross-DB compatibility).
+     * Date columns are normalized to {@link Instant} via {@link #toInstant(Object)}, which handles the differing JDBC
+     * temporal types returned by PostgreSQL and MySQL (cross-DBMS compatibility).
      *
      * @param rows the raw rows from the native query
      * @return the mapped DTOs
@@ -264,14 +267,27 @@ public class IrisAdminDashboardService {
         return results;
     }
 
+    /**
+     * Converts a temporal value returned by a native query to an {@link Instant}, normalizing to UTC.
+     * <p>
+     * Native queries bypass JPA type conversion and return raw JDBC types, which differ per DBMS: PostgreSQL maps a
+     * {@code timestamp without time zone} column to {@link LocalDateTime} (and {@code timestamptz} to {@link OffsetDateTime}),
+     * while MySQL returns {@link Timestamp}; some setups yield {@link Instant} directly. Artemis persists these columns in UTC,
+     * so a {@link LocalDateTime} is interpreted as UTC. Handling all of these keeps the dashboard queries working on both
+     * supported databases.
+     *
+     * @param value the temporal value from a native query row (must not be {@code null})
+     * @return the corresponding instant
+     */
     private static Instant toInstant(Object value) {
-        if (value instanceof Instant instant) {
-            return instant;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toInstant();
-        }
-        throw new IllegalArgumentException("Cannot convert to Instant: " + value.getClass().getName());
+        return switch (value) {
+            case Instant instant -> instant;
+            case Timestamp timestamp -> timestamp.toInstant();
+            case LocalDateTime localDateTime -> localDateTime.toInstant(ZoneOffset.UTC);
+            case OffsetDateTime offsetDateTime -> offsetDateTime.toInstant();
+            case null -> throw new IllegalArgumentException("Cannot convert null to Instant");
+            default -> throw new IllegalArgumentException("Cannot convert to Instant: " + value.getClass().getName());
+        };
     }
 
     // -- Time Series ------------------------------------------------------------
