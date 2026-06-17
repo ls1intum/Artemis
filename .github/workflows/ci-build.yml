@@ -1,0 +1,239 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        description: 'Head branch/ref the build represents (used for the release-image checkout ref).'
+        required: true
+        type: string
+      commit_sha:
+        description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
+        required: true
+        type: string
+      is_pr:
+        description: 'True when the umbrella was triggered by pull_request.'
+        required: true
+        type: boolean
+      is_internal_pr:
+        description: 'True only for PRs from branches inside ls1intum/Artemis (fork PRs cannot push to GHCR).'
+        required: true
+        type: boolean
+      is_release:
+        description: 'True when the umbrella was triggered by a release.'
+        required: true
+        type: boolean
+      is_release_build:
+        description: 'True for release-eligible builds (release events + develop/main/release-branch pushes). Gates -Psbom. Computed once in ci.yml so the event/ref logic lives in a single place.'
+        required: true
+        type: boolean
+      release_tag:
+        description: 'Tag name of the release. Empty when is_release is false.'
+        required: true
+        type: string
+
+# Default-deny at workflow level; each job grants only what it needs.
+permissions: {}
+
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  build-war:
+    name: Build .war artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      # Read-only: the release-asset upload (which needs `contents: write`) is the separate
+      # `upload-release` job below, so the write token never sits on this every-PR build.
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Angular Client
+        # Build the Angular client separately so that Node.js/esbuild get full system
+        # memory without competing with the Gradle JVM (which reserves up to 4g).
+        # --optimization=false works around an esbuild crash during script optimization.
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+      - name: Build .war
+        # Skip the webapp Gradle task since the Angular client was already built above.
+        #
+        # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
+        # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
+        # (computed in ci.yml: release events + develop/main/release-branch pushes). PRs and
+        # feature branches ship a WAR without SBOM — AdminSbomResource returns 404 and the admin
+        # UI shows an info banner. The multi-arch docker-release image always builds with -Psbom
+        # (see the Dockerfile); docker-pr reuses this WAR via external_builder, inheriting the
+        # no-SBOM PR build.
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Artemis.war
+          path: build/libs/Artemis-*.war
+          if-no-files-found: error
+
+  # Release-asset upload, split out so it is the ONLY job holding `contents: write` (mirrors the
+  # save-docker-tag split). Downloads the WAR `build-war` produced and attaches it to the release.
+  upload-release:
+    name: Upload Release Artifact
+    needs: build-war
+    if: ${{ inputs.is_release }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write  # `gh release upload`
+    steps:
+      - name: Download .war artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Upload to the GitHub release
+        # Route the tag through env to keep it out of shell-injection paths.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -Eeuo pipefail
+          if ! [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Refusing to upload release artifact: tag '$RELEASE_TAG' is not a valid version."
+            exit 1
+          fi
+          mv "build/libs/Artemis-${RELEASE_TAG}.war" /tmp/Artemis.war
+          gh release upload "$RELEASE_TAG" /tmp/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
+
+  # Fast PR path: single-arch (linux/amd64) image that reuses the .war from `build-war` via the
+  # Dockerfile's `external_builder` stage, skipping the duplicate Angular + Gradle build the
+  # multi-arch reusable would run in-image. Internal PRs only — fork PRs can't push to GHCR.
+  docker-pr:
+    name: Build and Push Docker Image (PR, amd64)
+    needs: build-war
+    if: ${{ inputs.is_pr && inputs.is_internal_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Download .war artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd  # v4.0.0
+      - name: Log in to GHCR
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf  # v6.0.0
+        with:
+          images: ghcr.io/ls1intum/artemis
+          tags: |
+            type=ref,event=pr
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
+        with:
+          context: .
+          file: ./docker/artemis/Dockerfile
+          platforms: linux/amd64
+          # Skip the in-image .war build; COPY the artifact produced by `build-war` instead.
+          build-args: WAR_FILE_STAGE=external_builder
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # Consumed by .github/actions/e2e-setup, which downloads the `docker-tag` artifact
+      # from the current parent run and pulls ghcr.io/ls1intum/artemis:<tag>.
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ steps.meta.outputs.version }}
+        run: |
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+          if-no-files-found: error
+
+  # Release / default-branch path: multi-arch publish via the shared reusable workflow.
+  # The reusable workflow runs its own checkout and cannot see `build-war`'s artifact,
+  # so it rebuilds the .war inside the image. This path only fires for push/release.
+  docker-release:
+    name: Build and Push Docker Image
+    if: ${{ !inputs.is_pr }}
+    # The reusable only checks out and pushes to GHCR via GITHUB_TOKEN (no attestation/release).
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
+    with:
+      ref: ${{ inputs.branch_name }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      # `type=ref,event=tag` is the release tag (e.g. "1.2.3"); `event=branch` covers
+      # `develop`/`main`/`release/*` pushes; `type=sha` guarantees at least one tag even
+      # on edge events so `image_tag` is never empty (downstream e2e-setup pulls by tag).
+      tags: |
+        type=ref,event=tag
+        type=ref,event=branch
+        type=sha,prefix=sha-
+
+  # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
+  # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced
+  # the image.
+  save-docker-tag:
+    name: Save Docker Image Tag
+    needs: docker-release
+    if: ${{ !inputs.is_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Save Docker tag to file
+        env:
+          DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
+        run: |
+          printf '%s' "$DOCKER_TAG" > docker-tag.txt
+          echo "Using Docker tag: $DOCKER_TAG"
+      - name: Upload Docker tag as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+          if-no-files-found: error
