@@ -1,8 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
@@ -18,7 +17,6 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
@@ -44,7 +42,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -52,9 +49,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
     imports: [
-        HeaderParticipationPageComponent,
-        ButtonComponent,
-        RouterLink,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         TranslateDirective,
@@ -68,7 +62,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         UpperCasePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
-        ExerciseSubmitButtonComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -81,7 +74,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
-    readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
@@ -89,7 +81,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     participationId = input<number>();
-    displayHeader = input<boolean>(true);
     expandProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
     inputSubmission = input<TextSubmission>();

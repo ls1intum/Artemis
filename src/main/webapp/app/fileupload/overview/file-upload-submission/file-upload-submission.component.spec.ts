@@ -32,7 +32,6 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { FileService } from 'app/foundation/service/file.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -156,7 +155,6 @@ describe('FileUploadSubmissionComponent', () => {
             .overrideComponent(FileUploadSubmissionComponent, {
                 remove: {
                     imports: [
-                        HeaderParticipationPageComponent,
                         ResizeableContainerComponent,
                         UnifiedFeedbackComponent,
                         RatingComponent,
@@ -169,7 +167,6 @@ describe('FileUploadSubmissionComponent', () => {
                 },
                 add: {
                     imports: [
-                        MockComponent(HeaderParticipationPageComponent),
                         MockComponent(ResizeableContainerComponent),
                         MockComponent(UnifiedFeedbackComponent),
                         MockComponent(RatingComponent),

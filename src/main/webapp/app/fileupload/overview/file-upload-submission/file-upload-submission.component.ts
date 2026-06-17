@@ -4,7 +4,6 @@ import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -17,7 +16,6 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -27,7 +25,6 @@ import { onError } from 'app/foundation/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
@@ -44,8 +41,6 @@ import { firstValueFrom, map } from 'rxjs';
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
     imports: [
-        HeaderParticipationPageComponent,
-        ButtonComponent,
         ResizeableContainerComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
@@ -74,7 +69,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     readonly participationId = input<number>();
-    readonly displayHeader = input(true);
     readonly expandProblemStatement = input(true);
     readonly showProblemStatement = input(true);
     readonly displayedInExamSummary = input(false);
@@ -169,7 +163,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     });
 
     faDownload = faDownload;
-    readonly ButtonType = ButtonType;
 
     // Icons
     farListAlt = faListAlt;

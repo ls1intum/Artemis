@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,6 @@ import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessme
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -31,11 +30,9 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -50,7 +47,6 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
@@ -58,9 +54,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
     imports: [
-        HeaderParticipationPageComponent,
-        ButtonComponent,
-        RouterLink,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         FullscreenComponent,
@@ -71,9 +64,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TranslateDirective,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
-        ExerciseSubmitButtonComponent,
         UnifiedFeedbackComponent,
     ],
 })
@@ -88,7 +79,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private translateService = inject(TranslateService);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
-    readonly ButtonType = ButtonType;
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
 

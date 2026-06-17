@@ -1,42 +1,4 @@
 <div [id]="'exercise-' + modelingExercise()?.id">
-    @if (displayHeader() && examMode()) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader()" [participation]="modelingParticipationHeader()">
-            <span pagetitle>
-                {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
-                <span class="font-weight-normal">{{ examMode() ? modelingExercise()?.exerciseGroup?.title : modelingExercise()?.title }}</span>
-            </span>
-            <ng-container submitbutton>
-                @if (isOwnerOfParticipation()) {
-                    @if (isFeedbackView()) {
-                        @if (isActive || !modelingExercise().dueDate) {
-                            <jhi-button
-                                id="Continue"
-                                [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course()?.id, 'exercises', 'modeling-exercises', modelingExercise()?.id!, 'participate', participation()?.id!]"
-                            />
-                        }
-                    }
-                }
-                @if (!isFeedbackView()) {
-                    <jhi-exercise-submit-button
-                        id="submit"
-                        class="submission-button"
-                        [exercise]="modelingExercise()"
-                        [disabled]="(!examMode() && !isActive && !isLate()) || !submission() || (!!result() && !isAutomaticResult) || (isLate() && !!submission().submitted)"
-                        [title]="!isLate() ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                        (onSubmit)="submit()"
-                        [isLoading]="isSaving()"
-                        [isSubmitted]="!!submission()?.submitted"
-                        [btnType]="!isLate() ? ButtonType.PRIMARY : ButtonType.WARNING"
-                        [tooltip]="submitButtonTooltip"
-                        [isGeneratingFeedback]="isGeneratingFeedback()"
-                        (generatingFeedback)="isGeneratingFeedback.set(true)"
-                    />
-                }
-            </ng-container>
-        </jhi-header-participation-page>
-    }
-
     @if (modelingExercise()) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"

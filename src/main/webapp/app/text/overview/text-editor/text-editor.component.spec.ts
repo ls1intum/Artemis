@@ -34,7 +34,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -57,12 +56,6 @@ import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
 // Mock components to avoid complex dependencies
-@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
-class MockHeaderParticipationPageComponent {
-    exercise = input<any>();
-    participation = input<any>();
-}
-
 @Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
 class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
@@ -132,10 +125,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
                 },
                 add: {
-                    imports: [MockHeaderParticipationPageComponent, MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
+                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
                 },
             })
             .compileComponents();
@@ -577,29 +570,6 @@ describe('TextEditorComponent', () => {
 
         const textarea = fixture.debugElement.query(By.css('#text-editor'));
         expect(textarea).toBeTruthy();
-    });
-
-    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
-        comp.isReadOnlyWithShowResult.set(true);
-        comp.textExercise.set(textExercise);
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeFalsy();
-    });
-
-    it('should render the submit button when isReadOnlyWithShowResult is false and in exam mode', () => {
-        comp.isOwnerOfParticipation.set(true);
-        comp.isReadOnlyWithShowResult.set(false);
-        comp.isAlwaysActive = true;
-        comp.examMode.set(true);
-        comp.textExercise.set(textExercise);
-        comp.submission.set({ id: 5, submitted: true });
-
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeTruthy();
     });
 
     it('should destroy', () => {
