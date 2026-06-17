@@ -26,7 +26,6 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -172,7 +171,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),

@@ -8,14 +8,6 @@
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation()) {
                     @if (isFeedbackView()) {
-                        @if ((sortedSubmissionHistory()?.length || 0) > 1) {
-                            <jhi-button
-                                id="toggleTimeline"
-                                [icon]="faTimeline"
-                                [title]="showResultHistory() ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                                (click)="showResultHistory.set(!showResultHistory())"
-                            />
-                        }
                         @if (isActive || !modelingExercise().dueDate) {
                             <jhi-button
                                 id="Continue"
@@ -43,19 +35,6 @@
                 }
             </ng-container>
         </jhi-header-participation-page>
-    }
-
-    @if (isFeedbackView() && showResultHistory()) {
-        <div class="mb-4">
-            <div id="result-history" class="row mb-2">
-                <jhi-result-history
-                    [results]="sortedResultHistory()"
-                    [exercise]="modelingExercise()"
-                    [participationInput]="participation()"
-                    [selectedResultId]="submission().latestResult?.id!"
-                />
-            </div>
-        </div>
     }
 
     @if (modelingExercise()) {

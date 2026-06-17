@@ -52,7 +52,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
@@ -71,14 +70,6 @@ class MockRequestFeedbackButtonComponent {
     hasAthenaResultForLatestSubmission = input<any>();
     isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
-}
-
-@Component({ selector: 'jhi-result-history', template: '', standalone: true })
-class MockResultHistoryComponent {
-    results = input<any>();
-    exercise = input<any>();
-    participationInput = input<any>();
-    selectedResultId = input<any>();
 }
 
 @Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
@@ -141,16 +132,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
                 },
                 add: {
-                    imports: [
-                        MockHeaderParticipationPageComponent,
-                        MockRequestFeedbackButtonComponent,
-                        MockResultHistoryComponent,
-                        MockIrisExerciseChatbotButtonComponent,
-                        FormsModule,
-                    ],
+                    imports: [MockHeaderParticipationPageComponent, MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
                 },
             })
             .compileComponents();

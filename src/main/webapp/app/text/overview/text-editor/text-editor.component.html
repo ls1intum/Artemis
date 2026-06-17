@@ -8,14 +8,6 @@
             <ng-container class="btn-group gap-1" submitbutton>
                 @if (isOwnerOfParticipation()) {
                     @if (isReadOnlyWithShowResult()) {
-                        @if ((sortedHistoryResults()?.length || 0) > 1) {
-                            <jhi-button
-                                id="toggleTimeline"
-                                [icon]="faTimeline"
-                                [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                                (click)="showHistory = !showHistory"
-                            />
-                        }
                         @if (isActive || !textExercise().dueDate) {
                             <jhi-button
                                 id="Continue"
@@ -43,20 +35,6 @@
             </ng-container>
         </jhi-header-participation-page>
     }
-    <div class="mb-2">
-        @if (isReadOnlyWithShowResult()) {
-            @if (showHistory) {
-                <div id="result-history" class="row mb-2">
-                    <jhi-result-history
-                        [results]="sortedHistoryResults()"
-                        [exercise]="textExercise()"
-                        [participationInput]="participation()"
-                        [selectedResultId]="submission().latestResult?.id!"
-                    />
-                </div>
-            }
-        }
-    </div>
 
     <!--resizable container-->
     @if (textExercise()) {

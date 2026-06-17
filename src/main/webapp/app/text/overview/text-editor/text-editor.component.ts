@@ -29,10 +29,9 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCircleNotch, faEye } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -56,7 +55,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         HeaderParticipationPageComponent,
         ButtonComponent,
         RouterLink,
-        ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         TranslateDirective,
@@ -127,7 +125,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
-    faTimeline = faTimeline;
     faEye = faEye;
 
     // used in the html template
@@ -136,7 +133,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participationUpdateListener: Subscription;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
-    showHistory = false;
     submissionId: number | undefined;
     resultId: number | undefined;
 

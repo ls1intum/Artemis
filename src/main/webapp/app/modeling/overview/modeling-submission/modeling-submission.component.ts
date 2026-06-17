@@ -3,7 +3,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, si
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -16,7 +16,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -62,7 +61,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         HeaderParticipationPageComponent,
         ButtonComponent,
         RouterLink,
-        ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         FullscreenComponent,
@@ -163,11 +161,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     faGripLines = faGripLines;
     farListAlt = faListAlt;
     faExclamationTriangle = faExclamationTriangle;
-    faTimeline = faTimeline;
 
     // mode
     readonly isFeedbackView = signal(false);
-    readonly showResultHistory = signal(false);
 
     private routeParams = toSignal(this.route.params);
 
