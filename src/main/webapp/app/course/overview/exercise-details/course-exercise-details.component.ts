@@ -468,7 +468,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const incomingSubmissions = participation.submissions ?? [];
                     const incomingIds = new Set(incomingSubmissions.map((s) => s.id));
                     const mergedSubmissions = [...existingSubmissions.filter((s) => !incomingIds.has(s.id)), ...incomingSubmissions];
-                    return { ...participation, submissions: mergedSubmissions };
+                    return Object.assign({}, participation, { submissions: mergedSubmissions });
                 }),
             );
         } else {
