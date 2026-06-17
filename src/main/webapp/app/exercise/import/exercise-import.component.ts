@@ -1,4 +1,4 @@
-import { Component, Injector, OnInit, computed, inject, input } from '@angular/core';
+import { Component, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -47,8 +47,8 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         () => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.programmingLanguage ?? this.programmingLanguage(),
     );
 
-    isCourseFilter = true;
-    isExamFilter = true;
+    readonly isCourseFilter = signal(true);
+    readonly isExamFilter = signal(true);
 
     titleKey: string;
 
@@ -98,12 +98,12 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     protected createOptions(): object {
-        return { isCourseFilter: this.isCourseFilter, isExamFilter: this.isExamFilter, programmingLanguage: this.selectedProgrammingLanguage() };
+        return { isCourseFilter: this.isCourseFilter(), isExamFilter: this.isExamFilter(), programmingLanguage: this.selectedProgrammingLanguage() };
     }
 
     override set sortedColumn(sortedColumn: string) {
         if (sortedColumn === 'COURSE_TITLE') {
-            if (this.isExamFilter && !this.isCourseFilter) {
+            if (this.isExamFilter() && !this.isCourseFilter()) {
                 sortedColumn = 'EXAM_TITLE';
             }
             // sort by course / exam title is not possible if course and exam exercises are mixed
@@ -118,13 +118,13 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     onCourseFilterChange() {
-        this.isCourseFilter = !this.isCourseFilter;
+        this.isCourseFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }
 
     onExamFilterChange() {
-        this.isExamFilter = !this.isExamFilter;
+        this.isExamFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }

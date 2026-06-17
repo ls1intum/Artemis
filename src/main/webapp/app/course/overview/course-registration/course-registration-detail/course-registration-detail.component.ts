@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -18,18 +18,18 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    loading = false;
+    readonly loading = signal(false);
     courseId: number;
-    course: Course | undefined = undefined;
+    readonly course = signal<Course | undefined>(undefined);
     private paramSubscription: any;
 
     ngOnInit(): void {
-        this.loading = true;
+        this.loading.set(true);
         this.paramSubscription = this.route!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
-                this.course = res.body!;
-                this.loading = false;
+                this.course.set(res.body!);
+                this.loading.set(false);
             });
             this.redirectIfCourseIsFullyAccessible();
         });

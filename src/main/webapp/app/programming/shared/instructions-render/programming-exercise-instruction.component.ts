@@ -1,18 +1,19 @@
 import {
     ApplicationRef,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ComponentRef,
     EnvironmentInjector,
     OnDestroy,
     OnInit,
     ViewContainerRef,
+    afterNextRender,
     createComponent,
     effect,
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -67,7 +68,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
-    private cdr = inject(ChangeDetectorRef);
 
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
     readonly participation = input<Participation | undefined>(undefined);
@@ -87,25 +87,28 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private testCasesSubscription?: Subscription;
 
     protected isInitial = true;
-    protected isLoading: boolean;
-    latestResultValue?: Result;
+    // Backs the template's root @if. Must be a signal: it is flipped inside async subscribe
+    // callbacks, and while the loading branch is shown no other tracked signal is live in the
+    // template — a plain field write would never schedule the render that swaps the branches.
+    protected readonly isLoading = signal(false);
+    readonly latestResultValue = signal<Result | undefined>(undefined);
     // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
-    protected tasks: TaskArray;
+    protected readonly tasks = signal<TaskArray>(undefined!);
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
     private lastRenderedProblemStatement?: string;
 
     get latestResult() {
-        return this.latestResultValue;
+        return this.latestResultValue();
     }
 
     set latestResult(result: Result | undefined) {
-        this.latestResultValue = result;
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue);
+        this.latestResultValue.set(result);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue());
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    protected renderedMarkdown: SafeHtml | undefined;
+    protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -219,8 +222,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 }),
                 switchMap((participationHasChanged: boolean) => {
                     const currentExercise = this.exercise();
-                    if (!this.isLoading && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
-                        this.isLoading = true;
+                    if (!this.isLoading() && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
+                        this.isLoading.set(true);
                         return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
                                 this.problemStatement = problemStatement?.trim() || undefined;
@@ -233,18 +236,18 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                             tap(() => {
                                 this.updateMarkdown();
                                 this.isInitial = false;
-                                this.isLoading = false;
+                                this.isLoading.set(false);
                             }),
                         );
                     } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
                         // Re-assign latestResult to refresh singleton task/UML extension state.
-                        this.latestResult = this.latestResultValue;
+                        this.latestResult = this.latestResultValue();
                         this.problemStatement = currentExercise?.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise?.problemStatement;
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
                     } else if (currentExercise && this.problemStatementHasChangedFromLast()) {
-                        this.latestResult = this.latestResultValue;
+                        this.latestResult = this.latestResultValue();
                         this.problemStatement = currentExercise.problemStatement?.trim() || undefined;
                         this.lastSeenProblemStatement = currentExercise.problemStatement;
                         this.problemStatementUpdateSubject.next();
@@ -296,12 +299,16 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     /**
      * Render the markdown into html.
+     *
+     * @param force when true, re-render even if the problem statement is unchanged (bypasses the live-preview
+     *     optimization). Used when the rendered output must be rebuilt regardless of the problem statement, e.g. when an
+     *     exam exercise becomes visible again and its asynchronously injected PlantUML diagrams must be re-injected.
      */
-    updateMarkdown() {
+    updateMarkdown(force = false) {
         const exercise = this.exercise();
         // Skip re-render if problem statement hasn't changed (optimization for live preview)
         const currentProblemStatement = exercise?.problemStatement?.trim();
-        if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
+        if (!force && currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
             return;
         }
         this.lastRenderedProblemStatement = currentProblemStatement;
@@ -314,10 +321,28 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
-        this.latestResult = this.latestResultValue;
+        this.latestResult = this.latestResultValue();
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
+    }
+
+    /**
+     * Forces a re-render of the problem statement, bypassing the "unchanged problem statement" optimization in
+     * {@link updateMarkdown}.
+     *
+     * In exam mode an exercise's change detection is detached while it is hidden. If a render runs during that time
+     * (for example because the student rapidly switches between exercises before the asynchronous PlantUML/task
+     * injection has settled), the injection can target stale or detached DOM and the rendered diagram is lost. Calling
+     * this once the exercise becomes visible again re-runs the render and injection against the live DOM, reliably
+     * restoring the PlantUML diagrams.
+     *
+     * Uses the explicit force flag rather than resetting {@link lastRenderedProblemStatement}, so it re-renders even
+     * when the problem statement is undefined/empty (in that case resetting to undefined would still equal the current
+     * value and the optimization would wrongly skip the re-render).
+     */
+    forceReRenderProblemStatement() {
+        this.updateMarkdown(true);
     }
 
     /**
@@ -400,8 +425,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             // Differences between UMLs are ignored, and we only inject the current one (last callback)
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
@@ -409,34 +433,38 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             this.scheduleContentInjection(false);
         } else {
             // Clear the rendered markdown when problem statement is empty or whitespace-only
-            this.renderedMarkdown = undefined;
+            this.renderedMarkdown.set(undefined);
             this.injectableContentForMarkdownCallbacks = [];
-            this.cdr.markForCheck();
         }
     }
 
     /**
      * Schedules the injection of dynamic content (UML diagrams, task components) into the DOM.
-     * Uses setTimeout to ensure the DOM has been updated before injection.
+     * Uses afterNextRender so the injection runs only after the render pass triggered by the
+     * renderedMarkdown signal write has put the markdown into the DOM. A setTimeout(0) is NOT
+     * sufficient under zoneless: its ordering against the change-detection scheduler is undefined,
+     * so the callbacks could query for the task/UML container elements before they exist.
      * @param onlyLastCallback If true, only invokes the last callback (for diff mode where only current UML matters)
      */
     private scheduleContentInjection(onlyLastCallback: boolean): void {
-        setTimeout(() => {
-            if (onlyLastCallback) {
-                const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
-                if (lastCallback) {
-                    lastCallback();
+        afterNextRender(
+            () => {
+                if (onlyLastCallback) {
+                    const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
+                    if (lastCallback) {
+                        lastCallback();
+                    }
+                } else {
+                    this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
                 }
-            } else {
-                this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
-            }
-            this.injectTasksIntoDocument();
-        }, 0);
+                this.injectTasksIntoDocument();
+            },
+            { injector: this.injector },
+        );
     }
 
     addStylesForTables(markdownWithoutTasks: string): string | undefined {
@@ -462,21 +490,23 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             return problemStatementHtml;
         }
 
-        this.tasks = tasks
-            // check that all groups (full match, name, tests) are present
-            .filter((testMatch) => testMatch?.length === 3)
-            .map((testMatch: RegExpMatchArray | null) => {
-                const nextIndex = this.taskIndex;
-                this.taskIndex++;
-                return {
-                    id: nextIndex,
-                    completeString: testMatch![0],
-                    taskName: testMatch![1],
-                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
-                };
-            });
+        this.tasks.set(
+            tasks
+                // check that all groups (full match, name, tests) are present
+                .filter((testMatch) => testMatch?.length === 3)
+                .map((testMatch: RegExpMatchArray | null) => {
+                    const nextIndex = this.taskIndex;
+                    this.taskIndex++;
+                    return {
+                        id: nextIndex,
+                        completeString: testMatch![0],
+                        taskName: testMatch![1],
+                        testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
+                    };
+                }),
+        );
 
-        return this.tasks.reduce(
+        return this.tasks().reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
@@ -487,7 +517,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     }
 
     private injectTasksIntoDocument = () => {
-        this.tasks.forEach(({ id, taskName, testIds }) => {
+        this.tasks().forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
@@ -495,8 +525,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 this.createTaskComponent(taskHtmlContainer, taskName, testIds);
             }
         });
-        // Batch change detection: trigger once after all task components are created
-        // instead of calling detectChanges() for each component individually
+        // Genuinely-unavoidable synchronous detectChanges: these task components live in markdown
+        // HTML injected via [innerHTML], outside any template tree. appRef.attachView() registers
+        // them for FUTURE app ticks but does NOT schedule an initial change-detection pass, and
+        // under zoneless nothing else does — without this, the step wizard never renders.
         this.taskComponentRefs.forEach((ref) => ref.changeDetectorRef.detectChanges());
     };
 
@@ -513,7 +545,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);
-        // Note: detectChanges() is called in batch after all components are created
     }
 
     // Effects and problemStatementUpdateSubject clean themselves up via DestroyRef / takeUntilDestroyed;

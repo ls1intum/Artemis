@@ -3,10 +3,10 @@
         <div class="modal-header">
             <h4 class="modal-title">
                 <span
-                    >{{ (isPublicChannel ? 'artemisApp.dialogs.createChannel.titlePublicChannel' : 'artemisApp.dialogs.createChannel.titlePrivateChannel') | artemisTranslate }}
-                    {{ isCourseWideChannel ? ('artemisApp.dialogs.createChannel.titleCourseWideChannel' | artemisTranslate) : '' }}
+                    >{{ (isPublicChannel() ? 'artemisApp.dialogs.createChannel.titlePublicChannel' : 'artemisApp.dialogs.createChannel.titlePrivateChannel') | artemisTranslate }}
+                    {{ isCourseWideChannel() ? ('artemisApp.dialogs.createChannel.titleCourseWideChannel' | artemisTranslate) : '' }}
                     {{
-                        (isAnnouncementChannel ? 'artemisApp.dialogs.createChannel.titleAnnouncementChannel' : 'artemisApp.dialogs.createChannel.titleRegularChannel')
+                        (isAnnouncementChannel() ? 'artemisApp.dialogs.createChannel.titleAnnouncementChannel' : 'artemisApp.dialogs.createChannel.titleRegularChannel')
                             | artemisTranslate
                     }}
                 </span>

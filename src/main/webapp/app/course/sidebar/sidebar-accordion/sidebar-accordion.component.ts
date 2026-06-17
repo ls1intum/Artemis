@@ -46,7 +46,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
-    totalUnreadMessagesPerGroup: { [key: string]: number } = {};
+    readonly totalUnreadMessagesPerGroup = signal<{ [key: string]: number }>({});
 
     constructor() {
         // Seed the working collapse state from the input.
@@ -132,15 +132,17 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     calculateUnreadMessagesOfGroup(): void {
         const groupedData = this.groupedData();
         if (!groupedData) {
-            this.totalUnreadMessagesPerGroup = {};
+            this.totalUnreadMessagesPerGroup.set({});
             return;
         }
 
+        const unreadMessagesPerGroup: { [key: string]: number } = {};
         Object.keys(groupedData).forEach((groupKey) => {
-            this.totalUnreadMessagesPerGroup[groupKey] = groupedData[groupKey].entityData
+            unreadMessagesPerGroup[groupKey] = groupedData[groupKey].entityData
                 .filter((item: SidebarCardElement) => this.shouldCountUnreadMessages(item))
                 .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
         });
+        this.totalUnreadMessagesPerGroup.set(unreadMessagesPerGroup);
     }
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {

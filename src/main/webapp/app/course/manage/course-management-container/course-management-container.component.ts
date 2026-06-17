@@ -319,7 +319,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
-            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
+            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed() ?? false);
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
         if (this.courseBody()) {
@@ -333,7 +333,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
         childRouteComponent.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed);
+        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
     }
 
     override getSidebarItems(): SidebarItem[] {

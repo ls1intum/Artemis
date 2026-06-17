@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisLectureSnippetDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 @Conditional(IrisEnabled.class)
 @Controller
@@ -23,14 +23,15 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
     }
 
     /**
-     * Search for lecture content matching the query.
+     * Performs a semantic lecture search via Pyris, optionally scoped to a set of courses.
      *
      * @param query     the search query
      * @param limit     maximum number of results to return
-     * @param courseIds optional list of course IDs to restrict the search; null means global search across all accessible content
-     * @return list of matching lecture search results
+     * @param courseIds optional list of course IDs to restrict the search to; {@code null} means search all ingested courses
+     * @return list of matching lecture snippets
      */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
-        return pyrisConnectorService.searchLectures(query, limit, courseIds, null);
+    public List<IrisLectureSnippetDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, null).stream().map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet()))
+                .toList();
     }
 }

@@ -39,9 +39,9 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
 
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
-    exam?: Exam;
-    isImportingExercises = false;
-    isImportInSameCourse = false;
+    readonly exam = signal<Exam | undefined>(undefined);
+    readonly isImportingExercises = signal(false);
+    readonly isImportInSameCourse = signal(false);
 
     constructor() {
         const pagingService = inject(ExamImportPagingService);
@@ -73,8 +73,9 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
     openExerciseSelection(exam: Exam) {
         this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
             next: (examRes: HttpResponse<Exam>) => {
-                this.exam = examRes.body!;
-                this.isImportInSameCourse = this.exam.course?.id === this.targetCourseId();
+                const loadedExam = examRes.body!;
+                this.exam.set(loadedExam);
+                this.isImportInSameCourse.set(loadedExam.course?.id === this.targetCourseId());
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -86,18 +87,20 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
      * Called once when user is importing the exam
      */
     performImportOfExerciseGroups() {
-        if (this.subsequentExerciseGroupSelection() && this.exam && this.targetExamId() && this.targetCourseId()) {
+        const currentExam = this.exam();
+        if (this.subsequentExerciseGroupSelection() && currentExam && this.targetExamId() && this.targetCourseId()) {
             // The validation of the selected exercises is only called when the user desires to import the exam
             if (!this.examExerciseImportComponent().validateUserInput()) {
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
                 return;
             }
-            this.isImportingExercises = true;
+            this.isImportingExercises.set(true);
             // The child component provides us with the selected exercise groups and exercises
-            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
-            this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, this.exam.exerciseGroups!).subscribe({
+            const exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+            this.exam.set({ ...currentExam, exerciseGroups });
+            this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!).subscribe({
                 next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
-                    this.isImportingExercises = false;
+                    this.isImportingExercises.set(false);
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
                     this.dialogRef?.close(httpResponse.body!);
                 },
@@ -106,19 +109,19 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                     const errorKey = httpErrorResponse.error?.errorKey;
                     if (errorKey === 'invalidKey') {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
-                        this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                        this.exam.update((exam) => ({ ...exam!, exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
                         // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
                         this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
                     } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
-                        this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                        this.exam.update((exam) => ({ ...exam!, exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
                         this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {
                         onError(this.alertService, httpErrorResponse);
                     }
-                    this.isImportingExercises = false;
+                    this.isImportingExercises.set(false);
                 },
             });
         }

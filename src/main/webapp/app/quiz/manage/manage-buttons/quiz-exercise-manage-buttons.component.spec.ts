@@ -131,12 +131,12 @@ describe('QuizExercise Management Buttons Component', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
 
-        expect(comp.isEvaluatingQuizExercise).toBeFalsy();
+        expect(comp.isEvaluatingQuizExercise()).toBeFalsy();
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
         expect(successSpy).toHaveBeenCalledWith('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle evaluate quiz exercise error', () => {
@@ -149,7 +149,7 @@ describe('QuizExercise Management Buttons Component', () => {
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle delete quiz exercise error', () => {
@@ -199,7 +199,7 @@ describe('QuizExercise Management Buttons Component', () => {
 
         expect(comp.courseId).toBe(123);
         expect(comp.isExamMode).toBeFalsy();
-        expect(comp.baseUrl).toBe('/course-management/123');
+        expect(comp.baseUrl()).toBe('/course-management/123');
     });
 });
 
@@ -255,7 +255,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.courseId).toBe(123);
         expect(comp.examId).toBe(789);
         expect(comp.isExamMode).toBe(true);
-        expect(comp.baseUrl).toBe('/course-management/123/exams/789/exercise-groups/111');
+        expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
     it('should navigate after delete in detail page', () => {

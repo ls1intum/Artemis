@@ -1,7 +1,7 @@
 <!-- expanded post to display post and answerPosts as thread -->
 <div class="h-100">
-    <div class="postings-container expanded-thread" #threadContainer [ngClass]="{ expanded: isExpanded }">
-        @if (!isExpanded) {
+    <div class="postings-container expanded-thread" #threadContainer [ngClass]="{ expanded: isExpanded() }">
+        @if (!isExpanded()) {
             <div class="draggable-left">
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
@@ -17,10 +17,10 @@
                         <fa-icon
                             class="pointer me-2"
                             #expandTooltip="ngbTooltip"
-                            [icon]="isExpanded ? faCompress : faExpand"
+                            [icon]="isExpanded() ? faCompress : faExpand"
                             (click)="toggleExpand()"
                             [ngbTooltip]="
-                                isExpanded
+                                isExpanded()
                                     ? ('artemisApp.conversationsLayout.threadSideBar.collapse' | artemisTranslate)
                                     : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
                             "
@@ -31,32 +31,32 @@
             </div>
             <!-- body -->
             <div #scrollBody class="pt-0 scrollbar wrapper-scroll-y mx-1 thread-answer-post">
-                @if (post !== undefined) {
+                @if (post() !== undefined) {
                     <div class="my-2">
                         <div class="card-body px-0">
                             <jhi-post
                                 [readOnlyMode]="readOnlyMode()"
-                                [posting]="post"
+                                [posting]="post()"
                                 [showAnswers]="true"
                                 [isCommunicationPage]="true"
                                 [isThreadSidebar]="true"
-                                [lastReadDate]="conversation?.lastReadDate"
-                                [hasChannelModerationRights]="hasChannelModerationRights"
+                                [lastReadDate]="conversation()?.lastReadDate"
+                                [hasChannelModerationRights]="hasChannelModerationRights()"
                             />
                         </div>
                         <div class="message-input mx-3 pt-2">
                             @if (!readOnlyMode()) {
                                 <jhi-message-reply-inline-input
-                                    [activeConversation]="conversation"
-                                    [posting]="createdAnswerPost"
-                                    (onCreate)="createdAnswerPost = createEmptyAnswerPost()"
+                                    [activeConversation]="conversation()"
+                                    [posting]="createdAnswerPost()"
+                                    (onCreate)="createdAnswerPost.set(createEmptyAnswerPost())"
                                     (valueChange)="scrollEditorIntoView()"
                                 />
                             }
                         </div>
                     </div>
                 }
-                <jhi-tutor-suggestion [post]="post" [course]="course()" />
+                <jhi-tutor-suggestion [post]="post()" [course]="course()" />
             </div>
         </div>
     </div>

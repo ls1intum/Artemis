@@ -36,15 +36,15 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     activeConversation = signal<ConversationDTO | undefined>(undefined);
 
     isInitialized = false;
-    maxSelectable: number | undefined;
-    protected isLoading = false;
+    readonly maxSelectable = signal<number | undefined>(undefined);
+    protected readonly isLoading = signal(false);
 
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
             const activeConversation = this.activeConversation()!;
             if (isGroupChatDTO(activeConversation)) {
-                this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0);
+                this.maxSelectable.set(MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0));
             }
         }
     }
@@ -64,7 +64,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const activeConversation = this.activeConversation()!;
         if (isChannelDTO(activeConversation)) {
@@ -72,7 +72,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                 .registerUsersToChannel(this.course()!.id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
                     finalize(() => {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }),
                     takeUntil(this.ngUnsubscribe),
                 )
@@ -89,7 +89,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                 .addUsersToGroupChat(this.course()!.id!, activeConversation.id!, userLogins)
                 .pipe(
                     finalize(() => {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }),
                     takeUntil(this.ngUnsubscribe),
                 )
