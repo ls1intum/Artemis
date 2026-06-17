@@ -453,7 +453,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();
         if (current.some((p) => p.id === participation.id)) {
-            this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
+            this._studentParticipations.set(
+                current.map((p) => {
+                    if (p.id !== participation.id) {
+                        return p;
+                    }
+                    // Merge incoming submissions with existing ones so that the full
+                    // attempt history is preserved after a practice submit.
+                    // The payload from quiz-participation.component only carries the
+                    // latest submission; without this merge every prior attempt
+                    // disappears from the result-history dropdown until the page is
+                    // refreshed and the full participation is reloaded from the server.
+                    const existingSubmissions = p.submissions ?? [];
+                    const incomingSubmissions = participation.submissions ?? [];
+                    const incomingIds = new Set(incomingSubmissions.map((s) => s.id));
+                    const mergedSubmissions = [...existingSubmissions.filter((s) => !incomingIds.has(s.id)), ...incomingSubmissions];
+                    return { ...participation, submissions: mergedSubmissions };
+                }),
+            );
         } else {
             this._studentParticipations.set([...current, participation]);
 
