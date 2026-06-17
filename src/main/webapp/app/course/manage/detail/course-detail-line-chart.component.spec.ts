@@ -10,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ComponentRef } from '@angular/core';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 class MockCourseManagementService {
     getStatisticsData = vi.fn().mockReturnValue(of([]));
@@ -35,7 +34,6 @@ describe('CourseDetailLineChartComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 

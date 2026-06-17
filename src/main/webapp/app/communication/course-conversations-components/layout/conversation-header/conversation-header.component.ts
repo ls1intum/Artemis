@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -42,9 +42,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             // Track pinnedMessageCount signal input (replaces ngOnChanges)
             const currentCount = this.pinnedMessageCount();
             untracked(() => {
-                if (this.showPinnedMessages && currentCount === 0) {
-                    this.showPinnedMessages = false;
-                    this.cdr.detectChanges();
+                if (this.showPinnedMessages() && currentCount === 0) {
+                    this.showPinnedMessages.set(false);
                 }
             });
         });
@@ -65,23 +64,22 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
 
-    course: Course;
-    activeConversation?: ConversationDTO;
+    readonly course = signal<Course>(undefined!);
+    readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
 
-    activeConversationAsChannel?: ChannelDTO;
-    channelSubTypeReferenceTranslationKey?: string;
-    channelSubTypeReferenceRouterLink?: string;
-    otherUser?: ConversationUserDTO;
+    readonly activeConversationAsChannel = signal<ChannelDTO | undefined>(undefined);
+    readonly channelSubTypeReferenceTranslationKey = signal<string | undefined>(undefined);
+    readonly channelSubTypeReferenceRouterLink = signal<string | undefined>(undefined);
+    readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faSearch = faSearch;
     faChevronLeft = faChevronLeft;
     readonly faPeopleGroup = faPeopleGroup;
-    showPinnedMessages: boolean = false;
+    readonly showPinnedMessages = signal(false);
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-    private cdr = inject(ChangeDetectorRef);
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;
@@ -89,7 +87,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     canAddUsers = canAddUsersToConversation;
 
     ngOnInit(): void {
-        this.course = this.metisConversationService.course!;
+        this.course.set(this.metisConversationService.course!);
         this.subscribeToActiveConversation();
     }
 
@@ -98,17 +96,16 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
      */
     togglePinnedMessages(): void {
         this.togglePinnedMessage.emit();
-        this.showPinnedMessages = !this.showPinnedMessages;
-        this.cdr.detectChanges();
+        this.showPinnedMessages.update((value) => !value);
     }
 
     /**
      * Gets the other user in a one-to-one chat (not the current user)
      */
     getOtherUser() {
-        const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        const conversation = getAsOneToOneChatDTO(this.activeConversation());
         if (conversation) {
-            this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+            this.otherUser.set(conversation.members?.find((user) => !user.isRequestingUser));
         }
     }
 
@@ -123,10 +120,11 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
-            this.activeConversation = conversation;
-            this.activeConversationAsChannel = getAsChannelDTO(conversation);
-            this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
-            this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
+            this.activeConversation.set(conversation);
+            const activeConversationAsChannel = getAsChannelDTO(conversation);
+            this.activeConversationAsChannel.set(activeConversationAsChannel);
+            this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(activeConversationAsChannel?.subType));
+            this.channelSubTypeReferenceRouterLink.set(this.metisService.getLinkForChannelSubType(activeConversationAsChannel));
             this.getOtherUser();
         });
     }
@@ -136,8 +134,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
             ...defaultFirstLayerDialogOptions,
             data: {
-                course: this.course,
-                activeConversation: this.activeConversation,
+                course: this.course(),
+                activeConversation: this.activeConversation(),
             },
         });
         ref?.onClose
@@ -159,12 +157,12 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
      */
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
-        const selectedTab = this.getAsOneToOneChat(this.activeConversation) ? ConversationDetailTabs.INFO : tab;
+        const selectedTab = this.getAsOneToOneChat(this.activeConversation()) ? ConversationDetailTabs.INFO : tab;
         const ref = this.dialogService.open(ConversationDetailDialogComponent, {
             ...defaultFirstLayerDialogOptions,
             data: {
-                course: this.course,
-                activeConversation: this.activeConversation,
+                course: this.course(),
+                activeConversation: this.activeConversation(),
                 selectedTab,
                 onUserNameClicked: (userId: number) => {
                     ref?.destroy();

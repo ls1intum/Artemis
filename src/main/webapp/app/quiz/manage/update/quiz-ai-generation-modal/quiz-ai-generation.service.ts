@@ -16,7 +16,6 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 export class QuizAiGenerationService {
     private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
     private translateService = inject(TranslateService);
-
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService
             .generateQuizQuestions(courseId, request)

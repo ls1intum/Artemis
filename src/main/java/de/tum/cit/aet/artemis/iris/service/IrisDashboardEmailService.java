@@ -18,11 +18,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -126,7 +126,7 @@ public class IrisDashboardEmailService {
         int sent = 0;
         for (String email : resolvedDigestRecipients) {
             try {
-                mailService.sendIrisDashboardDigestEmail(createSyntheticUser(email), digest);
+                mailService.sendIrisDashboardDigestEmail(createRecipient(email), digest);
                 sent++;
             }
             catch (Exception e) {
@@ -146,7 +146,7 @@ public class IrisDashboardEmailService {
         int sent = 0;
         for (String email : effectiveAlertRecipients()) {
             try {
-                mailService.sendIrisDashboardAlertEmail(createSyntheticUser(email), alert);
+                mailService.sendIrisDashboardAlertEmail(createRecipient(email), alert);
                 sent++;
             }
             catch (Exception e) {
@@ -188,12 +188,7 @@ public class IrisDashboardEmailService {
         return new ArrayList<>(seen.values());
     }
 
-    private User createSyntheticUser(String email) {
-        User user = new User();
-        user.setEmail(email);
-        user.setLangKey("en");
-        user.setLogin("iris-dashboard-recipient");
-        user.setFirstName("Administrator");
-        return user;
+    private MailRecipientDTO createRecipient(String email) {
+        return new MailRecipientDTO(email, "en", "iris-dashboard-recipient", "Administrator", null, null, null);
     }
 }

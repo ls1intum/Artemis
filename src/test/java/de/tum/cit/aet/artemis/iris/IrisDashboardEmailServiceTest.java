@@ -12,10 +12,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisDashboardEmailService;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -73,7 +73,7 @@ class IrisDashboardEmailServiceTest {
         int sent = emailService.sendDigest(digest);
 
         assertThat(sent).isEqualTo(2);
-        verify(mailService, times(2)).sendIrisDashboardDigestEmail(any(User.class), any());
+        verify(mailService, times(2)).sendIrisDashboardDigestEmail(any(MailRecipientDTO.class), any());
     }
 
     @Test

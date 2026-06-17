@@ -21,11 +21,11 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertChatModeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -48,7 +48,7 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     private MailService testMailService;
 
-    private User recipient;
+    private MailRecipientDTO recipient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -77,11 +77,7 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
         ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
 
-        recipient = new User();
-        recipient.setEmail("admin@greenmail.test");
-        recipient.setLangKey("en");
-        recipient.setLogin("iris-dashboard-recipient");
-        recipient.setFirstName("Administrator");
+        recipient = new MailRecipientDTO("admin@greenmail.test", "en", "iris-dashboard-recipient", "Administrator", null, null, null);
     }
 
     @Test

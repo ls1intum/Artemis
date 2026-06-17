@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.globalsearch.service.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -216,6 +219,39 @@ class V0ToV1MigrationTest {
         Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
 
         assertThat(newProps.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)).isEqualTo("file-upload");
+    }
+
+    @Test
+    void transformProperties_normalizesSecondlessStringDates() {
+        Map<String, Object> oldProps = minimalV0Properties();
+        oldProps.put("start_date", "2026-04-23T11:00Z");
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.START_DATE)).isEqualTo("2026-04-23T11:00:00Z");
+    }
+
+    @Test
+    void transformProperties_normalizesOffsetDateTimeDates() {
+        // The Weaviate client can return DATE-typed properties as OffsetDateTime instead of String. Passing the object
+        // through unchanged makes the client serialize it via toString(), which drops zero seconds
+        // (e.g. "2026-04-23T11:00Z") and is rejected by Weaviate with HTTP 422 (observed on production with release 9.4).
+        Map<String, Object> oldProps = minimalV0Properties();
+        oldProps.put("start_date", OffsetDateTime.of(2026, 4, 23, 11, 0, 0, 0, ZoneOffset.UTC));
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.START_DATE)).isEqualTo("2026-04-23T11:00:00.000Z");
+    }
+
+    @Test
+    void transformProperties_normalizesZonedDateTimeDates() {
+        Map<String, Object> oldProps = minimalV0Properties();
+        oldProps.put("exam_start_date", ZonedDateTime.of(2026, 4, 23, 11, 0, 0, 0, ZoneOffset.UTC));
+
+        Map<String, Object> newProps = V0ToV1Migration.transformProperties(oldProps);
+
+        assertThat(newProps.get(SearchableEntitySchema.Properties.EXAM_START_DATE)).isEqualTo("2026-04-23T11:00:00.000Z");
     }
 
     @Test

@@ -466,6 +466,29 @@ describe('ProgrammingSubmissionService', () => {
         expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
     });
 
+    it('should keep the shared submission state alive while another component still observes it', () => {
+        httpGetStub.mockReturnValue(of(currentSubmission));
+        // Two components (e.g. the exercise header and the embedded code editor) observe the same participation
+        const observable = submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true);
+        const firstComponent = observable.subscribe();
+        const secondComponent = submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe();
+
+        // One component is destroyed: it releases its own subscription first, then asks the service to clean up
+        firstComponent.unsubscribe();
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+
+        // The shared subject and the websocket topic must survive for the remaining component
+        const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
+        expect((submissionService as any).submissionSubjects[participationId]).toBeDefined();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(true);
+
+        // Once the last component is gone, the cleanup proceeds
+        secondComponent.unsubscribe();
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+        expect((submissionService as any).submissionSubjects[participationId]).toBeUndefined();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
+    });
+
     it('should only unsubscribe if no other participations use the topic with localci', () => {
         submissionService.isLocalCIEnabled = true;
         httpGetStub.mockReturnValue(of(currentSubmission));

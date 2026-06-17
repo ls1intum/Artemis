@@ -87,7 +87,7 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         await Promise.resolve();
-        expect(component.plagiarismCase).toEqual(plagiarismCase);
+        expect(component.plagiarismCase()).toEqual(plagiarismCase);
     });
 
     it('should set isAfterDueDate', async () => {
@@ -95,7 +95,7 @@ describe('Plagiarism Cases Student View Component', () => {
         exercise.dueDate = now.add(1, 'day');
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.isAfterDueDate).toBe(false);
+        expect(component.isAfterDueDate()).toBe(false);
     });
 
     it('should unset isAfterDueDate', async () => {
@@ -103,7 +103,7 @@ describe('Plagiarism Cases Student View Component', () => {
         exercise.dueDate = now.subtract(1, 'day');
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.isAfterDueDate).toBe(true);
+        expect(component.isAfterDueDate()).toBe(true);
     });
 
     it('should load plagiarism case on route update', async () => {
@@ -117,7 +117,7 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.courseId).toBe(2);
         expect(component.plagiarismCaseId).toBe(1);
         await Promise.resolve();
-        expect(component.plagiarismCase?.id).toBe(1);
+        expect(component.plagiarismCase()?.id).toBe(1);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 
@@ -135,7 +135,7 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.courseId).toBe(2);
         expect(component.plagiarismCaseId).toBe(2);
         await Promise.resolve();
-        expect(component.plagiarismCase?.id).toBe(2);
+        expect(component.plagiarismCase()?.id).toBe(2);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(2);
 
@@ -147,7 +147,7 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.courseId).toBe(3);
         expect(component.plagiarismCaseId).toBe(4);
         await Promise.resolve();
-        expect(component.plagiarismCase?.id).toBe(4);
+        expect(component.plagiarismCase()?.id).toBe(4);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(3);
     });

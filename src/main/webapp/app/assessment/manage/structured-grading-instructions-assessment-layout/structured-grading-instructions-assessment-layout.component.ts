@@ -1,6 +1,6 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, input, viewChildren } from '@angular/core';
+import { Component, OnInit, input, signal, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,7 +18,7 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     public readonly criteria = input.required<GradingCriterion[]>();
     readonly readonly = input<boolean>();
-    allowDrop: boolean;
+    readonly allowDrop = signal<boolean>(undefined!);
     // Icons
     faInfoCircle = faInfoCircle;
     faExpand = faExpand;
@@ -30,12 +30,12 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
      */
     ngOnInit(): void {
-        this.allowDrop = !this.readonly();
+        this.allowDrop.set(!this.readonly());
     }
 
     collapseAll() {
         this.expandableSections().forEach((section) => {
-            if (!section.isCollapsed) {
+            if (!section.isCollapsed()) {
                 section.toggleCollapsed();
             }
         });
@@ -43,7 +43,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     expandAll() {
         this.expandableSections().forEach((section) => {
-            if (section.isCollapsed) {
+            if (section.isCollapsed()) {
                 section.toggleCollapsed();
             }
         });
@@ -89,6 +89,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * disables drag if on readOnly mode
      */
     disableDrag() {
-        return this.allowDrop;
+        return this.allowDrop();
     }
 }

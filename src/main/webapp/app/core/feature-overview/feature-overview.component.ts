@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -49,8 +49,8 @@ export class FeatureOverviewComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private profileService = inject(ProfileService);
 
-    features: Feature[];
-    targetAudience = TargetAudience.INSTRUCTORS;
+    readonly features = signal<Feature[]>(undefined!);
+    readonly targetAudience = signal(TargetAudience.INSTRUCTORS);
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.
@@ -58,10 +58,10 @@ export class FeatureOverviewComponent implements OnInit {
      */
     ngOnInit(): void {
         if (this.route.snapshot.url[0]?.toString() === 'students') {
-            this.targetAudience = TargetAudience.STUDENTS;
+            this.targetAudience.set(TargetAudience.STUDENTS);
         }
 
-        if (this.targetAudience === TargetAudience.INSTRUCTORS) {
+        if (this.targetAudience() === TargetAudience.INSTRUCTORS) {
             this.setupInstructorFeatures();
         } else {
             this.setupStudentFeatures();
@@ -211,7 +211,7 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/students/exercise_diff_view.png',
         );
 
-        this.features = [
+        const features = [
             featureConduction,
             featureExamMode,
             featureOffline,
@@ -232,8 +232,9 @@ export class FeatureOverviewComponent implements OnInit {
         const profileInfo = this.profileService.getProfileInfo();
         const accountName = profileInfo.accountName;
         if (accountName === 'TUM') {
-            this.features.push(featureLogin);
+            features.push(featureLogin);
         }
+        this.features.set(features);
     }
 
     private setupInstructorFeatures() {
@@ -405,7 +406,7 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/exam_exercise_update_notification.png',
         );
-        this.features = [
+        this.features.set([
             featureCreateConductAssess,
             featureConfiguration,
             featureExamMode,
@@ -424,7 +425,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureChecklist,
             featureGradeKey,
             featureSubmissionPolicy,
-        ];
+        ]);
     }
 
     navigateToFeature(featureId: string): void {

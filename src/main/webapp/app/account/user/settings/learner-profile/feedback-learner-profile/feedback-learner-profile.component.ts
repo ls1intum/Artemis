@@ -31,7 +31,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     });
 
     /** Flag indicating whether the profile editing is disabled */
-    disabled = true;
+    readonly disabled = signal<boolean>(true);
 
     /** Whether the onboarding modal is visible */
     showOnboardingModal = signal<boolean>(false);
@@ -77,11 +77,11 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         try {
             const profile = await this.learnerProfileAPIService.getLearnerProfileForCurrentUser();
             this.learnerProfile.set(profile);
-            this.disabled = false;
+            this.disabled.set(false);
             this.updateProfileValues(profile);
         } catch (error) {
             if (error instanceof HttpErrorResponse && error.status === 404) {
-                this.disabled = true;
+                this.disabled.set(true);
                 this.learnerProfile.set(undefined);
             } else {
                 this.handleError(error);

@@ -151,43 +151,37 @@ artemis:
 spring:
   ai:
     model:
-      chat: azure-openai # use openai or none as alternatives
+      chat: openai # use none to disable chat models
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
       memory:
         max-messages: 20 # Maximum number of messages to retain in conversation history per session
+    # Single OpenAI module (official OpenAI Java SDK) since Spring AI 2.0.0-M6: one config tree serves
+    # Azure OpenAI / Microsoft Foundry (prod), OpenAI itself, and OpenAI-compatible local servers (dev).
+    # https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html
     openai:
-      # These are the "global" settings; chat-specific ones override them if set
-      base-url: http://localhost:1234
-      api-key: dummy-key      # most local servers ignore it
+      ## Variant 1 (active here): Azure OpenAI / Microsoft Foundry
+      base-url: https://endpoint.openai.azure.com
+      api-key: my-api-key-for-azure-openai
+      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
+      # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
+      # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
+      timeout: 5m
       chat:
-        # If your server uses /v1/chat/completions (Ollama-like proxies):
-        completions-path: /v1/chat/completions
-        # OR if it uses this:
-        # completions-path: /api/v0/chat/completions
-        options:
-          model: openai/gpt-oss-20b    # or whatever name your local server expects
-          temperature: 0.7
-    ## Alternative configuration for Azure OpenAI
-    # Use Azure OpenAI chat model auto-config
-#    model:
-#      chat: azure-openai
-    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
-    azure:
-      openai:
-        api-key: my-api-key-for-azure-openai
-        # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
-        endpoint: https://endpoint.openai.azure.com
-        # deployment-name should match the Azure OpenAI deployment
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
-            temperature: 1.0
-        client:
-          connect-timeout: 30s
-          read-timeout: 5m
+        # The Azure deployment name; used as the request model by the default ChatClient
+        model: gpt-5-mini
+        # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+        temperature: 1.0
+      ## Variant 2: local OpenAI-compatible server (LM Studio, Ollama, vLLM, ...) — same tree.
+      ## The SDK appends /chat/completions itself, so include the /v1 prefix in the base URL
+      ## (the former spring.ai.openai.chat.completions-path property no longer exists).
+      # base-url: http://localhost:1234/v1
+      # api-key: dummy-key      # most local servers ignore it
+      # timeout: 5m
+      # chat:
+      #   model: openai/gpt-oss-20b    # or whatever name your local server expects
+      #   temperature: 0.7
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
@@ -45,28 +45,36 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
     readonly FeatureToggle = FeatureToggle;
     exportInProgress: boolean;
-    repositoryExportOptions: RepositoryExportOptions;
-    isLoading = false;
-    isRepoExportForMultipleExercises: boolean;
-    isAtLeastInstructor = false;
+    // Backed by a signal because the template reads it (e.g. [disabled]) while [(ngModel)] mutates its
+    // properties in place. The getter/setter facade keeps reads reactive without breaking two-way binding.
+    private readonly _repositoryExportOptions = signal<RepositoryExportOptions>(undefined!);
+    get repositoryExportOptions(): RepositoryExportOptions {
+        return this._repositoryExportOptions();
+    }
+    set repositoryExportOptions(value: RepositoryExportOptions) {
+        this._repositoryExportOptions.set(value);
+    }
+    readonly isLoading = signal(false);
+    readonly isRepoExportForMultipleExercises = signal<boolean>(undefined!);
+    readonly isAtLeastInstructor = signal(false);
 
     // Icons
     faCircleNotch = faCircleNotch;
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.exportInProgress = false;
-        this.isRepoExportForMultipleExercises = this.programmingExercises.length > 1;
-        this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
-        this.isLoading = false;
+        this.isRepoExportForMultipleExercises.set(this.programmingExercises.length > 1);
+        this.isAtLeastInstructor.set(this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor));
+        this.isLoading.set(false);
         this.repositoryExportOptions = {
-            exportAllParticipants: this.isRepoExportForMultipleExercises,
+            exportAllParticipants: this.isRepoExportForMultipleExercises(),
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             combineStudentCommits: true,
             // we anonymize the export for tutors (double-blind)
-            anonymizeRepository: !this.isAtLeastInstructor,
-            addParticipantName: this.isAtLeastInstructor,
+            anonymizeRepository: !this.isAtLeastInstructor(),
+            addParticipantName: this.isAtLeastInstructor(),
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
     }
