@@ -195,4 +195,11 @@ describe('CourseDetailLineChartComponent', () => {
 
         expect(callbacks.label({ dataset: { label: 'Students' }, label: '42', parsed: { y: 22 } })).toBe('Students: 11 (22%)');
     });
+
+    it('should resolve x-axis category ticks to calendar week labels', () => {
+        const callback = (component.chartOptions().scales!.x as any).ticks.callback;
+
+        expect(callback.call({ getLabelForValue: (index: number) => `CW ${index + 18}` }, 0)).toBe('CW 18');
+        expect(callback.call({ getLabelForValue: (index: number) => `CW ${index + 18}` }, 7)).toBe('CW 25');
+    });
 });

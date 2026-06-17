@@ -79,7 +79,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     });
     readonly chartOptions = computed(() =>
         lineChartOptions({
-            xAxis: { label: this.xAxisLabel() },
+            xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
             yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
             tooltip: {
                 label: (item) => `${item.dataset.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
