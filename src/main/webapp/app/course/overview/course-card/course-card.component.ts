@@ -92,7 +92,13 @@ export class CourseCardComponent {
         doughnutChartOptions({
             arcWidth: 0.3,
             legend: false,
-            tooltip: { label: (item) => `${this.translateService.instant('artemisApp.courseOverview.statistics.' + item.label)}: ${item.parsed}` },
+            tooltip: {
+                title: (items) => {
+                    const label = items[0]?.label;
+                    return label ? this.translateService.instant('artemisApp.courseOverview.statistics.' + label) : '';
+                },
+                label: (item) => `${item.parsed}`,
+            },
         }),
     );
 

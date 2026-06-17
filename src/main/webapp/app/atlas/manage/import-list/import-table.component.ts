@@ -71,6 +71,14 @@ export class ImportTableComponent<T extends BaseEntity> {
         });
     }
 
+    /**
+     * Runs the current paginated search and applies its result to the table.
+     *
+     * Several searches can be in flight simultaneously (the initial unfiltered load plus debounced loads
+     * issued while typing) and their responses may return out of order. A response is therefore only applied
+     * when the search state it was issued with still matches the current state; otherwise a newer request has
+     * superseded it and the stale response is discarded so the table never shows results for an old query.
+     */
     private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
@@ -82,6 +90,15 @@ export class ImportTableComponent<T extends BaseEntity> {
                 pageSize: this.pageSize(),
             };
             const result = await lastValueFrom(this.pagingService.search(searchState));
+            // A newer request has superseded this one; discard its (now stale) response.
+            if (
+                searchState.searchTerm !== this.searchTerm() ||
+                searchState.page !== this.page() ||
+                searchState.sortedColumn !== this.sortedColumn() ||
+                searchState.sortingOrder !== this.sortingOrder()
+            ) {
+                return;
+            }
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {
