@@ -262,6 +262,22 @@ describe('ResultComponent', () => {
         expect(resultScore.classList.contains('clickable-result')).toBe(false);
     });
 
+    it('should render the score for a result-only input (e.g. build queue), resolving context from result.submission.participation', () => {
+        // The admin/instructor build-queue (finished-jobs-table) passes [result] only — no [participation]/[exercise].
+        // The component must resolve the exercise/participation by navigating result.submission.participation and
+        // render the score badge (HAS_RESULT). This is the only placement that relies on that navigation.
+        const submission: Submission = { id: 9, participation: programmingParticipation };
+        const standaloneResult: Result = { id: 9, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(1, 'minute') };
+
+        fixture.componentRef.setInput('result', standaloneResult);
+        fixture.componentRef.setInput('showBadge', true);
+        fixture.detectChanges();
+
+        expect(component.resolvedExercise()?.type).toBe(ExerciseType.PROGRAMMING);
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(fixture.debugElement.nativeElement.querySelector('#result-score')).not.toBeNull();
+    });
+
     it('should render a clickable score badge outside a sidebar card', () => {
         const submission: Submission = { id: 1, participation: programmingParticipation };
         const ratedResult: Result = { id: 8, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };

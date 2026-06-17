@@ -99,6 +99,34 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             await expect(card.locator('#result-score')).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
         });
     });
+
+    // Covers the result-only ("Bucket C") placement of jhi-result in the instructor/admin build overview
+    // (finished-jobs-table), where the component receives a [result] without a participation or exercise.
+    // evaluateTemplateStatus short-circuits to HAS_RESULT there, so the score badge must render.
+    test.describe('Shows the build result in the course build overview', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Renders the result-only badge in the finished build jobs table', async ({ login, page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.slow();
+            const expectedResult = cAllSuccessful.expectedResult;
+            const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, cAllSuccessful, async () => {
+                await expect(programmingExerciseEditor.getResultScoreFromExercise(exercise.id!)).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
+            });
+            // As an instructor, open the course build overview; the finished-jobs table renders jhi-result with a
+            // result-only input. The build just produced a passing result, so a matching score badge must be visible.
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/build-overview`);
+            await page.waitForLoadState('domcontentloaded');
+            await expect(page.locator('jhi-result #result-score').filter({ hasText: expectedResult }).first()).toBeVisible({ timeout: 30000 });
+        });
+    });
 });
 
 test.describe('Programming exercise advanced participation', { tag: '@slow' }, () => {
