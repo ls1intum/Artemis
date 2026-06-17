@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseStatisticUpdateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropMappingReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
@@ -228,9 +229,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             sendQuizResultToUser(quizExerciseId, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
-        // notify users via websocket about new results for the statistics, filter out solution information
-        quizExercise.filterForStatisticWebsocket();
-        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+        // notify users via websocket about new results for the statistics without mutating the persisted entity graph
+        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), QuizExerciseStatisticUpdateDTO.of(quizExercise));
     }
 
     /**
@@ -311,7 +311,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
-        quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
         return quizSubmission;
@@ -408,9 +407,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     @Override
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
-        var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
-        savedQuizSubmission.filterForStudentsDuringQuiz();
-        return savedQuizSubmission;
+        return quizSubmissionRepository.save(quizSubmission);
     }
 
     private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,
@@ -649,7 +646,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         }
         return switch (dto) {
             case MultipleChoiceSubmittedAnswerFromLiveClientDTO mcDTO when quizQuestion instanceof MultipleChoiceQuestion mcQuestion ->
-                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion);
+                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion, true);
             case DragAndDropSubmittedAnswerFromLiveClientDTO dndDTO when quizQuestion instanceof DragAndDropQuestion dndQuestion ->
                 buildDragAndDropSubmittedAnswer(dndDTO, dndQuestion);
             case ShortAnswerSubmittedAnswerFromLiveClientDTO saDTO when quizQuestion instanceof ShortAnswerQuestion saQuestion ->
@@ -678,6 +675,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     private MultipleChoiceSubmittedAnswer buildMultipleChoiceSubmittedAnswer(MultipleChoiceSubmittedAnswerFromLiveClientDTO dto, MultipleChoiceQuestion question) {
+        return buildMultipleChoiceSubmittedAnswer(dto, question, false);
+    }
+
+    private MultipleChoiceSubmittedAnswer buildMultipleChoiceSubmittedAnswer(MultipleChoiceSubmittedAnswerFromLiveClientDTO dto, MultipleChoiceQuestion question,
+            boolean failOnUnknownOption) {
         MultipleChoiceSubmittedAnswer answer = new MultipleChoiceSubmittedAnswer();
         answer.setQuizQuestion(question);
         Set<AnswerOption> selected = new HashSet<>();
@@ -691,6 +693,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 AnswerOption serverOption = optionsById.get(optionRef.id());
                 if (serverOption != null) {
                     selected.add(serverOption);
+                }
+                else if (failOnUnknownOption) {
+                    throw new BadRequestException("AnswerOption with id " + optionRef.id() + " not found in MultipleChoiceQuestion with id " + question.getId());
                 }
             }
         }

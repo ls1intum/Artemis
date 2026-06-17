@@ -308,6 +308,7 @@ class QuizComparisonTest {
                 assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
                 // reset submitted answers, compare with the unchanged original
+                originalAnswer.setSelectedOptions(answerOptions);
                 changedSubmittedAnswer.setSelectedOptions(answerOptions);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 

@@ -532,6 +532,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     public QuizQuestion copyQuestionId() {
         var question = new DragAndDropQuestion();
         question.setId(getId());
+        question.setVersion(getVersion());
         return question;
     }
 

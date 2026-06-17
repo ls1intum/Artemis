@@ -1,0 +1,79 @@
+# Architecture Decision: Multiple-Choice JSON Persistence
+
+Status: accepted for the multiple-choice JSON persistence cutover.
+
+## Context
+
+Multiple-choice answer options are owned by exactly one `MultipleChoiceQuestion`. They are ordered, edited together with their question, and are not queried globally. The previous relational `answer_option` table made this component look like an independent aggregate and required joins and foreign keys for data that is always manipulated through the question root.
+
+## Decision
+
+Persist `AnswerOption` values as a JSON component list on `quiz_question.answer_options`.
+
+- PostgreSQL stores the column as `jsonb`.
+- MySQL and H2 store the column as `json`.
+- The JSON list keeps the option order directly.
+- Each option contains `id`, `text`, `hint`, `explanation`, `isCorrect`, and `invalid`.
+- `AnswerOption` is not a JPA entity and does not extend `DomainObject`.
+- `AnswerOption` IDs are stable `Long` values scoped to the owning question.
+- `quiz_question.next_component_id` is the high-watermark for new option IDs.
+- Deleted option IDs are not reused.
+
+`MultipleChoiceQuestion` is the aggregate root for all answer option mutations. Update requests must map incoming data to immutable input values and call root methods that validate invariants, allocate IDs, and return an `AnswerOptionChangeSet`.
+
+The root rejects duplicate IDs, unknown IDs, missing booleans, empty option text, text longer than 255 characters, hints longer than 255 characters, and explanations longer than 500 characters.
+
+## References
+
+Submission and statistic references store scalar option IDs:
+
+- `MultipleChoiceSubmittedAnswer.selectedOptionIds`
+- `AnswerCounter.answerOptionId`
+
+Resolution always goes through the associated `MultipleChoiceQuestion`. Runtime code must treat unresolved persisted IDs as integrity errors with enough context to diagnose the broken question, submission, or counter.
+
+## Recalculation Rules
+
+Changing order, text, hint, or explanation does not require score recalculation.
+
+Deleting an option or changing `isCorrect` or `invalid` requires recalculation, because the scoring semantics may change for existing submissions.
+
+## Concurrency
+
+`quiz_question.version` is a server-internal optimistic-locking field. Concurrent backend updates to the same question fail with `409 Conflict`.
+
+This version does not protect long-open editor tabs from last-write-wins updates. That behavior is intentional for this cutover.
+
+## Migration and Cutover
+
+The cutover is atomic. There is no dual-read, dual-write, or identity-registry table.
+
+The Liquibase migration must:
+
+- Preflight corrupt source data with `HALT`.
+- Backfill ordered JSON from the old `answer_option` table.
+- Set `next_component_id` to `max(answer_option.id) + 1`.
+- Verify JSON content, order, IDs, and scalar references after the backfill.
+- Drop old answer-option foreign keys and the global statistic counter unique index.
+- Add a composite unique constraint for answer counters on `(multiple_choice_question_statistic_id, answer_id)`.
+- Drop the old `answer_option` table only after the checks pass.
+
+Deployment requires a maintenance window:
+
+1. Stop old nodes.
+2. Create a database backup.
+3. Run the migration with one new instance.
+4. Verify post-checks.
+5. Start the new nodes.
+
+Rollback is restoring the backup created immediately before the migration.
+
+## Consequences
+
+Question ownership becomes explicit and the save flow can mutate one managed aggregate root.
+
+The database no longer enforces answer-option references with foreign keys. Integrity is enforced by migration checks, aggregate-root validation, and runtime resolution errors.
+
+Any answer option change writes the full JSON list for the question. This is acceptable because answer options are edited at question scope and there are no global option lookups.
+
+Do not add JSON indexes for answer options unless a future feature introduces global option queries.

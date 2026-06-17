@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,6 +75,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
@@ -114,6 +116,8 @@ public class StudentExamService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
@@ -147,11 +151,12 @@ public class StudentExamService {
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
             ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            ExamService examService, QuizExerciseRepository quizExerciseRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
@@ -411,11 +416,49 @@ public class StudentExamService {
 
         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+        Set<Long> unresolvedQuestionIds = normalizeQuizQuestionReferences(quizSubmissionFromClient, existingSubmissionInDatabase);
+        if (!unresolvedQuestionIds.isEmpty()) {
+            QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
+            normalizeQuizQuestionReferences(quizSubmissionFromClient, quizExercise);
+        }
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             quizSubmissionRepository.save(quizSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
+    }
+
+    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, QuizSubmission existingSubmissionInDatabase) {
+        if (existingSubmissionInDatabase == null) {
+            return submissionFromClient.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull).map(QuizQuestion::getId)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+        }
+        Map<Long, QuizQuestion> questionsById = existingSubmissionInDatabase.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull)
+                .filter(question -> question.getId() != null).collect(Collectors.toMap(QuizQuestion::getId, question -> question, (left, right) -> left));
+        return normalizeQuizQuestionReferences(submissionFromClient, questionsById);
+    }
+
+    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, QuizExercise quizExercise) {
+        Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, question -> question));
+        return normalizeQuizQuestionReferences(submissionFromClient, questionsById);
+    }
+
+    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
+        Set<Long> unresolvedQuestionIds = new HashSet<>();
+        for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
+            QuizQuestion question = submittedAnswer.getQuizQuestion();
+            if (question != null && question.getId() != null) {
+                QuizQuestion managedQuestion = questionsById.get(question.getId());
+                if (managedQuestion != null) {
+                    submittedAnswer.setQuizQuestion(managedQuestion);
+                }
+                else {
+                    unresolvedQuestionIds.add(question.getId());
+                }
+            }
+        }
+        return unresolvedQuestionIds;
     }
 
     /**

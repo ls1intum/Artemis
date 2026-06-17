@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,7 +21,8 @@ import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AnswerOptionFromEditorDTO(Long id, @NotEmpty String text, String hint, String explanation, @NotNull Boolean isCorrect) {
+public record AnswerOptionFromEditorDTO(Long id, @NotBlank @Size(max = 255) String text, @Size(max = 255) String hint, @Size(max = 500) String explanation,
+        @NotNull Boolean isCorrect) {
 
     /**
      * Creates an AnswerOptionFromEditorDTO from the given AnswerOption domain object.

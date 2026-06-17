@@ -22,7 +22,16 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Server Guidelines',
-                    items: ['guidelines/server-development', 'guidelines/rest-api', 'guidelines/server-tests', 'guidelines/database', 'guidelines/caching', 'guidelines/performance', 'guidelines/criteria-builder'],
+                    items: [
+                        'guidelines/server-development',
+                        'guidelines/rest-api',
+                        'guidelines/server-tests',
+                        'guidelines/database',
+                        'guidelines/multiple-choice-json-persistence',
+                        'guidelines/caching',
+                        'guidelines/performance',
+                        'guidelines/criteria-builder',
+                    ],
                 },
                 {
                     type: 'category',

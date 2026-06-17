@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import org.hibernate.annotations.ConcreteProxy;
 
@@ -49,6 +50,13 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestion extends DomainObject {
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "next_component_id")
+    private Long nextComponentId;
+
     @Column(name = "title")
     private String title;
 
@@ -82,6 +90,32 @@ public abstract class QuizQuestion extends DomainObject {
     @JoinColumn(name = "exercise_id")
     @JsonIgnore
     private QuizExercise exercise;
+
+    @JsonIgnore
+    public Long getVersion() {
+        return version;
+    }
+
+    @JsonIgnore
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    @JsonIgnore
+    public Long getNextComponentId() {
+        return nextComponentId;
+    }
+
+    protected void setNextComponentId(Long nextComponentId) {
+        this.nextComponentId = nextComponentId;
+    }
+
+    protected long allocateNextComponentId() {
+        if (nextComponentId == null) {
+            nextComponentId = 1L;
+        }
+        return nextComponentId++;
+    }
 
     @JsonProperty("exerciseId")
     public Long getExerciseId() {

@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOptionInput;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -90,7 +91,15 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragAndDropMappingFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragAndDropQuestionFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragItemFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DropLocationFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.MultipleChoiceQuestionFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerMappingFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerQuestionFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerSolutionFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerSpotFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DropLocationReEvaluateDTO;
@@ -301,34 +310,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return recalculationNecessary;
     }
 
-    private static boolean applyAnswerOptionsFromDTO(List<AnswerOptionReEvaluateDTO> answerOptionDTO, List<AnswerOption> originalAnswerOption) {
-        boolean recalculationNecessary = false;
-        List<AnswerOption> answerOptionsToRemove = new ArrayList<>();
-        Map<Long, AnswerOptionReEvaluateDTO> answerOptionReEvaluateDTOMap = answerOptionDTO.stream().collect(Collectors.toMap(AnswerOptionReEvaluateDTO::id, Function.identity()));
-        for (AnswerOption originalAnswerOptionItem : originalAnswerOption) {
-            AnswerOptionReEvaluateDTO answerOptionDTOItem = answerOptionReEvaluateDTOMap.get(originalAnswerOptionItem.getId());
-            if (answerOptionDTOItem == null) {
-                answerOptionsToRemove.add(originalAnswerOptionItem);
-                recalculationNecessary = true;
-            }
-            else {
-                if (shouldSetInvalid(originalAnswerOptionItem.isInvalid(), answerOptionDTOItem.invalid(), answerOptionDTOItem.id(), "answer option")) {
-                    recalculationNecessary = true;
-                    originalAnswerOptionItem.setInvalid(Boolean.TRUE);
-                }
-                originalAnswerOptionItem.setText(answerOptionDTOItem.text());
-                originalAnswerOptionItem.setHint(answerOptionDTOItem.hint());
-                originalAnswerOptionItem.setExplanation(answerOptionDTOItem.explanation());
-                if (originalAnswerOptionItem.isIsCorrect() != answerOptionDTOItem.isCorrect()) {
-                    recalculationNecessary = true;
-                    originalAnswerOptionItem.setIsCorrect(answerOptionDTOItem.isCorrect());
-                }
-            }
-        }
-        originalAnswerOption.removeAll(answerOptionsToRemove);
-        return recalculationNecessary;
-    }
-
     private static boolean applyMultipleChoiceQuestionFromDTO(MultipleChoiceQuestionReEvaluateDTO mcDTO, MultipleChoiceQuestion originalQuestion) {
         boolean recalculationNecessary = false;
         originalQuestion.setTitle(mcDTO.title());
@@ -344,7 +325,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.setText(mcDTO.text());
         originalQuestion.setHint(mcDTO.hint());
         originalQuestion.setExplanation(mcDTO.explanation());
-        recalculationNecessary = applyAnswerOptionsFromDTO(mcDTO.answerOptions(), originalQuestion.getAnswerOptions()) || recalculationNecessary;
+        List<AnswerOptionInput> inputs = mcDTO.answerOptions().stream().map(optionDTO -> {
+            AnswerOption existingOption = originalQuestion.findAnswerOptionById(optionDTO.id());
+            Boolean invalid = existingOption != null && existingOption.isInvalid() ? Boolean.TRUE : optionDTO.invalid();
+            return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
+        }).toList();
+        try {
+            recalculationNecessary = originalQuestion.replaceAnswerOptions(inputs).requiresRecalculation() || recalculationNecessary;
+        }
+        catch (IllegalArgumentException ex) {
+            throw new BadRequestException(ex.getMessage());
+        }
         return recalculationNecessary;
     }
 
@@ -541,7 +532,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (originalQuizExercise.getQuizQuestions().size() != newQuestions.size()) {
             questionsChanged = true;
         }
-        originalQuizExercise.setQuizQuestions(newQuestions);
+        originalQuizExercise.getQuizQuestions().clear();
+        originalQuizExercise.getQuizQuestions().addAll(newQuestions);
         return questionsChanged;
     }
 
@@ -592,6 +584,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the updated quiz exercise with the changed statistics
      */
     public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NonNull List<MultipartFile> files) throws IOException {
+        originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(originalQuizExercise.getId());
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
@@ -1058,7 +1051,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
      *                                      quiz has already started, or conversion between exam/course types).
      */
-    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText,
+    private QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText, Set<QuizBatch> batches,
             Set<Long> originalCompetencyIds) throws IOException {
 
         if (!updatedQuiz.isValid()) {
@@ -1071,14 +1064,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // Check if quiz has already started or ended, and reuse the fetched batches
-        Set<QuizBatch> batches = checkQuizEditable(originalQuiz);
-
         updatedQuiz.reconnectJSONIgnoreAttributes();
 
         // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
         if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
-            updatedQuiz.setQuizBatches(batches);
+            replaceQuizBatchesPreservingCollection(updatedQuiz, batches);
         }
 
         handleDndQuizFileUpdates(updatedQuiz, originalQuiz, files);
@@ -1098,13 +1088,36 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Loads the current quiz exercise graph, applies the editor payload through aggregate-root APIs, then saves it through
+     * the repository boundary. This keeps option ID allocation on the existing question instances while respecting the
+     * project's rule against broad service-level transactions.
+     *
+     * @param exerciseId            the exercise to update
+     * @param updateQuizExerciseDTO complete editor payload
+     * @param files                 uploaded drag-and-drop files
+     * @param notificationText      optional notification text
+     * @return the persisted quiz exercise
+     * @throws IOException if processing an uploaded file fails
+     */
+    public QuizExercise updateFromEditor(Long exerciseId, UpdateQuizExerciseDTO updateQuizExerciseDTO, @NonNull List<MultipartFile> files, String notificationText)
+            throws IOException {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
+        Set<Long> originalCompetencyIds = quizExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        QuizExercise originalQuiz = copyFieldsForUpdate(quizExercise);
+        Set<QuizBatch> batches = checkQuizEditable(originalQuiz);
+
+        mergeDTOIntoDomainObject(quizExercise, updateQuizExerciseDTO);
+        return performUpdate(originalQuiz, quizExercise, files, notificationText, batches, originalCompetencyIds);
+    }
+
+    /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
      * This method converts DTOs to new entity objects to avoid Hibernate detached entity issues.
      *
      * @param quizExercise          The QuizExercise domain object to be updated
      * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
+    private void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
         // PUT semantics: all fields are assigned directly; null means "clear/unset".
         quizExercise.setTitle(updateQuizExerciseDTO.title());
         quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
@@ -1148,23 +1161,196 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
                     .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
 
-            // Convert DTOs to new entities to avoid detached entity issues
+            // Keep existing MC aggregate roots so question-scoped ID high-watermarks cannot move backwards.
             List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> {
+                if (dto instanceof MultipleChoiceQuestionFromEditorDTO mcDTO && mcDTO.id() != null
+                        && existingQuestionsById.get(mcDTO.id()) instanceof MultipleChoiceQuestion existingQuestion) {
+                    applyMultipleChoiceEditorDTO(existingQuestion, mcDTO);
+                    return existingQuestion;
+                }
+                if (dto instanceof DragAndDropQuestionFromEditorDTO dndDTO && dndDTO.id() != null
+                        && existingQuestionsById.get(dndDTO.id()) instanceof DragAndDropQuestion existingQuestion) {
+                    applyDragAndDropEditorDTO(existingQuestion, dndDTO);
+                    return existingQuestion;
+                }
+                if (dto instanceof ShortAnswerQuestionFromEditorDTO saDTO && saDTO.id() != null
+                        && existingQuestionsById.get(saDTO.id()) instanceof ShortAnswerQuestion existingQuestion) {
+                    applyShortAnswerEditorDTO(existingQuestion, saDTO);
+                    return existingQuestion;
+                }
                 QuizQuestion newQuestion = dto.toDomainObject();
                 // For existing questions, preserve statistics from the managed entity
                 if (newQuestion.getId() != null && existingQuestionsById.containsKey(newQuestion.getId())) {
                     QuizQuestion existingQuestion = existingQuestionsById.get(newQuestion.getId());
                     newQuestion.setQuizQuestionStatistic(existingQuestion.getQuizQuestionStatistic());
+                    newQuestion.setVersion(existingQuestion.getVersion());
                 }
                 return newQuestion;
             }).toList());
-            quizExercise.setQuizQuestions(newQuestions);
+            quizExercise.getQuizQuestions().clear();
+            quizExercise.getQuizQuestions().addAll(newQuestions);
         }
         else {
             quizExercise.getQuizQuestions().clear();
         }
 
         competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
+    }
+
+    private static void replaceQuizBatchesPreservingCollection(QuizExercise quizExercise, Set<QuizBatch> quizBatches) {
+        quizExercise.getQuizBatches().clear();
+        quizExercise.getQuizBatches().addAll(quizBatches);
+    }
+
+    private static void applyDragAndDropEditorDTO(DragAndDropQuestion question, DragAndDropQuestionFromEditorDTO dto) {
+        question.setTitle(dto.title());
+        question.setText(dto.text());
+        question.setHint(dto.hint());
+        question.setExplanation(dto.explanation());
+        question.setPoints(dto.points());
+        question.setScoringType(dto.scoringType());
+        question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
+        question.setBackgroundFilePath(dto.backgroundFilePath());
+
+        Map<Long, DropLocation> existingDropLocations = question.getDropLocations().stream().filter(dropLocation -> dropLocation.getId() != null)
+                .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
+        List<DropLocation> dropLocations = new ArrayList<>();
+        Map<Long, DropLocation> effectiveIdToDropLocation = new HashMap<>();
+        for (DropLocationFromEditorDTO locationDTO : dto.dropLocations()) {
+            DropLocation dropLocation = locationDTO.id() == null ? locationDTO.toDomainObject() : existingDropLocations.get(locationDTO.id());
+            if (dropLocation == null) {
+                throw new BadRequestAlertException("Unknown drop location ID " + locationDTO.id(), ENTITY_NAME, "invalidDropLocations");
+            }
+            locationDTO.applyTo(dropLocation);
+            dropLocations.add(dropLocation);
+            effectiveIdToDropLocation.put(locationDTO.effectiveId(), dropLocation);
+        }
+
+        Map<Long, DragItem> existingDragItems = question.getDragItems().stream().filter(dragItem -> dragItem.getId() != null)
+                .collect(Collectors.toMap(DragItem::getId, Function.identity()));
+        List<DragItem> dragItems = new ArrayList<>();
+        Map<Long, DragItem> effectiveIdToDragItem = new HashMap<>();
+        for (DragItemFromEditorDTO itemDTO : dto.dragItems()) {
+            DragItem dragItem = itemDTO.id() == null ? itemDTO.toDomainObject() : existingDragItems.get(itemDTO.id());
+            if (dragItem == null) {
+                throw new BadRequestAlertException("Unknown drag item ID " + itemDTO.id(), ENTITY_NAME, "invalidDragItems");
+            }
+            itemDTO.applyTo(dragItem);
+            dragItems.add(dragItem);
+            effectiveIdToDragItem.put(itemDTO.effectiveId(), dragItem);
+        }
+
+        Map<Long, DragAndDropMapping> existingMappings = question.getCorrectMappings().stream().filter(mapping -> mapping.getId() != null)
+                .collect(Collectors.toMap(DragAndDropMapping::getId, Function.identity()));
+        Set<DragAndDropMapping> mappings = new HashSet<>();
+        for (DragAndDropMappingFromEditorDTO mappingDTO : dto.correctMappings()) {
+            DragItem dragItem = effectiveIdToDragItem.get(mappingDTO.dragItemTempId());
+            DropLocation dropLocation = effectiveIdToDropLocation.get(mappingDTO.dropLocationTempId());
+            if (dragItem == null || dropLocation == null) {
+                throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
+            }
+            DragAndDropMapping mapping = mappingDTO.id() == null ? new DragAndDropMapping() : existingMappings.get(mappingDTO.id());
+            if (mapping == null) {
+                throw new BadRequestAlertException("Unknown drag and drop mapping ID " + mappingDTO.id(), ENTITY_NAME, "invalidMappings");
+            }
+            mapping.setDragItem(dragItem);
+            mapping.setDropLocation(dropLocation);
+            mappings.add(mapping);
+        }
+
+        question.getDropLocations().clear();
+        question.getDropLocations().addAll(dropLocations);
+        question.getDragItems().clear();
+        question.getDragItems().addAll(dragItems);
+        question.getCorrectMappings().clear();
+        question.getCorrectMappings().addAll(mappings);
+    }
+
+    private static void applyMultipleChoiceEditorDTO(MultipleChoiceQuestion question, MultipleChoiceQuestionFromEditorDTO dto) {
+        question.setTitle(dto.title());
+        question.setText(dto.text());
+        question.setHint(dto.hint());
+        question.setExplanation(dto.explanation());
+        question.setPoints(dto.points());
+        question.setScoringType(dto.scoringType());
+        question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
+        question.setSingleChoice(dto.singleChoice());
+
+        try {
+            question.replaceAnswerOptions(dto.answerOptions().stream().map(optionDTO -> {
+                AnswerOption existingOption = question.findAnswerOptionById(optionDTO.id());
+                Boolean invalid = existingOption == null ? Boolean.FALSE : existingOption.isInvalid();
+                return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
+            }).toList());
+        }
+        catch (IllegalArgumentException ex) {
+            throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "invalidAnswerOptions");
+        }
+    }
+
+    private static void applyShortAnswerEditorDTO(ShortAnswerQuestion question, ShortAnswerQuestionFromEditorDTO dto) {
+        question.setTitle(dto.title());
+        question.setText(dto.text());
+        question.setHint(dto.hint());
+        question.setExplanation(dto.explanation());
+        question.setPoints(dto.points());
+        question.setScoringType(dto.scoringType());
+        question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
+        question.setSimilarityValue(dto.similarityValue());
+        question.setMatchLetterCase(dto.matchLetterCase());
+
+        Map<Long, ShortAnswerSpot> existingSpots = question.getSpots().stream().filter(spot -> spot.getId() != null)
+                .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
+        List<ShortAnswerSpot> spots = new ArrayList<>();
+        Map<Long, ShortAnswerSpot> effectiveIdToSpot = new HashMap<>();
+        for (ShortAnswerSpotFromEditorDTO spotDTO : dto.spots()) {
+            ShortAnswerSpot spot = spotDTO.id() == null ? spotDTO.toDomainObject() : existingSpots.get(spotDTO.id());
+            if (spot == null) {
+                throw new BadRequestAlertException("Unknown short answer spot ID " + spotDTO.id(), ENTITY_NAME, "invalidShortAnswerSpots");
+            }
+            spotDTO.applyTo(spot);
+            spots.add(spot);
+            effectiveIdToSpot.put(spotDTO.effectiveId(), spot);
+        }
+
+        Map<Long, ShortAnswerSolution> existingSolutions = question.getSolutions().stream().filter(solution -> solution.getId() != null)
+                .collect(Collectors.toMap(ShortAnswerSolution::getId, Function.identity()));
+        List<ShortAnswerSolution> solutions = new ArrayList<>();
+        Map<Long, ShortAnswerSolution> effectiveIdToSolution = new HashMap<>();
+        for (ShortAnswerSolutionFromEditorDTO solutionDTO : dto.solutions()) {
+            ShortAnswerSolution solution = solutionDTO.id() == null ? solutionDTO.toDomainObject() : existingSolutions.get(solutionDTO.id());
+            if (solution == null) {
+                throw new BadRequestAlertException("Unknown short answer solution ID " + solutionDTO.id(), ENTITY_NAME, "invalidShortAnswerSolutions");
+            }
+            solutionDTO.applyTo(solution);
+            solutions.add(solution);
+            effectiveIdToSolution.put(solutionDTO.effectiveId(), solution);
+        }
+
+        Map<Long, ShortAnswerMapping> existingMappings = question.getCorrectMappings().stream().filter(mapping -> mapping.getId() != null)
+                .collect(Collectors.toMap(ShortAnswerMapping::getId, Function.identity()));
+        Set<ShortAnswerMapping> mappings = new HashSet<>();
+        for (ShortAnswerMappingFromEditorDTO mappingDTO : dto.correctMappings()) {
+            ShortAnswerSolution solution = effectiveIdToSolution.get(mappingDTO.solutionTempId());
+            ShortAnswerSpot spot = effectiveIdToSpot.get(mappingDTO.spotTempId());
+            if (solution == null || spot == null) {
+                throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
+            }
+            ShortAnswerMapping mapping = mappingDTO.id() == null ? new ShortAnswerMapping() : existingMappings.get(mappingDTO.id());
+            if (mapping == null) {
+                throw new BadRequestAlertException("Unknown short answer mapping ID " + mappingDTO.id(), ENTITY_NAME, "invalidMappings");
+            }
+            mapping.setSolution(solution);
+            mapping.setSpot(spot);
+            mappings.add(mapping);
+        }
+
+        question.getSpots().clear();
+        question.getSpots().addAll(spots);
+        question.getSolutions().clear();
+        question.getSolutions().addAll(solutions);
+        question.getCorrectMappings().clear();
+        question.getCorrectMappings().addAll(mappings);
     }
 
     /**
@@ -1174,18 +1360,50 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param quizExercise the quiz exercise to copy
      * @return a copy of the quiz exercise with all fields required for an update.
      */
-    public QuizExercise copyFieldsForUpdate(QuizExercise quizExercise) {
+    private QuizExercise copyFieldsForUpdate(QuizExercise quizExercise) {
         QuizExercise copy = new QuizExercise();
         BeanUtils.copyProperties(quizExercise, copy);
         if (!quizExercise.isExamExercise()) {
             copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
-        copy.setQuizQuestions(new ArrayList<>(quizExercise.getQuizQuestions()));
+        copy.setQuizQuestions(quizExercise.getQuizQuestions().stream().map(QuizExerciseService::copyQuizQuestionForUpdate).collect(Collectors.toCollection(ArrayList::new)));
         copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
         copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
         copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
         copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));
+        return copy;
+    }
+
+    private static QuizQuestion copyQuizQuestionForUpdate(QuizQuestion source) {
+        QuizQuestion copy = source.copyQuestionId();
+        copy.setTitle(source.getTitle());
+        copy.setText(source.getText());
+        copy.setHint(source.getHint());
+        copy.setExplanation(source.getExplanation());
+        copy.setPoints(source.getPoints());
+        copy.setScoringType(source.getScoringType());
+        copy.setRandomizeOrder(source.isRandomizeOrder());
+        copy.setInvalid(source.isInvalid());
+        copy.setQuizQuestionStatistic(source.getQuizQuestionStatistic());
+
+        if (source instanceof MultipleChoiceQuestion sourceQuestion && copy instanceof MultipleChoiceQuestion copyQuestion) {
+            copyQuestion.setSingleChoice(sourceQuestion.isSingleChoice());
+            copyQuestion.setAnswerOptions(sourceQuestion.getAnswerOptions());
+        }
+        else if (source instanceof DragAndDropQuestion sourceQuestion && copy instanceof DragAndDropQuestion copyQuestion) {
+            copyQuestion.setBackgroundFilePath(sourceQuestion.getBackgroundFilePath());
+            copyQuestion.setDragItems(sourceQuestion.getDragItems().stream().map(QuizExerciseService::copyDragItemForUpdate).collect(Collectors.toCollection(ArrayList::new)));
+        }
+        return copy;
+    }
+
+    private static DragItem copyDragItemForUpdate(DragItem source) {
+        DragItem copy = new DragItem();
+        copy.setId(source.getId());
+        copy.setText(source.getText());
+        copy.setPictureFilePath(source.getPictureFilePath());
+        copy.setInvalid(source.isInvalid());
         return copy;
     }
 

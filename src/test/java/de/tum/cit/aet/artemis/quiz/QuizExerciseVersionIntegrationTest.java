@@ -6,22 +6,31 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOptionInput;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
@@ -29,6 +38,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
 /**
  * Integration tests for exercise versioning on QuizExercise operations.
@@ -42,6 +52,12 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
 
     @Autowired
     private ExerciseVersionUtilService exerciseVersionUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -101,8 +117,8 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
-        question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        question.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        question.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        question.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         question.setExplanation("Explanation");
         question.copyQuestionId();
 
@@ -118,6 +134,36 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
         assertThat(originalVersion.getId()).isNotEqualTo(newVersion.getId());
         assertThat(originalVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
                 .isNotEqualTo(newVersion.getExerciseSnapshot());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConcurrentMultipleChoiceQuestionUpdates_failWithOptimisticLocking() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        MultipleChoiceQuestion multipleChoiceQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance)
+                .map(MultipleChoiceQuestion.class::cast).findFirst().orElseThrow();
+
+        CountDownLatch bothTransactionsLoaded = new CountDownLatch(2);
+        CountDownLatch firstTransactionCommitted = new CountDownLatch(1);
+        AtomicReference<Throwable> firstFailure = new AtomicReference<>();
+        AtomicReference<Throwable> secondFailure = new AtomicReference<>();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        try {
+            executorService.submit(
+                    () -> updateFirstAnswerOptionText(multipleChoiceQuestion.getId(), "first transaction", bothTransactionsLoaded, null, firstTransactionCommitted, firstFailure));
+            executorService.submit(() -> updateFirstAnswerOptionText(multipleChoiceQuestion.getId(), "second transaction", bothTransactionsLoaded, firstTransactionCommitted, null,
+                    secondFailure));
+
+            executorService.shutdown();
+            assertThat(executorService.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+        finally {
+            executorService.shutdownNow();
+        }
+
+        assertThat(firstFailure.get()).isNull();
+        assertThat(secondFailure.get()).isInstanceOf(OptimisticLockingFailureException.class);
     }
 
     @ParameterizedTest
@@ -155,6 +201,45 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
         assertThat(originalVersion.getId()).isNotEqualTo(newVersion.getId());
         assertThat(originalVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
                 .isNotEqualTo(newVersion.getExerciseSnapshot());
+    }
+
+    private void updateFirstAnswerOptionText(Long questionId, String answerOptionText, CountDownLatch bothTransactionsLoaded, CountDownLatch waitBeforeCommit,
+            CountDownLatch signalAfterCommit, AtomicReference<Throwable> failure) {
+        try {
+            new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+                MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizQuestionRepository.findById(questionId).orElseThrow();
+                question.replaceAnswerOptions(question.getAnswerOptions().stream()
+                        .map(answerOption -> new AnswerOptionInput(answerOption.getId(),
+                                answerOption.equals(question.getAnswerOptions().getFirst()) ? answerOptionText : answerOption.getText(), answerOption.getHint(),
+                                answerOption.getExplanation(), answerOption.isIsCorrect(), answerOption.isInvalid()))
+                        .toList());
+                bothTransactionsLoaded.countDown();
+                awaitLatch(bothTransactionsLoaded);
+                if (waitBeforeCommit != null) {
+                    awaitLatch(waitBeforeCommit);
+                }
+            });
+        }
+        catch (Throwable throwable) {
+            failure.set(throwable);
+        }
+        finally {
+            if (signalAfterCommit != null) {
+                signalAfterCommit.countDown();
+            }
+        }
+    }
+
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out while waiting for concurrent quiz question update");
+            }
+        }
+        catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Interrupted while waiting for concurrent quiz question update", interruptedException);
+        }
     }
 
 }

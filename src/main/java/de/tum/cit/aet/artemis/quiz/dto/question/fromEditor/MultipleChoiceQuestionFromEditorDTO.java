@@ -66,6 +66,9 @@ public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title
         question.setSingleChoice(singleChoice);
 
         List<AnswerOption> options = new java.util.ArrayList<>(answerOptions.stream().map(AnswerOptionFromEditorDTO::toDomainObject).toList());
+        if (id == null) {
+            options.forEach(option -> option.setId(null));
+        }
         question.setAnswerOptions(options);
         return question;
     }

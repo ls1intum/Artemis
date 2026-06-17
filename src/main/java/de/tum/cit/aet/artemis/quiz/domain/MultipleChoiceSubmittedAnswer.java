@@ -1,20 +1,21 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A MultipleChoiceSubmittedAnswer.
@@ -27,20 +28,45 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     // No @Cache here on purpose. A second-level cache with NONSTRICT_READ_WRITE used to produce partial / stale selected-option collections
     // under concurrent activity (autosave, evaluation) on a clustered setup, see Artemis issue #12574. Selected options are small and
     // rarely re-read for the same submission, so always fetching from the database is both simpler and deterministic.
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
-    private Set<AnswerOption> selectedOptions = new HashSet<>();
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id"))
+    @Column(name = "selected_options_id")
+    private Set<Long> selectedOptionIds = new HashSet<>();
 
+    @JsonProperty("selectedOptions")
     public Set<AnswerOption> getSelectedOptions() {
-        return selectedOptions;
+        if (!(getQuizQuestion() instanceof MultipleChoiceQuestion question) || selectedOptionIds == null) {
+            return Set.of();
+        }
+        return selectedOptionIds.stream().map(optionId -> {
+            AnswerOption option = question.findAnswerOptionById(optionId);
+            if (option == null) {
+                throw new IllegalStateException("Multiple-choice submission " + getId() + " references missing answer option " + optionId + " in question " + question.getId());
+            }
+            return option;
+        }).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+    @JsonProperty("selectedOptions")
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {
-        this.selectedOptions = answerOptions;
+        this.selectedOptionIds = answerOptions == null ? null : answerOptions.stream().map(AnswerOption::getId).collect(Collectors.toCollection(HashSet::new));
     }
 
     public void addSelectedOptions(AnswerOption answerOption) {
-        this.selectedOptions.add(answerOption);
+        if (selectedOptionIds == null) {
+            selectedOptionIds = new HashSet<>();
+        }
+        selectedOptionIds.add(answerOption.getId());
+    }
+
+    @JsonIgnore
+    public Set<Long> getSelectedOptionIds() {
+        return selectedOptionIds == null ? null : Set.copyOf(selectedOptionIds);
+    }
+
+    @JsonIgnore
+    public void setSelectedOptionIds(Set<Long> selectedOptionIds) {
+        this.selectedOptionIds = selectedOptionIds == null ? null : new HashSet<>(selectedOptionIds);
     }
 
     /**
@@ -51,14 +77,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      */
     public boolean isSelected(AnswerOption answerOption) {
         // search for this answer option in the selected answer options
-        for (AnswerOption selectedOption : getSelectedOptions()) {
-            if (Objects.equals(selectedOption.getId(), answerOption.getId())) {
-                // this answer option is selected => we can stop searching
-                return true;
-            }
-        }
-        // we didn't find the answer option => it wasn't selected
-        return false;
+        return selectedOptionIds != null && selectedOptionIds.contains(answerOption.getId());
     }
 
     /**
@@ -68,15 +87,9 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
      */
     private void checkAndDeleteSelectedOptions(MultipleChoiceQuestion question) {
 
-        if (question != null) {
+        if (question != null && selectedOptionIds != null) {
             // Check if an answerOption was deleted and delete reference to in selectedOptions
-            Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
-            for (AnswerOption answerOption : this.getSelectedOptions()) {
-                if (!question.getAnswerOptions().contains(answerOption)) {
-                    selectedOptionsToDelete.add(answerOption);
-                }
-            }
-            this.getSelectedOptions().removeAll(selectedOptionsToDelete);
+            selectedOptionIds.removeIf(answerOptionId -> question.findAnswerOptionById(answerOptionId) == null);
         }
     }
 
@@ -90,7 +103,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
         if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
             setQuizQuestion(null);
-            selectedOptions = null;
+            selectedOptionIds = null;
         }
         else {
             // find same quizQuestion in quizExercise
@@ -107,7 +120,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     }
 
     public Set<Long> toSelectedIds() {
-        return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        return selectedOptionIds == null ? null : Set.copyOf(selectedOptionIds);
     }
 
 }

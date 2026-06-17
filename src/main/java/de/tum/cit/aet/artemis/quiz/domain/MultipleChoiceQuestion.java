@@ -1,19 +1,24 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,28 +36,27 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceP
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    // No @Cache here on purpose: the parent collection of AnswerOption references that get resolved during merge cascade.
-    // A stale cached collection here is the exact failure mode that caused #12574 / #12584 on the clustered L2 cache.
-    // Bidirectional mapping: AnswerOption.question owns the question_id FK, so a parent saveAndFlush issues targeted
-    // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced the #12584 ID-regeneration class.
-    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
-    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "answer_options_order")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "answer_options")
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
     private boolean singleChoice = false;
 
+    public MultipleChoiceQuestion() {
+        setNextComponentId(1L);
+    }
+
     public List<AnswerOption> getAnswerOptions() {
-        return answerOptions;
+        return Collections.unmodifiableList(answerOptions);
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        // Direct field assignment so callers like filterSensitiveInformation can replace a lazy-initialized PersistentList
-        // without triggering session-less initialization. Back-references are set defensively in
-        // ensureAnswerOptionBackReferences via @PrePersist / @PreUpdate.
-        this.answerOptions = answerOptions;
+        this.answerOptions = answerOptions == null ? new ArrayList<>()
+                : answerOptions.stream().map(AnswerOptionInput::of).map(this::createAnswerOptionPreservingId).collect(Collectors.toCollection(ArrayList::new));
+        setNextComponentId(Math.max(getNextComponentId() == null ? 1L : getNextComponentId(),
+                this.answerOptions.stream().map(AnswerOption::getId).filter(Objects::nonNull).mapToLong(Long::longValue).max().orElse(0L) + 1L));
+        assignIdsToNewOptions();
     }
 
     public boolean isSingleChoice() {
@@ -70,17 +74,55 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
      */
     public AnswerOption findAnswerOptionById(Long answerOptionId) {
+        if (answerOptionId == null) {
+            return null;
+        }
+        return answerOptions.stream().filter(answer -> Objects.equals(answer.getId(), answerOptionId)).findFirst().orElse(null);
+    }
 
-        if (answerOptionId != null) {
-            // iterate through all answers of this quiz
-            for (AnswerOption answer : answerOptions) {
-                // return answer if the IDs are equal
-                if (answer.getId().equals(answerOptionId)) {
-                    return answer;
-                }
+    /**
+     * Replaces the complete ordered option list while preserving known IDs and allocating IDs for new options.
+     *
+     * @param inputs immutable option inputs in their requested order
+     * @return semantic changes caused by the replacement
+     */
+    public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs) {
+        Objects.requireNonNull(inputs);
+        validateAnswerOptions();
+        Map<Long, AnswerOption> existingById = answerOptions.stream().collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+        Set<Long> requestedIds = new HashSet<>();
+        Set<Long> addedIds = new LinkedHashSet<>();
+        Set<Long> updatedIds = new LinkedHashSet<>();
+        boolean requiresRecalculation = false;
+        List<AnswerOption> replacements = new ArrayList<>();
+
+        for (AnswerOptionInput input : inputs) {
+            validateInput(input);
+            if (input.id() != null && !requestedIds.add(input.id())) {
+                throw new IllegalArgumentException("Duplicate answer option ID " + input.id());
+            }
+            AnswerOption existing = input.id() == null ? null : existingById.get(input.id());
+            if (input.id() != null && existing == null) {
+                throw new IllegalArgumentException("Unknown answer option ID " + input.id());
+            }
+            Long id = existing == null ? allocateNextComponentId() : existing.getId();
+            AnswerOption replacement = new AnswerOption(id, input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+            replacements.add(replacement);
+            if (existing == null) {
+                addedIds.add(id);
+            }
+            else if (!sameContent(existing, replacement)) {
+                updatedIds.add(id);
+                requiresRecalculation |= !Objects.equals(existing.isIsCorrect(), replacement.isIsCorrect()) || !Objects.equals(existing.isInvalid(), replacement.isInvalid());
             }
         }
-        return null;
+
+        Set<Long> deletedIds = new LinkedHashSet<>(existingById.keySet());
+        deletedIds.removeAll(requestedIds);
+        requiresRecalculation |= !deletedIds.isEmpty();
+        answerOptions = replacements;
+        validateAnswerOptions();
+        return new AnswerOptionChangeSet(Set.copyOf(addedIds), Set.copyOf(updatedIds), Set.copyOf(deletedIds), requiresRecalculation);
     }
 
     /**
@@ -103,11 +145,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
 
         // find added Answers, which are not allowed to be added
-        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
+        Set<Long> notAllowedAddedAnswerIds = new HashSet<>();
         // check every answer of the question
         for (AnswerOption answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise -> if not it's an added answer
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
+            if (originalQuestion.findAnswerOptionById(answer.getId()) != null) {
                 // find original answer
                 AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
                 // correct invalid = null to invalid = false
@@ -119,11 +161,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             }
             else {
                 // mark the added Answers (adding answers is not allowed)
-                notAllowedAddedAnswers.add(answer);
+                notAllowedAddedAnswerIds.add(answer.getId());
             }
         }
         // remove the added Answers
-        this.getAnswerOptions().removeAll(notAllowedAddedAnswers);
+        answerOptions.removeIf(answer -> notAllowedAddedAnswerIds.contains(answer.getId()));
     }
 
     /**
@@ -159,7 +201,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check every answer of the question
         for (AnswerOption answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
+            if (originalQuestion.findAnswerOptionById(answer.getId()) != null) {
                 // find original answer
                 AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
 
@@ -248,51 +290,75 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     public QuizQuestion copyQuestionId() {
         var question = new MultipleChoiceQuestion();
         question.setId(getId());
+        question.setVersion(getVersion());
         return question;
     }
 
     /**
-     * Adds a single answer option and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Adds a single answer option as a JSON-owned component and allocates a question-scoped ID.
      *
      * @param answerOption the answer option to add
-     * @return this question for fluent chaining
+     * @return the newly added answer option with its question-scoped ID
      */
-    public MultipleChoiceQuestion addAnswerOption(AnswerOption answerOption) {
-        if (answerOptions == null) {
-            answerOptions = new ArrayList<>();
-        }
-        answerOptions.add(answerOption);
-        answerOption.setQuestion(this);
-        return this;
+    public AnswerOption addAnswerOption(AnswerOption answerOption) {
+        AnswerOptionInput input = AnswerOptionInput.of(answerOption);
+        validateInput(input);
+        AnswerOption copy = new AnswerOption(allocateNextComponentId(), input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+        answerOptions.add(copy);
+        return copy;
     }
 
     /**
-     * Removes a single answer option and clears its back-reference. Mirrors the remove* helpers on the other quiz
-     * entities for symmetry; with {@code orphanRemoval = true} the option will also be deleted on the next flush.
+     * Removes a single answer option from the JSON-owned component list.
      *
      * @param answerOption the answer option to remove
      */
     public void removeAnswerOption(AnswerOption answerOption) {
         if (answerOptions != null) {
-            answerOptions.remove(answerOption);
+            answerOptions.removeIf(option -> Objects.equals(option.getId(), answerOption.getId()));
         }
-        answerOption.setQuestion(null);
     }
 
-    /**
-     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any AnswerOption
-     * added via {@code getAnswerOptions().add(...)} (bypassing {@link #addAnswerOption}) would otherwise INSERT with
-     * {@code question_id = NULL}. Mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
-     */
     @PrePersist
     @PreUpdate
-    private void ensureAnswerOptionBackReferences() {
-        if (answerOptions != null) {
-            for (AnswerOption option : answerOptions) {
-                if (option != null && option.getQuestion() != this) {
-                    option.setQuestion(this);
-                }
+    public void validateAnswerOptions() {
+        if (answerOptions == null) {
+            throw new IllegalStateException("Answer options must not be null");
+        }
+        Set<Long> ids = new HashSet<>();
+        for (AnswerOption answerOption : answerOptions) {
+            validateInput(AnswerOptionInput.of(answerOption));
+            if (answerOption.getId() == null || !ids.add(answerOption.getId())) {
+                throw new IllegalStateException("Answer option IDs must be non-null and unique");
             }
+            if (getNextComponentId() == null || answerOption.getId() >= getNextComponentId()) {
+                throw new IllegalStateException("Answer option ID must be below nextComponentId");
+            }
+        }
+    }
+
+    private void assignIdsToNewOptions() {
+        answerOptions.stream().filter(option -> option.getId() == null).forEach(option -> option.setId(allocateNextComponentId()));
+    }
+
+    private AnswerOption createAnswerOptionPreservingId(AnswerOptionInput input) {
+        return new AnswerOption(input.id(), input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+    }
+
+    private static boolean sameContent(AnswerOption left, AnswerOption right) {
+        return Objects.equals(left.getText(), right.getText()) && Objects.equals(left.getHint(), right.getHint()) && Objects.equals(left.getExplanation(), right.getExplanation())
+                && Objects.equals(left.isIsCorrect(), right.isIsCorrect()) && Objects.equals(left.isInvalid(), right.isInvalid());
+    }
+
+    private static void validateInput(AnswerOptionInput input) {
+        if (input == null || input.text() == null || input.text().isBlank()) {
+            throw new IllegalArgumentException("Answer option text must not be blank");
+        }
+        if (input.text().length() > 255 || input.hint() != null && input.hint().length() > 255 || input.explanation() != null && input.explanation().length() > 500) {
+            throw new IllegalArgumentException("Answer option text, hint, or explanation exceeds its maximum length");
+        }
+        if (input.isCorrect() == null || input.invalid() == null) {
+            throw new IllegalArgumentException("Answer option boolean fields must not be null");
         }
     }
 }

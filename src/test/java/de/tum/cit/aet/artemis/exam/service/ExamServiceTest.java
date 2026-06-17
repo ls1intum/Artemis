@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +30,14 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -45,6 +53,9 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -114,6 +125,62 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
         assertThat(examResult.getExerciseGroups().getFirst()).isEqualTo(exerciseGroup1);
+    }
+
+    @Test
+    void loadQuizExercisesForStudentExam_filtersDetachedQuizSnapshotWithoutPersistingSolutions() {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
+        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
+
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam1);
+        studentExam.setExercises(new ArrayList<>(List.of(quizExercise)));
+
+        examService.loadQuizExercisesForStudentExam(studentExam);
+        quizExerciseRepository.flush();
+
+        QuizExercise filteredQuizExercise = (QuizExercise) studentExam.getExercises().getFirst();
+        MultipleChoiceQuestion filteredQuestion = (MultipleChoiceQuestion) filteredQuizExercise.getQuizQuestions().getFirst();
+        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsOnlyNulls();
+        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsOnlyNulls();
+
+        QuizExercise persistedQuizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
+        MultipleChoiceQuestion persistedQuestion = (MultipleChoiceQuestion) persistedQuizExercise.getQuizQuestions().getFirst();
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+    }
+
+    @Test
+    void filterParticipationForExercise_filtersQuizSubmissionQuestionSnapshotWithoutMutatingSourceQuestion() {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
+        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quizExercise.setExerciseGroup(new ExerciseGroup());
+        quizExercise.getExerciseGroup().setExam(exam1);
+        MultipleChoiceQuestion sourceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(sourceQuestion);
+        submittedAnswer.addSelectedOptions(sourceQuestion.getAnswerOptions().getFirst());
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(submittedAnswer);
+        quizSubmission.setScoreInPoints(1.0);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(quizExercise);
+        participation.setSubmissions(Set.of(quizSubmission));
+        quizSubmission.setParticipation(participation);
+
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam1);
+
+        examService.filterParticipationForExercise(studentExam, quizExercise, List.of(participation), false);
+
+        MultipleChoiceQuestion filteredQuestion = (MultipleChoiceQuestion) submittedAnswer.getQuizQuestion();
+        assertThat(filteredQuestion).isNotSameAs(sourceQuestion);
+        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsOnlyNulls();
+        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsOnlyNulls();
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
     }
 
     @Test

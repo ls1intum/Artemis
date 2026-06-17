@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,8 +69,13 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionBeforeEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
@@ -827,8 +833,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 .findFirst().orElseThrow();
         // The default MC question has only one correct option, but the bug manifests with multiple correct options loaded into a Set.
         // Add extra correct options so a fully-correct selection across several rows exercises the ManyToMany fetch we are fixing.
-        builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
-        builtMcQuestion.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        builtMcQuestion.addAnswerOption(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        builtMcQuestion.addAnswerOption(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
         quizExercise = quizExerciseService.save(quizExercise);
         quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
 
@@ -1053,18 +1059,20 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             // ObjectNotFoundException; now it must be silently dropped and the remaining valid selections must still be persisted.
             MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
                     .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            AnswerOption staleOption = new AnswerOption();
-            staleOption.setId(Long.MAX_VALUE);
-            mcAnswer.addSelectedOptions(staleOption);
-            int validSelectionCount = mcAnswer.getSelectedOptions().size() - 1;
+            Set<EntityIdRefDTO> selectedOptions = mcAnswer.getSelectedOptionIds().stream().map(EntityIdRefDTO::new).collect(Collectors.toCollection(HashSet::new));
+            selectedOptions.add(new EntityIdRefDTO(Long.MAX_VALUE));
+            int validSelectionCount = selectedOptions.size() - 1;
+            Set<SubmittedAnswerFromLiveClientDTO> submittedAnswers = Set
+                    .of(new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(mcAnswer.getQuizQuestion().getId()), selectedOptions));
+            QuizSubmissionFromLiveClientDTO submissionDTO = new QuizSubmissionFromLiveClientDTO(null, submittedAnswers);
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
-                    QuizSubmission.class, HttpStatus.OK);
+            QuizSubmissionBeforeEvaluationDTO updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true",
+                    submissionDTO, QuizSubmissionBeforeEvaluationDTO.class, HttpStatus.OK);
 
-            assertThat(updatedSubmission.isSubmitted()).isTrue();
-            MultipleChoiceSubmittedAnswer persistedMcAnswer = updatedSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
-                    .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            assertThat(persistedMcAnswer.getSelectedOptions()).hasSize(validSelectionCount).allSatisfy(option -> assertThat(option.getId()).isNotEqualTo(Long.MAX_VALUE));
+            assertThat(updatedSubmission.submitted()).isTrue();
+            var persistedMcAnswer = updatedSubmission.submittedAnswers().stream().filter(answer -> answer.multipleChoiceSubmittedAnswer() != null).findFirst().orElseThrow()
+                    .multipleChoiceSubmittedAnswer();
+            assertThat(persistedMcAnswer.selectedOptions()).hasSize(validSelectionCount).allSatisfy(option -> assertThat(option.id()).isNotEqualTo(Long.MAX_VALUE));
         }
 
         /**

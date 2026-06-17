@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260615120000-1-add-mc-json-columns-mysql-h2" author="artemis" dbms="mysql,h2">
+        <addColumn tableName="quiz_question">
+            <column name="answer_options" type="json"/>
+            <column name="next_component_id" type="bigint"/>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260615120000-2-add-mc-json-columns-postgresql" author="artemis" dbms="postgresql">
+        <addColumn tableName="quiz_question">
+            <column name="answer_options" type="jsonb"/>
+            <column name="next_component_id" type="bigint"/>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260615120000-3-preflight-answer-options" author="artemis">
+        <preConditions onFail="HALT" onFailMessage="Cannot migrate answer_option: preflight found invalid option data, ordering, or cross-question references.">
+            <and>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM answer_option ao
+                    LEFT JOIN quiz_question q ON q.id = ao.question_id
+                    WHERE ao.question_id IS NULL
+                       OR q.id IS NULL
+                       OR q.discriminator != 'MC'
+                       OR ao.answer_options_order IS NULL
+                       OR ao.answer_options_order &lt; 0
+                       OR ao.text IS NULL
+                       OR TRIM(ao.text) = ''
+                       OR ao.is_correct IS NULL
+                       OR ao.invalid IS NULL
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT question_id
+                        FROM answer_option
+                        GROUP BY question_id
+                        HAVING MIN(answer_options_order) != 0
+                            OR MAX(answer_options_order) != COUNT(*) - 1
+                            OR COUNT(DISTINCT answer_options_order) != COUNT(*)
+                    ) invalid_orders
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM multiple_choice_submitted_answer_selected_options selected
+                    LEFT JOIN submitted_answer submitted ON submitted.id = selected.multiple_choice_submitted_answers_id
+                    LEFT JOIN answer_option option_row ON option_row.id = selected.selected_options_id
+                    WHERE submitted.id IS NULL
+                       OR submitted.discriminator != 'MC'
+                       OR option_row.id IS NULL
+                       OR submitted.quiz_question_id != option_row.question_id
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM quiz_statistic_counter counter_row
+                    LEFT JOIN quiz_question question ON question.quiz_question_statistic_id = counter_row.multiple_choice_question_statistic_id
+                    LEFT JOIN answer_option option_row ON option_row.id = counter_row.answer_id
+                    WHERE (
+                        counter_row.discriminator = 'AC'
+                        AND (
+                            counter_row.answer_id IS NULL
+                            OR question.id IS NULL
+                            OR question.discriminator != 'MC'
+                            OR option_row.id IS NULL
+                            OR option_row.question_id != question.id
+                        )
+                    )
+                    OR (counter_row.discriminator != 'AC' AND counter_row.answer_id IS NOT NULL)
+                </sqlCheck>
+            </and>
+        </preConditions>
+        <sql>SELECT 1</sql>
+    </changeSet>
+
+    <changeSet id="20260615120000-4-backfill-answer-options-postgresql" author="artemis" dbms="postgresql">
+        <sql>
+            UPDATE quiz_question question
+            SET answer_options = COALESCE(
+                    (
+                        SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'id', option_row.id,
+                                'text', option_row.text,
+                                'hint', option_row.hint,
+                                'explanation', option_row.explanation,
+                                'isCorrect', option_row.is_correct,
+                                'invalid', option_row.invalid
+                            )
+                            ORDER BY option_row.answer_options_order
+                        )
+                        FROM answer_option option_row
+                        WHERE option_row.question_id = question.id
+                    ),
+                    '[]'::jsonb
+                ),
+                next_component_id = COALESCE(
+                    (SELECT MAX(option_row.id) + 1 FROM answer_option option_row WHERE option_row.question_id = question.id),
+                    1
+                )
+            WHERE question.discriminator = 'MC'
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260615120000-4-verify-answer-options-postgresql" author="artemis" dbms="postgresql">
+        <preConditions onFail="HALT" onFailMessage="PostgreSQL answer option JSON backfill did not preserve content, order, IDs, or references.">
+            <and>
+                <sqlCheck expectedResult="0">
+                    SELECT ABS(
+                        (SELECT COUNT(*) FROM answer_option)
+                        -
+                        (SELECT COALESCE(SUM(jsonb_array_length(answer_options)), 0) FROM quiz_question WHERE discriminator = 'MC')
+                    )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM answer_option option_row
+                    JOIN quiz_question question ON question.id = option_row.question_id
+                    WHERE ((question.answer_options -> option_row.answer_options_order ->> 'id')::bigint IS DISTINCT FROM option_row.id)
+                       OR NOT question.answer_options @> jsonb_build_array(
+                           jsonb_build_object(
+                               'id', option_row.id,
+                               'text', option_row.text,
+                               'hint', option_row.hint,
+                               'explanation', option_row.explanation,
+                               'isCorrect', option_row.is_correct,
+                               'invalid', option_row.invalid
+                           )
+                       )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM multiple_choice_submitted_answer_selected_options selected
+                    JOIN submitted_answer submitted ON submitted.id = selected.multiple_choice_submitted_answers_id
+                    JOIN quiz_question question ON question.id = submitted.quiz_question_id
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM jsonb_array_elements(question.answer_options) option_json
+                        WHERE (option_json ->> 'id')::bigint = selected.selected_options_id
+                    )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM quiz_statistic_counter counter_row
+                    JOIN quiz_question question ON question.quiz_question_statistic_id = counter_row.multiple_choice_question_statistic_id
+                    WHERE counter_row.answer_id IS NOT NULL
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM jsonb_array_elements(question.answer_options) option_json
+                          WHERE (option_json ->> 'id')::bigint = counter_row.answer_id
+                      )
+                </sqlCheck>
+            </and>
+        </preConditions>
+        <sql>SELECT 1</sql>
+    </changeSet>
+
+    <changeSet id="20260615120000-5-backfill-answer-options-mysql" author="artemis" dbms="mysql">
+        <sql splitStatements="true">
+            SET SESSION group_concat_max_len = 1073741824;
+            UPDATE quiz_question question
+            LEFT JOIN (
+                SELECT option_row.question_id,
+                       CONCAT(
+                           '[',
+                           GROUP_CONCAT(
+                               JSON_OBJECT(
+                                   'id', option_row.id,
+                                   'text', option_row.text,
+                                   'hint', option_row.hint,
+                                   'explanation', option_row.explanation,
+                                   'isCorrect', JSON_EXTRACT(IF(option_row.is_correct, 'true', 'false'), '$'),
+                                   'invalid', JSON_EXTRACT(IF(option_row.invalid, 'true', 'false'), '$')
+                               )
+                               ORDER BY option_row.answer_options_order
+                               SEPARATOR ','
+                           ),
+                           ']'
+                       ) AS aggregated_options,
+                       MAX(option_row.id) + 1 AS next_id
+                FROM answer_option option_row
+                GROUP BY option_row.question_id
+            ) migrated ON migrated.question_id = question.id
+            SET question.answer_options = COALESCE(migrated.aggregated_options, JSON_ARRAY()),
+                question.next_component_id = COALESCE(migrated.next_id, 1)
+            WHERE question.discriminator = 'MC';
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260615120000-5-verify-answer-options-mysql" author="artemis" dbms="mysql">
+        <preConditions onFail="HALT" onFailMessage="MySQL answer option JSON backfill did not preserve content, order, IDs, or references.">
+            <and>
+                <sqlCheck expectedResult="0">
+                    SELECT ABS(
+                        (SELECT COUNT(*) FROM answer_option)
+                        -
+                        (SELECT COALESCE(SUM(JSON_LENGTH(answer_options)), 0) FROM quiz_question WHERE discriminator = 'MC')
+                    )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM answer_option option_row
+                    JOIN quiz_question question ON question.id = option_row.question_id
+                    WHERE CAST(
+                            JSON_UNQUOTE(
+                                JSON_EXTRACT(question.answer_options, CONCAT('$[', option_row.answer_options_order, '].id'))
+                            )
+                            AS UNSIGNED
+                        ) != option_row.id
+                       OR NOT JSON_CONTAINS(
+                           question.answer_options,
+                           JSON_OBJECT(
+                               'id', option_row.id,
+                               'text', option_row.text,
+                               'hint', option_row.hint,
+                               'explanation', option_row.explanation,
+                               'isCorrect', JSON_EXTRACT(IF(option_row.is_correct, 'true', 'false'), '$'),
+                               'invalid', JSON_EXTRACT(IF(option_row.invalid, 'true', 'false'), '$')
+                           )
+                       )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM multiple_choice_submitted_answer_selected_options selected
+                    JOIN submitted_answer submitted ON submitted.id = selected.multiple_choice_submitted_answers_id
+                    JOIN quiz_question question ON question.id = submitted.quiz_question_id
+                    WHERE NOT JSON_CONTAINS(question.answer_options, JSON_OBJECT('id', selected.selected_options_id))
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM quiz_statistic_counter counter_row
+                    JOIN quiz_question question ON question.quiz_question_statistic_id = counter_row.multiple_choice_question_statistic_id
+                    WHERE counter_row.answer_id IS NOT NULL
+                      AND NOT JSON_CONTAINS(question.answer_options, JSON_OBJECT('id', counter_row.answer_id))
+                </sqlCheck>
+            </and>
+        </preConditions>
+        <sql>SELECT 1</sql>
+    </changeSet>
+
+    <!-- H2 is used only for disposable local databases; it has no production data to backfill. -->
+    <changeSet id="20260615120000-6-initialize-answer-options-h2" author="artemis" dbms="h2">
+        <sql>
+            UPDATE quiz_question SET answer_options = JSON '[]', next_component_id = 1 WHERE discriminator = 'MC'
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260615120000-7-cut-over-answer-option-references" author="artemis">
+        <dropForeignKeyConstraint baseTableName="multiple_choice_submitted_answer_selected_options" constraintName="FK87gmes7g3ad3qf3wmx3lu0iq0"/>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FKg7hjug3wu6icklf6gbiqs4n18"/>
+        <dropIndex tableName="multiple_choice_submitted_answer_selected_options" indexName="FK87gmes7g3ad3qf3wmx3lu0iq0"/>
+        <dropIndex tableName="quiz_statistic_counter" indexName="UC_STATISTIC_COUNTERANSWER_ID_COL"/>
+        <addUniqueConstraint tableName="quiz_statistic_counter" columnNames="multiple_choice_question_statistic_id, answer_id"
+                             constraintName="uc_mc_statistic_counter_question_answer"/>
+        <dropTable tableName="answer_option"/>
+    </changeSet>
+</databaseChangeLog>

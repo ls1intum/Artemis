@@ -471,6 +471,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public QuizQuestion copyQuestionId() {
         var question = new ShortAnswerQuestion();
         question.setId(getId());
+        question.setVersion(getVersion());
         return question;
     }
 

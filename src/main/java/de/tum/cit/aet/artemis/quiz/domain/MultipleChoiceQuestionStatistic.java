@@ -46,7 +46,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             return;
         }
         for (AnswerCounter counter : answerCounters) {
-            if (answer.equals(counter.getAnswer())) {
+            if (java.util.Objects.equals(answer.getId(), counter.getAnswerOptionId())) {
                 return;
             }
         }
@@ -73,10 +73,10 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
 
-            if (mcSubmittedAnswer.getSelectedOptions() != null) {
+            if (mcSubmittedAnswer.getSelectedOptionIds() != null) {
                 // change rated answerCounter if answer is selected
                 for (AnswerCounter answerCounter : answerCounters) {
-                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
+                    if (mcSubmittedAnswer.getSelectedOptionIds().contains(answerCounter.getAnswerOptionId())) {
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
                     }
                 }
@@ -91,10 +91,10 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
-            if (mcSubmittedAnswer.getSelectedOptions() != null) {
+            if (mcSubmittedAnswer.getSelectedOptionIds() != null) {
                 for (AnswerCounter answerCounter : answerCounters) {
                     // change unrated answerCounter if answer is selected
-                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
+                    if (mcSubmittedAnswer.getSelectedOptionIds().contains(answerCounter.getAnswerOptionId())) {
                         answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
                     }
                 }
