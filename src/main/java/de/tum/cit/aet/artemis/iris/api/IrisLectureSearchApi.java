@@ -31,7 +31,7 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
      * @return list of matching lecture snippets
      */
     public List<IrisLectureSnippetDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
-        return pyrisConnectorService.searchLectures(query, limit, courseIds, null).stream().map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet()))
-                .toList();
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, null).stream()
+                .map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet())).toList();
     }
 }

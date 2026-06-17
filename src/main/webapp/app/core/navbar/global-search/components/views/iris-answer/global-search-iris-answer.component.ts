@@ -175,7 +175,7 @@ export class GlobalSearchIrisAnswerComponent {
                     this.currentRunId.set(update.runId);
                     this.irisThinking.set(true);
                 } else {
-                    if (this.currentRunId() !== undefined && update.runId !== this.currentRunId()) {
+                    if (update.runId !== this.currentRunId()) {
                         return; // stale response from a superseded pipeline run
                     }
                     this.irisThinking.set(false);

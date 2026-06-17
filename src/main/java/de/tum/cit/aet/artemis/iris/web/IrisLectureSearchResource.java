@@ -106,7 +106,7 @@ public class IrisLectureSearchResource {
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO, Principal principal) {
         var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         var accessContext = buildAccessContext(user);
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), null, accessContext));
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
     }
 
     /**
