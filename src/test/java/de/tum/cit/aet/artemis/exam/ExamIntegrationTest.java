@@ -2067,6 +2067,35 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_emptiedMiddleGroupDoesNotCorruptExerciseGroupOrder() throws Exception {
+        // Regression test: when a NON-LAST exercise group is emptied (all its exercises fail to import) and removed, the
+        // removal must reindex the @OrderColumn 'exercise_group_order'. Removing it directly (bypassing the parent
+        // collection) would leave a gap that Hibernate reloads as a null element in exam.getExerciseGroups(), corrupting
+        // the exam so it can no longer be indexed, opened or deleted (NPE on a null exercise group).
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam.setChannelName("order-column-channel");
+
+        // Fail the TEXT exercise (a middle group: modelling, text, file upload, quiz) by deleting its source exercise, so
+        // its group is emptied and removed from the middle of the ordered exercise-group list.
+        TextExercise sourceText = (TextExercise) exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(TextExercise.class::isInstance)
+                .findFirst().orElseThrow();
+        String textTitle = sourceText.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        exerciseRepository.deleteById(sourceText.getId());
+
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
+        assertThat(result.skippedExercises()).as("the skipped text exercise must be reported").contains(textTitle);
+
+        // Re-fetch the created exam: its ordered exercise-group list must NOT contain a null element (no @OrderColumn gap).
+        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(result.exam().getId());
+        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null after removing an emptied middle group").doesNotContainNull();
+        assertThat(importedExam.getExerciseGroups()).hasSize(3);
+        assertThat(importedExam.getExerciseGroups()).as("no empty exercise group must survive the import").noneMatch(group -> group.getExercises().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_reportsProgressOverWebsocket() throws Exception {
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("ws-progress-channel");

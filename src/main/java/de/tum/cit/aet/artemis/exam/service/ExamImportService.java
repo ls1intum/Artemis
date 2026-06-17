@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -182,7 +183,7 @@ public class ExamImportService {
         // 3rd: Index all imported exercises and the exam itself in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
             service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
-            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().filter(Objects::nonNull).flatMap(group -> group.getExercises().stream())
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
@@ -240,7 +241,7 @@ public class ExamImportService {
         // Index the imported exercises and update the exam in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
             service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
-            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().filter(Objects::nonNull).flatMap(group -> group.getExercises().stream())
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
@@ -394,7 +395,12 @@ public class ExamImportService {
         if (!emptyCopiedGroups.isEmpty()) {
             log.warn("Removing {} exercise group(s) that ended up empty after importing into exam {} (all their exercises failed to import).", emptyCopiedGroups.size(),
                     targetExam.getId());
-            exerciseGroupRepository.deleteAll(emptyCopiedGroups);
+            // Remove the empty groups THROUGH the parent collection (not via exerciseGroupRepository.deleteAll) so Hibernate's
+            // orphanRemoval deletes them AND reindexes the @OrderColumn 'exercise_group_order'. Deleting them directly would
+            // leave a gap in the order column, which Hibernate reloads as a null element in exam.getExerciseGroups(),
+            // corrupting the exam so it can no longer be indexed, opened or deleted (NPE on a null exercise group).
+            persistedExam.getExerciseGroups().removeAll(emptyCopiedGroups);
+            examRepository.save(persistedExam);
         }
     }
 
