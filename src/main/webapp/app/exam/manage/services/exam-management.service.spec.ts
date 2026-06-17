@@ -110,7 +110,7 @@ describe('Exam Management Service Tests', () => {
         expect(req.request.body).toEqual(expectedDto);
 
         // CLEANUP
-        req.flush(mockExam);
+        req.flush({ exam: mockExam });
         await Promise.resolve();
     });
 
@@ -127,7 +127,7 @@ describe('Exam Management Service Tests', () => {
         expect(req.request.body).toEqual(mockExerciseGroup);
 
         // CLEANUP
-        req.flush(mockExerciseGroup);
+        req.flush({ exerciseGroups: mockExerciseGroup });
         await Promise.resolve();
     });
 

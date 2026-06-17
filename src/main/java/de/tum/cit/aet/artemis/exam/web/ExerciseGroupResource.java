@@ -12,7 +12,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -163,20 +163,18 @@ public class ExerciseGroupResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
-            throws IOException {
+    public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody List<ExerciseGroup> updatedExerciseGroup) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        ExamImportService.ExerciseGroupImportResult importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
+        ExerciseGroupImportResultDTO importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
 
-        // If some exercises could not be imported, the exercise groups are still created with the remaining exercises and
-        // the editor is informed which exercises were skipped instead of the whole import failing.
-        HttpHeaders headers = importResult.failedExerciseTitles().isEmpty() ? new HttpHeaders()
-                : HeaderUtil.createAlert(applicationName, "artemisApp.examManagement.import.partialSuccess", String.join(", ", importResult.failedExerciseTitles()));
-
-        return ResponseEntity.ok().headers(headers).body(importResult.exerciseGroups());
+        // The exercise groups are always created. Any exercises that could not be imported are reported in the response
+        // body, split into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the
+        // editor gets precise feedback instead of the whole import failing.
+        return ResponseEntity.ok(importResult);
     }
 
     /**

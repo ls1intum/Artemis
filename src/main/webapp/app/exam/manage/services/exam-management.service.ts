@@ -28,6 +28,8 @@ import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model'
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -37,6 +39,7 @@ export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
+    private alertService = inject(AlertService);
 
     public resourceUrl = 'api/exam/courses';
     public adminResourceUrl = 'api/exam/admin/courses';
@@ -94,9 +97,11 @@ export class ExamManagementService {
      */
     import(courseId: number, exam: Exam): Observable<EntityResponseType> {
         const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
-        return this.http
-            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { observe: 'response' }).pipe(
+            // surface which exercises were skipped or only partially imported, then unwrap the created exam so callers see the usual response
+            tap((res) => this.showImportFeedback(res.body)),
+            map((res) => this.processExamResponseFromServer(res.clone({ body: res.body?.exam }) as EntityResponseType)),
+        );
     }
 
     /**
@@ -106,7 +111,26 @@ export class ExamManagementService {
      * @param exerciseGroups the exercise groups to be added to the exam
      */
     importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
+        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' }).pipe(
+            // surface which exercises were skipped or only partially imported, then unwrap the exercise groups so callers see the usual response
+            tap((res) => this.showImportFeedback(res.body)),
+            map((res) => res.clone({ body: res.body?.exerciseGroups ?? [] })),
+        );
+    }
+
+    /**
+     * Shows feedback about exercises that could not be (fully) imported: skipped exercises (nothing persisted) as an info
+     * message, and incomplete exercises (failed partway, may need review/removal) as a warning.
+     *
+     * @param result the import result returned by the server (may be null)
+     */
+    private showImportFeedback(result: ExamImportResultDTO | ExerciseGroupImportResultDTO | null): void {
+        if (result?.skippedExercises?.length) {
+            this.alertService.info('artemisApp.examManagement.import.someExercisesSkipped', { param: result.skippedExercises.join(', ') });
+        }
+        if (result?.incompleteExercises?.length) {
+            this.alertService.warning('artemisApp.examManagement.import.someExercisesIncomplete', { param: result.incompleteExercises.join(', ') });
+        }
     }
 
     /**

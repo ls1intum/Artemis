@@ -11,8 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,7 +21,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +30,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -214,12 +212,13 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithProgrammingExercise_repositoryCopyFailureIsSkippedNotAborted() throws Exception {
+    void testImportExamWithProgrammingExercise_repositoryCopyFailureReportedAsIncomplete() throws Exception {
         // Regression test for the resilient exam import: when a programming exercise's repository copy fails mid-import,
         // its basis entity has already been committed (importProgrammingExerciseBasis is @Transactional, and runs before
-        // the repository copy). The import must skip that exercise and still succeed (no 5xx), reporting it via the
-        // partial-success alert header - rather than the empty-group cleanup hitting the exercise -> exercise_group
-        // RESTRICT foreign key on the committed-but-failed exercise and aborting the whole import with a 5xx.
+        // the repository copy). The import must still succeed (no 5xx) and report that exercise as INCOMPLETE in the
+        // response body (it failed partway and may have left a partial exercise that needs review) - rather than the
+        // empty-group cleanup hitting the exercise -> exercise_group RESTRICT foreign key on the committed-but-failed
+        // exercise and aborting the whole import with a 5xx.
         programmingExerciseTestService.setup(this, versionControlService);
 
         Course sourceCourse = courseUtilService.addEmptyCourse();
@@ -241,12 +240,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         String sourceTitle = sourceExercise.getTitle();
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
 
-        // The import must NOT abort with a 5xx; it succeeds and reports the failing programming exercise as skipped.
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, HttpStatus.CREATED, null);
+        // The import must NOT abort with a 5xx; it succeeds and reports the failing programming exercise in the response body.
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
 
-        assertThat(response.getHeader("X-artemisApp-alert")).isEqualTo("artemisApp.examManagement.import.partialSuccess");
-        assertThat(response.getHeader("X-artemisApp-params")).as("the skipped programming exercise must be named in the alert")
-                .contains(URLEncoder.encode(sourceTitle, StandardCharsets.UTF_8));
+        // The programming exercise failed during the (post-commit) repository copy, so it is reported as incomplete (may need review), not as a clean skip.
+        assertThat(result.incompleteExercises()).as("the programming exercise must be reported as incomplete").contains(sourceTitle);
+        // Nothing was cleanly skipped, so the skipped list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.skippedExercises()).as("no exercise must be reported as cleanly skipped").isNullOrEmpty();
     }
 
     @Test

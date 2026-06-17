@@ -547,7 +547,8 @@
             },
             "import": {
                 "search": "Search for exam",
-                "partialSuccess": "Exam imported. The following exercises could not be imported and were skipped: {{ param }}"
+                "someExercisesSkipped": "Some exercises could not be imported and were skipped: {{ param }}",
+                "someExercisesIncomplete": "Some exercises could not be fully imported and may be incomplete. Please review them and remove them if necessary: {{ param }}"
             },
             "testRun": {
                 "testRun": "Test Run",

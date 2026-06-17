@@ -95,6 +95,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
@@ -423,7 +424,8 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO) throws URISyntaxException, IOException {
+    public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO)
+            throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
@@ -436,15 +438,15 @@ public class ExamResource {
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
         // Import Exam with Exercises and create a channel for the exam
-        ExamImportService.ExamImportResult importResult = examImportService.importExamWithExercises(examToBeImported, courseId);
+        ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId);
         Exam examCopied = importResult.exam();
 
-        // If some exercises could not be imported, the exam is still created with the remaining exercises and the
-        // instructor is informed which exercises were skipped instead of the whole import failing.
-        HttpHeaders headers = importResult.failedExerciseTitles().isEmpty() ? HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())
-                : HeaderUtil.createAlert(applicationName, "artemisApp.examManagement.import.partialSuccess", String.join(", ", importResult.failedExerciseTitles()));
+        // The exam is always created. Any exercises that could not be imported are reported in the response body, split
+        // into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the client can
+        // give precise feedback instead of the whole import failing.
+        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle());
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(examCopied);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(importResult);
     }
 
     /**

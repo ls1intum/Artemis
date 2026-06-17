@@ -547,7 +547,8 @@
             },
             "import": {
                 "search": "Suche nach einer Klausur",
-                "partialSuccess": "Klausur importiert. Die folgenden Aufgaben konnten nicht importiert werden und wurden übersprungen: {{ param }}"
+                "someExercisesSkipped": "Einige Aufgaben konnten nicht importiert werden und wurden übersprungen: {{ param }}",
+                "someExercisesIncomplete": "Einige Aufgaben konnten nicht vollständig importiert werden und sind möglicherweise unvollständig. Bitte überprüfe sie und entferne sie gegebenenfalls: {{ param }}"
             },
             "testRun": {
                 "testRun": "Testlauf",

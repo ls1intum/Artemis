@@ -7,8 +7,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +19,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -30,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
@@ -225,8 +223,10 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
         final List<ExerciseGroup> exerciseGroupsBefore = targetExam.getExerciseGroups();
 
-        final List<ExerciseGroup> exerciseGroupsNow = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> exerciseGroupsNow = request
+                .postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore,
+                        ExerciseGroupImportResultDTO.class, HttpStatus.OK)
+                .exerciseGroups();
 
         assertThat(exerciseGroupsNow).hasSize(9).containsAll(exerciseGroupsBefore).allMatch(element -> element.getId() != null);
 
@@ -244,8 +244,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     void importExerciseGroup_skipsFailedExerciseAndReportsPartialSuccess() throws Exception {
         // Import groups from a source exam into a separate (empty) target exam, but remove the source quiz first so its
         // import yields Optional.empty (a real "source exercise no longer available" failure). The import must skip the
-        // quiz, import the rest, drop the now-empty quiz group, and report the skipped quiz via the partial-success
-        // alert header instead of silently dropping it.
+        // quiz, import the rest, drop the now-empty quiz group, and report the skipped quiz via the "skipped" list in the
+        // response body instead of silently dropping it.
         Exam targetExam = examUtilService.addExam(course1);
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         List<ExerciseGroup> groupsToImport = sourceExam.getExerciseGroups();
@@ -255,13 +255,13 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         String quizTitle = sourceQuiz.getTitle();
         exerciseRepository.deleteById(sourceQuiz.getId());
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                groupsToImport, HttpStatus.OK, null);
+        ExerciseGroupImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                groupsToImport, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
 
-        // The skipped quiz is reported to the editor via the partial-success alert header.
-        assertThat(response.getHeader("X-artemisApp-alert")).isEqualTo("artemisApp.examManagement.import.partialSuccess");
-        assertThat(response.getHeader("X-artemisApp-params")).as("the skipped quiz title must be named in the alert")
-                .contains(URLEncoder.encode(quizTitle, StandardCharsets.UTF_8));
+        // The skipped quiz is reported to the editor via the "skipped" list in the response body (not silently dropped).
+        assertThat(result.skippedExercises()).as("the skipped quiz title must be reported").contains(quizTitle);
+        // No exercise failed partway, so the incomplete list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.incompleteExercises()).as("no exercise must be reported as incomplete").isNullOrEmpty();
 
         // The target exam received modelling, text and file upload (quiz skipped, empty source group filtered out, and
         // the emptied quiz group removed). No QuizExercise was imported.
@@ -281,8 +281,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", listSendToServer, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
         listExpected.addAll(listSendToServer);
@@ -308,8 +308,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody(
-                "/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", listSendToServer, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
         assertThat(listReceived).hasSize(9);
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
