@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
@@ -1014,7 +1014,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     }
 
     // =========================================================================
-    // Context Awareness: video/slides/fullscreen context forwarding to Pyris
+    // Context Awareness: video/slides/combined view context forwarding to Pyris
     // =========================================================================
 
     @Nested
@@ -1078,20 +1078,27 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void sendMessageWithFullscreenContext_extractsLectureUnitIdForRagFiltering() throws Exception {
+        void sendMessageWithCombinedViewContext_extractsLectureUnitIdForRagFiltering() throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var fullscreenContext = new IrisFullscreenContextDTO(unitId);
-            var requestDto = buildRequestWithContext(messageToSend, List.of(fullscreenContext));
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 3), new IrisVideoContextDTO(unitId, 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
 
             mockChatResponse(dto -> {
-                // Fullscreen context should be in the context list
+                // Combined view context should be in the context list
                 assertThat(dto.context()).isNotNull();
                 assertThat(dto.context()).hasSize(1);
-                assertThat(dto.context().get(0)).isInstanceOf(IrisFullscreenContextDTO.class);
+                assertThat(dto.context().get(0)).isInstanceOf(IrisCombinedViewContextDTO.class);
 
-                // AND lectureUnitId should be extracted for RAG filtering
+                // AND the nested slide and video context should be forwarded unchanged
+                var forwardedContext = (IrisCombinedViewContextDTO) dto.context().get(0);
+                assertThat(forwardedContext.slides()).isNotNull();
+                assertThat(forwardedContext.slides().page()).isEqualTo(3);
+                assertThat(forwardedContext.video()).isNotNull();
+                assertThat(forwardedContext.video().timestamp()).isEqualTo(10.0);
+
+                // AND lectureUnitId should be derived from the nested context for RAG filtering
                 assertThat(dto.lectureUnitId()).isEqualTo(unitId);
 
                 assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
@@ -1166,8 +1173,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
             long foreignUnitId = Long.MAX_VALUE;
-            var fullscreenContext = new IrisFullscreenContextDTO(foreignUnitId);
-            var requestDto = buildRequestWithContext(messageToSend, List.of(fullscreenContext));
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(foreignUnitId, 1), null);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
 
             mockChatResponse(dto -> {
                 assertThat(dto.context()).isNull();
@@ -1190,12 +1197,12 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisChatSession session = createProgrammingSession(exercise, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
-            var fullscreenContext = new IrisFullscreenContextDTO(999L);
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(999L, 1), null);
             Map<String, String> uncommittedFiles = Map.of("Main.java", "public class Main {}");
 
             List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null))
                     .toList();
-            var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), uncommittedFiles, List.of(fullscreenContext));
+            var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), uncommittedFiles, List.of(combinedViewContext));
 
             mockChatResponse(dto -> {
                 // Lecture context must be dropped for non-LECTURE_CHAT sessions

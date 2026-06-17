@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 
-import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
@@ -100,52 +100,78 @@ class IrisMessageContextDTOTest {
     }
 
     @Test
-    void serializesFullscreenContext() throws Exception {
-        var dto = new IrisFullscreenContextDTO(123L);
+    void serializesCombinedViewContextWithNestedSlidesAndVideo() throws Exception {
+        var dto = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(123L, 5), new IrisVideoContextDTO(123L, 45.2));
         String json = mapper.writeValueAsString(dto);
 
-        assertThat(json).contains("\"type\":\"fullscreen\"");
-        assertThat(json).contains("\"lectureUnitId\":123");
+        assertThat(json).contains("\"type\":\"combinedView\"");
+        assertThat(json).contains("\"slides\"");
+        assertThat(json).contains("\"page\":5");
+        assertThat(json).contains("\"video\"");
+        assertThat(json).contains("\"timestamp\":45.2");
     }
 
     @Test
-    void deserializesFullscreenContext() throws Exception {
-        // Test that fullscreen context can be deserialized from JSON
-        var original = new IrisFullscreenContextDTO(123L);
+    void deserializesCombinedViewContextWithNestedSlidesAndVideo() throws Exception {
+        var original = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(123L, 5), new IrisVideoContextDTO(123L, 45.2));
         String json = mapper.writeValueAsString(original);
-        IrisMessageContextDTO dto = mapper.readValue(json, IrisFullscreenContextDTO.class);
+        IrisMessageContextDTO dto = mapper.readValue(json, IrisCombinedViewContextDTO.class);
 
-        assertThat(dto).isInstanceOf(IrisFullscreenContextDTO.class);
-        var fullscreenContext = (IrisFullscreenContextDTO) dto;
-        assertThat(fullscreenContext.lectureUnitId()).isEqualTo(123L);
-        assertThat(fullscreenContext.type()).isEqualTo("fullscreen");
+        assertThat(dto).isInstanceOf(IrisCombinedViewContextDTO.class);
+        var combinedViewContext = (IrisCombinedViewContextDTO) dto;
+        assertThat(combinedViewContext.type()).isEqualTo("combinedView");
+        assertThat(combinedViewContext.slides()).isNotNull();
+        assertThat(combinedViewContext.slides().page()).isEqualTo(5);
+        assertThat(combinedViewContext.video()).isNotNull();
+        assertThat(combinedViewContext.video().timestamp()).isEqualTo(45.2);
+        // The lecture unit ID is derived from the nested contexts.
+        assertThat(combinedViewContext.lectureUnitId()).isEqualTo(123L);
     }
 
     @Test
-    void fullscreenContextValidationRequiresPositiveLectureUnitId() {
-        var dto = new IrisFullscreenContextDTO("fullscreen", 0L);
+    void combinedViewContextDerivesLectureUnitIdFromVideoWhenNoSlides() {
+        var dto = new IrisCombinedViewContextDTO(null, new IrisVideoContextDTO(456L, 10.0));
+
+        assertThat(dto.slides()).isNull();
+        assertThat(dto.lectureUnitId()).isEqualTo(456L);
+    }
+
+    @Test
+    void combinedViewContextValidationCascadesToNestedSlides() {
+        // A nested slides context with an invalid page must fail validation via the @Valid cascade.
+        var dto = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO("slides", 123L, 0), null);
         var violations = validator.validate(dto);
 
         assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("lectureUnitId"));
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("slides.page"));
     }
 
     @Test
-    void polymorphicTypeHandlingWithFullscreenAndOtherContexts() throws Exception {
-        // Test that fullscreen context works together with video/slides contexts
-        var fullscreenContext = new IrisFullscreenContextDTO(123L);
+    void combinedViewContextValidationCascadesToNestedVideoLectureUnitId() {
+        // A nested video context with a non-positive lectureUnitId must fail validation via the @Valid cascade.
+        var dto = new IrisCombinedViewContextDTO(null, new IrisVideoContextDTO("video", 0L, 10.0));
+        var violations = validator.validate(dto);
+
+        assertThat(violations).isNotEmpty();
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("video.lectureUnitId"));
+    }
+
+    @Test
+    void polymorphicTypeHandlingWithCombinedViewAndOtherContexts() throws Exception {
+        // Test that the combined view context works together with standalone video/slides contexts
+        var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(123L, 5), new IrisVideoContextDTO(123L, 45.2));
         var videoContext = new IrisVideoContextDTO(123L, 45.2);
         var slidesContext = new IrisSlidesContextDTO(123L, 5);
 
-        List<IrisMessageContextDTO> contexts = List.of(fullscreenContext, videoContext, slidesContext);
+        List<IrisMessageContextDTO> contexts = List.of(combinedViewContext, videoContext, slidesContext);
 
         assertThat(contexts).hasSize(3);
-        assertThat(contexts.get(0)).isInstanceOf(IrisFullscreenContextDTO.class);
+        assertThat(contexts.get(0)).isInstanceOf(IrisCombinedViewContextDTO.class);
         assertThat(contexts.get(1)).isInstanceOf(IrisVideoContextDTO.class);
         assertThat(contexts.get(2)).isInstanceOf(IrisSlidesContextDTO.class);
 
-        var fullscreen = (IrisFullscreenContextDTO) contexts.get(0);
-        assertThat(fullscreen.lectureUnitId()).isEqualTo(123L);
+        var combinedView = (IrisCombinedViewContextDTO) contexts.get(0);
+        assertThat(combinedView.lectureUnitId()).isEqualTo(123L);
 
         var video = (IrisVideoContextDTO) contexts.get(1);
         assertThat(video.lectureUnitId()).isEqualTo(123L);

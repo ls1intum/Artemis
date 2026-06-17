@@ -38,11 +38,17 @@ export interface IrisSlidesContextDTO extends IrisMessageContextDTO {
 }
 
 /**
- * Context information for fullscreen mode in lectures.
- * Indicates that the user is viewing a lecture unit in fullscreen mode and provides the unit ID
- * for scoping RAG search to that specific unit.
+ * Context information for the combined lecture view (fullscreen mode).
+ * Indicates that the user is viewing a lecture unit in the combined view.
+ *
+ * The combined view only exists when there is at least a slide or a video, so the slide context
+ * (current page) and/or video context (current timestamp) of the unit are nested directly on this
+ * context instead of being sent as separate top-level context entries. Either nested context may be
+ * absent (e.g. no PDF is open, or the video has not been played yet), but not both. The lecture unit
+ * ID is derived from whichever nested context is present and is used to scope RAG search.
  */
-export interface IrisFullscreenContextDTO extends IrisMessageContextDTO {
-    type: 'fullscreen';
-    lectureUnitId: number;
+export interface IrisCombinedViewContextDTO extends IrisMessageContextDTO {
+    type: 'combinedView';
+    slides?: IrisSlidesContextDTO;
+    video?: IrisVideoContextDTO;
 }

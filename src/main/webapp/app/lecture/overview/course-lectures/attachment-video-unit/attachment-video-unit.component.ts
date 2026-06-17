@@ -54,13 +54,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import {
-    IrisFullscreenContextDTO,
-    IrisMessageContextDTO,
-    IrisSlidesContextDTO,
-    IrisVideoContextDTO,
-    LectureContextsProvider,
-} from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -242,41 +236,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return [];
             }
 
-            const contexts: IrisMessageContextDTO[] = [];
-
-            // Always include fullscreen context (indicates user is in fullscreen mode for RAG filtering)
-            const fullscreenContext: IrisFullscreenContextDTO = {
-                type: 'fullscreen',
-                lectureUnitId: unitId,
-            };
-            contexts.push(fullscreenContext);
-
-            // Optionally include video/slides context for additional boosting
+            // In the combined view, the slide and video context are nested on the combined view
+            // context instead of being sent as separate top-level entries.
             const provider = this.contextProvider();
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
             const hasVideoBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
 
-            // Only include video context if it has been played (not just showing thumbnail)
-            if (videoTimestamp != null && hasVideoBeenPlayed) {
-                const videoContext: IrisVideoContextDTO = {
-                    type: 'video',
-                    lectureUnitId: unitId,
-                    timestamp: videoTimestamp,
-                };
-                contexts.push(videoContext);
+            const slides: IrisSlidesContextDTO | undefined = pdfPage != null ? { type: 'slides', lectureUnitId: unitId, page: pdfPage } : undefined;
+            // Only include the video context if the video has been played (not just showing thumbnail)
+            const video: IrisVideoContextDTO | undefined =
+                videoTimestamp != null && hasVideoBeenPlayed ? { type: 'video', lectureUnitId: unitId, timestamp: videoTimestamp } : undefined;
+
+            // The combined view only carries meaningful context when a slide or video is present.
+            if (!slides && !video) {
+                return [];
             }
 
-            if (pdfPage != null) {
-                const slidesContext: IrisSlidesContextDTO = {
-                    type: 'slides',
-                    lectureUnitId: unitId,
-                    page: pdfPage,
-                };
-                contexts.push(slidesContext);
-            }
+            const combinedViewContext: IrisCombinedViewContextDTO = {
+                type: 'combinedView',
+                slides,
+                video,
+            };
 
-            return contexts;
+            return [combinedViewContext];
         },
     }));
 

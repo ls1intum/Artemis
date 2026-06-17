@@ -18,8 +18,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = IrisVideoContextDTO.class, name = "video"), @JsonSubTypes.Type(value = IrisSlidesContextDTO.class, name = "slides"),
-        @JsonSubTypes.Type(value = IrisFullscreenContextDTO.class, name = "fullscreen") })
-public sealed interface IrisMessageContextDTO permits IrisVideoContextDTO, IrisSlidesContextDTO, IrisFullscreenContextDTO {
+        @JsonSubTypes.Type(value = IrisCombinedViewContextDTO.class, name = "combinedView") })
+public sealed interface IrisMessageContextDTO permits IrisVideoContextDTO, IrisSlidesContextDTO, IrisCombinedViewContextDTO {
 
     /**
      * @return the type identifier for this context (e.g., "video", "slides", "exercise")

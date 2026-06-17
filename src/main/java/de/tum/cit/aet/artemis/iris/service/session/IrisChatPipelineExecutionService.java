@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
-import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
@@ -214,10 +214,10 @@ public class IrisChatPipelineExecutionService {
                 safeContext = context.stream().filter(ctx -> switch (ctx) {
                     case IrisVideoContextDTO v -> validUnitIds.contains(v.lectureUnitId());
                     case IrisSlidesContextDTO s -> validUnitIds.contains(s.lectureUnitId());
-                    case IrisFullscreenContextDTO f -> validUnitIds.contains(f.lectureUnitId());
+                    case IrisCombinedViewContextDTO f -> validUnitIds.contains(f.lectureUnitId());
                 }).toList();
-                lectureUnitId = safeContext.stream().filter(IrisFullscreenContextDTO.class::isInstance).map(IrisFullscreenContextDTO.class::cast)
-                        .map(IrisFullscreenContextDTO::lectureUnitId).findFirst().orElse(null);
+                lectureUnitId = safeContext.stream().filter(IrisCombinedViewContextDTO.class::isInstance).map(IrisCombinedViewContextDTO.class::cast)
+                        .map(IrisCombinedViewContextDTO::lectureUnitId).findFirst().orElse(null);
             }
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
