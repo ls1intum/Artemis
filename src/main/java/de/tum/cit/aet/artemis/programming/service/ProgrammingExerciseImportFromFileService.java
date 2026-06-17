@@ -171,7 +171,7 @@ public class ProgrammingExerciseImportFromFileService {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
             try {
-                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8), programmingExercise);
+                buildPlanRepository.setBuildPlanForExercise(Files.readString(buildPlanPath, StandardCharsets.UTF_8), programmingExercise);
             }
             catch (IOException e) {
                 log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);

@@ -381,7 +381,7 @@ public class ExerciseMappingToolsService {
 
             exerciseMappingPreview.remove();
 
-            return success(String.format("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.", linksToCreate.size(), linksToUpdate.size(),
+            return success("Successfully updated exercise-competency mappings. Created %d, updated %d, deleted %d.".formatted(linksToCreate.size(), linksToUpdate.size(),
                     linksToDelete.size()));
 
         }

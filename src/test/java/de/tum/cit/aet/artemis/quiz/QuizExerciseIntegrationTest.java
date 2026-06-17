@@ -309,7 +309,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     private void checkCreatedFile(String path) throws Exception {
         MediaType mediaType = path.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, path);
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, path);
         MvcResult result = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
@@ -2354,12 +2354,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
-                String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
+                String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
                 assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        String requestUrlPath = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
+                        String requestUrlPath = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
                         assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
                     }
                 }

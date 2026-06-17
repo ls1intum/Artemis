@@ -202,8 +202,8 @@ public class JenkinsBuildPlanService {
         final Long newExerciseId = newExercise.getId();
         final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
 
-        String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
-        String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
+        String toBeReplaced = "/%d/build-plan?secret=%s".formatted(previousExerciseId, previousBuildPlanAccessSecret);
+        String replacement = "/%d/build-plan?secret=%s".formatted(newExerciseId, newBuildPlanAccessSecret);
 
         try {
             JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);
