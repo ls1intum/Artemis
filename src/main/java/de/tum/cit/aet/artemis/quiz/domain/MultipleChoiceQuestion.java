@@ -51,6 +51,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return Collections.unmodifiableList(answerOptions);
     }
 
+    /**
+     * Replaces the JSON-owned answer options while preserving existing question-scoped IDs where possible.
+     *
+     * @param answerOptions the answer options to persist with this question
+     */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions == null ? new ArrayList<>()
                 : answerOptions.stream().map(AnswerOptionInput::of).map(this::createAnswerOptionPreservingId).collect(Collectors.toCollection(ArrayList::new));
@@ -319,6 +324,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         }
     }
 
+    /**
+     * Validates JSON-owned answer option invariants before persisting or updating the question.
+     */
     @PrePersist
     @PreUpdate
     public void validateAnswerOptions() {

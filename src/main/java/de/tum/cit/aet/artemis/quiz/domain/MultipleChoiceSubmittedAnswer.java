@@ -33,6 +33,11 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     @Column(name = "selected_options_id")
     private Set<Long> selectedOptionIds = new HashSet<>();
 
+    /**
+     * Resolves the selected question-scoped option IDs to their JSON-owned answer options for the API contract.
+     *
+     * @return the selected answer options in deterministic order
+     */
     @JsonProperty("selectedOptions")
     public Set<AnswerOption> getSelectedOptions() {
         if (!(getQuizQuestion() instanceof MultipleChoiceQuestion question) || selectedOptionIds == null) {

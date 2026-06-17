@@ -32,6 +32,11 @@ public class AnswerCounter extends QuizStatisticCounter {
         this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
     }
 
+    /**
+     * Resolves the stored question-scoped answer option ID to the JSON-owned answer option.
+     *
+     * @return the referenced answer option, or null if the statistic is not connected to a multiple-choice question
+     */
     @Transient
     public AnswerOption getAnswer() {
         if (multipleChoiceQuestionStatistic == null || !(multipleChoiceQuestionStatistic.getQuizQuestion() instanceof MultipleChoiceQuestion question)) {
