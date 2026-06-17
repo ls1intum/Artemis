@@ -239,4 +239,45 @@ describe('ResultComponent', () => {
             expect(warningIcon).toBeNull();
         }
     });
+
+    // The `isInSidebarCard` placement (course-overview sidebar, rendered via jhi-updating-result) is the one
+    // jhi-result mode that is not exercised by the code-editor / exercise-header E2E flows, so it is covered here:
+    // the score badge still renders, but it must be non-clickable (no navigation to the result detail dialog).
+    it('should render a non-clickable score badge in the sidebar-card placement', () => {
+        const submission: Submission = { id: 1, participation: programmingParticipation };
+        const ratedResult: Result = { id: 7, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
+        submission.results = [ratedResult];
+        const participation = cloneDeep(programmingParticipation);
+        participation.submissions = [submission];
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', ratedResult);
+        fixture.componentRef.setInput('showCompletion', true);
+        fixture.componentRef.setInput('isInSidebarCard', true);
+        fixture.detectChanges();
+
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        const resultScore = fixture.debugElement.nativeElement.querySelector('#result-score');
+        expect(resultScore).not.toBeNull();
+        expect(resultScore.classList.contains('clickable-result')).toBe(false);
+    });
+
+    it('should render a clickable score badge outside a sidebar card', () => {
+        const submission: Submission = { id: 1, participation: programmingParticipation };
+        const ratedResult: Result = { id: 8, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
+        submission.results = [ratedResult];
+        const participation = cloneDeep(programmingParticipation);
+        participation.submissions = [submission];
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', ratedResult);
+        fixture.componentRef.setInput('showCompletion', true);
+        fixture.componentRef.setInput('isInSidebarCard', false);
+        fixture.detectChanges();
+
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        const resultScore = fixture.debugElement.nativeElement.querySelector('#result-score');
+        expect(resultScore).not.toBeNull();
+        expect(resultScore.classList.contains('clickable-result')).toBe(true);
+    });
 });

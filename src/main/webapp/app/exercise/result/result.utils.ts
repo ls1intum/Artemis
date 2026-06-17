@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
+import { isParticipationInDueTime } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
@@ -184,8 +184,15 @@ export const evaluateTemplateStatus = (
         return ResultTemplateStatus.MISSING;
     }
 
+    // Discriminate the exercise type via the explicit `exercise` argument rather than the participation's embedded
+    // exercise. Some callers (e.g. the course-overview sidebar, whose participations come from the for-dashboard
+    // endpoint) provide a participation whose `exercise` was stripped server-side; reading participation.exercise
+    // there would make both type checks below fail and wrongly fall through to NO_RESULT even when a valid result
+    // is present. (`exercise` is guaranteed defined here by the early-return guard above.)
+    const exerciseType = exercise.type;
+
     // Evaluate status for modeling, text and file-upload exercises
-    if (isModelingOrTextOrFileUpload(participation)) {
+    if (exerciseType === ExerciseType.MODELING || exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.FILE_UPLOAD) {
         // Based on its submission we test if the participation is in due time of the given exercise.
 
         const inDueTime = isParticipationInDueTime(participation, exercise);
@@ -241,7 +248,7 @@ export const evaluateTemplateStatus = (
     }
 
     // Evaluate status for programming and quiz exercises
-    if (isProgrammingOrQuiz(participation)) {
+    if (exerciseType === ExerciseType.PROGRAMMING || exerciseType === ExerciseType.QUIZ) {
         if (isQueued) {
             return ResultTemplateStatus.IS_QUEUED;
         } else if (isBuilding) {

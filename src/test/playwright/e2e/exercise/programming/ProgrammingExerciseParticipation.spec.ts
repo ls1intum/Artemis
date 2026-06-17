@@ -39,15 +39,18 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
             });
 
-            test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+            test('Makes a submission using code editor', async ({ courseOverview, programmingExerciseOverview, programmingExerciseEditor }) => {
                 // C builds can take longer under CI parallel load
                 test.slow();
+                const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
                     await expect(resultScore).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
+                // After the build completes, the result must also surface in the course-overview sidebar card (the
+                // `isInSidebarCard` placement of jhi-result), which the editor/header placements do not cover.
+                await courseOverview.checkExerciseResultInSidebar(course.id!, exercise.title!, expectedResultPattern);
             });
 
             test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {

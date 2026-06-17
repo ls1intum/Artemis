@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import {
     ResultTemplateStatus,
     breakCircularResultBackReferences,
+    evaluateTemplateStatus,
     getManualUnreferencedFeedback,
     getResultIconClass,
     getTextColorClass,
@@ -20,6 +21,26 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {
+    describe('evaluateTemplateStatus exercise-type discrimination', () => {
+        const ratedProgrammingResult: Result = { id: 1, score: 100, rated: true, completionDate: dayjs().subtract(1, 'minute') };
+        const programmingExercise = { id: 6, type: ExerciseType.PROGRAMMING } as Exercise;
+
+        it('returns HAS_RESULT for a programming participation whose embedded exercise was stripped server-side', () => {
+            // The course-overview sidebar receives participations from the for-dashboard endpoint, which nulls
+            // participation.exercise. The status must be derived from the explicit `exercise` argument; otherwise it
+            // wrongly falls through to NO_RESULT even though a valid rated result is present (regression guard).
+            const participationWithoutExercise = { id: 18, type: ParticipationType.PROGRAMMING } as Participation;
+            const status = evaluateTemplateStatus(programmingExercise, participationWithoutExercise, ratedProgrammingResult, false);
+            expect(status).toBe(ResultTemplateStatus.HAS_RESULT);
+        });
+
+        it('returns HAS_RESULT for a programming participation that also carries its exercise', () => {
+            const participationWithExercise = { id: 18, type: ParticipationType.PROGRAMMING, exercise: programmingExercise } as Participation;
+            const status = evaluateTemplateStatus(programmingExercise, participationWithExercise, ratedProgrammingResult, false);
+            expect(status).toBe(ResultTemplateStatus.HAS_RESULT);
+        });
+    });
+
     it('should filter out all non unreferenced feedbacks that do not have type MANUAL_UNREFERENCED', () => {
         const feedbacks = [
             { reference: 'foo' },

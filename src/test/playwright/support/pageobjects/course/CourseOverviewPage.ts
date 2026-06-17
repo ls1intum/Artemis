@@ -85,6 +85,34 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Verifies that the result badge for the given exercise renders with the expected score in the course-overview
+     * sidebar card. This exercises the `isInSidebarCard` placement of {@code jhi-result} (rendered via
+     * {@code jhi-updating-result}, non-clickable, no completion timestamp), which the code-editor / exercise-header
+     * placements do not cover. Call this after the build/assessment has completed; the for-dashboard data can briefly
+     * lag a just-finished build, so this re-navigates (full page.goto) up to six times to re-fetch, mirroring
+     * {@code ProgrammingExerciseOverviewPage.checkResultScoreAfterBuild}.
+     * @param courseId The id of the course to open.
+     * @param exerciseTitle The title of the exercise whose sidebar card to check.
+     * @param expectedResult The expected result score text (or pattern) shown in the badge.
+     */
+    async checkExerciseResultInSidebar(courseId: number, exerciseTitle: string, expectedResult: string | RegExp) {
+        const sidebarResult = () => this.page.locator('#test-sidebar-card-medium', { hasText: exerciseTitle }).first().locator('#result-score');
+        for (let attempt = 0; attempt < 6; attempt++) {
+            await this.page.goto(`/courses/${courseId}/exercises`);
+            await this.page.waitForLoadState('domcontentloaded');
+            try {
+                await expect(sidebarResult()).toContainText(expectedResult, { timeout: 15000 });
+                return;
+            } catch {
+                // The course-overview dashboard data has not refreshed with the new result yet; re-navigate to re-fetch.
+            }
+        }
+        await this.page.goto(`/courses/${courseId}/exercises`);
+        await this.page.waitForLoadState('domcontentloaded');
+        await expect(sidebarResult()).toContainText(expectedResult, { timeout: 30000 });
+    }
+
+    /**
      * Opens an exercise given its name.
      * @param exerciseName The title of the exercise to open.
      */
