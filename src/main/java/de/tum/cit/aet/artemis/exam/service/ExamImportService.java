@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,7 +181,7 @@ public class ExamImportService {
         // 3rd: Index all imported exercises and the exam itself in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
             service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
-            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().filter(Objects::nonNull).flatMap(group -> group.getExercises().stream())
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
@@ -241,7 +239,7 @@ public class ExamImportService {
         // Index the imported exercises and update the exam in Weaviate
         searchableItemWeaviateService.ifPresent(service -> {
             service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
-            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().filter(Objects::nonNull).flatMap(group -> group.getExercises().stream())
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
@@ -376,32 +374,12 @@ public class ExamImportService {
                     progressNotifier);
         }
 
-        // Remove exercise groups that ended up empty because all of their exercises failed to import. An empty exercise
-        // group must not survive: student exam generation picks a random exercise per (mandatory) group via
-        // random.nextInt(exercises.size()), which throws for an empty group. The failed exercises are still reported to
-        // the instructor via the skipped/incomplete lists, so they can re-import or adjust the exam configuration.
-        //
-        // Emptiness is determined from the PERSISTED state (re-read from the DB), not from the in-memory copy: a
-        // programming exercise whose repository copy failed mid-import may already have been committed under its group
-        // (importProgrammingExerciseBasis is @Transactional and runs before the repository copy in importProgrammingExercise).
-        // Such a group is not empty in the database, so deleting it based on the stale in-memory copy would violate the
-        // RESTRICT foreign key on exercise -> exercise_group and abort the whole import with a 5xx. Re-reading also keeps
-        // this safe for the existing-exam path, where the exam already contains other groups: we only ever consider the
-        // groups copied in THIS import (scoped by id) and only delete those that truly have no persisted exercise.
-        Set<Long> copiedGroupIds = exerciseGroupsCopied.stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
-        Exam persistedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId());
-        List<ExerciseGroup> emptyCopiedGroups = persistedExam.getExerciseGroups().stream().filter(group -> copiedGroupIds.contains(group.getId()))
-                .filter(group -> group.getExercises().isEmpty()).toList();
-        if (!emptyCopiedGroups.isEmpty()) {
-            log.warn("Removing {} exercise group(s) that ended up empty after importing into exam {} (all their exercises failed to import).", emptyCopiedGroups.size(),
-                    targetExam.getId());
-            // Remove the empty groups THROUGH the parent collection (not via exerciseGroupRepository.deleteAll) so Hibernate's
-            // orphanRemoval deletes them AND reindexes the @OrderColumn 'exercise_group_order'. Deleting them directly would
-            // leave a gap in the order column, which Hibernate reloads as a null element in exam.getExerciseGroups(),
-            // corrupting the exam so it can no longer be indexed, opened or deleted (NPE on a null exercise group).
-            persistedExam.getExerciseGroups().removeAll(emptyCopiedGroups);
-            examRepository.save(persistedExam);
-        }
+        // A group whose exercises all failed to import is intentionally left in place (empty), not deleted: the failed
+        // exercises are reported to the instructor via the skipped/incomplete lists, and an empty exercise group is rejected
+        // later with a clear message by ExamService.validateForStudentExamGeneration ("all exercise groups must have at
+        // least one exercise") when the instructor generates student exams. Deleting the group here is both unnecessary and
+        // unsafe: Exam.exerciseGroups is an @OrderColumn list, so removing a non-last element mid-import can leave a gap in
+        // the order column that Hibernate reloads as a null element, corrupting the exam.
     }
 
     /**

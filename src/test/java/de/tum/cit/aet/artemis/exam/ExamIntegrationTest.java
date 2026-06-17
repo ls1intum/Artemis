@@ -2059,24 +2059,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Lock the behavior to the intended failure path: the quiz (and only the quiz) was skipped.
         assertThat(importedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())).as("the quiz must be the skipped exercise")
                 .noneMatch(QuizExercise.class::isInstance);
-        // The quiz exercise group ended up empty (its only exercise failed) and MUST have been removed. An empty exercise
-        // group would otherwise crash student exam generation (selectRandomExercise -> random.nextInt(0)).
-        assertThat(importedExam.getExerciseGroups()).hasSize(3);
-        assertThat(importedExam.getExerciseGroups()).as("no empty exercise group must survive the import").noneMatch(group -> group.getExercises().isEmpty());
+        // The quiz group ended up empty (its only exercise was skipped) but is intentionally KEPT, not deleted: the failure
+        // is reported via the skipped list, and an empty group is rejected later by validateForStudentExamGeneration. All
+        // four imported groups are retained and the ordered exercise-group list stays intact (no null element).
+        assertThat(importedExam.getExerciseGroups()).hasSize(4);
+        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(importedExam.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied quiz group is retained").hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_emptiedMiddleGroupDoesNotCorruptExerciseGroupOrder() throws Exception {
-        // Regression test: when a NON-LAST exercise group is emptied (all its exercises fail to import) and removed, the
-        // removal must reindex the @OrderColumn 'exercise_group_order'. Removing it directly (bypassing the parent
-        // collection) would leave a gap that Hibernate reloads as a null element in exam.getExerciseGroups(), corrupting
-        // the exam so it can no longer be indexed, opened or deleted (NPE on a null exercise group).
+    void testImportExamWithExercises_retainsEmptiedMiddleExerciseGroup() throws Exception {
+        // When a NON-LAST exercise group's exercises all fail to import, the (now empty) group is RETAINED in place rather
+        // than deleted. The import must not mutate the ordered exercise-group list: all four imported groups stay, in order,
+        // with no null element. (Deleting the emptied middle group used to leave a gap in the @OrderColumn
+        // 'exercise_group_order' that Hibernate reloaded as a null element, corrupting the exam.)
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("order-column-channel");
 
         // Fail the TEXT exercise (a middle group: modelling, text, file upload, quiz) by deleting its source exercise, so
-        // its group is emptied and removed from the middle of the ordered exercise-group list.
+        // its group is emptied in the middle of the ordered exercise-group list.
         TextExercise sourceText = (TextExercise) exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(TextExercise.class::isInstance)
                 .findFirst().orElseThrow();
         String textTitle = sourceText.getTitle();
@@ -2087,11 +2089,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 HttpStatus.CREATED);
         assertThat(result.skippedExercises()).as("the skipped text exercise must be reported").contains(textTitle);
 
-        // Re-fetch the created exam: its ordered exercise-group list must NOT contain a null element (no @OrderColumn gap).
+        // Re-fetch the created exam: the emptied middle group is retained and the ordered list contains no null element.
         Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(result.exam().getId());
-        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null after removing an emptied middle group").doesNotContainNull();
-        assertThat(importedExam.getExerciseGroups()).hasSize(3);
-        assertThat(importedExam.getExerciseGroups()).as("no empty exercise group must survive the import").noneMatch(group -> group.getExercises().isEmpty());
+        assertThat(importedExam.getExerciseGroups()).as("all imported groups are retained, including the emptied middle one").hasSize(4);
+        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(importedExam.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied text group is retained").hasSize(1);
     }
 
     @Test

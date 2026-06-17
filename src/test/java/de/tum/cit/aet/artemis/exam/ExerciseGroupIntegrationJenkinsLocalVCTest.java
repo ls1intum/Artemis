@@ -263,14 +263,17 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         // No exercise failed partway, so the incomplete list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
         assertThat(result.incompleteExercises()).as("no exercise must be reported as incomplete").isNullOrEmpty();
 
-        // The target exam received modelling, text and file upload (quiz skipped, empty source group filtered out, and
-        // the emptied quiz group removed). No QuizExercise was imported.
+        // The target exam received modelling, text and file upload (the empty source group is filtered out before import).
+        // The quiz was skipped, so its group is empty but is intentionally KEPT (not deleted), in order, with no null
+        // element. No QuizExercise was imported.
         Exam reloaded = examRepository.findWithExerciseGroupsAndExercisesById(targetExam.getId()).orElseThrow();
         long importedExerciseCount = reloaded.getExerciseGroups().stream().mapToLong(group -> group.getExercises().size()).sum();
         assertThat(importedExerciseCount).isEqualTo(3);
         assertThat(reloaded.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())).as("the quiz must be the skipped exercise")
                 .noneMatch(QuizExercise.class::isInstance);
-        assertThat(reloaded.getExerciseGroups()).as("no empty exercise group must survive the import").noneMatch(group -> group.getExercises().isEmpty());
+        assertThat(reloaded.getExerciseGroups()).as("all four imported groups are retained, including the emptied quiz group").hasSize(4);
+        assertThat(reloaded.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(reloaded.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied quiz group is retained").hasSize(1);
     }
 
     @Test

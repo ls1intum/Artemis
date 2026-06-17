@@ -298,10 +298,7 @@ public class ExamService {
     }
 
     private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
-        // Filter out null exercise groups defensively: a historically corrupted exam (a gap in the @OrderColumn
-        // 'exercise_group_order') reloads with a null element, which would otherwise NPE here and make the exam impossible
-        // to open or delete.
-        return exam.getExerciseGroups().stream().filter(Objects::nonNull).flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
                 // this also filters potential null values
                 .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
