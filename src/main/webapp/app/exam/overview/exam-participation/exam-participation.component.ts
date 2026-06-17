@@ -979,12 +979,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
-        this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
         submission.isSynced = true;
         submission.submitted = true;
+        // Only clear the failed-save flag once every syncable answer (quiz/text/modeling) is actually synced. Clearing it
+        // after a single successful save while another exercise's answer is still unsynced would wrongly suppress the
+        // restore-on-reload path for that not-yet-saved answer (a partial re-send must keep the exam marked save-failed).
+        if (!this.hasUnsyncedSubmissions()) {
+            this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
+        }
         // In-place mutations above are invisible to signals; nudge the render-version so the
         // navigation sidebar's save-state icons refresh under zoneless.
         this.wallClockVersion.update((version) => version + 1);
+    }
+
+    /**
+     * Returns whether any syncable answer (quiz, text or modeling) of the current student exam is still unsynced.
+     * Programming and file-upload submissions are excluded because they are never auto-synced via {@link triggerSave},
+     * so they must not keep the failed-save flag set. The flag must stay set while a syncable answer is still pending,
+     * so a reload restores and re-sends it.
+     */
+    private hasUnsyncedSubmissions(): boolean {
+        const syncableExerciseTypes = [ExerciseType.QUIZ, ExerciseType.TEXT, ExerciseType.MODELING];
+        return (this.studentExam()?.exercises ?? []).some(
+            (exercise) =>
+                syncableExerciseTypes.includes(exercise.type!) &&
+                (exercise.studentParticipations ?? []).some((participation) => (participation.submissions ?? []).some((submission) => !submission.isSynced)),
+        );
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {

@@ -854,9 +854,31 @@ describe('ExamParticipationComponent', () => {
             // the failed answer must stay unsynced so the autosave timer re-sends it later instead of it being silently lost
             expect(textSubmission.isSynced).toBe(false);
             expect(setLastSaveFailedSpy).toHaveBeenCalledWith(true, expect.anything(), expect.anything());
+            // the flag must NOT be reset to false by the later successful quiz/modeling saves while the text answer is
+            // still unsynced - otherwise a reload would skip restoring and re-sending it.
+            expect(setLastSaveFailedSpy).not.toHaveBeenCalledWith(false, expect.anything(), expect.anything());
+            expect(setLastSaveFailedSpy.mock.calls.at(-1)?.[0]).toBe(true);
             // the answers that did save are now synced
             expect(quizSubmission.isSynced).toBe(true);
             expect(modelingSubmission.isSynced).toBe(true);
+        });
+
+        it('should clear the failed-save flag once every restored answer is successfully re-sent', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+            const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+            comp.examStarted(studentExam, true);
+
+            // once all restored answers are synced, the flag is cleared so a later reload no longer enters the restore path
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(textSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+            expect(setLastSaveFailedSpy.mock.calls.at(-1)?.[0]).toBe(false);
         });
 
         it('should re-send only not-yet-saved answers and leave already-synced ones untouched when resuming', () => {
