@@ -22,7 +22,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
@@ -295,5 +295,180 @@ describe('ResultComponent', () => {
         const resultScore = fixture.debugElement.nativeElement.querySelector('#result-score');
         expect(resultScore).not.toBeNull();
         expect(resultScore.classList.contains('clickable-result')).toBe(true);
+    });
+
+    // Exhaustive rendering coverage: for every ResultTemplateStatus the presentational component can compute, drive
+    // the inputs that produce it and assert the corresponding DOM branch renders. This guards every visible state of
+    // this critical, widely-reused component against template/zoneless regressions.
+    describe('renders every template status', () => {
+        const query = (selector: string) => fixture.debugElement.nativeElement.querySelector(selector);
+
+        it('IS_QUEUED → queued indicator', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isQueued', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_QUEUED);
+            expect(query('#test-queued')).not.toBeNull();
+        });
+
+        it('IS_QUEUED with progress bar → progress bar component', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isQueued', true);
+            fixture.componentRef.setInput('showProgressBar', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_QUEUED);
+            expect(query('jhi-result-progress-bar')).not.toBeNull();
+        });
+
+        it('IS_BUILDING → building indicator', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isBuilding', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_BUILDING);
+            expect(query('#test-building')).not.toBeNull();
+        });
+
+        it('IS_BUILDING with progress bar → progress bar component', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isBuilding', true);
+            fixture.componentRef.setInput('showProgressBar', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_BUILDING);
+            expect(query('jhi-result-progress-bar')).not.toBeNull();
+        });
+
+        it('IS_GENERATING_FEEDBACK (Athena being processed) → generating indicator', () => {
+            const result: Result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'hour') };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+            expect(query('#preliminary-feedback-generating')).not.toBeNull();
+        });
+
+        it('FEEDBACK_GENERATION_FAILED (Athena failed) → score still rendered', () => {
+            const result: Result = { id: 1, score: 50, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_FAILED);
+            expect(query('#result-score')).not.toBeNull();
+        });
+
+        it('FEEDBACK_GENERATION_TIMED_OUT (Athena timed out) → score still rendered', () => {
+            const result: Result = { id: 1, score: 50, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().subtract(1, 'hour') };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
+            expect(query('#result-score')).not.toBeNull();
+        });
+
+        it('MISSING (failed programming submission) → missing message', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.MISSING);
+            expect(query('.text-danger')).not.toBeNull();
+        });
+
+        it('NO_RESULT → renders the no-result text and no score', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#result-score')).toBeNull();
+            expect(query('.text-body-secondary')).not.toBeNull();
+        });
+
+        it('NO_RESULT → still rendered as no-result (no score) when ungraded results are shown', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('showUngradedResults', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#result-score')).toBeNull();
+            expect(query('.text-body-secondary')).not.toBeNull();
+        });
+
+        it('HAS_RESULT with a rated result and showBadge → graded badge', () => {
+            const submission: Submission = { id: 1, participation: programmingParticipation };
+            const result: Result = { id: 1, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(1, 'minute') };
+            submission.results = [result];
+            const participation = cloneDeep(programmingParticipation);
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('showBadge', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+            expect(query('#result-score')).not.toBeNull();
+            expect(query('#result-score-badge')).not.toBeNull();
+        });
+
+        it('demotes a non-displayable SUBMITTED status to NO_RESULT (component only renders LATE, MISSING, or a displayable result)', () => {
+            // evaluateTemplateStatus computes SUBMITTED here, but with no displayable result the component renders the
+            // generic "no (graded) result" instead — the "Submitted" wording comes from jhi-submission-result-status.
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().add(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#test-submitted')).toBeNull();
+        });
+
+        it('SUBMITTED_WAITING_FOR_GRADING (text, manual result, assessment period active) → waiting text', () => {
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
+            const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
+            submission.results = [result];
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
+            expect(query('#test-submitted-waiting-grading')).not.toBeNull();
+        });
+
+        it('LATE (text, submitted after due date, has result) → late text', () => {
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
+            const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
+            submission.results = [result];
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.LATE);
+            expect(query('#test-late')).not.toBeNull();
+        });
+
+        it('demotes a non-displayable LATE_NO_FEEDBACK status to NO_RESULT', () => {
+            // evaluateTemplateStatus computes LATE_NO_FEEDBACK (late submission, no feedback); with no displayable
+            // result the component renders the generic "no (graded) result".
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#test-late-no-feedback')).toBeNull();
+        });
     });
 });
