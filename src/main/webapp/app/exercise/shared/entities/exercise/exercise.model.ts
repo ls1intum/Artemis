@@ -73,6 +73,22 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
+/**
+ * The variant group an exercise belongs to, as embedded in the serialized exercise (mirrors the
+ * server `ExerciseVariantGroup` entity, minus its back-reference exercise list). Lets the student
+ * dashboard reconstruct groups from its already-filtered exercises without a separate request.
+ */
+export interface ExerciseVariantGroupReference {
+    id?: number;
+    title?: string;
+    maxPoints?: number;
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
+}
+
 export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
@@ -105,6 +121,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
+    public exerciseVariantGroup?: ExerciseVariantGroupReference;
     public competencyLinks?: CompetencyExerciseLink[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value

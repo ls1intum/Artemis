@@ -51,17 +51,14 @@
     @if (buckets().length === 0) {
         <div class="alert alert-secondary" role="alert">No exercises match "{{ search() }}".</div>
     }
-    <div cdkDropList (cdkDropListDropped)="dropBucket($event)" [cdkDropListDisabled]="!isGroup()" class="d-flex flex-column gap-3">
+    <div class="d-flex flex-column gap-3">
         @for (bucket of buckets(); track bucket.id) {
-            <div cdkDrag [cdkDragDisabled]="!isGroup()" style="min-width: 0">
+            <div style="min-width: 0">
                 <p-panel [toggleable]="true">
                     <ng-template pTemplate="header">
                         <div class="d-flex flex-column w-100">
                             <!-- Row 1: always visible -->
                             <div class="d-flex align-items-center gap-2">
-                                @if (isGroup()) {
-                                    <span class="drag-handle text-muted pi pi-bars" cdkDragHandle></span>
-                                }
                                 @if (bucket.icon) {
                                     <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
                                 }
@@ -91,7 +88,6 @@
                                     bucket.group.dueDate ||
                                     bucket.group.assessmentDueDate ||
                                     bucket.group.maxPoints !== undefined ||
-                                    bucket.group.handInLimit !== undefined ||
                                     bucket.group.competencyLinks?.length
                                 ) {
                                     <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
@@ -118,17 +114,6 @@
                                                 />
                                             </span>
                                         }
-                                        @if (bucket.group.handInLimit !== undefined) {
-                                            <span class="d-flex align-items-center gap-1">
-                                                <span class="fw-semibold">Hand-in limit:</span> {{ bucket.group.handInLimit }}
-                                                <fa-icon
-                                                    [icon]="faCircleInfo"
-                                                    class="ms-1"
-                                                    pTooltip="Students may solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
-                                                    tooltipPosition="top"
-                                                />
-                                            </span>
-                                        }
                                         @if (bucket.group.competencyLinks?.length) {
                                             <span class="d-flex align-items-center gap-1 overflow-hidden">
                                                 <span class="fw-semibold flex-shrink-0">Competencies:</span>
@@ -148,6 +133,8 @@
                             [exercises]="bucket.exercises"
                             [courseId]="courseId()!"
                             [group]="bucket.group"
+                            [dropListId]="bucket.id"
+                            [connectedDropLists]="dropListIds()"
                             [showDragHandle]="isGroup()"
                             [showTypeIcon]="view() !== 'type'"
                             [showGroupSelector]="!isGroup() && groups().length > 0"

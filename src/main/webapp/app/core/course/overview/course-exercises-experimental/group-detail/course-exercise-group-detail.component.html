@@ -6,27 +6,6 @@
                     <fa-icon [icon]="faLayerGroup" />
                     {{ group.title }}
                 </h5>
-                <div class="d-flex align-items-center gap-2">
-                    @if (hasUnsubmittedChanges()) {
-                        <span class="text-warning small fw-semibold text-nowrap">
-                            <fa-icon [icon]="faTriangleExclamation" />
-                            Unsubmitted changes
-                        </span>
-                    } @else if (hasSubmitted()) {
-                        <span class="text-success small fw-semibold text-nowrap">
-                            <fa-icon [icon]="faCheck" />
-                            Selection submitted
-                        </span>
-                    }
-                    <button
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPaperPlane"
-                        [buttonLabel]="'Submit selection'"
-                        [hideLabelMobile]="false"
-                        [overwriteDisabled]="!hasUnsubmittedChanges()"
-                        (click)="submitSelection()"
-                    ></button>
-                </div>
             </div>
 
             <hr class="my-2" />
@@ -41,21 +20,8 @@
                     <div class="text-body">{{ group.maxPoints ?? '—' }}</div>
                 </div>
                 <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
-                    <div class="text-body-tertiary">Hand-in limit</div>
-                    <div class="text-body">{{ countTowardsScore() }} / {{ exercises().length }}</div>
-                </div>
-                <div
-                    class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold"
-                    [class.border-warning]="handedInCount() === 0"
-                    [title]="handedInCount() === 0 ? 'No variant handed in yet — select variants below and submit.' : undefined"
-                >
-                    <div class="text-body-tertiary">Handed in</div>
-                    <div [class.text-warning]="handedInCount() === 0" [class.text-body]="handedInCount() !== 0">
-                        @if (handedInCount() === 0) {
-                            <fa-icon [icon]="faTriangleExclamation" />
-                        }
-                        {{ handedInCount() }} / {{ countTowardsScore() }}
-                    </div>
+                    <div class="text-body-tertiary">Variants</div>
+                    <div class="text-body">{{ exercises().length }}</div>
                 </div>
             </div>
         </div>
@@ -63,16 +29,12 @@
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
                 <div class="alert alert-info mb-4" role="alert">
-                    This exercise has several variants. You can work on <strong>all</strong> of them, but only a limited number will count towards your maximum score. Select which
-                    variants you want assessed below. Any unselected variants remain available for practice.
+                    This exercise has several variants. You can work on <strong>all</strong> of them — pick whichever variant you like and open it below.
                 </div>
-                <div class="d-flex align-items-baseline justify-content-between mb-2">
-                    <h3 class="h5 mb-0">Variants to submit for grading</h3>
-                    <span class="text-secondary small">{{ selectedExercises().length }} / {{ countTowardsScore() }} selected</span>
-                </div>
+                <h3 class="h5 mb-2">Variants</h3>
                 <div class="d-flex flex-column" [style.gap]="'calc(0.5rem - 2px)'">
                     @for (exercise of exercises(); track exercise.id) {
-                        <ng-container [ngTemplateOutlet]="selectableTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
+                        <ng-container [ngTemplateOutlet]="variantTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
                     }
                 </div>
             </div>
@@ -80,22 +42,14 @@
     </div>
 }
 
-<!-- Compact selectable variant tile. -->
-<ng-template #selectableTile let-exercise>
+<!-- Compact read-only variant tile linking to the variant's exercise page. -->
+<ng-template #variantTile let-exercise>
     <div
-        class="tile-select multiselect-tile position-relative border rounded-3"
+        class="multiselect-tile position-relative border rounded-3"
         [class.multiselect-tile--easy]="exercise.difficulty === DifficultyLevel.EASY"
         [class.multiselect-tile--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
         [class.multiselect-tile--hard]="exercise.difficulty === DifficultyLevel.HARD"
-        [class.multiselect-tile--selected]="isSelected(exercise)"
     >
-        <p-checkbox
-            class="tile-select__checkbox"
-            [binary]="true"
-            [ngModel]="isSelected(exercise)"
-            (ngModelChange)="toggle(exercise, $event)"
-            [disabled]="!isSelected(exercise) && atSelectionLimit()"
-        />
         <a class="multiselect-tile__link" [routerLink]="exerciseLink(exercise)">
             <div class="fw-semibold text-truncate small">
                 <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
@@ -109,9 +63,9 @@
                     <span>Due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
                 }
             </div>
-            @if (exercise.problemStatement) {
+            @if (problemStatementPreview(exercise); as problemStatement) {
                 <p class="ps-quote">
-                    {{ exercise.problemStatement | slice: 3 : previewSliceEnd }}
+                    {{ problemStatement | slice: 0 : previewSliceEnd }}
                 </p>
             }
         </a>

@@ -3,10 +3,10 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TableModule, TableRowReorderEvent } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
-import { moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
@@ -16,6 +16,8 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { ExerciseActionsComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-actions.component';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
+/** Sentinel sort state set after a manual drag-and-drop reorder: no column is sorted, rows keep their dragged order. */
+type SortState = SortColumn | 'manual';
 
 const DIFFICULTY_ORDER: Record<string, number> = {
     [DifficultyLevel.EASY]: 0,
@@ -39,6 +41,9 @@ export interface TableGroupChange {
         TableModule,
         SelectModule,
         CheckboxModule,
+        CdkDropList,
+        CdkDrag,
+        CdkDragHandle,
         TranslateDirective,
         ArtemisDatePipe,
         ExerciseCategoriesComponent,
@@ -55,6 +60,10 @@ export class ExerciseTableComponent {
     readonly showCheckbox = input<boolean>(false);
     readonly selectedIds = input<Set<number>>(new Set());
     readonly groups = input<CourseExerciseGroup[]>([]);
+    /** CDK drop-list id for this table's exercises (the owning bucket's id). */
+    readonly dropListId = input<string>('');
+    /** Ids of the sibling exercise tables this one can exchange exercises with (enables cross-group drag-and-drop). */
+    readonly connectedDropLists = input<string[]>([]);
     /** Route segments inserted between courseId and urlSegment in the exercise title link. Used by versioned views to keep the mock interceptor active. */
     readonly overviewRouteMiddleSegments = input<string[]>([]);
 
@@ -75,12 +84,16 @@ export class ExerciseTableComponent {
     protected readonly faCaretUp = faCaretUp;
     protected readonly faCaretDown = faCaretDown;
 
-    readonly sortColumn = signal<SortColumn>('title');
+    readonly sortColumn = signal<SortState>('title');
     readonly sortAsc = signal(true);
 
     readonly sortedExercises = computed(() => {
         const col = this.sortColumn();
         const asc = this.sortAsc();
+        // Manual order: a drag-and-drop reorder takes precedence over column sorting until a header is clicked again.
+        if (col === 'manual') {
+            return [...this.exercises()];
+        }
         return [...this.exercises()].sort((a, b) => {
             let cmp = 0;
             switch (col) {
@@ -88,8 +101,8 @@ export class ExerciseTableComponent {
                     cmp = (a.title ?? '').localeCompare(b.title ?? '');
                     break;
                 case 'dueDate': {
-                    const da = effectiveDate(a, this.group(), 'dueDate');
-                    const db = effectiveDate(b, this.group(), 'dueDate');
+                    const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
+                    const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
                     cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
                     break;
                 }
@@ -134,11 +147,17 @@ export class ExerciseTableComponent {
         return this.sortAsc() ? this.faCaretUp : this.faCaretDown;
     }
 
-    onRowReorder(event: TableRowReorderEvent): void {
-        if (event.dragIndex === undefined || event.dropIndex === undefined) return;
-        const reordered = [...this.sortedExercises()];
-        moveItemInArray(reordered, event.dragIndex, event.dropIndex);
-        this.rowsReordered.emit(reordered);
+    onDrop(event: CdkDragDrop<Exercise[]>): void {
+        if (event.previousContainer === event.container) {
+            // Reorder within this group: keep the dragged order and stop applying column sorting.
+            const reordered = [...this.sortedExercises()];
+            moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+            this.sortColumn.set('manual');
+            this.rowsReordered.emit(reordered);
+        } else {
+            // Dropped from another group's table: move the exercise into this table's group.
+            this.groupChange.emit({ exercise: event.item.data, group: this.group() });
+        }
     }
 
     urlSegment(exercise: Exercise): string {
@@ -153,16 +172,25 @@ export class ExerciseTableComponent {
         return getIcon(exercise.type);
     }
 
+    /**
+     * The group whose timeline governs this exercise. In the group view the bucket's group is passed in
+     * directly; in the type/week/list views the bucket has no single group, so we resolve the exercise's
+     * owning group from the full groups list. This keeps the displayed dates consistent across all views.
+     */
+    private effectiveGroupFor(exercise: Exercise): CourseExerciseGroup | undefined {
+        return this.group() ?? this.owningGroupForExercise(exercise);
+    }
+
     effectiveReleaseDate(exercise: Exercise) {
-        return effectiveDate(exercise, this.group(), 'releaseDate');
+        return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'releaseDate');
     }
 
     effectiveDueDate(exercise: Exercise) {
-        return effectiveDate(exercise, this.group(), 'dueDate');
+        return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'dueDate');
     }
 
     effectiveAssessmentDueDate(exercise: Exercise) {
-        return effectiveDate(exercise, this.group(), 'assessmentDueDate');
+        return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
     difficultyBadgeClass(exercise: Exercise): string {

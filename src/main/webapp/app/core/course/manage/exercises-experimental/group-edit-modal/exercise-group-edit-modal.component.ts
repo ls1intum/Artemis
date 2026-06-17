@@ -32,7 +32,6 @@ export class ExerciseGroupEditModalComponent {
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
-    readonly draftHandInLimit = signal<number | undefined>(undefined);
     readonly draftCompetencyLinks = signal<GroupCompetencyLink[]>([]);
     readonly draftReleaseDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftStartDate = signal<dayjs.Dayjs | undefined>(undefined);
@@ -54,7 +53,6 @@ export class ExerciseGroupEditModalComponent {
             const g = this.group();
             this.draftTitle.set(g.title ?? '');
             this.draftMaxPoints.set(g.maxPoints);
-            this.draftHandInLimit.set(g.handInLimit);
             this.draftCompetencyLinks.set((g.competencyLinks ?? []).map((l) => ({ ...l })));
             this.draftReleaseDate.set(g.releaseDate);
             this.draftStartDate.set(g.startDate);
@@ -88,7 +86,6 @@ export class ExerciseGroupEditModalComponent {
             ...this.group(),
             title: this.draftTitle().trim(),
             maxPoints: this.draftMaxPoints(),
-            handInLimit: this.draftHandInLimit(),
             competencyLinks: this.draftCompetencyLinks(),
             releaseDate: this.draftReleaseDate(),
             startDate: this.draftStartDate(),

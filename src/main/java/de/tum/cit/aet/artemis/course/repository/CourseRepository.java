@@ -120,6 +120,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
+    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
+
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
      *
@@ -455,6 +458,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
+    }
+
+    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {

@@ -1,125 +1,115 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faLayerGroup, faPaperPlane, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { Checkbox } from 'primeng/checkbox';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { GroupHandInSelectionService } from '../group-hand-in-selection.service';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { forkJoin } from 'rxjs';
 
 /**
  * Detail page for an exercise with several variants, shown in the experimental student view's right
- * pane. Explains that the exercise has multiple variants and lets the student pick which variants
- * should count towards their score (read-only facts otherwise). Dev-only mock — nothing is persisted.
+ * pane. Explains that the exercise has multiple variants and lists them read-only (each variant links
+ * to its own exercise page). Dev-only mock — nothing is persisted.
  */
 @Component({
     selector: 'jhi-course-exercise-group-detail',
     templateUrl: './course-exercise-group-detail.component.html',
     styleUrls: ['./course-exercise-group-detail.component.scss'],
-    imports: [FormsModule, RouterLink, NgTemplateOutlet, SlicePipe, FaIconComponent, Checkbox, ExerciseActionButtonComponent, ArtemisDatePipe],
+    imports: [RouterLink, NgTemplateOutlet, SlicePipe, FaIconComponent, ArtemisDatePipe],
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly mockService = inject(ExerciseManagementMockService);
-    private readonly selectionService = inject(GroupHandInSelectionService);
+    private readonly mockDataService = inject(MockDataService);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faLayerGroup = faLayerGroup;
-    protected readonly faCheck = faCheck;
-    protected readonly faPaperPlane = faPaperPlane;
-    protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly getIcon = getIcon;
     protected readonly DifficultyLevel = DifficultyLevel;
 
-    protected readonly group = signal<CourseExerciseGroup | undefined>(undefined);
+    // The group id from the route, and (real mode only) the course's release-filtered exercises from
+    // the dashboard. The resolved group is derived from these: mock groups in mock mode, otherwise the
+    // group reconstructed from the exercises that carry the matching embedded variant-group reference.
+    private readonly groupId = signal<number | undefined>(undefined);
+    private readonly courseExercises = signal<Exercise[]>([]);
+
+    // The dashboard trims exercise problem statements, so for real data they are fetched per variant
+    // (via the exercise /details endpoint) and looked up here by exercise id to render the preview.
+    private readonly problemStatements = signal<Map<number, string>>(new Map());
+    private readonly problemStatementsRequested = new Set<number>();
+
+    protected readonly group = computed<CourseExerciseGroup | undefined>(() => {
+        const groupId = this.groupId();
+        if (groupId === undefined) {
+            return undefined;
+        }
+        const groups = this.mockDataService.enabled() ? this.mockService.getGroups() : buildGroupsFromExercises(this.courseExercises());
+        return groups.find((candidate) => candidate.id === groupId);
+    });
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
 
     // Problem-statement preview is fixed at 2 lines; slice end guarantees enough characters.
     protected readonly previewSliceEnd = 403;
 
-    // How many of the group's exercises count towards the score (read-only); caps the selection.
-    protected readonly countTowardsScore = computed(() => handInLimitFor(this.group()));
-
-    // The only thing the student can change: which exercises they want assessed.
-    protected readonly selectedExercises = signal<Exercise[]>([]);
-
-    // How many exercises have actually been handed in (submitted) for this group; mirrors the sidebar.
-    protected readonly handedInCount = computed(() => {
-        const groupId = this.group()?.id;
-        return groupId !== undefined ? this.selectionService.getSubmittedSelection(groupId).length : 0;
-    });
-
-    // Track which selection has been submitted, so the submit button only enables on unsubmitted changes.
-    private readonly submittedSelectionKey = signal('');
-    private readonly currentSelectionKey = computed(() => this.keyForIds(this.selectedIds()));
-    protected readonly hasUnsubmittedChanges = computed(() => this.currentSelectionKey() !== this.submittedSelectionKey());
-    protected readonly hasSubmitted = signal(false);
-
     protected courseId = 0;
 
     constructor() {
         this.courseId = Number(this.route.parent?.parent?.snapshot.params['courseId']);
-        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            const groupId = Number(params['groupId']);
-            const group = this.mockService.getGroups().find((candidate) => candidate.id === groupId);
-            this.group.set(group);
+        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => this.groupId.set(Number(params['groupId'])));
 
-            // Restore any previously handed-in selection so reopening the group reflects it (and no
-            // "unsubmitted changes" warning shows for an already-submitted selection).
-            const submittedIds = this.selectionService.getSubmittedSelection(groupId);
-            this.selectedExercises.set((group?.exercises ?? []).filter((exercise) => exercise.id !== undefined && submittedIds.includes(exercise.id)));
-            this.submittedSelectionKey.set(this.keyForIds(submittedIds));
-            this.hasSubmitted.set(submittedIds.length > 0);
+        // With real data the group is reconstructed from the dashboard's exercises (which are already
+        // filtered for the student); mock mode resolves the group synchronously from the mock service.
+        if (!this.mockDataService.enabled()) {
+            this.courseManagementService
+                .findOneForDashboard(this.courseId)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({ next: (response) => this.courseExercises.set(response.body?.exercises ?? []) });
+        }
+
+        // The dashboard omits problem statements; with real data, fetch each variant's details once the
+        // group is resolved so the preview can be shown (mock exercises already carry their statement).
+        effect(() => {
+            if (this.mockDataService.enabled()) {
+                return;
+            }
+            const members = this.group()?.exercises ?? [];
+            const missing = members.filter((exercise) => exercise.id !== undefined && exercise.problemStatement === undefined && !this.problemStatementsRequested.has(exercise.id));
+            if (missing.length === 0) {
+                return;
+            }
+            missing.forEach((exercise) => this.problemStatementsRequested.add(exercise.id!));
+            forkJoin(missing.map((exercise) => this.exerciseService.getExerciseDetails(exercise.id!)))
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((responses) => {
+                    const next = new Map(this.problemStatements());
+                    for (const response of responses) {
+                        const exercise = response.body?.exercise;
+                        if (exercise?.id !== undefined && exercise.problemStatement !== undefined) {
+                            next.set(exercise.id, exercise.problemStatement);
+                        }
+                    }
+                    this.problemStatements.set(next);
+                });
         });
     }
 
-    /** Mock submit: records the current selection as the submitted one (kept in the shared selection store). */
-    protected submitSelection(): void {
-        this.submittedSelectionKey.set(this.currentSelectionKey());
-        this.hasSubmitted.set(true);
-        const groupId = this.group()?.id;
-        if (groupId !== undefined) {
-            this.selectionService.submitSelection(groupId, this.selectedIds());
-        }
-    }
-
-    /** Selected exercise ids (mock exercises always carry an id). */
-    private selectedIds(): number[] {
-        return this.selectedExercises()
-            .map((exercise) => exercise.id)
-            .filter((id): id is number => id !== undefined);
-    }
-
-    private keyForIds(ids: number[]): string {
-        return ids
-            .slice()
-            .sort((a, b) => a - b)
-            .join(',');
-    }
-
-    protected isSelected(exercise: Exercise): boolean {
-        return this.selectedExercises().some((candidate) => candidate.id === exercise.id);
-    }
-
-    protected atSelectionLimit(): boolean {
-        return this.selectedExercises().length >= this.countTowardsScore();
-    }
-
-    protected toggle(exercise: Exercise, checked: boolean): void {
-        const current = this.selectedExercises();
-        if (checked) {
-            if (current.length < this.countTowardsScore()) {
-                this.selectedExercises.set(current.concat(exercise));
-            }
-        } else {
-            this.selectedExercises.set(current.filter((candidate) => candidate.id !== exercise.id));
-        }
+    /**
+     * Preview text for a variant's problem statement: the embedded statement (mock) or the separately
+     * fetched one (real), with a leading markdown heading (e.g. "## Title") stripped so the preview
+     * starts at the first real word regardless of the source's formatting.
+     */
+    protected problemStatementPreview(exercise: Exercise): string | undefined {
+        const statement = exercise.problemStatement ?? (exercise.id !== undefined ? this.problemStatements().get(exercise.id) : undefined);
+        return statement?.replace(/^\s*#{1,6}\s*/, '');
     }
 
     protected exerciseLink(exercise: Exercise): string {

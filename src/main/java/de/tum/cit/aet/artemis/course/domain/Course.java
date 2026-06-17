@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -186,6 +187,12 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
+
+    // Unidirectional Course -> ExerciseVariantGroup: the course owns its variant groups (FK course_id lives on
+    // exercise_variant_group), which lets empty groups exist in exercise management before any exercise is added.
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private Set<ExerciseVariantGroup> exerciseVariantGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -635,6 +642,18 @@ public class Course extends DomainObject {
 
     public void setExercises(Set<Exercise> exercises) {
         this.exercises = exercises;
+    }
+
+    public Set<ExerciseVariantGroup> getExerciseVariantGroups() {
+        return exerciseVariantGroups;
+    }
+
+    public void setExerciseVariantGroups(Set<ExerciseVariantGroup> exerciseVariantGroups) {
+        this.exerciseVariantGroups = exerciseVariantGroups;
+    }
+
+    public void addExerciseVariantGroup(ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroups.add(exerciseVariantGroup);
     }
 
     public Set<Lecture> getLectures() {

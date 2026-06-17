@@ -55,3 +55,24 @@ td.col-actions {
         cursor: grabbing;
     }
 }
+
+// Compact card shown under the cursor while dragging a row (a detached <tr> would not render correctly).
+.exercise-drag-preview {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    box-shadow: 0 5px 12px rgb(0 0 0 / 20%);
+}
+
+// Gap left behind in the table where the dragged row currently sits.
+.cdk-drag-placeholder {
+    opacity: 0.4;
+}
+
+// Smooth settle animation when a row is dropped.
+.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

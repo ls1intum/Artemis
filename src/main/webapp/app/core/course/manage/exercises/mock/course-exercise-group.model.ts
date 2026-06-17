@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /** A competency linked to a group. Weight follows the same LOW/MEDIUM/HIGH scale as exercise-level links. */
 export interface GroupCompetencyLink {
@@ -40,12 +41,6 @@ export class CourseExerciseGroup {
      */
     maxPoints?: number;
 
-    /**
-     * Limits how many exercises a student can hand in for graded assessment. Students may solve
-     * all variants (e.g. to obtain AI feedback), but only up to this many count towards the grade.
-     */
-    handInLimit?: number;
-
     /** Competencies shared by all exercises in this group. */
     competencyLinks?: GroupCompetencyLink[];
 
@@ -53,15 +48,36 @@ export class CourseExerciseGroup {
 }
 
 /**
- * How many of a group's exercises a student may hand in for graded assessment (read-only mock value).
- * Shared by the group detail page and the sidebar so both show the same limit.
- * TODO temporary test override: groups with more than 2 variants allow handing in 2.
+ * Reconstructs the course-level variant groups from a list of exercises by grouping on the
+ * embedded {@link Exercise.exerciseVariantGroup} reference. Used by the student views, where the
+ * dashboard already carries each (release-filtered) exercise's group, so no extra request is needed.
+ * Exercises without a group are ignored. Group metadata (title, dates, caps) is taken from the
+ * embedded reference; dates are converted from their server representation to dayjs.
  */
-export function handInLimitFor(group: CourseExerciseGroup | undefined): number {
-    if ((group?.exercises?.length ?? 0) > 2) {
-        return 2;
+export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseGroup[] {
+    const groupsById = new Map<number, CourseExerciseGroup>();
+    for (const exercise of exercises) {
+        const reference = exercise.exerciseVariantGroup;
+        if (reference?.id === undefined) {
+            continue;
+        }
+        let group = groupsById.get(reference.id);
+        if (!group) {
+            group = {
+                id: reference.id,
+                title: reference.title,
+                maxPoints: reference.maxPoints,
+                releaseDate: convertDateFromServer(reference.releaseDate),
+                startDate: convertDateFromServer(reference.startDate),
+                dueDate: convertDateFromServer(reference.dueDate),
+                assessmentDueDate: convertDateFromServer(reference.assessmentDueDate),
+                exercises: [],
+            };
+            groupsById.set(reference.id, group);
+        }
+        group.exercises!.push(exercise);
     }
-    return group?.handInLimit ?? 1;
+    return Array.from(groupsById.values());
 }
 
 /** Directed relation type between exercises and/or groups. Kept deliberately simple, no payload. */
@@ -98,9 +114,11 @@ export class ExerciseRelation {
 export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate';
 
 /**
- * Resolves the date that actually applies to an exercise for a given timeline field. When the owning
- * group sets that field, the group date wins and the exercise's own date is ignored.
+ * Resolves the date that actually applies to an exercise for a given timeline field. Once an exercise
+ * belongs to a group, the group's timeline fully governs it: the group date is used even when it is
+ * unset (the exercise's own date is ignored in that case too). Only ungrouped exercises fall back to
+ * their individual dates.
  */
 export function effectiveDate(exercise: Exercise, group: CourseExerciseGroup | undefined, field: GroupTimelineField): dayjs.Dayjs | undefined {
-    return group?.[field] ?? exercise[field];
+    return group ? group[field] : exercise[field];
 }

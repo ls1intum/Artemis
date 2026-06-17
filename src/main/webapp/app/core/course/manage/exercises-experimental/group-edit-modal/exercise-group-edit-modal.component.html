@@ -14,7 +14,7 @@
             />
         </div>
 
-        <!-- Points & hand-in limit -->
+        <!-- Points -->
         <div class="d-flex flex-wrap gap-3">
             <div>
                 <div class="d-flex align-items-center gap-1 fw-semibold mb-1">
@@ -31,24 +31,6 @@
                     (ngModelChange)="draftMaxPoints.set($event ?? undefined)"
                     [min]="0"
                     placeholder="No cap"
-                    styleClass="group-pts-input"
-                />
-            </div>
-            <div>
-                <div class="d-flex align-items-center gap-1 fw-semibold mb-1">
-                    <span>Hand-in limit</span>
-                    <fa-icon
-                        [icon]="faCircleInfo"
-                        pTooltip="Limits how many exercises a student can submit for manual grading. Students may still solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
-                        tooltipPosition="top"
-                        class="text-muted"
-                    />
-                </div>
-                <p-inputnumber
-                    [ngModel]="draftHandInLimit() ?? null"
-                    (ngModelChange)="draftHandInLimit.set($event ?? undefined)"
-                    [min]="1"
-                    placeholder="No limit"
                     styleClass="group-pts-input"
                 />
             </div>

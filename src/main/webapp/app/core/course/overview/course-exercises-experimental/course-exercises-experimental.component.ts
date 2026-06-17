@@ -3,15 +3,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { faLayerGroup, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
-import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { GroupHandInSelectionService } from './group-hand-in-selection.service';
+import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 
@@ -60,7 +59,6 @@ export class CourseExercisesExperimentalComponent {
     private readonly mockDataService = inject(MockDataService);
     private readonly courseOverviewService = inject(CourseOverviewService);
     private readonly courseManagementService = inject(CourseManagementService);
-    private readonly selectionService = inject(GroupHandInSelectionService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly _exerciseSelected = signal(false);
@@ -123,7 +121,10 @@ export class CourseExercisesExperimentalComponent {
      */
     private buildGroupedData(exercises: Exercise[]): Pick<SidebarData, 'groupedData' | 'ungroupedData'> {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
-        for (const group of this.mockDataService.enabled() ? this.mockService.getGroups() : []) {
+        // Mock mode uses the mock groups; with real data the groups are reconstructed from each
+        // exercise's embedded variant-group reference (already delivered, release-filtered, by the dashboard).
+        const groups = this.mockDataService.enabled() ? this.mockService.getGroups() : buildGroupsFromExercises(exercises);
+        for (const group of groups) {
             for (const member of group.exercises ?? []) {
                 if (member.id !== undefined) {
                     groupByExerciseId.set(member.id, group);
@@ -157,27 +158,16 @@ export class CourseExercisesExperimentalComponent {
 
     /**
      * An exercise with several variants, rendered as one connected sidebar stack: a card header (the
-     * exercise title, icon and hand-in status) sits above its nested variant cards. Clicking it opens the
-     * detail page where the student picks which variants to hand in.
+     * exercise title and icon) sits above its nested variant cards. Clicking it opens the detail page
+     * that lists the variants.
      */
     private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
-
-        // Below the title we show how many variants have been handed in out of the hand-in limit (instead
-        // of a date). Until at least one is handed in it reads "0 / Y" in warning yellow with a triangle and
-        // a tooltip prompting the student to open it and pick variants.
-        const handedInCount = group.id !== undefined ? this.selectionService.getSubmittedSelection(group.id).length : 0;
-        const handInText = `Handed in: ${handedInCount} / ${handInLimitFor(group)}`;
-        const nothingHandedIn = handedInCount === 0;
         return {
             title: group.title ?? '',
             id: group.id ?? '',
             targetComponentSubRoute: 'group',
             icon: faLayerGroup,
-            subtitleLeft: handInText,
-            subtitleLeftIcon: nothingHandedIn ? faTriangleExclamation : undefined,
-            subtitleLeftClass: nothingHandedIn ? 'text-warning fw-semibold' : undefined,
-            subtitleLeftTooltip: nothingHandedIn ? 'No variant handed in yet — click to select variants and hand them in.' : undefined,
             startDate: dueDate,
             size: 'M',
             groupHeaderStyle: 'card',

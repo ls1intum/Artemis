@@ -21,22 +21,9 @@
     max-width: fit-content;
 }
 
-// Multiselect tile: the select checkbox sits inside the tile on the left, with room to its right before
-// the title. The tile content is padded left to clear the (vertically centred) checkbox.
-.tile-select {
-    &__checkbox {
-        // Vertically centred within the tile.
-        position: absolute;
-        left: 0.85rem;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 2;
-    }
-}
-
-// Compact selectable exercise tile (tiles / exercise page): a difficulty-coloured left stripe, the
-// checkbox, the title + points/due date, and a short indented quote of the problem statement (mirroring
-// the exercise-variant generation preview).
+// Compact read-only variant tile (exercise page): a difficulty-coloured left stripe, the title +
+// points/due date, and a short indented quote of the problem statement (mirroring the exercise-variant
+// generation preview).
 .multiselect-tile {
     overflow: hidden;
     position: relative;
@@ -70,20 +57,15 @@
         background-color: var(--bs-danger);
     }
 
-    // Darken (don't underline) on hover, like the exercise sidebar cards. Selected tiles keep their accent.
-    &:not(&--selected):hover {
+    // Darken (don't underline) on hover, like the exercise sidebar cards.
+    &:hover {
         background-color: var(--link-item-bg);
     }
 
-    &--selected {
-        border-color: var(--bs-primary) !important;
-        background-color: var(--bs-primary-bg-subtle);
-    }
-
     &__link {
-        // Tight vertical padding to match the sidebar cards; extra left padding leaves space for the checkbox.
+        // Tight vertical padding to match the sidebar cards; left padding clears the difficulty stripe.
         display: block;
-        padding: 0.4rem 0.6rem 0.4rem 3rem;
+        padding: 0.4rem 0.6rem 0.4rem 1rem;
         color: inherit;
         text-decoration: none;
 

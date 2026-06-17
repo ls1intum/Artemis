@@ -360,7 +360,6 @@ export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
         dueDate: WEEK(3).add(10, 'day'),
         assessmentDueDate: WEEK(3).add(13, 'day'),
         maxPoints: 10,
-        handInLimit: 1,
         competencyLinks: [link(9001, 'Loops & Iteration', 1), link(9006, 'Control Flow & Conditionals', 0.5), link(9007, 'Algorithm Design', 0.25)],
         exercises: [LOOPS_CARS, LOOPS_PLANES, LOOPS_ROBOTS],
     },

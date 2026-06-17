@@ -1,136 +1,151 @@
-<p-table [value]="sortedExercises()" (onRowReorder)="onRowReorder($event)" size="small" styleClass="p-datatable-sm" [scrollable]="true">
-    <ng-template pTemplate="header">
-        <tr>
-            @if (showCheckbox()) {
-                <th style="width: 2.5rem">
-                    <p-checkbox [binary]="true" [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
-                </th>
-            }
-            @if (showDragHandle()) {
-                <th style="width: 2.5rem"></th>
-            }
-            <th class="sort-col" (click)="sortBy('title')">Title <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" /></th>
-            <th class="sort-col col-dates" (click)="sortBy('dueDate')">Dates <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" /></th>
-            <th class="sort-col" (click)="sortBy('points')">Points <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" /></th>
-            @if (!showGroupSelector()) {
-                <th class="sort-col" (click)="sortBy('difficulty')">Difficulty <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" /></th>
-            }
-            @if (showGroupSelector()) {
-                <th>Group</th>
-            }
-            <th>Categories</th>
-            <th class="text-end col-actions">Actions</th>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-exercise let-index="rowIndex">
-        <tr [pReorderableRow]="index" [pReorderableRowDisabled]="!showDragHandle()">
-            @if (showCheckbox()) {
-                <td>
-                    <p-checkbox
-                        [binary]="true"
-                        [ngModel]="exercise.id !== undefined && selectedIds().has(exercise.id)"
-                        (ngModelChange)="exercise.id !== undefined && selectionToggle.emit(exercise.id)"
-                    />
-                </td>
-            }
-            @if (showDragHandle()) {
-                <td>
-                    <span pReorderableRowHandle class="pi pi-bars drag-handle" title="Drag to reorder"></span>
-                </td>
-            }
-            <td class="col-title">
-                @if (showTypeIcon()) {
-                    <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
+<div
+    cdkDropList
+    [id]="dropListId()"
+    [cdkDropListData]="sortedExercises()"
+    [cdkDropListConnectedTo]="connectedDropLists()"
+    [cdkDropListDisabled]="!showDragHandle()"
+    (cdkDropListDropped)="onDrop($event)"
+>
+    <p-table [value]="sortedExercises()" size="small" styleClass="p-datatable-sm" [scrollable]="true">
+        <ng-template pTemplate="header">
+            <tr>
+                @if (showCheckbox()) {
+                    <th style="width: 2.5rem">
+                        <p-checkbox [binary]="true" [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
+                    </th>
                 }
-                <a class="fw-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
-                @if (exercise.type === ExerciseType.QUIZ) {
-                    @let q = asQuiz(exercise);
-                    <span class="badge ms-1 {{ quizStatusClass(q) }} small">{{ quizStatusLabel(q) }}</span>
-                    @if (q.quizMode && q.quizMode !== QuizMode.SYNCHRONIZED) {
-                        <span class="badge bg-light text-dark border small ms-1">{{ q.quizMode }}</span>
-                    }
+                @if (showDragHandle()) {
+                    <th style="width: 2.5rem"></th>
                 }
-            </td>
-            <td class="col-dates">
-                <div class="d-flex flex-column small">
-                    @if (effectiveReleaseDate(exercise)) {
-                        <div>
-                            <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
-                            {{ effectiveReleaseDate(exercise) | artemisDate }}
-                        </div>
+                <th class="sort-col" (click)="sortBy('title')">Title <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" /></th>
+                <th class="sort-col col-dates" (click)="sortBy('dueDate')">Dates <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" /></th>
+                <th class="sort-col" (click)="sortBy('points')">Points <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" /></th>
+                @if (!showGroupSelector()) {
+                    <th class="sort-col" (click)="sortBy('difficulty')">Difficulty <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" /></th>
+                }
+                @if (showGroupSelector()) {
+                    <th>Group</th>
+                }
+                <th>Categories</th>
+                <th class="text-end col-actions">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-exercise>
+            <tr cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
+                <div *cdkDragPreview class="exercise-drag-preview">
+                    @if (showTypeIcon()) {
+                        <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
                     }
-                    @if (effectiveDueDate(exercise)) {
-                        <div>
-                            <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
-                            {{ effectiveDueDate(exercise) | artemisDate }}
-                        </div>
-                    }
-                    @if (effectiveAssessmentDueDate(exercise)) {
-                        <div>
-                            <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
-                            {{ effectiveAssessmentDueDate(exercise) | artemisDate }}
-                        </div>
-                    }
+                    <span class="fw-semibold">{{ exercise.title }}</span>
                 </div>
-            </td>
-            <td class="text-nowrap">
-                <div class="d-flex flex-column">
-                    <span>
-                        {{ exercise.maxPoints }}pts
-                        @if (exercise.bonusPoints) {
-                            <span class="text-muted small">(+{{ exercise.bonusPoints }})</span>
-                        }
-                    </span>
-                    @switch (exercise.includedInOverallScore) {
-                        @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
-                        }
-                        @case (IncludedInOverallScore.INCLUDED_AS_BONUS) {
-                            <span class="small text-warning-emphasis fw-semibold" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
-                        }
-                        @case (IncludedInOverallScore.NOT_INCLUDED) {
-                            <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                @if (showCheckbox()) {
+                    <td>
+                        <p-checkbox
+                            [binary]="true"
+                            [ngModel]="exercise.id !== undefined && selectedIds().has(exercise.id)"
+                            (ngModelChange)="exercise.id !== undefined && selectionToggle.emit(exercise.id)"
+                        />
+                    </td>
+                }
+                @if (showDragHandle()) {
+                    <td>
+                        <span cdkDragHandle class="pi pi-bars drag-handle" title="Drag to reorder or move between groups"></span>
+                    </td>
+                }
+                <td class="col-title">
+                    @if (showTypeIcon()) {
+                        <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
+                    }
+                    <a class="fw-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
+                    @if (exercise.type === ExerciseType.QUIZ) {
+                        @let q = asQuiz(exercise);
+                        <span class="badge ms-1 {{ quizStatusClass(q) }} small">{{ quizStatusLabel(q) }}</span>
+                        @if (q.quizMode && q.quizMode !== QuizMode.SYNCHRONIZED) {
+                            <span class="badge bg-light text-dark border small ms-1">{{ q.quizMode }}</span>
                         }
                     }
-                </div>
-            </td>
-            @if (!showGroupSelector()) {
+                </td>
+                <td class="col-dates">
+                    <div class="d-flex flex-column small">
+                        @if (effectiveReleaseDate(exercise)) {
+                            <div>
+                                <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                {{ effectiveReleaseDate(exercise) | artemisDate }}
+                            </div>
+                        }
+                        @if (effectiveDueDate(exercise)) {
+                            <div>
+                                <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                {{ effectiveDueDate(exercise) | artemisDate }}
+                            </div>
+                        }
+                        @if (effectiveAssessmentDueDate(exercise)) {
+                            <div>
+                                <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                {{ effectiveAssessmentDueDate(exercise) | artemisDate }}
+                            </div>
+                        }
+                    </div>
+                </td>
+                <td class="text-nowrap">
+                    <div class="d-flex flex-column">
+                        <span>
+                            {{ exercise.maxPoints }}pts
+                            @if (exercise.bonusPoints) {
+                                <span class="text-muted small">(+{{ exercise.bonusPoints }})</span>
+                            }
+                        </span>
+                        @switch (exercise.includedInOverallScore) {
+                            @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                            }
+                            @case (IncludedInOverallScore.INCLUDED_AS_BONUS) {
+                                <span class="small text-warning-emphasis fw-semibold" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                            }
+                            @case (IncludedInOverallScore.NOT_INCLUDED) {
+                                <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                            }
+                        }
+                    </div>
+                </td>
+                @if (!showGroupSelector()) {
+                    <td>
+                        @if (exercise.difficulty) {
+                            <span class="badge {{ difficultyBadgeClass(exercise) }}">{{ exercise.difficulty }}</span>
+                        } @else {
+                            <span class="text-muted fst-italic small">none</span>
+                        }
+                    </td>
+                }
+                @if (showGroupSelector()) {
+                    <td>
+                        <p-select
+                            [options]="groupOptions()"
+                            [ngModel]="owningGroupId(exercise)"
+                            (ngModelChange)="onGroupSelect(exercise, $event)"
+                            optionLabel="label"
+                            optionValue="value"
+                            size="small"
+                            styleClass="col-group-select"
+                        />
+                    </td>
+                }
                 <td>
-                    @if (exercise.difficulty) {
-                        <span class="badge {{ difficultyBadgeClass(exercise) }}">{{ exercise.difficulty }}</span>
+                    @if (exercise.categories && exercise.categories.length > 0) {
+                        <jhi-exercise-categories [exercise]="exercise" />
                     } @else {
                         <span class="text-muted fst-italic small">none</span>
                     }
                 </td>
-            }
-            @if (showGroupSelector()) {
-                <td>
-                    <p-select
-                        [options]="groupOptions()"
-                        [ngModel]="owningGroupId(exercise)"
-                        (ngModelChange)="onGroupSelect(exercise, $event)"
-                        optionLabel="label"
-                        optionValue="value"
-                        size="small"
-                        styleClass="col-group-select"
-                    />
+                <td class="col-actions">
+                    <jhi-exercise-actions [exercise]="exercise" [courseId]="courseId()" (exerciseUpdated)="exerciseUpdated.emit($event)" />
                 </td>
-            }
-            <td>
-                @if (exercise.categories && exercise.categories.length > 0) {
-                    <jhi-exercise-categories [exercise]="exercise" />
-                } @else {
-                    <span class="text-muted fst-italic small">none</span>
-                }
-            </td>
-            <td class="col-actions">
-                <jhi-exercise-actions [exercise]="exercise" [courseId]="courseId()" (exerciseUpdated)="exerciseUpdated.emit($event)" />
-            </td>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-        <tr>
-            <td [attr.colspan]="8 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0) + (showGroupSelector() ? 1 : 0)" class="text-center text-muted py-3">No exercises</td>
-        </tr>
-    </ng-template>
-</p-table>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td [attr.colspan]="8 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0) + (showGroupSelector() ? 1 : 0)" class="text-center text-muted py-3">No exercises</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

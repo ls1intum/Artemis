@@ -143,6 +143,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
+    @ManyToOne
+    @JoinColumn(name = "exercise_variant_group_id")
+    @JsonIgnoreProperties("exercises")
+    private ExerciseVariantGroup exerciseVariantGroup;
+
     // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
     // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -350,6 +355,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroup = exerciseGroup;
+    }
+
+    @Nullable
+    public ExerciseVariantGroup getExerciseVariantGroup() {
+        return exerciseVariantGroup;
+    }
+
+    public void setExerciseVariantGroup(@Nullable ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroup = exerciseVariantGroup;
     }
 
     @JsonIgnore

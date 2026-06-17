@@ -5,14 +5,13 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faGripVertical, faLayerGroup, faList, faPen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLayerGroup, faList, faPen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,6 +19,7 @@ import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exerc
 import { ALL_MOCK_COMPETENCIES } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
+import { ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
@@ -58,9 +58,6 @@ const TYPE_TITLES: Record<string, string> = {
         PanelModule,
         ButtonModule,
         TooltipModule,
-        CdkDropList,
-        CdkDrag,
-        CdkDragHandle,
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
@@ -74,7 +71,6 @@ const TYPE_TITLES: Record<string, string> = {
 export class CourseManagementExercisesComponent implements OnInit {
     protected readonly allMockCompetencies = ALL_MOCK_COMPETENCIES;
 
-    protected readonly faGripVertical = faGripVertical;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
@@ -104,6 +100,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly groupEditModalId = signal<number | undefined>(undefined);
 
     readonly isGroup = computed(() => this.view() === 'group');
+    /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
+    readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
     readonly groupEditModalGroup = computed(() => this.groups().find((g) => g.id === this.groupEditModalId()));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly courseId = computed(() => this.course()?.id);
@@ -128,6 +126,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
 
     ngOnInit(): void {
         this.route.parent!.data.subscribe(({ course }) => {
@@ -139,9 +138,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.groups.set(this.mockService.getGroups());
                 this.buildBuckets();
             } else if (course?.id) {
-                this.courseManagementService.findWithExercises(course.id).subscribe({
+                const courseId = course.id;
+                this.courseManagementService.findWithExercises(courseId).subscribe({
                     next: (response) => {
                         this.exercises.set(response.body?.exercises ?? []);
+                        this.loadGroupsFromServer(courseId);
                         this.buildBuckets();
                     },
                 });
@@ -165,12 +166,6 @@ export class CourseManagementExercisesComponent implements OnInit {
         return this.groups().find((group) => group.exercises?.some((member) => member.id === exercise.id));
     }
 
-    dropBucket(event: CdkDragDrop<Bucket[]>): void {
-        const buckets = [...this.buckets()];
-        moveItemInArray(buckets, event.previousIndex, event.currentIndex);
-        this.buckets.set(buckets);
-    }
-
     toggleSelection(id: number): void {
         const current = new Set(this.selectedIds());
         if (current.has(id)) {
@@ -186,14 +181,46 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     createGroupForExercise(exercise: Exercise): void {
+        const courseId = this.course()?.id;
+        if (!this.mockDataService.enabled() && courseId !== undefined && exercise.id !== undefined) {
+            const exerciseId = exercise.id;
+            // Seed the new group with the exercise's current timeline so creating a group from it does not wipe its
+            // dates (the group's timeline is propagated back onto every member on assignment).
+            this.exerciseVariantGroupService
+                .createGroup(courseId, {
+                    title: this.defaultGroupTitle(),
+                    releaseDate: exercise.releaseDate,
+                    startDate: exercise.startDate,
+                    dueDate: exercise.dueDate,
+                    assessmentDueDate: exercise.assessmentDueDate,
+                })
+                .subscribe((dto) => {
+                    this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exerciseId, dto.id).subscribe(() => this.loadGroupsFromServer(courseId));
+                });
+            return;
+        }
         const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
-        const newGroup: CourseExerciseGroup = { id: nextId, title: `Group ${nextId}`, order: nextId, exercises: [exercise] };
+        const newGroup: CourseExerciseGroup = {
+            id: nextId,
+            title: `Group ${nextId}`,
+            order: nextId,
+            releaseDate: exercise.releaseDate,
+            startDate: exercise.startDate,
+            dueDate: exercise.dueDate,
+            assessmentDueDate: exercise.assessmentDueDate,
+            exercises: [exercise],
+        };
         const stripped = this.groups().map((g) => ({ ...g, exercises: (g.exercises ?? []).filter((e) => e.id !== exercise.id) }));
         this.groups.set([...stripped, newGroup]);
         this.buildBuckets();
     }
 
     changeExerciseGroup(exercise: Exercise, newGroup: CourseExerciseGroup | undefined): void {
+        const courseId = this.course()?.id;
+        if (!this.mockDataService.enabled() && courseId !== undefined && exercise.id !== undefined) {
+            this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe(() => this.loadGroupsFromServer(courseId));
+            return;
+        }
         const updated = this.groups().map((g) => ({
             ...g,
             exercises: (g.exercises ?? []).filter((e) => e.id !== exercise.id),
@@ -202,9 +229,12 @@ export class CourseManagementExercisesComponent implements OnInit {
             const target = updated.find((g) => g.id === newGroup.id);
             if (target) {
                 target.exercises = [...(target.exercises ?? []), exercise];
+                // Variants share the group's timeline: the moved exercise adopts the group's dates (even unset ones).
+                this.applyGroupTimeline(exercise, target);
             }
         }
         this.groups.set(updated);
+        this.exercises.set([...this.exercises()]);
         this.buildBuckets();
     }
 
@@ -256,6 +286,18 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onAddModalGroupCreate(): void {
         this.view.set('group');
+        const courseId = this.course()?.id;
+        if (!this.mockDataService.enabled() && courseId !== undefined) {
+            this.exerciseVariantGroupService.createGroup(courseId, { title: this.defaultGroupTitle() }).subscribe((dto) => {
+                const created = toCourseExerciseGroup(dto, this.exercisesById());
+                this.groups.set([...this.groups(), created]);
+                this.buildBuckets();
+                if (created.id !== undefined) {
+                    this.openGroupEditModal(created.id);
+                }
+            });
+            return;
+        }
         const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
         const newGroup: CourseExerciseGroup = { id: nextId, title: `Group ${nextId}`, order: nextId, exercises: [] };
         this.groups.set([...this.groups(), newGroup]);
@@ -350,7 +392,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         const searching = this.hasSearch();
         const buckets: Bucket[] = this.groups()
             .slice()
-            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
             .map((group) => {
                 const members = group.exercises ?? [];
                 members.forEach((exercise) => exercise.id !== undefined && groupedIds.add(exercise.id));
@@ -420,11 +462,69 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     onGroupEditModalSave(updated: CourseExerciseGroup): void {
+        const courseId = this.course()?.id;
+        if (!this.mockDataService.enabled() && courseId !== undefined && updated.id !== undefined) {
+            this.exerciseVariantGroupService
+                .updateGroup(courseId, {
+                    id: updated.id,
+                    title: updated.title || 'Group',
+                    maxPoints: updated.maxPoints,
+                    releaseDate: updated.releaseDate,
+                    startDate: updated.startDate,
+                    dueDate: updated.dueDate,
+                    assessmentDueDate: updated.assessmentDueDate,
+                })
+                .subscribe((dto) => {
+                    const mapped = toCourseExerciseGroup(dto, this.exercisesById());
+                    this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
+                    this.buildBuckets();
+                });
+            return;
+        }
         this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...updated } : g)));
+        // Variants share the group's timeline: propagate the edited group dates onto every member exercise.
+        const saved = this.groups().find((g) => g.id === updated.id);
+        saved?.exercises?.forEach((exercise) => this.applyGroupTimeline(exercise, saved));
+        this.exercises.set([...this.exercises()]);
         this.buildBuckets();
     }
 
     getGroupCompetenciesDisplay(group: CourseExerciseGroup): string {
         return (group.competencyLinks ?? []).map((l) => l.title).join(', ');
+    }
+
+    /** Loads the course's variant groups from the server and maps them to the view model (non-mock mode only). */
+    private loadGroupsFromServer(courseId: number): void {
+        if (this.mockDataService.enabled()) {
+            return;
+        }
+        this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe((dtos) => {
+            const exercisesById = this.exercisesById();
+            this.groups.set(dtos.map((dto) => toCourseExerciseGroup(dto, exercisesById)));
+            this.buildBuckets();
+        });
+    }
+
+    private exercisesById(): Map<number, Exercise> {
+        return new Map(
+            this.exercises()
+                .filter((exercise) => exercise.id !== undefined)
+                .map((exercise) => [exercise.id!, exercise]),
+        );
+    }
+
+    private defaultGroupTitle(): string {
+        return `Group ${this.groups().length + 1}`;
+    }
+
+    /**
+     * Overwrites the exercise's timeline (in place) with the group's shared timeline, including unset dates. Mock-mode
+     * counterpart of the server-side propagation in {@code ExerciseVariantGroupResource}.
+     */
+    private applyGroupTimeline(exercise: Exercise, group: CourseExerciseGroup): void {
+        exercise.releaseDate = group.releaseDate;
+        exercise.startDate = group.startDate;
+        exercise.dueDate = group.dueDate;
+        exercise.assessmentDueDate = group.assessmentDueDate;
     }
 }
