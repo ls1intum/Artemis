@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -70,7 +71,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-import-test");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, Exam.class, CREATED);
+        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
 
         assertThat(importedExam.getId()).isNotNull();
         assertThat(importedExam.getExerciseGroups()).hasSize(4);
@@ -102,7 +103,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-empty-import");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, Exam.class, CREATED);
+        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
 
         assertThat(importedExam.getId()).isNotNull();
 
