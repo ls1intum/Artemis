@@ -1,14 +1,16 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { CurveFactory } from 'd3-shape';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../services/course-management.service';
-import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import * as shape from 'd3-shape';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToLineData, referenceLineDataset } from 'app/shared-ui/chart/chart-adapters';
+import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
 import { mean } from 'simple-statistics';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,7 +30,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, ChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);
@@ -51,13 +53,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
-    // NGX variables
-    chartColor: Color = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
-    };
     readonly xAxisLabel = signal('');
 
     readonly data = signal<any[]>([]);
@@ -70,9 +65,27 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries: { absoluteValue?: number; name?: string }[] = [{}];
-    curve: CurveFactory = shape.curveMonotoneX;
     readonly average = signal({ name: 'Mean', value: 0 });
     readonly startDateDisplayed = signal(false);
+
+    // line color and (dashed) average reference line color
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE, GraphColors.GREY]);
+
+    readonly chartData = computed(() => {
+        const lineData = multiSeriesToLineData(this.data() as ChartMultiSeriesEntry[], [this.chartColors()[0]], { monotone: true });
+        const average = this.average();
+        lineData.datasets.push(referenceLineDataset(average.name, average.value, lineData.labels?.length ?? 0, this.chartColors()[1]));
+        return lineData;
+    });
+    readonly chartOptions = computed(() =>
+        lineChartOptions({
+            xAxis: { label: this.xAxisLabel() },
+            yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
+            tooltip: {
+                label: (item) => `${item.dataset.label} in ${item.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
+            },
+        }),
+    );
 
     // Icons
     faSpinner = faSpinner;
@@ -204,15 +217,15 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
         this.reloadChart();
     }
 
-    formatYAxis(value: any) {
+    formatYAxis(value: number | string): string {
         return value.toLocaleString() + ' %';
     }
 
     /**
      * Using the model, we look for the entry with the same title (CW XX) and return the absolute value for this entry
      */
-    findAbsoluteValue(model: any) {
-        const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
+    findAbsoluteValue(model: { name: string }): number | string | undefined {
+        const result = this.absoluteSeries.find((entry) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
     }
 

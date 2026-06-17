@@ -2,10 +2,10 @@
     <button (click)="toggleOverlay()" class="btn btn-outline-secondary btn-sm">
         <fa-icon [icon]="faBell" />
 
-        <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount" [isSmall]="true" />
+        <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount()" [isSmall]="true" />
     </button>
 
-    <div [ngClass]="isShown ? 'is-shown' : ''" class="course-notification-overview-overlay">
+    <div [ngClass]="isShown() ? 'is-shown' : ''" class="course-notification-overview-overlay">
         <div class="course-notification-overview-triangle"></div>
 
         <div class="course-notification-overview-headline-button-wrap mb-2">
@@ -31,7 +31,7 @@
         </div>
 
         <div class="course-notification-overview-category-wrap pb-1">
-            @for (category of courseCategories; track category) {
+            @for (category of courseCategories(); track category) {
                 <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
                     <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
                 </div>
@@ -39,10 +39,10 @@
         </div>
 
         <div #scrollContainer class="course-notification-overview-notification-container">
-            @if (!isLoading) {
-                @if (notificationsForSelectedCategory.length > 0) {
+            @if (!isLoading()) {
+                @if (notificationsForSelectedCategory().length > 0) {
                     <div>
-                        @for (notification of notificationsForSelectedCategory; track notification) {
+                        @for (notification of notificationsForSelectedCategory(); track notification) {
                             <div class="notification-animation-wrapper" animate.enter="notification-item-entering" animate.leave="notification-item-leaving">
                                 <div class="course-notification-overview-notification-wrap">
                                     <jhi-course-notification

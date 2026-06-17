@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
@@ -54,11 +54,11 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     readonly onExamHandInEarly = output<void>();
 
     static itemsVisiblePerSideDefault = 4;
-    itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
+    readonly itemsVisiblePerSide = signal(ExamNavigationBarComponent.itemsVisiblePerSideDefault);
 
     criticalTime = dayjs.duration(5, 'minutes');
 
-    icon: IconProp = faCheck;
+    readonly icon = signal<IconProp>(faCheck);
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
@@ -76,13 +76,13 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
-                this.itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
+                this.itemsVisiblePerSide.set(ExamNavigationBarComponent.itemsVisiblePerSideDefault);
             } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.large)) {
-                this.itemsVisiblePerSide = 3;
+                this.itemsVisiblePerSide.set(3);
             } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.medium)) {
-                this.itemsVisiblePerSide = 1;
+                this.itemsVisiblePerSide.set(1);
             } else {
-                this.itemsVisiblePerSide = 0;
+                this.itemsVisiblePerSide.set(0);
             }
         });
 
@@ -194,48 +194,59 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
-     * also determines the used icon and its color
-     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
-     *  this method could e.g. return the sync status and the icon
+     * Pure computation of the exercise button status and its icon, free of side effects so it can be
+     * called safely during template rendering (writing to a signal during render throws NG0600).
      *
      * @param exerciseIndex index of the exercise
-     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
+     * @return the sync status of the exercise and the icon to display for it
      */
-    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
-        this.icon = faCheck;
+    computeExerciseButtonStatus(exerciseIndex: number): { status: 'synced' | 'synced active' | 'notSynced'; icon: IconProp } {
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {
-            return this.exerciseIndex() === exerciseIndex ? 'synced active' : 'synced';
+            return { status: this.exerciseIndex() === exerciseIndex ? 'synced active' : 'synced', icon: faCheck };
         }
 
         // start with a yellow status (edit icon)
-        // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
-        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faEdit;
         const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
             // this should only occur for programming exercises
-            return 'synced';
+            return { status: 'synced', icon: faEdit };
         }
-        if (submission.submitted) {
-            this.icon = faCheck;
-        }
+        const icon: IconProp = submission.submitted ? faCheck : faEdit;
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
             if (exerciseIndex === this.exerciseIndex() && !this.overviewPageOpen()) {
-                return 'synced active';
+                return { status: 'synced active', icon };
             } else {
-                return 'synced';
+                return { status: 'synced', icon };
             }
         } else {
             // make button yellow except for programming exercises with only offline IDE
-            this.icon = faEdit;
-            return 'notSynced';
+            return { status: 'notSynced', icon: faEdit };
         }
+    }
+
+    /**
+     * Pure helper for the template: returns the icon to display for the given exercise without mutating state.
+     */
+    getExerciseButtonIcon(exerciseIndex: number): IconProp {
+        return this.computeExerciseButtonStatus(exerciseIndex).icon;
+    }
+
+    /**
+     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color and stores it in the {@link icon} signal.
+     *
+     * @param exerciseIndex index of the exercise
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
+     */
+    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        const { status, icon } = this.computeExerciseButtonStatus(exerciseIndex);
+        this.icon.set(icon);
+        return status;
     }
 
     isOnlyOfflineIDE(exercise: Exercise): boolean {

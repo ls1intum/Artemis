@@ -443,7 +443,14 @@ public class LocalVCServletService {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
+            // Git clients routinely send a request with an empty password (e.g. before a credential helper supplies one or when only the username is baked into the remote URL).
+            // That is expected probing noise rather than a genuine failed login attempt, so log it at debug to keep the production logs focused on real credential issues.
+            if (passwordOrToken == null || passwordOrToken.isEmpty()) {
+                log.debug("Login attempt for user {} without a password; no credentials provided", username);
+            }
+            else {
+                log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
+            }
             throw new LocalVCAuthException(e.getMessage());
         }
 

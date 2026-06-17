@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.core.util.junit_extensions;
 
 import java.nio.file.Path;
 
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -26,7 +28,28 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 public class GlobalCleanupListener implements TestExecutionListener {
 
     @Override
+    public void testPlanExecutionStarted(TestPlan testPlan) {
+        CpuUsageMonitor.start();
+    }
+
+    @Override
+    public void executionStarted(TestIdentifier testIdentifier) {
+        TestBucketTiming.recordExecutionStarted(testIdentifier);
+    }
+
+    @Override
+    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+        TestBucketTiming.recordExecutionFinished(testIdentifier);
+    }
+
+    @Override
+    public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+        TestBucketTiming.recordExecutionSkipped(testIdentifier);
+    }
+
+    @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
+        TestBucketTiming.printSummary();
         RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test"));
         RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test-independent-batch"));
     }

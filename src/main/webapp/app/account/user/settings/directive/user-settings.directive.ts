@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Directive, OnInit, inject } from '@angular/core';
+import { Directive, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -12,7 +12,6 @@ import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-s
 @Directive()
 export abstract class UserSettingsDirective implements OnInit {
     protected userSettingsService = inject(UserSettingsService);
-    protected changeDetector = inject(ChangeDetectorRef);
     private alertService = inject(AlertService);
 
     // HTML template related
@@ -22,8 +21,8 @@ export abstract class UserSettingsDirective implements OnInit {
     // userSettings logic related
     userSettingsCategory: UserSettingsCategory;
     changeEventMessage: string;
-    userSettings: UserSettingsStructure<Setting>;
-    settings: Array<Setting>;
+    readonly userSettings = signal<UserSettingsStructure<Setting>>(undefined!);
+    readonly settings = signal<Array<Setting>>(undefined!);
     page = 0;
     error?: string;
 
@@ -40,9 +39,8 @@ export abstract class UserSettingsDirective implements OnInit {
     protected loadSetting(): void {
         this.userSettingsService.loadSettings(this.userSettingsCategory)?.subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
-                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
-                this.changeDetector.detectChanges();
+                this.userSettings.set(this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.alertService.closeAll();
             },
             error: (res: HttpErrorResponse) => this.onError(res),
@@ -56,10 +54,10 @@ export abstract class UserSettingsDirective implements OnInit {
      * Sends all settings which were changed by the user to the server for saving
      */
     public saveSettings() {
-        this.userSettingsService.saveSettings(this.settings, this.userSettingsCategory).subscribe({
+        this.userSettingsService.saveSettings(this.settings(), this.userSettingsCategory).subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                this.userSettings = this.userSettingsService.saveSettingsSuccess(this.userSettings, res.body!);
-                this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+                this.userSettings.set(this.userSettingsService.saveSettingsSuccess(this.userSettings(), res.body!));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.finishSaving();
             },
             error: (res: HttpErrorResponse) => this.onError(res),

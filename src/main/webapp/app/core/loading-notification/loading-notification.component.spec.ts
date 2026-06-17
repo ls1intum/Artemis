@@ -45,7 +45,7 @@ describe('LoadingNotificationComponent', () => {
 
         it('should have isLoading initialized to false', () => {
             fixture.detectChanges(); // Ensure ngOnInit is called so ngOnDestroy doesn't fail
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should subscribe to loadingStatus on init', () => {
@@ -60,10 +60,10 @@ describe('LoadingNotificationComponent', () => {
             fixture.detectChanges();
 
             loadingStatusSubject.next(true);
-            expect(component.isLoading).toBe(false); // Should still be false due to debounce
+            expect(component.isLoading()).toBe(false); // Should still be false due to debounce
 
             await vi.advanceTimersByTimeAsync(1000); // Wait for debounce time
-            expect(component.isLoading).toBe(true);
+            expect(component.isLoading()).toBe(true);
         });
 
         it('should set isLoading to false after debounce when loadingStatus emits false', async () => {
@@ -73,12 +73,12 @@ describe('LoadingNotificationComponent', () => {
             // First set to true
             loadingStatusSubject.next(true);
             await vi.advanceTimersByTimeAsync(1000);
-            expect(component.isLoading).toBe(true);
+            expect(component.isLoading()).toBe(true);
 
             // Then set to false
             loadingStatusSubject.next(false);
             await vi.advanceTimersByTimeAsync(1000);
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should only update isLoading after debounce period of 1000ms', async () => {
@@ -87,10 +87,10 @@ describe('LoadingNotificationComponent', () => {
 
             loadingStatusSubject.next(true);
             await vi.advanceTimersByTimeAsync(500); // Only wait 500ms
-            expect(component.isLoading).toBe(false); // Should still be false
+            expect(component.isLoading()).toBe(false); // Should still be false
 
             await vi.advanceTimersByTimeAsync(500); // Wait remaining 500ms
-            expect(component.isLoading).toBe(true); // Now should be true
+            expect(component.isLoading()).toBe(true); // Now should be true
         });
 
         it('should debounce rapid loading status changes', async () => {
@@ -108,11 +108,11 @@ describe('LoadingNotificationComponent', () => {
             await vi.advanceTimersByTimeAsync(200);
 
             // Still within debounce, should be initial value
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
 
             await vi.advanceTimersByTimeAsync(1000); // Wait for final debounce
             // Should have the last emitted value (false)
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
     });
 
@@ -125,7 +125,7 @@ describe('LoadingNotificationComponent', () => {
         });
 
         it('should display spinner when isLoading is true', () => {
-            component.isLoading = true;
+            component.isLoading.set(true);
             fixture.detectChanges();
 
             const spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
@@ -134,7 +134,7 @@ describe('LoadingNotificationComponent', () => {
 
         it('should hide spinner when isLoading becomes false', async () => {
             // Start with loading true
-            component.isLoading = true;
+            component.isLoading.set(true);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -144,7 +144,7 @@ describe('LoadingNotificationComponent', () => {
             // Set to false - recreate the fixture to avoid change detection issues
             fixture = TestBed.createComponent(LoadingNotificationComponent);
             component = fixture.componentInstance;
-            component.isLoading = false;
+            component.isLoading.set(false);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -153,7 +153,7 @@ describe('LoadingNotificationComponent', () => {
         });
 
         it('should have correct spinner styling', () => {
-            component.isLoading = true;
+            component.isLoading.set(true);
             fixture.detectChanges();
 
             const spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
@@ -183,7 +183,7 @@ describe('LoadingNotificationComponent', () => {
             loadingStatusSubject.next(true);
             await vi.advanceTimersByTimeAsync(1000);
 
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
     });
 
@@ -199,7 +199,7 @@ describe('LoadingNotificationComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             // The debounced value should be false (the last value after debounce)
-            expect(component.isLoading).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should update isLoading for slow requests (over 1000ms)', async () => {
@@ -210,7 +210,7 @@ describe('LoadingNotificationComponent', () => {
             loadingStatusSubject.next(true);
             await vi.advanceTimersByTimeAsync(1000);
 
-            expect(component.isLoading).toBe(true);
+            expect(component.isLoading()).toBe(true);
         });
     });
 });

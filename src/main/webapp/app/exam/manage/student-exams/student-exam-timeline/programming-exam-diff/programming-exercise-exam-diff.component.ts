@@ -57,7 +57,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     cachedDiffInformationChange = output<Map<string, RepositoryDiffInformation>>();
     cachedDiffReportsChange = output<Map<string, RepositoryDiffInformation>>();
 
-    isLoadingDiffReport: boolean;
+    readonly isLoadingDiffReport = signal<boolean>(undefined!);
     isLeftTemplate: boolean;
     leftKey: string;
     rightKey: string;
@@ -185,7 +185,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         this.diffInformation.set(await processRepositoryDiff(left, right));
         this.cachedDiffInformation().set(this.calculateMapKey(), this.diffInformation()!);
         this.cachedDiffInformationChange.emit(this.cachedDiffInformation());
-        this.isLoadingDiffReport = false;
+        this.isLoadingDiffReport.set(false);
 
         // Set ready state to true when diff processing is complete
         this.diffReady.set(true);

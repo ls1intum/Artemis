@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output } from '@angular/core';
+import { Component, OnInit, input, output, signal } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,7 +15,7 @@ import { KeyValuePipe } from '@angular/common';
                 #policy="ngModel"
                 required
                 class="form-select"
-                [ngModel]="selectedSubmissionPolicyType"
+                [ngModel]="selectedSubmissionPolicyType()"
                 (ngModelChange)="onSubmissionPolicyTypeChanged($event)"
                 name="submissionPolicyType"
                 id="field_submissionPolicy"
@@ -26,7 +26,7 @@ import { KeyValuePipe } from '@angular/common';
                 <option value="submission_penalty" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel"></option>
             </select>
         </div>
-        @if (!isNonePolicy) {
+        @if (!isNonePolicy()) {
             <form [formGroup]="form">
                 <div class="row mb-3">
                     <div class="col">
@@ -105,11 +105,11 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     form: FormGroup;
 
-    selectedSubmissionPolicyType: SubmissionPolicyType;
+    readonly selectedSubmissionPolicyType = signal<SubmissionPolicyType>(undefined!);
 
     isSubmissionPenaltyPolicy: boolean;
     isLockRepositoryPolicy: boolean;
-    isNonePolicy: boolean;
+    readonly isNonePolicy = signal(false);
 
     // This is used to ensure that only integers [1-500] can be used as input for the submission limit.
     submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$';
@@ -138,10 +138,11 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     }
 
     private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {
-        this.isNonePolicy = this.isLockRepositoryPolicy = this.isSubmissionPenaltyPolicy = false;
+        this.isNonePolicy.set(false);
+        this.isLockRepositoryPolicy = this.isSubmissionPenaltyPolicy = false;
         switch (submissionPolicyType) {
             case SubmissionPolicyType.NONE:
-                this.isNonePolicy = true;
+                this.isNonePolicy.set(true);
                 break;
             case SubmissionPolicyType.LOCK_REPOSITORY:
                 this.isLockRepositoryPolicy = true;
@@ -150,7 +151,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
                 this.isSubmissionPenaltyPolicy = true;
                 break;
         }
-        this.selectedSubmissionPolicyType = submissionPolicyType;
+        this.selectedSubmissionPolicyType.set(submissionPolicyType);
     }
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {

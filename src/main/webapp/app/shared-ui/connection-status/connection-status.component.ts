@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -16,7 +16,7 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);
 
     isExamMode = input(false);
-    disconnected = true;
+    readonly disconnected = signal(true);
     websocketStatusSubscription: Subscription;
 
     // Icons
@@ -27,7 +27,7 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // listen to connect / disconnect events
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected;
+            this.disconnected.set(!status.connected);
         });
     }
 

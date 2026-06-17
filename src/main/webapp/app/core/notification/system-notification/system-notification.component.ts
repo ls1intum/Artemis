@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, RendererStyleFlags2, inject } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, RendererStyleFlags2, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -35,7 +35,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     readonly WARNING = SystemNotificationType.WARNING;
 
     notifications: SystemNotification[] = [];
-    notificationsToDisplay: SystemNotification[] = [];
+    readonly notificationsToDisplay = signal<SystemNotification[]>([]);
     closedIds: number[] = [];
     websocketStatusSubscription?: Subscription;
     systemNotificationSubscription?: Subscription;
@@ -111,9 +111,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
      */
     private selectVisibleNotificationsAndScheduleUpdate() {
         const now = dayjs();
-        this.notificationsToDisplay = this.notifications
-            .filter((notification) => notification.id == undefined || !this.closedIds.includes(notification.id))
-            .filter((notification) => notification.notificationDate?.isSameOrBefore(now) && (notification.expireDate?.isAfter(now) ?? true));
+        this.notificationsToDisplay.set(
+            this.notifications
+                .filter((notification) => notification.id == undefined || !this.closedIds.includes(notification.id))
+                .filter((notification) => notification.notificationDate?.isSameOrBefore(now) && (notification.expireDate?.isAfter(now) ?? true)),
+        );
 
         if (this.nextUpdateFuture) {
             clearTimeout(this.nextUpdateFuture);

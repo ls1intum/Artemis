@@ -1,6 +1,6 @@
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
@@ -25,7 +25,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     examChange = output<Exam>();
 
     faHourglassHalf = faHourglassHalf;
-    workingTimeChangeAllowed = false;
+    readonly workingTimeChangeAllowed = signal(false);
 
     private dialogRef: DynamicDialogRef | null | undefined;
     private timeoutRef: any;
@@ -44,7 +44,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
 
     private checkWorkingTimeChangeAllowed() {
         const endDate = this.exam().endDate?.subtract(1, 'minutes');
-        this.workingTimeChangeAllowed = dayjs().isBefore(endDate);
+        this.workingTimeChangeAllowed.set(dayjs().isBefore(endDate));
 
         // Run the check again when the exam ends
         const nextCheckTimeout = endDate?.diff();

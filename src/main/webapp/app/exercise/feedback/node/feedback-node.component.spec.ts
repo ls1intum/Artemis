@@ -25,13 +25,13 @@ describe('FeedbackNodeComponent', () => {
         fixture.componentRef.setInput('feedbackItemNode', new FeedbackItem());
         fixture.detectChanges();
 
-        expect(component.feedbackItem).toBeDefined();
+        expect(component.feedbackItem()).toBeDefined();
     });
 
     it('should set specific node type correctly for feedback group', () => {
         fixture.componentRef.setInput('feedbackItemNode', { members: [], credits: 0 } as unknown as FeedbackGroup);
         fixture.detectChanges();
 
-        expect(component.feedbackItemGroup).toBeDefined();
+        expect(component.feedbackItemGroup()).toBeDefined();
     });
 });
