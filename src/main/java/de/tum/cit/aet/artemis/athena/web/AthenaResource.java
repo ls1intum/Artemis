@@ -105,7 +105,7 @@ public class AthenaResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
+        if (course == null || course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
             throw new BadRequestAlertException("Athena grading feedback is not enabled for this course", "Course", "athenaGradingFeedbackNotEnabled");
         }
 

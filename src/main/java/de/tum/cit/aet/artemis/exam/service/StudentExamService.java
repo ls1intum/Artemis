@@ -249,12 +249,16 @@ public class StudentExamService {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);
         }
 
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
-        List<StudentParticipation> eligibleParticipations = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().areFeedbackSuggestionsEnabled()).toList();
-        if (eligibleParticipations.isEmpty()) {
+        // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
+        // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
+        Set<Long> eligibleExerciseIds = studentExam.getExercises().stream().filter(Exercise::areFeedbackSuggestionsEnabled).map(Exercise::getId).collect(Collectors.toSet());
+        if (eligibleExerciseIds.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena grading feedback enabled", "StudentExam", "noCourseLevelAthenaGradingEnabled", true);
         }
+
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+        List<StudentParticipation> eligibleParticipations = participations.stream()
+                .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId())).toList();
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {

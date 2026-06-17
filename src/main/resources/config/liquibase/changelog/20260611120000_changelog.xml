@@ -46,4 +46,12 @@
         <dropColumn tableName="exercise" columnName="allow_feedback_requests"/>
     </changeSet>
 
+    <!-- Remove allow_manual_feedback_requests from exercise (column name used by JPA mapping) -->
+    <changeSet id="20260611120000-5" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_manual_feedback_requests"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allow_manual_feedback_requests"/>
+    </changeSet>
+
 </databaseChangeLog>

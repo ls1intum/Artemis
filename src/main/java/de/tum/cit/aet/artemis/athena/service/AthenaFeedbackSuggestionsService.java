@@ -202,7 +202,7 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course.getAthenaConfig() != null
+        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
                 && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
@@ -242,7 +242,7 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course.getAthenaConfig() != null
+        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
                 && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
@@ -272,7 +272,7 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean feedbackEnabled = course.getAthenaConfig() != null
+        boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
                 && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
