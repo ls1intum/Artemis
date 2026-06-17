@@ -55,7 +55,8 @@ public record CourseCreateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean athenaGradingFeedbackEnabled, boolean athenaAutoFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -120,7 +121,7 @@ public record CourseCreateDTO(
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        athenaConfig.setAutoFeedbackEnabled(athenaAutoFeedbackEnabled);
+        athenaConfig.setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setAthenaConfig(athenaConfig);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);

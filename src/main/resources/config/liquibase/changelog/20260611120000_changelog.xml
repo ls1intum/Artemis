@@ -17,7 +17,7 @@
             <column name="grading_feedback_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="auto_feedback_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="formative_feedback_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </createTable>

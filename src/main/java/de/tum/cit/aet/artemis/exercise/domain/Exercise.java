@@ -655,7 +655,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public boolean getAllowFeedbackRequests() {
         var course = getCourseViaExerciseGroupOrCourseMember();
-        return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isAutoFeedbackEnabled();
+        return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled();
     }
 
     public boolean areFeedbackSuggestionsEnabled() {

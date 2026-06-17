@@ -801,9 +801,9 @@ public class Course extends DomainObject {
         return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
     }
 
-    @JsonProperty("athenaAutoFeedbackEnabled")
-    public boolean isAthenaAutoFeedbackEnabled() {
-        return athenaConfig != null && athenaConfig.isAutoFeedbackEnabled();
+    @JsonProperty("athenaFormativeFeedbackEnabled")
+    public boolean isAthenaFormativeFeedbackEnabled() {
+        return athenaConfig != null && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

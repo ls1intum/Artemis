@@ -27,8 +27,8 @@ public class CourseAthenaConfig {
     @Column(name = "grading_feedback_enabled", nullable = false)
     private boolean gradingFeedbackEnabled = false;
 
-    @Column(name = "auto_feedback_enabled", nullable = false)
-    private boolean autoFeedbackEnabled = false;
+    @Column(name = "formative_feedback_enabled", nullable = false)
+    private boolean formativeFeedbackEnabled = false;
 
     public Long getId() {
         return id;
@@ -50,11 +50,11 @@ public class CourseAthenaConfig {
         this.gradingFeedbackEnabled = gradingFeedbackEnabled;
     }
 
-    public boolean isAutoFeedbackEnabled() {
-        return autoFeedbackEnabled;
+    public boolean isFormativeFeedbackEnabled() {
+        return formativeFeedbackEnabled;
     }
 
-    public void setAutoFeedbackEnabled(boolean autoFeedbackEnabled) {
-        this.autoFeedbackEnabled = autoFeedbackEnabled;
+    public void setFormativeFeedbackEnabled(boolean formativeFeedbackEnabled) {
+        this.formativeFeedbackEnabled = formativeFeedbackEnabled;
     }
 }

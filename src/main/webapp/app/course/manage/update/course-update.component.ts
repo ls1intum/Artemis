@@ -214,7 +214,7 @@ export class CourseUpdateComponent implements OnInit {
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
-        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaAutoFeedbackEnabled));
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -274,7 +274,7 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
-                athenaAutoFeedbackEnabled: new FormControl(this.course.athenaAutoFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -596,9 +596,9 @@ export class CourseUpdateComponent implements OnInit {
         this.athenaFeedbackEnabled.update((v) => !v);
         if (!this.athenaFeedbackEnabled()) {
             this.course.athenaGradingFeedbackEnabled = false;
-            this.course.athenaAutoFeedbackEnabled = false;
+            this.course.athenaFormativeFeedbackEnabled = false;
             this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
-            this.courseForm.controls['athenaAutoFeedbackEnabled'].setValue(false);
+            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
         }
     }
 
@@ -607,9 +607,9 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
     }
 
-    changeAthenaAutoFeedback() {
-        this.course.athenaAutoFeedbackEnabled = !this.course.athenaAutoFeedbackEnabled;
-        this.courseForm.controls['athenaAutoFeedbackEnabled'].setValue(this.course.athenaAutoFeedbackEnabled);
+    changeAthenaFormativeFeedback() {
+        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
+        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
     }
 
     /**

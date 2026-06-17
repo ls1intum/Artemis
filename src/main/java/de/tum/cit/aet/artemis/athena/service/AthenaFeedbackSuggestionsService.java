@@ -203,7 +203,7 @@ public class AthenaFeedbackSuggestionsService {
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean feedbackEnabled = course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());
@@ -243,7 +243,7 @@ public class AthenaFeedbackSuggestionsService {
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean feedbackEnabled = course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());
@@ -273,7 +273,7 @@ public class AthenaFeedbackSuggestionsService {
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean feedbackEnabled = course.getAthenaConfig() != null
-                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isAutoFeedbackEnabled());
+                && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());
         if (!feedbackEnabled) {
             log.warn("Athena {} feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", isGraded ? "grading" : "auto", exercise.getTitle(),
                     exercise.getId());

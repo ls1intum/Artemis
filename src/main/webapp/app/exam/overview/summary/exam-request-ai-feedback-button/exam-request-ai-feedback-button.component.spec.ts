@@ -44,7 +44,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     let examParticipationService: ExamParticipationService;
 
     const user = { id: 1, name: 'Test User' } as User;
-    const course = { id: 1, accuracyOfScores: 2, athenaAutoFeedbackEnabled: true } as Course;
+    const course = { id: 1, accuracyOfScores: 2, athenaFormativeFeedbackEnabled: true } as Course;
 
     const exam = { id: 1, title: 'ExamForTesting', testExam: false, course } as Exam;
     const testExam = { id: 2, title: 'TestExam for Testing', testExam: true, course } as Exam;

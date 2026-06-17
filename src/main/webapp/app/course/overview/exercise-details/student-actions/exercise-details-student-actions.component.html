@@ -130,7 +130,7 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise().course?.athenaAutoFeedbackEnabled && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
+                    @if (exercise().course?.athenaFormativeFeedbackEnabled && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
                         <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
                     }
                     <!--                    </ng-container>-->
@@ -223,7 +223,7 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
                     ></button>
                     @if (
-                        exercise().course?.athenaAutoFeedbackEnabled &&
+                        exercise().course?.athenaFormativeFeedbackEnabled &&
                         athenaEnabled &&
                         (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) &&
                         beforeDueDate()

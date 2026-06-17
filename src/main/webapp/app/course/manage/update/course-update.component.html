@@ -408,16 +408,20 @@
                             <input
                                 type="checkbox"
                                 class="form-check-input"
-                                name="athenaAutoFeedbackEnabled"
-                                id="field_athenaAutoFeedbackEnabled"
-                                [checked]="course.athenaAutoFeedbackEnabled"
-                                (change)="changeAthenaAutoFeedback()"
+                                name="athenaFormativeFeedbackEnabled"
+                                id="field_athenaFormativeFeedbackEnabled"
+                                [checked]="course.athenaFormativeFeedbackEnabled"
+                                (change)="changeAthenaFormativeFeedback()"
                             />
-                            <label class="form-check-label" jhiTranslate="artemisApp.course.athenaConfig.autoFeedbackEnabled.label" for="field_athenaAutoFeedbackEnabled"></label>
+                            <label
+                                class="form-check-label"
+                                jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label"
+                                for="field_athenaFormativeFeedbackEnabled"
+                            ></label>
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 class="text-secondary"
-                                ngbTooltip="{{ 'artemisApp.course.athenaConfig.autoFeedbackEnabled.tooltip' | artemisTranslate }}"
+                                ngbTooltip="{{ 'artemisApp.course.athenaConfig.formativeFeedbackEnabled.tooltip' | artemisTranslate }}"
                             />
                         </div>
                         <div class="nested-form-group form-check">

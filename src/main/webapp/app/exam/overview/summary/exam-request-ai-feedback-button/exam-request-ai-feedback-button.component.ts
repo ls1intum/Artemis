@@ -60,7 +60,7 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     readonly hasAthenaFeedbackSupportedExercise = computed(() => {
         const exam = this.studentExam();
-        if (!exam?.exam?.course?.athenaAutoFeedbackEnabled) {
+        if (!exam?.exam?.course?.athenaFormativeFeedbackEnabled) {
             return false;
         }
         return (exam?.exercises ?? []).some((exercise) => exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING);
@@ -73,7 +73,7 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     private readonly eligibleExerciseIds = computed(() => {
         const exam = this.studentExam();
-        if (!exam?.exam?.course?.athenaAutoFeedbackEnabled) {
+        if (!exam?.exam?.course?.athenaFormativeFeedbackEnabled) {
             return [];
         }
         return (exam?.exercises ?? [])

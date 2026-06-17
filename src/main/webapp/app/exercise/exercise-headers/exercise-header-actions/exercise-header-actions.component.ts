@@ -212,7 +212,7 @@ export class ExerciseHeaderActionsComponent {
         () =>
             !this.examMode() &&
             this.hasUserAcceptedLLM() &&
-            ((this.athenaEnabled && (this.exercise().course?.athenaAutoFeedbackEnabled ?? false)) || (this.exercise().allowFeedbackRequests ?? false)),
+            ((this.athenaEnabled && (this.exercise().course?.athenaFormativeFeedbackEnabled ?? false)) || (this.exercise().allowFeedbackRequests ?? false)),
     );
 
     readonly beforeDueDate = computed(() => {

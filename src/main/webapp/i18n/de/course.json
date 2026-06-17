@@ -247,7 +247,7 @@
                     "label": "Bewertungsfeedback-Vorschläge aktiviert",
                     "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für alle Aufgabentypen vor."
                 },
-                "autoFeedbackEnabled": {
+                "formativeFeedbackEnabled": {
                     "label": "Formatives Feedback-Anfragen aktiviert",
                     "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
                 }

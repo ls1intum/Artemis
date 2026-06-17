@@ -822,7 +822,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
-        athenaConfig.setAutoFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
@@ -880,7 +880,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
-        athenaConfig.setAutoFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
@@ -918,7 +918,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
         var textAthenaConfig = new CourseAthenaConfig();
         textAthenaConfig.setCourse(textCourse);
-        textAthenaConfig.setAutoFeedbackEnabled(true);
+        textAthenaConfig.setFormativeFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
 
@@ -967,7 +967,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
         var teamAthenaConfig = new CourseAthenaConfig();
         teamAthenaConfig.setCourse(teamCourse);
-        teamAthenaConfig.setAutoFeedbackEnabled(true);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
@@ -1014,7 +1014,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
         var teamAthenaConfig = new CourseAthenaConfig();
         teamAthenaConfig.setCourse(teamCourse);
-        teamAthenaConfig.setAutoFeedbackEnabled(true);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
@@ -1056,7 +1056,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
         var modelingAthenaConfig = new CourseAthenaConfig();
         modelingAthenaConfig.setCourse(modelingCourse);
-        modelingAthenaConfig.setAutoFeedbackEnabled(true);
+        modelingAthenaConfig.setFormativeFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
 
@@ -1103,7 +1103,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var teamCourse = teamExercise.getCourseViaExerciseGroupOrCourseMember();
         var teamAthenaConfig = new CourseAthenaConfig();
         teamAthenaConfig.setCourse(teamCourse);
-        teamAthenaConfig.setAutoFeedbackEnabled(true);
+        teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
         courseRepository.save(teamCourse);
 
@@ -1144,7 +1144,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
-        athenaConfig.setAutoFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         this.courseRepository.save(course);
 
@@ -1180,7 +1180,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
         var textAthenaConfig = new CourseAthenaConfig();
         textAthenaConfig.setCourse(textCourse);
-        textAthenaConfig.setAutoFeedbackEnabled(true);
+        textAthenaConfig.setFormativeFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
         this.courseRepository.save(textCourse);
 
@@ -1218,7 +1218,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
         var modelingAthenaConfig = new CourseAthenaConfig();
         modelingAthenaConfig.setCourse(modelingCourse);
-        modelingAthenaConfig.setAutoFeedbackEnabled(true);
+        modelingAthenaConfig.setFormativeFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
         this.courseRepository.save(modelingCourse);
 
@@ -2063,7 +2063,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
         var exerciseAthenaConfig = new CourseAthenaConfig();
         exerciseAthenaConfig.setCourse(exerciseCourse);
-        exerciseAthenaConfig.setAutoFeedbackEnabled(true);
+        exerciseAthenaConfig.setFormativeFeedbackEnabled(true);
         exerciseCourse.setAthenaConfig(exerciseAthenaConfig);
         courseRepository.save(exerciseCourse);
     }

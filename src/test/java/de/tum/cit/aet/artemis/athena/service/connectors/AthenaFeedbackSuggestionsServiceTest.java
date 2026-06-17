@@ -82,12 +82,12 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         var course = new Course();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);
-        athenaConfig.setAutoFeedbackEnabled(false);
+        athenaConfig.setFormativeFeedbackEnabled(false);
         course.setAthenaConfig(athenaConfig);
 
         var autoConfig = new CourseAthenaConfig();
         autoConfig.setGradingFeedbackEnabled(false);
-        autoConfig.setAutoFeedbackEnabled(true);
+        autoConfig.setFormativeFeedbackEnabled(true);
         autoCourse = new Course();
         autoCourse.setAthenaConfig(autoConfig);
 

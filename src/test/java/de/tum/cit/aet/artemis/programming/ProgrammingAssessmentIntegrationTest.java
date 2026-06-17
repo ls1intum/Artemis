@@ -1012,7 +1012,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
-        athenaConfig.setAutoFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));

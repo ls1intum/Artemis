@@ -60,7 +60,7 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean athenaGradingFeedbackEnabled, boolean athenaAutoFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
         boolean onboardingDone) {
 
     /**
@@ -126,7 +126,7 @@ public record CourseUpdateDTO(
             course.setAthenaConfig(config);
         }
         course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        course.getAthenaConfig().setAutoFeedbackEnabled(athenaAutoFeedbackEnabled);
+        course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -153,7 +153,7 @@ public record CourseUpdateDTO(
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
                 course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
-                course.getAthenaConfig() != null && course.getAthenaConfig().isAutoFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
+                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
                 course.isOnboardingDone());
     }
 }
