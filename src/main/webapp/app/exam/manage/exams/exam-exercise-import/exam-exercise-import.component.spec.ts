@@ -310,6 +310,45 @@ describe('Exam Exercise Import Component', () => {
         expect(component.validateUserInput()).toBe(true);
     });
 
+    it('should return a specific error key for each invalid programming exercise title and short name', () => {
+        fixture.componentRef.setInput('exam', exam1);
+        component.ngOnInit();
+        const prefix = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+        // A programming exercise with this title and short name is blocked (rejected by the server / same-course import)
+        component.titleAndShortNameOfProgrammingExercises.set(programmingExercise.id!, ['rejectedTitle', 'rejectedShortName']);
+
+        // Valid baseline -> no error
+        programmingExercise.title = 'ProgrammingExercise';
+        programmingExercise.shortName = 'prog3';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBeUndefined();
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBeUndefined();
+
+        // Title errors
+        programmingExercise.title = undefined;
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleRequired');
+        programmingExercise.title = '//';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titlePattern');
+        programmingExercise.title = 'ProgrammingExercise';
+        component.exercisesWithDuplicatedTitles.set(programmingExercise.id!, 'ProgrammingExercise');
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleDuplicate');
+        component.exercisesWithDuplicatedTitles.delete(programmingExercise.id!);
+        programmingExercise.title = 'rejectedTitle';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleAlreadyExists');
+        programmingExercise.title = 'ProgrammingExercise';
+
+        // Short name errors
+        programmingExercise.shortName = 'AA';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameLength');
+        programmingExercise.shortName = '9AAA';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNamePattern');
+        programmingExercise.shortName = 'prog3';
+        component.exercisesWithDuplicatedShortNames.set(programmingExercise.id!, 'prog3');
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameDuplicate');
+        component.exercisesWithDuplicatedShortNames.delete(programmingExercise.id!);
+        programmingExercise.shortName = 'rejectedShortName';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameAlreadyExists');
+    });
+
     it('should correctly return the Exercise Icon', () => {
         expect(component.getExerciseIcon(modelingExercise.type)).toEqual(faProjectDiagram);
         expect(component.getExerciseIcon(textExercise.type)).toEqual(faFont);

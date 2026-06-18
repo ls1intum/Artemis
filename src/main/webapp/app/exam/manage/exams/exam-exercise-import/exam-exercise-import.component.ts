@@ -46,6 +46,9 @@ export class ExamExerciseImportComponent implements OnInit {
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly SHORT_NAME_REGEX = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
 
+    // Prefix for the per-field validation error translation keys shown below the title / short name inputs
+    private static readonly IMPORT_ERROR_PREFIX = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+
     // Icons
     faCheckDouble = faCheckDouble;
     faFont = faFont;
@@ -231,26 +234,60 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
-        return (
-            !!exercise.title?.length &&
-            EXERCISE_TITLE_NAME_REGEX.test(exercise.title!) &&
-            !this.exercisesWithDuplicatedTitles.has(exercise.id!) &&
-            (exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) || this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) === '')
-        );
+        return this.getProgrammingExerciseTitleError(exercise) === undefined;
     }
 
     /**
-     * Validates the Title for Programming Exercises based on the user's input
+     * Validates the Short Name for Programming Exercises based on the user's input
      * @param exercise the exercise to be checked
      */
     validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
-        return (
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.shortName?.length! > 2 &&
-            this.SHORT_NAME_REGEX.test(exercise.shortName!) &&
-            !this.exercisesWithDuplicatedShortNames.has(exercise.id!) &&
-            exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
-        );
+        return this.getProgrammingExerciseShortNameError(exercise) === undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise title is invalid, or {@code undefined}
+     * if it is valid. Used to show a precise, actionable error below the title field instead of only a red border.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseTitleError(exercise: Exercise): string | undefined {
+        if (!exercise.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleRequired';
+        }
+        if (!EXERCISE_TITLE_NAME_REGEX.test(exercise.title)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titlePattern';
+        }
+        if (this.exercisesWithDuplicatedTitles.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleDuplicate';
+        }
+        // The title still equals the one rejected by the server / blocked because of a same-course import.
+        if (exercise.title === this.getBlocklistTitleOfProgrammingExercise(exercise.id!) && this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) !== '') {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleAlreadyExists';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise short name is invalid, or
+     * {@code undefined} if it is valid. Used to show a precise, actionable error below the short name field.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseShortNameError(exercise: Exercise): string | undefined {
+        const shortName = exercise.shortName;
+        if (!shortName || shortName.length <= 2) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameLength';
+        }
+        if (!this.SHORT_NAME_REGEX.test(shortName)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNamePattern';
+        }
+        if (this.exercisesWithDuplicatedShortNames.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameDuplicate';
+        }
+        // The short name still equals the one rejected by the server / blocked because of a same-course import.
+        if (shortName === this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameAlreadyExists';
+        }
+        return undefined;
     }
 
     /**

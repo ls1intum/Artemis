@@ -120,6 +120,9 @@
                                                 [(ngModel)]="exercise.title"
                                                 (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true)"
                                             />
+                                            @if (getProgrammingExerciseTitleError(exercise); as titleError) {
+                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="titleError"></div>
+                                            }
                                         }
                                     </td>
                                     @if (exercise.type! === exerciseType.PROGRAMMING) {
@@ -133,6 +136,9 @@
                                                 [(ngModel)]="exercise.shortName"
                                                 (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false)"
                                             />
+                                            @if (getProgrammingExerciseShortNameError(exercise); as shortNameError) {
+                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="shortNameError"></div>
+                                            }
                                         </td>
                                     }
                                     <td>
