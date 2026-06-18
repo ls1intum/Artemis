@@ -14,6 +14,7 @@ import {
     untracked,
     viewChildren,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import Split from 'split.js';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -45,9 +46,12 @@ export class SplitPaneDirective {
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
+    private readonly document = inject(DOCUMENT);
 
     /** Width in px below which the split collapses into a single tabbed panel */
     readonly collapseBelowPx = input(768);
+    /** Use the viewport width for the responsive breakpoint instead of this component's content width. */
+    readonly useViewportWidthForCollapse = input(false);
 
     readonly panels = contentChildren(PanelDirective);
     readonly leftPanel = computed(() => this.panels()[0]);
@@ -131,11 +135,12 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit(): void {
+        const observedElement = this.useViewportWidthForCollapse() ? this.document.documentElement : this.elementRef.nativeElement;
         this.resizeObserver = new ResizeObserver((entries) => {
             const width = entries[0].contentRect.width;
             this._isNarrow.set(width < this.collapseBelowPx());
         });
-        this.resizeObserver.observe(this.elementRef.nativeElement);
+        this.resizeObserver.observe(observedElement);
     }
 
     ngOnDestroy(): void {

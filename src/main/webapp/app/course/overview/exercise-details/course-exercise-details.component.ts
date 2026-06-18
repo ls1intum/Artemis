@@ -74,6 +74,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
     protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -146,6 +150,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
 
     // Sorted results signal
     private readonly _sortedHistoryResults = signal<Result[]>([]);
