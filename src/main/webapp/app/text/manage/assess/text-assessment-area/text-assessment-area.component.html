@@ -1,5 +1,5 @@
 @if (autoTextBlockAssessment()) {
-    @for (ref of textBlockRefs(); track ref; let i = $index) {
+    @for (ref of textBlockRefs(); track ref.block; let i = $index) {
         <jhi-text-block-assessment-card
             id="text-feedback-block-{{ i }}"
             [textBlockRef]="ref"

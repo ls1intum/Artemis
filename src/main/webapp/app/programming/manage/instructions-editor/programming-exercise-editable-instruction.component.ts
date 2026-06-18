@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
@@ -83,9 +83,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     private previousExercise?: ProgrammingExercise;
 
-    unsavedChangesValue = false;
+    readonly unsavedChangesValue = signal(false);
 
-    exerciseTestCases: string[] = [];
+    readonly exerciseTestCases = signal<string[]>([]);
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
@@ -110,7 +110,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
-    savingInstructions = false;
+    readonly savingInstructions = signal(false);
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -122,7 +122,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private suppressUnsavedForNextProblemStatementChange = false;
     private dirtySignalSuppressedDuringInitialSync = false;
 
-    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
+    readonly markdownEditorMonaco = viewChild(MarkdownEditorMonacoComponent);
 
     readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
@@ -171,7 +171,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set unsavedChanges(hasChanges: boolean) {
-        this.unsavedChangesValue = hasChanges;
+        this.unsavedChangesValue.set(hasChanges);
         // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
         // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
@@ -249,7 +249,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private persistProblemStatement(): Observable<void> {
-        this.savingInstructions = true;
+        this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
@@ -263,7 +263,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 return EMPTY;
             }),
             finalize(() => {
-                this.savingInstructions = false;
+                this.savingInstructions.set(false);
             }),
         );
     }
@@ -341,8 +341,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         return of();
                     }),
                     tap((testCaseNames: string[]) => {
-                        this.exerciseTestCases = testCaseNames;
-                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.exerciseTestCases.set(testCaseNames);
+                        const cases = this.exerciseTestCases().map((value) => ({ value, id: value }));
                         this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
@@ -374,7 +374,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-        this.markdownEditorMonaco?.monacoEditor?.()?.setAnnotations(lineWarnings as Annotation[]);
+        this.markdownEditorMonaco()
+            ?.monacoEditor?.()
+            ?.setAnnotations(lineWarnings as Annotation[]);
     };
 
     /**
@@ -385,7 +387,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @returns The current editor content, or undefined if editor is not available.
      */
     getCurrentContent(): string | undefined {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
         if (!monacoEditor) {
             return undefined;
         }
@@ -399,7 +401,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param text The text to set in the editor.
      */
     setText(text: string): void {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor?.();
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
         if (!monacoEditor) {
             return;
         }
@@ -415,11 +417,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.markdownEditorMonaco?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.markdownEditorMonaco()?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     clearReviewCommentDrafts(): void {
-        this.markdownEditorMonaco?.clearReviewCommentDrafts();
+        this.markdownEditorMonaco()?.clearReviewCommentDrafts();
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
@@ -494,7 +496,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param payload The thread id whose consistency inline fix was applied in the editor.
      */
     onApplyInlineFix(payload: { threadId: number }): void {
-        if (this.savingInstructions) {
+        if (this.savingInstructions()) {
             return;
         }
 
@@ -514,7 +516,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param refined The new content to show in the modified editor.
      */
     applyRefinedContent(refined: string): void {
-        this.markdownEditorMonaco?.applyRefinedContent(refined);
+        this.markdownEditorMonaco()?.applyRefinedContent(refined);
         // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
         // event propagates the change via textChanged → markdownChange → updateProblemStatement.
     }
@@ -523,8 +525,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {
-        this.markdownEditorMonaco?.revertAll();
-        const currentContent = this.markdownEditorMonaco?.monacoEditor?.()?.getText();
+        this.markdownEditorMonaco()?.revertAll();
+        const currentContent = this.markdownEditorMonaco()?.monacoEditor?.()?.getText();
         if (currentContent !== undefined) {
             this.updateProblemStatement(currentContent);
         }
@@ -545,11 +547,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
-        if (!this.markdownEditorMonaco?.monacoEditor?.()) {
+        if (!this.markdownEditorMonaco()?.monacoEditor?.()) {
             return;
         }
-        const model = this.markdownEditorMonaco.monacoEditor()!.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor()!.getEditor();
+        const model = this.markdownEditorMonaco()!.monacoEditor()!.getModel();
+        const editorInstance = this.markdownEditorMonaco()!.monacoEditor()!.getEditor();
         if (!model || !editorInstance) {
             return;
         }

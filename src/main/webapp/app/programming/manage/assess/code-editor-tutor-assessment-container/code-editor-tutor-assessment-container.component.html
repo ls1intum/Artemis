@@ -1,13 +1,13 @@
-@if (participationCouldNotBeFetched || lockLimitReached) {
+@if (participationCouldNotBeFetched() || lockLimitReached()) {
     <nav class="card">
         <div class="card-body">
-            @if (participationCouldNotBeFetched) {
+            @if (participationCouldNotBeFetched()) {
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
-            @if (lockLimitReached) {
+            @if (lockLimitReached()) {
                 <div>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
                     <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span>
@@ -16,26 +16,26 @@
         </div>
     </nav>
 }
-<div [id]="'exercise-' + exercise?.id">
+<div [id]="'exercise-' + exercise()?.id">
     <jhi-assessment-layout
         (navigateBack)="navigateBack()"
-        [isLoading]="loadingParticipation"
-        [saveBusy]="saveBusy"
-        [submitBusy]="submitBusy"
-        [cancelBusy]="cancelBusy"
-        [nextSubmissionBusy]="nextSubmissionBusy"
-        [isTeamMode]="!!exercise?.teamMode"
-        [isAssessor]="isAssessor"
-        [isTestRun]="isTestRun"
-        [exerciseDashboardLink]="exerciseDashboardLink"
+        [isLoading]="loadingParticipation()"
+        [saveBusy]="saveBusy()"
+        [submitBusy]="submitBusy()"
+        [cancelBusy]="cancelBusy()"
+        [nextSubmissionBusy]="nextSubmissionBusy()"
+        [isTeamMode]="!!exercise()?.teamMode"
+        [isAssessor]="isAssessor()"
+        [isTestRun]="isTestRun()"
+        [exerciseDashboardLink]="exerciseDashboardLink()"
         [canOverride]="canOverride"
-        [result]="manualResult"
-        [assessmentsAreValid]="assessmentsAreValid"
-        [complaint]="complaint"
-        [exercise]="exercise"
-        [submission]="submission"
-        [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
-        [correctionRound]="correctionRound"
+        [result]="manualResult()"
+        [assessmentsAreValid]="assessmentsAreValid()"
+        [complaint]="complaint()"
+        [exercise]="exercise()"
+        [submission]="submission()"
+        [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+        [correctionRound]="correctionRound()"
         [isProgrammingExercise]="true"
         (save)="save()"
         (onSubmit)="submit()"
@@ -43,7 +43,15 @@
         (nextSubmission)="nextSubmission()"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
-        @if (submission) {
+        <jhi-feedback-suggestions-banner
+            jhiBannerSlot
+            [isLoading]="loadingFeedbackSuggestions()"
+            [hasAutomaticFeedback]="hasAutomaticFeedback()"
+            [isAssessor]="isAssessor()"
+            [resultCompletionDate]="manualResult()?.completionDate"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+        />
+        @if (submission()) {
             <ng-container *ngTemplateOutlet="assessment" />
         } @else {
             <ng-container *ngTemplateOutlet="noSubmission" />
@@ -51,18 +59,18 @@
     </jhi-assessment-layout>
 
     <ng-template #assessment>
-        @if (!loadingParticipation && !participationCouldNotBeFetched) {
+        @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
             <jhi-code-editor-container
                 [isProblemStatementVisible]="false"
                 [editable]="false"
-                [participation]="participation"
-                [feedbackSuggestions]="feedbackSuggestions"
+                [participation]="participation()"
+                [feedbackSuggestions]="feedbackSuggestions()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
-                [course]="getCourseFromExercise(exercise)"
+                [course]="getCourseFromExercise(exercise())"
                 (onUpdateFeedback)="onUpdateFeedback($event)"
                 (onAcceptSuggestion)="removeSuggestion($event)"
                 (onDiscardSuggestion)="removeSuggestion($event)"
@@ -78,65 +86,65 @@
         <!-- The templates must be outside of the ng-container, otherwise it cannot be transferred via the context -->
         <ng-template #editorTitle>
             <span>
-                <span>{{ exercise?.title }}</span>
+                <span>{{ exercise()?.title }}</span>
                 <span
-                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                    [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
                 ></span>
                 <span>
-                    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                    @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
                     }
                 </span>
             </span>
         </ng-template>
         <ng-template #editorToolbar>
-            @if (isAtLeastEditor && !isTestRun) {
-                <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink" target="_blank" rel="noopener noreferrer">
+            @if (isAtLeastEditor() && !isTestRun()) {
+                <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink()" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink" />
                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
                 </a>
             }
             <jhi-programming-assessment-repo-export
-                [programmingExercises]="[exercise]"
+                [programmingExercises]="[exercise()]"
                 [singleParticipantMode]="true"
-                [participationIdList]="participation ? [participation!.id!] : []"
+                [participationIdList]="participation() ? [participation()!.id!] : []"
             />
-            @if (participation) {
+            @if (participation()) {
                 <jhi-result
-                    [result]="manualResult"
+                    [result]="manualResult()"
                     [showUngradedResults]="true"
                     [showBadge]="false"
                     [isBuilding]="false"
-                    [participation]="participation"
-                    [exercise]="exercise"
+                    [participation]="participation()"
+                    [exercise]="exercise()"
                     [short]="false"
                     class="me-1 my-1"
                 />
             }
         </ng-template>
         <ng-template #editorSidebar>
-            @if (exercise) {
+            @if (exercise()) {
                 <jhi-assessment-instructions
                     class="card-body markdown-preview instructions-wrapper__content overflow-auto"
-                    [exercise]="exercise!"
-                    [programmingParticipation]="participation"
-                    [gradingCriteria]="exercise.gradingCriteria"
+                    [exercise]="exercise()!"
+                    [programmingParticipation]="participation()"
+                    [gradingCriteria]="exercise().gradingCriteria"
                 />
             }
         </ng-template>
         <ng-template #editorBottom>
             <div class="row mt-3">
-                @if (manualResult && manualResult.id) {
+                @if (manualResult()?.id; as resultId) {
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
-                        [feedbackSuggestions]="unreferencedFeedbackSuggestions"
+                        [feedbackSuggestions]="unreferencedFeedbackSuggestions()"
                         (feedbacksChange)="validateUpdatedFeedback($event)"
                         [readOnly]="readOnly()"
                         [highlightDifferences]="highlightDifferences"
                         (onAcceptSuggestion)="removeSuggestion($event)"
                         (onDiscardSuggestion)="removeSuggestion($event)"
-                        [resultId]="manualResult.id"
+                        [resultId]="resultId"
                     />
                 }
             </div>
@@ -144,10 +152,10 @@
     </ng-template>
 
     <ng-template #noSubmission>
-        @if (!loadingInitialSubmission) {
+        @if (!loadingInitialSubmission()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
-                <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
+                <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>

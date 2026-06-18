@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal, viewChild } from '@angular/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -67,7 +67,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
-    submissionCount?: number;
+    readonly submissionCount = signal<number | undefined>(undefined);
     repositoryIsLocked = false;
 
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -115,7 +115,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     onActivate() {
         super.onActivate();
-        this.instructions().updateMarkdown();
+        // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
+        // hidden its change detection was detached, so a render that happened in the meantime may have injected the
+        // PlantUML diagrams into stale DOM. Re-rendering now that the exercise is visible restores them reliably.
+        this.instructions().forceReRenderProblemStatement();
         this.updateDomain();
     }
 
@@ -131,7 +134,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Sets the submission count and lock based on the student participation.
      */
     setSubmissionCountAndLockIfNeeded() {
-        this.submissionCount = this.studentParticipation().submissionCount ?? this.submissionCount;
+        this.submissionCount.set(this.studentParticipation().submissionCount ?? this.submissionCount());
         // TODO: update repositoryIsLocked with the actual value from the server
     }
 
@@ -170,7 +173,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
-        this.codeEditorContainer().actions.onSave();
+        // Use a non-null assertion (instead of optional chaining) to preserve the original throw-on-missing
+        // contract: a missing actions component must surface as an error rather than silently dropping the save.
+        this.codeEditorContainer().actions()!.onSave();
     }
 
     updateViewFromSubmission(): void {

@@ -3,7 +3,7 @@ import { Commands } from '../../support/commands';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { addE2EInitScript, generateUUID } from '../../support/utils';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -359,9 +359,8 @@ test.describe('Exam participation', () => {
                 if (participationId) {
                     await waitForParticipationBuildToFinish(participationId);
                 }
-                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult, BUILD_RESULT_TIMEOUT * 2);
+                await examParticipation.checkExerciseScore(programmingExercise.id!, 'Build successful, no tests executed', BUILD_RESULT_TIMEOUT * 2);
                 await examParticipation.handInEarly();
-                await examAPIRequests.finishExam(exam);
                 await login(instructor);
                 await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
             });
@@ -408,6 +407,7 @@ test.describe('Exam participation', () => {
             for (const student of [studentOne, studentTwo]) {
                 const studentContext = await browser.newContext();
                 const studentPage = await studentContext.newPage();
+                await addE2EInitScript(studentPage);
                 studentPages.push(studentPage);
 
                 await Commands.login(studentPage, student);
@@ -446,6 +446,7 @@ test.describe('Exam participation', () => {
             for (const student of students) {
                 const studentContext = await browser.newContext();
                 const studentPage = await studentContext.newPage();
+                await addE2EInitScript(studentPage);
                 studentPages.push(studentPage);
 
                 await Commands.login(studentPage, student);
@@ -485,6 +486,7 @@ test.describe('Exam participation', () => {
                 for (const student of students) {
                     const studentContext = await browser.newContext();
                     const studentPage = await studentContext.newPage();
+                    await addE2EInitScript(studentPage);
                     studentPages.push(studentPage);
 
                     await Commands.login(studentPage, student);

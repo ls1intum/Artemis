@@ -2,7 +2,7 @@
     <input type="file" accept="application/zip" (change)="setFileForExerciseImport($event)" style="margin-right: -10px; padding-right: -10px" />
     <jhi-button
         id="upload-exercise-btn"
-        [disabled]="fileForImport === undefined"
+        [disabled]="fileForImport() === undefined"
         [icon]="faUpload"
         [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
         (onClick)="uploadExercise()"

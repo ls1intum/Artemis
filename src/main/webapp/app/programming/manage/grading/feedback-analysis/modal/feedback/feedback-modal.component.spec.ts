@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,12 +10,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('FeedbackModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeedbackModalComponent>;
     let component: FeedbackModalComponent;
     let activeModal: NgbActiveModal;
 
     const mockLongFeedbackTextService = {
-        find: jest.fn().mockReturnValue({
+        find: vi.fn().mockReturnValue({
             subscribe: (callback: (response: { body: string }) => void) => callback({ body: 'Loaded long feedback' }),
         }),
     };
@@ -41,6 +45,10 @@ describe('FeedbackModalComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should load long feedback text if hasLongFeedbackText is true', () => {
         expect(mockLongFeedbackTextService.find).toHaveBeenCalledWith(1);
         expect(component.longFeedbackText()).toBe('Loaded long feedback');
@@ -53,7 +61,7 @@ describe('FeedbackModalComponent', () => {
     });
 
     it('should call close on activeModal when close is triggered', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const closeSpy = vi.spyOn(activeModal, 'close');
         component.activeModal.close();
         expect(closeSpy).toHaveBeenCalledOnce();
     });

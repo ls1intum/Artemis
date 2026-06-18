@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { Signal, inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -12,7 +12,7 @@ import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-le
  */
 export interface LectureUnsavedChangesComponent {
     shouldDisplayDismissWarning: boolean;
-    isChangeMadeToTitleOrPeriodSection: boolean;
+    isChangeMadeToTitleOrPeriodSection: Signal<boolean>;
     isChangeMadeToTitleSection(): boolean;
     isChangeMadeToPeriodSection(): boolean;
 }
@@ -22,7 +22,7 @@ export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUnsavedChange
         return of(true);
     }
 
-    if (component.isChangeMadeToTitleOrPeriodSection) {
+    if (component.isChangeMadeToTitleOrPeriodSection()) {
         const dialogService = inject(DialogService);
         const translateService = inject(TranslateService);
 

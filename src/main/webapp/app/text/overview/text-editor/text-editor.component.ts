@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -15,7 +15,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -37,7 +37,7 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UpperCasePipe } from '@angular/common';
@@ -63,7 +63,7 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         FormsModule,
         TeamSubmissionSyncComponent,
         TextResultComponent,
-        AdditionalFeedbackComponent,
+        UnifiedFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         FaIconComponent,
@@ -88,6 +88,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
     protected readonly isAthenaAIResult = isAthenaAIResult;
+    protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     participationId = input<number>();
     displayHeader = input<boolean>(true);
@@ -97,31 +98,31 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     inputParticipation = input<StudentParticipation>();
     isExamSummary = input<boolean>(false);
 
-    textExercise: TextExercise;
-    participation: StudentParticipation;
-    result: Result;
-    resultWithComplaint?: Result;
-    submission: TextSubmission;
-    course?: Course;
-    isSaving = false;
+    readonly textExercise = signal<TextExercise>(undefined!);
+    readonly participation = signal<StudentParticipation>(undefined!);
+    readonly result = signal<Result>(undefined!);
+    readonly resultWithComplaint = signal<Result | undefined>(undefined);
+    readonly submission = signal<TextSubmission>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isSaving = signal(false);
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
     submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
-    isAllowedToSubmitAfterDueDate: boolean;
+    readonly isAllowedToSubmitAfterDueDate = signal<boolean>(false);
     // answer is the text that is stored in the user interface
-    answer: string;
+    readonly answer = signal<string>('');
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    examMode = false;
-    isGeneratingFeedback = false;
+    readonly examMode = signal(false);
+    readonly isGeneratingFeedback = signal(false);
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
-    isOwnerOfParticipation: boolean;
-    isReadOnlyWithShowResult = false;
+    readonly isOwnerOfParticipation = signal<boolean>(false);
+    readonly isReadOnlyWithShowResult = signal(false);
     // Icon
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;
@@ -133,7 +134,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly onTextEditorTab = onTextEditorTab;
 
     participationUpdateListener: Subscription;
-    sortedHistoryResults: Result[];
+    readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     showHistory = false;
     submissionId: number | undefined;
@@ -156,23 +157,23 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textService.get(participationId!, this.resultId).subscribe({
                     next: (data: StudentParticipation) => {
                         this.updateParticipation(data, this.submissionId, this.resultId);
-                        this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
+                        this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
-                this.isReadOnlyWithShowResult = !!this.submissionId;
+                this.isReadOnlyWithShowResult.set(!!this.submissionId);
             } else {
                 this.route.params?.subscribe((params) => {
                     const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
                     const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
                     const newParticipationId = Number(params['participationId']);
-                    const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
+                    const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation()?.id;
                     const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
                     this.submissionId = newSubmissionId;
                     this.resultId = newResultId;
-                    this.isReadOnlyWithShowResult = !!newSubmissionId;
+                    this.isReadOnlyWithShowResult.set(!!newSubmissionId);
                     if (participationChanged || submissionOrResultChanged) {
-                        const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
+                        const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation()?.id;
                         if (participationIdToFetch === undefined) {
                             return;
                         }
@@ -183,11 +184,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                             error: (error: HttpErrorResponse) => onError(this.alertService, error),
                         });
                     } else {
-                        this.updateParticipation(this.participation, this.submissionId, this.resultId);
+                        this.updateParticipation(this.participation(), this.submissionId, this.resultId);
                     }
                 });
 
-                this.isReadOnlyWithShowResult = !!this.submissionId;
+                this.isReadOnlyWithShowResult.set(!!this.submissionId);
             }
         }
         this.participationUpdateListener?.unsubscribe();
@@ -196,8 +197,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                // subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject, so every
+                // text-editor instance receives every participation change (including the ones emitted by other
+                // instances when they call addParticipation()). Without this guard, multiple editors rendered
+                // together - e.g. several text exercises in the exam result summary - would all overwrite their
+                // own exercise/submission state with whichever participation was added last, making every text
+                // summary display the last exercise. Only react to changes for our own participation.
+                if (changedParticipation?.id !== this.participation()?.id) {
+                    return;
+                }
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+                const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const lastResult = results?.last();
                 const isNewAthenaResult =
                     !!results &&
@@ -205,14 +215,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     lastResult?.successful !== undefined;
                 if (isNewAthenaResult) {
-                    this.isGeneratingFeedback = false;
+                    this.isGeneratingFeedback.set(false);
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
-                        if (this.isExamSummary() && this.participation?.id !== undefined) {
-                            this.textService.get(this.participation.id, lastResult?.id).subscribe({
+                        if (this.isExamSummary() && this.participation()?.id !== undefined) {
+                            this.textService.get(this.participation().id!, lastResult?.id).subscribe({
                                 next: (data) => this.updateParticipation(data, this.submissionId, lastResult?.id),
                                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
                             });
@@ -237,22 +247,22 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     private setupComponentWithInputValues() {
         if (this.inputExercise() !== undefined) {
-            this.textExercise = this.inputExercise()!;
-            this.examMode = !!this.textExercise.exerciseGroup;
+            this.textExercise.set(this.inputExercise()!);
+            this.examMode.set(!!this.textExercise().exerciseGroup);
         }
         if (this.inputSubmission() !== undefined) {
-            this.submission = this.inputSubmission()!;
+            this.submission.set(this.inputSubmission()!);
         }
         if (this.inputParticipation() !== undefined) {
-            this.participation = this.inputParticipation()!;
+            this.participation.set(this.inputParticipation()!);
         }
 
-        if (this.submission?.text) {
-            this.answer = this.submission.text;
+        if (this.submission()?.text) {
+            this.answer.set(this.submission().text ?? '');
         }
 
-        if (this.participation && this.textExercise) {
-            this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
+        if (this.participation() && this.textExercise()) {
+            this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
         }
     }
 
@@ -264,18 +274,18 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined, resultId: number | undefined = undefined) {
         if (participation) {
-            this.participation = participation;
+            this.participation.set(participation);
         } else {
             return;
         }
-        this.textExercise = this.participation.exercise as TextExercise;
-        this.examMode = !!this.textExercise.exerciseGroup;
-        this.textExercise.studentParticipations = [this.participation];
+        this.textExercise.set(this.participation().exercise as TextExercise);
+        this.examMode.set(!!this.textExercise().exerciseGroup);
+        this.textExercise().studentParticipations = [this.participation()];
         this.checkIfSubmitAlwaysEnabled();
-        this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
-        this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
-        this.course = getCourseFromExercise(this.textExercise);
-        this.sortedHistoryResults =
+        this.isAfterAssessmentDueDate = !!this.textExercise().course && (!this.textExercise().assessmentDueDate || dayjs().isAfter(this.textExercise().assessmentDueDate));
+        this.isAfterPublishDate = !!this.textExercise().exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise().exerciseGroup!.exam!.publishResultsDate);
+        this.course.set(getCourseFromExercise(this.textExercise()));
+        this.sortedHistoryResults.set(
             participation.submissions
                 ?.flatMap((submission) => {
                     return (
@@ -285,108 +295,117 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         }) ?? []
                     );
                 })
-                .sort((a, b) => (a.id ?? 0) - (b.id ?? 0)) || [];
+                .sort((a, b) => (a.id ?? 0) - (b.id ?? 0)) || [],
+        );
 
-        if (this.participation.submissions?.length) {
+        if (this.participation().submissions?.length) {
             if (submissionId) {
-                const foundSubmission = this.participation.submissions.find((sub) => sub.id === submissionId)!;
+                const foundSubmission = this.participation().submissions!.find((sub) => sub.id === submissionId)!;
                 if (foundSubmission) {
-                    this.submission = foundSubmission;
+                    this.submission.set(foundSubmission);
                 } else {
-                    this.submission = this.participation.submissions.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last() as TextSubmission;
+                    this.submission.set(
+                        this.participation()
+                            .submissions!.sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
+                            .last() as TextSubmission,
+                    );
                 }
             } else {
-                this.submission = this.participation.submissions.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last() as TextSubmission;
+                this.submission.set(
+                    this.participation()
+                        .submissions!.sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
+                        .last() as TextSubmission,
+                );
             }
 
-            setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+            setLatestSubmissionResult(this.submission(), getLatestSubmissionResult(this.submission()));
 
             // If resultId is provided, find the specific result; otherwise use latest
-            if (resultId && this.submission?.results) {
-                const specificResult = this.submission.results.find((result) => result.id === resultId);
-                this.result = specificResult || this.submission.latestResult!;
-            } else if (!this.submission?.results) {
-                this.result = this.sortedHistoryResults.last()!;
+            if (resultId && this.submission()?.results) {
+                const specificResult = this.submission().results?.find((result) => result.id === resultId);
+                this.result.set(specificResult || this.submission().latestResult!);
+            } else if (!this.submission()?.results) {
+                this.result.set(this.sortedHistoryResults().last()!);
             } else {
-                this.result = this.submission.latestResult!;
-                this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                this.result.set(this.submission().latestResult!);
+                this.hasAthenaResultForLatestSubmission = this.submission().latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
-            if (this.result && !this.result.submission) {
-                this.result.submission = this.submission;
+            if (this.result() && !this.result().submission) {
+                this.result().submission = this.submission();
             }
 
             // if one of the submissions results has a complaint, we get it
-            this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
+            this.resultWithComplaint.set(getFirstResultWithComplaint(this.submission()));
 
-            if (this.submission?.text) {
-                this.answer = this.submission.text;
+            if (this.submission()?.text) {
+                this.answer.set(this.submission().text ?? '');
             } else {
                 // handles the case when a submission is empty
-                this.answer = '';
+                this.answer.set('');
             }
         }
         // check whether the student looks at the result
-        this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
+        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
     }
 
     ngOnDestroy() {
         // Auto-save unsaved changes when navigating away from the component.
         // This ensures students don't lose their work if they accidentally navigate away
         // without explicitly saving their text submission.
-        if (!this.canDeactivate() && this.textExercise.id) {
+        if (!this.canDeactivate() && this.textExercise().id) {
             let newSubmission = new TextSubmission();
-            if (this.submission) {
-                newSubmission = this.submission;
+            if (this.submission()) {
+                newSubmission = this.submission();
             }
-            newSubmission.text = this.answer;
-            if (this.submission?.id) {
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
-                    this.submission = response.body!;
-                    setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+            newSubmission.text = this.answer();
+            if (this.submission()?.id) {
+                this.textSubmissionService.update(newSubmission, this.textExercise().id!).subscribe((response) => {
+                    this.submission.set(response.body!);
+                    setLatestSubmissionResult(this.submission(), getLatestSubmissionResult(this.submission()));
                     // Reconnect the submission to its participation so that the submission status
                     // is displayed correctly in the result component after auto-save.
-                    if (this.submission.participation) {
-                        this.submission.participation.submissions = [this.submission];
-                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    if (this.submission().participation) {
+                        this.submission().participation!.submissions = [this.submission()];
+                        this.participationWebsocketService.addParticipation(this.submission().participation as StudentParticipation, this.textExercise());
                     }
                 });
             }
         }
 
         this.participationUpdateListener?.unsubscribe();
-        if (this.participation) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.textExercise);
+        if (this.participation()) {
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation().id!, this.textExercise());
         }
     }
 
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
-            this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
-        const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
+            this.textExercise().dueDate && this.participation().initializationDate && dayjs(this.participation().initializationDate).isAfter(this.textExercise().dueDate);
+        const isAlwaysActive = !this.result() && (!this.textExercise().dueDate || isInitializationAfterDueDate);
 
-        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate && !this.participation.testRun && !dayjs().isAfter(this.participation.individualDueDate);
+        this.isAllowedToSubmitAfterDueDate.set(!!isInitializationAfterDueDate && !this.participation().testRun && !dayjs().isAfter(this.participation().individualDueDate));
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
     get isAutomaticResult(): boolean {
-        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+        return this.result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
     /**
      * True, if the due date is after the current date, or there is no due date, or the participation is a practice run
      */
     get isActive(): boolean {
         return (
-            !this.examMode &&
-            (!this.result || this.isAutomaticResult) &&
-            (!!this.participation?.testRun || (this.textExercise && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))))
+            !this.examMode() &&
+            (!this.result() || this.isAutomaticResult) &&
+            (!!this.participation()?.testRun || (this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
         );
     }
 
     get submitButtonTooltip(): string {
-        if (this.isAllowedToSubmitAfterDueDate) {
+        if (this.isAllowedToSubmitAfterDueDate()) {
             return 'entity.action.submitDueDateMissedTooltip';
         }
-        if (this.isActive && !this.textExercise.dueDate) {
+        if (this.isActive && !this.textExercise().dueDate) {
             return 'entity.action.submitNoDueDateTooltip';
         } else if (this.isActive) {
             return 'entity.action.submitTooltip';
@@ -399,22 +418,22 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
+        return this.result() ? getUnreferencedFeedback(this.result().feedbacks) : undefined;
     }
 
     get wordCount(): number {
-        return this.stringCountService.countWords(this.answer);
+        return this.stringCountService.countWords(this.answer());
     }
 
     get characterCount(): number {
-        return this.stringCountService.countCharacters(this.answer);
+        return this.stringCountService.countCharacters(this.answer());
     }
 
     canDeactivate(): boolean {
-        if (!this.submission) {
+        if (!this.submission()) {
             return true;
         }
-        return this.submission.text === this.answer;
+        return this.submission().text === this.answer();
     }
 
     /**
@@ -432,44 +451,44 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     submit() {
-        if (this.isSaving) {
+        if (this.isSaving()) {
             return;
         }
 
-        if (!this.submission) {
+        if (!this.submission()) {
             return;
         }
 
-        this.isSaving = true;
-        this.submission = this.submissionForAnswer(this.answer);
-        const submissionToCreateOrUpdate = this.submission;
+        this.isSaving.set(true);
+        this.submission.set(this.submissionForAnswer(this.answer()));
+        const submissionToCreateOrUpdate = this.submission();
         // id undefined creates a new submission and setting results to undefined prevents foreign key constraints when deleting results from submission
         if (this.hasAthenaResultForLatestSubmission) {
             submissionToCreateOrUpdate.id = undefined;
             submissionToCreateOrUpdate.results = undefined;
         } else {
-            setLatestSubmissionResult(submissionToCreateOrUpdate, getLatestSubmissionResult(this.submission));
+            setLatestSubmissionResult(submissionToCreateOrUpdate, getLatestSubmissionResult(this.submission()));
         }
 
-        this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
+        this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise().id!).subscribe({
             next: (response) => {
-                this.submission = response.body!;
-                if (this.participation.team) {
+                this.submission.set(response.body!);
+                if (this.participation().team) {
                     // Make sure the team is not lost during update
-                    const studentParticipation = this.submission.participation as StudentParticipation;
-                    studentParticipation.team = this.participation.team;
+                    const studentParticipation = this.submission().participation as StudentParticipation;
+                    studentParticipation.team = this.participation().team;
                 }
-                setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-                this.submissionChange.next(this.submission);
+                setLatestSubmissionResult(this.submission(), getLatestSubmissionResult(this.submission()));
+                this.submissionChange.next(this.submission());
                 // reconnect so that the submission status is displayed correctly in the result.component
-                this.submission.participation!.submissions = [this.submission];
-                this.participation = this.submission.participation as StudentParticipation;
-                this.participation.exercise = this.textExercise;
-                this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
-                this.textExercise.studentParticipations = [this.participation];
-                this.result = getLatestSubmissionResult(this.submission)!;
-                this.isSaving = false;
-                if (!this.isAllowedToSubmitAfterDueDate) {
+                this.submission().participation!.submissions = [this.submission()];
+                this.participation.set(this.submission().participation as StudentParticipation);
+                this.participation().exercise = this.textExercise();
+                this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
+                this.textExercise().studentParticipations = [this.participation()];
+                this.result.set(getLatestSubmissionResult(this.submission())!);
+                this.isSaving.set(false);
+                if (!this.isAllowedToSubmitAfterDueDate()) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');
                     this.hasAthenaResultForLatestSubmission = false;
                 } else {
@@ -478,7 +497,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             },
             error: (err: HttpErrorResponse) => {
                 this.alertService.error(err.error.message);
-                this.isSaving = false;
+                this.isSaving.set(false);
             },
         });
     }
@@ -498,15 +517,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private submissionForAnswer(answer: string): TextSubmission {
-        return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
+        return { ...this.submission(), text: answer, language: this.textService.predictLanguage(answer) };
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
-        submission.participation!.exercise = this.textExercise;
+        submission.participation!.exercise = this.textExercise();
         submission.participation!.submissions = [submission];
         // Keep the existing team on the participation
         const studentParticipation = submission.participation as StudentParticipation;
-        studentParticipation.team = this.participation.team;
+        studentParticipation.team = this.participation().team;
         this.updateParticipation(studentParticipation);
     }
 

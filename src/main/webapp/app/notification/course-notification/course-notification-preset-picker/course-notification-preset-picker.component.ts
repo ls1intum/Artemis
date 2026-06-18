@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,16 +30,13 @@ export class CourseNotificationPresetPickerComponent {
     protected readonly faCheck = faCheck;
 
     private recentlySelectedTimeout: NodeJS.Timeout;
-    protected isRecentlySelected: boolean = false;
-    protected selectedPresetLangKey: string;
-
-    constructor() {
-        effect(() => {
-            const identifier = this.selectedCourseSettingPreset()?.identifier ?? 'customUserCourseNotificationSettingPreset';
-
-            this.selectedPresetLangKey = 'artemisApp.courseNotification.preset.' + identifier + '.title';
-        });
-    }
+    // `isRecentlySelected` is flipped back to false inside a setTimeout callback, and the lang key derives
+    // from a signal input; both are read in the template, so they must be reactive under zoneless.
+    protected readonly isRecentlySelected = signal(false);
+    protected readonly selectedPresetLangKey = computed(() => {
+        const identifier = this.selectedCourseSettingPreset()?.identifier ?? 'customUserCourseNotificationSettingPreset';
+        return 'artemisApp.courseNotification.preset.' + identifier + '.title';
+    });
 
     /**
      * Handles preset selection from the dropdown.
@@ -48,13 +45,13 @@ export class CourseNotificationPresetPickerComponent {
      * @param presetTypeId - The type ID of the selected preset
      */
     protected presetSelected(presetTypeId: number) {
-        this.isRecentlySelected = true;
+        this.isRecentlySelected.set(true);
         if (this.recentlySelectedTimeout) {
             clearTimeout(this.recentlySelectedTimeout);
         }
 
         this.recentlySelectedTimeout = setTimeout(() => {
-            this.isRecentlySelected = false;
+            this.isRecentlySelected.set(false);
         }, 5000);
 
         this.onPresetSelected.emit(presetTypeId);

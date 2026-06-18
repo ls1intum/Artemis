@@ -1,11 +1,7 @@
-@if (!isLoading) {
+@if (!isLoading()) {
     <form name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
-        <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="entity.exportRepos.title"></h4>
-            <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
-        </div>
         <div class="modal-body">
-            @if (isRepoExportForMultipleExercises) {
+            @if (isRepoExportForMultipleExercises()) {
                 <div class="table-responsive m-2 p-1">
                     <span style="font-weight: bold" jhiTranslate="artemisApp.instructorDashboard.exportRepos.currentlySelected"
                         >You are about to download all teams'/students' submissions of the following exercises:</span
@@ -21,7 +17,7 @@
                     </table>
                 </div>
             }
-            @if (!singleParticipantMode && !isRepoExportForMultipleExercises) {
+            @if (!singleParticipantMode && !isRepoExportForMultipleExercises()) {
                 <p
                     [jhiTranslate]="'artemisApp.instructorDashboard.exportRepos.questions.' + (programmingExercises[0].teamMode ? 'team' : 'individual')"
                     [translateValues]="{ exerciseTitle: programmingExercises[0].title, courseTitle: programmingExercises[0].course?.title }"
@@ -29,7 +25,7 @@
                     Confirm export
                 </p>
             }
-            @if (!participationIdList && !isRepoExportForMultipleExercises) {
+            @if (!participationIdList && !isRepoExportForMultipleExercises()) {
                 <textarea
                     name="studentIds"
                     class="export-textarea"
@@ -41,7 +37,7 @@
             <!--
         Only show download all checkbox for instructors & admins.
         -->
-            @if (isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises) {
+            @if (isAtLeastInstructor() && !singleParticipantMode && !isRepoExportForMultipleExercises()) {
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
@@ -85,17 +81,17 @@
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
-                        @if (!isRepoExportForMultipleExercises) {
+                        @if (!isRepoExportForMultipleExercises()) {
                             <strong
                                 [jhiTranslate]="
                                     'artemisApp.programmingExercise.export.addToProject.title.' +
-                                    (!isRepoExportForMultipleExercises && programmingExercises[0].teamMode ? 'team' : 'student')
+                                    (!isRepoExportForMultipleExercises() && programmingExercises[0].teamMode ? 'team' : 'student')
                                 "
                             >
                                 Add {{ programmingExercises[0].teamMode ? 'team' : 'student' }} name to project
                             </strong>
                         }
-                        @if (isRepoExportForMultipleExercises) {
+                        @if (isRepoExportForMultipleExercises()) {
                             <strong [jhiTranslate]="'artemisApp.programmingExercise.export.addToProject.title.teamOrStudent'"> Add team/student name to project </strong>
                         }
                         <jhi-help-icon text="artemisApp.programmingExercise.export.addToProject.tooltip" />
@@ -109,7 +105,7 @@
                     <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip" />
                 </label>
             </div>
-            @if (isAtLeastInstructor) {
+            @if (isAtLeastInstructor()) {
                 <div class="checkbox">
                     <label class="control-label">
                         <input
@@ -117,7 +113,7 @@
                             type="checkbox"
                             name="anonymizeRepository"
                             [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
-                            [disabled]="!isAtLeastInstructor"
+                            [disabled]="!isAtLeastInstructor()"
                         />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip" />

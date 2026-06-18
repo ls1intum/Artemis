@@ -69,10 +69,10 @@ pnpm run coverage:pr -- --verbose
 1. **Detect changed files**: Uses `git diff` to find files changed compared to the base branch
 2. **Identify affected modules**: Extracts module names from file paths (e.g., `core`, `exam`, `programming`)
 3. **Run module tests**:
-   - Client: Runs `pnpm run prebuild && pnpm exec ng test --coverage --test-path-pattern=...` for affected modules
+   - Client: Runs `pnpm run prebuild && pnpm exec vitest run --coverage ...` for affected modules
    - Server: Runs `./gradlew test -DincludeModules=<modules> jacocoTestReport`
 4. **Parse coverage reports**:
-   - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
+   - Client: Reads `build/test-results/vitest/coverage/coverage-summary.json` (Vitest output)
    - Server: Reads JaCoCo XML reports from `build/reports/jacoco/<module>/jacocoTestReport.xml`
 5. **Generate report**: Creates a Markdown table with coverage percentages
 

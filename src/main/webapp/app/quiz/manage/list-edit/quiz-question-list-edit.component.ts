@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -33,7 +34,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
     ],
 })
 export class QuizQuestionListEditComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
@@ -67,7 +68,7 @@ export class QuizQuestionListEditComponent {
     /** Per-question reasoning from the last bulk refinement. */
     bulkRefinementReasonings = signal(new Map<QuizQuestion, string>());
 
-    showExistingQuestions = false;
+    readonly showExistingQuestions = signal(false);
     fileMap = new Map<string, { path?: string; file: File }>();
 
     /**
@@ -180,7 +181,7 @@ export class QuizQuestionListEditComponent {
      * @param quizQuestions the list of newly added QuizQuestions
      */
     handleExistingQuestionsAdded(quizQuestions: Array<QuizQuestion>) {
-        this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestions.update((show) => !show);
         for (const quizQuestion of quizQuestions) {
             this.addQuestion(quizQuestion);
         }
@@ -256,14 +257,27 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
+        const ref = this.dialogService.open(ApollonDiagramImportDialogComponent, {
+            width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: { courseId: this.courseId() },
+        });
+        if (!ref) {
+            return;
+        }
 
-        const courseIdValue = this.courseId();
-
-        const instance = modalRef.componentInstance;
-        instance.courseId = signal(courseIdValue);
-
-        const question = await modalRef.result;
+        const question = await firstValueFrom(ref.onClose, { defaultValue: undefined });
         if (question) {
             this.addQuestion(question);
         }
@@ -296,7 +310,7 @@ export class QuizQuestionListEditComponent {
      * Toggles existing questions view
      */
     showHideExistingQuestions() {
-        this.showExistingQuestions = !this.showExistingQuestions;
+        this.showExistingQuestions.update((show) => !show);
     }
 
     /**

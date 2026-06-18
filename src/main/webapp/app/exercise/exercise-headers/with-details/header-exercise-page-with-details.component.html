@@ -9,7 +9,7 @@
                     &nbsp;
                     <ng-content select="[pagetitle]" />
                 </div>
-                @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories?.length) {
+                @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories()?.length) {
                     <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
                 }
             </div>
@@ -19,8 +19,8 @@
                         <span [style.margin-right]="exercise().maxPoints ? '30px' : null">
                             <span class="me-2">
                                 {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                                @if (achievedPoints !== undefined) {
-                                    {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                                @if (achievedPoints() !== undefined) {
+                                    {{ achievedPoints() + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
                                 }
                                 {{ exercise().maxPoints }}
                                 @if (exercise().bonusPoints) {
@@ -48,7 +48,7 @@
                     <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
                     <div>
                         {{
-                            numberOfSubmissions +
+                            numberOfSubmissions() +
                                 '/' +
                                 submissionPolicy()!.submissionLimit +
                                 (submissionPolicy()!.exceedingPenalty
@@ -65,19 +65,19 @@
             }
         </div>
         <div class="right-col">
-            @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'releaseDate' && nextRelevantDateLabel !== 'startDate')) {
+            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
             } @else {
-                @if (nextRelevantDate && (!exam() || !isTestRun())) {
+                @if (nextRelevantDate() && (!exam() || !isTestRun())) {
                     <div class="fw-500">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
                         <span
-                            [ngClass]="nextRelevantDateStatusBadge"
+                            [ngClass]="nextRelevantDateStatusBadge()"
                             class="badge"
                             [ngbTooltip]="
-                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate: { date: nextRelevantDate | artemisDate }
+                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
                             "
                         >
-                            {{ nextRelevantDate | artemisTimeAgo }}
+                            {{ nextRelevantDate() | artemisTimeAgo }}
                         </span>
                     </div>
                 }
@@ -105,31 +105,31 @@
                     </div>
                 }
             }
-            @if (dueDate) {
+            @if (dueDate()) {
                 <div class="fw-500">
                     {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
                     <span
-                        [ngClass]="dueDateStatusBadge"
+                        [ngClass]="dueDateStatusBadge()"
                         class="badge"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
                     >
-                        {{ dueDate | artemisTimeAgo }}
+                        {{ dueDate() | artemisTimeAgo }}
                     </span>
                 </div>
             }
-            @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'assessmentDue' && nextRelevantDateLabel !== 'complaintDue')) {
+            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
             } @else {
-                @if (nextRelevantDate && (!exam() || !isTestRun())) {
+                @if (nextRelevantDate() && (!exam() || !isTestRun())) {
                     <div class="fw-500">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
                         <span
-                            [ngClass]="nextRelevantDateStatusBadge"
+                            [ngClass]="nextRelevantDateStatusBadge()"
                             class="badge"
                             [ngbTooltip]="
-                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate: { date: nextRelevantDate | artemisDate }
+                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
                             "
                         >
-                            {{ nextRelevantDate | artemisTimeAgo }}
+                            {{ nextRelevantDate() | artemisTimeAgo }}
                         </span>
                     </div>
                 }
@@ -158,7 +158,7 @@
                     </div>
                 }
             }
-            @if (!nextRelevantDate && canComplainLaterOn) {
+            @if (!nextRelevantDate() && canComplainLaterOn()) {
                 <div class="fw-500">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -53,8 +53,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private modalService = inject(NgbModal);
-    private changeDetector = inject(ChangeDetectorRef);
+    private changeDetectorRef = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -82,8 +81,8 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     refineRequested = output();
     collapseChanged = output<boolean>();
 
-    questionEditorText = '';
-    isQuestionCollapsed: boolean;
+    readonly questionEditorText = signal('');
+    readonly isQuestionCollapsed = signal<boolean>(undefined!);
     reEvaluationInProgress = input<boolean>(false);
     backupQuestion: MultipleChoiceQuestion;
 
@@ -94,8 +93,8 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         }
         return markdownEditor.inPreviewMode();
     });
-    showMultipleChoiceQuestionPreview = true;
-    showMultipleChoiceQuestionVisual = true;
+    readonly showMultipleChoiceQuestionPreview = signal(true);
+    readonly showMultipleChoiceQuestionVisual = signal(true);
 
     correctAction = new CorrectMultipleChoiceAnswerAction();
     wrongAction = new WrongMultipleChoiceAnswerAction();
@@ -126,7 +125,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      * Init the question editor text by parsing the markdown.
      */
     ngOnInit(): void {
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -152,14 +151,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     }
 
     /**
-     * open the modal for the help dialog
-     * @param content
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
-    /**
      * Detect of text changes in the markdown editor
      * 1. Parse the text in the editor to get the newest values
      * 2. Notify the parent component to check the validity of the text
@@ -167,7 +158,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     changesInMarkdown(): void {
         this.prepareForSave();
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -177,7 +167,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     changesInVisualMode(): void {
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -268,27 +257,33 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      *        and the check for the question validity is triggered
      */
     private resetMultipleChoicePreview() {
-        this.showMultipleChoiceQuestionPreview = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionPreview = true;
-        this.changeDetector.detectChanges();
+        // Genuinely-unavoidable synchronous detectChanges: the preview child must be destroyed and recreated
+        // within ONE call so it re-initializes from the in-place-mutated question, and prepareForSave()/the
+        // save flow may run immediately afterwards and require the child to exist again. Signal writes coalesce
+        // within a change-detection pass and afterNextRender would leave a one-render window in which
+        // viewChild.required throws / the save serializes an empty question (caught by E2E).
+        this.showMultipleChoiceQuestionPreview.set(false);
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionPreview.set(true);
+        this.changeDetectorRef.detectChanges();
     }
 
     private resetMultipleChoiceVisual() {
-        this.showMultipleChoiceQuestionVisual = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionVisual = true;
-        this.changeDetector.detectChanges();
+        // Synchronous destroy/recreate for the same reason as resetMultipleChoicePreview (see comment above).
+        this.showMultipleChoiceQuestionVisual.set(false);
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionVisual.set(true);
+        this.changeDetectorRef.detectChanges();
     }
 
     toggleCollapse(): void {
-        this.isQuestionCollapsed = !this.isQuestionCollapsed;
-        this.collapseChanged.emit(this.isQuestionCollapsed);
+        this.isQuestionCollapsed.update((collapsed) => !collapsed);
+        this.collapseChanged.emit(this.isQuestionCollapsed());
     }
 
     refineAndExpand(): void {
-        if (this.isQuestionCollapsed) {
-            this.isQuestionCollapsed = false;
+        if (this.isQuestionCollapsed()) {
+            this.isQuestionCollapsed.set(false);
             this.collapseChanged.emit(false);
         }
         this.refineRequested.emit();
@@ -299,10 +294,10 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      * Called after an external update (e.g. AI refinement) mutates the question object in-place.
      */
     reloadFromQuestion(): void {
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
         const editor = this.markdownEditor();
         if (editor) {
-            editor.setMarkdown(this.questionEditorText);
+            editor.setMarkdown(this.questionEditorText());
         }
         this.resetMultipleChoicePreview();
         this.resetMultipleChoiceVisual();
@@ -349,6 +344,5 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().singleChoice = this.backupQuestion.singleChoice;
         this.question().invalid = this.backupQuestion.invalid;
         this.question().answerOptions = cloneDeep(this.backupQuestion.answerOptions);
-        this.changeDetector.detectChanges();
     }
 }

@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, inject, input, model } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, inject, input, model, signal } from '@angular/core';
+import { DialogModule } from 'primeng/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -19,14 +19,15 @@ import { NgClass } from '@angular/common';
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, NgClass],
+    imports: [TranslateDirective, FaIconComponent, NgClass, DialogModule],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
-    private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
 
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
+
+    readonly isVisible = signal(false);
 
     score = model<number>(); // Score of the student that has been achieved
     questionIndex = input<number>(); // Question Index of the question
@@ -51,7 +52,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
     checkForCorrectAnswers = new Array<AnswerOption>();
     checkForWrongAnswers = new Array<AnswerOption>();
-    isSingleChoice: boolean;
+    readonly isSingleChoice = signal<boolean>(undefined!);
 
     /* Drag and Drop Counting Variables*/
     differenceDragAndDrop: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
@@ -65,12 +66,12 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     /* Plural Variables*/
     questionPoint: string;
     scorePoint: string;
-    wrongOption: string;
-    rightOption: string;
-    rightMap: string;
-    wrongMap: string;
-    rightGap: string;
-    wrongGap: string;
+    readonly wrongOption = signal<string>(undefined!);
+    readonly rightOption = signal<string>(undefined!);
+    readonly rightMap = signal<string>(undefined!);
+    readonly wrongMap = signal<string>(undefined!);
+    readonly rightGap = signal<string>(undefined!);
+    readonly wrongGap = signal<string>(undefined!);
 
     // Icons
     farQuestionCircle = faQuestionCircle;
@@ -96,8 +97,8 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     /**
      * opens the pop-up for the explanation of the points
      */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+    open() {
+        this.isVisible.set(true);
     }
 
     /**
@@ -146,7 +147,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.submittedAnswerCorrectValues();
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const mcmQuestion = this.question() as MultipleChoiceQuestion;
-        this.isSingleChoice = mcmQuestion.singleChoice ?? false;
+        this.isSingleChoice.set(mcmQuestion.singleChoice ?? false);
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions!.length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.checkForCorrectAnswers.length;
         this.multipleChoiceWrongAnswerChosen = this.checkForWrongAnswers.length;
@@ -157,15 +158,15 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
 
         if (this.inTotalSelectedRightOptions === 1) {
-            this.rightOption = this.translateService.instant(translationBasePath + 'option');
+            this.rightOption.set(this.translateService.instant(translationBasePath + 'option'));
         } else {
-            this.rightOption = this.translateService.instant(translationBasePath + 'options');
+            this.rightOption.set(this.translateService.instant(translationBasePath + 'options'));
         }
 
         if (this.inTotalSelectedWrongOptions === 1) {
-            this.wrongOption = this.translateService.instant(translationBasePath + 'option');
+            this.wrongOption.set(this.translateService.instant(translationBasePath + 'option'));
         } else {
-            this.wrongOption = this.translateService.instant(translationBasePath + 'options');
+            this.wrongOption.set(this.translateService.instant(translationBasePath + 'options'));
         }
     }
 
@@ -177,15 +178,15 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems()! - this.incorrectlyMappedDragAndDropItems()!;
 
         if (this.correctlyMappedDragAndDropItems() === 1) {
-            this.rightMap = this.translateService.instant(translationBasePath + 'item');
+            this.rightMap.set(this.translateService.instant(translationBasePath + 'item'));
         } else {
-            this.rightMap = this.translateService.instant(translationBasePath + 'items');
+            this.rightMap.set(this.translateService.instant(translationBasePath + 'items'));
         }
 
         if (this.incorrectlyMappedDragAndDropItems() === 1) {
-            this.wrongMap = this.translateService.instant(translationBasePath + 'item');
+            this.wrongMap.set(this.translateService.instant(translationBasePath + 'item'));
         } else {
-            this.wrongMap = this.translateService.instant(translationBasePath + 'items');
+            this.wrongMap.set(this.translateService.instant(translationBasePath + 'items'));
         }
     }
 
@@ -201,15 +202,15 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
 
         if (this.shortAnswerCorrectAnswers === 1) {
-            this.rightGap = this.translateService.instant(translationBasePath + 'textgap');
+            this.rightGap.set(this.translateService.instant(translationBasePath + 'textgap'));
         } else {
-            this.rightGap = this.translateService.instant(translationBasePath + 'textgaps');
+            this.rightGap.set(this.translateService.instant(translationBasePath + 'textgaps'));
         }
 
         if (this.shortAnswerWrongAnswers === 1) {
-            this.wrongGap = this.translateService.instant(translationBasePath + 'textgap');
+            this.wrongGap.set(this.translateService.instant(translationBasePath + 'textgap'));
         } else {
-            this.wrongGap = this.translateService.instant(translationBasePath + 'textgaps');
+            this.wrongGap.set(this.translateService.instant(translationBasePath + 'textgaps'));
         }
     }
 

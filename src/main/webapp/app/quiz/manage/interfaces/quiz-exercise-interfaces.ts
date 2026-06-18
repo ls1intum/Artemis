@@ -9,13 +9,11 @@ export class Option {
 }
 
 export class Duration {
-    days?: number;
     hours?: number;
     minutes?: number;
     seconds?: number;
 
-    constructor(minutes: number, seconds: number, days = 0, hours = 0) {
-        this.days = days;
+    constructor(minutes: number, seconds: number, hours = 0) {
         this.hours = hours;
         this.minutes = minutes;
         this.seconds = seconds;

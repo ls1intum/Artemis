@@ -127,7 +127,7 @@
                         </div>
                         <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                             <div class="student-name">{{ student.name }} ({{ student.login }})</div>
-                            <button class="jest-student-remove-link student-remove-link ms-4" (click)="onRemoveStudent(student)">
+                            <button class="student-remove-link ms-4" (click)="onRemoveStudent(student)">
                                 <fa-icon [icon]="faTrashAlt" />
                             </button>
                         </div>
@@ -179,7 +179,7 @@
         <button type="button" class="btn btn-secondary cancel" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">
+        <button type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed" class="btn btn-primary">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

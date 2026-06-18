@@ -60,8 +60,8 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     readonly scrollableContent = viewChild.required<ElementRef>('scrollableContent');
 
-    course: Course;
-    onlineCourseConfiguration: OnlineCourseConfiguration;
+    readonly course = signal<Course>(undefined!);
+    readonly onlineCourseConfiguration = signal<OnlineCourseConfiguration>(undefined!);
     onlineCourseConfigurationForm: FormGroup;
     readonly ltiConfiguredPlatforms = signal<LtiPlatformConfiguration[]>([]);
 
@@ -78,16 +78,17 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                this.course = course;
-                this.onlineCourseConfiguration = course.onlineCourseConfiguration;
+                this.course.set(course);
+                this.onlineCourseConfiguration.set(course.onlineCourseConfiguration);
             }
         });
 
+        const onlineCourseConfiguration = this.onlineCourseConfiguration();
         this.onlineCourseConfigurationForm = new FormGroup({
-            id: new FormControl(this.onlineCourseConfiguration.id),
-            userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
-            ltiPlatformConfiguration: new FormControl(this.onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
+            id: new FormControl(onlineCourseConfiguration.id),
+            userPrefix: new FormControl(onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            requireExistingUser: new FormControl(onlineCourseConfiguration.requireExistingUser),
+            ltiPlatformConfiguration: new FormControl(onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
         });
 
         this.loadInitialPlatforms();
@@ -127,7 +128,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         this.isSaving.set(true);
         const onlineCourseConfiguration = this.onlineCourseConfigurationForm.getRawValue();
         this.courseService
-            .updateOnlineCourseConfiguration(this.course.id!, onlineCourseConfiguration)
+            .updateOnlineCourseConfiguration(this.course().id!, onlineCourseConfiguration)
             .pipe(
                 finalize(() => {
                     this.isSaving.set(false);
@@ -161,11 +162,11 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['course-management', this.course.id!.toString(), 'lti-configuration']);
+        this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
     }
 
     setPlatform(platform: LtiPlatformConfiguration) {
-        this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
+        this.onlineCourseConfiguration().ltiPlatformConfiguration = platform;
         this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.setValue(platform);
     }
 

@@ -57,16 +57,16 @@ describe('Plagiarism Run Details', () => {
 
         expect(comp.updateChartDataSet).toHaveBeenCalledOnce();
         for (let i = 0; i < 10; i++) {
-            expect(comp.ngxData[i].value).toBe(plagiarismResult.similarityDistribution[i]);
+            expect(comp.chartEntries()[i].value).toBe(plagiarismResult.similarityDistribution[i]);
         }
     });
 
     it('updates the chart data correctly', () => {
-        expect(comp.ngxData).toHaveLength(0);
+        expect(comp.chartEntries()).toHaveLength(0);
 
         comp.updateChartDataSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-        expect(comp.ngxData).toHaveLength(10);
+        expect(comp.chartEntries()).toHaveLength(10);
     });
 
     it('sets BucketDTOs', () => {
@@ -84,7 +84,8 @@ describe('Plagiarism Run Details', () => {
         const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
         const maximumBorder = minimumBorder + 10;
 
-        const event = { name: '[' + minimumBorder + '%-' + maximumBorder + '%)' };
+        comp.updateChartDataSet(plagiarismResult.similarityDistribution);
+        const event = { element: { datasetIndex: 0, index: minimumBorder / 10 } };
 
         comp.onSelect(event);
 
@@ -93,8 +94,17 @@ describe('Plagiarism Run Details', () => {
         vi.restoreAllMocks();
     });
 
+    it('does not emit a range if the click did not hit a bar', () => {
+        const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
+
+        comp.updateChartDataSet(plagiarismResult.similarityDistribution);
+        comp.onSelect({});
+
+        expect(similaritySelectedStub).not.toHaveBeenCalled();
+    });
+
     it.each([1, 2, 3])('return correct bucketDTO', (label: number) => {
-        comp.ngxChartLabels = ['1', '2', '3'];
+        comp.chartLabels = ['1', '2', '3'];
         comp.bucketDTOs = [
             { confirmed: 1, denied: 1, open: 1 },
             { confirmed: 2, denied: 2, open: 2 },

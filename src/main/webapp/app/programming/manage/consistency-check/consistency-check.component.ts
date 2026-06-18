@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,47 +10,60 @@ import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
+interface ConsistencyCheckData {
+    exercisesToCheck: ProgrammingExercise[];
+}
+
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
     imports: [TranslateDirective, FaIconComponent, RouterLink],
 })
 export class ConsistencyCheckComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private alertService = inject(AlertService);
 
-    @Input() exercisesToCheck: ProgrammingExercise[];
+    private readonly data = this.dialogConfig.data as ConsistencyCheckData | undefined;
 
-    inconsistencies: ConsistencyCheckError[] = [];
-    isLoading = true;
+    readonly exercisesToCheck = signal<ProgrammingExercise[]>(this.data?.exercisesToCheck ?? []);
+
+    readonly inconsistencies = signal<ConsistencyCheckError[]>([]);
+    readonly isLoading = signal(true);
 
     // Icons
     faTimes = faTimes;
     faCheck = faCheck;
 
     ngOnInit(): void {
-        this.isLoading = true;
-        let exercisesRemaining = this.exercisesToCheck.length;
-        this.exercisesToCheck.forEach((exercise) => {
+        this.isLoading.set(true);
+        const exercisesToCheck = this.exercisesToCheck();
+        if (exercisesToCheck.length === 0) {
+            this.isLoading.set(false);
+            return;
+        }
+        let exercisesRemaining = exercisesToCheck.length;
+        exercisesToCheck.forEach((exercise) => {
             const course = getCourseId(exercise);
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
                 next: (inconsistencies) => {
-                    this.inconsistencies = this.inconsistencies.concat(inconsistencies);
-                    this.inconsistencies.map((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    const updatedInconsistencies = this.inconsistencies().concat(inconsistencies);
+                    updatedInconsistencies.forEach((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    this.inconsistencies.set(updatedInconsistencies);
                     if (--exercisesRemaining === 0) {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }
                 },
                 error: (err) => {
                     this.alertService.error(err);
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         });
     }
 
     closeModal() {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 }

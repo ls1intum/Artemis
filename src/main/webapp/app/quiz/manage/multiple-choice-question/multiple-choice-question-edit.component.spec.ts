@@ -18,8 +18,6 @@ import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 
 // Mock monaco-editor module
@@ -52,12 +50,11 @@ vi.mock('monaco-editor', () => ({
     },
 }));
 
-describe('MultipleChoiceQuestionEditComponent', () => {
+describe('MultipleChoiceQuestionEditComponent', async () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
-    let modalService: NgbModal;
 
     const question: MultipleChoiceQuestion = {
         exportQuiz: false,
@@ -138,7 +135,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: MonacoEditorService, useValue: mockMonacoEditorService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -149,7 +145,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.detectChanges();
@@ -159,10 +154,10 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize with question markdown text', () => {
+    it('should initialize with question markdown text', async () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.questionEditorText).toEqual(
+        expect(component.questionEditorText()).toEqual(
             'some-text\n' +
                 '\t[hint] some-hint\n' +
                 '\t[exp] some-explanation\n' +
@@ -174,7 +169,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         );
     });
 
-    it('should store scoring type when changed', () => {
+    it('should store scoring type when changed', async () => {
         const newQuestion = { ...question };
         newQuestion.scoringType = undefined;
         newQuestion.singleChoice = true;
@@ -186,7 +181,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.question().scoringType).toBe(ScoringType.ALL_OR_NOTHING);
     });
 
-    it('should parse answer options but not question titles', () => {
+    it('should parse answer options but not question titles', async () => {
         const originalConsoleWarn = console.warn;
         console.warn = () => {};
 
@@ -226,10 +221,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
+        await fixture.whenStable();
+        expect(component.showMultipleChoiceQuestionPreview()).toBe(true);
     });
 
-    it('should parse answer options with question titles', () => {
+    it('should parse answer options with question titles', async () => {
         const originalConsoleWarn = console.warn;
         console.warn = () => {};
 
@@ -267,10 +263,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
+        await fixture.whenStable();
+        expect(component.showMultipleChoiceQuestionPreview()).toBe(true);
     });
 
-    it('should parse question titles', () => {
+    it('should parse question titles', async () => {
         component.domainActionsFound([{ text: 'text1', action: undefined }]);
 
         const expected: MultipleChoiceQuestion = {
@@ -286,17 +283,19 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         };
 
         expect(component.question()).toEqual(expected);
-        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
+        await fixture.whenStable();
+        expect(component.showMultipleChoiceQuestionPreview()).toBe(true);
     });
 
-    it('should find no domain actions', () => {
+    it('should find no domain actions', async () => {
         component.domainActionsFound([]);
 
         expectCleanupQuestion();
-        expect(component.showMultipleChoiceQuestionPreview).toBe(true);
+        await fixture.whenStable();
+        expect(component.showMultipleChoiceQuestionPreview()).toBe(true);
     });
 
-    it('should detect changes in markdown', () => {
+    it('should detect changes in markdown', async () => {
         const spy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.changesInMarkdown();
@@ -313,21 +312,21 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.question().hasCorrectOption).toBeUndefined();
     }
 
-    it('should trigger delete button', () => {
+    it('should trigger delete button', async () => {
         const spy = vi.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.question-action-btn--delete`));
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
     });
 
-    it('should parse markdown when preparing for save in edit mode', () => {
+    it('should parse markdown when preparing for save in edit mode', async () => {
         component.markdownEditor()!.inVisualMode.set(false);
         const parseMarkdownSpy = vi.spyOn(component.markdownEditor()!, 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update markdown from the visual component when preparing for save in visual mode', () => {
+    it('should update markdown from the visual component when preparing for save in visual mode', async () => {
         component.markdownEditor()!.inVisualMode.set(true);
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
         const mockEditor = {
@@ -345,26 +344,15 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.markdownEditor()!.currentMarkdown()).toBe('parsed-question');
     });
 
-    it('should open modal', () => {
-        const content = {};
-        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
-
-        component.open(content);
-
-        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(content, { size: 'lg' });
-    });
-
-    it('should detect changes in visual mode', () => {
+    it('should detect changes in visual mode', async () => {
         const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
-        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.changesInVisualMode();
 
         expect(emitSpy).toHaveBeenCalledOnce();
-        expect(detectChangesSpy).toHaveBeenCalledOnce();
     });
 
-    it('should move up', () => {
+    it('should move up', async () => {
         const emitSpy = vi.spyOn(component.questionMoveUp, 'emit');
 
         component.moveUp();
@@ -372,7 +360,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should move down', () => {
+    it('should move down', async () => {
         const emitSpy = vi.spyOn(component.questionMoveDown, 'emit');
 
         component.moveDown();
@@ -380,7 +368,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should reset question title', () => {
+    it('should reset question title', async () => {
         component.backupQuestion = { ...question, title: 'backup-title' };
         component.question().title = 'current-title';
 
@@ -389,17 +377,15 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.question().title).toBe('backup-title');
     });
 
-    it('should reset question', () => {
+    it('should reset question', async () => {
         const backup = { ...question, title: 'backup-title', text: 'backup-text' };
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';
-        const detectChangesSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
 
         component.resetQuestion();
 
         expect(component.question().title).toBe('backup-title');
         expect(component.question().text).toBe('backup-text');
-        expect(detectChangesSpy).toHaveBeenCalledOnce();
     });
 });

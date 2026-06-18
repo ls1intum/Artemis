@@ -13,9 +13,9 @@
                             fontSizeInRem="0.8"
                             imageId="user-profile-picture"
                             defaultPictureId="user-default-profile-picture"
-                            [authorId]="otherUser?.id"
-                            [authorName]="otherUser?.name"
-                            [imageUrl]="addPublicFilePrefix(otherUser?.imageUrl)"
+                            [authorId]="otherUser()?.id"
+                            [authorName]="otherUser()?.name"
+                            [imageUrl]="addPublicFilePrefix(otherUser()?.imageUrl)"
                         />
                     }
                     {{ conversationService.getConversationName(activeConversation(), true) }}
@@ -46,7 +46,7 @@
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
                     ></a>
                 </li>
-                @if (!isOneToOneChat) {
+                @if (!isOneToOneChat()) {
                     <li class="nav-item members-tab">
                         <a
                             class="nav-link"
@@ -74,12 +74,12 @@
                     <jhi-conversation-members
                         [course]="course()!"
                         [activeConversationInput]="activeConversation()!"
-                        (changesPerformed)="changesWerePerformed = true"
+                        (changesPerformed)="changesWerePerformed.set(true)"
                         (userNameClicked)="onUserNameClicked($event)"
                     />
                 }
                 @case (Tabs.INFO) {
-                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed.set(true)" />
                 }
                 @case (Tabs.SETTINGS) {
                     <jhi-conversation-settings

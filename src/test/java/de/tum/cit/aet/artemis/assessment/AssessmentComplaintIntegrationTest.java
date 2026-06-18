@@ -52,12 +52,12 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
 
@@ -113,6 +113,26 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
+    }
+
+    /**
+     * Deleting an exercise that carries a resolved complaint (a Complaint with an answered ComplaintResponse) must not
+     * fail the cascade. Regression test for a Hibernate TransientPropertyValueException
+     * ("Persistent instance of Complaint references an unsaved transient instance of ComplaintResponse").
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteModelingExerciseWithResolvedComplaint_shouldNotFail() throws Exception {
+        complaint.setAccepted(true);
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setComplaint(complaint);
+        complaintResponse.setResponseText("resolved");
+        complaintResponse.setSubmittedTime(ZonedDateTime.now());
+        complaintResponse.setReviewer(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        complaintResponseTestRepository.save(complaintResponse);
+
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
     }
 
     @Test

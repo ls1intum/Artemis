@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -77,14 +79,17 @@ public class ProcessingStateCallbackService {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
+        this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -218,12 +223,14 @@ public class ProcessingStateCallbackService {
      * Validates the job token to reject stale callbacks from old jobs.
      * After completion, dispatches the next pending job to fill the freed slot.
      *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token from the callback
-     * @param success       whether processing succeeded
-     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param lectureUnitId      the ID of the lecture unit
+     * @param jobToken           the job token from the callback
+     * @param success            whether processing succeeded
+     * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based: index 0 = slide 1);
+     *                               {@code null} if not applicable or unavailable
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -249,6 +256,7 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
+            saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -618,6 +626,29 @@ public class ProcessingStateCallbackService {
         }
 
         return activeStates.size();
+    }
+
+    // -------------------- Display Page Number Mapping --------------------
+
+    /**
+     * Saves the display page numbers received from PyRIS to the attachment.
+     * The list maps slide numbers to the displayed page numbers detected in the PDF.
+     * A {@code null} payload is treated as "no update" so retries or legacy callbacks
+     * cannot erase an already persisted mapping.
+     */
+    private void saveDisplayPageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> displayPageNumbers) {
+        if (displayPageNumbers == null) {
+            return;
+        }
+        if (!(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
+            return;
+        }
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        if (attachment == null) {
+            return;
+        }
+        attachment.setDisplayPageNumbers(displayPageNumbers);
+        attachmentRepository.save(attachment);
     }
 
     /**

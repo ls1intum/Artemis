@@ -45,24 +45,24 @@ export class SettingsComponent implements OnInit {
     /** List of available languages for the language selector */
     readonly languages = LANGUAGES;
     /** Whether self-registration is enabled (affects UI display) */
-    readonly isRegistrationEnabled: boolean;
+    readonly isRegistrationEnabled = signal(false);
     /** Whether the current user is an internal user (can edit their name and email) */
     readonly isInternalUser = signal(false);
     /** Whether the SAML2 profile is active (names/email are synced from IdP and cannot be changed) */
-    readonly isSaml2Active: boolean;
+    readonly isSaml2Active = signal(false);
     /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
     readonly allowedEmailPattern?: string;
     /** Human-readable description of allowed email pattern for display in UI */
-    readonly allowedEmailPatternReadable?: string;
+    readonly allowedEmailPatternReadable = signal<string | undefined>(undefined);
 
     readonly settingsForm: FormGroup<SettingsForm>;
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-        this.isSaml2Active = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2);
+        this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
+        this.isSaml2Active.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2));
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
-        this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+        this.allowedEmailPatternReadable.set(profileInfo.allowedEmailPatternReadable);
 
         this.settingsForm = new FormGroup<SettingsForm>({
             firstName: new FormControl<string>('', {
@@ -109,7 +109,7 @@ export class SettingsComponent implements OnInit {
      * Disabled controls are excluded from validation, preventing spurious errors.
      */
     private updateNameAndEmailControlState(isInternal: boolean): void {
-        const shouldDisable = !isInternal || this.isSaml2Active;
+        const shouldDisable = !isInternal || this.isSaml2Active();
         const action = shouldDisable ? 'disable' : 'enable';
         this.settingsForm.controls.firstName[action]();
         this.settingsForm.controls.lastName[action]();
@@ -137,7 +137,7 @@ export class SettingsComponent implements OnInit {
         const langKey = this.settingsForm.controls.langKey.value;
 
         // When SAML2 is active, name and email are managed by the IdP — only langKey can be changed
-        if (!this.isSaml2Active) {
+        if (!this.isSaml2Active()) {
             userToUpdate.firstName = firstName || undefined;
             userToUpdate.lastName = lastName || undefined;
             userToUpdate.email = email || undefined;

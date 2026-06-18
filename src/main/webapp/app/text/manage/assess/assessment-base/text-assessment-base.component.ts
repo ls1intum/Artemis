@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -27,11 +27,42 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
      */
 
-    exercise?: TextExercise;
+    // These fields are written in async callbacks (HTTP subscribe) by both subclasses and read by their templates.
+    // Under zoneless change detection plain field writes schedule no render, so they are backed by signals while
+    // keeping the plain property API for the subclasses, the State machinery, and the specs.
+    private readonly exerciseSignal = signal<TextExercise | undefined>(undefined);
+    get exercise(): TextExercise | undefined {
+        return this.exerciseSignal();
+    }
+    set exercise(value: TextExercise | undefined) {
+        this.exerciseSignal.set(value);
+    }
+
     protected userId?: number;
-    textBlockRefs: TextBlockRef[];
-    unusedTextBlockRefs: TextBlockRef[];
-    submission?: TextSubmission;
+
+    private readonly textBlockRefsSignal = signal<TextBlockRef[]>([]);
+    get textBlockRefs(): TextBlockRef[] {
+        return this.textBlockRefsSignal();
+    }
+    set textBlockRefs(value: TextBlockRef[]) {
+        this.textBlockRefsSignal.set(value);
+    }
+
+    private readonly unusedTextBlockRefsSignal = signal<TextBlockRef[]>([]);
+    get unusedTextBlockRefs(): TextBlockRef[] {
+        return this.unusedTextBlockRefsSignal();
+    }
+    set unusedTextBlockRefs(value: TextBlockRef[]) {
+        this.unusedTextBlockRefsSignal.set(value);
+    }
+
+    private readonly submissionSignal = signal<TextSubmission | undefined>(undefined);
+    get submission(): TextSubmission | undefined {
+        return this.submissionSignal();
+    }
+    set submission(value: TextSubmission | undefined) {
+        this.submissionSignal.set(value);
+    }
 
     readonly getCourseFromExercise = getCourseFromExercise;
 

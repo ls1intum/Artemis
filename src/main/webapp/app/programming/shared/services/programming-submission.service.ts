@@ -947,10 +947,21 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Unsubscribe from the submission
+     * Unsubscribe from the submission.
+     *
+     * Callers must release their own subscription to the submission state observable before calling this
+     * method — the shared state is only torn down once no observers remain.
+     *
      * @param participationId
      */
     public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {
+        // Multiple components can display the same participation at once (e.g. the exercise header and the
+        // embedded code editor). While any of them is still subscribed to the shared subject, the websocket
+        // registration and the subject must stay alive — deleting them here would leave the remaining
+        // components with an orphaned subject that no longer receives any submission state updates.
+        if (this.submissionSubjects[participationId]?.observed) {
+            return;
+        }
         const submissionTopic = this.submissionTopicsSubscribed.get(participationId);
         if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);

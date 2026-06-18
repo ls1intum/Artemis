@@ -28,6 +28,10 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
             await modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
             await modelingExerciseCreation.setPoints(10);
+            await modelingExerciseCreation.setReleaseDate(dayjs().subtract(1, 'hour'));
+            await modelingExerciseCreation.setStartDate(dayjs());
+            await modelingExerciseCreation.setDueDate(dayjs().add(1, 'day'));
+            await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
             const response = await modelingExerciseCreation.save();
             modelingExercise = await response.json();
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();

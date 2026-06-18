@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,7 +10,8 @@ import { CodeEditorStudentContainerComponent } from 'app/programming/overview/co
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -34,6 +35,8 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -62,6 +65,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
+    private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
@@ -72,9 +76,19 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
+    private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
+    private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizResultSubscription: { unsubscribe(): void } | undefined;
+
+    readonly quizSubmitted = output<QuizSubmission>();
+    readonly quizPracticeParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
+    readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
@@ -117,6 +131,10 @@ export class ExerciseSplitPanelComponent {
         const exercise = this.exercise();
         return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
     });
+
+    readonly irisPanelStartsCollapsed = computed(
+        () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
+    );
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
@@ -273,7 +291,7 @@ export class ExerciseSplitPanelComponent {
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode === 'practice') {
+        if (quizComponent && quizComponent.mode() === 'practice') {
             quizComponent.restartPractice();
             return true;
         }
@@ -286,6 +304,18 @@ export class ExerciseSplitPanelComponent {
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);
             });
+            this.quizSubmittedSubscription = component.quizSubmittedEvent.subscribe((submission: QuizSubmission) => {
+                this.quizSubmitted.emit(submission);
+            });
+            this.liveQuizStatusSubscription = component.liveQuizStatusChange.subscribe((status: LiveQuizParticipationStatus | undefined) => {
+                this.liveQuizStatusChange.emit(status);
+            });
+            this.quizPracticeParticipationSubscription = component.practiceParticipationChanged.subscribe((participation: StudentParticipation) => {
+                this.quizPracticeParticipationChanged.emit(participation);
+            });
+            this.liveQuizResultSubscription = component.liveQuizResultParticipation.subscribe((participation: StudentParticipation) => {
+                this.liveQuizResultParticipation.emit(participation);
+            });
         }
     }
 
@@ -293,6 +323,14 @@ export class ExerciseSplitPanelComponent {
         this._quizComponent.set(undefined);
         this.quizStartedSubscription?.unsubscribe();
         this.quizStartedSubscription = undefined;
+        this.quizSubmittedSubscription?.unsubscribe();
+        this.quizSubmittedSubscription = undefined;
+        this.liveQuizStatusSubscription?.unsubscribe();
+        this.liveQuizStatusSubscription = undefined;
+        this.quizPracticeParticipationSubscription?.unsubscribe();
+        this.quizPracticeParticipationSubscription = undefined;
+        this.liveQuizResultSubscription?.unsubscribe();
+        this.liveQuizResultSubscription = undefined;
         this._quizHasStarted.set(false);
     }
 }

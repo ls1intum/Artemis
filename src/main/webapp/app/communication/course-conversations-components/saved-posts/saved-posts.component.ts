@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -24,9 +24,9 @@ export class SavedPostsComponent implements OnDestroy {
     private readonly alertService = inject(AlertService);
     private fetchSubscription?: Subscription;
 
-    protected posts: Posting[];
-    protected hiddenPosts: number[] = [];
-    protected isShowDeleteNotice = false;
+    protected readonly posts = signal<Posting[]>([]);
+    protected readonly hiddenPosts = signal<number[]>([]);
+    protected readonly isShowDeleteNotice = signal(false);
 
     // Icons
     readonly faBookmark = faBookmark;
@@ -37,22 +37,22 @@ export class SavedPostsComponent implements OnDestroy {
             const savedPostStatus = this.savedPostStatus();
             const courseId = this.courseId();
             untracked(() => {
-                this.isShowDeleteNotice = savedPostStatus !== SavedPostStatus.IN_PROGRESS;
+                this.isShowDeleteNotice.set(savedPostStatus !== SavedPostStatus.IN_PROGRESS);
 
                 this.fetchSubscription?.unsubscribe();
                 this.fetchSubscription = this.savedPostService.fetchSavedPosts(courseId, savedPostStatus).subscribe({
                     next: (response) => {
                         if (!response.body) {
-                            this.posts = [];
+                            this.posts.set([]);
                         } else {
-                            this.posts = response.body.map(this.savedPostService.convertPostingToCorrespondingType);
+                            this.posts.set(response.body.map(this.savedPostService.convertPostingToCorrespondingType));
                         }
                     },
                     error: () => {
-                        this.posts = [];
+                        this.posts.set([]);
                     },
                     complete: () => {
-                        this.hiddenPosts = [];
+                        this.hiddenPosts.set([]);
                     },
                 });
             });
@@ -70,7 +70,7 @@ export class SavedPostsComponent implements OnDestroy {
             .changeSavedPostStatus(post, status)
             .pipe(take(1))
             .subscribe({
-                next: () => this.hiddenPosts.push(post.id!),
+                next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
                 error: () => this.alertService.error('artemisApp.metis.post.changeSavedStatusError'),
             });
     }
@@ -80,7 +80,7 @@ export class SavedPostsComponent implements OnDestroy {
             .removeSavedPost(post)
             .pipe(take(1))
             .subscribe({
-                next: () => this.hiddenPosts.push(post.id!),
+                next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
                 error: () => this.alertService.error('artemisApp.metis.post.removeBookmarkError'),
             });
     }

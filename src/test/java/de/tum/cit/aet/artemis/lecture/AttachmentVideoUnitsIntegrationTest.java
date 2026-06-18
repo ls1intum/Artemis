@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
 

@@ -81,7 +81,7 @@ describe('ExternalSubmissionDialogComponent', () => {
 
         component.save();
 
-        expect(component.isSaving).toBe(true);
+        expect(component.isSaving()).toBe(true);
         expect(result.feedbacks).toBe(component.feedbacks);
         expect(result.feedbacks?.every((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
         expect(createMock).toHaveBeenCalledOnce();
@@ -92,14 +92,14 @@ describe('ExternalSubmissionDialogComponent', () => {
 
         expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).toHaveBeenCalledWith(result);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving()).toBe(false);
         expect(eventManagerSpy).toHaveBeenCalledOnce();
         expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
     it('should set isSaving to false on saveError', () => {
         component.result = new Result();
-        component.isSaving = true;
+        component.isSaving.set(true);
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
 
         const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
@@ -108,7 +108,7 @@ describe('ExternalSubmissionDialogComponent', () => {
         component.save();
         expect(createMock).toHaveBeenCalledOnce();
         expect(onSaveErrorSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving()).toBe(false);
     });
 
     it('should add a new feedback on pushFeedback and remove last on popFeedback', () => {
