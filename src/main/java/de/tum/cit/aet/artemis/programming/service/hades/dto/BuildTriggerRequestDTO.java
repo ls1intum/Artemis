@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildTriggerRequestDTO(@NotNull Long exerciseId, @NotNull Long participationId, @NotNull @Valid RepositoryDTO exerciseRepository, @Valid RepositoryDTO testRepository,
-        List<@Valid RepositoryDTO> auxiliaryRepositories, @NotBlank String buildScript, String scriptType, @NotBlank String programmingLanguage,
+        List<@Valid RepositoryDTO> auxiliaryRepositories, @NotBlank String buildScript, ScriptType scriptType, @NotBlank String programmingLanguage,
         Map<String, String> additionalProperties) {
 
     public enum ScriptType {
@@ -32,21 +32,6 @@ public record BuildTriggerRequestDTO(@NotNull Long exerciseId, @NotNull Long par
 
         public String getValue() {
             return value;
-        }
-    }
-
-    /**
-     * Gets the script type, defaulting to SHELL if not specified.
-     */
-    public ScriptType getScriptType() {
-        if (scriptType == null || scriptType.isBlank()) {
-            return ScriptType.SHELL;
-        }
-        try {
-            return ScriptType.valueOf(scriptType.toUpperCase());
-        }
-        catch (IllegalArgumentException e) {
-            return ScriptType.SHELL;
         }
     }
 }

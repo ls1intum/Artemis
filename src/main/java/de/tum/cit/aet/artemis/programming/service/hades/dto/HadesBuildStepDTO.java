@@ -19,10 +19,4 @@ public record HadesBuildStepDTO(Integer id, String name, String image, List<Volu
 
     public record VolumeMount(String name, String mountPath) {
     }
-
-    @Override
-    public String toString() {
-        return "HadesBuildStepDTO{" + "id=" + id + ", name='" + name + '\'' + ", image='" + image + '\'' + ", volumeMounts=" + volumeMounts + ", workingDir='" + workingDir + '\''
-                + ", metadata=" + metadata + ", script='" + script + '\'' + '}';
-    }
 }

@@ -91,7 +91,7 @@ public class PublicProgrammingExerciseResultResource {
 
         ProgrammingExerciseParticipation participation = programmingExerciseParticipationService
                 .findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
-        log.info("Successfully retrieved participation via ID: {}", participationId);
+        log.debug("Successfully retrieved participation via ID: {}", participationId);
 
         // Process the new result from the build result.
         Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);

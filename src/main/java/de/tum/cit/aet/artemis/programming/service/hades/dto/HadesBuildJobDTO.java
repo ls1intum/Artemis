@@ -31,10 +31,4 @@ public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String
         List<Volume> volumes = List.of(new Volume("shared", new EmptyDir()));
         this(name, volumes, metadata, timestamp, priority, steps);
     }
-
-    @Override
-    public String toString() {
-        return "HadesBuildJobDTO{" + "name='" + name + '\'' + ", volumes=" + volumes + ", metadata=" + metadata + ", timestamp='" + timestamp + '\'' + ", priority=" + priority
-                + ", steps=" + steps + '}';
-    }
 }
