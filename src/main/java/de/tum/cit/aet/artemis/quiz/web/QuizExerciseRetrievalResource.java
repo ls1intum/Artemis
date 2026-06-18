@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -212,7 +213,7 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<QuizExerciseForSearchDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
