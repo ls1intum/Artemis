@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Spring AI 2.0.0-RC1 added a sequence_id column to the chat memory table: JdbcChatMemoryRepository now
+         inserts an explicit per-conversation message sequence and orders reads by it instead of the timestamp. -->
+    <changeSet id="20260611220000-1" author="artemis">
+        <addColumn tableName="spring_ai_chat_memory">
+            <column name="sequence_id" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <createIndex indexName="idx_chat_memory_conversation_id_sequence_id" tableName="spring_ai_chat_memory">
+            <column name="conversation_id"/>
+            <column name="sequence_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Backfill the sequence for existing messages from their timestamp order so the first read of an existing
+         conversation keeps the correct message order (the repository rewrites the whole conversation on the next write).
+         Restricted to mysql/postgresql: H2 is only used for local/dev databases without real conversation history,
+         and it does not support the MySQL UPDATE..JOIN syntax. -->
+    <changeSet id="20260611220000-2" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <sql>
+            UPDATE spring_ai_chat_memory t
+            JOIN (SELECT id, ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY `timestamp`, id) - 1 AS rn FROM spring_ai_chat_memory) s ON t.id = s.id
+            SET t.sequence_id = s.rn
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260611220000-3" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql>
+            UPDATE spring_ai_chat_memory t
+            SET sequence_id = s.rn
+            FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY timestamp, id) - 1 AS rn FROM spring_ai_chat_memory) s
+            WHERE t.id = s.id
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -27,12 +27,12 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly dayjs = dayjs;
 
-    participation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
+    readonly participation = signal<TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation>(undefined!);
     exerciseId: number;
     repositoryType: RepositoryType;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     paramSub: Subscription;
-    commits: CommitInfo[];
+    readonly commits = signal<CommitInfo[]>([]);
     commitsInfoSubscription: Subscription;
     participationSub: Subscription;
 
@@ -69,16 +69,18 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                 tap((exerciseRes) => {
                     this.exercise = exerciseRes.body!;
                     if (this.repositoryType === 'TEMPLATE') {
-                        this.participation = this.exercise.templateParticipation!;
-                        (this.participation as TemplateProgrammingExerciseParticipation).programmingExercise = this.exercise;
+                        const participation = this.exercise.templateParticipation!;
+                        participation.programmingExercise = this.exercise;
+                        this.participation.set(participation);
                     } else if (this.repositoryType === 'SOLUTION') {
-                        this.participation = this.exercise.solutionParticipation!;
-                        (this.participation as SolutionProgrammingExerciseParticipation).programmingExercise = this.exercise;
+                        const participation = this.exercise.solutionParticipation!;
+                        participation.programmingExercise = this.exercise;
+                        this.participation.set(participation);
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
-                        this.participation = this.exercise.templateParticipation!;
+                        this.participation.set(this.exercise.templateParticipation!);
                     } else if (this.repositoryType === 'AUXILIARY') {
-                        this.participation = this.exercise.templateParticipation!;
+                        this.participation.set(this.exercise.templateParticipation!);
                     }
                 }),
             )
@@ -101,12 +103,12 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .getStudentParticipationWithAllResults(this.repositoryId!)
             .pipe(
                 tap((participation) => {
-                    this.participation = participation;
-                    this.participation.submissions?.forEach((submission) => {
+                    participation.submissions?.forEach((submission) => {
                         submission.results?.forEach((result) => {
                             result.submission = submission;
                         });
                     });
+                    this.participation.set(participation);
                 }),
             )
             .subscribe({
@@ -137,8 +139,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleParticipationCommits() {
-        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation.id!).subscribe((commits) => {
-            this.commits = this.sortCommitsByTimestampDesc(commits);
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation().id!).subscribe((commits) => {
+            this.commits.set(this.sortCommitsByTimestampDesc(commits));
             this.setCommitResults();
         });
     }
@@ -152,7 +154,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService
             .retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!)
             .subscribe((commits) => {
-                this.commits = this.sortCommitsByTimestampDesc(commits);
+                this.commits.set(this.sortCommitsByTimestampDesc(commits));
             });
     }
 
@@ -165,7 +167,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService
             .retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType)
             .subscribe((commits) => {
-                this.commits = this.sortCommitsByTimestampDesc(commits);
+                this.commits.set(this.sortCommitsByTimestampDesc(commits));
                 if (!this.isTestRepository) {
                     this.setCommitResults();
                 }
@@ -177,14 +179,14 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private setCommitResults() {
-        const results = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-        this.commits.forEach((commit) => {
+        const results = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
+        this.commits().forEach((commit) => {
             commit.result = results.find((result) => {
                 const submission = result.submission as ProgrammingSubmission;
                 return submission && submission.commitHash === commit.hash;
             });
             if (commit.result?.submission) {
-                commit.result.submission.participation = this.participation;
+                commit.result.submission.participation = this.participation();
             }
         });
     }

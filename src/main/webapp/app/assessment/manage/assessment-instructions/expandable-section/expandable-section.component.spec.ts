@@ -45,19 +45,19 @@ describe('ExpandableSectionComponent', () => {
         component.ngOnInit();
 
         expect(retrieveSpy).toHaveBeenCalledWith(component.storageKey);
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(true);
         expect(storeSpy).toHaveBeenCalledWith(component.storageKey, true);
     });
 
     it('should toggle state on toggle of collapsed', () => {
         fixture.componentRef.setInput('headerKey', 'test');
-        component.isCollapsed = true;
+        component.isCollapsed.set(true);
 
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
         component.toggleCollapsed();
 
-        expect(component.isCollapsed).toBe(false);
+        expect(component.isCollapsed()).toBe(false);
         expect(storeSpy).toHaveBeenCalledWith(component.storageKey, false);
     });
 });

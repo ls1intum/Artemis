@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 export class ExamGradingPage {
     private readonly page: Page;
@@ -8,8 +8,16 @@ export class ExamGradingPage {
     }
 
     async addGradeStep(gradeInterval: number, gradeName: string) {
-        await this.page.locator('button', { hasText: 'Add Grade Step' }).click();
+        const addButton = this.page.locator('button', { hasText: 'Add Grade Step' });
+        // Make sure the grading editor has rendered before counting rows (the button sits below the table).
+        await addButton.waitFor({ state: 'visible' });
         const gradeSteps = this.page.locator('table').locator('tbody').locator('tr');
+        const numberOfGradeStepsBefore = await gradeSteps.count();
+        await addButton.click();
+        // Under Angular's zoneless change detection the new grade-step row renders on the next change-detection tick
+        // (a macrotask) rather than synchronously after the click, so wait for the row count to grow instead of
+        // reading it immediately (a one-shot read would race the tick and target the wrong row).
+        await expect.poll(() => gradeSteps.count()).toBeGreaterThan(numberOfGradeStepsBefore);
         const numberOfGradeSteps = await gradeSteps.count();
         const newGradeStep = gradeSteps.nth(numberOfGradeSteps - 2);
         await newGradeStep.locator('input').first().fill(`${gradeInterval}`);

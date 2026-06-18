@@ -62,18 +62,21 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
-    participation: ProgrammingExerciseStudentParticipation;
-    exercise: ProgrammingExercise;
-    course?: Course;
+    // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
+    // signal-backed under zoneless change detection, otherwise the loaded editor never renders.
+    readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly exercise = signal<ProgrammingExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
-    loadingParticipation = false;
-    participationCouldNotBeFetched = false;
-    repositoryIsLocked = false;
+    readonly loadingParticipation = signal(false);
+    readonly participationCouldNotBeFetched = signal(false);
+    readonly repositoryIsLocked = signal(false);
+    // Written only in a template event handler, which schedules change detection itself — may stay plain.
     showEditorInstructions = true;
-    latestResult: Result | undefined;
-    hasTutorAssessment = false;
-    numberOfSubmissionsForSubmissionPolicy?: number;
+    readonly latestResult = signal<Result | undefined>(undefined);
+    readonly hasTutorAssessment = signal(false);
+    readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -85,26 +88,27 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.paramSub = this.route!.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
+            this.loadingParticipation.set(true);
+            this.participationCouldNotBeFetched.set(false);
             const participationId = this.participationId() ?? Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                        this.participation = participationWithResults;
-                        this.exercise = this.participation.exercise as ProgrammingExercise;
-                        this.lightweight.set(!this.exercise?.exerciseGroup);
-                        const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
+                        this.participation.set(participationWithResults);
+                        const exercise = participationWithResults.exercise as ProgrammingExercise;
+                        this.exercise.set(exercise);
+                        this.lightweight.set(!exercise?.exerciseGroup);
+                        const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
-                        this.repositoryIsLocked = dueDateHasPassed && !isPracticeMode(this.participation);
-                        const allResults = getAllResultsOfAllSubmissions(this.participation.submissions);
-                        this.latestResult = allResults.length >= 1 ? allResults.first() : undefined;
+                        this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
+                        const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
+                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
                         this.checkForTutorAssessment(dueDateHasPassed);
-                        this.course = getCourseFromExercise(this.exercise);
-                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
+                        this.course.set(getCourseFromExercise(exercise));
+                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
                             if (submissionPolicy?.active) {
-                                this.exercise.submissionPolicy = submissionPolicy;
+                                this.exercise().submissionPolicy = submissionPolicy;
                                 this.getNumberOfSubmissionsForSubmissionPolicy();
                             }
                         });
@@ -115,11 +119,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: () => {
-                        this.loadingParticipation = false;
+                        this.loadingParticipation.set(false);
                     },
                     error: () => {
-                        this.participationCouldNotBeFetched = true;
-                        this.loadingParticipation = false;
+                        this.participationCouldNotBeFetched.set(true);
+                        this.loadingParticipation.set(false);
                     },
                 });
         });
@@ -153,21 +157,23 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
-        if (this.latestResult) {
+        const latestResult = this.latestResult();
+        if (latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
-            isManualResult = isManualResultFunction(this.latestResult);
+            isManualResult = isManualResultFunction(latestResult);
             if (isManualResult) {
-                hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
+                hasTutorFeedback = latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
         // Also check for assessment due date to never show manual feedback before the due date
-        this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
+        this.hasTutorAssessment.set(dueDateHasPassed && isManualResult && hasTutorFeedback);
     }
 
     getNumberOfSubmissionsForSubmissionPolicy() {
-        if (this.participation.id) {
-            this.submissionPolicyService.getParticipationSubmissionCount(this.participation.id).subscribe((numberOfSubmissions) => {
-                this.numberOfSubmissionsForSubmissionPolicy = numberOfSubmissions;
+        const participationId = this.participation()?.id;
+        if (participationId) {
+            this.submissionPolicyService.getParticipationSubmissionCount(participationId).subscribe((numberOfSubmissions) => {
+                this.numberOfSubmissionsForSubmissionPolicy.set(numberOfSubmissions);
             });
         }
     }
@@ -176,9 +182,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Check whether a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
-        if (this.latestResult?.feedbacks) {
-            checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
-            return getManualUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+        const latestResult = this.latestResult();
+        if (latestResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
+            return getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
         }
         return [];
     }

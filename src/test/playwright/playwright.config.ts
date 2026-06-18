@@ -63,6 +63,22 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        launchOptions: {
+            args: [
+                '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
+                // When the app is served over HTTPS with a self-signed cert (multi-node runner), bypass
+                // certificate validation at the browser-process level. The context-level `ignoreHTTPSErrors`
+                // does not reliably cover ES-module / lazy-chunk script fetches, which intermittently failed
+                // with "An SSL certificate error occurred when fetching the script", aborting route bootstraps
+                // (Angular NG05604). No-op when the app is served over plain HTTP (single-node fast runner).
+                ...((process.env.BASE_URL || '').startsWith('https') ? ['--ignore-certificate-errors'] : []),
+                // Optional browser-level host resolver override (e.g. "MAP localhost 127.0.0.1"). The multi-node
+                // runner sets this so the browser reaches the nginx LB over IPv4 (avoiding the historical ::1
+                // ECONNREFUSED cascade) while still using a domain origin (https://localhost) — an IP literal such
+                // as 127.0.0.1 is not a valid WebAuthn Relying Party ID and breaks every passkey test.
+                ...(process.env.PW_BROWSER_HOST_RESOLVER_RULES ? [`--host-resolver-rules=${process.env.PW_BROWSER_HOST_RESOLVER_RULES}`] : []),
+            ],
+        },
     },
 
     /* Configure projects for fast, slow, and multi-node tests */

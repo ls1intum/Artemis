@@ -17,10 +17,9 @@ import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
@@ -229,7 +228,7 @@ public class CompetencyOrchestrationService {
      * there is no {@code SecurityContext} (e.g. a scheduler-driven run).
      */
     private String callChatClient(String systemPrompt, long courseId, long exerciseId, List<AppliedActionDTO> appliedActions) {
-        ToolCallingChatOptions options = buildChatOptions();
+        OpenAiChatOptions.Builder options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolsService.COURSE_ID_KEY, courseId);
         toolContext.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, new OrchestratorToolsService.AppliedActionsBuffer(appliedActions));
@@ -247,15 +246,15 @@ public class CompetencyOrchestrationService {
     }
 
     /** GPT-5 reasoning models reject explicit temperature alongside reasoningEffort, so we omit one when the other is set. */
-    private ToolCallingChatOptions buildChatOptions() {
-        var builder = AzureOpenAiChatOptions.builder().deploymentName(deploymentName);
+    private OpenAiChatOptions.Builder buildChatOptions() {
+        var builder = OpenAiChatOptions.builder().deploymentName(deploymentName);
         if (reasoningEffort != null && !reasoningEffort.isBlank()) {
             builder.reasoningEffort(reasoningEffort);
         }
         else {
             builder.temperature(temperature);
         }
-        return builder.build();
+        return builder;
     }
 
     private static String renderExerciseChangeBatch(long exerciseId, String title, String problemStatement) {
