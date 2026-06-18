@@ -129,4 +129,24 @@ describe('ExamImportProgressDialogComponent', () => {
         expect(component.visible()).toBeFalsy();
         expect(component.ready()).toBeFalsy();
     });
+
+    it('should render duplicate skipped/incomplete titles without a duplicate-track-key error', async () => {
+        // Exercise titles are not unique (and "(unnamed exercise)" repeats). The @for loops must not track by title, or
+        // rendering throws NG0955 (duplicated keys). This test renders the summary with duplicate titles.
+        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const promise = component.runImport('import-dup', 4, request$.asObservable());
+        request$.next(
+            new HttpResponse({
+                status: 201,
+                body: { exam: { id: 1 } as Exam, skippedExercises: ['(unnamed exercise)', '(unnamed exercise)'], incompleteExercises: ['Dup', 'Dup'] },
+            }),
+        );
+        request$.complete();
+
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(fixture.nativeElement.querySelectorAll('li')).toHaveLength(4);
+
+        component.onDismiss();
+        await expect(promise).resolves.toBeDefined();
+    });
 });

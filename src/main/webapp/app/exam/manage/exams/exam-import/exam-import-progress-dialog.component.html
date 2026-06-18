@@ -46,7 +46,8 @@
                         <strong>{{ 'artemisApp.examManagement.import.progress.incompleteHeader' | artemisTranslate }}</strong>
                     </div>
                     <ul class="mb-0">
-                        @for (title of incompleteExercises(); track title) {
+                        <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
+                        @for (title of incompleteExercises(); track $index) {
                             <li>{{ title }}</li>
                         }
                     </ul>
@@ -59,7 +60,8 @@
                         <strong>{{ 'artemisApp.examManagement.import.progress.skippedHeader' | artemisTranslate }}</strong>
                     </div>
                     <ul class="mb-0">
-                        @for (title of skippedExercises(); track title) {
+                        <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
+                        @for (title of skippedExercises(); track $index) {
                             <li>{{ title }}</li>
                         }
                     </ul>
