@@ -234,7 +234,7 @@
                 <div class="mb-3">
                     <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
                     <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
-                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="course?.id" />
+                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="exam.course?.id" />
                 </div>
             }
             <!-- Section exam assessment and student review
