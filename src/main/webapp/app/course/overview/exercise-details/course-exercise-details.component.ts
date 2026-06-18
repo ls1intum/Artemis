@@ -7,6 +7,7 @@ import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -69,6 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
 
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
@@ -462,6 +464,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
+            }
+            // Propagate the newly created participation into the cached course so the course-overview sidebar re-maps
+            // and reflects the started exercise live (otherwise the card stays at "Not yet started" until a page reload).
+            const course = this.courseStorageService.getCourse(this.courseId);
+            const cachedExercise = course?.exercises?.find((exercise) => exercise.id === this.exercise?.id);
+            if (course && cachedExercise && this.exercise) {
+                cachedExercise.studentParticipations = this.exercise.studentParticipations;
+                this.courseStorageService.updateCourse(course);
             }
         }
         this.sortResults();

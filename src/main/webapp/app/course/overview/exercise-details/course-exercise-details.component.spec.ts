@@ -9,6 +9,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -592,5 +594,22 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
+    });
+
+    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const newParticipation = { id: 777 } as StudentParticipation;
+
+        comp.onNewParticipation(newParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(cachedExercise.studentParticipations).toContain(newParticipation);
     });
 });
