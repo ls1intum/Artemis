@@ -99,7 +99,7 @@ export class QuizAiQuestionRefinementPanelComponent {
         }
         const q = this.question() as MultipleChoiceQuestion;
         Object.assign(q, prev);
-        q.answerOptions = prev.answerOptions?.map((opt) => ({ ...opt }));
+        q.answerOptions = prev.answerOptions?.map((opt) => Object.assign({}, opt));
         this.questionRefined.emit(q);
         this.refinementExplanation.set(undefined);
         this.previousQuestion.set(undefined);

@@ -120,11 +120,8 @@ public class HyperionQuizQuestionGenerationService {
         }
 
         ChatResponse chatResponse;
-        GeneratedQuestionsOutput generatedQuestions;
         try {
             chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
-            String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
-            generatedQuestions = outputConverter.convert(responseText);
         }
         catch (Exception e) {
             log.error("Failed to generate quiz questions for course [{}]", course.getId(), e);
@@ -134,6 +131,20 @@ public class HyperionQuizQuestionGenerationService {
         Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
+
+        String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+        if (responseText == null) {
+            throw new InternalServerErrorAlertException("LLM returned an empty response", "QuizQuestionGeneration", "QuizQuestionGeneration.emptyLLMResponse");
+        }
+
+        GeneratedQuestionsOutput generatedQuestions;
+        try {
+            generatedQuestions = outputConverter.convert(responseText);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse generated quiz questions for course [{}]", course.getId(), e);
+            throw new InternalServerErrorAlertException("Failed to generate quiz questions", "QuizQuestionGeneration", "QuizQuestionGeneration.generationFailed");
+        }
 
         List<GeneratedQuizQuestionDTO> questions = mapAndValidateGeneratedQuestions(generatedQuestions);
         return new QuizQuestionGenerationResponseDTO(questions);
@@ -259,11 +270,8 @@ public class HyperionQuizQuestionGenerationService {
                         answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
 
         ChatResponse chatResponse;
-        RefinedQuestionWithExplanationOutput output;
         try {
             chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
-            String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
-            output = outputConverter.convert(responseText);
         }
         catch (Exception e) {
             log.error("Failed to refine quiz question for course [{}]", course.getId(), e);
@@ -272,6 +280,20 @@ public class HyperionQuizQuestionGenerationService {
 
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REFINEMENT_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
+
+        String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+        if (responseText == null) {
+            throw new InternalServerErrorAlertException("LLM returned an empty response", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyLLMResponse");
+        }
+
+        RefinedQuestionWithExplanationOutput output;
+        try {
+            output = outputConverter.convert(responseText);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse refined quiz question for course [{}]", course.getId(), e);
+            throw new InternalServerErrorAlertException("Failed to refine quiz question", "QuizQuestionRefinement", "QuizQuestionRefinement.refinementFailed");
+        }
 
         if (output == null || output.question() == null) {
             throw new InternalServerErrorAlertException("Refined quiz question is empty", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyResponse");
