@@ -28,7 +28,6 @@ export interface ExerciseSnapshotDTO {
     teamAssignmentConfig?: TeamAssignmentConfigSnapshot;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
-    feedbackSuggestionModule?: string;
     gradingCriteria?: GradingCriterionSnapshotDTO[];
     plagiarismDetectionConfig?: PlagiarismDetectionConfig;
     programmingData?: ProgrammingExerciseSnapshotDTO;

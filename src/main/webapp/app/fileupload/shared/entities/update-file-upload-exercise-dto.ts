@@ -36,7 +36,6 @@ export interface UpdateFileUploadExerciseDto {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
-    feedbackSuggestionModule?: string;
     competencyLinks?: CompetencyLinkDTO[];
 }
 
@@ -71,7 +70,6 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         exerciseGroupId: fileUploadExercise.exerciseGroup?.id,
         gradingCriteria: fileUploadExercise.gradingCriteria ?? [],
         gradingInstructions: fileUploadExercise.gradingInstructions,
-        feedbackSuggestionModule: fileUploadExercise.feedbackSuggestionModule,
         competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => ({
             competency: { id: link.competency!.id! },
             weight: link.weight ?? 1,

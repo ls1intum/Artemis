@@ -257,12 +257,6 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             (exercise) => exercise.secondCorrectionEnabled,
             (exercise, value) => (exercise.secondCorrectionEnabled = (value as boolean | undefined) ?? false),
         ),
-        baseHandler(
-            'feedbackSuggestionModule',
-            'artemisApp.exercise.feedbackSuggestionsEnabled',
-            (exercise) => exercise.feedbackSuggestionModule,
-            (exercise, value) => (exercise.feedbackSuggestionModule = value as string | undefined),
-        ),
         {
             key: 'gradingCriteria',
             labelKey: 'artemisApp.assessmentInstructions.structuredGradingInstructions',

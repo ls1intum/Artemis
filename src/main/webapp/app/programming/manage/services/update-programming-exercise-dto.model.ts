@@ -58,7 +58,6 @@ export interface UpdateProgrammingExerciseDTO {
     allowComplaintsForAutomaticAssessments?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
-    feedbackSuggestionModule?: string;
     gradingInstructions?: string;
 
     // Timeline fields
@@ -180,7 +179,6 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
         presentationScoreEnabled: exercise.presentationScoreEnabled,
         secondCorrectionEnabled: exercise.secondCorrectionEnabled,
-        feedbackSuggestionModule: exercise.feedbackSuggestionModule,
         gradingInstructions: exercise.gradingInstructions,
         releaseDate: convertDateFromClient(exercise.releaseDate),
         startDate: convertDateFromClient(exercise.startDate),

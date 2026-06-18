@@ -36,7 +36,6 @@ export interface UpdateModelingExerciseDTO {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
-    feedbackSuggestionModule?: string;
     competencyLinks?: CompetencyLinkDTO[];
 }
 
@@ -71,7 +70,6 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
-        feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
         competencyLinks: (modelingExercise.competencyLinks ?? []).map((link) => ({
             competency: { id: link.competency!.id! },
             weight: link.weight ?? 1,

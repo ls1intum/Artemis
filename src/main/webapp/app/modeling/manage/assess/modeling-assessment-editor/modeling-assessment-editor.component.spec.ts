@@ -223,7 +223,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                     exercise: {
                         id: 1,
                         type: 'modeling',
-                        feedbackSuggestionModule: 'modeling',
                     } as unknown as Exercise,
                 },
             } as ModelingSubmission;
@@ -605,7 +604,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should return unreferenced feedback only', () => {
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
 
         const unreferencedFeedback = createTestFeedback();

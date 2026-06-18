@@ -127,7 +127,6 @@ export abstract class Exercise implements BaseEntity {
 
     // helper attributes
     public secondCorrectionEnabled = false;
-    public feedbackSuggestionModule?: string;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;

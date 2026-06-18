@@ -57,7 +57,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         type: ExerciseType.TEXT,
         studentParticipations: [textParticipation],
         exerciseGroup,
-        feedbackSuggestionModule: 'module_text_test',
     } as TextExercise;
 
     const studentExam = { id: 1, exam, user, exercises: [textExercise] } as StudentExam;
@@ -313,7 +312,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [athenaTextParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [athenaTextExercise] }));
@@ -490,7 +488,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [filledParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [filledExercise] }));
@@ -546,7 +543,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.TEXT,
             studentParticipations: [nonEmptyTextParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_text_test',
         } as TextExercise;
         const modelingSubmission = { id: 5, submitted: true, model: '{"version":"3.0.0","type":"ClassDiagram","elements":{"a":{}}}' } as ModelingSubmission;
         const modelingExercise = {
@@ -554,7 +550,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.MODELING,
             studentParticipations: [{ id: 2, student: user, submissions: [modelingSubmission] } as StudentParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_modeling_test',
         } as TextExercise;
 
         function configureMultiExercise(): BehaviorSubject<Result | undefined>[] {
@@ -628,7 +623,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [seededParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             localStorage.setItem(feedbackRequestedKey, 'true');
