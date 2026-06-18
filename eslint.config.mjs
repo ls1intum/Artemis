@@ -210,6 +210,18 @@ export default tseslint.config(
                     ],
                 },
             ],
+            'no-restricted-syntax': [
+                'error',
+                {
+                    // Monaco's editor.addCommand registers a command in the process-global CommandsRegistry whose handler
+                    // retains the editor; it is not released on editor.dispose(), which leaks the editor and its entire
+                    // DOM subtree (see PR #12976). Use editor.addAction, which returns a disposable that must be stored
+                    // and disposed on destroy.
+                    selector: "CallExpression[callee.property.name='addCommand']",
+                    message:
+                        'Do not use editor.addCommand (it leaks the editor via Monaco’s process-global command registry). Use editor.addAction, store the returned disposable, and dispose it on destroy.',
+                },
+            ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
