@@ -1,16 +1,9 @@
-import { CompetencyContributionCardDTO, CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import {
-    CompetencyExerciseLinkResponseDTO,
-    CourseCompetencyProgressDTO,
-    CourseCompetencyResponseDTO,
-    ExerciseForCompetencyDTO,
-} from 'app/atlas/shared/dto/course-competency-response.dto';
-import { INTRO_JAVA_ALL_EXERCISES, INTRO_JAVA_EXERCISE_GROUPS } from './intro-to-programming-java-exercises';
+import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 
 /**
- * Mock competencies for the experimental student exercise views. Linked to exercises (and to the Loops
- * exercise group's variants) so the competency contribution cards appear below the problem statement,
- * exactly as they do for real exercises. Dev-only; no server-side counterpart.
+ * Mock competencies for the experimental student exercise views. Linked to exercises so the competency
+ * contribution cards appear below the problem statement, exactly as they do for real exercises.
+ * Dev-only; no server-side counterpart.
  */
 interface MockCompetency {
     competencyId: number;
@@ -28,20 +21,6 @@ const COMP_ALGORITHM: MockCompetency = { competencyId: 9007, title: 'Algorithm D
 const COMP_DATA_STRUCT: MockCompetency = { competencyId: 9008, title: 'Data Structures' };
 const COMP_COMPLEXITY: MockCompetency = { competencyId: 9009, title: 'Complexity Analysis' };
 const COMP_SW_ARCH: MockCompetency = { competencyId: 9010, title: 'Software Architecture' };
-
-/** All mock competencies available in the course — used by the group edit UI. */
-export const ALL_MOCK_COMPETENCIES: readonly MockCompetency[] = [
-    COMP_LOOPS,
-    COMP_CONTROL_FLOW,
-    COMP_ALGORITHM,
-    COMP_ARRAYS,
-    COMP_DATA_STRUCT,
-    COMP_RECURSION,
-    COMP_COMPLEXITY,
-    COMP_OOP,
-    COMP_SW_ARCH,
-    COMP_TEAM,
-];
 
 function contribution(competency: MockCompetency, weight: number, mastery?: number): CompetencyContributionCardDTO {
     const card = new CompetencyContributionCardDTO();
@@ -83,92 +62,3 @@ const CONTRIBUTIONS_BY_EXERCISE_ID: Record<number, CompetencyContributionCardDTO
 export function getMockCompetencyContributions(exerciseId: number): CompetencyContributionCardDTO[] {
     return CONTRIBUTIONS_BY_EXERCISE_ID[exerciseId] ?? [];
 }
-
-// Lookup: exerciseId → { groupId, groupTitle } for exercises that belong to a group.
-const EXERCISE_GROUP_INFO: Record<number, { groupId: number; groupTitle: string }> = {};
-for (const group of INTRO_JAVA_EXERCISE_GROUPS) {
-    for (const ex of group.exercises ?? []) {
-        if (ex.id !== undefined && group.id !== undefined && group.title !== undefined) {
-            EXERCISE_GROUP_INFO[ex.id] = { groupId: group.id, groupTitle: group.title };
-        }
-    }
-}
-
-// Reverse map: competencyId → exercises that contribute to it (with weight).
-// Built from CONTRIBUTIONS_BY_EXERCISE_ID so the two sources stay in sync.
-const EXERCISE_LINKS_BY_COMPETENCY_ID: Record<number, CompetencyExerciseLinkResponseDTO[]> = {};
-for (const [exerciseIdStr, contributions] of Object.entries(CONTRIBUTIONS_BY_EXERCISE_ID)) {
-    const exerciseId = Number(exerciseIdStr);
-    const exercise = INTRO_JAVA_ALL_EXERCISES.find((e) => e.id === exerciseId);
-    if (!exercise) continue;
-    const exerciseDTO: ExerciseForCompetencyDTO = {
-        id: exercise.id!,
-        title: exercise.title,
-        shortName: exercise.shortName,
-        type: exercise.type,
-        maxPoints: exercise.maxPoints,
-        bonusPoints: exercise.bonusPoints,
-        difficulty: exercise.difficulty,
-        mode: exercise.mode,
-        includedInOverallScore: exercise.includedInOverallScore,
-    };
-    for (const c of contributions) {
-        const cid = c.competencyId!;
-        const link: CompetencyExerciseLinkResponseDTO = { weight: c.weight ?? 1, exercise: exerciseDTO };
-        const groupInfo = EXERCISE_GROUP_INFO[exerciseId];
-        if (groupInfo) {
-            link.groupId = groupInfo.groupId;
-            link.groupTitle = groupInfo.groupTitle;
-        }
-        (EXERCISE_LINKS_BY_COMPETENCY_ID[cid] ??= []).push(link);
-    }
-}
-
-const TAXONOMIES: CompetencyTaxonomy[] = [
-    CompetencyTaxonomy.APPLY,
-    CompetencyTaxonomy.UNDERSTAND,
-    CompetencyTaxonomy.ANALYZE,
-    CompetencyTaxonomy.APPLY,
-    CompetencyTaxonomy.UNDERSTAND,
-    CompetencyTaxonomy.EVALUATE,
-    CompetencyTaxonomy.ANALYZE,
-    CompetencyTaxonomy.CREATE,
-    CompetencyTaxonomy.EVALUATE,
-    CompetencyTaxonomy.APPLY,
-];
-
-const DESCRIPTIONS: string[] = [
-    'Students can write iterative solutions using for, while, and do-while loops.',
-    'Students understand collections and can manipulate arrays and lists.',
-    'Students can design and implement classes, objects, and inheritance hierarchies.',
-    'Students can solve problems by breaking them into self-referential sub-problems.',
-    'Students can work effectively in a team using version control and code review.',
-    'Students can write conditionals and understand branching logic.',
-    'Students can design efficient algorithms and reason about correctness.',
-    'Students know common data structures and when to apply each.',
-    'Students can analyse time and space complexity using Big-O notation.',
-    'Students can decompose a problem into well-defined, loosely coupled modules.',
-];
-
-const MOCK_COURSE_INFO = { id: 1, title: 'Introduction to Programming in Java', semester: 'SS25' };
-
-/** Mock competency list for the instructor competency-management page and student competencies view. */
-export const MOCK_COURSE_COMPETENCY_RESPONSES: CourseCompetencyResponseDTO[] = ALL_MOCK_COMPETENCIES.map((comp, index) => ({
-    id: comp.competencyId,
-    title: comp.title,
-    description: DESCRIPTIONS[index],
-    type: CourseCompetencyType.COMPETENCY,
-    taxonomy: TAXONOMIES[index],
-    masteryThreshold: 80,
-    optional: index >= 8,
-    course: MOCK_COURSE_INFO,
-    exerciseLinks: EXERCISE_LINKS_BY_COMPETENCY_ID[comp.competencyId] ?? [],
-}));
-
-/** Mock course-level progress for the instructor competency-management page. */
-export const MOCK_COMPETENCY_PROGRESS: CourseCompetencyProgressDTO[] = ALL_MOCK_COMPETENCIES.map((comp, index) => ({
-    competencyId: comp.competencyId,
-    numberOfStudents: 120,
-    numberOfMasteredStudents: Math.round(120 * (0.3 + index * 0.05)),
-    averageStudentScore: Math.round(40 + index * 5),
-}));

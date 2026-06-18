@@ -11,7 +11,7 @@
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCourse" type="text" />
             <span class="ms-3" jhiTranslate="artemisApp.competency.import.importRelations"></span>
             <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
-            @if (loading) {
+            @if (loading()) {
                 <span class="ms-3" jhiTranslate="loading"></span>
             }
         </div>
@@ -34,7 +34,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (course of content.resultsOnPage; track trackId($index, course)) {
+                    @for (course of content().resultsOnPage; track trackId($index, course)) {
                         <tr class="flex-row">
                             <td class="col-1">
                                 <span>{{ course.id }}</span>
@@ -60,7 +60,7 @@
             <ngb-pagination
                 (pageChange)="onPageChange($event)"
                 [(page)]="state.page"
-                [collectionSize]="total"
+                [collectionSize]="total()"
                 [maxSize]="5"
                 [pageSize]="state.pageSize"
                 [rotate]="true"

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, input } from '@angular/core';
+import { Component, OnDestroy, effect, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -21,13 +21,15 @@ export class ResultProgressBarComponent implements OnDestroy {
     isQueued = input.required<boolean>();
     showBorder = input<boolean>(false);
 
-    isQueueProgressBarAnimated: boolean;
-    queueProgressBarOpacity: number;
-    queueProgressBarValue: number;
+    // These fields back template bindings and are mutated from the opacity-pulsing interval below, i.e. outside any
+    // change-detection cycle. Signals are used so each write schedules change detection under zoneless.
+    readonly isQueueProgressBarAnimated = signal(false);
+    readonly queueProgressBarOpacity = signal(0);
+    readonly queueProgressBarValue = signal(0);
 
-    isBuildProgressBarAnimated: boolean;
-    buildProgressBarOpacity: number;
-    buildProgressBarValue: number;
+    readonly isBuildProgressBarAnimated = signal(false);
+    readonly buildProgressBarOpacity = signal(0);
+    readonly buildProgressBarValue = signal(0);
 
     estimatedDurationInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -57,12 +59,12 @@ export class ResultProgressBarComponent implements OnDestroy {
         } else {
             if (this.isBuilding()) {
                 this.setupQueueProgressBarForBuild();
-                this.isBuildProgressBarAnimated = false;
-                this.buildProgressBarValue = 100;
+                this.isBuildProgressBarAnimated.set(false);
+                this.buildProgressBarValue.set(100);
             } else if (this.isQueued()) {
                 this.setupBuildProgressBarForQueued();
-                this.isQueueProgressBarAnimated = false;
-                this.queueProgressBarValue = 100;
+                this.isQueueProgressBarAnimated.set(false);
+                this.queueProgressBarValue.set(100);
             }
             this.estimatedDurationInterval = setInterval(() => {
                 this.alternateOpacity(this.isQueued());
@@ -77,7 +79,7 @@ export class ResultProgressBarComponent implements OnDestroy {
                 clearInterval(this.estimatedDurationInterval);
                 this.estimatedDurationInterval = undefined;
             }
-            this.isQueueProgressBarAnimated = false;
+            this.isQueueProgressBarAnimated.set(false);
         }
         return isBuildingOrQueued;
     }
@@ -89,42 +91,42 @@ export class ResultProgressBarComponent implements OnDestroy {
     }
 
     private setupBuildProgressBarForQueued() {
-        this.isBuildProgressBarAnimated = true;
-        this.buildProgressBarOpacity = 1;
-        this.buildProgressBarValue = 0;
+        this.isBuildProgressBarAnimated.set(true);
+        this.buildProgressBarOpacity.set(1);
+        this.buildProgressBarValue.set(0);
     }
 
     private setupQueueProgressBarForBuild() {
-        this.isQueueProgressBarAnimated = true;
-        this.queueProgressBarOpacity = 1;
-        this.queueProgressBarValue = 100;
+        this.isQueueProgressBarAnimated.set(true);
+        this.queueProgressBarOpacity.set(1);
+        this.queueProgressBarValue.set(100);
     }
 
     private updateQueueProgressBar() {
-        this.isQueueProgressBarAnimated = true;
-        this.queueProgressBarOpacity = 1;
+        this.isQueueProgressBarAnimated.set(true);
+        this.queueProgressBarOpacity.set(1);
         if (this.estimatedDuration() === 0) {
-            this.queueProgressBarValue = 100;
+            this.queueProgressBarValue.set(100);
             return;
         }
-        this.queueProgressBarValue = Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100);
+        this.queueProgressBarValue.set(Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100));
     }
 
     private updateBuildProgressBar() {
-        this.isBuildProgressBarAnimated = true;
-        this.buildProgressBarOpacity = 1;
+        this.isBuildProgressBarAnimated.set(true);
+        this.buildProgressBarOpacity.set(1);
         if (this.estimatedDuration() === 0) {
-            this.buildProgressBarValue = 100;
+            this.buildProgressBarValue.set(100);
             return;
         }
-        this.buildProgressBarValue = Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100);
+        this.buildProgressBarValue.set(Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100));
     }
 
     private alternateOpacity(isQueue?: boolean) {
         if (isQueue) {
-            this.queueProgressBarOpacity = this.queueProgressBarOpacity === 1 ? 0 : 1;
+            this.queueProgressBarOpacity.update((opacity) => (opacity === 1 ? 0 : 1));
         } else {
-            this.buildProgressBarOpacity = this.buildProgressBarOpacity === 1 ? 0 : 1;
+            this.buildProgressBarOpacity.update((opacity) => (opacity === 1 ? 0 : 1));
         }
     }
 }

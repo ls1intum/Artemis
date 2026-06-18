@@ -8,13 +8,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
-import { CourseExerciseGroup, GroupCompetencyLink } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseTimelineComponent, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
-
-export interface GroupCompetencyDef {
-    competencyId: number;
-    title: string;
-}
 
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
@@ -27,12 +22,10 @@ export class ExerciseGroupEditModalComponent {
     readonly visible = input.required<boolean>();
     readonly visibleChange = output<boolean>();
     readonly group = input.required<CourseExerciseGroup>();
-    readonly allCompetencies = input<readonly GroupCompetencyDef[]>([]);
     readonly save = output<CourseExerciseGroup>();
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
-    readonly draftCompetencyLinks = signal<GroupCompetencyLink[]>([]);
     readonly draftReleaseDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftStartDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
@@ -53,7 +46,6 @@ export class ExerciseGroupEditModalComponent {
             const g = this.group();
             this.draftTitle.set(g.title ?? '');
             this.draftMaxPoints.set(g.maxPoints);
-            this.draftCompetencyLinks.set((g.competencyLinks ?? []).map((l) => ({ ...l })));
             this.draftReleaseDate.set(g.releaseDate);
             this.draftStartDate.set(g.startDate);
             this.draftDueDate.set(g.dueDate);
@@ -61,32 +53,11 @@ export class ExerciseGroupEditModalComponent {
         });
     }
 
-    isCompetencyLinked(competencyId: number): boolean {
-        return this.draftCompetencyLinks().some((l) => l.competencyId === competencyId);
-    }
-
-    onCompetencyToggle(comp: GroupCompetencyDef, checked: boolean): void {
-        if (checked) {
-            this.draftCompetencyLinks.set([...this.draftCompetencyLinks(), { competencyId: comp.competencyId, title: comp.title, weight: 0.5 }]);
-        } else {
-            this.draftCompetencyLinks.set(this.draftCompetencyLinks().filter((l) => l.competencyId !== comp.competencyId));
-        }
-    }
-
-    getCompetencyWeight(competencyId: number): number {
-        return this.draftCompetencyLinks().find((l) => l.competencyId === competencyId)?.weight ?? 0.5;
-    }
-
-    updateCompetencyWeight(competencyId: number, weight: number): void {
-        this.draftCompetencyLinks.set(this.draftCompetencyLinks().map((l) => (l.competencyId === competencyId ? { ...l, weight } : l)));
-    }
-
     onSave(): void {
         const updated: CourseExerciseGroup = {
             ...this.group(),
             title: this.draftTitle().trim(),
             maxPoints: this.draftMaxPoints(),
-            competencyLinks: this.draftCompetencyLinks(),
             releaseDate: this.draftReleaseDate(),
             startDate: this.draftStartDate(),
             dueDate: this.draftDueDate(),

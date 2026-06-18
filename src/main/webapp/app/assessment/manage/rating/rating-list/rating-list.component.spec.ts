@@ -99,8 +99,8 @@ describe('RatingListComponent', () => {
     });
 
     it('should initialize ratings from paginated response', () => {
-        expect(component.ratings).toHaveLength(3);
-        expect(component.totalElements).toBe(3);
+        expect(component.ratings()).toHaveLength(3);
+        expect(component.totalElements()).toBe(3);
         expect(component.page).toBe(1);
     });
 

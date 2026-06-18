@@ -87,8 +87,7 @@
                                     bucket.group.startDate ||
                                     bucket.group.dueDate ||
                                     bucket.group.assessmentDueDate ||
-                                    bucket.group.maxPoints !== undefined ||
-                                    bucket.group.competencyLinks?.length
+                                    bucket.group.maxPoints !== undefined
                                 ) {
                                     <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
                                         @if (bucket.group.releaseDate) {
@@ -112,14 +111,6 @@
                                                     pTooltip="Caps the total points this group contributes to the course score."
                                                     tooltipPosition="top"
                                                 />
-                                            </span>
-                                        }
-                                        @if (bucket.group.competencyLinks?.length) {
-                                            <span class="d-flex align-items-center gap-1 overflow-hidden">
-                                                <span class="fw-semibold flex-shrink-0">Competencies:</span>
-                                                <span class="text-truncate" style="max-width: 320px" [title]="getGroupCompetenciesDisplay(bucket.group)">
-                                                    {{ getGroupCompetenciesDisplay(bucket.group) }}
-                                                </span>
                                             </span>
                                         }
                                     </div>
@@ -166,7 +157,6 @@
         <jhi-exercise-group-edit-modal
             [visible]="groupEditModalVisible()"
             [group]="groupEditModalGroup()!"
-            [allCompetencies]="allMockCompetencies"
             (visibleChange)="groupEditModalVisible.set($event)"
             (save)="onGroupEditModalSave($event)"
         />

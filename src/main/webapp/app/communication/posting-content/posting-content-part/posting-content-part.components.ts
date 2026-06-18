@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import {
     faAt,
@@ -40,7 +40,7 @@ export class PostingContentPartComponent implements OnInit {
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    imageNotFound = false;
+    readonly imageNotFound = signal(false);
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
@@ -85,8 +85,8 @@ export class PostingContentPartComponent implements OnInit {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
-    processedContentBeforeReference: string;
-    processedContentAfterReference: string;
+    readonly processedContentBeforeReference = signal<string>(undefined!);
+    readonly processedContentAfterReference = signal<string>(undefined!);
 
     private initialized = false;
 
@@ -116,7 +116,7 @@ export class PostingContentPartComponent implements OnInit {
     }
 
     toggleImageNotFound(): void {
-        this.imageNotFound = true;
+        this.imageNotFound.set(true);
     }
 
     /**
@@ -124,11 +124,11 @@ export class PostingContentPartComponent implements OnInit {
      */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
+            this.processedContentBeforeReference.set(this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || ''));
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
+            this.processedContentAfterReference.set(this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || ''));
         }
     }
 

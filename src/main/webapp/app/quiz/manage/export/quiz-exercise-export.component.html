@@ -1,18 +1,18 @@
 <div class="d-flex flex-column flex-grow-1 overflow-hidden">
     <h2>
-        @if (course) {
+        @if (course(); as course) {
             <span jhiTranslate="artemisApp.quizExercise.export.title" [translateValues]="{ param: course.title }"></span>
         }
     </h2>
     <div class="row"></div>
     <br />
-    @if (isLoading) {
+    @if (isLoading()) {
         <div class="d-flex align-items-center gap-2 py-4 text-muted">
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <span jhiTranslate="artemisApp.quizExercise.export.loading"></span>
         </div>
     }
-    <div class="table-responsive flex-grow-1 overflow-auto" [hidden]="isLoading">
+    <div class="table-responsive flex-grow-1 overflow-auto" [hidden]="isLoading()">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -31,7 +31,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (question of questions; track question) {
+                @for (question of questions(); track question) {
                     <tr>
                         <td width="50%">{{ question.title }}</td>
                         <td width="25%">{{ question.exercise?.title || '' }}</td>

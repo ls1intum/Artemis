@@ -82,13 +82,13 @@ describe('CourseNotificationComponent', () => {
     });
 
     it('should set notification parameters correctly', () => {
-        expect(componentAsAny.notificationParameters).toEqual({
+        expect(componentAsAny.notificationParameters()).toEqual({
             courseTitle: 'Test Course',
             courseIconUrl: 'test-icon-url',
             courseName: 'Test Course',
             courseId: 101,
         });
-        expect(componentAsAny.notificationType).toBe('newPostNotification');
+        expect(componentAsAny.notificationType()).toBe('newPostNotification');
     });
 
     it('should show close button when isShowClose is true', () => {
@@ -145,10 +145,10 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBe(true);
-        expect(componentAsAny.authorName).toBe('Test Author');
-        expect(componentAsAny.authorId).toBe(42);
-        expect(componentAsAny.authorImageUrl).toBe('test-author-image.jpg');
+        expect(componentAsAny.isShowProfilePicture()).toBe(true);
+        expect(componentAsAny.authorName()).toBe('Test Author');
+        expect(componentAsAny.authorId()).toBe(42);
+        expect(componentAsAny.authorImageUrl()).toBe('test-author-image.jpg');
 
         const profilePicture = fixture.debugElement.query(By.css('jhi-profile-picture'));
         expect(profilePicture).not.toBeNull();
@@ -160,14 +160,14 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithoutAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBe(false);
+        expect(componentAsAny.isShowProfilePicture()).toBe(false);
 
         const iconElement = fixture.debugElement.query(By.css('.course-notification-icon'));
         expect(iconElement).not.toBeNull();
     });
 
     it('should update notification details when courseNotification input changes', () => {
-        const initialType = componentAsAny.notificationType;
+        const initialType = componentAsAny.notificationType();
 
         vi.spyOn(courseNotificationService, 'getIconFromType').mockReturnValue(faBell);
 
@@ -176,8 +176,8 @@ describe('CourseNotificationComponent', () => {
         fixture.detectChanges();
 
         expect(courseNotificationService.getIconFromType).toHaveBeenCalledWith('differentNotificationType');
-        expect(componentAsAny.notificationType).toBe('differentNotificationType');
-        expect(componentAsAny.notificationType).not.toBe(initialType);
+        expect(componentAsAny.notificationType()).toBe('differentNotificationType');
+        expect(componentAsAny.notificationType()).not.toBe(initialType);
     });
 
     it('should show loading indicator when displayTimeInMilliseconds is defined', () => {

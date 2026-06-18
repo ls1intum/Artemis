@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -35,10 +35,10 @@ export class QuizExerciseExportComponent implements OnInit {
     private dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private dialogRef = inject(DynamicDialogRef, { optional: true });
 
-    questions: QuizQuestion[] = new Array(0);
+    readonly questions = signal<QuizQuestion[]>([]);
     courseId: number;
-    course: Course;
-    isLoading = false;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isLoading = signal(false);
 
     protected readonly faArrowLeft = faArrowLeft;
 
@@ -71,16 +71,16 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
+            this.course.set(courseResponse.body!);
             // For the given course, get the list of all quiz exercises, then load each quiz's questions in parallel.
             this.quizExerciseService.findForCourse(courseId).subscribe({
                 next: (res: HttpResponse<QuizExercise[]>) => {
                     const quizExercises = res.body!;
                     if (quizExercises.length === 0) {
-                        this.questions = [];
-                        this.isLoading = false;
+                        this.questions.set([]);
+                        this.isLoading.set(false);
                         return;
                     }
                     forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id!))).subscribe({
@@ -89,23 +89,23 @@ export class QuizExerciseExportComponent implements OnInit {
                             responses.forEach((response, index) => {
                                 const quizExercise = quizExercises[index];
                                 // reconnect course and exercise in case we need this information later
-                                quizExercise.course = this.course;
+                                quizExercise.course = this.course();
                                 response.body?.quizQuestions?.forEach((question) => {
                                     question.exercise = quizExercise;
                                     collected.push(question);
                                 });
                             });
-                            this.questions = collected;
-                            this.isLoading = false;
+                            this.questions.set(collected);
+                            this.isLoading.set(false);
                         },
                         error: (error: HttpErrorResponse) => {
-                            this.isLoading = false;
+                            this.isLoading.set(false);
                             onError(this.alertService, error);
                         },
                     });
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     onError(this.alertService, error);
                 },
             });
@@ -116,7 +116,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * Exports selected questions into json file.
      */
     exportQuiz() {
-        this.quizExerciseService.exportQuiz(this.questions, false);
+        this.quizExerciseService.exportQuiz(this.questions(), false);
         // When shown as a modal, close it once the export has been triggered.
         this.dialogRef?.close();
     }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,8 +23,8 @@ export class RatingListComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    public ratings: RatingListItem[] = [];
-    public totalElements = 0;
+    readonly ratings = signal<RatingListItem[]>([]);
+    readonly totalElements = signal(0);
     public page = 1; // ngb-pagination is 1-indexed
     public pageSize = 20;
 
@@ -49,8 +49,8 @@ export class RatingListComponent implements OnInit {
         const sortDirection = this.ratingsReverseOrder ? 'asc' : 'desc';
         const sort = `${this.ratingsSortingPredicate},${sortDirection}`;
         this.ratingService.getRatingsForDashboard(this.courseId, this.page - 1, this.pageSize, sort).subscribe((pageResult) => {
-            this.ratings = pageResult.content;
-            this.totalElements = pageResult.totalElements;
+            this.ratings.set(pageResult.content);
+            this.totalElements.set(pageResult.totalElements);
         });
     }
 

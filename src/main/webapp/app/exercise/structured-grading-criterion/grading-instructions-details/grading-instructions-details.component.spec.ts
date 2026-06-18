@@ -72,7 +72,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             // WHEN
             component.ngOnInit();
             // THEN
-            expect(component.markdownEditorText).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
+            expect(component.markdownEditorText()).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         });
     });
 

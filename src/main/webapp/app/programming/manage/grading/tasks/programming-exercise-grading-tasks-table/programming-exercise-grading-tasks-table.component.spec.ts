@@ -54,18 +54,18 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     });
 
     it('should update tasks through the service and set them in the component', () => {
-        comp.tasks = [{ taskName: 'task1' }] as ProgrammingExerciseTask[];
+        comp.tasks.set([{ taskName: 'task1' }] as ProgrammingExerciseTask[]);
         const updatedTasks = [{ taskName: 'updatedTask' }] as ProgrammingExerciseTask[];
         taskServiceUpdateTasksStub.mockReturnValue(updatedTasks);
 
         comp.updateTasks();
 
         expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
-        expect(comp.tasks).toBe(updatedTasks);
+        expect(comp.tasks()).toBe(updatedTasks);
     });
 
     it('should pass inactive test case toggle to the task service and update the components tasks', () => {
-        comp.tasks = [{ taskName: 'task1' }] as ProgrammingExerciseTask[];
+        comp.tasks.set([{ taskName: 'task1' }] as ProgrammingExerciseTask[]);
         const inactiveTasks = [{ taskName: 'updatedTask' }] as ProgrammingExerciseTask[];
         const taskServiceToggleIgnoreInactiveStub = vi.spyOn(taskService, 'toggleIgnoreInactive').mockReturnValue();
         taskServiceUpdateTasksStub.mockReturnValue(inactiveTasks);
@@ -82,12 +82,12 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.saveTestCases();
 
-        expect(comp.isSaving).toBe(true);
+        expect(comp.isSaving()).toBe(true);
         expect(taskServiceSaveTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving()).toBe(false);
     });
 
     it('should pass reset to the task and update tasks', () => {
@@ -97,12 +97,12 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.resetTestCases();
 
-        expect(comp.isSaving).toBe(true);
+        expect(comp.isSaving()).toBe(true);
         expect(taskServiceResetTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving()).toBe(false);
         expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
     });
 
@@ -153,7 +153,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.changeSort('weight');
 
-        expect(comp.tasks).toEqual(expected);
+        expect(comp.tasks()).toEqual(expected);
     });
 
     it('should sort test cases correctly', () => {
@@ -190,7 +190,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.changeSort('weight');
 
-        expect(comp.tasks).toEqual(expected);
+        expect(comp.tasks()).toEqual(expected);
     });
 
     it('should sort task and test names correctly', () => {
@@ -218,6 +218,6 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.changeSort('name');
 
-        expect(comp.tasks).toEqual(expected);
+        expect(comp.tasks()).toEqual(expected);
     });
 });

@@ -133,7 +133,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(getAllSpy).toHaveBeenCalledOnce();
-            expect(component.languages).toEqual(LANGUAGES);
+            expect(component.languages()).toEqual(LANGUAGES);
             expect(profileInfoSpy).toHaveBeenCalledOnce();
         });
 
@@ -257,8 +257,8 @@ describe('UserManagementUpdateComponent', () => {
                     }),
                 ),
             );
-            component.user = existingUser;
-            component.user.login = 'test_user';
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
@@ -271,7 +271,7 @@ describe('UserManagementUpdateComponent', () => {
         it('should call create service when saving new user', async () => {
             const newUser = new User();
             vi.spyOn(adminUserService, 'create').mockReturnValue(of(new HttpResponse({ body: newUser })));
-            component.user = newUser;
+            component.user.set(newUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
@@ -289,17 +289,17 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     it('should set password to undefined when using random password', () => {
-        component.user = { password: 'abc' } as User;
+        component.user.set({ password: 'abc' } as User);
         component.shouldRandomizePassword(true);
-        expect(component.user.password).toBeUndefined();
+        expect(component.user().password).toBeUndefined();
 
         component.shouldRandomizePassword(false);
-        expect(component.user.password).toBe('');
+        expect(component.user().password).toBe('');
     });
 
     it('should open organizations modal and add selected organization', () => {
         const existingOrganization = {} as Organization;
-        component.user = { organizations: [existingOrganization] } as User;
+        component.user.set({ organizations: [existingOrganization] } as User);
 
         const organizationSubject = new Subject<Organization>();
         const mockDialogRef = {
@@ -315,30 +315,30 @@ describe('UserManagementUpdateComponent', () => {
         // Simulate selecting a new organization
         const newOrganization = {} as Organization;
         organizationSubject.next(newOrganization);
-        // Check component.user.organizations directly since immutable operations create a new array
-        expect(component.user.organizations).toContain(existingOrganization);
-        expect(component.user.organizations).toContain(newOrganization);
-        expect(component.user.organizations).toHaveLength(2);
+        // Check component.user().organizations directly since immutable operations create a new array
+        expect(component.user().organizations).toContain(existingOrganization);
+        expect(component.user().organizations).toContain(newOrganization);
+        expect(component.user().organizations).toHaveLength(2);
 
         // Test when user has no organizations yet
-        component.user.organizations = undefined;
+        component.user().organizations = undefined;
         organizationSubject.next(newOrganization);
-        expect(component.user.organizations).toEqual([newOrganization]);
+        expect(component.user().organizations).toEqual([newOrganization]);
     });
 
     it('should remove organization from user', () => {
         const organization1 = { id: 1 };
         const organization2 = { id: 2 };
-        component.user = { organizations: [organization1, organization2] } as User;
+        component.user.set({ organizations: [organization1, organization2] } as User);
 
         component.removeOrganizationFromUser(organization2);
 
-        expect(component.user.organizations).toEqual([organization1]);
+        expect(component.user().organizations).toEqual([organization1]);
     });
 
     it('should add selected group from autocomplete panel to user', () => {
         const newGroup = 'nicegroup';
-        component.user = { groups: [] } as unknown as User;
+        component.user.set({ groups: [] } as unknown as User);
         component.allGroups = [newGroup];
 
         const option = { viewValue: newGroup };
@@ -346,19 +346,19 @@ describe('UserManagementUpdateComponent', () => {
 
         component.onSelected(event);
 
-        expect(component.user.groups).toEqual([newGroup]);
+        expect(component.user().groups).toEqual([newGroup]);
     });
 
     it('should add group to user on chip input', () => {
         const newGroup = 'nicegroup';
         component.allGroups = [newGroup];
-        component.user = { groups: [] } as unknown as User;
+        component.user.set({ groups: [] } as unknown as User);
 
         const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
 
-        component.onGroupAdd(component.user, event);
+        component.onGroupAdd(component.user(), event);
 
-        expect(component.user.groups).toEqual([newGroup]);
+        expect(component.user().groups).toEqual([newGroup]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
     });
 
@@ -366,30 +366,30 @@ describe('UserManagementUpdateComponent', () => {
         const allowedGroup = 'nicegroup';
         const notAllowedGroup = 'badgroup';
         component.allGroups = [allowedGroup];
-        component.user = { groups: [] } as unknown as User;
+        component.user.set({ groups: [] } as unknown as User);
 
         const event = { value: notAllowedGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
 
-        component.onGroupAdd(component.user, event);
+        component.onGroupAdd(component.user(), event);
 
-        expect(component.user.groups).toEqual([]);
+        expect(component.user().groups).toEqual([]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
     });
 
     it('should remove group from user', () => {
         const group1 = 'nicegroup';
         const group2 = 'badgroup';
-        component.user = { groups: [group1, group2] } as unknown as User;
+        component.user.set({ groups: [group1, group2] } as unknown as User);
 
-        component.onGroupRemove(component.user, group1);
+        component.onGroupRemove(component.user(), group1);
 
-        expect(component.user.groups).toEqual([group2]);
+        expect(component.user().groups).toEqual([group2]);
     });
 
     describe('previousState', () => {
         it('should navigate to user detail page when editing existing user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
-            component.user = { id: 123, login: 'testuser' } as User;
+            component.user.set({ id: 123, login: 'testuser' } as User);
 
             component.previousState();
 
@@ -398,7 +398,7 @@ describe('UserManagementUpdateComponent', () => {
 
         it('should navigate to user management overview when creating new user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
-            component.user = { id: undefined } as unknown as User;
+            component.user.set({ id: undefined } as unknown as User);
 
             component.previousState();
 
@@ -418,37 +418,37 @@ describe('UserManagementUpdateComponent', () => {
     it('should add group to user when user has no groups yet', () => {
         const newGroup = 'nicegroup';
         component.allGroups = [newGroup];
-        component.user = {} as User; // No groups property
+        component.user.set({} as User); // No groups property
 
         const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
+        component.onGroupAdd(component.user(), event);
 
-        expect(component.user.groups).toEqual([newGroup]);
+        expect(component.user().groups).toEqual([newGroup]);
     });
 
     it('should not add duplicate group to user', () => {
         const existingGroup = 'nicegroup';
         component.allGroups = [existingGroup];
-        component.user = { groups: [existingGroup] } as unknown as User;
+        component.user.set({ groups: [existingGroup] } as unknown as User);
 
         const event = { value: existingGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
+        component.onGroupAdd(component.user(), event);
 
-        expect(component.user.groups).toEqual([existingGroup]);
+        expect(component.user().groups).toEqual([existingGroup]);
     });
 
     it('should handle empty group value on chip input', () => {
         component.allGroups = ['nicegroup'];
-        component.user = { groups: [] } as unknown as User;
+        component.user.set({ groups: [] } as unknown as User);
 
         const event = { value: '', chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
+        component.onGroupAdd(component.user(), event);
 
-        expect(component.user.groups).toEqual([]);
+        expect(component.user().groups).toEqual([]);
     });
 
     it('should handle undefined modal selection', () => {
-        component.user = { organizations: [{ id: 1 }] as Organization[] } as User;
+        component.user.set({ organizations: [{ id: 1 }] as Organization[] } as User);
 
         const organizationSubject = new Subject<Organization | undefined>();
         const mockDialogRef = {
@@ -460,7 +460,7 @@ describe('UserManagementUpdateComponent', () => {
         organizationSubject.next(undefined);
 
         // Should not add undefined to organizations
-        expect(component.user.organizations).toHaveLength(1);
+        expect(component.user().organizations).toHaveLength(1);
     });
 
     it('should filter out undefined groups when filtering', () => {
@@ -481,7 +481,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(organizationService.getOrganizationsByUser).toHaveBeenCalledWith(testUser.id);
-            expect(component.user.organizations).toEqual(mockOrganizations);
+            expect(component.user().organizations).toEqual(mockOrganizations);
         });
 
         it('should handle groups from courseAdminService with body containing groups', () => {
@@ -498,16 +498,16 @@ describe('UserManagementUpdateComponent', () => {
         it('should initialize empty groups for new user without id', () => {
             // Simulate scenario where route returns no user (new user creation)
             // The component initializes user.groups = [] when user.id is undefined
-            component.user = new User(); // No id
-            component.user.groups = undefined;
+            component.user.set(new User()); // No id
+            component.user().groups = undefined;
             // @ts-ignore - accessing private method
             component.initializeForm();
 
             // Simulate new user scenario where groups should be initialized
-            if (!component.user.id) {
-                component.user.groups = [];
+            if (!component.user().id) {
+                component.user().groups = [];
             }
-            expect(component.user.groups).toEqual([]);
+            expect(component.user().groups).toEqual([]);
         });
     });
 
@@ -523,9 +523,9 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             // Setup existing user with different login
-            component.user = new User(123);
-            component.user.login = 'new_login';
-            component.user.password = undefined;
+            component.user.set(new User(123));
+            component.user().login = 'new_login';
+            component.user().password = undefined;
             // @ts-ignore - accessing private property for testing
             component.oldLogin = 'old_login';
 
@@ -535,7 +535,7 @@ describe('UserManagementUpdateComponent', () => {
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user })));
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
             component.save();
 
@@ -554,8 +554,8 @@ describe('UserManagementUpdateComponent', () => {
 
             component.ngOnInit();
 
-            component.user = new User(123);
-            component.user.login = 'same_login';
+            component.user.set(new User(123));
+            component.user().login = 'same_login';
             // @ts-ignore - accessing private property for testing
             component.oldLogin = 'same_login';
 
@@ -565,7 +565,7 @@ describe('UserManagementUpdateComponent', () => {
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user })));
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
             component.save();
 
@@ -576,7 +576,7 @@ describe('UserManagementUpdateComponent', () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
             vi.spyOn(adminUserService, 'update').mockReturnValue(throwError(() => new Error('Update failed')));
-            component.user = existingUser;
+            component.user.set(existingUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
             component.isSaving.set(true);
@@ -589,7 +589,7 @@ describe('UserManagementUpdateComponent', () => {
         it('should handle create error correctly', () => {
             const newUser = new User();
             vi.spyOn(adminUserService, 'create').mockReturnValue(throwError(() => new Error('Create failed')));
-            component.user = newUser;
+            component.user.set(newUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
             component.isSaving.set(true);
@@ -605,21 +605,21 @@ describe('UserManagementUpdateComponent', () => {
             existingUser.groups = ['group1', 'group2'];
             existingUser.organizations = [{ id: 1 }] as Organization[];
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
-            component.user = existingUser;
+            component.user.set(existingUser);
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
             component.save();
 
-            expect(component.user.groups).toEqual(['group1', 'group2']);
-            expect(component.user.organizations).toEqual([{ id: 1 }]);
+            expect(component.user().groups).toEqual(['group1', 'group2']);
+            expect(component.user().organizations).toEqual([{ id: 1 }]);
         });
     });
 
     describe('initializeForm', () => {
         it('should return early if editForm already exists', () => {
             // Initialize user first to avoid undefined error
-            component.user = new User(123);
+            component.user.set(new User(123));
 
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
@@ -634,7 +634,7 @@ describe('UserManagementUpdateComponent', () => {
         });
 
         it('should enable internal field for new users', () => {
-            component.user = new User(); // No id = new user
+            component.user.set(new User()); // No id = new user
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
@@ -642,7 +642,7 @@ describe('UserManagementUpdateComponent', () => {
         });
 
         it('should disable internal field for existing users', () => {
-            component.user = new User(123); // Has id = existing user
+            component.user.set(new User(123)); // Has id = existing user
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
@@ -652,7 +652,7 @@ describe('UserManagementUpdateComponent', () => {
 
     describe('authority management', () => {
         beforeEach(() => {
-            component.user = new User(123);
+            component.user.set(new User(123));
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
         });
@@ -752,7 +752,7 @@ describe('UserManagementUpdateComponent', () => {
             await fixture.whenStable();
 
             let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
+            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
 
             component.groupCtrl.setValue('admin');
 
@@ -768,7 +768,7 @@ describe('UserManagementUpdateComponent', () => {
             await fixture.whenStable();
 
             let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
+            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
 
             component.groupCtrl.setValue(undefined);
 

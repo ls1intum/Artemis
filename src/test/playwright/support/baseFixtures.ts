@@ -1,8 +1,9 @@
-import { Browser, Page, test as baseTest, expect } from '@playwright/test';
+import { Browser, CDPSession, Page, test as baseTest, expect } from '@playwright/test';
 import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
+import { addE2EInitScript } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -98,6 +99,7 @@ async function prewarmChunks(browser: Browser): Promise<void> {
 const test = baseTest.extend<
     {
         autoTestFixture: string;
+        virtualAuthenticator: CDPSession;
     },
     { chunksWarmed: void }
 >({
@@ -115,20 +117,9 @@ const test = baseTest.extend<
     ],
     autoTestFixture: [
         async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
-            // Hide the notification popup overlay that can block clicks in e2e tests.
-            // This runs before every page load to ensure the overlay never intercepts pointer events.
-            await page.addInitScript(() => {
-                const injectStyle = () => {
-                    const style = document.createElement('style');
-                    style.textContent = 'jhi-course-notification-popup-overlay { display: none !important; }';
-                    document.head.appendChild(style);
-                };
-                if (document.head) {
-                    injectStyle();
-                } else {
-                    document.addEventListener('DOMContentLoaded', injectStyle);
-                }
-            });
+            // Add shared init scripts that suppress overlays (notification popup, passkey modal)
+            // which would block test interactions. See addE2EInitScript for details.
+            await addE2EInitScript(page);
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
@@ -163,6 +154,22 @@ const test = baseTest.extend<
             auto: true,
         },
     ],
+    virtualAuthenticator: async ({ page }, use) => {
+        const cdpSession = await page.context().newCDPSession(page);
+        await cdpSession.send('WebAuthn.enable', { enableUI: false });
+        await cdpSession.send('WebAuthn.addVirtualAuthenticator', {
+            options: {
+                protocol: 'ctap2',
+                transport: 'internal',
+                hasResidentKey: true,
+                hasUserVerification: true,
+                isUserVerified: true,
+                automaticPresenceSimulation: true,
+            },
+        });
+        await use(cdpSession);
+        await cdpSession.send('WebAuthn.disable');
+    },
 });
 
 export { test, expect };

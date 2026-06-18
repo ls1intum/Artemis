@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -71,7 +71,7 @@ export class ExportModalComponent implements OnInit {
     readonly CsvDecimalSeparator = CsvDecimalSeparator;
 
     activeTab = 1;
-    options: CsvExportOptions;
+    readonly options = signal<CsvExportOptions>(undefined!);
 
     // Icons
     faBan = faBan;
@@ -81,20 +81,20 @@ export class ExportModalComponent implements OnInit {
         // set default csv export options based on the current language
         switch (this.translateService.getCurrentLang()) {
             case 'de':
-                this.options = {
+                this.options.set({
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,
                     quoteStrings: true,
                     quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
                     decimalSeparator: CsvDecimalSeparator.COMMA,
-                };
+                });
                 break;
             default:
-                this.options = {
+                this.options.set({
                     fieldSeparator: CsvFieldSeparator.COMMA,
                     quoteStrings: true,
                     quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
                     decimalSeparator: CsvDecimalSeparator.PERIOD,
-                };
+                });
         }
     }
 
@@ -103,7 +103,7 @@ export class ExportModalComponent implements OnInit {
      * @param separator chosen separator which is used to separate the fields in the generated csv file
      */
     setCsvFieldSeparator(separator: CsvFieldSeparator) {
-        this.options.fieldSeparator = separator;
+        this.options.update((options) => ({ ...options, fieldSeparator: separator }));
     }
 
     /**
@@ -111,8 +111,7 @@ export class ExportModalComponent implements OnInit {
      * @param quoteString chosen quoteString option which is used to quote strings in the generated csv file
      */
     setCsvQuoteString(quoteString: CsvQuoteStrings) {
-        this.options.quoteCharacter = quoteString;
-        this.options.quoteStrings = quoteString !== CsvQuoteStrings.NONE;
+        this.options.update((options) => ({ ...options, quoteCharacter: quoteString, quoteStrings: quoteString !== CsvQuoteStrings.NONE }));
     }
 
     /**
@@ -120,7 +119,7 @@ export class ExportModalComponent implements OnInit {
      * @param separator chosen decimal separator which is used in the generated csv file
      */
     setCsvDecimalSeparator(separator: CsvDecimalSeparator) {
-        this.options.decimalSeparator = separator;
+        this.options.update((options) => ({ ...options, decimalSeparator: separator }));
     }
 
     /**
@@ -139,7 +138,7 @@ export class ExportModalComponent implements OnInit {
             this.dialogRef.close();
         } else {
             // CSV export
-            this.dialogRef.close(this.options);
+            this.dialogRef.close(this.options());
         }
     }
 }
