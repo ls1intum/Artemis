@@ -1,11 +1,11 @@
 <div id="exercise-header" class="d-flex flex-column flex-fill">
-    <div class="d-flex align-items-center justify-content-between gap-2">
-        <div class="d-flex align-items-center gap-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-3 overflow-parent">
             @if (showSidebarToggle() && isSidebarCollapsed()) {
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
             }
             @if (exerciseIcon()) {
-                <h5 class="mb-0">
+                <h5 class="mb-0 text-truncate">
                     <fa-icon [icon]="exerciseIcon()!" />
                     {{ exercise().title }}
                 </h5>
@@ -31,7 +31,7 @@
 
     <div class="d-flex align-items-center gap-2">
         <jhi-exercise-headers-information
-            class="flex-grow-1 min-w-0"
+            class="flex-grow-1 overflow-parent"
             [exercise]="exercise()"
             [studentParticipation]="activeParticipation()"
             [submissionPolicy]="submissionPolicy()"
