@@ -118,6 +118,8 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         const emittedValues: MultipleChoiceQuestion[] = [];
         component.questionRefined.subscribe((q) => emittedValues.push(q));
+        const dismissedCount = { n: 0 };
+        component.reasoningDismissed.subscribe(() => dismissedCount.n++);
 
         component.refinePrompt.set('make it harder');
         runInInjectionContext(envInjector, () => component.submitRefinement());
@@ -129,6 +131,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         expect(component.isRefining()).toBe(false);
         expect(emittedValues).toHaveLength(1);
         expect(emittedValues[0]).toBe(refinedQuestion);
+        expect(dismissedCount.n).toBe(1);
 
         vi.useRealTimers();
     });
@@ -184,6 +187,65 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         expect(explanationText.nativeElement.textContent).toContain(reasoning);
 
         vi.useRealTimers();
+    });
+
+    describe('dismissReasoning()', () => {
+        it('should clear local reasoning and previous question without emitting reasoningDismissed', () => {
+            setupWithHyperionEnabled(true);
+            component.refinementExplanation.set('Local reasoning');
+            component.previousQuestion.set(createMockQuestion());
+
+            const dismissed: number[] = [];
+            component.reasoningDismissed.subscribe(() => dismissed.push(1));
+
+            component.dismissReasoning();
+
+            expect(component.refinementExplanation()).toBeUndefined();
+            expect(component.previousQuestion()).toBeUndefined();
+            expect(dismissed).toHaveLength(0);
+        });
+
+        it('should emit reasoningDismissed when no local reasoning exists', () => {
+            setupWithHyperionEnabled(true);
+
+            const dismissed: number[] = [];
+            component.reasoningDismissed.subscribe(() => dismissed.push(1));
+
+            component.dismissReasoning();
+
+            expect(dismissed).toHaveLength(1);
+        });
+    });
+
+    describe('bulk refinement integration', () => {
+        it('should render panel when externalReasoning is set even if isOpen is false', () => {
+            setupWithHyperionEnabled(true);
+            fixture.componentRef.setInput('isOpen', false);
+            fixture.componentRef.setInput('externalReasoning', 'Bulk AI changed this');
+            fixture.detectChanges();
+
+            const panel = fixture.debugElement.query(By.css('.quiz-ai-refinement-panel'));
+            expect(panel).not.toBeNull();
+        });
+
+        it('should restore using externalPreviousQuestion when no local snapshot exists', () => {
+            setupWithHyperionEnabled(true);
+            const externalPrev = createMockQuestion();
+            externalPrev.title = 'Bulk Previous Title';
+            fixture.componentRef.setInput('externalPreviousQuestion', externalPrev);
+            fixture.detectChanges();
+
+            const emitted: MultipleChoiceQuestion[] = [];
+            component.questionRefined.subscribe((q) => emitted.push(q));
+            const dismissed: number[] = [];
+            component.reasoningDismissed.subscribe(() => dismissed.push(1));
+
+            component.restorePreviousQuestion();
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0].title).toBe('Bulk Previous Title');
+            expect(dismissed).toHaveLength(1);
+        });
     });
 
     describe('restore previous version', () => {

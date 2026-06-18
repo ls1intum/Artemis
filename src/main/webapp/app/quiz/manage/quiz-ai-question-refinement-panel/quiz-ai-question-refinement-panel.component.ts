@@ -136,6 +136,7 @@ export class QuizAiQuestionRefinementPanelComponent {
             )
             .subscribe({
                 next: (result) => {
+                    this.reasoningDismissed.emit();
                     this.previousQuestion.set(result.previousQuestion);
                     const reasoning = result.reasoning?.trim() || this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.defaultReasoning');
                     this.refinementExplanation.set(reasoning);

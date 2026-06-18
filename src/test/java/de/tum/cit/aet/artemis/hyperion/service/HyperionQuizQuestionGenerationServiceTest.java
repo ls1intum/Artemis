@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -23,11 +25,14 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
@@ -56,8 +61,7 @@ class HyperionQuizQuestionGenerationServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
-        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        // ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService, userRepository);
@@ -182,6 +186,126 @@ class HyperionQuizQuestionGenerationServiceTest {
 
         assertThatThrownBy(() -> service.refineQuizQuestion(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
                 .hasMessageContaining("Failed to refine quiz question");
+    }
+
+    @Test
+    void generateQuizQuestions_tracksTokenUsageOnSuccess() {
+        String json = """
+                {
+                  "questions": [
+                    {
+                      "type": "single-choice",
+                      "title": "HTTP Methods",
+                      "questionText": "Which HTTP method is idempotent?",
+                      "options": [
+                        { "text": "PUT", "correct": true },
+                        { "text": "POST", "correct": false }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
+
+        Course course = new Course();
+        course.setTitle("Software Engineering");
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
+                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
+
+        service.generateQuizQuestions(course, request);
+
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.HYPERION), any(), any());
+    }
+
+    @Test
+    void generateQuizQuestions_tracksTokenUsageEvenWhenConversionFails() {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("not valid json")))));
+
+        Course course = new Course();
+        course.setTitle("Software Engineering");
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
+                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
+
+        assertThatThrownBy(() -> service.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class);
+
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.HYPERION), any(), any());
+    }
+
+    @Test
+    void refineQuizQuestion_tracksTokenUsageOnSuccess() {
+        String json = """
+                {
+                  "question": {
+                    "type": "single-choice",
+                    "title": "HTTP Idempotency",
+                    "questionText": "Which HTTP method is idempotent?",
+                    "options": [
+                      { "text": "PUT", "correct": true },
+                      { "text": "POST", "correct": false }
+                    ]
+                  },
+                  "reasoning": "Improved wording."
+                }
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
+
+        Course course = new Course();
+        course.setTitle("Software Engineering");
+        GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method?",
+                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
+        QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make it clearer");
+
+        service.refineQuizQuestion(course, request);
+
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.HYPERION), any(), any());
+    }
+
+    @Test
+    void refineAllQuizQuestions_returnsOneResultPerQuestion() {
+        String json = """
+                {
+                  "question": {
+                    "type": "single-choice",
+                    "title": "HTTP Idempotency",
+                    "questionText": "Which HTTP method is idempotent?",
+                    "options": [
+                      { "text": "PUT", "correct": true },
+                      { "text": "POST", "correct": false }
+                    ]
+                  },
+                  "reasoning": "Improved."
+                }
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
+
+        Course course = new Course();
+        course.setTitle("Software Engineering");
+        GeneratedQuizQuestionDTO q1 = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "Q1", "Question 1?",
+                List.of(new GeneratedQuizAnswerOptionDTO("A", true, null, null), new GeneratedQuizAnswerOptionDTO("B", false, null, null)), null, null);
+        GeneratedQuizQuestionDTO q2 = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "Q2", "Question 2?",
+                List.of(new GeneratedQuizAnswerOptionDTO("C", true, null, null), new GeneratedQuizAnswerOptionDTO("D", false, null, null)), null, null);
+        QuizQuestionBulkRefinementRequestDTO request = new QuizQuestionBulkRefinementRequestDTO(List.of(q1, q2), "Make it harder");
+
+        QuizQuestionBulkRefinementResponseDTO response = service.refineAllQuizQuestions(course, request);
+
+        assertThat(response.refinements()).hasSize(2);
+        assertThat(response.refinements()).allMatch(r -> r instanceof QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO);
+    }
+
+    @Test
+    void refineAllQuizQuestions_returnsFailureDTOWithoutThrowingWhenQuestionFails() {
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI unavailable"));
+
+        Course course = new Course();
+        course.setTitle("Software Engineering");
+        GeneratedQuizQuestionDTO q = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "Q1", "Question?",
+                List.of(new GeneratedQuizAnswerOptionDTO("A", true, null, null), new GeneratedQuizAnswerOptionDTO("B", false, null, null)), null, null);
+        QuizQuestionBulkRefinementRequestDTO request = new QuizQuestionBulkRefinementRequestDTO(List.of(q), "Refine it");
+
+        QuizQuestionBulkRefinementResponseDTO response = service.refineAllQuizQuestions(course, request);
+
+        assertThat(response.refinements()).hasSize(1);
+        assertThat(response.refinements().getFirst()).isInstanceOf(QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO.class);
     }
 
     @Test
