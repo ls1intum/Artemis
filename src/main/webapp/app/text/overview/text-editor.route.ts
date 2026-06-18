@@ -10,7 +10,7 @@ export const textEditorRoute: Routes = [
         loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.textExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -20,7 +20,7 @@ export const textEditorRoute: Routes = [
         loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.textExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -29,7 +29,7 @@ export const textEditorRoute: Routes = [
         loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.textExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
     },
