@@ -25,7 +25,6 @@
                             "classnames",
                             "clone-deep",
                             "crypto",
-                            "dagre",
                             "dayjs/locale/de",
                             "dompurify",
                             "emoji-js",
@@ -50,7 +49,6 @@
                             "markdown-it-class",
                             "use-sync-external-store/shim",
                             "use-sync-external-store/shim/with-selector",
-                            "webcola",
                             "@stomp/rx-stomp",
                             "@stomp/stompjs"
                         ],
@@ -63,7 +61,7 @@
                         },
                         "index": "src/main/webapp/index.html",
                         "browser": "src/main/webapp/app/app.main.ts",
-                        "polyfills": ["src/main/webapp/app/polyfills.ts", "@angular/localize/init"],
+                        "polyfills": ["@angular/localize/init"],
                         "tsConfig": "tsconfig.json",
                         "inlineStyleLanguage": "scss",
                         "stylePreprocessorOptions": {

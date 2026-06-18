@@ -1,4 +1,4 @@
-@if (isRegistrationEnabled || isInternalUser()) {
+@if (isRegistrationEnabled() || isInternalUser()) {
     <div>
         <div class="row justify-content-center">
             <div class="col-md-8">
@@ -12,7 +12,7 @@
                         <strong>Settings saved!</strong>
                     </div>
                 }
-                @if (isSaml2Active) {
+                @if (isSaml2Active()) {
                     <p-message severity="info">
                         <span jhiTranslate="settings.saml2SyncedInfo"> Your name and email address are managed by your institution via SAML2 and cannot be changed here. </span>
                     </p-message>
@@ -31,7 +31,7 @@
                                 name="firstName"
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
-                                [disabled]="!isInternalUser() || isSaml2Active"
+                                [disabled]="!isInternalUser() || isSaml2Active()"
                             />
                             @if (settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)) {
                                 <div>
@@ -56,7 +56,7 @@
                                 name="lastName"
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
-                                [disabled]="!isInternalUser() || isSaml2Active"
+                                [disabled]="!isInternalUser() || isSaml2Active()"
                             />
                             @if (settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)) {
                                 <div>
@@ -72,10 +72,10 @@
                                 </div>
                             }
                         </div>
-                        @if (allowedEmailPatternReadable) {
+                        @if (allowedEmailPatternReadable()) {
                             <div class="form-group">
                                 <strong jhiTranslate="global.form.email.pattern"></strong>
-                                {{ allowedEmailPatternReadable }}
+                                {{ allowedEmailPatternReadable() }}
                             </div>
                         }
                         <div class="form-group">
@@ -87,7 +87,7 @@
                                 name="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
-                                [disabled]="!isInternalUser() || isSaml2Active"
+                                [disabled]="!isInternalUser() || isSaml2Active()"
                             />
                             @if (settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)) {
                                 <div>

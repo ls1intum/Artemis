@@ -24,6 +24,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -108,7 +109,7 @@ class MailServiceTest {
      */
     @Test
     void testSendEmail() {
-        mailSendingService.sendEmail(student1, subject, content, false, true);
+        mailSendingService.sendEmail(MailRecipientDTO.from(student1), subject, content, false, true);
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -118,6 +119,6 @@ class MailServiceTest {
     @Test
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
+        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(MailRecipientDTO.from(student1), subject, content, false, true));
     }
 }

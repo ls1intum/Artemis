@@ -9,7 +9,8 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { ComponentRef } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -27,8 +28,10 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideNoopAnimationsForTests(),
             ],
+        }).overrideComponent(CourseManagementOverviewStatisticsComponent, {
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseManagementOverviewStatisticsComponent);
@@ -49,12 +52,14 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.ngxData()).toHaveLength(1);
-        expect(component.ngxData()[0].name).toBe('active students');
-        expect(component.ngxData()[0].series[0].value).toBe(0);
-        expect(component.ngxData()[0].series[1].value).toBe(44);
-        expect(component.ngxData()[0].series[2].value).toBe(36);
-        expect(component.ngxData()[0].series[3].value).toBe(92);
+        expect(component.chartEntries()).toHaveLength(1);
+        expect(component.chartEntries()[0].name).toBe('active students');
+        expect(component.chartEntries()[0].series[0].value).toBe(0);
+        expect(component.chartEntries()[0].series[1].value).toBe(44);
+        expect(component.chartEntries()[0].series[2].value).toBe(36);
+        expect(component.chartEntries()[0].series[3].value).toBe(92);
+
+        expect(component.chartData().datasets).toHaveLength(1);
     });
 
     it('should react to changes', async () => {
@@ -67,10 +72,10 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.ngxData()[0].series[0].value).toBe(0);
-        expect(component.ngxData()[0].series[1].value).toBe(0);
-        expect(component.ngxData()[0].series[2].value).toBe(0);
-        expect(component.ngxData()[0].series[3].value).toBe(0);
+        expect(component.chartEntries()[0].series[0].value).toBe(0);
+        expect(component.chartEntries()[0].series[1].value).toBe(0);
+        expect(component.chartEntries()[0].series[2].value).toBe(0);
+        expect(component.chartEntries()[0].series[3].value).toBe(0);
     });
 
     it('should show lettering if course did not start yet', async () => {
@@ -90,9 +95,9 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.ngxData()[0].series).toHaveLength(2);
-        expect(component.ngxData()[0].series[0].value).toBe(36);
-        expect(component.ngxData()[0].series[1].value).toBe(92);
+        expect(component.chartEntries()[0].series).toHaveLength(2);
+        expect(component.chartEntries()[0].series[0].value).toBe(36);
+        expect(component.chartEntries()[0].series[1].value).toBe(92);
     });
 
     it('should adapt labels if end date is passed', async () => {
@@ -101,7 +106,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.ngxData()[0].series[3].name).toBe('overview.weekAgo');
+        expect(component.chartEntries()[0].series[3].name).toBe('overview.weekAgo');
     });
 
     it('should adapt if course phase is smaller than 4 weeks', async () => {
@@ -111,9 +116,9 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.ngxData()[0].series).toHaveLength(2);
-        expect(component.ngxData()[0].series[0].value).toBe(36);
-        expect(component.ngxData()[0].series[1].value).toBe(92);
-        expect(component.ngxData()[0].series[1].name).toBe('overview.weekAgo');
+        expect(component.chartEntries()[0].series).toHaveLength(2);
+        expect(component.chartEntries()[0].series[0].value).toBe(36);
+        expect(component.chartEntries()[0].series[1].value).toBe(92);
+        expect(component.chartEntries()[0].series[1].name).toBe('overview.weekAgo');
     });
 });

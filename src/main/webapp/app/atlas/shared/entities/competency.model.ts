@@ -6,6 +6,7 @@ import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUni
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 
 /**
  * The available competency types (based on Bloom's Taxonomy)
@@ -42,6 +43,17 @@ export enum CourseCompetencyValidators {
 export enum CourseCompetencyType {
     COMPETENCY = 'competency',
     PREREQUISITE = 'prerequisite',
+}
+
+/** Node representation of a course competency in the relation graph. */
+export interface CourseCompetencyGraphNode {
+    id: string;
+    label?: string;
+    dimension?: GraphNodeDimension;
+    data: {
+        id: number;
+        type?: CourseCompetencyType;
+    };
 }
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;

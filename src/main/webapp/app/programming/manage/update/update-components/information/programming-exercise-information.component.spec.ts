@@ -91,7 +91,11 @@ describe('ProgrammingExerciseInformationComponent', () => {
         const checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
         const recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
         const updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-        const programmingExerciseEditCheckoutDirectories = { formValidChanges: new Subject() } as ProgrammingExerciseEditCheckoutDirectoriesComponent;
+        const programmingExerciseEditCheckoutDirectories = {
+            formValidChanges: new Subject(),
+            formValid: signal(true),
+            areValuesUnique: () => true,
+        } as unknown as ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
         // Stub the view-query signals so registerInputFields() wires up the valueChanges subscriptions.
         internals(comp).checkoutSolutionRepositoryField = signal(checkoutSolutionRepositoryField);

@@ -25,6 +25,7 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+
 // Darker primary tone used for on-brand buttons/tags that sit on white/light backgrounds and
 // need WCAG AA (≥ 4.5:1) contrast. 1f5c9a vs #fff ≈ 6.14:1.
 $primary-dark: #1f5c9a;
@@ -542,7 +543,7 @@ $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
 $feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
 $graph-grey: rgba(127, 127, 127, 255);
 $graph-dark-blue: rgba(53, 61, 71, 1);
@@ -552,6 +553,10 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
+
+// Chart text and grid line colors (consumed by chart.js via ChartColorService)
+$chart-text-color: #666;
+$chart-grid-color: rgba(0, 0, 0, 0.1);
 
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
@@ -606,8 +611,8 @@ $calendar-day-badge-selected: $gray-400;
 $league-badge-bronze-color: #cd7f32;
 $league-badge-silver-color: #c0c0c0;
 $league-badge-gold-color: #ffd700;
-$league-badge-diamond-color: hsl(195, 60%, 50%);
-$league-badge-master-color: hsl(270, 60%, 50%);
+$league-badge-diamond-color: hsl(195deg, 60%, 50%);
+$league-badge-master-color: hsl(270deg, 60%, 50%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-300;
 

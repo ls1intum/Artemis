@@ -7,6 +7,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { Commands } from '../../../support/commands';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
+import { newBrowserPage } from '../../../support/utils';
 import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
@@ -23,8 +24,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
     test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
-        const context = await browser.newContext({ ignoreHTTPSErrors: true });
-        const page = await context.newPage();
+        const page = await newBrowserPage(browser);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);
         // Initialize deadlines after login so the short windows aren't consumed by setup.

@@ -10,13 +10,11 @@
             <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side">
                 <jhi-course-sidebar
                     [course]="course()"
-                    [courses]="courses()"
                     [sidebarItems]="sidebarItems()"
                     [courseActionItems]="[]"
                     [isNavbarCollapsed]="isNavbarCollapsed()"
                     [hasUnreadMessages]="hasUnreadMessages()"
                     [communicationRouteLoaded]="communicationRouteLoaded()"
-                    (switchCourse)="switchCourse($event)"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
             </mat-sidenav>

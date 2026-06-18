@@ -1,5 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -19,7 +19,7 @@ export class ProgrammingExerciseTheiaComponent {
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
 
     programmingLanguage?: ProgrammingLanguage;
-    theiaImages = {};
+    readonly theiaImages = signal<object>({});
 
     constructor() {
         // Replicates the previous ngOnChanges behavior: whenever either input changes, reload the
@@ -70,12 +70,12 @@ export class ProgrammingExerciseTheiaComponent {
             next: (images) => {
                 if (!images) {
                     // Remove selection if no image is available
-                    this.theiaImages = {};
+                    this.theiaImages.set({});
                     this.resetImageSelection();
                     return;
                 }
 
-                this.theiaImages = images;
+                this.theiaImages.set(images);
 
                 // Set the first image as default if none is selected
                 if (programmingExercise.buildConfig && !programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
@@ -83,7 +83,7 @@ export class ProgrammingExerciseTheiaComponent {
                 }
             },
             error: () => {
-                this.theiaImages = {};
+                this.theiaImages.set({});
                 this.resetImageSelection();
             },
         });

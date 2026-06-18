@@ -1,15 +1,15 @@
 <div class="feedback-text">
-    @if (!previewText) {
+    @if (!previewText()) {
         <p>{{ feedback().text }}</p>
     } @else {
-        @if (isCollapsed) {
+        @if (isCollapsed()) {
             <div>
                 <div class="d-inline fa-angle" (click)="toggleCollapse()">
                     <fa-icon [icon]="faAngleRight" />
                     <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
                 </div>
                 <!-- Only show first line as preview -->
-                <p>{{ previewText }}</p>
+                <p>{{ previewText() }}</p>
             </div>
         } @else {
             <div>

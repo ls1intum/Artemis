@@ -1,5 +1,5 @@
-<div class="connection-status" [ngClass]="{ disconnected: disconnected }">
-    @if (!disconnected) {
+<div class="connection-status" [ngClass]="{ disconnected: disconnected() }">
+    @if (!disconnected()) {
         <div class="badge bg-success connectedExam">
             <fa-icon class="small" [fixedWidth]="true" [icon]="faTowerBroadcast" />
             <span jhiTranslate="connectionStatus.connected"></span>
