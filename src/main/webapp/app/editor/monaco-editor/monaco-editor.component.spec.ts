@@ -59,7 +59,7 @@ describe('MonacoEditorComponent', () => {
             onDidFocusEditorText: vi.fn().mockReturnValue({ dispose: vi.fn() }),
             updateOptions: vi.fn(),
             dispose: vi.fn(),
-            addCommand: vi.fn(),
+            addAction: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         }),
         getOriginalEditor: vi.fn().mockReturnValue({ getValue: vi.fn(), updateOptions: vi.fn(), onDidLayoutChange: vi.fn().mockReturnValue({ dispose: vi.fn() }) }),
         setModel: vi.fn(),
@@ -509,7 +509,7 @@ describe('MonacoEditorComponent', () => {
         const commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
 
-        comp['_editor'].trigger('keyboard', commandId!, null);
+        comp['deletePreviousGraphemeCluster'](comp['_editor']);
 
         expect(comp.getText()).toBe('');
     });
@@ -526,7 +526,7 @@ describe('MonacoEditorComponent', () => {
 
         let commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
-        comp['_editor'].trigger('keyboard', commandId!, null);
+        comp['deletePreviousGraphemeCluster'](comp['_editor']);
 
         expect(comp.getText()).toEqual(emoji1);
 
@@ -534,7 +534,7 @@ describe('MonacoEditorComponent', () => {
 
         commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
-        comp['_editor'].trigger('keyboard', commandId!, null);
+        comp['deletePreviousGraphemeCluster'](comp['_editor']);
 
         expect(comp.getText()).toBe('');
     });
@@ -550,7 +550,7 @@ describe('MonacoEditorComponent', () => {
         const commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
 
-        comp['_editor'].trigger('keyboard', commandId!, null);
+        comp['deletePreviousGraphemeCluster'](comp['_editor']);
 
         expect(comp.getText()).toBe('Hello  World!');
     });
@@ -562,11 +562,27 @@ describe('MonacoEditorComponent', () => {
         comp.setText(fullText);
         comp.setPosition({ lineNumber: 1, column: 9 });
 
-        const commandId = comp.getCustomBackspaceCommandId();
-        comp['_editor'].trigger('keyboard', commandId!, null);
+        comp['deletePreviousGraphemeCluster'](comp['_editor']);
 
         const newPosition = comp.getPosition();
         expect(newPosition.column).toBe(7);
+    });
+
+    it('registers the backspace action once and disposes it on destroy (prevents the global-command-registry leak)', () => {
+        fixture.detectChanges();
+
+        // The action is registered once per editor via editor.addAction, which returns a disposable we must release.
+        const disposables = comp['customBackspaceActionDisposables'];
+        expect(disposables.length).toBe(1);
+        const disposeSpy = vi.spyOn(disposables[0], 'dispose');
+
+        // Re-invoking registration for the same editor must not register the action again (no global-registry growth).
+        comp['registerCustomBackspaceAction'](comp['_editor']);
+        expect(disposables.length).toBe(1);
+
+        // On destroy the registration must be released, otherwise Monaco's global CommandsRegistry retains the editor.
+        fixture.destroy();
+        expect(disposeSpy).toHaveBeenCalled();
     });
 
     it('should initialize diff mode when mode input is set to diff', () => {
@@ -679,7 +695,7 @@ describe('MonacoEditorComponent', () => {
             onDidFocusEditorText: vi.fn(),
             updateOptions: vi.fn(),
             dispose: vi.fn(),
-            addCommand: vi.fn(),
+            addAction: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         };
         mockDiffEditor.getModifiedEditor.mockReturnValue(modifiedEditorMock);
 
