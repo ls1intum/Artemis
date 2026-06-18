@@ -1,7 +1,7 @@
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
@@ -154,6 +154,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .pipe(
                 // Ignore initial null/undefined result from service
                 filter((result) => !!result),
+                // The per-participation result subject is a BehaviorSubject that can re-emit the same result many
+                // times (websocket re-delivery / republication via notifyAllResultSubscribers). Without this guard
+                // every emission triggered a fresh `buildlogs` fetch — and because of the switchMap below, each new
+                // emission cancelled the in-flight request — flooding the server with thousands of (cancelled)
+                // requests and pegging the client until it crashed (reported on PR #12967, fixed here). Only react
+                // when the result identity actually changes.
+                distinctUntilChanged((previous, current) => previous?.id === current?.id),
                 tap((result) => {
                     this.result.set(result!);
                 }),

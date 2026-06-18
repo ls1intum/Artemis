@@ -204,6 +204,24 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
+    it('should fetch build logs only once when the result websocket re-emits the same result (prevents the buildlogs request flood)', () => {
+        // Regression test for the runaway `buildlogs` request loop: the per-participation result BehaviorSubject can
+        // re-emit the same result many times; without de-duplication the build-output component fired a new buildlogs
+        // request on every emission (switchMap cancelling each in-flight request), flooding the server and pegging the
+        // client until it crashed. The same result must therefore trigger at most one fetch.
+        const result = { id: 1, successful: false } as Result;
+        const participation = { id: 1 } as Participation;
+
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
+        // The subject emits the identical result three times in a row.
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(result, result, result));
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+    });
+
     it('should retrieve build logs if result submission could not be built', () => {
         const submission = { id: 1, buildFailed: true } as ProgrammingSubmission;
         const result = { id: 1, successful: true } as Result;
