@@ -7,6 +7,10 @@ import type { PluginSimple } from 'markdown-it';
  * blocks. The emitted markup (class names and inline octicon SVGs) matches the former dependency,
  * so the vendored github-alerts styles (`content/scss/_github-alerts.scss`) keep applying. Output
  * still flows through DOMPurify in the markdown conversion util.
+ *
+ * This implementation is based on markdown-it-github-alerts by Anthony Fu.
+ * Original: https://github.com/antfu/markdown-it-github-alerts
+ * MIT License — Copyright (c) 2023 Anthony Fu <https://github.com/antfu>
  */
 
 /** Inline octicon SVGs for each alert type (verbatim from markdown-it-github-alerts' defaults). */

@@ -1,7 +1,7 @@
-// Styles for GitHub-style markdown alerts, vendored from the former `markdown-it-github-alerts`
-// dependency (its styles/github-colors-light.css, github-colors-dark-media.css and github-base.css,
-// concatenated in the original import order). Targeted by the in-house markdownItGitHubAlerts plugin
-// (app/foundation/util/markdown-github-alerts.plugin.ts).
+/* Styles for GitHub-style markdown alerts, vendored from the former `markdown-it-github-alerts`
+ * dependency (its styles/github-colors-light.css, github-colors-dark-media.css and github-base.css,
+ * concatenated in the original import order). Targeted by the in-house markdownItGitHubAlerts plugin
+ * (app/foundation/util/markdown-github-alerts.plugin.ts). */
 
 :root {
     --color-note: #0969da;
