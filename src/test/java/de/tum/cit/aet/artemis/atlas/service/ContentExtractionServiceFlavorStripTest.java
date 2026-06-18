@@ -17,8 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
@@ -47,8 +47,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     private void stubLlm(FlavorStripEditsDTO edits) {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
-                .thenReturn(edits);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class))).thenReturn(edits);
     }
 
     @Test
@@ -106,7 +105,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void stripFlavorText_llmThrows_returnsRaw() {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class)))
                 .thenThrow(new RuntimeException("LLM unreachable"));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
@@ -169,7 +168,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void buildChatOptions_withReasoningEffort_setsReasoningEffortNotTemperature() {
         // GPT-5 reasoning deployments reject temperature + reasoningEffort together; only reasoningEffort is set.
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "medium", 1.0).build();
+        AzureOpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "medium", 1.0);
 
         assertThat(options.getReasoningEffort()).isEqualTo("medium");
         assertThat(options.getTemperature()).isNull();
@@ -178,7 +177,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void buildChatOptions_blankReasoningEffort_setsTemperatureNotReasoningEffort() {
-        OpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "  ", 1.0).build();
+        AzureOpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "  ", 1.0);
 
         assertThat(options.getTemperature()).isEqualTo(1.0);
         assertThat(options.getReasoningEffort()).isNull();
