@@ -313,6 +313,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             }
                             const programmingSubmission = submission as ProgrammingSubmission;
                             const submissionParticipationId = programmingSubmission.participation!.id!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIEnabled) {
@@ -370,6 +373,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
                             const submissionParticipationId = submissionProcessing.participationId!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
 
                             if (!this.isNewestSubmission(submissionProcessing, exerciseId, submissionParticipationId)) {
