@@ -64,8 +64,8 @@ public class ContentChangeAccumulatorService {
 
     private final int dailyCap;
 
-    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider,
-            @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance, Clock clock, AtlasOrchestratorProperties properties) {
+    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance,
+            Clock clock, AtlasOrchestratorProperties properties) {
         this.distributedDataProvider = distributedDataProvider;
         this.hazelcastInstance = hazelcastInstance;
         this.clock = clock;
