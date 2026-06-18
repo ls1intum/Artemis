@@ -173,6 +173,7 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
+    @JsonIgnore
     @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private CourseAthenaConfig athenaConfig;
 
@@ -798,12 +799,12 @@ public class Course extends DomainObject {
 
     @JsonProperty("athenaGradingFeedbackEnabled")
     public boolean isAthenaGradingFeedbackEnabled() {
-        return athenaConfig != null && athenaConfig.isGradingFeedbackEnabled();
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
     }
 
     @JsonProperty("athenaFormativeFeedbackEnabled")
     public boolean isAthenaFormativeFeedbackEnabled() {
-        return athenaConfig != null && athenaConfig.isFormativeFeedbackEnabled();
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

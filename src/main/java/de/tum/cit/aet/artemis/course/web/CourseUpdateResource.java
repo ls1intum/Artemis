@@ -124,6 +124,9 @@ public class CourseUpdateResource {
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException
+        // in the instructor permission check below and in courseUpdateDTO.applyTo()
+        existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
