@@ -130,9 +130,9 @@ jobs:
         continue-on-error: true
         with:
           name: Client Coverage Summaries
-          # Archive holds vitest/coverage/coverage-summary.json; download under build/test-results/
-          # so it lands where the coverage script reads it.
-          path: build/test-results/
+          # Nested path is deliberate: the single-file artifact unpacks flat, and it must land where
+          # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
+          path: build/test-results/vitest/coverage/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 

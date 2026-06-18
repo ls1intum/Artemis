@@ -191,6 +191,208 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
     });
 
+    it('should keep pre-existing selections when adding another option (multi-select)', () => {
+        // Regression test for answer loss in exams: when the component is initialized with
+        // already-selected options (e.g. a resumed exam, a page reload, or a recreated
+        // component after hand-in-early), selecting a further option must keep the existing
+        // selections instead of replacing them with only the newly clicked one.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
+
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+
+        fixture.componentRef.setInput('question', question);
+        // Pre-existing selections, as if loaded from a previously saved submission.
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        // Add a third option.
+        component.toggleSelection(answerOptions[2]);
+
+        expect(emitted).toBeDefined();
+        const emittedIds = emitted!.map((option) => option.id).sort((a, b) => (a ?? 0) - (b ?? 0));
+        expect(emittedIds).toEqual([1, 2, 3]);
+    });
+
+    it('should accumulate rapid successive toggles before the input round-trips (no answer loss)', () => {
+        // In zoneless mode the input only updates on the next change-detection cycle, so two toggles dispatched within
+        // the same frame both read the same (not-yet-updated) input. Without an in-frame working copy the second toggle
+        // would drop the option added by the first. This asserts both additions are kept.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+            { id: 4, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        const emissions: AnswerOption[][] = [];
+        component.selectedAnswerOptionsChange.subscribe((v) => emissions.push(v));
+
+        // Two toggles WITHOUT re-feeding the input in between (clicks within one change-detection frame).
+        component.toggleSelection(answerOptions[2]);
+        component.toggleSelection(answerOptions[3]);
+
+        expect(emissions).toHaveLength(2);
+        expect(emissions[0].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3]);
+        expect(emissions[1].map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3, 4]);
+    });
+
+    it('should reset the working copy when the input changes, then build on the new input', () => {
+        // After the parent round-trips (or the submission is reloaded), the working copy must be discarded so the next
+        // toggle starts from the authoritative input.
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+            { id: 3, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(answerOptions[1]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2]);
+
+        // The authoritative input is replaced (e.g. a reload restoring only option 3); the next toggle must build on it.
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[2]]);
+        fixture.changeDetectorRef.detectChanges();
+        component.toggleSelection(answerOptions[0]);
+        expect(emitted!.map((o) => o.id).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 3]);
+    });
+
+    it('should remove a pre-existing option when toggled off (multi-select)', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[1]]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(answerOptions[0]);
+        expect(emitted!.map((o) => o.id)).toEqual([2]);
+    });
+
+    it('should not mutate the input array when toggling', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        const input = [answerOptions[0]];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', input);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.toggleSelection(answerOptions[1]);
+        expect(input).toEqual([answerOptions[0]]);
+    });
+
+    it('should handle answer options without an id by reference identity', () => {
+        const a: AnswerOption = { invalid: false };
+        const b: AnswerOption = { invalid: false };
+        const answerOptions: AnswerOption[] = [a, b];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [a]);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted: AnswerOption[] | undefined;
+        component.selectedAnswerOptionsChange.subscribe((v) => (emitted = v));
+
+        component.toggleSelection(b);
+        expect(emitted).toEqual([a, b]);
+
+        fixture.componentRef.setInput('selectedAnswerOptions', emitted!);
+        fixture.changeDetectorRef.detectChanges();
+        component.toggleSelection(a);
+        expect(emitted).toEqual([b]);
+    });
+
+    it('should not emit when click is disabled', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0]]);
+        fixture.componentRef.setInput('clickDisabled', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        let emitted = false;
+        component.selectedAnswerOptionsChange.subscribe(() => (emitted = true));
+        component.toggleSelection(answerOptions[1]);
+        expect(emitted).toBe(false);
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
+    });
+
     it('should toggle answer options, but only allow one to be selected for single choice questions', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
