@@ -14,7 +14,6 @@ import {
     viewChildren,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -22,7 +21,6 @@ import dayjs from 'dayjs/esm';
 import { BarControlConfiguration } from 'app/shared-ui/tab-bar/tab-bar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { sortCourses } from 'app/foundation/util/course.util';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, MODULE_FEATURE_TUTORIALGROUP, PROFILE_LOCALCI } from 'app/app.constants';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -34,6 +32,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -53,6 +52,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
     protected localStorageService = inject(LocalStorageService);
+    protected currentCourseContextService = inject(CurrentCourseContextService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription: Subscription;
@@ -60,11 +60,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected subscription?: Subscription;
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
-    dashboardSubscription: Subscription;
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
-    courses = signal<Course[] | undefined>(undefined);
     refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
@@ -91,8 +89,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     readonly navigationEnd = toSignal(this.navigationEnd$);
 
     sidebarItems = signal<SidebarItem[]>([]);
-    readonly MIN_DISPLAYED_COURSES: number = 6;
-
     conversationServiceInstantiated = signal<boolean>(false);
     checkedForUnreadMessages = signal<boolean>(false);
 
@@ -124,6 +120,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             } else if (!isCommunicationEnabled(updatedCourse) && this.conversationServiceInstantiated()) {
                 this.disableConversationService();
             }
+        });
+
+        effect(() => {
+            this.currentCourseContextService.setCourse(this.course());
         });
     }
 
@@ -157,15 +157,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 CourseAccessStorageService.STORAGE_KEY,
                 CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
             );
-            this.courseAccessStorageService.onCourseAccessed(
-                this.courseId(),
-                CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-            );
         }
 
         await firstValueFrom(this.loadCourse());
-        await this.updateRecentlyAccessedCourses();
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti.set(isShownViaLti);
@@ -185,7 +179,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract handleToggleSidebar(): void;
 
     abstract loadCourse(refresh?: boolean): Observable<void>;
-    abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
         if (this.controlsViewContainer()) {
@@ -203,7 +196,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.loadCourseSubscription?.unsubscribe();
-        this.dashboardSubscription?.unsubscribe();
+        this.currentCourseContextService.clearCourse();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -211,27 +204,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     private disableConversationService() {
         this.conversationServiceInstantiated.set(false);
         this.metisConversationService.disableConversationService();
-    }
-
-    /** Initialize courses attribute by retrieving all courses from the server */
-    async updateRecentlyAccessedCourses() {
-        this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
-            next: (res: HttpResponse<Course[]>) => {
-                if (res.body) {
-                    let courses: Course[] = [];
-                    res.body?.forEach((course) => {
-                        courses.push(course);
-                    });
-                    courses = sortCourses(courses);
-                    if (courses.length > this.MIN_DISPLAYED_COURSES) {
-                        const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
-                        courses = courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
-                    }
-                    courses = courses.filter((course) => course.id !== this.courseId());
-                    this.courses.set(courses);
-                }
-            },
-        });
     }
 
     /**
