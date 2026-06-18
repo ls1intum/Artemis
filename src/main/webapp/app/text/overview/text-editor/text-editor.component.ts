@@ -99,7 +99,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private submissionChange = new Subject<TextSubmission>();
     submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
-    isAlwaysActive: boolean;
     readonly isAllowedToSubmitAfterDueDate = signal<boolean>(false);
     // answer is the text that is stored in the user interface
     readonly answer = signal<string>('');
@@ -368,10 +367,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
             this.textExercise().dueDate && this.participation().initializationDate && dayjs(this.participation().initializationDate).isAfter(this.textExercise().dueDate);
-        const isAlwaysActive = !this.result() && (!this.textExercise().dueDate || isInitializationAfterDueDate);
-
         this.isAllowedToSubmitAfterDueDate.set(!!isInitializationAfterDueDate && !this.participation().testRun && !dayjs().isAfter(this.participation().individualDueDate));
-        this.isAlwaysActive = !!isAlwaysActive;
     }
 
     get isAutomaticResult(): boolean {

@@ -254,7 +254,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeFalsy();
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
@@ -287,37 +286,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeTruthy();
-
-        fixture.destroy();
-    });
-
-    it('should not be always active if there is a result and no due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.result.set(result);
-        comp.textExercise.set(textExercise);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeFalsy();
-
-        fixture.destroy();
-    });
-
-    it('should be always active if there is no result and the initialization date is after the due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise.set(textExercise);
-        comp.textExercise().dueDate = dayjs();
-        participation.initializationDate = dayjs().add(1, 'days');
-        // @ts-ignore updateParticipation is private
-        comp.updateParticipation(participation);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
