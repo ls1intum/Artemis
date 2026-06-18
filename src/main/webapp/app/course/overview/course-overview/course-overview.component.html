@@ -12,14 +12,12 @@
             <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side" [hidden]="isExamStarted()">
                 <jhi-course-sidebar
                     [course]="course()"
-                    [courses]="courses()"
                     [sidebarItems]="sidebarItems()"
                     [courseActionItems]="courseActionItems()"
                     [isNavbarCollapsed]="isNavbarCollapsed()"
                     [isExamStarted]="isExamStarted()"
                     [hasUnreadMessages]="hasUnreadMessages()"
                     [communicationRouteLoaded]="communicationRouteLoaded()"
-                    (switchCourse)="switchCourse($event)"
                     (courseActionItemClick)="courseActionItemClick($event)"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
@@ -55,10 +53,10 @@
                                 <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                             </button>
                         }
-                        @if (selectableSettingPresets) {
+                        @if (selectableSettingPresets()) {
                             <jhi-course-notification-preset-picker
-                                [availableCourseSettingPresets]="selectableSettingPresets"
-                                [selectedCourseSettingPreset]="selectedSettingPreset"
+                                [availableCourseSettingPresets]="selectableSettingPresets()!"
+                                [selectedCourseSettingPreset]="selectedSettingPreset()"
                                 [isSmallButton]="true"
                                 (onPresetSelected)="presetSelected($event)"
                             />

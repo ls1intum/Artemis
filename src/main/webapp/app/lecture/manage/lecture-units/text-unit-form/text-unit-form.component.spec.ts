@@ -194,7 +194,6 @@ describe('TextUnitFormComponent', () => {
         await textUnitFormComponentFixture.whenStable();
 
         textUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        textUnitFormComponent.ngOnChanges();
         textUnitFormComponentFixture.detectChanges();
         await textUnitFormComponentFixture.whenStable();
 

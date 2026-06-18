@@ -53,13 +53,13 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
     });
 
     it('should initialize component properties from the input specification', () => {
-        expect(component['titleLangKey']).toBe('artemisApp.courseNotification.newPostNotification.settingsTitle');
+        expect(component['titleLangKey']()).toBe('artemisApp.courseNotification.newPostNotification.settingsTitle');
         expect(component['typeId']).toBe(1);
         expect(component['channels']).toEqual(testChannelSetting);
 
-        expect(component['mockNotification']).toBeDefined();
-        expect(component['mockNotification'].notificationType).toBe('newPostNotification');
-        expect(component['mockNotification'].notificationId).toBe(1);
+        expect(component['mockNotification']()).toBeDefined();
+        expect(component['mockNotification']().notificationType).toBe('newPostNotification');
+        expect(component['mockNotification']().notificationId).toBe(1);
     });
 
     it('should render notification preview using CourseNotificationComponent', () => {
@@ -68,7 +68,7 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
 
         const courseNotification = notificationComponent.componentInstance.courseNotification;
         const value = typeof courseNotification === 'function' ? courseNotification() : courseNotification;
-        expect(value).toBe(component['mockNotification']);
+        expect(value).toBe(component['mockNotification']());
     });
 
     it('should disable channels based on CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES', () => {
@@ -99,7 +99,7 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
 
         expect(emittedSpec).toBeInstanceOf(CourseNotificationSettingSpecification);
         expect(emittedSpec.typeId).toBe(component['typeId']);
-        expect(emittedSpec.identifier).toBe(component['titleLangKey']);
+        expect(emittedSpec.identifier).toBe(component['titleLangKey']());
         expect(emittedSpec.channelSetting).toEqual(component['channels']);
         expect(emittedSpec.channelSetting[CourseNotificationChannel.PUSH]).toBe(false);
     });

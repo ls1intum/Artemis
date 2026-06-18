@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -25,8 +25,8 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
         return this.popoverRef()!;
     }
 
-    disconnected = false;
-    isOnExamParticipationPage = false;
+    readonly disconnected = signal(false);
+    readonly isOnExamParticipationPage = signal(false);
     websocketStatusSubscription?: Subscription;
     // Initialise with an empty Subscription so ngOnDestroy can unsubscribe safely even if the
     // constructor never assigned a real subscription (e.g. component torn down mid-construction).
@@ -40,14 +40,14 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     constructor() {
         this.routerSubscription = this.router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
-            .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));
+            .subscribe((event: NavigationEnd) => this.isOnExamParticipationPage.set(!!event.url.match('^/courses/\\d+/exams/\\d+')));
     }
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected && status.wasEverConnectedBefore;
+            this.disconnected.set(!status.connected && status.wasEverConnectedBefore);
 
-            if (this.disconnected) {
+            if (this.disconnected()) {
                 this.openTimeout = setTimeout(() => this.popoverRef()?.open(), 300);
             } else {
                 clearTimeout(this.openTimeout);

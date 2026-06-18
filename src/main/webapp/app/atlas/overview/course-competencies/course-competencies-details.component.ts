@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
@@ -75,11 +75,11 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     competencyId?: number;
     course?: Course;
-    courseId?: number;
-    isLoading = false;
-    competency: Competency;
-    competencyProgress: CompetencyProgress;
-    showFireworks = false;
+    readonly courseId = signal<number | undefined>(undefined);
+    readonly isLoading = signal(false);
+    readonly competency = signal<Competency | undefined>(undefined);
+    readonly competencyProgress = signal<CompetencyProgress | undefined>(undefined);
+    readonly showFireworks = signal(false);
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
@@ -96,9 +96,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
                 this.competencyId = Number(competencyIdParams.competencyId);
-                this.courseId = Number(courseIdParams.courseId);
-                this.course = this.courseStorageService.getCourse(this.courseId);
-                if (this.competencyId && this.courseId) {
+                this.courseId.set(Number(courseIdParams.courseId));
+                this.course = this.courseStorageService.getCourse(this.courseId()!);
+                if (this.competencyId && this.courseId()) {
                     this.loadData();
                 }
 
@@ -112,18 +112,21 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     private loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        this.courseCompetencyService.findById(this.competencyId!, this.courseId!).subscribe({
+        this.courseCompetencyService.findById(this.competencyId!, this.courseId()!).subscribe({
             next: (competencyResp) => {
-                this.competency = competencyResp.body!;
-                this.competencyProgress = this.getUserProgress();
+                this.competency.set(competencyResp.body!);
+                this.competencyProgress.set(this.getUserProgress());
 
                 this.handleExerciseLinks();
 
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            error: (errorResponse: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, errorResponse);
+            },
         });
     }
 
@@ -132,43 +135,45 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleExerciseLinks() {
-        if (this.competency.exerciseLinks) {
-            this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
-            this.competency.lectureUnitLinks.push(
-                ...this.competency.exerciseLinks.map((exerciseLink) => {
+        const competency = this.competency();
+        if (competency?.exerciseLinks) {
+            competency.lectureUnitLinks = competency.lectureUnitLinks ?? [];
+            competency.lectureUnitLinks.push(
+                ...competency.exerciseLinks.map((exerciseLink) => {
                     const exerciseUnit = new ExerciseUnit();
                     exerciseUnit.id = exerciseLink.exercise?.id;
                     exerciseUnit.exercise = exerciseLink.exercise;
-                    return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                    return new CompetencyLectureUnitLink(competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
                 }),
             );
         }
     }
 
     showFireworksIfMastered() {
-        if (this.mastery >= 100 && !this.showFireworks) {
-            setTimeout(() => (this.showFireworks = true), 1000);
-            setTimeout(() => (this.showFireworks = false), 6000);
+        if (this.mastery >= 100 && !this.showFireworks()) {
+            setTimeout(() => this.showFireworks.set(true), 1000);
+            setTimeout(() => this.showFireworks.set(false), 6000);
         }
     }
 
     getUserProgress(): CompetencyProgress {
-        if (this.competency.userProgress?.length) {
-            return this.competency.userProgress.first()!;
+        const userProgress = this.competency()?.userProgress;
+        if (userProgress?.length) {
+            return userProgress.first()!;
         }
         return { progress: 0, confidence: 1 } as CompetencyProgress;
     }
 
     get progress(): number {
-        return getProgress(this.competencyProgress);
+        return getProgress(this.competencyProgress());
     }
 
     get confidence(): number {
-        return getConfidence(this.competencyProgress);
+        return getConfidence(this.competencyProgress());
     }
 
     get mastery(): number {
-        return getMastery(this.competencyProgress);
+        return getMastery(this.competencyProgress());
     }
 
     get isMastered(): boolean {
@@ -184,9 +189,15 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             next: () => {
                 event.lectureUnit.completed = event.completed;
 
-                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
+                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
                     next: (resp) => {
-                        this.competency.userProgress = [resp.body!];
+                        this.competencyProgress.set(resp.body!);
+                        this.competency.update((competency) => {
+                            if (competency) {
+                                competency.userProgress = [resp.body!];
+                            }
+                            return competency;
+                        });
                         this.showFireworksIfMastered();
                     },
                 });
@@ -196,6 +207,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     get softDueDatePassed(): boolean {
-        return dayjs().isAfter(this.competency.softDueDate);
+        return dayjs().isAfter(this.competency()?.softDueDate);
     }
 }

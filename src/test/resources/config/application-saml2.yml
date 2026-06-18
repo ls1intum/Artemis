@@ -29,18 +29,24 @@ saml2:
     # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
     # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
 
-spring:
-    security:
-        saml2:
-            relyingparty:
-                registration: {}
-                    # REGISTRATION_ID_HERE: # The EntityId will be generated as "https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>"
-                    #     signing.credentials: &my-metadata 
-                    #         - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem # path-to-key (optional) Set this path to the Key for encryption/signing (must be a PKCS#8 file!) ; if not needed, omit
-                    #           certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt # path-to-cert (optional) Set this path to the Certificate for encryption/signing ; if not needed, omit
-                    #     decryption.credentials: *my-metadata
-                    #     assertingparty:
-                    #         metadata-uri: URL_TO_METADATA_HERE # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
+# Spring Boot standard SAML2 relying party registrations. These tests enable Artemis SAML2
+# (artemis.user-management.saml2.enabled=true) but do not wire a real identity provider, so no relying
+# party is registered here. Do NOT reintroduce an empty `registration: {}`: since Spring Boot 4.1 empty
+# YAML objects are retained in the PropertySource, so `{}` is bound as a String and fails to convert to
+# Map<String, Registration> in RegistrationConfiguredCondition, which breaks context startup for every
+# SAML2 test. To configure a real registration, uncomment and fill in the block below:
+# spring:
+#     security:
+#         saml2:
+#             relyingparty:
+#                 registration:
+#                     REGISTRATION_ID_HERE: # The EntityId will be generated as "https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>"
+#                         signing.credentials: &my-metadata
+#                             - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem # path-to-key (optional) Set this path to the Key for encryption/signing (must be a PKCS#8 file!) ; if not needed, omit
+#                               certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt # path-to-cert (optional) Set this path to the Certificate for encryption/signing ; if not needed, omit
+#                         decryption.credentials: *my-metadata
+#                         assertingparty:
+#                             metadata-uri: URL_TO_METADATA_HERE # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
 
 
 # String used for the SAML2 login button. E.g. 'Shibboleth Login'

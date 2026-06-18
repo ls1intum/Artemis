@@ -102,8 +102,8 @@ describe('BuildJobStatisticsComponent', () => {
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(0);
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledTimes(0);
         expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
-        expect(component.displayMissingBuilds).toBeFalsy();
-        expect(component.displaySpanSelector).toBeFalsy();
+        expect(component.displayMissingBuilds()).toBeFalsy();
+        expect(component.displaySpanSelector()).toBeFalsy();
     });
 
     it('should handle error when getting build job statistics', () => {
@@ -165,7 +165,7 @@ describe('BuildJobStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.displayMissingBuilds).toBeTruthy();
+        expect(component.displayMissingBuilds()).toBeTruthy();
         expect(component.pieChartData().length).toBe(5);
         expect(component.pieChartData()[4].name).toBe('Missing');
     });
@@ -176,7 +176,7 @@ describe('BuildJobStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.displayMissingBuilds).toBeFalsy();
+        expect(component.displayMissingBuilds()).toBeFalsy();
         expect(component.pieChartData().length).toBe(4);
     });
 
