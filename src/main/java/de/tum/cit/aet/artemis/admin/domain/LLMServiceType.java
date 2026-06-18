@@ -4,5 +4,5 @@ package de.tum.cit.aet.artemis.admin.domain;
  * Enum representing different types of LLM (Large Language Model) services used in the system.
  */
 public enum LLMServiceType {
-    IRIS, ATHENA, HYPERION
+    IRIS, ATHENA, HYPERION, ATLAS
 }

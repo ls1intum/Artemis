@@ -20,12 +20,16 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
@@ -34,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
@@ -63,6 +68,9 @@ public class CompetencyOrchestrationService {
     private static final String EXECUTE_PROMPT_PATH = "prompts/atlas/orchestrator_execute_prompt.st";
 
     private static final String RUN_MAP_NAME = "atlas-orchestrator-runs";
+
+    /** Token-usage pipeline id for one orchestrator LLM round. */
+    private static final String ORCHESTRATION_PIPELINE_ID = "ATLAS_ORCHESTRATION";
 
     /** Length caps on instructor-controlled strings to bound prompt size and injection surface. */
     private static final int EXERCISE_TITLE_MAX = 200;
@@ -106,12 +114,16 @@ public class CompetencyOrchestrationService {
 
     private final ContentChangeAccumulatorService contentChangeAccumulatorService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     private volatile DistributedMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
             AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
-            ContentChangeAccumulatorService contentChangeAccumulatorService) {
+            ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorToolsService = orchestratorToolsService;
@@ -123,6 +135,8 @@ public class CompetencyOrchestrationService {
         this.reasoningEffort = properties.reasoningEffort();
         this.distributedDataProvider = distributedDataProvider;
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -382,7 +396,7 @@ public class CompetencyOrchestrationService {
         List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
-            content = callChatClient(systemPrompt, courseId, appliedActions);
+            content = callChatClient(systemPrompt, courseId, exerciseId, appliedActions);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator LLM call failed for exercise {} after applying {} action(s): {}", exerciseId, appliedActions.size(), ex.getMessage(), ex);
@@ -422,7 +436,9 @@ public class CompetencyOrchestrationService {
         List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
-            content = callChatClient(systemPrompt, courseId, appliedActions);
+            // Batch reasons over all exercises in one LLM round; token usage is attributed to the course
+            // (the primary cost view) with the first exercise as a representative for the per-exercise field.
+            content = callChatClient(systemPrompt, courseId, exercises.getFirst().getId(), appliedActions);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
@@ -442,8 +458,13 @@ public class CompetencyOrchestrationService {
      * non-null before we get here, so no null check is needed and no null is returned. Returns the
      * (possibly empty) final assistant message; the orchestrator's mutations have already been
      * appended to {@code appliedActions} via the typed buffer in the tool context.
+     * <p>
+     * The {@link ChatResponse} (rather than just its content) is captured so the round's token usage
+     * is persisted via {@link LLMTokenUsageService}, feeding the existing per-course LLM cost views.
+     * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when
+     * there is no {@code SecurityContext} (e.g. a scheduler-driven run).
      */
-    private String callChatClient(String systemPrompt, long courseId, List<AppliedActionDTO> appliedActions) {
+    private String callChatClient(String systemPrompt, long courseId, long exerciseId, List<AppliedActionDTO> appliedActions) {
         OpenAiChatOptions.Builder options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolsService.COURSE_ID_KEY, courseId);
@@ -453,7 +474,11 @@ public class CompetencyOrchestrationService {
         if (orchestratorToolCallbackProvider != null) {
             promptSpec = promptSpec.toolCallbacks(orchestratorToolCallbackProvider);
         }
-        String content = promptSpec.call().content();
+        ChatResponse chatResponse = promptSpec.call().chatResponse();
+        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
+                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+        String content = LLMTokenUsageService.extractResponseText(chatResponse);
         return Objects.requireNonNullElse(content, "");
     }
 

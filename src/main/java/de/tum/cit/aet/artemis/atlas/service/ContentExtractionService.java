@@ -143,7 +143,7 @@ public class ContentExtractionService {
     }
 
     /**
-     * Build the chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
+     * Build the OpenAI chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
      * explicit temperature alongside {@code reasoningEffort}, so exactly one is set: {@code reasoningEffort}
      * when configured, otherwise {@code temperature}. Mirrors {@code CompetencyOrchestrationService.buildChatOptions}.
      */
