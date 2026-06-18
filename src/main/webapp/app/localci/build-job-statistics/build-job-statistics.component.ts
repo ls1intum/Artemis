@@ -1,10 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { onError } from 'app/foundation/util/global.utils';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,7 +28,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, NgxChartsModule, HelpIconComponent],
+    imports: [TranslateDirective, ChartModule, HelpIconComponent],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,7 +47,7 @@ export class BuildJobStatisticsComponent implements OnInit {
     protected readonly SpanType = SpanType;
 
     /** Currently selected time span for statistics (day, week, or month) */
-    currentSpan: SpanType = SpanType.WEEK;
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
 
     /** Formatted percentage strings for display */
     successfulBuildsPercentage = signal('-%');
@@ -54,10 +57,10 @@ export class BuildJobStatisticsComponent implements OnInit {
     missingBuildsPercentage = signal('-%');
 
     /** Whether to show the time span selector tabs (hidden when statistics come from input) */
-    displaySpanSelector = true;
+    readonly displaySpanSelector = signal(true);
 
     /** Whether to show missing builds in the chart (hidden when embedded in agent details) */
-    displayMissingBuilds = true;
+    readonly displayMissingBuilds = signal(true);
 
     /** Current build job statistics data */
     buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
@@ -71,20 +74,17 @@ export class BuildJobStatisticsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.getBuildJobStatistics(this.currentSpan);
+        this.getBuildJobStatistics(this.currentSpan());
     }
 
-    /** Data array for the pie chart visualization (ngx-charts format) */
-    pieChartData = signal<NgxChartsSingleSeriesDataEntry[]>([]);
+    /** Data array for the pie chart visualization; one entry per segment */
+    pieChartData = signal<ChartSeriesEntry[]>([]);
 
-    /** Color scheme configuration for the pie chart segments */
-    pieChartColorScheme = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        // Colors: green (success), red (failed), yellow (cancelled), blue (timeout), grey (missing)
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.GREY],
-    } as Color;
+    /** Colors of the pie chart segments: green (success), red (failed), yellow (cancelled), blue (timeout), grey (missing) */
+    private readonly pieChartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.GREY]);
+
+    readonly chartData = computed(() => singleSeriesChartData(this.pieChartData(), this.pieChartColors()));
+    readonly chartOptions = computed(() => doughnutChartOptions({ arcWidth: 0.4, legend: false }));
 
     /**
      * Determines the context and fetches appropriate statistics.
@@ -100,8 +100,8 @@ export class BuildJobStatisticsComponent implements OnInit {
                 this.getBuildJobStatisticsForBuildQueue(span);
             } else {
                 // Embedded in another component: use input statistics without span selector
-                this.displayMissingBuilds = false;
-                this.displaySpanSelector = false;
+                this.displayMissingBuilds.set(false);
+                this.displaySpanSelector.set(false);
                 this.updateDisplayedBuildJobStatistics(this.buildJobStatisticsInput()!);
             }
         });
@@ -164,14 +164,14 @@ export class BuildJobStatisticsComponent implements OnInit {
         }
 
         // Update pie chart data with current statistics
-        const chartData: NgxChartsSingleSeriesDataEntry[] = [
+        const chartData: ChartSeriesEntry[] = [
             { name: 'Successful', value: statistics.successfulBuilds },
             { name: 'Failed', value: statistics.failedBuilds },
             { name: 'Cancelled', value: statistics.cancelledBuilds },
             { name: 'Timeout', value: statistics.timeOutBuilds },
         ];
         // Only include missing builds when displayMissingBuilds is enabled
-        if (this.displayMissingBuilds) {
+        if (this.displayMissingBuilds()) {
             chartData.push({ name: 'Missing', value: statistics.missingBuilds });
         }
         this.pieChartData.set(chartData);
@@ -182,8 +182,8 @@ export class BuildJobStatisticsComponent implements OnInit {
      * @param span The new span
      */
     onTabChange(span: SpanType): void {
-        if (this.currentSpan !== span) {
-            this.currentSpan = span;
+        if (this.currentSpan() !== span) {
+            this.currentSpan.set(span);
             this.getBuildJobStatistics(span);
         }
     }

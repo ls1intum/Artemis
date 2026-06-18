@@ -196,11 +196,11 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
     it('should not deactivate with pending changes', () => {
         let canDeactivate;
 
-        component['isLoading'] = false;
+        component['isLoading'].set(false);
         canDeactivate = component.canDeactivate();
         expect(canDeactivate).toBeTruthy();
 
-        component['isLoading'] = true;
+        component['isLoading'].set(true);
         canDeactivate = component.canDeactivate();
         expect(canDeactivate).toBeFalsy();
     });

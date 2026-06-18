@@ -113,6 +113,11 @@ configurations {
 }
 
 repositories {
+    // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors during dependency resolution)
+    maven {
+        name = "reposiliteRepository"
+        url = "https://reposilite.aet.cit.tum.de/releases"
+    }
     mavenCentral()
     mavenLocal()
     // required for Spring AI milestone releases
@@ -231,7 +236,7 @@ dependencies {
     // Align all Spring AI modules to the same version
     // 2.0.0-M6+ fixes GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-RC2")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
@@ -321,7 +326,7 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.35.0"
+    implementation "com.google.protobuf:protobuf-java:4.35.1"
 
     // Jackson 2 core modules — versions managed by Spring Boot BOM
     implementation "com.fasterxml.jackson.core:jackson-annotations"
@@ -333,7 +338,7 @@ dependencies {
     // Use hibernate7 variant for Hibernate 7.x compatibility
     // NOTE: version pinned because the Spring Boot BOM does not include the hibernate7 variant.
     // Must be kept in sync with the Jackson 2.x version managed by the BOM.
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.2"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.4"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
     // Support YML serialization and deserialization
@@ -363,6 +368,10 @@ dependencies {
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
     implementation "org.apache.commons:commons-collections4:4.5.0"
+    // Declared explicitly because production code imports org.apache.commons.io.* directly (FileUtil, FileService, FilenameUtils, …).
+    // It was previously only present transitively, which is fragile: a transitive provider can drop or relocate the package on a
+    // version bump (e.g. the OpenSAML/Velocity upgrade removed org.apache.velocity.shaded.commons.io). Enforced by ArchitectureTest.testNoShadedDependencies.
+    implementation "commons-io:commons-io:2.22.0"
 
     implementation("org.liquibase:liquibase-core:${liquibase_version}") {
         exclude group: "com.opencsv", module: "opencsv"
@@ -390,23 +399,24 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.1 (Oakwood) — individual module versions are pinned because the
+    // Spring Cloud 2025.1.2 (Oakwood) — individual module versions are pinned because the
     // spring-cloud-dependencies BOM does not publish versions for these specific modules.
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.1"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.3"
-    implementation "org.springframework.cloud:spring-cloud-commons:5.0.1"
+    // 2025.1.2 introduces Spring Boot 4.1.0 compatibility; the 2025.1.1 verifier rejected 4.1.0 and shut the app down.
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.4"
+    implementation "org.springframework.cloud:spring-cloud-commons:5.0.2"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
     // Version managed by the Spring Boot BOM.
     implementation "io.projectreactor.netty:reactor-netty-core"
 
     // required for the connection to Hermes (push notifications)
-    implementation "org.springframework.retry:spring-retry:2.0.12"
+    implementation "org.springframework.retry:spring-retry:2.0.13"
 
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.6.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.7.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -481,7 +491,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.49.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.50.0"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
 

@@ -1,0 +1,569 @@
+name: CI
+# Single CI entry point. See .github/workflows/README.md for the contract.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - develop
+      - main
+      - release/*
+  release:
+    # `published` covers draft promotion. No `push: tags:` trigger — UI release publish
+    # would otherwise double-fire.
+    types: [published]
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Bypass change detection and run every job'
+        type: boolean
+        default: false
+
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.event.pull_request.number)
+     || github.event_name == 'merge_group'  && format('ci-mq-{0}', github.event.merge_group.head_sha)
+     || github.event_name == 'release'      && format('ci-release-{0}', github.event.release.tag_name)
+     || format('ci-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+
+  detect-changes:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build_relevant: ${{ steps.decide.outputs.build_relevant }}
+      has_java: ${{ steps.decide.outputs.has_java }}
+      has_docs: ${{ steps.decide.outputs.has_docs }}
+      has_i18n: ${{ steps.decide.outputs.has_i18n }}
+      has_gradle: ${{ steps.decide.outputs.has_gradle }}
+      has_workflows: ${{ steps.decide.outputs.has_workflows }}
+      has_version: ${{ steps.decide.outputs.has_version }}
+      has_beans: ${{ steps.decide.outputs.has_beans }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
+      # initial commits, force-pushes, missing merge-base, and `merge_group` events.
+      # Two passes, because `predicate-quantifier` is per-step. The `relevant` pass uses
+      # `every` so the negations actually subtract — under the default `some` they are inert
+      # (every file matches via `**`), which would make build/test always-run. Result:
+      # build/test run unless every changed file is markdown, LICENSE, or under documentation/.
+      - id: relevant
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        with:
+          # On push/merge_group: diff against the previous commit. On PR: against base.ref.
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          predicate-quantifier: every
+          filters: |
+            build:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+      #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs.
+      #   Each area includes its own workflow/helper files so edited checks run themselves.
+      - id: area
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        with:
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          filters: |
+            has_java:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quality.yml'
+              - 'src/main/java/**'
+              - 'src/test/java/**'
+              - 'build.gradle'
+              - 'gradle/**'
+              - 'supporting_scripts/analyze_java_files.py'
+              - 'supporting_scripts/find_slow_queries.py'
+            # bean-instantiations boots the *production* context (gradle test is skipped), so it
+            # only cares about main sources + the build graph — not test sources or the analysis
+            # helpers that has_java carries for the quality jobs.
+            has_beans:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-bean-instantiations.yml'
+              - 'src/main/java/**'
+              - 'src/main/resources/**'
+              - 'build.gradle'
+              - 'gradle/**'
+            has_docs:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-docs.yml'
+              - 'documentation/**'
+            has_i18n:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-translation.yml'
+              - '.ci/translation-file-checker/**'
+              - 'src/main/webapp/i18n/**'
+            has_gradle:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-gradle-wrapper.yml'
+              - 'gradle/wrapper/**'
+              - 'gradlew'
+              - 'gradlew.bat'
+            has_workflows:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/actionlint.yaml'
+            has_version:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-version-consistency.yml'
+              - 'build.gradle'
+              - 'openapi/openapi.yaml'
+              - 'README.md'
+              - 'supporting_scripts/update_version.sh'
+
+      - id: decide
+        env:
+          # Events with no diff baseline (release, merge_group root commit) or an explicit
+          # opt-in (workflow_dispatch + force_build) run everything.
+          FORCE: >-
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.force_build)
+             || github.event_name == 'release'
+             || github.event_name == 'merge_group' }}
+          F_BUILD: ${{ steps.relevant.outputs.build }}
+          F_JAVA: ${{ steps.area.outputs.has_java }}
+          F_DOCS: ${{ steps.area.outputs.has_docs }}
+          F_I18N: ${{ steps.area.outputs.has_i18n }}
+          F_GRADLE: ${{ steps.area.outputs.has_gradle }}
+          F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
+          F_VERSION: ${{ steps.area.outputs.has_version }}
+          F_BEANS: ${{ steps.area.outputs.has_beans }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$FORCE" = "true" ]; then
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans; do
+              echo "$k=true" >> "$GITHUB_OUTPUT"
+            done
+          else
+            {
+              echo "build_relevant=${F_BUILD:-false}"
+              echo "has_java=${F_JAVA:-false}"
+              echo "has_docs=${F_DOCS:-false}"
+              echo "has_i18n=${F_I18N:-false}"
+              echo "has_gradle=${F_GRADLE:-false}"
+              echo "has_workflows=${F_WORKFLOWS:-false}"
+              echo "has_version=${F_VERSION:-false}"
+              echo "has_beans=${F_BEANS:-false}"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-build.yml
+    permissions:
+      # `contents: write` is the ceiling for ci-build.yml's `upload-release` job (`gh release
+      # upload`); `build-war` itself runs read-only. `packages: write` is for the GHCR push.
+      contents: write
+      packages: write
+    with:
+      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      is_release: ${{ github.event_name == 'release' }}
+      # Release-eligible build (gates -Psbom). Tag pushes don't trigger ci.yml, so the
+      # tag case is covered by the `release` event rather than a `push: refs/tags/*` arm.
+      is_release_build: ${{ github.event_name == 'release' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))) }}
+      release_tag: ${{ github.event.release.tag_name || '' }}
+
+  test:
+    name: Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-test.yml
+    permissions:
+      contents: read
+      checks: write
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
+      run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      pr_author: ${{ github.event.pull_request.user.login || '' }}
+    secrets:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+  # In-run coverage table for INTERNAL PRs — posts as soon as `test` finishes (~28 min) instead of
+  # waiting for the whole run, which the advisory e2e tail delays to ~120 min (and with it the
+  # workflow_run reporter). Trust model: runs on `pull_request` (NOT pull_request_target) in the PR's
+  # OWN context, so the token is the PR's own — write only on internal PRs (author is already a
+  # collaborator), force-read-only on forks. Hence the internal-PR `if` gate IS the security boundary,
+  # and checking out the PR head to read its source for accurate per-file columns is safe (no overlay,
+  # no API-derived-file dance the fork path needs). Fork PRs fall through to the hardened, fork-only
+  # pullrequest-coverage-reporter.yml. ADVISORY: deliberately NOT in all-required-ci-passed's needs.
+  # Minimum permissions are an invariant here (PR-author code runs): never add secrets or any write
+  # scope beyond pull-requests.
+  coverage-report:
+    name: Report PR Coverage
+    needs: [detect-changes, test]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.test.result != 'skipped' && needs.test.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    # Own group (not the umbrella's) so a superseded push doesn't tear a mid-flight PR-body update.
+    concurrency:
+      group: coverage-inrun-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Detect changed files
+        id: changes
+        # Advisory poster: a transient listFiles blip must not red this job. On failure the outputs
+        # are empty, the generate/update steps below skip, and the next push retries.
+        continue-on-error: true
+        uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
+      - name: Download server JaCoCo XML
+        if: steps.changes.outputs.has_server_changes == 'true'
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: Server JaCoCo XML
+          path: build/reports/jacoco/
+      - name: Download client coverage summaries
+        if: steps.changes.outputs.has_client_changes == 'true'
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: Client Coverage Summaries
+          # Nested path is deliberate: the single-file artifact unpacks flat, and it must land where
+          # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
+          path: build/test-results/vitest/coverage/
+      - name: Setup Node.js
+        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Generate coverage table
+        id: coverage
+        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
+        env:
+          CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
+          SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+        # PR head is checked out, so the shared script reads the PR's own source for accurate
+        # per-file columns natively (no overlay — that's the fork path's problem, not this one).
+        run: .github/scripts/generate-coverage-table.sh
+      - name: Update PR description with coverage
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.changes.outcome == 'success'
+        continue-on-error: true
+        uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
+          HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
+          COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
+          COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
+          # The TEST job result, not the whole-run conclusion (which e2e pollutes on internal PRs).
+          TEST_CONCLUSION: ${{ needs.test.result }}
+          TEST_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          POST_AUTHOR_COMMENT: 'false'
+        with:
+          script: await require('./.github/scripts/update-pr-coverage.js')({ github, context, core })
+
+  quality:
+    name: Quality
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-quality.yml
+    permissions:
+      contents: read
+      checks: write  # server-style's architecture-test reporter posts a check-run
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
+
+  gradle-wrapper:
+    name: Validate Gradle Wrapper
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_gradle == 'true'
+    uses: ./.github/workflows/ci-gradle-wrapper.yml
+    permissions:
+      contents: read
+
+  workflows:
+    name: Lint Workflows
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_workflows == 'true'
+    uses: ./.github/workflows/ci-workflows.yml
+    permissions:
+      contents: read
+
+  docs:
+    name: Build Documentation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_docs == 'true'
+    uses: ./.github/workflows/ci-docs.yml
+    permissions:
+      contents: read
+    with:
+      # On a develop push, also upload the Pages artifact for the deploy-docs job to publish.
+      upload_pages_artifact: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+
+  # Publishes the docs to GitHub Pages on develop — folded in from the old deploy-documentation.yml
+  # so the entire CI/CD trigger surface lives in this one file. It consumes the Pages artifact the
+  # `docs` job uploaded (no second build) and gates on that build passing. Job-level
+  # `concurrency: pages` serializes Pages deploys across runs and against the manual redeploy in
+  # deploy-documentation.yml. PRs skip it, so `pages`/`id-token` write scope is never granted on a PR.
+  deploy-docs:
+    name: Deploy Documentation
+    needs: [detect-changes, docs]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.has_docs == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  translation:
+    name: Check Translation Keys
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_i18n == 'true'
+    uses: ./.github/workflows/ci-translation.yml
+    permissions:
+      contents: read
+
+  version-consistency:
+    name: Version Consistency
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_version == 'true'
+    uses: ./.github/workflows/ci-version-consistency.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  bean-instantiations:
+    name: Bean Instantiations
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_beans == 'true'
+    uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # Advisory — not in the required gate. Depends on `build` for the Docker image, not on
+  # `test`, so a flaky unit-test run never blocks it; runs only when `build` succeeded
+  # (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they cannot
+  # push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
+  # fail at setup with no image to pull.
+  e2e:
+    name: E2E
+    needs: [detect-changes, build]
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/ci-e2e.yml
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+      actions: read
+    with:
+      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
+      pr_number: ${{ github.event.pull_request.number || 0 }}
+    secrets:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+      HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+
+  # Advisory — not in the required gate. CodeQL builds the code itself (its tracer must observe
+  # compilation), so it runs independently of `build`, in parallel, on the abundant GitHub-hosted
+  # pool — it never touches the self-hosted runners and adds no merge latency. Fork PRs are
+  # excluded: `security-events: write` (the SARIF upload) is downgraded to read-only on fork
+  # tokens, so CodeQL would only fail at upload. Forks are still covered post-merge by the push
+  # scan on `develop`/`main` and the weekly scheduled scan (codeql-analysis.yml).
+  codeql:
+    name: CodeQL
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    uses: ./.github/workflows/ci-codeql.yml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # The single required status check. Depends on every deterministic job — build, test, and
+  # the quality gates — which run in parallel and finish within `test`'s window, so requiring
+  # them adds no merge latency. `e2e` is the one exclusion: it is slow and flaky, so it stays
+  # advisory (out of `needs:`) and never blocks merging. `detect-changes` is included so a
+  # change-detection failure fails the gate closed. Path-skipped jobs report `skipped`, which
+  # the gate accepts as a pass.
+  #
+  # INVARIANT (load-bearing): a required job's `skipped` is accepted as a pass, so the gate is
+  # only safe while every job whose skip could hide a failure has its failure-producing
+  # dependency ALSO listed here. Today that holds because the required jobs gate solely on
+  # `detect-changes`, which is in this list. If a future required job is made to `needs:`
+  # another required job's output, add that producer here too, or a cascading skip could pass
+  # the gate green over broken code.
+  all-required-ci-passed:
+    name: All required CI Passed
+    if: always()
+    needs:
+      - detect-changes
+      - build
+      - test
+      - quality
+      - gradle-wrapper
+      - translation
+      - docs
+      - workflows
+      - version-consistency
+      - bean-instantiations
+    runs-on: ubuntu-latest
+    permissions: {}
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate gate
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          # Fail closed: a jq error must not leave `failing` empty and pass the gate green.
+          set -Eeuo pipefail
+          failing=$(jq -r '
+            to_entries[]
+            | select(.value.result != "success" and .value.result != "skipped")
+            | "\(.key): \(.value.result)"
+          ' <<< "$NEEDS")
+          if [ -n "$failing" ]; then
+            echo "::error::One or more required CI jobs did not pass:"
+            echo "$failing"
+            exit 1
+          fi
+
+  # Informational Summary-page report (timeline + per-job table); never required, never in
+  # another job's `needs:`, so it cannot block merging.
+  ci-summary:
+    name: CI Summary
+    if: always()
+    needs:
+      - detect-changes
+      - build
+      - test
+      - quality
+      - gradle-wrapper
+      - workflows
+      - docs
+      - translation
+      - version-consistency
+      - bean-instantiations
+      - e2e
+      - codeql
+      - coverage-report
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read  # actions-timeline reads the run's jobs API
+    timeout-minutes: 5
+    steps:
+      - name: Render run timeline
+        uses: Kesin11/actions-timeline@44c9c178ffb2fb1d9859614a3ffa79ccfb77565e  # v3.1.0
+        with:
+          show-waiting-runner: true
+      - name: Render summary
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # Everything except these is required (i.e. in all-required-ci-passed's needs).
+          ADVISORY: e2e codeql coverage-report
+        run: |
+          set -Eeuo pipefail
+          icon() {
+            case "$1" in
+              success)   printf '✅' ;;
+              failure)   printf '❌' ;;
+              skipped)   printf '⏭️' ;;
+              cancelled) printf '🚫' ;;
+              error)     printf '⚠️' ;;  # e2e_result aggregate (advisory infra error)
+              *)         printf '❔' ;;
+            esac
+          }
+          # Only a REQUIRED check's failure is locally fixable + merge-blocking; advisory
+          # (e2e/codeql) failures are not, and detect-changes has no table row, so none of them
+          # should trigger the local-fix hints.
+          required_failure=$(jq -r --arg adv "$ADVISORY" '
+            ($adv | split(" ") + ["detect-changes"]) as $a
+            | any(to_entries[]; .value.result == "failure" and (.key as $k | $a | index($k) | not))
+          ' <<< "$NEEDS")
+          {
+            echo "## CI Summary"
+            echo
+            echo "| Job | Role | Result |"
+            echo "|-----|------|--------|"
+            while IFS=$'\t' read -r job result; do
+              if [ "$job" = "detect-changes" ]; then continue; fi
+              case " $ADVISORY " in
+                *" $job "*) role='advisory' ;;
+                *)          role='**required**' ;;
+              esac
+              printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
+            done < <(jq -r 'to_entries[] | "\(.key)\t\((.value.outputs.e2e_result // "") as $o | if $o == "" then .value.result else $o end)"' <<< "$NEEDS")
+
+            # Local-fix hints, shown only when a required job failed; commands mirror CLAUDE.md.
+            if [ "$required_failure" = "true" ]; then
+              echo
+              echo "<details><summary>💡 Common local fixes</summary>"
+              echo
+              echo "| Symptom | Command |"
+              echo "|---------|---------|"
+              echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
+              echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain\` |"
+              echo
+              echo "Failed test details are in the **Test** and **E2E** checks above."
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

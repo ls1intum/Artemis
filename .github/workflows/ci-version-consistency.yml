@@ -1,0 +1,25 @@
+name: Version Consistency
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  check:
+    name: Verify version consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Verify version is consistent across build.gradle, openapi.yaml and README.md
+        run: bash supporting_scripts/update_version.sh --check

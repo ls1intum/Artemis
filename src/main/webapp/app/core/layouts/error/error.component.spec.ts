@@ -37,9 +37,9 @@ describe('ErrorComponent', () => {
         fixture.detectChanges();
         const comp = fixture.componentInstance;
 
-        expect(comp.error403).toBe(true);
-        expect(comp.error404).toBeFalsy();
-        expect(comp.errorMessage).toBe('Oops');
+        expect(comp.error403()).toBe(true);
+        expect(comp.error404()).toBeFalsy();
+        expect(comp.errorMessage()).toBe('Oops');
     });
 
     it('should handle missing fields gracefully', () => {
@@ -49,8 +49,8 @@ describe('ErrorComponent', () => {
         fixture.detectChanges();
         const comp = fixture.componentInstance;
 
-        expect(comp.error403).toBeUndefined();
-        expect(comp.error404).toBeUndefined();
-        expect(comp.errorMessage).toBeUndefined();
+        expect(comp.error403()).toBeUndefined();
+        expect(comp.error404()).toBeUndefined();
+        expect(comp.errorMessage()).toBeUndefined();
     });
 });

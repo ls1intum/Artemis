@@ -40,8 +40,10 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     noOfChannels = 0;
     channelModificationPerformed = false;
-    isLoading = false;
-    channels: ChannelDTO[] = [];
+    // Signal-backed: set inside the async getChannelsOfCourse() subscribe/finalize, so they must
+    // schedule change detection under zoneless CD for the channel list/spinner to render.
+    readonly isLoading = signal(false);
+    readonly channels = signal<ChannelDTO[]>([]);
 
     isInitialized = false;
 
@@ -105,20 +107,20 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     }
 
     loadChannelsOfCourse() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.channelService
             .getChannelsOfCourse(this.course()!.id!)
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
-                    this.channels = channels;
-                    this.noOfChannels = this.channels.length;
+                    this.channels.set(channels);
+                    this.noOfChannels = channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);

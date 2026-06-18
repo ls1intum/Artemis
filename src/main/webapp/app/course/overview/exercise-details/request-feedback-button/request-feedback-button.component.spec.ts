@@ -138,7 +138,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedLLMUsage = true;
+        component.hasUserAcceptedLLMUsage.set(true);
 
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable<StudentParticipation>((subscriber) => {
@@ -208,7 +208,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise);
-            component.isExamExercise = false;
+            component.isExamExercise.set(false);
 
             await initAndTick();
 
@@ -225,7 +225,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
             setupComponentInputs(exercise, true);
-            component.hasUserAcceptedLLMUsage = true;
+            component.hasUserAcceptedLLMUsage.set(true);
 
             await initAndTick();
 
@@ -246,7 +246,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise);
-            component.hasUserAcceptedLLMUsage = true;
+            component.hasUserAcceptedLLMUsage.set(true);
 
             vi.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
             vi.spyOn(alertService, 'warning');
@@ -291,7 +291,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise, true, false);
-            component.hasUserAcceptedLLMUsage = true;
+            component.hasUserAcceptedLLMUsage.set(true);
 
             const modalSpy = vi.spyOn(llmModalService, 'open');
             const processFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
@@ -346,7 +346,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(true);
     });
 
     it('should set hasUserAcceptedLLMUsage to true when selectedLLMUsage is LOCAL_AI', () => {
@@ -354,7 +354,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(true);
     });
 
     it('should set hasUserAcceptedLLMUsage to false when user identity is undefined', () => {
@@ -362,7 +362,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedLLMUsage).toBe(false);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(false);
     });
 
     it('should set hasUserAcceptedLLMUsage to false when selectedLLMUsage is NO_AI', () => {
@@ -370,7 +370,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedLLMUsage).toBe(false);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(false);
     });
 
     it('should open LLM modal when hasUserAcceptedLLMUsage is false', async () => {
@@ -379,7 +379,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedLLMUsage = false;
+        component.hasUserAcceptedLLMUsage.set(false);
 
         const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
 
@@ -398,7 +398,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
         await initAndTick();
-        component.hasUserAcceptedLLMUsage = false;
+        component.hasUserAcceptedLLMUsage.set(false);
 
         vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
@@ -409,7 +409,7 @@ describe('RequestFeedbackButtonComponent', () => {
         await vi.advanceTimersByTimeAsync(0);
 
         expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(true);
         expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
     });
 
@@ -430,7 +430,7 @@ describe('RequestFeedbackButtonComponent', () => {
         await vi.advanceTimersByTimeAsync(0);
 
         expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
-        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+        expect(component.hasUserAcceptedLLMUsage()).toBe(true);
         expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         expect(courseExerciseService.requestFeedback).toHaveBeenCalledWith(exercise.id, participation.id);
     });
@@ -616,7 +616,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedLLMUsage = true;
+        component.hasUserAcceptedLLMUsage.set(true);
 
         const generatingFeedbackSpy = vi.fn();
         component.generatingFeedback.subscribe(generatingFeedbackSpy);
@@ -711,7 +711,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
             setupComponentInputs(exercise, true, false);
-            component.hasUserAcceptedLLMUsage = false;
+            component.hasUserAcceptedLLMUsage.set(false);
             component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
 
             mockLLMModalService.open.mockClear();

@@ -307,7 +307,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 this.course.set(courseResponse.body!);
             }
             this.sidebarItems.set(this.getSidebarItems());
-            this.updateRecentlyAccessedCourses().catch();
         });
     }
 
@@ -323,14 +322,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     protected getHasSidebar(): boolean {
         return this.communicationRouteLoaded();
-    }
-
-    /** Navigate to a new Course */
-    switchCourse(course: Course) {
-        const url = ['course-management', course.id];
-        this.router.navigate(url).then(() => {
-            this.handleCourseIdChange(course.id!);
-        });
     }
 
     protected handleComponentActivation(componentRef: any): void {
@@ -353,7 +344,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
-            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
+            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed() ?? false);
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
         if (this.courseBody()) {
@@ -367,7 +358,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
         childRouteComponent.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed);
+        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
     }
 
     override getSidebarItems(): SidebarItem[] {
