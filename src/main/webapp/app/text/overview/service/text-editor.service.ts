@@ -62,6 +62,32 @@ const ENGLISH_STOP_WORDS = new Set([
     'over',
     'after',
     'before',
+    // Greetings, courtesy and other high-frequency words so short submissions (e.g. "Thanks",
+    // "Best regards") still get classified even when they contain no other function word.
+    'thanks',
+    'thank',
+    'please',
+    'hello',
+    'hi',
+    'yes',
+    'good',
+    'best',
+    'regards',
+    'kind',
+    'have',
+    'has',
+    'had',
+    'will',
+    'would',
+    'can',
+    'could',
+    'should',
+    'my',
+    'your',
+    'our',
+    'more',
+    'much',
+    'very',
 ]);
 
 /** Common German function words for the same heuristic. */
@@ -124,6 +150,40 @@ const GERMAN_STOP_WORDS = new Set([
     'aber',
     'sowie',
     'zudem',
+    // Greetings, courtesy and other high-frequency words so short submissions (e.g. "Vielen Dank",
+    // "Viele Grüße") still get classified even when they contain no other function word.
+    'danke',
+    'dank',
+    'vielen',
+    'viele',
+    'grüße',
+    'grüßen',
+    'freundlichen',
+    'hallo',
+    'bitte',
+    'gerne',
+    'ja',
+    'nein',
+    'gut',
+    'kein',
+    'keine',
+    'mehr',
+    'hier',
+    'haben',
+    'hat',
+    'hatte',
+    'wird',
+    'werden',
+    'kann',
+    'können',
+    'muss',
+    'soll',
+    'wurde',
+    'wurden',
+    'mein',
+    'meine',
+    'sein',
+    'seine',
 ]);
 
 @Injectable({ providedIn: 'root' })
@@ -174,6 +234,11 @@ export class TextEditorService {
         }
         if (englishScore > germanScore) {
             return Language.ENGLISH;
+        }
+        // On a tie (including no stop-word matches), German-specific characters are a strong German
+        // signal for short phrases that contain no function word (e.g. "Schöne Grüße").
+        if (/[äöüß]/i.test(text)) {
+            return Language.GERMAN;
         }
         return undefined;
     }
