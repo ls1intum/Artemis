@@ -653,6 +653,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
+    @JsonIgnore
     public boolean getAllowFeedbackRequests() {
         var course = getCourseViaExerciseGroupOrCourseMember();
         return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled();

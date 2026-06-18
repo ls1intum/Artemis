@@ -857,6 +857,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedback_feedbackRequestAlreadySent() throws Exception {
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
@@ -1853,6 +1860,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedAndRateLimitExceeded_thenFail() throws Exception {
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
@@ -1987,6 +2000,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedAfterDueDateOnGradedParticipation_thenFail() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(textExercise);
 
