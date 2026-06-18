@@ -2,14 +2,6 @@ import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
-/** A competency linked to a group. Weight follows the same LOW/MEDIUM/HIGH scale as exercise-level links. */
-export interface GroupCompetencyLink {
-    competencyId: number;
-    title: string;
-    /** LOW = 0.25, MEDIUM = 0.5, HIGH = 1.0 */
-    weight: number;
-}
-
 /**
  * Course-level grouping of exercises. Distinct from the exam-scoped `ExerciseGroup`.
  *
@@ -40,9 +32,6 @@ export class CourseExerciseGroup {
      * calculation: if the summed exercise points exceed the cap, the contribution is capped here.
      */
     maxPoints?: number;
-
-    /** Competencies shared by all exercises in this group. */
-    competencyLinks?: GroupCompetencyLink[];
 
     exercises?: Exercise[];
 }

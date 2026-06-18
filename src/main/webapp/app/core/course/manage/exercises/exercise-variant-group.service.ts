@@ -97,8 +97,8 @@ export class ExerciseVariantGroupService {
 
 /**
  * Maps a server DTO to the client {@link CourseExerciseGroup} model used by the management view. Members are resolved
- * from {@code exercisesById} since the DTO only carries exercise ids. The mock-only {@code order} and
- * {@code competencyLinks} fields stay undefined.
+ * from {@code exercisesById} since the DTO only carries exercise ids. The mock-only {@code order} field stays
+ * undefined.
  */
 export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesById: Map<number, Exercise>): CourseExerciseGroup {
     return {

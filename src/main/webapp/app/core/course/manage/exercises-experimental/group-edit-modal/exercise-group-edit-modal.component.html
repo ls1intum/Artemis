@@ -1,21 +1,19 @@
 <p-dialog header="Edit Group" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" appendTo="body" [style]="{ width: '780px' }" [closable]="true">
     <div class="d-flex flex-column gap-4">
-        <!-- Title -->
-        <div>
-            <label class="fw-semibold d-block mb-1" for="group-edit-title">Name</label>
-            <input
-                id="group-edit-title"
-                pInputText
-                class="w-100"
-                [ngModel]="draftTitle()"
-                (ngModelChange)="draftTitle.set($event)"
-                placeholder="Group name"
-                [class.ng-invalid]="!isTitleValid()"
-            />
-        </div>
-
-        <!-- Points -->
+        <!-- Name + Points -->
         <div class="d-flex flex-wrap gap-3">
+            <div class="flex-grow-1">
+                <label class="fw-semibold d-block mb-1" for="group-edit-title">Name</label>
+                <input
+                    id="group-edit-title"
+                    pInputText
+                    class="w-100"
+                    [ngModel]="draftTitle()"
+                    (ngModelChange)="draftTitle.set($event)"
+                    placeholder="Group name"
+                    [class.ng-invalid]="!isTitleValid()"
+                />
+            </div>
             <div>
                 <div class="d-flex align-items-center gap-1 fw-semibold mb-1">
                     <span>Max points</span>
@@ -36,51 +34,14 @@
             </div>
         </div>
 
-        <!-- Dates + Competencies side-by-side -->
-        <div class="d-flex gap-4 align-items-start">
-            <div class="flex-shrink-0">
-                <div class="fw-semibold mb-2">Dates</div>
-                <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
-                    <i class="pi pi-exclamation-triangle"></i>
-                    Group dates override individual exercise dates.
-                </div>
-                <jhi-exercise-timeline [timelineItems]="timelineItems()" />
+        <!-- Dates -->
+        <div>
+            <div class="fw-semibold mb-2">Dates</div>
+            <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
+                <i class="pi pi-exclamation-triangle"></i>
+                Group dates override individual exercise dates.
             </div>
-
-            @if (allCompetencies().length > 0) {
-                <div class="flex-grow-1">
-                    <div class="fw-semibold mb-2">Competencies</div>
-                    <div class="border rounded p-2">
-                        @for (comp of allCompetencies(); track comp.competencyId) {
-                            <div class="mb-1">
-                                <div class="d-flex align-items-center">
-                                    <input
-                                        type="checkbox"
-                                        [id]="'modal-comp-' + group().id + '-' + comp.competencyId"
-                                        [ngModel]="isCompetencyLinked(comp.competencyId)"
-                                        (ngModelChange)="onCompetencyToggle(comp, $event)"
-                                        class="me-2"
-                                    />
-                                    <label [for]="'modal-comp-' + group().id + '-' + comp.competencyId" class="m-0 small" style="cursor: pointer">
-                                        {{ comp.title }}
-                                    </label>
-                                </div>
-                                @if (isCompetencyLinked(comp.competencyId)) {
-                                    <select
-                                        [ngModel]="getCompetencyWeight(comp.competencyId)"
-                                        (ngModelChange)="updateCompetencyWeight(comp.competencyId, +$event)"
-                                        class="ms-4 form-select form-select-sm d-inline-block w-auto"
-                                    >
-                                        <option [ngValue]="0.25">Low (0.25)</option>
-                                        <option [ngValue]="0.5">Medium (0.5)</option>
-                                        <option [ngValue]="1">High (1.0)</option>
-                                    </select>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
+            <jhi-exercise-timeline [timelineItems]="timelineItems()" />
         </div>
     </div>
 

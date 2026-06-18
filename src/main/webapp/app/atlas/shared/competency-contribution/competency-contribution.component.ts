@@ -7,14 +7,14 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
+import { CarouselModule } from 'primeng/carousel';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-contribution',
-    imports: [TranslateDirective, CompetencyContributionCardComponent],
+    imports: [TranslateDirective, CompetencyContributionCardComponent, CarouselModule],
     templateUrl: './competency-contribution.component.html',
-    styleUrls: ['./competency-contribution.component.scss'],
 })
 export class CompetencyContributionComponent {
     courseId = input.required<number>();

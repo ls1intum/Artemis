@@ -16,7 +16,6 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { ALL_MOCK_COMPETENCIES } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/course/manage/exercises/exercise-variant-group.service';
@@ -69,8 +68,6 @@ const TYPE_TITLES: Record<string, string> = {
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    protected readonly allMockCompetencies = ALL_MOCK_COMPETENCIES;
-
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
@@ -487,10 +484,6 @@ export class CourseManagementExercisesComponent implements OnInit {
         saved?.exercises?.forEach((exercise) => this.applyGroupTimeline(exercise, saved));
         this.exercises.set([...this.exercises()]);
         this.buildBuckets();
-    }
-
-    getGroupCompetenciesDisplay(group: CourseExerciseGroup): string {
-        return (group.competencyLinks ?? []).map((l) => l.title).join(', ');
     }
 
     /** Loads the course's variant groups from the server and maps them to the view model (non-mock mode only). */
