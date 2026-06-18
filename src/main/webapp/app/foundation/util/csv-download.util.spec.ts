@@ -69,6 +69,18 @@ describe('csv-download.util', () => {
         expect(content).toContain('" normal"');
     });
 
+    it('guards header cells that look like spreadsheet formulas against CSV injection', async () => {
+        // headers can be built from authored titles (e.g. exercise or grading-criterion names)
+        downloadCsv([{ '=HYPERLINK("https://evil.com")': 'x' }], {
+            columnHeaders: ['=HYPERLINK("https://evil.com")'],
+            fileName: 'f',
+            quoteStrings: true,
+        });
+        const { content } = await lastCsv();
+        // the formula-like header is prefixed with a single quote; embedded double quotes are doubled
+        expect(content).toContain('"\'=HYPERLINK(""https://evil.com"")"');
+    });
+
     it('does not treat a lone leading symbol (e.g. the "-" empty-value placeholder) as a formula', async () => {
         downloadCsv([{ score: '-', plus: '+', at: '@', equals: '=' }], { columnHeaders: ['score', 'plus', 'at', 'equals'], fileName: 'f', quoteStrings: false });
         const { content } = await lastCsv();

@@ -28,7 +28,6 @@
                             "dayjs/locale/de",
                             "dompurify",
                             "emoji-js",
-                            "export-to-csv",
                             "graphemer",
                             "hoist-non-react-statics",
                             "interactjs",

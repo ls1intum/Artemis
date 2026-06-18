@@ -103,7 +103,7 @@ export function downloadCsv(rows: readonly CsvRow[], options: CsvDownloadOptions
         decimalSeparator: options.decimalSeparator ?? '.',
     };
 
-    const headerLine = options.columnHeaders.map((header) => quoteString(header, resolved)).join(resolved.separator);
+    const headerLine = options.columnHeaders.map((header) => quoteString(sanitizeAgainstCsvInjection(header), resolved)).join(resolved.separator);
     const dataLines = rows.map((row) => options.columnHeaders.map((key) => formatCell(row[key], resolved)).join(resolved.separator));
 
     const csv = UTF8_BOM + [headerLine, ...dataLines].join(LINE_ENDING) + LINE_ENDING;
