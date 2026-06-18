@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.assessment.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -120,13 +122,38 @@ public class ComplaintUtilService {
      * @param complaintType The type of the complaint to create.
      */
     public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType complaintType) {
-        Result result = resultTestRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId())).stream().findFirst().orElse(null);
+        Result result = findLatestResultForSubmission(submission);
         if (result != null) {
             result.hasComplaint(true);
-            resultTestRepository.save(result);
+            result = resultTestRepository.save(result);
+            synchronizeInMemoryResultWithComplaint(submission, result);
         }
         Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);
+    }
+
+    private Result findLatestResultForSubmission(Submission submission) {
+        if (submission.getId() == null) {
+            return submission.getLatestResult();
+        }
+        Result storedResult = resultTestRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId())).stream().findFirst().orElse(null);
+        return storedResult != null ? storedResult : submission.getLatestResult();
+    }
+
+    private void synchronizeInMemoryResultWithComplaint(Submission submission, Result result) {
+        if (!Hibernate.isInitialized(submission.getResults())) {
+            return;
+        }
+
+        Result inMemoryResult = submission.getResults().stream().filter(existingResult -> existingResult != null && Objects.equals(existingResult.getId(), result.getId()))
+                .findFirst().orElse(null);
+        if (inMemoryResult != null) {
+            inMemoryResult.hasComplaint(true);
+            return;
+        }
+
+        result.setSubmission(submission);
+        submission.addResult(result);
     }
 
     /**
