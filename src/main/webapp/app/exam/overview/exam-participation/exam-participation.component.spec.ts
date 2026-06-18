@@ -910,6 +910,20 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()?.submitted).toBe(true);
     });
 
+    it('should clear the failed-save flag once the exam is successfully submitted', () => {
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.exam.set(new Exam());
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+        comp.onExamEndConfirmed();
+
+        // A lingering failed-save flag would otherwise re-enter the restore path on a reload before the exam ends and
+        // re-send answers for an already-submitted exam.
+        expect(setLastSaveFailedSpy).toHaveBeenCalledWith(false, expect.anything(), expect.anything());
+    });
+
     it('should show error when already submitted for test run and successfully loading student exam', () => {
         const httpError = new Error();
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';

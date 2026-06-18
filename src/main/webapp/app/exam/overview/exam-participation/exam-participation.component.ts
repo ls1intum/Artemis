@@ -453,6 +453,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     this.studentExam().submitted = true;
                     this.studentExam().submissionDate = dayjs();
 
+                    // The exam is now submitted, so any earlier failed-save flag is obsolete. Clear it, otherwise a reload
+                    // before the exam ends would re-enter the restore path and re-send answers for an already-submitted exam.
+                    this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
+
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
 
