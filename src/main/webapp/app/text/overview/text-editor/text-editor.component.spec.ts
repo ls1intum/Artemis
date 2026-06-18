@@ -597,29 +597,6 @@ describe('TextEditorComponent', () => {
         expect(comp.isAutomaticResult).toBe(false);
     });
 
-    it('submitButtonTooltip covers all branches', () => {
-        comp.textExercise.set({} as TextExercise);
-        // Due date missed allowed
-        comp.isAllowedToSubmitAfterDueDate.set(true);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
-
-        // Active without due date
-        comp.isAllowedToSubmitAfterDueDate.set(false);
-        comp.isAlwaysActive = true;
-        comp.result.set(undefined as any);
-        comp.textExercise.set({ dueDate: undefined } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
-
-        // Active with due date
-        comp.textExercise.set({ dueDate: dayjs().add(1, 'hour') } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
-
-        // Not active
-        comp.isAlwaysActive = false;
-        comp.result.set({ assessmentType: AssessmentType.MANUAL } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
-    });
-
     it('canDeactivate true when no submission or unchanged; false when changed', () => {
         // no submission
         comp.submission.set(undefined!);

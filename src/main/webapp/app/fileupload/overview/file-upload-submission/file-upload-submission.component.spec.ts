@@ -583,27 +583,6 @@ describe('FileUploadSubmissionComponent', () => {
         });
     });
 
-    describe('submitButtonTooltip', () => {
-        beforeEach(async () => {
-            const exercise = createExercise({ dueDate: dayjs().add(1, 'day') });
-            const submission = createSubmission(exercise);
-            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-            fixture.detectChanges();
-            await fixture.whenStable();
-        });
-
-        it('should show select file tooltip when no file selected', () => {
-            expect(component.submitButtonTooltip()).toBe('artemisApp.fileUploadSubmission.selectFile');
-        });
-
-        it('should show submit tooltip when file selected and active', () => {
-            component.submissionFile.set(createFile('test.pdf', 'application/pdf'));
-            fixture.detectChanges();
-
-            expect(component.submitButtonTooltip()).toBe('entity.action.submitTooltip');
-        });
-    });
-
     describe('submittedFileName and extension', () => {
         it('should extract file name from path', async () => {
             const submission = createSubmittedSubmission();

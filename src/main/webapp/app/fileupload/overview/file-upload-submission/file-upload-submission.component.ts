@@ -142,26 +142,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         return !this.examMode() && !!exercise && !!participation && !hasExerciseDueDatePassed(exercise, participation);
     });
 
-    submitButtonTooltip = computed(() => {
-        if (!this.submissionFile()) {
-            return 'artemisApp.fileUploadSubmission.selectFile';
-        }
-
-        if (!this.isLate()) {
-            const exercise = this.fileUploadExercise();
-            // Using isActive() computed value
-            if (this.isActive() && exercise && !exercise.dueDate) {
-                return 'entity.action.submitNoDueDateTooltip';
-            } else if (this.isActive()) {
-                return 'entity.action.submitTooltip';
-            } else {
-                return 'entity.action.dueDateMissedTooltip';
-            }
-        }
-
-        return 'entity.action.submitDueDateMissedTooltip';
-    });
-
     faDownload = faDownload;
 
     // Icons

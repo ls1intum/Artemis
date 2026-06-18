@@ -101,8 +101,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly isOwnerOfParticipation = signal<boolean>(undefined!);
 
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
-    readonly modelingParticipationHeader = signal<StudentParticipation>(undefined!);
-    readonly modelingExerciseHeader = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
@@ -307,15 +305,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
         }
-
-        // In the header we always want to display the latest submission, even when we are viewing a specific submission
-        this.modelingParticipationHeader.set(modelingSubmission.participation as StudentParticipation);
-        this.modelingParticipationHeader().submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
-        const modelingExerciseHeader = this.modelingParticipationHeader().exercise as ModelingExercise;
-        if (modelingExerciseHeader) {
-            modelingExerciseHeader.studentParticipations = [this.participation()];
-        }
-        this.modelingExerciseHeader.set(modelingExerciseHeader);
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
         if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory()) {
@@ -640,14 +629,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submissionChange.next(this.submission());
                     this.participation.set(this.submission().participation as StudentParticipation);
                     this.participation().exercise = this.modelingExercise();
-                    this.modelingParticipationHeader.set(this.submission().participation as StudentParticipation);
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission().participation!.submissions = [this.submission()];
                     this.participationWebsocketService.addParticipation(this.participation(), this.modelingExercise());
                     this.modelingExercise().studentParticipations = [this.participation()];
-                    if (this.modelingExerciseHeader()) {
-                        this.modelingExerciseHeader().studentParticipations = [this.participation()];
-                    }
                     this.result.set(getLatestSubmissionResult(this.submission()));
                     this.retryStarted.set(false);
 
@@ -894,20 +879,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     get isActive(): boolean {
         return this.modelingExercise() && !this.examMode() && (!hasExerciseDueDatePassed(this.modelingExercise(), this.participation()) || !!this.participation()?.testRun);
-    }
-
-    get submitButtonTooltip(): string {
-        if (!this.isLate()) {
-            if (this.isActive && !this.modelingExercise().dueDate) {
-                return 'entity.action.submitNoDueDateTooltip';
-            } else if (this.isActive) {
-                return 'entity.action.submitTooltip';
-            } else {
-                return 'entity.action.dueDateMissedTooltip';
-            }
-        }
-
-        return 'entity.action.submitDueDateMissedTooltip';
     }
 
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;

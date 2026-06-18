@@ -388,19 +388,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
-    get submitButtonTooltip(): string {
-        if (this.isAllowedToSubmitAfterDueDate()) {
-            return 'entity.action.submitDueDateMissedTooltip';
-        }
-        if (this.isActive && !this.textExercise().dueDate) {
-            return 'entity.action.submitNoDueDateTooltip';
-        } else if (this.isActive) {
-            return 'entity.action.submitTooltip';
-        }
-
-        return 'entity.action.dueDateMissedTooltip';
-    }
-
     /**
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
