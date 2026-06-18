@@ -12,15 +12,19 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.hazelcast.HazelcastDistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 
 /**
@@ -36,11 +40,8 @@ import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
  * critical section so concurrent updates from different nodes linearise against the key owner — we
  * never lose events under contention.
  * <p>
- * When no {@link DistributedDataProvider} is configured (e.g. a core node using an external CI
- * instead of the integrated LocalCI, where the abstraction is not on the classpath), the accumulator
- * falls back to a node-local map: auto-orchestration then only observes changes recorded on the same
- * node. This is acceptable for the (off-by-default) feature; the supported clustered deployments run
- * with a provider present.
+ * Map resolution: {@link DistributedDataProvider} (Hazelcast or Redis) → core {@link HazelcastInstance} →
+ * node-local map (single-node/tests only). See {@link #resolveMap()}.
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -53,6 +54,8 @@ public class ContentChangeAccumulatorService {
 
     private final Optional<DistributedDataProvider> distributedDataProvider;
 
+    private final Optional<HazelcastInstance> hazelcastInstance;
+
     private volatile DistributedMap<Long, ContentChangeAccumulator> map;
 
     private final Clock clock;
@@ -61,34 +64,39 @@ public class ContentChangeAccumulatorService {
 
     private final int dailyCap;
 
-    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties) {
+    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider,
+            @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance, Clock clock, AtlasOrchestratorProperties properties) {
         this.distributedDataProvider = distributedDataProvider;
+        this.hazelcastInstance = hazelcastInstance;
         this.clock = clock;
         this.debounceWindowSeconds = properties.debounceWindowSeconds();
         this.dailyCap = properties.maxDailyOrchestrations();
     }
 
-    /**
-     * Resolve the shared accumulator map lazily (not in the constructor) so application startup is
-     * not blocked on the distributed data layer. Falls back to a node-local map when no provider is
-     * configured.
-     */
+    /** Lazily resolve the shared accumulator map (see {@link #resolveMap}). */
     private DistributedMap<Long, ContentChangeAccumulator> map() {
         DistributedMap<Long, ContentChangeAccumulator> resolved = map;
         if (resolved == null) {
             synchronized (this) {
                 resolved = map;
                 if (resolved == null) {
-                    resolved = distributedDataProvider.<DistributedMap<Long, ContentChangeAccumulator>>map(provider -> provider.getMap(MAP_NAME)).orElseGet(() -> {
-                        log.warn(
-                                "No DistributedDataProvider available; Atlas content-change accumulator falls back to a node-local map. Auto-orchestration only observes changes recorded on this node.");
-                        return new LocalMap<>();
-                    });
+                    resolved = resolveMap();
                     map = resolved;
                 }
             }
         }
         return resolved;
+    }
+
+    private DistributedMap<Long, ContentChangeAccumulator> resolveMap() {
+        if (distributedDataProvider.isPresent()) {
+            return distributedDataProvider.get().getMap(MAP_NAME);
+        }
+        if (hazelcastInstance.isPresent()) {
+            return new HazelcastDistributedMap<>(hazelcastInstance.get().getMap(MAP_NAME));
+        }
+        log.warn("Neither a DistributedDataProvider nor a HazelcastInstance is available; Atlas content-change accumulator uses a node-local map (single-node only).");
+        return new LocalMap<>();
     }
 
     /**

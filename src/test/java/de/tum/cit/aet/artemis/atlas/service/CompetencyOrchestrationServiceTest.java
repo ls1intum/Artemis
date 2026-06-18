@@ -23,6 +23,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -342,9 +343,45 @@ class CompetencyOrchestrationServiceTest {
         verify(runMap).remove(COURSE_ID);
     }
 
+    @Test
+    void run_staleInProgressClaim_isReclaimed() {
+        ProgrammingExercise exercise = courseExercise(18L);
+        when(programmingExerciseRepository.findByIdElseThrow(18L)).thenReturn(exercise);
+        stubRunMap();
+        // A crashed node left a claim older than the 30-min run lease; on a TTL-less map (Redis/Local)
+        // this would otherwise block the course in IN_PROGRESS forever. Seed it directly into the map.
+        runMap.put(COURSE_ID, new RunInfo("crashed-run", 99L, Instant.now().minus(Duration.ofMinutes(31))));
+        when(contentExtractionService.extractContent(exercise)).thenThrow(new RuntimeException("stop after reclaim"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(18L);
+
+        // The stale claim was expired and reclaimed (the run proceeded past the guard), not rejected as IN_PROGRESS.
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runWithQueuedFlush_failedRun_requeuesDrainedIds() {
+        ProgrammingExercise clicked = courseExercise(20L);
+        when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(clicked));
+        stubRunMap();
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
+        // A transient failure before any competency mutation -> FAILED.
+        when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenThrow(new RuntimeException("transient"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        // claimBatchNow drained and reset the bucket; on FAILED the drained queued id (33) and the clicked id (20)
+        // must be requeued so the course's other pending changes are not silently lost.
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(33L, 20L));
+    }
+
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
         return new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService, templateService, chatClient,
-                toolCallbackFactory, Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
+                toolCallbackFactory, Optional.of(distributedDataProvider), Optional.empty(), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {

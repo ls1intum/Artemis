@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,9 +24,12 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -41,6 +45,7 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.Batc
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.hazelcast.HazelcastDistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -71,6 +76,9 @@ public class CompetencyOrchestrationService {
 
     /** Token-usage pipeline id for one orchestrator LLM round. */
     private static final String ORCHESTRATION_PIPELINE_ID = "ATLAS_ORCHESTRATION";
+
+    /** Stale-claim lease: a run claim older than this is reclaimed, so a crashed node can't wedge a course in IN_PROGRESS (Redis/Local maps have no TTL). */
+    private static final Duration RUN_LEASE = Duration.ofMinutes(30);
 
     /** Length caps on instructor-controlled strings to bound prompt size and injection surface. */
     private static final int EXERCISE_TITLE_MAX = 200;
@@ -112,6 +120,8 @@ public class CompetencyOrchestrationService {
 
     private final Optional<DistributedDataProvider> distributedDataProvider;
 
+    private final Optional<HazelcastInstance> hazelcastInstance;
+
     private final ContentChangeAccumulatorService contentChangeAccumulatorService;
 
     private final LLMTokenUsageService llmTokenUsageService;
@@ -122,7 +132,8 @@ public class CompetencyOrchestrationService {
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
+            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider,
+            @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance, AtlasOrchestratorProperties properties,
             ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
@@ -134,24 +145,20 @@ public class CompetencyOrchestrationService {
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
         this.distributedDataProvider = distributedDataProvider;
+        this.hazelcastInstance = hazelcastInstance;
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
     }
 
-    /**
-     * Per-course run map (IN_PROGRESS guard), resolved lazily through the {@link DistributedDataProvider}
-     * abstraction so it works on Hazelcast and Redis deployments alike. Falls back to a node-local map
-     * when no provider is configured. TTL is configured in {@code HazelcastConfiguration#registerCustomMaps}
-     * when the provider is Hazelcast-backed.
-     */
+    /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
     private DistributedMap<Long, RunInfo> runMap() {
         DistributedMap<Long, RunInfo> resolved = runMap;
         if (resolved == null) {
             synchronized (this) {
                 resolved = runMap;
                 if (resolved == null) {
-                    resolved = distributedDataProvider.<DistributedMap<Long, RunInfo>>map(provider -> provider.getMap(RUN_MAP_NAME)).orElseGet(LocalMap::new);
+                    resolved = resolveRunMap();
                     runMap = resolved;
                 }
             }
@@ -159,18 +166,24 @@ public class CompetencyOrchestrationService {
         return resolved;
     }
 
-    /**
-     * Atomically claim the per-course run lock. Returns {@code null} when the lock was acquired (the
-     * given {@code claim} is now stored), or the in-progress {@link RunInfo} when another run already
-     * holds it. Mirrors {@code IMap#putIfAbsent} semantics via the abstraction's per-key lock.
-     */
+    private DistributedMap<Long, RunInfo> resolveRunMap() {
+        if (distributedDataProvider.isPresent()) {
+            return distributedDataProvider.get().getMap(RUN_MAP_NAME);
+        }
+        if (hazelcastInstance.isPresent()) {
+            return new HazelcastDistributedMap<>(hazelcastInstance.get().getMap(RUN_MAP_NAME));
+        }
+        return new LocalMap<>();
+    }
+
+    /** Claim the per-course run lock: returns {@code null} if acquired, else the active (non-stale) {@link RunInfo}. Reclaims {@link #RUN_LEASE}-stale entries. */
     @Nullable
     private RunInfo claimRun(long courseId, RunInfo claim) {
         DistributedMap<Long, RunInfo> currentMap = runMap();
         currentMap.lock(courseId);
         try {
             RunInfo existing = currentMap.get(courseId);
-            if (existing != null) {
+            if (existing != null && !isStale(existing, claim.startedAt())) {
                 return existing;
             }
             currentMap.put(courseId, claim);
@@ -179,6 +192,14 @@ public class CompetencyOrchestrationService {
         finally {
             currentMap.unlock(courseId);
         }
+    }
+
+    /** Stale once {@code startedAt} is null or older than {@link #RUN_LEASE} before {@code now} (cross-node clocks; 30 min absorbs skew + run time). */
+    private static boolean isStale(RunInfo existing, @Nullable Instant now) {
+        if (existing.startedAt() == null) {
+            return true;
+        }
+        return now != null && existing.startedAt().isBefore(now.minus(RUN_LEASE));
     }
 
     /**
@@ -312,7 +333,12 @@ public class CompetencyOrchestrationService {
             if (exercises.isEmpty()) {
                 return CompetencyOrchestrationResultDTO.noOp("No applicable exercises in batch.");
             }
-            return orchestrateBatch(exercises, courseId);
+            CompetencyOrchestrationResultDTO result = orchestrateBatch(exercises, courseId);
+            // claimBatchNow drained the bucket; on FAILED (nothing committed) requeue so the drained ids aren't lost.
+            if (result.status() == CompetencyOrchestrationResultDTO.Status.FAILED) {
+                contentChangeAccumulatorService.requeueAfterFailedRun(courseId, mergedExerciseIds);
+            }
+            return result;
         }
         finally {
             releaseRun(courseId, claim);
@@ -436,8 +462,7 @@ public class CompetencyOrchestrationService {
         List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
-            // Batch reasons over all exercises in one LLM round; token usage is attributed to the course
-            // (the primary cost view) with the first exercise as a representative for the per-exercise field.
+            // Batch cost is attributed to the course; the first exercise stands in for the per-exercise field.
             content = callChatClient(systemPrompt, courseId, exercises.getFirst().getId(), appliedActions);
         }
         catch (Exception ex) {
@@ -598,7 +623,7 @@ public class CompetencyOrchestrationService {
         return safeName + " (" + safeType + ")";
     }
 
-    /** Distributed map entry guarding per-course orchestrator runs; expiry is handled by the map TTL. */
+    /** Distributed map entry guarding per-course runs; expired via {@link #RUN_LEASE} in {@link #claimRun}. */
     record RunInfo(String runId, long exerciseId, @Nullable Instant startedAt) implements Serializable {
 
         @Serial

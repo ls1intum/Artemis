@@ -35,7 +35,7 @@ class ContentChangeAccumulatorServiceTest {
     void setUp() {
         clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L);
-        service = new ContentChangeAccumulatorService(Optional.empty(), clock, properties);
+        service = new ContentChangeAccumulatorService(Optional.empty(), Optional.empty(), clock, properties);
         service.clearForTesting();
     }
 
