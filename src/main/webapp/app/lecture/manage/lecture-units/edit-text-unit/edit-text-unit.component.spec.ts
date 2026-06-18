@@ -106,10 +106,10 @@ describe('EditTextUnitComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
-        expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
-        expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
-        expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
+        expect(editTextUnitComponent.formData().name).toEqual(originalTextUnit.name);
+        expect(editTextUnitComponent.formData().releaseDate).toEqual(originalTextUnit.releaseDate);
+        expect(editTextUnitComponent.formData().content).toEqual(originalTextUnit.content);
+        expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', async () => {

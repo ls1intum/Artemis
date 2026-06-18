@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockProvider } from 'ng-mocks';
-import { ChartNode, ExerciseScoresChartComponent } from 'app/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { ExerciseScoresChartComponent } from 'app/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/course/overview/visualizations/exercise-scores-chart.service';
@@ -13,14 +12,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
-import { LineChartModule } from '@swimlane/ngx-charts';
-
-// Mock the ngx-charts line chart component to avoid SIGSEGV crashes from heavy SVG/d3 rendering in jsdom
-@Component({ selector: 'ngx-charts-line-chart', template: '' })
-class MockLineChartComponent {}
+import { ChartModule, UIChart } from 'primeng/chart';
 
 class MockActivatedRoute {
     parent: any;
@@ -59,11 +52,10 @@ describe('ExerciseScoresChartComponent', () => {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
                 },
-                provideNoopAnimationsForTests(),
             ],
         }).overrideComponent(ExerciseScoresChartComponent, {
-            remove: { imports: [LineChartModule] },
-            add: { imports: [MockLineChartComponent], schemas: [NO_ERRORS_SCHEMA] },
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(ExerciseScoresChartComponent);
@@ -92,28 +84,35 @@ describe('ExerciseScoresChartComponent', () => {
 
         const getScoresStub = setUpServiceAndStartComponent([firstExercise, secondExercise]);
         expect(getScoresStub).toHaveBeenCalledOnce();
-        expect(component.ngxData).toHaveLength(3);
+        expect(component.chartEntries()).toHaveLength(3);
 
-        // datasets[0] is student score
-        expect(component.ngxData[0].series).toHaveLength(2);
-        const studentFirstExerciseDataPoint = component.ngxData[0].series[0];
-        const sutdentSecondExerciseDataPoint = component.ngxData[0].series[1];
+        // entry 0 is the student score
+        expect(component.chartEntries()[0].series).toHaveLength(2);
+        const studentFirstExerciseDataPoint = component.chartEntries()[0].series[0];
+        const sutdentSecondExerciseDataPoint = component.chartEntries()[0].series[1];
         validateStructureOfDataPoint(studentFirstExerciseDataPoint, firstExercise, firstExercise.scoreOfStudent!);
         validateStructureOfDataPoint(sutdentSecondExerciseDataPoint, secondExercise, secondExercise.scoreOfStudent!);
 
-        // datasets[1] is average score
-        expect(component.ngxData[1].series).toHaveLength(2);
-        const averageFirstExerciseDataPoint = component.ngxData[1].series[0];
-        const averageSecondExerciseDataPoint = component.ngxData[1].series[1];
+        // entry 1 is the average score
+        expect(component.chartEntries()[1].series).toHaveLength(2);
+        const averageFirstExerciseDataPoint = component.chartEntries()[1].series[0];
+        const averageSecondExerciseDataPoint = component.chartEntries()[1].series[1];
         validateStructureOfDataPoint(averageFirstExerciseDataPoint, firstExercise, firstExercise.averageScoreAchieved!);
         validateStructureOfDataPoint(averageSecondExerciseDataPoint, secondExercise, secondExercise.averageScoreAchieved!);
 
-        // datasets[2] is best score
-        expect(component.ngxData[2].series).toHaveLength(2);
-        const bestFirstExerciseDataPoint = component.ngxData[2].series[0];
-        const bestSecondExerciseDataPoint = component.ngxData[2].series[1];
+        // entry 2 is the best score
+        expect(component.chartEntries()[2].series).toHaveLength(2);
+        const bestFirstExerciseDataPoint = component.chartEntries()[2].series[0];
+        const bestSecondExerciseDataPoint = component.chartEntries()[2].series[1];
         validateStructureOfDataPoint(bestFirstExerciseDataPoint, firstExercise, firstExercise.maxScoreAchieved!);
         validateStructureOfDataPoint(bestSecondExerciseDataPoint, secondExercise, secondExercise.maxScoreAchieved!);
+
+        // the chart data contains one dataset per series with the exercise titles as labels
+        expect(component.chartData().datasets).toHaveLength(3);
+        expect(component.chartData().labels).toEqual(['First Exercise', 'Second Exercise']);
+        expect(component.chartData().datasets[0].data).toEqual([50, 40]);
+        expect(component.chartData().datasets[1].data).toEqual([70, 80]);
+        expect(component.chartData().datasets[2].data).toEqual([100, 90]);
     });
 
     it('should filter exercises correctly', () => {
@@ -136,7 +135,7 @@ describe('ExerciseScoresChartComponent', () => {
 
         expect(getScoresStub).toHaveBeenCalledOnce();
         // Should only contain the not filtered exercises (filtered out: 2, 4, 5)
-        expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 3, 6, 7, 8, 9]);
+        expect(component.chartEntries()[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 3, 6, 7, 8, 9]);
 
         // Now test changing the filter - this should use the cached data
         // Reset excludedExerciseScores to ensure proper restoration
@@ -151,26 +150,10 @@ describe('ExerciseScoresChartComponent', () => {
         // This tests the component's filtering behavior without lifecycle interference
         (component as any).initializeChart();
 
-        expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        expect(component.chartEntries()[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
         // The service should not be called again when just filtering
         expect(getScoresStub).toHaveBeenCalledOnce();
-    });
-
-    it('should react correctly if legend entry is clicked', () => {
-        const firstExercise = generateExerciseScoresDTO(ExerciseType.FILE_UPLOAD, 1, 40, 30, 60, dayjs(), 'first exercise');
-        const secondExercise = generateExerciseScoresDTO(ExerciseType.FILE_UPLOAD, 2, 43, 31, 70, dayjs(), 'second exercise');
-
-        setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        const legendClickEvent = 'artemisApp.exercise-scores-chart.maximumScoreLabel';
-        component.onSelect(legendClickEvent);
-
-        expect(component.ngxColor.domain[2]).toBe('rgba(255,255,255,0)');
-        expect(component.ngxData[2].series).toEqual([]);
-
-        component.onSelect(legendClickEvent);
-        expect(component.ngxColor.domain[2]).toBe(GraphColors.GREEN);
-        expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([60, 70]);
     });
 
     it('should react correct if chart point is clicked', () => {
@@ -180,17 +163,21 @@ describe('ExerciseScoresChartComponent', () => {
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = vi.spyOn(routingService, 'routeInNewTab');
-        const pointClickEvent: ChartNode = { exerciseType: '', name: '', series: '', value: 0, exerciseId: 2 };
 
-        component.onSelect(pointClickEvent);
+        // click on the second data point of the student score series
+        component.onSelect({ element: { datasetIndex: 0, index: 1 } });
 
         expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
 
-        pointClickEvent.exerciseId = 1;
-
-        component.onSelect(pointClickEvent);
+        // click on the first data point of the best score series
+        component.onSelect({ element: { datasetIndex: 2, index: 0 } });
 
         expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
+
+        // clicks that do not hit a data point must not navigate
+        routingStub.mockClear();
+        component.onSelect({ element: undefined });
+        expect(routingStub).not.toHaveBeenCalled();
     });
 
     const setUpServiceAndStartComponent = (exerciseDTOs: ExerciseScoresDTO[]) => {

@@ -64,6 +64,17 @@ export class ThemeService {
      */
     public currentTheme = computed(() => this.userPreference() ?? this.systemPreference());
 
+    /**
+     * Revision counter that is bumped once a theme's CSS variables are actually in effect.
+     * Unlike {@link currentTheme}, which switches as soon as the user toggles the theme, this signal only
+     * changes after the dark theme stylesheet finished loading (or the override was removed for the light
+     * theme). Consumers that resolve CSS custom properties via getComputedStyle (e.g. canvas-based charts)
+     * must depend on this signal instead of {@link currentTheme} to avoid reading stale variable values.
+     */
+    private _appliedThemeRevision = signal(0);
+
+    public readonly appliedThemeRevision = this._appliedThemeRevision.asReadonly();
+
     private localStorageService = inject(LocalStorageService);
 
     private darkSchemeMediaQuery: MediaQueryList;
@@ -182,6 +193,7 @@ export class ThemeService {
             // The default theme is always injected by Angular; therefore, we just need to remove
             // our theme override, if present
             overrideTag?.remove();
+            this._appliedThemeRevision.update((revision) => revision + 1);
         } else {
             // If the theme is not the default theme, we need to add a theme override stylesheet to the page header
 
@@ -198,6 +210,7 @@ export class ThemeService {
             // As soon as the new style sheet loaded, remove the old override (if present)
             newTag.onload = () => {
                 overrideTag?.remove();
+                this._appliedThemeRevision.update((revision) => revision + 1);
             };
 
             // Insert the new stylesheet link tag after the last existing link tag

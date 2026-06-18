@@ -291,7 +291,7 @@ export class ExerciseSplitPanelComponent {
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode === 'practice') {
+        if (quizComponent && quizComponent.mode() === 'practice') {
             quizComponent.restartPractice();
             return true;
         }

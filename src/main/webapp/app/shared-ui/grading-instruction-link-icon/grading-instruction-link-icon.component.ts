@@ -20,7 +20,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
 
     instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
-    showConfirm = false;
+    readonly showConfirm = signal(false);
 
     ngOnInit(): void {
         this.instruction.set(this.feedback().gradingInstruction);
@@ -47,6 +47,6 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      * toggle showConfirm
      */
     toggle(): void {
-        this.showConfirm = !this.showConfirm;
+        this.showConfirm.update((value) => !value);
     }
 }

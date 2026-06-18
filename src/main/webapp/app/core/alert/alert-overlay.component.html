@@ -1,4 +1,4 @@
-@if ((alerts?.length ?? 0) >= 2) {
+@if (alerts().length >= 2) {
     <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
         <div class="dismiss-all">
             <div class="btn btn-secondary" (click)="alertService.closeAll()">
@@ -8,7 +8,7 @@
         </div>
     </div>
 }
-@for (alert of alerts; track alert) {
+@for (alert of alerts(); track alert) {
     <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
         <div class="alert-wrap">
             <div class="alert-inner" [ngClass]="alert.type.containerClassName">

@@ -63,18 +63,18 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     courseId = input.required<number>();
 
-    registrationsDisplayedInTable: TutorialGroupImportData[] = [];
-    allRegistrations: TutorialGroupImportData[] = [];
+    readonly registrationsDisplayedInTable = signal<TutorialGroupImportData[]>([]);
+    readonly allRegistrations = signal<TutorialGroupImportData[]>([]);
     notImportedRegistrations: TutorialGroupImportData[] = [];
     importedRegistrations: TutorialGroupImportData[] = [];
 
-    isCSVParsing = false;
+    readonly isCSVParsing = signal(false);
     protected readonly CsvExample = CsvExample;
-    validationErrors: string[] = [];
-    isImporting = false;
-    isImportDone = false;
-    numberOfImportedRegistrations = 0;
-    numberOfNotImportedRegistration = 0;
+    readonly validationErrors = signal<string[]>([]);
+    readonly isImporting = signal(false);
+    readonly isImportDone = signal(false);
+    readonly numberOfImportedRegistrations = signal(0);
+    readonly numberOfNotImportedRegistration = signal(0);
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -96,7 +96,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faFileImport = faFileImport;
-    selectedFilter: filterValues = 'all';
+    readonly selectedFilter = signal<filterValues>('all');
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
@@ -144,28 +144,28 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     get isParseDisabled() {
         return (
             this.selectedFile === undefined ||
-            this.isCSVParsing ||
-            this.isImporting ||
+            this.isCSVParsing() ||
+            this.isImporting() ||
             (this.specifyFixedPlaceControl?.value && (!this.statusHeaderControl?.value || !this.fixedPlaceValueControl?.value)) ||
             this.fixedPlaceForm.invalid
         );
     }
 
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.registrationsDisplayedInTable?.length;
+        return this.isImporting() || !this.registrationsDisplayedInTable()?.length;
     }
 
     resetDialog() {
-        this.registrationsDisplayedInTable = [];
-        this.allRegistrations = [];
+        this.registrationsDisplayedInTable.set([]);
+        this.allRegistrations.set([]);
         this.notImportedRegistrations = [];
         this.importedRegistrations = [];
-        this.validationErrors = [];
-        this.isImportDone = false;
-        this.isImporting = false;
-        this.isCSVParsing = false;
-        this.numberOfImportedRegistrations = 0;
-        this.numberOfNotImportedRegistration = 0;
+        this.validationErrors.set([]);
+        this.isImportDone.set(false);
+        this.isImporting.set(false);
+        this.isCSVParsing.set(false);
+        this.numberOfImportedRegistrations.set(0);
+        this.numberOfNotImportedRegistration.set(0);
     }
 
     onCSVFileSelected(event: Event) {
@@ -187,26 +187,26 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupImportData[]> {
         let csvRows: ParsedCSVRow[] = [];
         try {
-            this.isCSVParsing = true;
-            this.validationErrors = [];
+            this.isCSVParsing.set(true);
+            this.validationErrors.set([]);
             const parseResult = await this.parseCSVFile(csvFile);
 
             if (parseResult.errors.length > 0) {
                 const errorMessagesCombined = parseResult.errors.map((error) => error.message).join('|');
-                this.validationErrors.push(errorMessagesCombined);
+                this.validationErrors.update((errors) => [...errors, errorMessagesCombined]);
             } else {
                 csvRows = parseResult.data as ParsedCSVRow[];
             }
         } catch (error) {
-            this.validationErrors.push(error.message);
+            this.validationErrors.update((errors) => [...errors, error.message]);
         } finally {
-            this.isCSVParsing = false;
+            this.isCSVParsing.set(false);
         }
 
         if (csvRows && csvRows.length > 0) {
             this.performExtraRowValidation(csvRows);
         }
-        if (this.validationErrors && this.validationErrors.length > 0) {
+        if (this.validationErrors().length > 0) {
             this.resetFileUpload();
             return [];
         }
@@ -254,7 +254,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             .sort((a, b) => this.compareTitle(a, b));
 
         this.performExtraDTOValidation(registrations);
-        if (this.validationErrors && this.validationErrors.length > 0) {
+        if (this.validationErrors().length > 0) {
             this.resetFileUpload();
             return [];
         } else {
@@ -288,8 +288,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     }
 
     import() {
-        this.isImporting = true;
-        this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(this.courseId(), this.registrationsDisplayedInTable, 'response').subscribe({
+        this.isImporting.set(true);
+        this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(this.courseId(), this.registrationsDisplayedInTable(), 'response').subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });
@@ -328,15 +328,16 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const withoutIdentifierValidationError = this.withoutIdentifierValidation(csvRows);
         const maxLength = 1000;
         if (titleValidationError !== null) {
-            this.validationErrors.push(titleValidationError.length <= maxLength ? titleValidationError : titleValidationError.slice(0, maxLength) + '...');
+            const message = titleValidationError.length <= maxLength ? titleValidationError : titleValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         if (titleRegexValidationError !== null) {
-            this.validationErrors.push(titleRegexValidationError.length <= maxLength ? titleRegexValidationError : titleRegexValidationError.slice(0, maxLength) + '...');
+            const message = titleRegexValidationError.length <= maxLength ? titleRegexValidationError : titleRegexValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         if (withoutIdentifierValidationError !== null) {
-            this.validationErrors.push(
-                withoutIdentifierValidationError.length <= maxLength ? withoutIdentifierValidationError : withoutIdentifierValidationError.slice(0, maxLength) + '...',
-            );
+            const message = withoutIdentifierValidationError.length <= maxLength ? withoutIdentifierValidationError : withoutIdentifierValidationError.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
     }
 
@@ -344,13 +345,13 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const duplicatedRegistrationNumbers = this.duplicatedRegistrationNumbers(registrations);
         const maxLength = 1000;
         if (duplicatedRegistrationNumbers !== null) {
-            this.validationErrors.push(
-                duplicatedRegistrationNumbers.length <= maxLength ? duplicatedRegistrationNumbers : duplicatedRegistrationNumbers.slice(0, maxLength) + '...',
-            );
+            const message = duplicatedRegistrationNumbers.length <= maxLength ? duplicatedRegistrationNumbers : duplicatedRegistrationNumbers.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
         const duplicatedLogins = this.duplicatedLogins(registrations);
         if (duplicatedLogins !== null) {
-            this.validationErrors.push(duplicatedLogins.length <= maxLength ? duplicatedLogins : duplicatedLogins.slice(0, maxLength) + '...');
+            const message = duplicatedLogins.length <= maxLength ? duplicatedLogins : duplicatedLogins.slice(0, maxLength) + '...';
+            this.validationErrors.update((errors) => [...errors, message]);
         }
     }
 
@@ -457,7 +458,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     }
 
     clear() {
-        if (this.isImportDone) {
+        if (this.isImportDone()) {
             this.close();
             this.importCompleted.emit();
         } else {
@@ -471,28 +472,28 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     }
 
     onSaveSuccess(registrations: HttpResponse<TutorialGroupImportData[]>) {
-        this.isImporting = false;
-        this.isImportDone = true;
-        this.registrationsDisplayedInTable = registrations.body ?? [];
-        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => this.compareTitle(a, b));
-        this.allRegistrations = this.registrationsDisplayedInTable;
-        this.notImportedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful !== true);
-        this.importedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful === true);
-        this.numberOfNotImportedRegistration = this.notImportedRegistrations.length;
-        this.numberOfImportedRegistrations = this.importedRegistrations.length;
+        this.isImporting.set(false);
+        this.isImportDone.set(true);
+        const sortedRegistrations = (registrations.body ?? []).sort((a, b) => this.compareTitle(a, b));
+        this.registrationsDisplayedInTable.set(sortedRegistrations);
+        this.allRegistrations.set(sortedRegistrations);
+        this.notImportedRegistrations = sortedRegistrations.filter((registration) => registration.importSuccessful !== true);
+        this.importedRegistrations = sortedRegistrations.filter((registration) => registration.importSuccessful === true);
+        this.numberOfNotImportedRegistration.set(this.notImportedRegistrations.length);
+        this.numberOfImportedRegistrations.set(this.importedRegistrations.length);
     }
 
     onSaveError() {
         this.alertService.error('artemisApp.tutorialGroupImportDialog.errorMessages.genericErrorMessage');
-        this.isImporting = false;
+        this.isImporting.set(false);
     }
 
     wasImported(registration: TutorialGroupImportData): boolean {
-        return this.isImportDone && registration.importSuccessful === true;
+        return this.isImportDone() && registration.importSuccessful === true;
     }
 
     wasNotImported(registration: TutorialGroupImportData): boolean {
-        return this.isImportDone && registration.importSuccessful !== true;
+        return this.isImportDone() && registration.importSuccessful !== true;
     }
 
     /**
@@ -515,21 +516,21 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     async onParseClicked() {
         this.resetDialog();
         if (this.selectedFile) {
-            this.registrationsDisplayedInTable = await this.readRegistrationsFromCSVFile(this.selectedFile);
+            this.registrationsDisplayedInTable.set(await this.readRegistrationsFromCSVFile(this.selectedFile));
         }
     }
 
     onFilterChange(newFilterValue: filterValues) {
-        this.selectedFilter = newFilterValue;
+        this.selectedFilter.set(newFilterValue);
         switch (newFilterValue) {
             case 'all':
-                this.registrationsDisplayedInTable = this.allRegistrations;
+                this.registrationsDisplayedInTable.set(this.allRegistrations());
                 break;
             case 'onlyImported':
-                this.registrationsDisplayedInTable = this.importedRegistrations;
+                this.registrationsDisplayedInTable.set(this.importedRegistrations);
                 break;
             case 'onlyNotImported':
-                this.registrationsDisplayedInTable = this.notImportedRegistrations;
+                this.registrationsDisplayedInTable.set(this.notImportedRegistrations);
         }
     }
 }

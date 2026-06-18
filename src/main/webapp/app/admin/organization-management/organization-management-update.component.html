@@ -5,7 +5,7 @@
             <div>
                 <div class="form-group">
                     <label for="name" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.name"></label>
-                    <input id="name" type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization.name" required minlength="1" maxlength="100" />
+                    <input id="name" type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
                     @if (nameInput.dirty && nameInput.invalid) {
                         <div>
                             @if (nameInput.errors?.required) {
@@ -28,7 +28,7 @@
                         class="form-control"
                         name="shortName"
                         #shortNameInput="ngModel"
-                        [(ngModel)]="organization.shortName"
+                        [(ngModel)]="organization().shortName"
                         required
                         minlength="1"
                         maxlength="50"
@@ -50,20 +50,20 @@
                 </div>
                 <div class="form-group">
                     <label for="url" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.url"></label>
-                    <input id="url" type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization.url" />
+                    <input id="url" type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization().url" />
                 </div>
                 <div class="form-group">
                     <label for="description" jhiTranslate="artemisApp.organizationManagement.description"></label>
-                    <input id="description" type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization.description" />
+                    <input id="description" type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization().description" />
                 </div>
                 <div class="form-group">
                     <label for="logoUrl" jhiTranslate="artemisApp.organizationManagement.logoUrl"></label>
-                    <input id="logoUrl" type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
+                    <input id="logoUrl" type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization().logoUrl" />
                 </div>
                 <div class="form-group">
                     <div class="alert alert-warning">
                         <span jhiTranslate="artemisApp.organizationManagement.patternChangeWarning"
-                            >Changing the email pattern will trigger a re-assignment of all users to this organization</span
+                            >Changing the email pattern will trigger a re-assignment of all users to this organization()</span
                         >
                     </div>
                     <label for="emailPattern" jhiTranslate="artemisApp.organizationManagement.emailPattern"></label>
@@ -75,7 +75,7 @@
                         name="emailPattern"
                         validPattern
                         #emailPattern="ngModel"
-                        [(ngModel)]="organization.emailPattern"
+                        [(ngModel)]="organization().emailPattern"
                     />
                     @if (emailPattern?.dirty && emailPattern?.invalid) {
                         <div>
