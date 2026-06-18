@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faArrowRight, faCode, faFileAlt, faFileUpload, faLayerGroup, faPencilAlt, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -19,7 +19,7 @@ interface ExerciseTypeCard {
     type: ExerciseType;
     label: string;
     description: string;
-    icon: typeof faCode;
+    icon: typeof faKeyboard;
     accentClass: string;
     routeSegment: string;
 }
@@ -43,7 +43,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         type: ExerciseType.PROGRAMMING,
         label: 'Programming',
         description: 'Automated grading with test suites. Supports Java, Python, C, and more.',
-        icon: faCode,
+        icon: faKeyboard,
         accentClass: 'card--programming',
         routeSegment: 'programming-exercises/new',
     },
@@ -51,7 +51,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         type: ExerciseType.QUIZ,
         label: 'Quiz',
         description: 'Multiple choice, short answer, and drag-and-drop questions.',
-        icon: faQuestion,
+        icon: faCheckDouble,
         accentClass: 'card--quiz',
         routeSegment: 'quiz-exercises/new',
     },
@@ -59,7 +59,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         type: ExerciseType.MODELING,
         label: 'Modeling',
         description: 'UML diagrams and model-based exercises with semi-automatic assessment.',
-        icon: faPencilAlt,
+        icon: faProjectDiagram,
         accentClass: 'card--modeling',
         routeSegment: 'modeling-exercises/new',
     },
@@ -67,7 +67,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         type: ExerciseType.TEXT,
         label: 'Text',
         description: 'Free-text essays and open-ended questions with manual review.',
-        icon: faFileAlt,
+        icon: faFont,
         accentClass: 'card--text',
         routeSegment: 'text-exercises/new',
     },
