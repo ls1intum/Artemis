@@ -25,7 +25,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,6 +38,8 @@ import { SystemNotificationComponent } from 'app/core/notification/system-notifi
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -66,6 +68,8 @@ import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/compo
         HasAnyAuthorityDirective,
         ServerAdministrationComponent,
         GlobalSearchNavbarComponent,
+        ImageComponent,
+        SlicePipe,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -83,6 +87,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly currentCourseContextService = inject(CurrentCourseContextService);
 
     protected readonly faBars = faBars;
     protected readonly faThLarge = faThLarge;
@@ -126,11 +131,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly globalSearchEnabled = signal(false);
     readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
+    readonly currentCourse = this.currentCourseContextService.course;
 
-    courseTitle?: string;
-    exerciseTitle?: string;
-    lectureTitle?: string;
-    examTitle?: string;
+    courseTitle = signal<string | undefined>(undefined);
+    exerciseTitle = signal<string | undefined>(undefined);
+    lectureTitle = signal<string | undefined>(undefined);
+    examTitle = signal<string | undefined>(undefined);
 
     private standardizedCompetencySubscription: Subscription;
     private globalSearchSubscription: Subscription;
@@ -819,6 +825,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
     }
 
+    getCourseLink(courseId: number | undefined): (string | number)[] | undefined {
+        if (!courseId) {
+            return undefined;
+        }
+        return this.router.url.startsWith('/course-management') ? ['/course-management', courseId] : ['/courses', courseId];
+    }
+
     toggleNavbar() {
         this.isNavbarCollapsed.update((collapsed) => !collapsed);
     }
@@ -893,7 +906,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
         const breadcrumbs = this.breadcrumbs();
         const generalTitle = breadcrumbs[breadcrumbs.length - 1].translate ? this.translateService.instant(breadcrumbs[breadcrumbs.length - 1].label) : undefined;
-        const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
+        const titles = [generalTitle, this.exerciseTitle(), this.examTitle(), this.lectureTitle(), this.courseTitle()].filter((title) => title !== undefined).join(' | ');
         // No need have a dynamic title on the start page -> use the title defined in the Router modules.
         if (titles && breadcrumbs.length > 1) {
             this.titleService.setTitle(titles);
@@ -905,9 +918,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     initTabTitles() {
         // The course title is not set to undefined, as there is a change detection in the setTabTitle Method
-        this.exerciseTitle = undefined;
-        this.lectureTitle = undefined;
-        this.examTitle = undefined;
+        this.exerciseTitle.set(undefined);
+        this.lectureTitle.set(undefined);
+        this.examTitle.set(undefined);
     }
 
     /**
@@ -918,20 +931,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     setTabTitles(type: EntityType, title: string) {
         switch (type) {
             case EntityType.COURSE:
-                if (this.courseTitle != title) {
-                    this.courseTitle = title;
+                if (this.courseTitle() !== title) {
+                    this.courseTitle.set(title);
                     // If the courseTitle changes, we need to rebuild the tab titles
                     this.buildTabTitles();
                 }
                 break;
             case EntityType.EXERCISE:
-                this.exerciseTitle = title;
+                this.exerciseTitle.set(title);
                 break;
             case EntityType.EXAM:
-                this.examTitle = title;
+                this.examTitle.set(title);
                 break;
             case EntityType.LECTURE:
-                this.lectureTitle = title;
+                this.lectureTitle.set(title);
                 break;
         }
     }
