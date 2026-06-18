@@ -19,7 +19,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -64,7 +64,6 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
     private accountService = inject(AccountService);
 
-    readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 

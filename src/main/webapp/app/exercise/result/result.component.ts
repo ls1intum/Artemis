@@ -8,13 +8,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
-import { Participation, ParticipationType, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -66,11 +65,7 @@ export class ResultComponent {
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
-    readonly ParticipationType = ParticipationType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly getCourseFromExercise = getCourseFromExercise;
-    protected readonly AssessmentType = AssessmentType;
 
     readonly participation = input<Participation>();
     readonly result = input<Result>();
@@ -155,7 +150,6 @@ export class ResultComponent {
 
     // Icons
     readonly faCircleNotch = faCircleNotch;
-    readonly faFile = faFile;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 

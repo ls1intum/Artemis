@@ -101,21 +101,6 @@ export const initializedResultWithScore = (result?: Result) => {
 };
 
 /**
- * Prepare a result that contains a participation which is needed in the rating component
- */
-export const addParticipationToResult = (result: Result | undefined, participation: StudentParticipation) => {
-    // TODO should not be needed anymore
-    // const ratingResult = cloneDeep(result);
-    // if (ratingResult) {
-    //     const ratingParticipation = cloneDeep(participation);
-    //     // remove circular dependency
-    //     ratingParticipation.exercise!.studentParticipations = [];
-    //     ratingResult.participation = ratingParticipation;
-    // }
-    // return ratingResult;
-};
-
-/**
  * searches for all manual unreferenced feedback in an array of feedbacks of a result
  * @param feedbacks the feedback of a result
  * @returns an array with the unreferenced feedback of the result
