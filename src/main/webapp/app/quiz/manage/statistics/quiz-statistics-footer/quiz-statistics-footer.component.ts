@@ -19,6 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -104,13 +105,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {

@@ -62,14 +62,6 @@ const exercise1: Exercise = {
     secondCorrectionEnabled: true,
 };
 
-const exercise2: Exercise = {
-    id: 6,
-    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
-    studentAssignedTeamIdComputed: false,
-    dueDate: dayjs().add(1, 'days'),
-    secondCorrectionEnabled: true,
-};
-
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
@@ -92,19 +84,6 @@ const course1: Course = {
     onlineCourse: true,
 };
 
-const course2: Course = {
-    id: 2,
-    title: 'Course2',
-    exercises: [exercise2],
-    isAtLeastInstructor: true,
-    exams: [exam2],
-    description: 'Short description of course 2',
-    shortName: 'shortName2',
-    isAtLeastEditor: true,
-    tutorialGroupsConfiguration: {},
-};
-
-const coursesDropdown: Course[] = [course1, course2];
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
@@ -220,15 +199,6 @@ describe('CourseManagementContainerComponent', () => {
             ),
         );
 
-        vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: coursesDropdown,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
-
         getCourseSummarySpy = vi.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
             of(
                 new HttpResponse({
@@ -298,11 +268,6 @@ describe('CourseManagementContainerComponent', () => {
             1,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
-            1,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
     });
 
@@ -686,29 +651,6 @@ describe('CourseManagementContainerComponent', () => {
         component.getPageTitle();
 
         expect(component.pageTitle()).toBe('');
-    });
-
-    it('should initialize courses attribute for dropdown', async () => {
-        component.courseId.set(course1.id!);
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).toEqual([course2]);
-    });
-
-    it('should filter out current course from dropdown courses', async () => {
-        component.courseId.set(course2.id!);
-
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).not.toContain(course2);
-    });
-
-    it('should switch course and navigate to the correct URL', async () => {
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
-
-        component.switchCourse(course2);
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id]);
     });
 
     it('should handle component activation with controls', () => {

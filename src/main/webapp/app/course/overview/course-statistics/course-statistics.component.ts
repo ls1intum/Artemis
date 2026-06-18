@@ -238,7 +238,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly doughnutOptions = computed(() =>
         doughnutChartOptions({
             legend: false,
-            tooltip: { label: (item) => `${this.translateService.instant(item.label)}: ${item.parsed}` },
+            tooltip: {
+                title: (items) => this.translateService.instant(items[0]?.label ?? ''),
+                label: (item) => `${item.parsed}`,
+            },
         }),
     );
 
