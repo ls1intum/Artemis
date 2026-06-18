@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -105,6 +105,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
+    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
     // Icons
     faTimes = faTimes;
@@ -308,7 +309,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.activatedComponentReference.set(componentRef);
         }
 
-        this.isSidebarCollapsed.update((value) => value ?? false);
+        if (componentRef instanceof CourseExercisesComponent) {
+            componentRef.setPageTitle(this.pageTitle());
+        }
+
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.getShowRefreshButton();
     }
 
