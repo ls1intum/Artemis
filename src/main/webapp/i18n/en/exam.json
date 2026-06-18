@@ -709,8 +709,9 @@
                     "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
                     "duplicatedProgrammingExerciseShortName": "Multiple programming exercises in the exam have the same short name. Please choose a different short name!",
                     "duplicatedProgrammingExerciseTitle": "Multiple programming exercises in the exam have the same title. Please choose a different title!",
-                    "invalidExerciseConfiguration": "Some programming exercise titles or short names are invalid or already in use. Please correct the fields marked in red below before importing.",
+                    "invalidExerciseConfiguration": "Some titles or short names are missing, invalid, or already in use. Please correct the fields marked in red below before importing.",
                     "error": {
+                        "groupTitleRequired": "Please enter a title for the exercise group.",
                         "titleRequired": "Please enter a title.",
                         "titlePattern": "The title contains invalid characters.",
                         "titleDuplicate": "Another selected exercise already uses this title. Each title must be unique.",

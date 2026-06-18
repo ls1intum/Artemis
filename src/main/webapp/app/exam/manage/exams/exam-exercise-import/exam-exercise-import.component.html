@@ -32,12 +32,15 @@
                                 </td>
                                 <td class="w-75">
                                     <input
-                                        [ngClass]="{ 'form-control': true, 'is-invalid': exerciseGroup?.title?.length! === 0 }"
+                                        [ngClass]="{ 'form-control': true, 'is-invalid': !!getExerciseGroupTitleError(exerciseGroup) }"
                                         type="text"
                                         id="exerciseGroup-{{ exerciseGroup.id }}-title"
                                         name="exerciseGroup-{{ exerciseGroup.id }}-title"
                                         [(ngModel)]="exerciseGroup.title"
                                     />
+                                    @if (getExerciseGroupTitleError(exerciseGroup); as groupTitleError) {
+                                        <div class="invalid-feedback d-block text-start small" [jhiTranslate]="groupTitleError"></div>
+                                    }
                                 </td>
                             </tr>
                             <tr>
@@ -103,12 +106,15 @@
                                     <td>
                                         @if (exercise.type !== exerciseType.PROGRAMMING) {
                                             <input
-                                                [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 }"
+                                                [ngClass]="{ 'form-control': true, 'is-invalid': !!getNonProgrammingExerciseTitleError(exercise) }"
                                                 type="text"
                                                 [id]="'exercise-' + exercise.id + '-title'"
                                                 [name]="'exercise-' + exercise.id + '-title'"
                                                 [(ngModel)]="exercise.title"
                                             />
+                                            @if (getNonProgrammingExerciseTitleError(exercise); as titleError) {
+                                                <div class="invalid-feedback d-block text-start small" [jhiTranslate]="titleError"></div>
+                                            }
                                         }
                                         @if (exercise.type === exerciseType.PROGRAMMING) {
                                             <input

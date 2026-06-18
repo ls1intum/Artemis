@@ -709,8 +709,9 @@
                     "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
                     "duplicatedProgrammingExerciseShortName": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Kurznamen. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen",
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
-                    "invalidExerciseConfiguration": "Einige Titel oder Kurznamen von Programmieraufgaben sind ungültig oder bereits vergeben. Bitte korrigiere die unten rot markierten Felder vor dem Import.",
+                    "invalidExerciseConfiguration": "Einige Titel oder Kurznamen fehlen, sind ungültig oder bereits vergeben. Bitte korrigiere die unten rot markierten Felder vor dem Import.",
                     "error": {
+                        "groupTitleRequired": "Bitte gib einen Titel für die Aufgabengruppe ein.",
                         "titleRequired": "Bitte gib einen Titel ein.",
                         "titlePattern": "Der Titel enthält ungültige Zeichen.",
                         "titleDuplicate": "Eine andere ausgewählte Aufgabe verwendet diesen Titel bereits. Jeder Titel muss eindeutig sein.",

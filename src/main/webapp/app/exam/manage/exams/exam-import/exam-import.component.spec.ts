@@ -11,6 +11,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -80,6 +81,10 @@ describe('Exam Import Component', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ExerciseService,
+                    useValue: { getExistingExerciseDetailsInCourse: () => of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() }) },
+                },
             ],
         }).compileComponents();
 
