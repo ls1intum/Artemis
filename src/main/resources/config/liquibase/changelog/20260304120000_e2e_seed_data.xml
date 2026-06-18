@@ -47,7 +47,6 @@
             <column name="info_sharing_config" type="NUMERIC"/>
             <column name="unenrollment_enabled" type="BOOLEAN"/>
             <column name="learning_paths_enabled" type="BOOLEAN"/>
-            <column name="restricted_athena_modules_access" type="BOOLEAN"/>
             <column name="student_course_analytics_dashboard_enabled" type="BOOLEAN"/>
             <column name="faq_enabled" type="BOOLEAN"/>
             <column name="max_complaint_text_limit" type="NUMERIC"/>
