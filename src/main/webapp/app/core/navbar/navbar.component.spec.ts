@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -28,6 +29,11 @@ class StubLoadingNotificationComponent {}
 class StubThemeSwitchComponent {
     popoverPlacement = input<string>();
 }
+
+@Component({ selector: 'jhi-image', template: '' })
+class StubImageComponent {
+    src = input<string>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -53,6 +59,9 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 import { BehaviorSubject } from 'rxjs';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { Course } from 'app/course/shared/entities/course.model';
 
 class MockBreadcrumb {
     label: string;
@@ -68,6 +77,7 @@ describe('NavbarComponent', () => {
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
+    let currentCourseContextService: CurrentCourseContextService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -123,17 +133,21 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent],
                 },
                 add: {
-                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent],
+                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent, StubImageComponent],
                 },
             })
             .compileComponents();
         fixture = TestBed.createComponent(NavbarComponent);
         component = fixture.componentInstance;
+        router.navigate.mockClear();
+        router.navigateByUrl.mockClear();
         examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
+        currentCourseContextService = TestBed.inject(CurrentCourseContextService);
+        currentCourseContextService.clearCourse();
         entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
@@ -146,6 +160,39 @@ describe('NavbarComponent', () => {
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should display the current course next to the logo', () => {
+        const course = { id: 1, title: 'Course1', courseIconPath: 'path/to/icon.png' } as Course;
+        currentCourseContextService.setCourse(course);
+
+        fixture.detectChanges();
+
+        const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
+        expect(titleElement).toBeTruthy();
+        expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
+    });
+
+    it('should display a course initial if the current course has no icon', () => {
+        currentCourseContextService.setCourse({ id: 1, title: 'Course1' } as Course);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it('should link the current course to the management overview when in a management route', () => {
+        router.setUrl('/course-management/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/course-management', 1]);
+    });
+
+    it('should link the current course to the student overview when in a student route', () => {
+        router.setUrl('/courses/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/courses', 1]);
     });
 
     it('should make api call when logged in user changes language', () => {
