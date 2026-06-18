@@ -110,12 +110,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
-    // Tracks editors that already have the grapheme-aware backspace command registered, so it is registered at most
-    // once per editor (see registerCustomBackspaceAction).
-    private readonly editorsWithBackspaceAction = new WeakSet<monaco.editor.IStandaloneCodeEditor>();
-    // Disposables for the registered backspace actions; disposed on destroy so their (process-global) command
-    // registrations are released — otherwise the editors they reference, and their whole DOM subtree, leak.
-    private readonly customBackspaceActionDisposables: Disposable[] = [];
+    // Disposables for the registered backspace actions, keyed by editor so transient diff editors can be released
+    // when they are disposed instead of waiting for the whole component to be destroyed.
+    private readonly customBackspaceActionDisposables = new Map<monaco.editor.IStandaloneCodeEditor, Disposable>();
 
     private diffUpdateListener?: Disposable;
     private diffLayoutListener?: Disposable;
@@ -288,6 +285,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
         this.customBackspaceActionDisposables.forEach((disposable) => disposable.dispose());
+        this.customBackspaceActionDisposables.clear();
         this.diffUpdateListener?.dispose();
         this.diffLayoutListener?.dispose();
 
@@ -365,6 +363,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.diffListenersAttached = false;
 
         if (this._diffEditor) {
+            this.disposeCustomBackspaceAction(this._diffEditor.getModifiedEditor());
             // Clear cached editor before disposing to prevent race conditions
             // (e.g., ResizeObserver callback reading mode() as 'diff' during transition)
             this.lastEditableEditor = undefined;
@@ -1020,20 +1019,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // globally-tracked command whose handler captures the editor; re-registering it (previously done on every
         // focus event) leaked those editors and their DOM, because Monaco only disposes the most recently registered
         // command on editor.dispose(). The command is editor-scoped, so a single registration suffices.
-        if (this.editorsWithBackspaceAction.has(editor)) {
+        if (this.customBackspaceActionDisposables.has(editor)) {
             return;
         }
-        this.editorsWithBackspaceAction.add(editor);
         this.customBackspaceCommandId = MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID;
-        this.customBackspaceActionDisposables.push(
-            editor.addAction({
-                id: MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID,
-                label: 'Delete previous grapheme cluster',
-                keybindings: [monaco.KeyCode.Backspace],
-                precondition: '!findWidgetVisible && !editorReadonly',
-                run: (actionEditor) => this.deletePreviousGraphemeCluster(actionEditor),
-            }),
-        );
+        const disposable = editor.addAction({
+            id: MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID,
+            label: 'Delete previous grapheme cluster',
+            keybindings: [monaco.KeyCode.Backspace],
+            precondition: 'editorTextFocus && !findWidgetVisible && !editorReadonly',
+            run: (actionEditor) => this.deletePreviousGraphemeCluster(actionEditor),
+        });
+        this.customBackspaceActionDisposables.set(editor, disposable);
+    }
+
+    private disposeCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor): void {
+        this.customBackspaceActionDisposables.get(editor)?.dispose();
+        this.customBackspaceActionDisposables.delete(editor);
     }
 
     /**

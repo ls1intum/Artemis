@@ -572,13 +572,13 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
 
         // The action is registered once per editor via editor.addAction, which returns a disposable we must release.
-        const disposables = comp['customBackspaceActionDisposables'];
-        expect(disposables.length).toBe(1);
-        const disposeSpy = vi.spyOn(disposables[0], 'dispose');
+        const disposables = comp['customBackspaceActionDisposables'] as Map<unknown, { dispose: () => void }>;
+        expect(disposables.size).toBe(1);
+        const disposeSpy = vi.spyOn(disposables.values().next().value!, 'dispose');
 
         // Re-invoking registration for the same editor must not register the action again (no global-registry growth).
         comp['registerCustomBackspaceAction'](comp['_editor']);
-        expect(disposables.length).toBe(1);
+        expect(disposables.size).toBe(1);
 
         // On destroy the registration must be released, otherwise Monaco's global CommandsRegistry retains the editor.
         fixture.destroy();
