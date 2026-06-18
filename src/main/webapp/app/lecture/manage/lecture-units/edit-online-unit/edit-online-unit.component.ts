@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,13 +22,13 @@ export class EditOnlineUnitComponent implements OnInit {
     private onlineUnitService = inject(OnlineUnitService);
     private alertService = inject(AlertService);
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     onlineUnit: OnlineUnit;
-    formData: OnlineUnitFormData;
+    readonly formData = signal<OnlineUnitFormData>(undefined!);
     lectureId: number;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
@@ -39,20 +39,20 @@ export class EditOnlineUnitComponent implements OnInit {
                     return this.onlineUnitService.findById(onlineUnitId, this.lectureId);
                 }),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (onlineUnitResponse: HttpResponse<OnlineUnit>) => {
                     this.onlineUnit = onlineUnitResponse.body!;
 
-                    this.formData = {
+                    this.formData.set({
                         name: this.onlineUnit.name,
                         description: this.onlineUnit.description,
                         releaseDate: this.onlineUnit.releaseDate,
                         source: this.onlineUnit.source,
                         competencyLinks: this.onlineUnit.competencyLinks,
-                    };
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -65,12 +65,12 @@ export class EditOnlineUnitComponent implements OnInit {
         this.onlineUnit.releaseDate = releaseDate;
         this.onlineUnit.source = source;
         this.onlineUnit.competencyLinks = competencyLinks;
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.onlineUnitService
             .update(this.onlineUnit, this.lectureId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/online-units/:onlineUnitId/edit
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),

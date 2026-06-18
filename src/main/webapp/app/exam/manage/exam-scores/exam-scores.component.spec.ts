@@ -387,11 +387,11 @@ describe('ExamScoresComponent', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
 
         // expect three distinct scores
-        expect(comp.scores).toHaveLength(3);
+        expect(comp.scores()).toHaveLength(3);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
-        const groupResult1 = comp.aggregatedExerciseGroupResults.find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
+        const groupResult1 = comp.aggregatedExerciseGroupResults().find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
         const expectedGroupResult = {
             noOfParticipantsWithFilter: 3,
             totalPoints: 170,
@@ -470,11 +470,11 @@ describe('ExamScoresComponent', () => {
         // it should skip the not submitted one
         const noOfSubmittedExercises = examScoreDTO.studentResults.length - 1;
         // expect two distinct scores
-        expect(comp.scores).toHaveLength(2);
+        expect(comp.scores()).toHaveLength(2);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
-        const groupResult1 = comp.aggregatedExerciseGroupResults.find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
+        const groupResult1 = comp.aggregatedExerciseGroupResults().find((groupRes) => groupRes.exerciseGroupId === exGroup1.id);
         const expectedGroupResult = {
             noOfParticipantsWithFilter: 2,
             totalPoints: 120,
@@ -545,9 +545,9 @@ describe('ExamScoresComponent', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
-        comp.gradingScale = gradingScale;
-        comp.gradingScale.gradeSteps = [gradeStep1];
-        comp.gradingScaleExists = true;
+        comp.gradingScale.set(gradingScale);
+        comp.gradingScale()!.gradeSteps = [gradeStep1];
+        comp.gradingScaleExists.set(true);
 
         const exportAsCsvStub = vi.spyOn(comp, 'exportAsCsv');
         // create csv
@@ -611,20 +611,20 @@ describe('ExamScoresComponent', () => {
         );
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
-        expect(comp.hasBonus).toEqual(BonusStrategy.GRADES_DISCRETE);
-        expect(comp.hasPlagiarismVerdicts).toBe(true);
-        expect(comp.hasPlagiarismVerdictsInBonusSource).toBe(true);
-        expect(comp.gradesWithBonus).toEqual(finalGrades);
+        expect(comp.hasBonus()).toEqual(BonusStrategy.GRADES_DISCRETE);
+        expect(comp.hasPlagiarismVerdicts()).toBe(true);
+        expect(comp.hasPlagiarismVerdictsInBonusSource()).toBe(true);
+        expect(comp.gradesWithBonus()).toEqual(finalGrades);
     });
 
     it('should initialize correctly with bonus points', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })));
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
-        expect(comp.hasBonus).toEqual(BonusStrategy.POINTS);
-        expect(comp.hasPlagiarismVerdicts).toBe(false);
-        expect(comp.hasPlagiarismVerdictsInBonusSource).toBe(false);
-        expect(comp.gradesWithBonus).toEqual(finalGrades);
+        expect(comp.hasBonus()).toEqual(BonusStrategy.POINTS);
+        expect(comp.hasPlagiarismVerdicts()).toBe(false);
+        expect(comp.hasPlagiarismVerdictsInBonusSource()).toBe(false);
+        expect(comp.gradesWithBonus()).toEqual(finalGrades);
     });
 
     it('should generate csv correctly with bonus grades and plagiarism', () => {
@@ -633,9 +633,9 @@ describe('ExamScoresComponent', () => {
             of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
         );
         fixture.detectChanges();
-        comp.gradingScale = gradingScale;
-        comp.gradingScale.gradeSteps = [gradeStep1];
-        comp.gradingScaleExists = true;
+        comp.gradingScale.set(gradingScale);
+        comp.gradingScale()!.gradeSteps = [gradeStep1];
+        comp.gradingScaleExists.set(true);
 
         const exportAsCsvStub = vi.spyOn(comp, 'exportAsCsv');
         // create csv
@@ -727,26 +727,26 @@ describe('ExamScoresComponent', () => {
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).toBe(true);
-        expect(comp.gradingScale).toEqual(gradingScale);
-        expect(comp.isBonus).toBe(false);
+        expect(comp.gradingScaleExists()).toBe(true);
+        expect(comp.gradingScale()).toEqual(gradingScale);
+        expect(comp.isBonus()).toBe(false);
     });
 
     it('should filter non-empty submissions', () => {
-        comp.filterForNonEmptySubmissions = false;
-        comp.gradingScale = gradingScale;
-        comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
-        comp.gradingScaleExists = true;
-        comp.exerciseGroups = examScoreDTO.exerciseGroups;
-        comp.studentResults = examScoreDTO.studentResults;
-        comp.examScoreDTO = examScoreDTO;
-        comp.aggregatedExamResults = new AggregatedExamResult();
-        comp.course = { accuracyOfScores: 1 };
+        comp.filterForNonEmptySubmissions.set(false);
+        comp.gradingScale.set(gradingScale);
+        comp.gradingScale()!.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
+        comp.gradingScaleExists.set(true);
+        comp.exerciseGroups.set(examScoreDTO.exerciseGroups);
+        comp.studentResults.set(examScoreDTO.studentResults);
+        comp.examScoreDTO.set(examScoreDTO);
+        comp.aggregatedExamResults.set(new AggregatedExamResult());
+        comp.course.set({ accuracyOfScores: 1 });
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).toBe(true);
+        expect(comp.filterForNonEmptySubmissions()).toBe(true);
     });
 
     describe('test table filtering', () => {
@@ -755,7 +755,7 @@ describe('ExamScoresComponent', () => {
         it('should set table state correctly if non empty submissions filter is activated', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
-            comp.filterForNonEmptySubmissions = false;
+            comp.filterForNonEmptySubmissions.set(false);
             comp.ngOnInit();
 
             comp.toggleFilterForNonEmptySubmission();
@@ -801,7 +801,7 @@ describe('ExamScoresComponent', () => {
         it('should set table state correctly if only submitted exams filter is activated', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
-            comp.filterForSubmittedExams = false;
+            comp.filterForSubmittedExams.set(false);
             comp.ngOnInit();
 
             comp.toggleFilterForSubmittedExam();
@@ -848,8 +848,8 @@ describe('ExamScoresComponent', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.ngOnInit();
-            comp.filterForNonEmptySubmissions = false;
-            comp.filterForSubmittedExams = false;
+            comp.filterForNonEmptySubmissions.set(false);
+            comp.filterForSubmittedExams.set(false);
             comp.ngOnInit();
 
             comp.toggleFilterForSubmittedExam();
@@ -896,24 +896,24 @@ describe('ExamScoresComponent', () => {
 
     it('should toggle median correctly', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        comp.isBonus = false;
+        comp.isBonus.set(false);
         fixture.detectChanges();
 
-        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showPassedMedian()).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(false);
+        expect(comp.showPassedMedian()).toBe(false);
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.showOverallMedian).toBe(true);
+        expect(comp.showOverallMedian()).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(true);
-        expect(comp.showOverallMedian).toBe(false);
+        expect(comp.showPassedMedian()).toBe(true);
+        expect(comp.showOverallMedian()).toBe(false);
     });
 
     it('should return data label correctly if noOfExamsFiltered is 0', () => {
@@ -926,9 +926,9 @@ describe('ExamScoresComponent', () => {
 });
 
 function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
-    expect(comp.examScoreDTO).toEqual(examScoreDTO);
-    expect(comp.studentResults).toEqual(examScoreDTO.studentResults);
-    expect(comp.exerciseGroups).toEqual(examScoreDTO.exerciseGroups);
+    expect(comp.examScoreDTO()).toEqual(examScoreDTO);
+    expect(comp.studentResults()).toEqual(examScoreDTO.studentResults);
+    expect(comp.exerciseGroups()).toEqual(examScoreDTO.exerciseGroups);
 }
 
 function validateUserRow(

@@ -46,7 +46,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.componentRef.setInput('readonly', true);
 
         comp.ngOnInit();
-        expect(comp.allowDrop).toBe(false);
+        expect(comp.allowDrop()).toBe(false);
         expect(comp.disableDrag()).toBe(false);
     });
 
@@ -80,15 +80,15 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
         expect(comp.expandableSections()).toHaveLength(2);
         comp.expandableSections().forEach((section) => {
-            expect(section.isCollapsed).toBe(false);
+            expect(section.isCollapsed()).toBe(false);
         });
         comp.collapseAll();
         comp.expandableSections().forEach((section) => {
-            expect(section.isCollapsed).toBe(true);
+            expect(section.isCollapsed()).toBe(true);
         });
         comp.expandAll();
         comp.expandableSections().forEach((section) => {
-            expect(section.isCollapsed).toBe(false);
+            expect(section.isCollapsed()).toBe(false);
         });
     });
 });

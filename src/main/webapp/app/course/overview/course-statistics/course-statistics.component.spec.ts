@@ -368,6 +368,13 @@ describe('CourseStatisticsComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
+        const callbacks = (comp.doughnutOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.title([{ label: 'artemisApp.courseOverview.statistics.missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(callbacks.label({ parsed: 400 })).toBe('400');
+    });
+
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
@@ -463,7 +470,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
-        expect(comp.course).toBeUndefined();
+        expect(comp.course()).toBeUndefined();
 
         const courseToSubscribeTo = { ...course };
         courseToSubscribeTo.exercises = [...modelingExercises];
@@ -473,7 +480,7 @@ describe('CourseStatisticsComponent', () => {
 
         courseStorageService.updateCourse(courseToSubscribeTo);
 
-        expect(comp.course).toEqual(courseToSubscribeTo);
+        expect(comp.course()).toEqual(courseToSubscribeTo);
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
     });
 
@@ -510,7 +517,7 @@ describe('CourseStatisticsComponent', () => {
             vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
-            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
+            expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
             expect(comp.ngxExerciseGroups().size).toBe(3);
             const modelingExercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
             expect(modelingExercises).toHaveLength(5);

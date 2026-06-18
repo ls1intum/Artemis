@@ -47,20 +47,20 @@ export class UsersImportDialogComponent implements OnDestroy {
     examUserMode = input<boolean>(false);
     adminUserMode = input<boolean>(false);
 
-    usersToImport: StudentDTO[] = [];
-    examUsersToImport: ExamUserDTO[] = [];
+    readonly usersToImport = signal<StudentDTO[]>([]);
+    readonly examUsersToImport = signal<ExamUserDTO[]>([]);
     notFoundUsers: Partial<StudentDTO>[] = [];
 
-    isParsing = false;
-    validationError?: string;
-    noUsersFoundError?: boolean;
-    isImporting = false;
-    hasImported = false;
+    readonly isParsing = signal(false);
+    readonly validationError = signal<string | undefined>(undefined);
+    readonly noUsersFoundError = signal<boolean | undefined>(undefined);
+    readonly isImporting = signal(false);
+    readonly hasImported = signal(false);
     /**
      * Admin-only: when enabled, users that cannot be found in the database or LDAP are created as internal Artemis
      * users using the optional password column from the CSV (or a generated one if absent).
      */
-    createInternalUsers = false;
+    readonly createInternalUsers = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -77,58 +77,58 @@ export class UsersImportDialogComponent implements OnDestroy {
     }
 
     private resetDialog() {
-        this.usersToImport = [];
-        this.examUsersToImport = [];
+        this.usersToImport.set([]);
+        this.examUsersToImport.set([]);
         this.notFoundUsers = [];
-        this.hasImported = false;
-        this.validationError = undefined;
-        this.noUsersFoundError = undefined;
+        this.hasImported.set(false);
+        this.validationError.set(undefined);
+        this.noUsersFoundError.set(undefined);
     }
 
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
             const file = event.target.files[0];
-            this.isParsing = true;
+            this.isParsing.set(true);
             try {
                 if (this.examUserMode()) {
                     const result = await readExamUserDTOsFromCSVFile(file);
                     if (!result.ok) {
-                        this.validationError = result.invalidRowIndices.join(', ');
+                        this.validationError.set(result.invalidRowIndices.join(', '));
                         event.target.value = '';
                         return;
                     }
 
                     const examUsers = result.examUsers;
                     if (examUsers.length === 0) {
-                        this.noUsersFoundError = true;
+                        this.noUsersFoundError.set(true);
                         event.target.value = '';
                         return;
                     }
 
-                    this.examUsersToImport = result.examUsers;
+                    this.examUsersToImport.set(result.examUsers);
                 } else {
                     const result = await readStudentDTOsFromCSVFile(file);
                     if (!result.ok) {
-                        this.validationError = result.invalidRowIndices.join(', ');
+                        this.validationError.set(result.invalidRowIndices.join(', '));
                         event.target.value = '';
                         return;
                     }
 
                     const students = result.students;
                     if (students.length === 0) {
-                        this.noUsersFoundError = true;
+                        this.noUsersFoundError.set(true);
                         event.target.value = '';
                         return;
                     }
 
-                    this.usersToImport = result.students;
+                    this.usersToImport.set(result.students);
                 }
             } catch {
                 this.alertService.error('artemisApp.importUsers.genericErrorMessage');
                 event.target.value = '';
             } finally {
-                this.isParsing = false;
+                this.isParsing.set(false);
             }
         }
     }
@@ -137,14 +137,14 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Sends the import request to the server with the list of users to be imported
      */
     importUsers() {
-        this.isImporting = true;
+        this.isImporting.set(true);
         const tutorialGroup = this.tutorialGroup();
         const courseGroup = this.courseGroup();
         const exam = this.exam();
         const courseId = this.courseId();
 
         if (tutorialGroup) {
-            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport, 'response').subscribe({
+            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport(), 'response').subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
                     const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
                     this.onSaveSuccess(convertedStudents);
@@ -152,19 +152,19 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (courseGroup && !exam) {
-            this.courseManagementService.addUsersToGroupInCourse(courseId!, this.usersToImport, courseGroup).subscribe({
+            this.courseManagementService.addUsersToGroupInCourse(courseId!, this.usersToImport(), courseGroup).subscribe({
                 next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
         } else if (!courseGroup && exam) {
-            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport).subscribe({
+            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
                 next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
-            const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
-            this.adminUserService.importAll(artemisUsers, this.createInternalUsers).subscribe({
+            const artemisUsers = this.usersToImport().map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            this.adminUserService.importAll(artemisUsers, this.createInternalUsers()).subscribe({
                 next: (res) => {
                     const convertedStudents =
                         res.body?.map((user) => ({
@@ -177,7 +177,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
-            this.isImporting = false;
+            this.isImporting.set(false);
         }
     }
 
@@ -207,7 +207,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasImported(user: StudentDTO): boolean {
-        return this.hasImported && !this.wasNotImported(user);
+        return this.hasImported() && !this.wasNotImported(user);
     }
 
     /**
@@ -215,7 +215,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasNotImported(user: StudentDTO): boolean {
-        if (this.hasImported && this.notFoundUsers?.length === 0) {
+        if (this.hasImported() && this.notFoundUsers?.length === 0) {
             return false;
         }
 
@@ -236,22 +236,22 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Number of Users that were successfully imported
      */
     get numberOfUsersImported(): number {
-        return !this.hasImported
+        return !this.hasImported()
             ? 0
             : this.examUserMode()
-              ? this.examUsersToImport.length - this.numberOfUsersNotImported
-              : this.usersToImport.length - this.numberOfUsersNotImported;
+              ? this.examUsersToImport().length - this.numberOfUsersNotImported
+              : this.usersToImport().length - this.numberOfUsersNotImported;
     }
 
     /**
      * Number of users which could not be imported
      */
     get numberOfUsersNotImported(): number {
-        return !this.hasImported ? 0 : this.notFoundUsers.length;
+        return !this.hasImported() ? 0 : this.notFoundUsers.length;
     }
 
     get isSubmitDisabled(): boolean {
-        return this.examUserMode() ? this.isImporting || !this.examUsersToImport?.length : this.isImporting || !this.usersToImport?.length;
+        return this.examUserMode() ? this.isImporting() || !this.examUsersToImport()?.length : this.isImporting() || !this.usersToImport()?.length;
     }
 
     /**
@@ -259,8 +259,8 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param notFoundUsers - List of users that could NOT be imported since they were not found
      */
     onSaveSuccess(notFoundUsers: Partial<StudentDTO>[]) {
-        this.isImporting = false;
-        this.hasImported = true;
+        this.isImporting.set(false);
+        this.hasImported.set(true);
         this.notFoundUsers = notFoundUsers || [];
     }
 
@@ -269,12 +269,12 @@ export class UsersImportDialogComponent implements OnDestroy {
      */
     onSaveError() {
         this.alertService.error('artemisApp.importUsers.genericErrorMessage');
-        this.isImporting = false;
+        this.isImporting.set(false);
     }
 
     open(): void {
         this.resetDialog();
-        this.createInternalUsers = false;
+        this.createInternalUsers.set(false);
         this.dialogVisible.set(true);
     }
 

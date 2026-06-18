@@ -42,11 +42,19 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             localVCServletService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
-            servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
+            int status = localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI());
+            // The first request of every git operation has no Authorization header by design (the client waits
+            // for the 401 challenge), so do not log that expected handshake. Log every other rejection with its
+            // concrete reason — otherwise a 401/403 is returned silently and is impossible to diagnose.
+            if (!"No authorization header provided".equals(e.getMessage())) {
+                log.warn("LocalVC fetch rejected for {} -> HTTP {} ({}: {})", servletRequest.getRequestURI(), status, e.getClass().getSimpleName(), e.getMessage());
+            }
+            servletResponse.setStatus(status);
             return;
         }
         catch (AuthenticationException e) {
             // intercept failed authentication to log it in the VCS access log
+            log.warn("LocalVC fetch authentication failed for {} ({}: {})", servletRequest.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
             localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
         }

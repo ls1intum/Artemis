@@ -9,9 +9,8 @@
 # directly, without requiring transitive deps at top-level node_modules).
 
 # Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
-# Without this, peer deps such as `@angular/animations` (required by
-# @swimlane/ngx-graph) are not installed, and the Angular esbuild bundle
-# fails with "Could not resolve @angular/animations".
+# Without this, peer deps are not installed, and the Angular esbuild bundle
+# fails with "Could not resolve ..." errors.
 autoInstallPeers: true
 
 # Treat the lockfile as authoritative; never silently update it during install.
@@ -22,10 +21,10 @@ enablePrePostScripts: true
 
 # Tell pnpm that Angular 21 is an acceptable peer for packages whose published
 # peerDependencies range still lists only "18.x || 19.x || 20.x".
-# We already pin every relevant @angular/* dep under @swimlane/* and ng-mocks
+# We already pin every relevant @angular/* dep under ng-mocks
 # to ^21.2.0 via the `overrides:` block below; this block just suppresses
 # the cosmetic peer-range warning that overrides do not silence on their own.
-# When @swimlane / ng-mocks publish releases that declare Angular 21 in their
+# When ng-mocks publishes a release that declares Angular 21 in its
 # peer range, this block (and the matching overrides) can be removed.
 peerDependencyRules:
     allowedVersions:
@@ -41,19 +40,9 @@ peerDependencyRules:
 
 # Dependency overrides. pnpm 11 reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
-# transitive packages to CVE-patched versions and force Angular 21 across all
-# @swimlane/* and ng-mocks subtrees (still on older peer ranges).
+# transitive packages to CVE-patched versions and force Angular 21 across the
+# ng-mocks subtree (still on an older peer range).
 overrides:
-    '@swimlane/ngx-graph>@angular/animations': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/cdk': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/common': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/compiler': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/core': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/forms': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser-dynamic': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/router': '^21.2.0'
-    '@swimlane/ngx-graph>rxjs': '^7.8.2'
     'ng-mocks>@angular/common': '^21.2.0'
     'ng-mocks>@angular/core': '^21.2.0'
     'ng-mocks>@angular/forms': '^21.2.0'
@@ -62,6 +51,7 @@ overrides:
     'ng-mocks>@angular/router': '^21.2.0'
     'ng-mocks>rxjs': '^7.8.2'
     'babel-plugin-istanbul>test-exclude': '8.0.0'
+    '@babel/core': '7.29.7'
     '@babel/runtime': '7.29.2'
     '@babel/plugin-transform-modules-systemjs': '7.29.4'
     '@primeuix/styled': '0.7.4'
@@ -71,15 +61,15 @@ overrides:
     cookie: '1.1.1'
     debug: '4.4.3'
     diff: '9.0.0'
-    dompurify: '3.4.8'
-    esbuild: '0.28.0'
+    dompurify: '3.4.10'
+    esbuild: '0.28.1'
     express: '5.2.1'
     fast-uri: '3.1.2'
     globals: '17.6.0'
-    hono: '4.12.23'
+    hono: '4.12.25'
     '@hono/node-server': '1.19.13'
     ip-address: '10.2.0'
-    js-yaml: '4.1.1'
+    js-yaml: '4.2.0'
     jsdom: '29.1.1'
     katex: '0.17.0'
     minimatch: '10.2.5'
@@ -91,19 +81,18 @@ overrides:
     tough-cookie: '6.0.1'
     undici: '7.25.0'
     uuid: '14.0.0'
-    vite: '7.3.2'
+    vite: '7.3.5'
     webpack: '5.106.2'
     webpack-dev-middleware: '7.4.5'
     webpack-dev-server: '5.2.4'
     word-wrap: '1.2.5'
-    ws: '8.20.1'
+    ws: '8.21.0'
     yargs-parser: '22.0.0'
 
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
-    'eslint@10.4.1': 'patches/eslint+10.4.1.patch'
+    'eslint@10.5.0': 'patches/eslint+10.5.0.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings

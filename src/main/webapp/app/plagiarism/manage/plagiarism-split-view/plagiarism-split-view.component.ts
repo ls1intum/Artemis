@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, signal, viewChildren } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import Split from 'split.js';
@@ -36,18 +36,18 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     readonly panes = viewChildren(SplitPaneDirective);
 
-    plagiarismComparison: PlagiarismComparison;
+    readonly plagiarismComparison = signal<PlagiarismComparison | undefined>(undefined);
     fileSelectedSubject = new Subject<PlagiarismFileElement>();
     showFilesSubject = new Subject<boolean>();
     dropdownHoverSubject = new Subject<PlagiarismFileElement>();
 
     public split: Split.Instance;
 
-    public isProgrammingOrTextExercise: boolean;
+    readonly isProgrammingOrTextExercise = signal(false);
 
-    public matchesA: Map<string, FromToElement[]>;
-    public matchesB: Map<string, FromToElement[]>;
-    isLockFilesEnabled = false;
+    readonly matchesA = signal<Map<string, FromToElement[]> | undefined>(undefined);
+    readonly matchesB = signal<Map<string, FromToElement[]> | undefined>(undefined);
+    readonly isLockFilesEnabled = signal(false);
 
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
@@ -74,20 +74,21 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         if (changes.exercise) {
             const exercise = changes.exercise.currentValue;
 
-            this.isProgrammingOrTextExercise = exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT;
+            this.isProgrammingOrTextExercise.set(exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT);
         }
 
         if (changes.comparison) {
             this.plagiarismCasesService
                 .getPlagiarismComparisonForSplitView(getCourseId(this.exercise())!, changes.comparison.currentValue.id)
                 .subscribe((resp: HttpResponse<PlagiarismComparison>) => {
-                    this.plagiarismComparison = resp.body!;
+                    const plagiarismComparison = resp.body!;
                     const sortByStudentLogin = this.sortByStudentLogin();
-                    if (sortByStudentLogin && sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
-                        this.swapSubmissions(this.plagiarismComparison);
+                    if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
+                        this.swapSubmissions(plagiarismComparison);
                     }
-                    if (this.isProgrammingOrTextExercise) {
-                        this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison);
+                    this.plagiarismComparison.set(plagiarismComparison);
+                    if (this.isProgrammingOrTextExercise()) {
+                        this.parseTextMatches(plagiarismComparison);
                     }
                 });
         }
@@ -123,12 +124,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const matchesA = plagComparison.matches.map((match) => new SimpleMatch(match.startA, match.length)).sort((m1, m2) => m1.start - m2.start);
             const matchesB = plagComparison.matches.map((match) => new SimpleMatch(match.startB, match.length)).sort((m1, m2) => m1.start - m2.start);
 
-            this.matchesA = this.mapMatchesToElements(matchesA, plagComparison.submissionA);
-            this.matchesB = this.mapMatchesToElements(matchesB, plagComparison.submissionB);
+            this.matchesA.set(this.mapMatchesToElements(matchesA, plagComparison.submissionA));
+            this.matchesB.set(this.mapMatchesToElements(matchesB, plagComparison.submissionB));
         } else {
             // empty map in case no matches are available
-            this.matchesA = new Map<string, FromToElement[]>();
-            this.matchesB = new Map<string, FromToElement[]>();
+            this.matchesA.set(new Map<string, FromToElement[]>());
+            this.matchesB.set(new Map<string, FromToElement[]>());
         }
     }
 
@@ -162,11 +163,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     getTextSubmissionA() {
-        return this.plagiarismComparison.submissionA as PlagiarismSubmission;
+        return this.plagiarismComparison()!.submissionA as PlagiarismSubmission;
     }
 
     getTextSubmissionB() {
-        return this.plagiarismComparison.submissionB as PlagiarismSubmission;
+        return this.plagiarismComparison()!.submissionB as PlagiarismSubmission;
     }
 
     handleSplitControl(pane: string) {
@@ -189,6 +190,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * Toggles the state of file locking and emits the new state to the parent component.
      */
     toggleLockFiles() {
-        this.isLockFilesEnabled = !this.isLockFilesEnabled;
+        this.isLockFilesEnabled.update((enabled) => !enabled);
     }
 }
