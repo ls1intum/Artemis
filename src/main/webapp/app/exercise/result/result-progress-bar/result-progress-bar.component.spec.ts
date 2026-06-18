@@ -48,14 +48,14 @@ describe('ResultProgressBarComponent', () => {
         fixture.componentRef.setInput('estimatedDuration', 25);
         fixture.detectChanges();
 
-        expect(component.isBuildProgressBarAnimated).toBe(true);
-        expect(component.buildProgressBarOpacity).toBe(1);
-        expect(component.buildProgressBarValue).toBe(0);
+        expect(component.isBuildProgressBarAnimated()).toBe(true);
+        expect(component.buildProgressBarOpacity()).toBe(1);
+        expect(component.buildProgressBarValue()).toBe(0);
 
         vi.advanceTimersByTime(1500);
 
-        expect(component.queueProgressBarValue).toBeGreaterThan(0);
-        expect(component.queueProgressBarValue).toBeLessThan(100);
+        expect(component.queueProgressBarValue()).toBeGreaterThan(0);
+        expect(component.queueProgressBarValue()).toBeLessThan(100);
     });
 
     it('should set build progress bar', () => {
@@ -64,18 +64,18 @@ describe('ResultProgressBarComponent', () => {
         fixture.componentRef.setInput('isQueued', false);
         fixture.detectChanges();
 
-        expect(component.isQueueProgressBarAnimated).toBe(true);
-        expect(component.queueProgressBarOpacity).toBe(1);
-        expect(component.queueProgressBarValue).toBe(100);
+        expect(component.isQueueProgressBarAnimated()).toBe(true);
+        expect(component.queueProgressBarOpacity()).toBe(1);
+        expect(component.queueProgressBarValue()).toBe(100);
 
         vi.advanceTimersByTime(1500);
 
-        expect(component.buildProgressBarValue).toBeGreaterThan(0);
-        expect(component.buildProgressBarValue).toBeLessThan(100);
+        expect(component.buildProgressBarValue()).toBeGreaterThan(0);
+        expect(component.buildProgressBarValue()).toBeLessThan(100);
     });
 
     it('should alternate opacity when queued', () => {
-        component.queueProgressBarOpacity = 1;
+        component.queueProgressBarOpacity.set(1);
 
         vi.useFakeTimers();
         fixture.componentRef.setInput('isBuilding', false);
@@ -84,16 +84,16 @@ describe('ResultProgressBarComponent', () => {
         fixture.componentRef.setInput('estimatedRemaining', undefined);
         fixture.detectChanges();
 
-        expect(component.isQueueProgressBarAnimated).toBe(false);
-        expect(component.queueProgressBarValue).toBe(100);
+        expect(component.isQueueProgressBarAnimated()).toBe(false);
+        expect(component.queueProgressBarValue()).toBe(100);
 
         vi.advanceTimersByTime(1500);
 
-        expect(component.queueProgressBarOpacity).toBe(0);
+        expect(component.queueProgressBarOpacity()).toBe(0);
     });
 
     it('should alternate opacity when building', () => {
-        component.buildProgressBarOpacity = 1;
+        component.buildProgressBarOpacity.set(1);
 
         vi.useFakeTimers();
         fixture.componentRef.setInput('isBuilding', true);
@@ -102,12 +102,12 @@ describe('ResultProgressBarComponent', () => {
         fixture.componentRef.setInput('estimatedRemaining', undefined);
         fixture.detectChanges();
 
-        expect(component.isBuildProgressBarAnimated).toBe(false);
-        expect(component.buildProgressBarValue).toBe(100);
+        expect(component.isBuildProgressBarAnimated()).toBe(false);
+        expect(component.buildProgressBarValue()).toBe(100);
 
         vi.advanceTimersByTime(1500);
 
-        expect(component.buildProgressBarOpacity).toBe(0);
+        expect(component.buildProgressBarOpacity()).toBe(0);
     });
 
     it('should clear interval on destroy', () => {

@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -129,15 +130,23 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
+            originalProgrammingExercise.setCourse(course);
+            originalProgrammingExercise.setTestCasesChanged(false);
+
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
-            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
+            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, false, true);
+
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
+
+            Optional<String> importedJenkinsBuildPlan = Optional.empty();
+            if (profileService.isJenkinsActive()) {
+                importedJenkinsBuildPlan = readBuildPlanIfExisting(pathToDirectoryWithImportedContent);
+            }
 
             try {
                 programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
@@ -146,12 +155,10 @@ public class ProgrammingExerciseImportFromFileService {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
             }
 
-            newProgrammingExercise.setCourse(course);
-            // It doesn't make sense to import a build plan on a local CI setup.
-            if (profileService.isJenkinsActive()) {
-                importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
+            if (importedJenkinsBuildPlan.isPresent()) {
+                buildPlanRepository.setBuildPlanForExercise(importedJenkinsBuildPlan.orElseThrow(), newProgrammingExercise);
             }
-            // TODO: we need to create the build configuration
+            newProgrammingExercise = programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(newProgrammingExercise);
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
@@ -161,22 +168,18 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Imports a build plan if it exists in the extracted zip file
-     * If the file cannot be read, the build plan is skipped
+     * Reads a build plan if it exists in the extracted zip file.
+     * If the file cannot be read, the build plan is skipped.
      *
-     * @param programmingExercise the programming exercise for which the build plan should be imported
-     * @param importExerciseDir   the directory where the extracted zip file is located
+     * @param importExerciseDir the directory where the extracted zip file is located
+     * @return the build plan content, if present and readable
      */
-    private void importBuildPlanIfExisting(ProgrammingExercise programmingExercise, Path importExerciseDir) {
+    private Optional<String> readBuildPlanIfExisting(Path importExerciseDir) throws IOException {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
-            try {
-                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8), programmingExercise);
-            }
-            catch (IOException e) {
-                log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
-            }
+            return Optional.of(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8));
         }
+        return Optional.empty();
     }
 
     /**

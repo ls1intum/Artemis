@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -49,12 +49,12 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     getAsChannel = getAsChannelDTO;
     isChannel = isChannelDTO;
 
-    members: ConversationUserDTO[] = [];
+    readonly members = signal<ConversationUserDTO[]>([]);
     // page information
     page = 1;
     itemsPerPage = 10;
-    totalItems = 0;
-    isSearching = true;
+    readonly totalItems = signal<number>(0);
+    readonly isSearching = signal(true);
     searchTerm = '';
 
     // icons
@@ -74,7 +74,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     public conversationService = inject(ConversationService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
-    private cdr = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
 
     filterOptions = computed(() => {
@@ -135,13 +134,13 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                         return prev === curr;
                     }
                 }),
-                tap(() => (this.members = [])),
+                tap(() => this.members.set([])),
                 map((query) => {
                     const searchTerm = query.searchTerm !== null && query.searchTerm !== undefined ? query.searchTerm : '';
                     return searchTerm.trim().toLowerCase();
                 }),
                 tap((searchTerm) => {
-                    this.isSearching = true;
+                    this.isSearching.set(true);
                     this.searchTerm = searchTerm;
                 }),
                 switchMap(() => {
@@ -162,11 +161,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: HttpResponse<ConversationUserDTO[]>) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     this.onSuccess(res.body, res.headers);
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     onError(this.alertService, errorResponse);
                 },
             });
@@ -212,20 +211,19 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     }
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
         if (this.activeConversation) {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
                     return {
                         ...current,
-                        numberOfMembers: this.totalItems,
+                        numberOfMembers: this.totalItems(),
                     };
                 }
                 return current;
             });
         }
-        this.members = members || [];
-        this.cdr.detectChanges();
+        this.members.set(members || []);
     }
 }

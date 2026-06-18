@@ -115,6 +115,26 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
     }
 
+    /**
+     * Deleting an exercise that carries a resolved complaint (a Complaint with an answered ComplaintResponse) must not
+     * fail the cascade. Regression test for a Hibernate TransientPropertyValueException
+     * ("Persistent instance of Complaint references an unsaved transient instance of ComplaintResponse").
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteModelingExerciseWithResolvedComplaint_shouldNotFail() throws Exception {
+        complaint.setAccepted(true);
+        complaint = complaintRepo.save(complaint);
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setComplaint(complaint);
+        complaintResponse.setResponseText("resolved");
+        complaintResponse.setSubmittedTime(ZonedDateTime.now());
+        complaintResponse.setReviewer(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        complaintResponseTestRepository.save(complaintResponse);
+
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessmentResultBeforeDueDate() throws Exception {

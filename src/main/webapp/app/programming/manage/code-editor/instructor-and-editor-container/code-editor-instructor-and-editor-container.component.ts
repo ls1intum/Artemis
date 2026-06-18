@@ -256,7 +256,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
-    selectedIssue: ConsistencyIssueNavigationIssue | undefined = undefined;
+    readonly selectedIssue = signal<ConsistencyIssueNavigationIssue | undefined>(undefined);
     private shouldAutoStartCodeGenerationAllRepositories = window.history.state?.[AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE] === true;
 
     // Icons
@@ -352,13 +352,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 return;
             }
 
-            const hasValidSelection = this.selectedIssue ? issues.some((issue) => issue.threadId === this.selectedIssue?.threadId) : false;
+            const hasValidSelection = this.selectedIssue() ? issues.some((issue) => issue.threadId === this.selectedIssue()?.threadId) : false;
             if (hasValidSelection) {
                 return;
             }
 
-            this.selectedIssue = issues[0];
-            this.jumpToLocation(this.selectedIssue);
+            this.selectedIssue.set(issues[0]);
+            this.jumpToLocation(this.selectedIssue()!);
         });
     }
 
@@ -1520,7 +1520,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        this.selectedIssue = undefined;
+        this.selectedIssue.set(undefined);
         this.showConsistencyIssuesToolbar.set(false);
         const existingConsistencyThreadIds = new Set(
             this.exerciseReviewCommentService
@@ -1668,10 +1668,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     get currentGlobalIndex(): number {
         const issues = this.sortedIssues();
-        if (!this.selectedIssue) {
+        if (!this.selectedIssue()) {
             return 0;
         }
-        const index = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
+        const index = issues.findIndex((issue) => issue.threadId === this.selectedIssue()?.threadId);
         return index >= 0 ? index + 1 : 0;
     }
 
@@ -1680,10 +1680,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const issues = this.sortedIssues();
 
         if (this.showConsistencyIssuesToolbar()) {
-            const isIssueValid = this.selectedIssue && issues.some((issue) => issue.threadId === this.selectedIssue?.threadId);
+            const isIssueValid = this.selectedIssue() && issues.some((issue) => issue.threadId === this.selectedIssue()?.threadId);
             if (!isIssueValid && issues.length > 0) {
-                this.selectedIssue = issues[0];
-                this.jumpToLocation(this.selectedIssue);
+                this.selectedIssue.set(issues[0]);
+                this.jumpToLocation(this.selectedIssue()!);
             }
         }
     }
@@ -1699,8 +1699,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         let currentIndex = -1;
-        if (this.selectedIssue) {
-            currentIndex = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
+        if (this.selectedIssue()) {
+            currentIndex = issues.findIndex((issue) => issue.threadId === this.selectedIssue()?.threadId);
         }
 
         let newIndex = currentIndex + step;
@@ -1710,8 +1710,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             newIndex = issues.length - 1;
         }
 
-        this.selectedIssue = issues[newIndex];
-        this.jumpToLocation(this.selectedIssue);
+        this.selectedIssue.set(issues[newIndex]);
+        this.jumpToLocation(this.selectedIssue()!);
     }
 
     /**
@@ -1721,7 +1721,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (location.threadId !== undefined) {
             const selectedIssue = this.sortedIssues().find((issue) => issue.threadId === location.threadId);
             if (selectedIssue) {
-                this.selectedIssue = selectedIssue;
+                this.selectedIssue.set(selectedIssue);
             }
         }
         this.navigateToLocation(location);

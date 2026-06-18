@@ -82,9 +82,9 @@ export class ExerciseGroupsComponent implements OnInit {
 
     courseId!: number;
     course = signal<Course | undefined>(undefined);
-    examId!: number;
-    exam!: Exam;
-    exerciseGroups: ExerciseGroup[] | undefined = undefined;
+    readonly examId = signal<number>(undefined!);
+    exam = signal<Exam | undefined>(undefined);
+    exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -116,13 +116,13 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
             next: ([examRes, examInfoDTO]) => {
-                this.exam = examRes.body!;
-                this.exerciseGroups = this.exam.exerciseGroups;
-                this.course.set(this.exam.course!);
+                this.exam.set(examRes.body!);
+                this.exerciseGroups.set(this.exam()!.exerciseGroups);
+                this.course.set(this.exam()!.course!);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
                 this.setupExerciseGroupToExerciseTypesDict();
             },
@@ -150,7 +150,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * null will be returned
      */
     loadLatestIndividualEndDateOfExam() {
-        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId).pipe(
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId()).pipe(
             // When the exam start date was not set properly an error will be thrown.
             // Catch this in the inner observable otherwise forkJoin won't return data
             catchError(() => {
@@ -163,7 +163,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        return this.examManagementService.find(this.courseId, this.examId, true);
+        return this.examManagementService.find(this.courseId, this.examId(), true);
     }
 
     /**
@@ -173,10 +173,13 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseGroupId
      */
     removeExercise(exerciseId: number, exerciseGroupId: number) {
-        if (this.exerciseGroups) {
-            this.exerciseGroups.forEach((exerciseGroup) => {
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            exerciseGroups.forEach((exerciseGroup) => {
                 if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
+                    // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+                    this.exerciseGroups.set([...exerciseGroups]);
                     this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
@@ -189,14 +192,14 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.exerciseGroupService.delete(this.courseId, this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
                     content: 'Deleted an exercise group',
                 });
                 this.dialogErrorSource.next('');
-                this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
+                this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
                 const dict = new Map(this.exerciseGroupToExerciseTypesDict());
                 dict.delete(exerciseGroupId);
                 this.exerciseGroupToExerciseTypesDict.set(dict);
@@ -230,7 +233,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
         const dialogData: ExerciseImportDialogData = { exerciseType };
 
         // Determine the header key based on exercise type
@@ -273,8 +276,11 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveUp(index: number): void {
-        if (this.exerciseGroups) {
-            [this.exerciseGroups[index], this.exerciseGroups[index - 1]] = [this.exerciseGroups[index - 1], this.exerciseGroups[index]];
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
+            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+            this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
     }
@@ -284,15 +290,18 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveDown(index: number): void {
-        if (this.exerciseGroups) {
-            [this.exerciseGroups[index], this.exerciseGroups[index + 1]] = [this.exerciseGroups[index + 1], this.exerciseGroups[index]];
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
+            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+            this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId, this.exerciseGroups!).subscribe({
-            next: (res) => (this.exerciseGroups = res.body!),
+        this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
+            next: (res) => this.exerciseGroups.set(res.body!),
             error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         });
     }
@@ -304,8 +313,9 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     setupExerciseGroupToExerciseTypesDict() {
         const dict = new Map<number, ExerciseType[]>();
-        if (this.exerciseGroups) {
-            for (const exerciseGroup of this.exerciseGroups) {
+        const exerciseGroups = this.exerciseGroups();
+        if (exerciseGroups) {
+            for (const exerciseGroup of exerciseGroups) {
                 dict.set(exerciseGroup.id!, []);
                 if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
@@ -324,7 +334,7 @@ export class ExerciseGroupsComponent implements OnInit {
         const dialogData: ExamImportDialogData = {
             subsequentExerciseGroupSelection: true,
             targetCourseId: this.courseId,
-            targetExamId: this.examId,
+            targetExamId: this.examId(),
         };
 
         const dialogRef = this.dialogService.open(ExamImportComponent, {
@@ -340,7 +350,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
         dialogRef?.onClose.subscribe((exerciseGroups: ExerciseGroup[] | undefined) => {
             if (exerciseGroups) {
-                this.exerciseGroups = exerciseGroups;
+                this.exerciseGroups.set(exerciseGroups);
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });

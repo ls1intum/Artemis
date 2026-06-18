@@ -723,6 +723,55 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipation> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
+    /**
+     * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
+     * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
+     * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
+     * Must be called after the (individual) due date by a user with at least instructor rights.
+     */
+    async triggerInstructorBuildForAll(exerciseId: number) {
+        const response = await this.page.request.post(`api/programming/programming-exercises/${exerciseId}/trigger-instructor-build-all`);
+        if (!response.ok()) {
+            throw new Error(`Failed to trigger instructor build for exercise ${exerciseId}: ${response.status()}`);
+        }
+    }
+
+    /**
+     * Moves a programming exercise's "Run Tests after Due Date" date into the recent past via the timeline endpoint.
+     *
+     * For exam programming exercises the server defaults this date to (latest individual exam end + grace + 15 min)
+     * — the intended default (see AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Until it passes,
+     * {@code ProgrammingExercise.areManualResultsAllowed()} is false and the server rejects manual assessment with
+     * 403 "Creating manual results is disabled for this exercise!". An instructor would normally move this date
+     * earlier to start assessing right away; this mirrors that so the E2E test does not have to wait 15 minutes.
+     *
+     * Must be called after the exam (and its grace period) has ended: the timeline update keeps a client-provided
+     * value only when it is not before the exam end date, so {@code dayjs()} here must already be past that.
+     * Requires at least editor rights (admin/instructor). The full current timeline is re-sent unchanged so only
+     * the build-and-test date is modified.
+     */
+    async setProgrammingExerciseBuildAndTestDateToPast(exerciseId: number) {
+        const getResponse = await this.page.request.get(`api/programming/programming-exercises/${exerciseId}`);
+        if (!getResponse.ok()) {
+            throw new Error(`Failed to fetch programming exercise ${exerciseId}: ${getResponse.status()}`);
+        }
+        const exercise = await getResponse.json();
+        const timelineUpdate = {
+            id: exercise.id,
+            releaseDate: exercise.releaseDate,
+            startDate: exercise.startDate,
+            dueDate: exercise.dueDate,
+            assessmentType: exercise.assessmentType,
+            assessmentDueDate: exercise.assessmentDueDate,
+            exampleSolutionPublicationDate: exercise.exampleSolutionPublicationDate,
+            buildAndTestStudentSubmissionsAfterDueDate: dayjsToString(dayjs()),
+        };
+        const response = await this.page.request.put(`api/programming/programming-exercises/timeline`, { data: timelineUpdate });
+        if (!response.ok()) {
+            throw new Error(`Failed to move build-and-test date for exercise ${exerciseId}: ${response.status()}`);
+        }
+    }
+
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
         const pageResponse = await this.page.request.get(
             `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,

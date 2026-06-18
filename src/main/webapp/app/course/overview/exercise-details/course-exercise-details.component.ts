@@ -74,6 +74,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
     protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -97,7 +101,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Use signals for reactive state
     public learningPathMode = false;
     public exerciseId: number;
-    public courseId: number;
+
+    // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
+    // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
+    private readonly _courseId = signal<number>(undefined as unknown as number);
+    public get courseId(): number {
+        return this._courseId();
+    }
+    public set courseId(value: number) {
+        this._courseId.set(value);
+    }
 
     // Main exercise signal
     private readonly _exercise = signal<Exercise | undefined>(undefined);
@@ -138,6 +151,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
 
     // Sorted results signal
     private readonly _sortedHistoryResults = signal<Result[]>([]);

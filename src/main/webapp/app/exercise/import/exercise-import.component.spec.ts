@@ -84,7 +84,7 @@ describe('ExerciseImportComponent', () => {
     it('should initialize the content', () => {
         fixture.detectChanges();
 
-        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+        expect(comp.content()).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
     it('should close the dialog', () => {
@@ -115,13 +115,13 @@ describe('ExerciseImportComponent', () => {
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(10);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(10);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         comp.onPageChange(0);
         vi.advanceTimersByTime(10);
@@ -158,7 +158,7 @@ describe('ExerciseImportComponent', () => {
     });
 
     const resetContent = () => {
-        comp.content = { resultsOnPage: [], numberOfPages: 0 };
+        comp.content.set({ resultsOnPage: [], numberOfPages: 0 });
     };
 
     // The paging service is mocked to emit synchronously via of(...), so the only asynchrony is the
@@ -171,7 +171,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(300);
         expect(searchStub).toHaveBeenCalledWith(state, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         searchStub.mockClear();
         resetContent();
     };
@@ -183,7 +183,7 @@ describe('ExerciseImportComponent', () => {
         vi.advanceTimersByTime(10);
 
         expect(searchStub).toHaveBeenCalledWith(expectedState, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
@@ -230,7 +230,7 @@ describe('ExerciseImportComponent', () => {
         expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
 
         expect(comp.searchTerm).toEqual(givenSearchTerm);
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     });
@@ -258,14 +258,14 @@ describe('ExerciseImportComponent', () => {
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBe(true);
-        expect(comp.isExamFilter).toBe(true);
+        expect(comp.isCourseFilter()).toBe(true);
+        expect(comp.isExamFilter()).toBe(true);
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
         vi.advanceTimersByTime(299);
-        expect(comp.isCourseFilter).toBe(false);
-        expect(comp.isExamFilter).toBe(false);
+        expect(comp.isCourseFilter()).toBe(false);
+        expect(comp.isExamFilter()).toBe(false);
         expect(searchStub).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(1);
@@ -319,8 +319,8 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should sort by exam title when only the exam filter is active', () => {
-        comp.isExamFilter = true;
-        comp.isCourseFilter = false;
+        comp.isExamFilter.set(true);
+        comp.isCourseFilter.set(false);
 
         comp.sortedColumn = 'COURSE_TITLE';
 
