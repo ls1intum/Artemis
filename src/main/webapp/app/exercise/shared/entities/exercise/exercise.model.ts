@@ -87,7 +87,6 @@ export abstract class Exercise implements BaseEntity {
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
-    public allowFeedbackRequests?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -159,7 +158,6 @@ export abstract class Exercise implements BaseEntity {
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
-        this.allowFeedbackRequests = false; // default value;
     }
 
     /**
@@ -279,7 +277,6 @@ export function resetForImport(exercise: Exercise) {
 
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
-    exercise.allowFeedbackRequests = false;
 
     exercise.competencyLinks = [];
 }

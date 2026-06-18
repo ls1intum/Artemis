@@ -105,9 +105,8 @@ describe('RequestFeedbackButtonComponent', () => {
         return {
             id: 1,
             type,
-            course: isExam ? undefined : {},
+            course: isExam ? undefined : { athenaFormativeFeedbackEnabled: true },
             studentParticipations: participation ? [participation] : undefined,
-            allowFeedbackRequests: true,
         } as Exercise;
     }
 
@@ -165,7 +164,7 @@ describe('RequestFeedbackButtonComponent', () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const exercise = createBaseExercise(ExerciseType.TEXT, false);
-            exercise.allowFeedbackRequests = true;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
             setupComponentInputs(exercise);
 
             await initAndTick();

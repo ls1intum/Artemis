@@ -33,7 +33,6 @@ export interface UpdateTextExerciseDTO {
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     channelName?: string;
 
     // Grading criteria
@@ -111,7 +110,6 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         secondCorrectionEnabled: textExercise.secondCorrectionEnabled,
         feedbackSuggestionModule: textExercise.feedbackSuggestionModule,
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,
-        allowFeedbackRequests: textExercise.allowFeedbackRequests,
         channelName: textExercise.channelName,
         gradingCriteria: gradingCriteriaDTOs,
         competencyLinks: competencyLinkDTOs,

@@ -56,7 +56,6 @@ export interface UpdateProgrammingExerciseDTO {
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
@@ -179,7 +178,6 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         bonusPoints,
         includedInOverallScore: exercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
-        allowFeedbackRequests: exercise.allowFeedbackRequests,
         presentationScoreEnabled: exercise.presentationScoreEnabled,
         secondCorrectionEnabled: exercise.secondCorrectionEnabled,
         feedbackSuggestionModule: exercise.feedbackSuggestionModule,

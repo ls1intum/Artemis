@@ -209,10 +209,7 @@ export class ExerciseHeaderActionsComponent {
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
     readonly showFeedbackPopover = computed(
-        () =>
-            !this.examMode() &&
-            this.hasUserAcceptedLLM() &&
-            ((this.athenaEnabled && (this.exercise().course?.athenaFormativeFeedbackEnabled ?? false)) || (this.exercise().allowFeedbackRequests ?? false)),
+        () => !this.examMode() && this.hasUserAcceptedLLM() && this.athenaEnabled && (this.exercise().course?.athenaFormativeFeedbackEnabled ?? false),
     );
 
     readonly beforeDueDate = computed(() => {

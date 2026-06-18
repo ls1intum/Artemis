@@ -219,12 +219,6 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             (exercise, value) => (exercise.allowComplaintsForAutomaticAssessments = value as boolean | undefined),
         ),
         baseHandler(
-            'allowFeedbackRequests',
-            'artemisApp.course.requestMoreFeedbackEnabled.title',
-            (exercise) => exercise.allowFeedbackRequests,
-            (exercise, value) => (exercise.allowFeedbackRequests = value as boolean | undefined),
-        ),
-        baseHandler(
             'includedInOverallScore',
             'artemisApp.exercise.includedInOverallScore',
             (exercise) => exercise.includedInOverallScore,

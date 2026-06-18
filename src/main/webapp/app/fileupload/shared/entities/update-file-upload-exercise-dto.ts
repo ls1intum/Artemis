@@ -19,7 +19,6 @@ export interface UpdateFileUploadExerciseDto {
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
 
@@ -59,7 +58,6 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         bonusPoints: fileUploadExercise.bonusPoints,
         includedInOverallScore: fileUploadExercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: fileUploadExercise.allowComplaintsForAutomaticAssessments ?? false,
-        allowFeedbackRequests: fileUploadExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: fileUploadExercise.presentationScoreEnabled ?? false,
         secondCorrectionEnabled: fileUploadExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(fileUploadExercise.releaseDate),
