@@ -13,10 +13,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,9 +36,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
@@ -47,6 +45,9 @@ import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunIn
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -72,19 +73,22 @@ class CompetencyOrchestrationServiceTest {
     private AtlasAgentToolCallbackService toolCallbackFactory;
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
-
-    @Mock
-    private IMap<Long, RunInfo> runMap;
+    private DistributedDataProvider distributedDataProvider;
 
     @Mock
     private ContentChangeAccumulatorService contentChangeAccumulatorService;
+
+    // Spy over a real node-local map so the lock-guarded claim/release read-modify-write is exercised
+    // statefully (a Mockito mock cannot return the value a previous put stored), while still allowing
+    // interaction verification.
+    private DistributedMap<Long, RunInfo> runMap;
 
     private AtlasOrchestratorProperties properties;
 
     @BeforeEach
     void setUp() {
         properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", 300, 10, 30000L);
+        runMap = spy(new LocalMap<>());
     }
 
     @Test
@@ -95,7 +99,7 @@ class CompetencyOrchestrationServiceTest {
 
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(NO_CHAT_CLIENT);
-        verify(runMap, never()).putIfAbsent(anyLong(), any());
+        verify(runMap, never()).put(anyLong(), any());
     }
 
     @Test
@@ -106,19 +110,19 @@ class CompetencyOrchestrationServiceTest {
 
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(UNSUPPORTED_EXERCISE);
-        verify(runMap, never()).putIfAbsent(anyLong(), any());
+        verify(runMap, never()).put(anyLong(), any());
     }
 
     @Test
     void run_alreadyInProgress_returnsInProgress() {
         when(programmingExerciseRepository.findByIdElseThrow(13L)).thenReturn(courseExercise(13L));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
+        doReturn(new RunInfo("other-run", 99L, Instant.now())).when(runMap).get(COURSE_ID);
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(13L);
 
         assertThat(result.status()).isEqualTo(IN_PROGRESS);
-        verify(runMap, never()).remove(anyLong(), any());
+        verify(runMap, never()).remove(anyLong());
     }
 
     @Test
@@ -126,27 +130,26 @@ class CompetencyOrchestrationServiceTest {
         ProgrammingExercise exercise = courseExercise(14L);
         when(programmingExerciseRepository.findByIdElseThrow(14L)).thenReturn(exercise);
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentExtractionService.extractContent(exercise)).thenThrow(new RuntimeException("boom"));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(14L);
 
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
-        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
     void runWithQueuedFlush_alreadyInProgress_skipsAccumulator() {
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(courseExercise(20L));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
+        doReturn(new RunInfo("other-run", 99L, Instant.now())).when(runMap).get(COURSE_ID);
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
 
         assertThat(result.status()).isEqualTo(IN_PROGRESS);
         verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
-        verify(runMap, never()).remove(anyLong(), any());
+        verify(runMap, never()).remove(anyLong());
     }
 
     @Test
@@ -161,7 +164,6 @@ class CompetencyOrchestrationServiceTest {
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(foreignQueued, clicked));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L))));
         when(contentExtractionService.extractContent(clicked)).thenThrow(new RuntimeException("stop after queued"));
 
@@ -172,7 +174,7 @@ class CompetencyOrchestrationServiceTest {
         // Wrong-course queued exercise was inspected but never orchestrated (no content extraction).
         verify(programmingExerciseRepository).findAllById(any());
         verify(contentExtractionService, never()).extractContent(foreignQueued);
-        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
@@ -183,7 +185,6 @@ class CompetencyOrchestrationServiceTest {
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(queued, clicked));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
@@ -200,7 +201,7 @@ class CompetencyOrchestrationServiceTest {
         order.verify(contentExtractionService).extractContent(queued);
         order.verify(contentExtractionService).extractContent(clicked);
         verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
-        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
@@ -208,7 +209,6 @@ class CompetencyOrchestrationServiceTest {
         ProgrammingExercise exercise = courseExercise(15L);
         when(programmingExerciseRepository.findByIdElseThrow(15L)).thenReturn(exercise);
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
@@ -236,7 +236,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
         assertThat(result.appliedActions()).hasSize(1);
         assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
-        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+        verify(runMap).remove(COURSE_ID);
     }
 
     @Test
@@ -246,7 +246,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(NO_CHAT_CLIENT);
         verify(programmingExerciseRepository, never()).findAllById(any());
-        verify(runMap, never()).putIfAbsent(anyLong(), any());
+        verify(runMap, never()).put(anyLong(), any());
     }
 
     @Test
@@ -260,19 +260,19 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(NO_OP);
         assertThat(result.appliedActions()).isEmpty();
         // Exam and missing exercises are dropped before the per-course lock is even claimed.
-        verify(runMap, never()).putIfAbsent(anyLong(), any());
+        verify(runMap, never()).put(anyLong(), any());
     }
 
     @Test
     void runBatch_alreadyInProgress_returnsInProgress() {
         when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(courseExercise(10L)));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
+        doReturn(new RunInfo("other-run", 99L, Instant.now())).when(runMap).get(COURSE_ID);
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L));
 
         assertThat(result.status()).isEqualTo(IN_PROGRESS);
-        verify(runMap, never()).remove(anyLong(), any());
+        verify(runMap, never()).remove(anyLong());
     }
 
     @Test
@@ -281,7 +281,6 @@ class CompetencyOrchestrationServiceTest {
         ProgrammingExercise second = courseExercise(11L);
         when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(first, second));
         stubRunMap();
-        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         // Fail at render so we exercise the single-run preparation path without driving the LLM.
@@ -295,22 +294,20 @@ class CompetencyOrchestrationServiceTest {
         verify(contentExtractionService).extractContent(first);
         verify(contentExtractionService).extractContent(second);
         verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
-        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+        verify(runMap).remove(COURSE_ID);
     }
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
         return new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService, templateService, chatClient,
-                toolCallbackFactory, hazelcastInstance, properties, contentChangeAccumulatorService);
+                toolCallbackFactory, Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {
-        CompetencyOrchestrationService service = createService(chatClient);
-        service.initRunMap();
-        return service;
+        return createService(chatClient);
     }
 
     private void stubRunMap() {
-        when(hazelcastInstance.<Long, RunInfo>getMap("atlas-orchestrator-runs")).thenReturn(runMap);
+        when(distributedDataProvider.<Long, RunInfo>getMap("atlas-orchestrator-runs")).thenReturn(runMap);
     }
 
     private static ProgrammingExercise courseExercise(long id) {

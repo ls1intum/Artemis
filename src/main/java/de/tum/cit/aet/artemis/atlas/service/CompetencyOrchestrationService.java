@@ -16,21 +16,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.annotation.PostConstruct;
-
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
@@ -40,6 +34,9 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -105,15 +102,15 @@ public class CompetencyOrchestrationService {
 
     private final String reasoningEffort;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final Optional<DistributedDataProvider> distributedDataProvider;
 
     private final ContentChangeAccumulatorService contentChangeAccumulatorService;
 
-    private IMap<Long, RunInfo> runMap;
+    private volatile DistributedMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AtlasOrchestratorProperties properties,
+            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
             ContentChangeAccumulatorService contentChangeAccumulatorService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
@@ -124,14 +121,67 @@ public class CompetencyOrchestrationService {
         this.deploymentName = properties.model();
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
     }
 
-    /** TTL configured in {@code HazelcastConfiguration#registerCustomMaps}. */
-    @PostConstruct
-    void initRunMap() {
-        this.runMap = hazelcastInstance.getMap(RUN_MAP_NAME);
+    /**
+     * Per-course run map (IN_PROGRESS guard), resolved lazily through the {@link DistributedDataProvider}
+     * abstraction so it works on Hazelcast and Redis deployments alike. Falls back to a node-local map
+     * when no provider is configured. TTL is configured in {@code HazelcastConfiguration#registerCustomMaps}
+     * when the provider is Hazelcast-backed.
+     */
+    private DistributedMap<Long, RunInfo> runMap() {
+        DistributedMap<Long, RunInfo> resolved = runMap;
+        if (resolved == null) {
+            synchronized (this) {
+                resolved = runMap;
+                if (resolved == null) {
+                    resolved = distributedDataProvider.<DistributedMap<Long, RunInfo>>map(provider -> provider.getMap(RUN_MAP_NAME)).orElseGet(LocalMap::new);
+                    runMap = resolved;
+                }
+            }
+        }
+        return resolved;
+    }
+
+    /**
+     * Atomically claim the per-course run lock. Returns {@code null} when the lock was acquired (the
+     * given {@code claim} is now stored), or the in-progress {@link RunInfo} when another run already
+     * holds it. Mirrors {@code IMap#putIfAbsent} semantics via the abstraction's per-key lock.
+     */
+    @Nullable
+    private RunInfo claimRun(long courseId, RunInfo claim) {
+        DistributedMap<Long, RunInfo> currentMap = runMap();
+        currentMap.lock(courseId);
+        try {
+            RunInfo existing = currentMap.get(courseId);
+            if (existing != null) {
+                return existing;
+            }
+            currentMap.put(courseId, claim);
+            return null;
+        }
+        finally {
+            currentMap.unlock(courseId);
+        }
+    }
+
+    /**
+     * Release the per-course run lock, but only if it still holds {@code claim} — a TTL-evicted entry
+     * replaced by another claim is left untouched (compare-and-remove).
+     */
+    private void releaseRun(long courseId, RunInfo claim) {
+        DistributedMap<Long, RunInfo> currentMap = runMap();
+        currentMap.lock(courseId);
+        try {
+            if (claim.equals(currentMap.get(courseId))) {
+                currentMap.remove(courseId);
+            }
+        }
+        finally {
+            currentMap.unlock(courseId);
+        }
     }
 
     /**
@@ -159,7 +209,7 @@ public class CompetencyOrchestrationService {
         long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exerciseId, Instant.now());
-        RunInfo existing = runMap.putIfAbsent(courseId, claim);
+        RunInfo existing = claimRun(courseId, claim);
         if (existing != null) {
             log.info("Atlas orchestrator rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId, existing.runId(),
                     existing.exerciseId());
@@ -169,8 +219,7 @@ public class CompetencyOrchestrationService {
             return orchestrateExercise(exercise, courseId);
         }
         finally {
-            // Compare-and-remove: leaves a TTL-evicted entry replaced by another claim untouched.
-            runMap.remove(courseId, claim);
+            releaseRun(courseId, claim);
         }
     }
 
@@ -198,7 +247,7 @@ public class CompetencyOrchestrationService {
         }
 
         RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exercises.getFirst().getId(), Instant.now());
-        RunInfo existing = runMap.putIfAbsent(courseId, claim);
+        RunInfo existing = claimRun(courseId, claim);
         if (existing != null) {
             log.info("Atlas orchestrator (batch) rejected for course {}: run {} already in progress for exercise {}", courseId, existing.runId(), existing.exerciseId());
             return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
@@ -207,7 +256,7 @@ public class CompetencyOrchestrationService {
             return orchestrateBatch(exercises, courseId);
         }
         finally {
-            runMap.remove(courseId, claim);
+            releaseRun(courseId, claim);
         }
     }
 
@@ -231,7 +280,7 @@ public class CompetencyOrchestrationService {
         long courseId = clicked.getCourseViaExerciseGroupOrCourseMember().getId();
 
         RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exerciseId, Instant.now());
-        RunInfo existing = runMap.putIfAbsent(courseId, claim);
+        RunInfo existing = claimRun(courseId, claim);
         if (existing != null) {
             log.info("Atlas orchestrator (manual flush) rejected for exercise {} (course {}): run {} already in progress for exercise {}", exerciseId, courseId, existing.runId(),
                     existing.exerciseId());
@@ -252,7 +301,7 @@ public class CompetencyOrchestrationService {
             return orchestrateBatch(exercises, courseId);
         }
         finally {
-            runMap.remove(courseId, claim);
+            releaseRun(courseId, claim);
         }
     }
 
@@ -524,7 +573,7 @@ public class CompetencyOrchestrationService {
         return safeName + " (" + safeType + ")";
     }
 
-    /** Hazelcast map entry guarding per-course orchestrator runs; expiry is handled by the map TTL. */
+    /** Distributed map entry guarding per-course orchestrator runs; expiry is handled by the map TTL. */
     record RunInfo(String runId, long exerciseId, @Nullable Instant startedAt) implements Serializable {
 
         @Serial

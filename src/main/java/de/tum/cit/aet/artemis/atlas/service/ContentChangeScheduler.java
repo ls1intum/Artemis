@@ -96,22 +96,16 @@ public class ContentChangeScheduler {
     }
 
     private void processCourse(long courseId) {
-        String runId = UUID.randomUUID().toString();
-        if (!accumulator.tryClaimLock(courseId)) {
-            log.debug("atlas.automatic course {} skipped — another scheduler tick holds the lock", courseId);
+        // The lock-guarded claimDueBatch atomically drains and resets the bucket, so only one
+        // scheduler tick — on any node — ever receives a non-empty batch for a given course. The
+        // subsequent orchestration is additionally guarded by the per-course run lock in
+        // CompetencyOrchestrationService, so no separate scheduler lock is needed here.
+        Optional<BatchClaim> maybeClaim = accumulator.claimDueBatch(courseId);
+        if (maybeClaim.isEmpty()) {
             return;
         }
-        try {
-            Optional<BatchClaim> maybeClaim = accumulator.claimDueBatch(courseId);
-            if (maybeClaim.isEmpty()) {
-                return;
-            }
-            BatchClaim claim = maybeClaim.get();
-            processBatch(courseId, runId, claim);
-        }
-        finally {
-            accumulator.releaseLock(courseId);
-        }
+        String runId = UUID.randomUUID().toString();
+        processBatch(courseId, runId, maybeClaim.get());
     }
 
     private void processBatch(long courseId, String runId, BatchClaim claim) {
