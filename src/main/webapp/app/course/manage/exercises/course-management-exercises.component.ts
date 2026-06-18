@@ -269,6 +269,10 @@ export class CourseManagementExercisesComponent implements OnInit {
         const dialogRef = this.dialogService.open(QuizExerciseExportComponent, {
             header: this.translateService.instant('artemisApp.exercise.exportAction'),
             width: '60rem',
+            height: '40rem',
+            // Let the component own its internal layout (scrollable table + pinned footer); the dialog content must not
+            // scroll itself. Drop the content's bottom padding so the footer bar sits flush with the modal bottom.
+            contentStyle: { overflow: 'hidden', display: 'flex', 'flex-direction': 'column', 'padding-bottom': '0' },
             modal: true,
             closable: true,
             closeOnEscape: true,

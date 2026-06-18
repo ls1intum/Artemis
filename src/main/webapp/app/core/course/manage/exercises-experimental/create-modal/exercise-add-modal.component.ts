@@ -130,7 +130,7 @@ export class ExerciseAddModalComponent {
     navigateToCreate(card: ExerciseTypeCard): void {
         const id = this.courseId();
         if (id !== undefined) {
-            this.router.navigate(['/course-management', id, card.routeSegment]);
+            this.router.navigate(['/course-management', id, ...card.routeSegment.split('/')]);
         }
         this.close();
     }
