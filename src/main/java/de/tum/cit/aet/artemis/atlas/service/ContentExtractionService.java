@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -126,7 +126,7 @@ public class ContentExtractionService {
             // Spring AI's .entity(Class) automatically appends JSON schema / format instructions to
             // the user message; no need to inject them via the prompt template.
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
-            AzureOpenAiChatOptions options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
+            OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
             FlavorStripEditsDTO parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEditsDTO.class);
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
@@ -143,19 +143,19 @@ public class ContentExtractionService {
     }
 
     /**
-     * Build the Azure chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
+     * Build the chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
      * explicit temperature alongside {@code reasoningEffort}, so exactly one is set: {@code reasoningEffort}
      * when configured, otherwise {@code temperature}. Mirrors {@code CompetencyOrchestrationService.buildChatOptions}.
      */
-    static AzureOpenAiChatOptions buildChatOptions(String model, String reasoningEffort, double temperature) {
-        AzureOpenAiChatOptions.Builder builder = AzureOpenAiChatOptions.builder().deploymentName(model);
+    static OpenAiChatOptions.Builder buildChatOptions(String model, String reasoningEffort, double temperature) {
+        OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder().deploymentName(model);
         if (reasoningEffort != null && !reasoningEffort.isBlank()) {
             builder.reasoningEffort(reasoningEffort);
         }
         else {
             builder.temperature(temperature);
         }
-        return builder.build();
+        return builder;
     }
 
     /**
