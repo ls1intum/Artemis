@@ -21,6 +21,13 @@ const ALERT_ICONS: Record<string, string> = {
         '<svg class="octicon octicon-stop mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>',
 };
 
+/** Metadata attached to an `alert_open` token and read back by its renderer rule. */
+interface AlertMeta {
+    title: string;
+    type: string;
+    icon: string;
+}
+
 const ALERT_MARKERS = ['TIP', 'NOTE', 'IMPORTANT', 'WARNING', 'CAUTION'];
 const CLASS_PREFIX = 'markdown-alert';
 const ALERT_REGEX = new RegExp(`^\\\\?\\[\\!(${ALERT_MARKERS.join('|')})\\]([^\\n\\r]*)`, 'i');
@@ -60,14 +67,14 @@ export const markdownItGitHubAlerts: PluginSimple = (md) => {
             firstContent.content = firstContent.content.slice(match[0].length).trimStart();
             open.type = 'alert_open';
             open.tag = 'div';
-            open.meta = { title, type, icon };
+            open.meta = { title, type, icon } satisfies AlertMeta;
             close.type = 'alert_close';
             close.tag = 'div';
         }
     });
 
     md.renderer.rules.alert_open = (tokens, idx) => {
-        const { title, type, icon } = tokens[idx].meta;
+        const { title, type, icon } = tokens[idx].meta as AlertMeta;
         return `<div class="${CLASS_PREFIX} ${CLASS_PREFIX}-${type}"><p class="${CLASS_PREFIX}-title">${icon}${title}</p>`;
     };
 };
