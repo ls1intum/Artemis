@@ -84,11 +84,12 @@ public class JenkinsBuildPlanService {
     /**
      * Creates a build plan for the programming exercise
      *
-     * @param exercise      the programming exercise
-     * @param planKey       the name of the plan
-     * @param repositoryUri the uri of the vcs repository
+     * @param exercise                   the programming exercise
+     * @param planKey                    the name of the plan
+     * @param repositoryUri              the uri of the vcs repository
+     * @param forceCreateStoredBuildPlan whether to create the stored build plan even if one already exists
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, boolean forceCreateStoredBuildPlan) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
@@ -102,7 +103,9 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
 
         // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+        if (forceCreateStoredBuildPlan || buildPlanRepository.findByProgrammingExercises_Id(exercise.getId()).isEmpty()) {
+            jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+        }
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
 
         triggerBuild(jobFolder, job);

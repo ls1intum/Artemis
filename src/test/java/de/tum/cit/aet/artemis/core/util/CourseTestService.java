@@ -3551,6 +3551,16 @@ public class CourseTestService {
     // Test
     public void testGetExistingExerciseDetails_asEditor() throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
-        request.get("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
+        // The sample programming exercises in the fixture above are not actually associated with the course, so add one that
+        // really belongs to it (course set + persisted) with a known title / short name.
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        CourseExistingExerciseDetailsDTO details = request.get("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
+                CourseExistingExerciseDetailsDTO.class);
+
+        assertThat(details.exerciseTitles()).contains(programmingExercise.getTitle());
+        // Regression guard: short names were never returned because includeShortNames compared the lowercase request param
+        // ("programming") against ExerciseType.PROGRAMMING.toString() ("PROGRAMMING"), which is always false (#12940).
+        assertThat(details.shortNames()).contains(programmingExercise.getShortName());
     }
 }

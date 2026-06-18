@@ -8,6 +8,8 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -65,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
@@ -1969,7 +1972,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         exam.setChannelName("channelname-imported");
         ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, HttpStatus.CREATED)
+                .exam();
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.isTestExam()).isFalse();
@@ -2001,7 +2005,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setChannelName("testchannelname-imported");
         ExamImportDTO importDTO2 = ExamImportDTO.of(exam, course1.getId());
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO2, Exam.class, CREATED);
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO2, ExamImportResultDTO.class, CREATED).exam();
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.getCourse()).isEqualTo(course1);
@@ -2018,6 +2022,93 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_skipsFailedExerciseAndImportsTheRest() throws Exception {
+        // Source exam has non-empty groups modelling, text, file upload, quiz (plus one empty group that is filtered out).
+        // We make the quiz import fail; the other three exercises are imported. The import must still succeed overall
+        // (no 5xx) and only skip the quiz, reporting it via the "skipped" list in the response body.
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam.setChannelName("partial-import-channel");
+
+        // Make the quiz import fail by removing its source exercise after building the import payload: the quiz import
+        // then cannot resolve the source exercise and yields Optional.empty (a real "source exercise no longer available"
+        // failure). This deliberately avoids @MockitoSpyBean, which an ArchUnit rule forbids on concrete integration test
+        // classes (it would force an extra Spring context). It also exercises the empty-result skip path directly.
+        QuizExercise sourceQuiz = (QuizExercise) exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(QuizExercise.class::isInstance)
+                .findFirst().orElseThrow();
+        String quizTitle = sourceQuiz.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        exerciseRepository.deleteById(sourceQuiz.getId());
+
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
+
+        // The quiz could not resolve its (deleted) source exercise, so it is reported as skipped (cleanly not imported), not incomplete.
+        assertThat(result.skippedExercises()).as("the skipped quiz title must be reported").contains(quizTitle);
+        // No exercise failed partway, so the incomplete list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.incompleteExercises()).as("no exercise must be reported as incomplete").isNullOrEmpty();
+
+        // Re-fetch the created exam (its id is in the response body) and verify the persisted state.
+        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(result.exam().getId());
+
+        // All exercises except the failing quiz were imported (modelling, text, file upload).
+        long importedExerciseCount = importedExam.getExerciseGroups().stream().mapToLong(group -> group.getExercises().size()).sum();
+        assertThat(importedExerciseCount).isEqualTo(3);
+        // Lock the behavior to the intended failure path: the quiz (and only the quiz) was skipped.
+        assertThat(importedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())).as("the quiz must be the skipped exercise")
+                .noneMatch(QuizExercise.class::isInstance);
+        // The quiz group ended up empty (its only exercise was skipped) but is intentionally KEPT, not deleted: the failure
+        // is reported via the skipped list, and an empty group is rejected later by validateForStudentExamGeneration. All
+        // four imported groups are retained and the ordered exercise-group list stays intact (no null element).
+        assertThat(importedExam.getExerciseGroups()).hasSize(4);
+        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(importedExam.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied quiz group is retained").hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_retainsEmptiedMiddleExerciseGroup() throws Exception {
+        // When a NON-LAST exercise group's exercises all fail to import, the (now empty) group is RETAINED in place rather
+        // than deleted. The import must not mutate the ordered exercise-group list: all four imported groups stay, in order,
+        // with no null element. (Deleting the emptied middle group used to leave a gap in the @OrderColumn
+        // 'exercise_group_order' that Hibernate reloaded as a null element, corrupting the exam.)
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam.setChannelName("order-column-channel");
+
+        // Fail the TEXT exercise (a middle group: modelling, text, file upload, quiz) by deleting its source exercise, so
+        // its group is emptied in the middle of the ordered exercise-group list.
+        TextExercise sourceText = (TextExercise) exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(TextExercise.class::isInstance)
+                .findFirst().orElseThrow();
+        String textTitle = sourceText.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        exerciseRepository.deleteById(sourceText.getId());
+
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
+        assertThat(result.skippedExercises()).as("the skipped text exercise must be reported").contains(textTitle);
+
+        // Re-fetch the created exam: the emptied middle group is retained and the ordered list contains no null element.
+        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(result.exam().getId());
+        assertThat(importedExam.getExerciseGroups()).as("all imported groups are retained, including the emptied middle one").hasSize(4);
+        assertThat(importedExam.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(importedExam.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied text group is retained").hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_reportsProgressOverWebsocket() throws Exception {
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam.setChannelName("ws-progress-channel");
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        String importId = "test-import-id";
+
+        // When a client supplies an importId, the importing user receives live progress on an import-specific websocket channel.
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import?importId=" + importId, importDTO, ExamImportResultDTO.class, CREATED);
+
+        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), eq("/topic/exam-import/" + importId), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithQuizExercise_successfulWithQuestions() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().getFirst();
@@ -2030,7 +2121,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exerciseRepository.save(quiz);
 
         ExamImportDTO quizImportDTO = ExamImportDTO.of(exam, course1.getId());
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", quizImportDTO, Exam.class, CREATED);
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", quizImportDTO, ExamImportResultDTO.class, CREATED).exam();
         assertThat(received.getExerciseGroups()).hasSize(1);
 
         ExerciseGroup receivedGroup = received.getExerciseGroups().getFirst();
@@ -2054,7 +2145,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam.setChannelName("testchannelname");
 
         ExamImportDTO otherCourseImportDTO = ExamImportDTO.of(exam, course1.getId());
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", otherCourseImportDTO, Exam.class, CREATED);
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", otherCourseImportDTO, ExamImportResultDTO.class, CREATED)
+                .exam();
         assertThat(received.getExerciseGroups()).hasSize(5);
 
         for (int i = 0; i <= 4; i++) {

@@ -142,24 +142,36 @@
                             <div class="row">
                                 <div class="col-lg-4 col-sm-12">
                                     <div class="form-group">
-                                        <label for="quiz-duration-minutes" class="form-control-label" jhiTranslate="artemisApp.quizExercise.duration"></label>
+                                        <label class="form-control-label" jhiTranslate="artemisApp.quizExercise.duration"></label>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <label for="quiz-duration-hours" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.hours"></label>
+                                            <p-inputnumber
+                                                inputId="quiz-duration-hours"
+                                                [(ngModel)]="duration.hours"
+                                                (ngModelChange)="onDurationChange()"
+                                                [min]="0"
+                                                name="durationHours"
+                                                styleClass="duration-input"
+                                            />
+                                            <span jhiTranslate="artemisApp.quizExercise.hours"></span>
+                                            <label for="quiz-duration-minutes" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.minutes"></label>
                                             <p-inputnumber
                                                 inputId="quiz-duration-minutes"
                                                 [(ngModel)]="duration.minutes"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
-                                                [max]="600"
+                                                [max]="59"
                                                 name="durationMinutes"
                                                 styleClass="duration-input"
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                            <label for="quiz-duration-seconds" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.seconds"></label>
                                             <p-inputnumber
                                                 inputId="quiz-duration-seconds"
                                                 [(ngModel)]="duration.seconds"
                                                 (ngModelChange)="onDurationChange()"
-                                                [min]="-1"
-                                                [max]="60"
+                                                [min]="0"
+                                                [max]="59"
                                                 name="durationSeconds"
                                                 styleClass="duration-input"
                                             />

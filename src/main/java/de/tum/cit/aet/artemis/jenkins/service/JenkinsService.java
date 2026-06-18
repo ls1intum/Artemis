@@ -59,7 +59,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryUri, false);
     }
 
     @Override
@@ -73,8 +73,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE));
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE), true);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION), true);
     }
 
     @Override
