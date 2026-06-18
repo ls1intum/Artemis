@@ -173,7 +173,7 @@ public class ExerciseGroupResource {
         // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
         // can show a progress dialog while this (synchronous) request runs.
         ExerciseGroupImportResultDTO importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId, importId,
-                userRepository.getUser().getLogin());
+                userRepository.getCurrentUserLogin());
 
         // The exercise groups are always created. Any exercises that could not be imported are reported in the response
         // body, split into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the

@@ -36,7 +36,7 @@ describe('ExamImportProgressDialogComponent', () => {
 
     it('should show live progress while the import is running', () => {
         const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
-        component.runImport('import-1', request$.asObservable());
+        component.runImport('import-1', 3, request$.asObservable());
 
         expect(examManagementService.subscribeToImportProgress).toHaveBeenCalledWith('import-1');
 
@@ -58,7 +58,7 @@ describe('ExamImportProgressDialogComponent', () => {
 
     it('should show a success summary and resolve on dismiss when everything imported', async () => {
         const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
-        const promise = component.runImport('import-2', request$.asObservable());
+        const promise = component.runImport('import-2', 2, request$.asObservable());
 
         progress$.next({
             state: ExamImportProgressState.RUNNING,
@@ -81,9 +81,27 @@ describe('ExamImportProgressDialogComponent', () => {
         expect(component.visible()).toBeFalsy();
     });
 
+    it('should show correct counts from the caller total even when no websocket progress arrives', async () => {
+        // The summary counts must not depend on websocket delivery: with no progress event at all, the caller-provided total
+        // and the authoritative HTTP response still yield the right "all N imported" message.
+        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const promise = component.runImport('import-no-ws', 2, request$.asObservable());
+
+        request$.next(new HttpResponse({ status: 201, body: { exam: { id: 9 } as Exam } }));
+        request$.complete();
+
+        expect(component.ready()).toBeTruthy();
+        expect(component.hasIssues()).toBeFalsy();
+        expect(component.totalExercises()).toBe(2);
+        expect(component.importedCount()).toBe(2);
+
+        component.onDismiss();
+        await expect(promise).resolves.toBeDefined();
+    });
+
     it('should list skipped and incomplete exercises from the (authoritative) HTTP response', async () => {
         const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
-        const promise = component.runImport('import-3', request$.asObservable());
+        const promise = component.runImport('import-3', 3, request$.asObservable());
 
         progress$.next({ state: ExamImportProgressState.RUNNING, totalExercises: 3, processedExercises: 0 });
         request$.next(new HttpResponse({ status: 201, body: { exam: { id: 8 } as Exam, skippedExercises: ['Quiz 2'], incompleteExercises: ['Prog 1'] } }));
@@ -102,7 +120,7 @@ describe('ExamImportProgressDialogComponent', () => {
 
     it('should reject without showing a summary when the request fails before any progress', async () => {
         const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
-        const promise = component.runImport('import-4', request$.asObservable());
+        const promise = component.runImport('import-4', 1, request$.asObservable());
         const error = new HttpErrorResponse({ status: 400, error: { errorKey: 'invalidKey' } });
 
         request$.error(error);

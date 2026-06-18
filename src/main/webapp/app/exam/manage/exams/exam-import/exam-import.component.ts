@@ -114,10 +114,11 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
             this.exam.set({ ...currentExam, exerciseGroups });
             // Run the import behind a progress dialog that shows live websocket progress and a persistent, must-dismiss
             // summary of any skipped or incomplete exercises (so the editor cannot overlook them).
+            const totalExercises = (exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
             const importId = this.examManagementService.generateImportId();
             const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!, importId);
             this.examImportProgressDialog()
-                .runImport(importId, request$)
+                .runImport(importId, totalExercises, request$)
                 .then((response: HttpResponse<ExerciseGroupImportResultDTO>) => {
                     this.isImportingExercises.set(false);
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam

@@ -308,6 +308,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
+        // Guard against re-entry (e.g. pressing Enter in the form while a save/import is already running): the save button is
+        // disabled while saving, but ngSubmit can still fire. A second import would reset the in-flight progress dialog.
+        if (this.isSaving()) {
+            return;
+        }
         this.isSaving.set(true);
 
         // Importing an exam can fail per exercise and take a while (programming repository copies). It therefore runs behind
@@ -342,10 +347,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return;
         }
         this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+        const totalExercises = (this.exam.exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
         const importId = this.examManagementService.generateImportId();
         const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
         this.examImportProgressDialog()
-            .runImport(importId, request$)
+            .runImport(importId, totalExercises, request$)
             .then((response) => {
                 const importedExam = response.body?.exam;
                 if (importedExam) {

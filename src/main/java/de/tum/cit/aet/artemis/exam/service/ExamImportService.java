@@ -214,11 +214,14 @@ public class ExamImportService {
     public ExerciseGroupImportResultDTO importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId, String importId,
             String userLogin) throws IOException {
         ExamImportProgressNotifier progressNotifier = new ExamImportProgressNotifier(websocketMessagingService, userLogin, importId);
-        progressNotifier.start(countExercises(exerciseGroupsToCopy));
 
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
         preCheckProgrammingExercisesForTitleAndShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
+
+        // Start reporting progress only after the pre-check passed, so a request that fails validation up front does not emit
+        // a (RUNNING) progress event (and briefly flash the progress dialog). This matches the full-exam import path.
+        progressNotifier.start(countExercises(exerciseGroupsToCopy));
 
         Exam targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 

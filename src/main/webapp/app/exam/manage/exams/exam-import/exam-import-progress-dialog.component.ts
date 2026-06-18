@@ -52,6 +52,7 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
     });
 
     private progressSubscription?: Subscription;
+    private requestSubscription?: Subscription;
     private resolve?: (response: HttpResponse<ExamImportResultDTO | ExerciseGroupImportResultDTO>) => void;
     private lastResponse?: HttpResponse<ExamImportResultDTO | ExerciseGroupImportResultDTO>;
 
@@ -59,23 +60,29 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
      * Runs the given import with a live-progress dialog.
      *
      * @param importId the id passed to the import request; the dialog subscribes to the matching websocket channel
+     * @param totalExercises the number of exercises being imported (known by the caller); the final summary is computed from
+     *        this and the (authoritative) HTTP response, so the counts are correct even if no websocket event ever arrives
      * @param request$ the import request (already carrying the importId)
      * @return a promise resolving with the import response once the user dismisses the dialog; rejects with the request
      *         error (e.g. a validation failure returned before the import starts) without showing a summary
      */
-    runImport<T extends ExamImportResultDTO | ExerciseGroupImportResultDTO>(importId: string, request$: Observable<HttpResponse<T>>): Promise<HttpResponse<T>> {
+    runImport<T extends ExamImportResultDTO | ExerciseGroupImportResultDTO>(
+        importId: string,
+        totalExercises: number,
+        request$: Observable<HttpResponse<T>>,
+    ): Promise<HttpResponse<T>> {
         this.reset();
+        this.totalExercises.set(totalExercises);
         this.progressSubscription = this.examManagementService.subscribeToImportProgress(importId).subscribe((progress) => this.applyProgress(progress));
 
         return new Promise<HttpResponse<T>>((resolve, reject) => {
-            request$.subscribe({
+            this.requestSubscription = request$.subscribe({
                 next: (response) => {
-                    // The HTTP response is authoritative for the final outcome (robust even if the terminal websocket event is lost).
+                    // The HTTP response is authoritative for the final outcome (robust even if the terminal websocket event is lost):
+                    // the skipped/incomplete titles come from the response, the total is the caller-provided count, so the summary is correct.
                     this.skippedExercises.set(response.body?.skippedExercises ?? []);
                     this.incompleteExercises.set(response.body?.incompleteExercises ?? []);
-                    if (this.totalExercises() > 0) {
-                        this.processedExercises.set(this.totalExercises());
-                    }
+                    this.processedExercises.set(this.totalExercises());
                     this.ready.set(true);
                     this.visible.set(true);
                     this.lastResponse = response;
@@ -106,7 +113,7 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
     }
 
     private applyProgress(progress: ExamImportProgress): void {
-        this.totalExercises.set(progress.totalExercises);
+        // The total is authoritative from the caller; live events only drive the progress bar and the current-exercise label.
         // Once the authoritative HTTP response arrived we stop letting live events move the bar/labels backwards.
         if (!this.ready()) {
             this.processedExercises.set(progress.processedExercises);
@@ -116,8 +123,7 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
     }
 
     private reset(): void {
-        this.progressSubscription?.unsubscribe();
-        this.progressSubscription = undefined;
+        this.unsubscribeAll();
         this.resolve = undefined;
         this.lastResponse = undefined;
         this.ready.set(false);
@@ -130,13 +136,19 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
     }
 
     private cleanup(): void {
-        this.progressSubscription?.unsubscribe();
-        this.progressSubscription = undefined;
+        this.unsubscribeAll();
         this.resolve = undefined;
         this.visible.set(false);
     }
 
-    ngOnDestroy(): void {
+    private unsubscribeAll(): void {
         this.progressSubscription?.unsubscribe();
+        this.progressSubscription = undefined;
+        this.requestSubscription?.unsubscribe();
+        this.requestSubscription = undefined;
+    }
+
+    ngOnDestroy(): void {
+        this.unsubscribeAll();
     }
 }

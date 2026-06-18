@@ -104,7 +104,15 @@ export class ExamManagementService {
      */
     import(courseId: number, exam: Exam, importId: string): Observable<HttpResponse<ExamImportResultDTO>> {
         const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
-        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { params: { importId }, observe: 'response' });
+        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { params: { importId }, observe: 'response' }).pipe(
+            // Apply the same post-processing the (non-DTO) endpoints do for a returned exam: convert server dates, set course
+            // access rights and prime the title cache for the imported exam.
+            tap((res) => {
+                if (res.body?.exam) {
+                    this.convertExamFromServerAndSendTitles(res.body.exam);
+                }
+            }),
+        );
     }
 
     /**

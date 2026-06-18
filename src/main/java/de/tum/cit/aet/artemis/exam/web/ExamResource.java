@@ -440,7 +440,7 @@ public class ExamResource {
 
         // Import Exam with Exercises and create a channel for the exam. When the client supplies an importId, live progress
         // is reported to the importing user over a websocket so the UI can show a progress dialog while this request runs.
-        ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getUser().getLogin());
+        ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getCurrentUserLogin());
         Exam examCopied = importResult.exam();
 
         // The exam is always created. Any exercises that could not be imported are reported in the response body, split
