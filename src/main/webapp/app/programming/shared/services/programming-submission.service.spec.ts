@@ -489,6 +489,27 @@ describe('ProgrammingSubmissionService', () => {
         expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
     });
 
+    it('should release the per-participation result subscriptions and timers once the participation is no longer observed', () => {
+        const inner = submissionService as any;
+        // Result-side state that is set up alongside the submission subscription (subscribeForNewResult / timers).
+        inner.submissionSubjects = { [participationId]: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
+        const resultSub = of(0).subscribe();
+        const resultUnsubscribeSpy = vi.spyOn(resultSub, 'unsubscribe');
+        inner.resultSubscriptions = { [participationId]: resultSub };
+        inner.resultTimerSubscriptions = { [participationId]: of(0).subscribe() };
+        inner.queueEstimateTimerSubscriptions = { [participationId]: of(0).subscribe() };
+        inner.participationIdToExerciseId.set(participationId, 10);
+
+        // No component observes the submission subject, so cleanup proceeds and must release the result-side state too.
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+
+        expect(resultUnsubscribeSpy).toHaveBeenCalled();
+        expect(inner.resultSubscriptions[participationId]).toBeUndefined();
+        expect(inner.resultTimerSubscriptions[participationId]).toBeUndefined();
+        expect(inner.queueEstimateTimerSubscriptions[participationId]).toBeUndefined();
+        expect(inner.participationIdToExerciseId.has(participationId)).toBe(false);
+    });
+
     it('should only unsubscribe if no other participations use the topic with localci', () => {
         submissionService.isLocalCIEnabled = true;
         httpGetStub.mockReturnValue(of(currentSubmission));

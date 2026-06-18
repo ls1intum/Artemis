@@ -962,6 +962,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (this.submissionSubjects[participationId]?.observed) {
             return;
         }
+        // The participation is no longer observed, so also release the result-side subscriptions and timers that were
+        // set up alongside the submission subscription (subscribeForNewResult / startResultWaitingTimer /
+        // startQueueEstimateTimer). These were previously only cleared on logout (resetState), so they accumulated for
+        // every distinct participation a user visited within a session — a memory leak on navigate-away-and-back.
+        this.resultSubscriptions[participationId]?.unsubscribe();
+        delete this.resultSubscriptions[participationId];
+        this.resetResultWaitingTimer(participationId);
+        delete this.resultTimerSubscriptions[participationId];
+        this.resetQueueEstimateTimer(participationId);
+        delete this.queueEstimateTimerSubscriptions[participationId];
+        this.participationIdToExerciseId.delete(participationId);
         const submissionTopic = this.submissionTopicsSubscribed.get(participationId);
         if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);
