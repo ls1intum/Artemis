@@ -17,7 +17,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.dto.osv.OsvVulnerabilityDTO;
 import de.tum.cit.aet.artemis.admin.web.AdminSbomResource;
 import de.tum.cit.aet.artemis.core.connector.OsvRequestMockProvider;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -226,7 +226,8 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         doReturn(versionInfo).when(artemisVersionService).getVersionInfo();
 
         // Mock mail service to avoid sending real emails
-        doNothing().when(mailService).sendVulnerabilityScanResultEmail(any(User.class), any(ComponentVulnerabilitiesDTO.class), any(ArtemisVersionDTO.class), anyBoolean());
+        doNothing().when(mailService).sendVulnerabilityScanResultEmail(any(MailRecipientDTO.class), any(ComponentVulnerabilitiesDTO.class), any(ArtemisVersionDTO.class),
+                anyBoolean());
 
         request.postWithoutLocation("/api/core/admin/sbom/vulnerabilities/send-email", null, HttpStatus.OK, null);
 

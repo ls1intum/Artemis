@@ -154,15 +154,15 @@ describe('Exercise Groups Component', () => {
     });
 
     it('removes an exercise from group', () => {
-        comp.exerciseGroups = groups;
+        comp.exerciseGroups.set(groups);
 
         comp.removeExercise(3, 0);
 
-        expect(comp.exerciseGroups[0].exercises).toHaveLength(1);
+        expect(comp.exerciseGroups()![0].exercises).toHaveLength(1);
     });
 
     it('deletes an exercise group', async () => {
-        comp.exerciseGroups = groups;
+        comp.exerciseGroups.set(groups);
 
         vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         vi.spyOn(eventManager, 'broadcast');
@@ -171,7 +171,7 @@ describe('Exercise Groups Component', () => {
         await Promise.resolve();
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
-        expect(comp.exerciseGroups).toHaveLength(groups.length - 1);
+        expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
     });
 
     it('returns the exercise icon type quiz', () => {
@@ -254,35 +254,35 @@ describe('Exercise Groups Component', () => {
     );
 
     it('moves up an exercise group', () => {
-        comp.exerciseGroups = groups;
+        comp.exerciseGroups.set(groups);
         const from = 1;
         const to = 0;
 
-        const fromId = comp.exerciseGroups[from].id;
-        const toId = comp.exerciseGroups[to].id;
+        const fromId = comp.exerciseGroups()![from].id;
+        const toId = comp.exerciseGroups()![to].id;
 
         comp.moveUp(from);
 
-        expect(comp.exerciseGroups[to].id).toBe(fromId);
-        expect(comp.exerciseGroups[from].id).toBe(toId);
+        expect(comp.exerciseGroups()![to].id).toBe(fromId);
+        expect(comp.exerciseGroups()![from].id).toBe(toId);
     });
 
     it('moves down an exercise group', () => {
-        comp.exerciseGroups = groups;
+        comp.exerciseGroups.set(groups);
         const from = 0;
         const to = 1;
 
-        const fromId = comp.exerciseGroups[from].id;
-        const toId = comp.exerciseGroups[to].id;
+        const fromId = comp.exerciseGroups()![from].id;
+        const toId = comp.exerciseGroups()![to].id;
 
         comp.moveDown(from);
 
-        expect(comp.exerciseGroups[to].id).toBe(fromId);
-        expect(comp.exerciseGroups[from].id).toBe(toId);
+        expect(comp.exerciseGroups()![to].id).toBe(fromId);
+        expect(comp.exerciseGroups()![from].id).toBe(toId);
     });
 
     it('maps exercise types to exercise groups', () => {
-        comp.exerciseGroups = groups;
+        comp.exerciseGroups.set(groups);
         const firstGroupId = groups[0].id!;
         const expectedResult = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
@@ -310,7 +310,7 @@ describe('Exercise Groups Component', () => {
         await Promise.resolve();
 
         expect(dialogService.open).toHaveBeenCalledOnce();
-        expect(comp.exerciseGroups).toEqual([exerciseGroup]);
+        expect(comp.exerciseGroups()).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
     });
 });

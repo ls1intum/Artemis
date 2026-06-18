@@ -219,8 +219,8 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission().isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toBe('file1.png');
-            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submittedFileName()).toBe('file1.png');
+            expect(comp.submittedFileExtension()).toBe('png');
             expect(comp.submissionFile).toBeUndefined();
         });
     });

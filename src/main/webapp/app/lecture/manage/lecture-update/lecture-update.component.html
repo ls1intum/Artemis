@@ -22,7 +22,7 @@
             <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
             <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
-                <jhi-form-status-bar [formStatusSections]="formStatusSections" />
+                <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
                 <div>
                     <div>
                         <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
@@ -57,7 +57,7 @@
                             type="submit"
                             id="save-entity"
                             class="btn btn-primary ms-2"
-                            [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
+                            [disabled]="editForm.form.invalid || isSaving() || processUnitMode() || !isChangeMadeToTitleOrPeriodSection() || !areSectionsValid()"
                         >
                             <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>
                         </button>
@@ -67,13 +67,13 @@
                     <div class="mt-3">
                         <jhi-lecture-update-units [lecture]="lecture()" />
                         <div class="py-2">
-                            <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
+                            <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving()" />
                             <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processAutomatically"></span>
                             <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.lectureFileToolTip' | artemisTranslate" />
                         </div>
                     </div>
                 }
-                @if (processUnitMode) {
+                @if (processUnitMode()) {
                     <div class="alert alert-warning mt-3">
                         <ul class="informative-text">
                             <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.firstLine"></li>
@@ -82,7 +82,7 @@
                         </ul>
                     </div>
                 }
-                @if (processUnitMode) {
+                @if (processUnitMode()) {
                     <div class="form-group">
                         <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
                         <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
@@ -106,25 +106,25 @@
                                 />
                             </div>
                         </div>
-                        @if (!fileName && fileInputTouched) {
+                        @if (!fileName() && fileInputTouched) {
                             <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
                         }
                     </div>
                 }
                 <div class="d-flex">
-                    @if (processUnitMode) {
+                    @if (processUnitMode()) {
                         <div class="flex-grow-1 ms-3">
                             <div class="process-units-button">
                                 <button
                                     type="button"
                                     id="process-units-entity"
-                                    [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
+                                    [disabled]="editForm.form.invalid || isSaving() || !processUnitMode() || isProcessing() || !fileName()"
                                     class="btn btn-success"
                                     (click)="proceedToUnitSplit()"
                                 >
                                     <fa-icon [icon]="faPuzzleProcess" class="me-1" />
                                     <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processUnits"></span>
-                                    @if (isProcessing) {
+                                    @if (isProcessing()) {
                                         <span class="spinner-border spinner-border-sm"></span>
                                     }
                                 </button>

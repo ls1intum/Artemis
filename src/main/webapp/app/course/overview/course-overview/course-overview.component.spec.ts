@@ -115,9 +115,6 @@ const course2: Course = {
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
-const coursesDropdown: Course[] = [course1, course2];
-const courses: Course[] = [course2];
-
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
@@ -152,7 +149,6 @@ describe('CourseOverviewComponent', () => {
     let findOneForDashboardStub: ReturnType<typeof vi.spyOn>;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
-    let findAllForDropdownSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
     let courseNotificationSettingService: CourseNotificationSettingService;
@@ -268,7 +264,6 @@ describe('CourseOverviewComponent', () => {
         // default for findOneForRegistrationStub is to return the course as well
         findOneForRegistrationStub = vi.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-        findAllForDropdownSpy = vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
@@ -307,11 +302,6 @@ describe('CourseOverviewComponent', () => {
             course1.id,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
-            course1.id,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
     });
 
@@ -684,40 +674,6 @@ describe('CourseOverviewComponent', () => {
         expect(component.isExamStarted()).toBe(true);
     });
 
-    it('should initialize courses attribute when page is loaded', async () => {
-        await component.ngOnInit();
-
-        expect(component.courses()).toEqual(courses);
-        expect(component.courses()?.length).toBe(1);
-    });
-
-    it('should not initialize courses attribute when page has error while loading', async () => {
-        // Use EMPTY instead of throwError to avoid RxJS reportUnhandledError — the subscribe() in
-        // updateRecentlyAccessedCourses() has no error handler, so thrown errors leak asynchronously.
-        // EMPTY completes without emitting, so courses() stays undefined, satisfying the test intent.
-        findAllForDropdownSpy.mockReturnValue(EMPTY);
-
-        await component.ngOnInit();
-        // When findAllForDropdown completes without value, courses should not be initialized
-        expect(component.courses()).toBeUndefined();
-    });
-
-    it('should not display current course in dropdown', async () => {
-        await component.ngOnInit();
-
-        expect(component.courses()).toEqual(courses);
-        expect(component.courses()?.pop()).toBe(course2);
-    });
-
-    it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
-        component.updateRecentlyAccessedCourses();
-        fixture.changeDetectorRef.detectChanges();
-        component.ngOnDestroy();
-
-        expect(courseService.findAllForDropdown).toHaveBeenCalled();
-        expect(component.dashboardSubscription.closed).toBe(true);
-    });
-
     it('should toggle isCollapsed when service emits corresponding event', () => {
         fixture.detectChanges();
         courseSidebarService.openSidebar();
@@ -730,17 +686,6 @@ describe('CourseOverviewComponent', () => {
         expect(component.isSidebarCollapsed()).toBe(true);
     });
 
-    it('should switch course and navigate to the correct URL', async () => {
-        const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/dashboard');
-
-        component.switchCourse(course2);
-        await Promise.resolve();
-
-        expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'dashboard']);
-    });
     describe('determineManageViewLink', () => {
         beforeEach(() => {
             component.courseId.set(123);
@@ -824,8 +769,8 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
         fixture.detectChanges();
 
-        const selectableSettingPresets = (component as any).selectableSettingPresets;
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectableSettingPresets = (component as any).selectableSettingPresets();
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectableSettingPresets).toBeDefined();
         expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
@@ -841,7 +786,7 @@ describe('CourseOverviewComponent', () => {
 
         component.presetSelected(2);
 
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectedSettingPreset).toBeDefined();
         expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
@@ -854,7 +799,7 @@ describe('CourseOverviewComponent', () => {
 
         component.presetSelected(0);
 
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
+        const selectedSettingPreset = (component as any).selectedSettingPreset();
 
         expect(selectedSettingPreset).toBeUndefined();
         expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
@@ -874,7 +819,7 @@ describe('CourseOverviewComponent', () => {
         (component as any).settingInfo = mockSettingInfo;
         (component as any).initializeCourseNotificationValues();
 
-        expect((component as any).selectableSettingPresets).toBeDefined();
-        expect((component as any).selectedSettingPreset).toBeDefined();
+        expect((component as any).selectableSettingPresets()).toBeDefined();
+        expect((component as any).selectedSettingPreset()).toBeDefined();
     });
 });

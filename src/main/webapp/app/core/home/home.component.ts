@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -53,32 +53,32 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
-    authenticationError = false;
-    account: User;
+    readonly authenticationError = signal(false);
+    readonly account = signal<User | undefined>(undefined);
     password: string;
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
-    needsToAcceptTerms = false;
+    readonly needsToAcceptTerms = signal(false);
     userAcceptedTerms = false;
     username: string;
     credentials: Credentials;
-    isRegistrationEnabled = false;
-    isPasswordLoginDisabled = false;
-    isPasskeyEnabled = false;
-    loading = true;
+    readonly isRegistrationEnabled = signal(false);
+    readonly isPasswordLoginDisabled = signal(false);
+    readonly isPasskeyEnabled = signal(false);
+    readonly loading = signal(true);
     mainElementFocused = false;
 
     usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
-    usernamePlaceholderTranslated = 'Login or email'; // default, might be overridden
+    readonly usernamePlaceholderTranslated = signal('Login or email'); // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
-    usernameRegexPattern = /^[a-zA-Z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
-    errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
-    accountName?: string; // additional information in the welcome message
+    readonly usernameRegexPattern = signal<RegExp>(/^[a-zA-Z0-9.@_-]{4,50}$/); // default (at least 4, at most 50 characters), might be overridden
+    readonly errorMessageUsername = signal('home.errors.usernameIncorrect'); // default, might be overridden
+    readonly accountName = signal<string | undefined>(undefined); // additional information in the welcome message
 
-    isFormValid = false;
-    isSubmittingLogin = false;
+    readonly isFormValid = signal(false);
+    readonly isSubmittingLogin = signal(false);
 
-    profileInfo: ProfileInfo;
+    readonly profileInfo = signal<ProfileInfo>(undefined!);
 
     ngOnInit() {
         this.initializeWithProfileInfo();
@@ -90,7 +90,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // logout: the component is briefly created while still authenticated, fires a
             // challenge request, gets destroyed, and a new instance overwrites the cookie.
             if (!user) {
-                this.loading = false;
+                this.loading.set(false);
                 this.prefillPasskeysIfPossible();
             }
         });
@@ -113,7 +113,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * @see https://www.w3.org/TR/webauthn-3/#client-side-discoverable-credential
      */
     async prefillPasskeysIfPossible() {
-        if (!this.isPasskeyEnabled) {
+        if (!this.isPasskeyEnabled()) {
             return;
         }
         if (!window.PublicKeyCredential?.isConditionalMediationAvailable) {
@@ -175,30 +175,31 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * Initializes the component with the required information received from the server.
      */
     private initializeWithProfileInfo() {
-        this.profileInfo = this.profileService.getProfileInfo();
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
+        const profileInfo = this.profileService.getProfileInfo();
+        this.profileInfo.set(profileInfo);
+        this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
 
-        this.accountName = this.profileInfo.accountName;
-        if (this.profileInfo.allowedLdapUsernamePattern) {
-            this.usernameRegexPattern = new RegExp(this.profileInfo.allowedLdapUsernamePattern);
+        this.accountName.set(profileInfo.accountName);
+        if (profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern.set(new RegExp(profileInfo.allowedLdapUsernamePattern));
         }
-        if (this.accountName === 'TUM') {
+        if (this.accountName() === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
-            this.errorMessageUsername = 'home.errors.tumWarning';
+            this.errorMessageUsername.set('home.errors.tumWarning');
             // Temporary workaround: Do not show a warning when TUM users login with an email address with a specific ending
             // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
-            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
+            this.usernameRegexPattern.set(new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/));
         }
-        this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+        this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+            this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         });
 
-        this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
-        this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
+        this.isRegistrationEnabled.set(!!profileInfo.registrationEnabled);
+        this.needsToAcceptTerms.set(!!profileInfo.needsToAcceptTerms);
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
-            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
+            this.isPasswordLoginDisabled.set(!!this.profileInfo()?.saml2 && this.profileInfo().saml2!.passwordLoginDisabled && !loginFormOverride);
         });
     }
 
@@ -215,12 +216,12 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     ngAfterViewChecked() {
         // Only focus the username input once, not on every update
-        if (this.mainElementFocused || this.loading) {
+        if (this.mainElementFocused || this.loading()) {
             return;
         }
 
         // Focus on the main element as soon as it is visible
-        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled ? '#saml2Button' : '#username', true);
+        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled() ? '#saml2Button' : '#username', true);
         if (mainElement) {
             mainElement.focus();
             this.mainElementFocused = true;
@@ -233,7 +234,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     login() {
-        this.isSubmittingLogin = true;
+        this.isSubmittingLogin.set(true);
         this.loginService
             .login({
                 username: this.username,
@@ -244,16 +245,18 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                 this.handleLoginSuccess();
             })
             .catch(() => {
-                this.authenticationError = true;
+                this.authenticationError.set(true);
             })
-            .finally(() => (this.isSubmittingLogin = false));
+            .finally(() => {
+                this.isSubmittingLogin.set(false);
+            });
     }
 
     /**
      * Handle a successful user login.
      */
     private handleLoginSuccess() {
-        this.authenticationError = false;
+        this.authenticationError.set(false);
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
@@ -266,7 +269,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     currentUserCallback(account: User) {
-        this.account = account;
+        this.account.set(account);
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to the stored previousState and clear the previousState
@@ -290,12 +293,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     checkFormValidity() {
-        this.isFormValid =
+        this.isFormValid.set(
             this.username !== undefined &&
-            this.username.length >= this.USERNAME_MIN_LENGTH &&
-            this.username.length <= this.USERNAME_MAX_LENGTH &&
-            this.password !== undefined &&
-            this.password.length >= this.PASSWORD_MIN_LENGTH &&
-            this.password.length <= this.PASSWORD_MAX_LENGTH;
+                this.username.length >= this.USERNAME_MIN_LENGTH &&
+                this.username.length <= this.USERNAME_MAX_LENGTH &&
+                this.password !== undefined &&
+                this.password.length >= this.PASSWORD_MIN_LENGTH &&
+                this.password.length <= this.PASSWORD_MAX_LENGTH,
+        );
     }
 }

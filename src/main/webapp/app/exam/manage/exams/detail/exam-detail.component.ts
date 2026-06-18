@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -53,12 +53,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
 
-    exam: Exam;
+    readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
     formattedConfirmationStartText?: SafeHtml;
     formattedEndText?: SafeHtml;
     formattedConfirmationEndText?: SafeHtml;
-    isExamOver = true;
+    readonly isExamOver = signal(true);
     resetType = ActionType.Reset;
     buttonSize = ButtonSize.MEDIUM;
     private dialogErrorSource = new Subject<string>();
@@ -77,12 +77,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faAward = faAward;
     faFlaskVial = faFlaskVial;
 
-    plagiarismEnabled = false;
+    readonly plagiarismEnabled = signal(false);
 
     isAdmin = false;
-    canHaveBonus = false;
+    readonly canHaveBonus = signal(false);
 
-    examDetailSections: DetailOverviewSection[];
+    readonly examDetailSections = signal<DetailOverviewSection[]>([]);
 
     /**
      * Initialize the exam
@@ -91,22 +91,22 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         this.getExamRoutesByIdentifier = this.getExamRoutesByIdentifier.bind(this);
         this.route.data.subscribe(({ exam }) => {
             scrollToTopOfPage();
-            this.exam = exam;
-            this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
-            this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
-            this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
-            this.formattedConfirmationEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-            this.isExamOver = !!this.exam.endDate?.isBefore(dayjs());
+            this.exam.set(exam);
+            this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().startText);
+            this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationStartText);
+            this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().endText);
+            this.formattedConfirmationEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam().confirmationEndText);
+            this.isExamOver.set(!!this.exam().endDate?.isBefore(dayjs()));
             this.isAdmin = this.accountService.isAdmin();
             this.getExamDetailSections();
 
-            this.gradingService.findGradingScaleForExam(this.exam.course!.id!, this.exam.id!).subscribe((gradingSystemResponse) => {
+            this.gradingService.findGradingScaleForExam(this.exam().course!.id!, this.exam().id!).subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
-                    this.canHaveBonus = gradingSystemResponse.body.gradeSteps.gradeType === GradeType.GRADE;
+                    this.canHaveBonus.set(gradingSystemResponse.body.gradeSteps.gradeType === GradeType.GRADE);
                 }
             });
 
-            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+            this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         });
     }
 
@@ -118,8 +118,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     }
 
     getExamDetailSections() {
-        const exam = this.exam;
-        this.examDetailSections = [
+        const exam = this.exam();
+        this.examDetailSections.set([
             {
                 headline: 'artemisApp.exam.detail.sections.general',
                 details: [
@@ -147,24 +147,24 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Markdown, title: 'artemisApp.examManagement.confirmationEndText', data: { innerHtml: this.formattedConfirmationEndText } },
                 ],
             },
-        ];
+        ]);
     }
 
     /**
      * Returns the route for exam components by identifier
      */
     getExamRoutesByIdentifier(identifier: string): (string | number | undefined)[] {
-        return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, identifier];
+        return ['/course-management', this.exam().course?.id, 'exams', this.exam().id, identifier];
     }
 
     /**
      * Reset an exam with examId by deleting all studentExams and participations
      */
     resetExam(): void {
-        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe({
+        this.examManagementService.reset(this.exam().course!.id!, this.exam().id!).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
-                this.exam = res.body!;
+                this.exam.set(res.body!);
                 this.alertService.success('artemisApp.examManagement.reset.success');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -176,10 +176,10 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number): void {
-        this.examManagementService.delete(this.exam.course!.id!, examId).subscribe({
+        this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.router.navigate(['/course-management', this.exam.course!.id!, 'exams']);
+                this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -187,14 +187,14 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     private getExistingSummaryEntries(): EntitySummary {
         const numberOfProgrammingExerciseParticipations =
-            this.exam.exerciseGroups
-                ?.flatMap((exerciseGroup) => exerciseGroup.exercises)
+            this.exam()
+                .exerciseGroups?.flatMap((exerciseGroup) => exerciseGroup.exercises)
                 .filter((exercise) => exercise?.type === ExerciseType.PROGRAMMING)
                 .map((exercise) => exercise?.numberOfParticipations ?? 0)
                 .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
 
         const numberOfExercisesPerType = new Map<ExerciseType, number>();
-        this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+        this.exam().exerciseGroups?.forEach((exerciseGroup) => {
             exerciseGroup.exercises?.forEach((exercise) => {
                 if (exercise.type === undefined) {
                     return;
@@ -204,9 +204,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             });
         });
 
-        const numberOfExerciseGroups = this.exam.exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam.testExam ?? false;
-        const isTestCourse = this.exam.course?.testCourse ?? false;
+        const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
+        const isTestExam = this.exam().testExam ?? false;
+        const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {
             'artemisApp.examManagement.delete.summary.numberExerciseGroups': numberOfExerciseGroups,
@@ -222,7 +222,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     }
 
     fetchExamDeletionSummary(): Observable<EntitySummary> {
-        return this.examManagementService.getDeletionSummary(this.exam.course!.id!, this.exam.id!).pipe(
+        return this.examManagementService.getDeletionSummary(this.exam().course!.id!, this.exam().id!).pipe(
             map((response) => {
                 const summary = response.body;
 

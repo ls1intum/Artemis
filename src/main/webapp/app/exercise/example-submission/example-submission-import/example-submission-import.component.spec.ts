@@ -100,7 +100,7 @@ describe('ExampleSubmissionImportComponent', () => {
         await vi.advanceTimersByTimeAsync(300);
 
         expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
-        expect(component.content.resultsOnPage[0].submissionSize).toBe(2);
+        expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
     it('should close the dialog on dismiss', () => {

@@ -1,22 +1,22 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamResultSummaryComponent } from '../../../overview/summary/exam-result-summary.component';
 
 @Component({
     selector: 'jhi-student-exam-summary',
-    template: '<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true" />',
+    template: '<jhi-exam-participation-summary [studentExam]="studentExam()!" [instructorView]="true" />',
     imports: [ExamResultSummaryComponent],
 })
 export class StudentExamSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
 
-    studentExam: StudentExam;
+    readonly studentExam = signal<StudentExam | undefined>(undefined);
 
     /**
      * Initialize the studentExam
      */
     ngOnInit(): void {
-        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => (this.studentExam = studentExamWithGrade.studentExam));
+        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => this.studentExam.set(studentExamWithGrade.studentExam));
     }
 }

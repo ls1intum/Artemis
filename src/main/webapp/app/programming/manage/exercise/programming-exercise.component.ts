@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, model } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, model, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { Observable, merge } from 'rxjs';
@@ -90,11 +90,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     private profileService = inject(ProfileService);
 
     readonly programmingExercises = model<ProgrammingExercise[]>([]);
-    filteredProgrammingExercises: ProgrammingExercise[];
+    readonly filteredProgrammingExercises = signal<ProgrammingExercise[]>([]);
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
-    localCIEnabled = true;
-    onlineIdeEnabled = false;
+    readonly localCIEnabled = signal(true);
+    readonly onlineIdeEnabled = signal(false);
     numberOfResultsOfSolutionParticipation = 0;
     numberOfResultsOfTemplateParticipation = 0;
 
@@ -125,28 +125,28 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<ProgrammingExercise[]>) => {
                 const programmingExercises = res.body!;
                 const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
-                this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
+                this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+                this.onlineIdeEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
                 // reconnect exercise with course
                 programmingExercises.forEach((exercise) => {
-                    exercise.course = this.courseContext;
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
                     this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;
                     if (exercise.projectKey) {
-                        if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled) {
+                        if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled()) {
                             exercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate!,
                                 exercise.projectKey,
                                 exercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        if (exercise.templateParticipation?.buildPlanId && !this.localCIEnabled) {
+                        if (exercise.templateParticipation?.buildPlanId && !this.localCIEnabled()) {
                             exercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate!,
                                 exercise.projectKey,
@@ -154,7 +154,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                             );
                         }
                     }
-                    this.selectedExercises = [];
+                    this.selectedExercises.set([]);
                 });
                 this.programmingExercises.set(programmingExercises);
                 this.applyFilter();
@@ -165,8 +165,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     protected applyFilter(): void {
-        this.filteredProgrammingExercises = this.programmingExercises().filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
+        this.filteredProgrammingExercises.set(this.programmingExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredProgrammingExercises().length);
     }
 
     trackId(_index: number, item: ProgrammingExercise) {
@@ -226,7 +226,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             size: 'xl',
             backdrop: 'static',
         });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedExercises;
+        modalRef.componentInstance.selectedProgrammingExercises = this.selectedExercises();
         modalRef.closed.subscribe(() => {
             location.reload();
         });
@@ -241,7 +241,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             closable: true,
             closeOnEscape: true,
             header: this.translateService.instant('artemisApp.consistencyCheck.title'),
-            data: { exercisesToCheck: this.selectedExercises },
+            data: { exercisesToCheck: this.selectedExercises() },
         });
     }
 

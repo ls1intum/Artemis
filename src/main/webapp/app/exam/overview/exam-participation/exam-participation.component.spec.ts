@@ -171,13 +171,13 @@ describe('ExamParticipationComponent', () => {
         // unhandled NG04002 rejection. Stub it once so individual tests don't have to.
         vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         // Stub ngOnInit-triggered service calls with non-emitting Observables so ngOnInit only sets the route-derived
-        // identifiers (courseId/examId/testRunId) without polluting comp.studentExam.
+        // identifiers (courseId/examId/testRunId) without polluting comp.studentExam().
         const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
         comp.ngOnInit();
         loadTestRunSpy.mockClear();
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
     });
 
     afterEach(() => {
@@ -194,17 +194,17 @@ describe('ExamParticipationComponent', () => {
         it('should initialize and display test run ribbon', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(fixture).toBeTruthy();
-            expect(!!comp.testRunId).toBe(true);
+            expect(!!comp.testRunId()).toBe(true);
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
             expect(testRunRibbon).toBeDefined();
         });
         it('should initialize and not display test run ribbon', () => {
             TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-            comp.exam.id = 2;
+            comp.exam().id = 2;
             comp.ngOnInit();
             fixture.changeDetectorRef.detectChanges();
             expect(fixture).toBeTruthy();
-            expect(!!comp.testRunId).toBe(false);
+            expect(!!comp.testRunId()).toBe(false);
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
             expect(testRunRibbon).toBeNull();
         });
@@ -212,29 +212,29 @@ describe('ExamParticipationComponent', () => {
 
     describe('isProgrammingExercise', () => {
         it('should return true if active exercise is a programming exercise', () => {
-            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExercise()).toBe(true);
         });
         it('should return false if active exercise is not a programming exercise', () => {
-            comp.activeExamPage.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            comp.activeExamPage().exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             expect(comp.isProgrammingExercise()).toBe(false);
         });
     });
 
     describe('isProgrammingExerciseWithCodeEditor', () => {
         it('should return true if programming exercise is with code editor', () => {
-            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(false);
-            (comp.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor = true;
+            (comp.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor = true;
             expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(true);
         });
     });
 
     describe('isProgrammingExerciseWithOfflineIDE', () => {
         it('should return true if active exercise is with offline ide', () => {
-            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(true);
-            (comp.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde = false;
+            (comp.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde = false;
             expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(false);
         });
     });
@@ -247,8 +247,8 @@ describe('ExamParticipationComponent', () => {
         const loadTestRunStub = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         comp.ngOnInit();
         expect(loadTestRunStub).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
-        expect(comp.exam).toEqual(studentExam.exam);
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
     });
 
     it('should load exam if test run id is not defined', () => {
@@ -262,8 +262,8 @@ describe('ExamParticipationComponent', () => {
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
-        expect(comp.exam).toEqual(studentExam.exam);
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
         expect(loadStudentExamWithExercisesForSummary).not.toHaveBeenCalled();
         studentExam.exam.course = new Course();
         studentExam.ended = true;
@@ -271,8 +271,8 @@ describe('ExamParticipationComponent', () => {
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledTimes(2);
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExamWithExercises);
-        expect(comp.studentExam).not.toEqual(studentExam);
+        expect(comp.studentExam()).toEqual(studentExamWithExercises);
+        expect(comp.studentExam()).not.toEqual(studentExam);
     });
 
     it('should redirect to exam summary after test run is over', () => {
@@ -286,7 +286,7 @@ describe('ExamParticipationComponent', () => {
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam()).toEqual(studentExam);
         comp.onExamEndConfirmed();
         expect(submitStudentExamSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
@@ -303,8 +303,8 @@ describe('ExamParticipationComponent', () => {
         const loadTestRunStub = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         comp.ngOnInit();
         expect(loadTestRunStub).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
-        expect(comp.exam).toEqual(studentExam.exam);
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
     });
 
     it('should load existing testExam if studentExam id is start', () => {
@@ -322,9 +322,9 @@ describe('ExamParticipationComponent', () => {
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
-        expect(comp.exam).toEqual(studentExam.exam);
-        expect(comp.studentExam.id).toEqual(studentExam.id);
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
+        expect(comp.studentExam().id).toEqual(studentExam.id);
         expect(loadStudentExamWithExercisesForSummary).not.toHaveBeenCalled();
     });
 
@@ -353,9 +353,9 @@ describe('ExamParticipationComponent', () => {
         comp.ngOnInit();
         expect(loadStudentExamSpy).not.toHaveBeenCalled();
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExamWithExercises);
-        expect(comp.studentExam).not.toEqual(studentExam);
-        expect(comp.studentExam.id).toEqual(studentExamWithExercises.id);
+        expect(comp.studentExam()).toEqual(studentExamWithExercises);
+        expect(comp.studentExam()).not.toEqual(studentExam);
+        expect(comp.studentExam().id).toEqual(studentExamWithExercises.id);
     });
 
     it('should load exam from local storage if needed', () => {
@@ -378,9 +378,9 @@ describe('ExamParticipationComponent', () => {
         expect(loadStudentExamStub).toHaveBeenCalledOnce();
         expect(lastSaveFailedStub).toHaveBeenCalledOnce();
         expect(loadLocalStudentExamStub).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(localStudentExam);
-        expect(comp.studentExam).not.toEqual(studentExam);
-        expect(comp.exam).toEqual(studentExam.exam);
+        expect(comp.studentExam()).toEqual(localStudentExam);
+        expect(comp.studentExam()).not.toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
     });
 
     it('should determine tutor status if no exam was loaded', () => {
@@ -396,7 +396,7 @@ describe('ExamParticipationComponent', () => {
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
-        expect(comp.isAtLeastTutor).toBe(true);
+        expect(comp.isAtLeastTutor()).toBe(true);
     });
 
     it('should determine tutor status if no exam was loaded and course was not cached', () => {
@@ -414,7 +414,7 @@ describe('ExamParticipationComponent', () => {
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
-        expect(comp.isAtLeastTutor).toBe(true);
+        expect(comp.isAtLeastTutor()).toBe(true);
     });
 
     const testExamStarted = (studentExam: StudentExam) => {
@@ -464,22 +464,22 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.submitted).toBe(false);
 
         if (studentExam.testRun || studentExam.exam?.testExam) {
-            expect(comp.individualStudentEndDate).toEqual(comp.testStartTime!.add(studentExam.workingTime!, 'seconds'));
+            expect(comp.individualStudentEndDate()).toEqual(comp.testStartTime()!.add(studentExam.workingTime!, 'seconds'));
         } else {
-            expect(comp.individualStudentEndDate).toEqual(comp.exam.startDate!.add(studentExam.workingTime!, 'seconds'));
+            expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
         }
 
         // Initialize Exam Overview Page
-        expect(comp.activeExamPage.exercise).toBeUndefined();
-        expect(comp.activeExamPage.isOverviewPage).toBe(true);
+        expect(comp.activeExamPage().exercise).toBeUndefined();
+        expect(comp.activeExamPage().isOverviewPage).toBe(true);
     };
 
     it('should initialize exercises when exam starts', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
         studentExam.testRun = true;
-        comp.testStartTime = dayjs().subtract(1000, 'seconds');
-        comp.exam = new Exam();
+        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+        comp.exam.set(new Exam());
         testExamStarted(studentExam);
     });
 
@@ -489,8 +489,8 @@ describe('ExamParticipationComponent', () => {
         exam.testExam = true;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
-        comp.testStartTime = dayjs().subtract(1000, 'seconds');
-        comp.exam = exam;
+        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+        comp.exam.set(exam);
         testExamStarted(studentExam);
     });
 
@@ -499,18 +499,18 @@ describe('ExamParticipationComponent', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         comp.ngOnInit();
         const startDate = dayjs();
-        comp.exam = new Exam();
-        comp.exam.startDate = dayjs(startDate);
+        comp.exam.set(new Exam());
+        comp.exam().startDate = dayjs(startDate);
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
         testExamStarted(studentExam);
-        expect(comp.individualStudentEndDate).toEqual(startDate.add(workingTime, 'seconds'));
+        expect(comp.individualStudentEndDate()).toEqual(startDate.add(workingTime, 'seconds'));
     });
 
     it('should create participation for given exercise', () => {
-        comp.exam = new Exam();
-        comp.exam.course = new Course();
+        comp.exam.set(new Exam());
+        comp.exam().course = new Course();
         const createdParticipation = new StudentParticipation();
         const programmingSubmission = new ProgrammingSubmission();
         createdParticipation.submissions = [programmingSubmission];
@@ -535,8 +535,8 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should generate participation state when participation creation fails', () => {
-        comp.exam = new Exam();
-        comp.exam.course = new Course();
+        comp.exam.set(new Exam());
+        comp.exam().course = new Course();
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const courseExerciseServiceStub = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(throwError(() => httpError));
         const seenStates: string[] = [];
@@ -553,8 +553,8 @@ describe('ExamParticipationComponent', () => {
         const startDate = dayjs('2022-02-21T23:00:00+01:00');
 
         beforeEach(() => {
-            comp.studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0 };
-            comp.studentExamId = comp.studentExam.id!;
+            comp.studentExam.set({ id: 3, workingTime: 420, numberOfExamSessions: 0 });
+            comp.studentExamId.set(comp.studentExam().id!);
             examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         });
 
@@ -565,7 +565,7 @@ describe('ExamParticipationComponent', () => {
             vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
             const ackSpy = vi.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
             comp.initIndividualEndDates(startDate);
-            expect(comp.studentExam.workingTime).toBe(1337);
+            expect(comp.studentExam().workingTime).toBe(1337);
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
@@ -579,7 +579,7 @@ describe('ExamParticipationComponent', () => {
             // (if left out, the test would pass in the German time zone and fail in most other time zones)
             const startDate = dayjs().set('h', 23); //today at 23:00
             comp.initIndividualEndDates(startDate);
-            expect(comp.studentExam.workingTime).toBe(9001);
+            expect(comp.studentExam().workingTime).toBe(9001);
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
@@ -590,22 +590,22 @@ describe('ExamParticipationComponent', () => {
             vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
             const ackSpy = vi.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
             comp.initIndividualEndDates(startDate);
-            expect(comp.studentExam.workingTime).toBe(42);
+            expect(comp.studentExam().workingTime).toBe(42);
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
     });
 
     describe('websocket problem statement update subscription', () => {
         beforeEach(() => {
-            comp.studentExam = new StudentExam();
-            comp.exam = new Exam();
+            comp.studentExam.set(new StudentExam());
+            comp.exam.set(new Exam());
             const textExercise = new TextExercise(new Course(), undefined);
             textExercise.id = 1;
             textExercise.problemStatement = 'old problem statement text exercise';
             const programmingExercise = new ProgrammingExercise(new Course(), undefined);
             programmingExercise.id = 2;
             programmingExercise.problemStatement = 'old problem statement programming exercise';
-            comp.studentExam.exercises = [textExercise, programmingExercise];
+            comp.studentExam().exercises = [textExercise, programmingExercise];
         });
 
         it('should correctly update problem statement if exercise was not opened yet', () => {
@@ -616,10 +616,10 @@ describe('ExamParticipationComponent', () => {
             } as any as ExamLiveEvent;
             vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
             vi.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
-            comp.examStarted(comp.studentExam);
+            comp.examStarted(comp.studentExam());
             comp['subscribeToProblemStatementUpdates']();
             expect(examExerciseUpdateService.updateLiveExamExercise).not.toHaveBeenCalled();
-            expect(comp.studentExam.exercises![1].problemStatement).toBe('new problem statement');
+            expect(comp.studentExam().exercises![1].problemStatement).toBe('new problem statement');
         });
 
         it('should correctly update problem statement if exercise was previously opened', () => {
@@ -630,8 +630,8 @@ describe('ExamParticipationComponent', () => {
             } as any as ExamLiveEvent;
             vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
             vi.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
-            comp.examStarted(comp.studentExam);
-            comp.pageComponentVisited[1] = true;
+            comp.examStarted(comp.studentExam());
+            comp.pageComponentVisited()[1] = true;
             comp['subscribeToProblemStatementUpdates']();
             expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(2, 'new problem statement');
         });
@@ -643,8 +643,8 @@ describe('ExamParticipationComponent', () => {
         let quizSubmissionUpdateSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
-            comp.studentExam = new StudentExam();
-            comp.exam = new Exam();
+            comp.studentExam.set(new StudentExam());
+            comp.exam.set(new Exam());
         });
 
         const expectSyncedSubmissions = (submission: Submission, syncedSubmission: Submission) => {
@@ -664,7 +664,7 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission, syncedSubmission];
             participation.submissions = [submission, syncedSubmission];
             textExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [textExercise];
+            comp.studentExam().exercises = [textExercise];
             textSubmissionUpdateSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -681,7 +681,7 @@ describe('ExamParticipationComponent', () => {
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             modelingExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [modelingExercise];
+            comp.studentExam().exercises = [modelingExercise];
             modelingSubmissionUpdateSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -698,7 +698,7 @@ describe('ExamParticipationComponent', () => {
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
-            comp.studentExam.exercises = [quizExercise];
+            comp.studentExam().exercises = [quizExercise];
             quizSubmissionUpdateSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
             comp.triggerSave(false);
             await new Promise((resolve) => setTimeout(resolve, 500));
@@ -709,13 +709,13 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should submit exam when end confirmed', () => {
-        comp.studentExam = new StudentExam();
-        comp.studentExam.submitted = false;
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam?.submitted).toBe(true);
+        expect(comp.studentExam()?.submitted).toBe(true);
     });
 
     it('should show error when already submitted for test run and successfully loading student exam', () => {
@@ -726,12 +726,12 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = new Exam();
         const loadTestRunWithExercisesForConductionSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).not.toHaveBeenCalled();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam()).toEqual(studentExam);
     });
 
     it('should show error when already submitted for test run and failed to load student exam', () => {
@@ -740,7 +740,7 @@ describe('ExamParticipationComponent', () => {
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const loadTestRunWithExercisesForConductionSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(throwError(() => new Error()));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
@@ -754,13 +754,13 @@ describe('ExamParticipationComponent', () => {
         const studentExam = new StudentExam();
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        comp.exam = new Exam();
-        comp.testRunId = 0;
+        comp.exam.set(new Exam());
+        comp.testRunId.set(0);
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).not.toHaveBeenCalled();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam()).toEqual(studentExam);
     });
 
     it('should show error when already submitted and failed to load student exam', () => {
@@ -769,8 +769,8 @@ describe('ExamParticipationComponent', () => {
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => new Error()));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        comp.exam = new Exam();
-        comp.testRunId = 0;
+        comp.exam.set(new Exam());
+        comp.testRunId.set(0);
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
@@ -781,7 +781,7 @@ describe('ExamParticipationComponent', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const submitSpy = vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
@@ -789,7 +789,7 @@ describe('ExamParticipationComponent', () => {
 
     describe('canDeactivate', () => {
         it('should return true if logout is true', () => {
-            comp.loggedOut = true;
+            comp.loggedOut.set(true);
             expect(comp.canDeactivate()).toBe(true);
         });
 
@@ -805,23 +805,23 @@ describe('ExamParticipationComponent', () => {
         it('should return true if exam has ended', () => {
             const studentExam = new StudentExam();
             studentExam.ended = true;
-            comp.studentExam = studentExam;
+            comp.studentExam.set(studentExam);
             expect(comp.isOver()).toBe(true);
         });
         it('should return true when handed in early', () => {
-            comp.handInEarly = true;
+            comp.handInEarly.set(true);
             expect(comp.isOver()).toBe(true);
         });
         it('should return true if student exam has been submitted', () => {
             const studentExam = new StudentExam();
             studentExam.submitted = true;
-            comp.studentExam = studentExam;
+            comp.studentExam.set(studentExam);
             expect(comp.isOver()).toBe(true);
         });
         it('should be over if individual end date is before server date', () => {
             const endDate = dayjs().subtract(1, 'days');
             const date = dayjs();
-            comp.individualStudentEndDate = endDate;
+            comp.individualStudentEndDate.set(endDate);
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isOver()).toBe(true);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -829,7 +829,7 @@ describe('ExamParticipationComponent', () => {
         it('should not be over if individual end date is after server date', () => {
             const endDate = dayjs().add(1, 'days');
             const date = dayjs();
-            comp.individualStudentEndDate = endDate;
+            comp.individualStudentEndDate.set(endDate);
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isOver()).toBe(false);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -839,7 +839,7 @@ describe('ExamParticipationComponent', () => {
     const setComponentWithoutTestRun = () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         comp.ngOnInit();
-        comp.exam = new Exam();
+        comp.exam.set(new Exam());
     };
 
     describe('isVisible', () => {
@@ -853,7 +853,7 @@ describe('ExamParticipationComponent', () => {
             setComponentWithoutTestRun();
             const visibleDate = dayjs().subtract(1, 'days');
             const date = dayjs();
-            comp.exam.visibleDate = visibleDate;
+            comp.exam().visibleDate = visibleDate;
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isVisible()).toBe(true);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -863,7 +863,7 @@ describe('ExamParticipationComponent', () => {
             setComponentWithoutTestRun();
             const visibleDate = dayjs().add(1, 'days');
             const date = dayjs();
-            comp.exam.visibleDate = visibleDate;
+            comp.exam().visibleDate = visibleDate;
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isVisible()).toBe(false);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -881,7 +881,7 @@ describe('ExamParticipationComponent', () => {
             setComponentWithoutTestRun();
             const startDate = dayjs().subtract(1, 'days');
             const date = dayjs();
-            comp.exam.startDate = startDate;
+            comp.exam().startDate = startDate;
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBe(true);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -891,7 +891,7 @@ describe('ExamParticipationComponent', () => {
             setComponentWithoutTestRun();
             const startDate = dayjs().add(1, 'days');
             const date = dayjs();
-            comp.exam.startDate = startDate;
+            comp.exam().startDate = startDate;
             const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBe(false);
             expect(serverNowSpy).toHaveBeenCalledOnce();
@@ -901,30 +901,30 @@ describe('ExamParticipationComponent', () => {
     it('should clear autoSaveInterval when exam ended', () => {
         const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
         comp.autoSaveInterval = 1;
-        comp.studentExam = new StudentExam();
-        comp.exam = new Exam();
+        comp.studentExam.set(new StudentExam());
+        comp.exam.set(new Exam());
         comp.examEnded();
         expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
     });
 
     describe('onPageChange', () => {
         it('should trigger save and initialize exercise when exercise changed', () => {
-            comp.exerciseIndex = 0;
+            comp.exerciseIndex.set(0);
             const exercise1 = new TextExercise(new Course(), undefined);
             exercise1.id = 15;
             const exercise2 = new ProgrammingExercise(new Course(), undefined);
             exercise2.id = 42;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise1, exercise2];
-            comp.pageComponentVisited = [false, false];
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [exercise1, exercise2];
+            comp.pageComponentVisited.set([false, false]);
             const triggerSpy = vi.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
             const createParticipationForExerciseSpy = vi.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
             vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(of(undefined as any));
-            comp.exam = new Exam();
+            comp.exam.set(new Exam());
             comp.onPageChange(exerciseChange);
             expect(triggerSpy).toHaveBeenCalledWith(true);
-            expect(comp.exerciseIndex).toBe(1);
+            expect(comp.exerciseIndex()).toBe(1);
             expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
         });
 
@@ -938,18 +938,18 @@ describe('ExamParticipationComponent', () => {
             exercise.studentParticipations = [participation];
             const triggerSpy = vi.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise, forceSave: true };
-            comp.exam = new Exam();
-            comp.activeExamPage = new ExamPage();
-            comp.activeExamPage.exercise = exercise;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise];
-            comp.pageComponentVisited = [true];
-            comp.examStartConfirmed = true;
+            comp.exam.set(new Exam());
+            comp.activeExamPage.set(new ExamPage());
+            comp.activeExamPage().exercise = exercise;
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [exercise];
+            comp.pageComponentVisited.set([true]);
+            comp.examStartConfirmed.set(true);
 
             comp.onPageChange(exerciseChange);
 
             expect(triggerSpy).toHaveBeenCalledWith(true);
-            expect(comp.exerciseIndex).toBe(0);
+            expect(comp.exerciseIndex()).toBe(0);
         });
     });
 
@@ -968,15 +968,15 @@ describe('ExamParticipationComponent', () => {
             exercise3.allowOfflineIde = true;
 
             // Set initial component state
-            comp.handInEarly = true;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
-            comp.activeExamPage = {
+            comp.handInEarly.set(true);
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [exercise1, exercise2, exercise3];
+            comp.activeExamPage.set({
                 isOverviewPage: false,
                 exercise: exercise2,
-            };
-            comp.exerciseIndex = 1;
-            comp.pageComponentVisited = [true, true, true];
+            });
+            comp.exerciseIndex.set(1);
+            comp.pageComponentVisited.set([true, true, true]);
 
             // Spy on the private method resetPageComponentVisited
             const resetPageComponentVisitedSpy = vi.spyOn<any, any>(comp, 'resetPageComponentVisited');
@@ -988,13 +988,13 @@ describe('ExamParticipationComponent', () => {
             expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
 
             // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
-            expect(comp.pageComponentVisited).toEqual([false, true, false]);
-            expect(comp.exerciseIndex).toBe(1);
+            expect(comp.pageComponentVisited()).toEqual([false, true, false]);
+            expect(comp.exerciseIndex()).toBe(1);
         });
 
         it('should trigger save', () => {
             const triggerSaveSpy = vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
-            comp.handInEarly = false;
+            comp.handInEarly.set(false);
             comp.handleHandInEarly();
 
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
@@ -1003,8 +1003,8 @@ describe('ExamParticipationComponent', () => {
 
     describe('toggleHandInEarly', () => {
         it('should not fetch attendance check status if exam is a test exam', () => {
-            comp.exam = new Exam();
-            comp.exam.testExam = true;
+            comp.exam.set(new Exam());
+            comp.exam().testExam = true;
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
@@ -1017,8 +1017,8 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should not fetch attendance check status if exam is not an exam with attendance check', () => {
-            comp.exam = new Exam();
-            comp.exam.examWithAttendanceCheck = false;
+            comp.exam.set(new Exam());
+            comp.exam().examWithAttendanceCheck = false;
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
@@ -1031,7 +1031,7 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should not fetch attendance check status if user clicks continue', () => {
-            comp.handInEarly = true;
+            comp.handInEarly.set(true);
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
@@ -1044,8 +1044,8 @@ describe('ExamParticipationComponent', () => {
         });
 
         it('should fetch attendance check status if exam is an exam with attendance check', () => {
-            comp.exam = new Exam();
-            comp.exam.examWithAttendanceCheck = true;
+            comp.exam.set(new Exam());
+            comp.exam().examWithAttendanceCheck = true;
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked').mockReturnValue(of(new HttpResponse({ body: true })));
@@ -1055,14 +1055,14 @@ describe('ExamParticipationComponent', () => {
 
             // Verify that isAttendanceChecked has been called
             expect(attendanceCheckSpy).toHaveBeenCalledOnce();
-            expect(comp.attendanceChecked).toBe(true);
+            expect(comp.attendanceChecked()).toBe(true);
         });
     });
 
     describe('activePageIndex', () => {
         it('should return -1 if active page is overview page', () => {
-            comp.activeExamPage = new ExamPage();
-            comp.activeExamPage.isOverviewPage = true;
+            comp.activeExamPage.set(new ExamPage());
+            comp.activeExamPage().isOverviewPage = true;
             expect(comp.activePageIndex).toBe(-1);
         });
 
@@ -1072,11 +1072,11 @@ describe('ExamParticipationComponent', () => {
             const exercise1 = new ProgrammingExercise(undefined, undefined);
             exercise1.id = 6;
 
-            comp.activeExamPage = new ExamPage();
-            comp.activeExamPage.exercise = exercise1;
+            comp.activeExamPage.set(new ExamPage());
+            comp.activeExamPage().exercise = exercise1;
 
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise0, exercise1];
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [exercise0, exercise1];
 
             expect(comp.activePageIndex).toBe(1);
         });
@@ -1088,11 +1088,11 @@ describe('ExamParticipationComponent', () => {
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
 
-        comp.activeExamPage = new ExamPage();
-        comp.activeExamPage.exercise = exercise1;
+        comp.activeExamPage.set(new ExamPage());
+        comp.activeExamPage().exercise = exercise1;
 
-        comp.studentExam = new StudentExam();
-        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().exercises = [exercise0, exercise1];
 
         expect(comp.activePageIndex).toBe(1);
     });
@@ -1104,10 +1104,10 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
-        comp.studentExam = new StudentExam();
-        comp.studentExam.exercises = [exercise0, exercise1];
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().exercises = [exercise0, exercise1];
         comp.ngOnInit();
-        comp.examStarted(comp.studentExam);
+        comp.examStarted(comp.studentExam());
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
@@ -1127,7 +1127,7 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
 
-        comp.testExam = false;
+        comp.testExam.set(false);
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
@@ -1148,7 +1148,7 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
 
-        comp.testExam = true;
+        comp.testExam.set(true);
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).not.toHaveBeenCalledOnce();
@@ -1167,10 +1167,10 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExam));
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
-        comp.testExam = true;
-        comp.courseId = 1;
-        comp.examId = 2;
-        comp.studentExamId = 3;
+        comp.testExam.set(true);
+        comp.courseId.set(1);
+        comp.examId.set(2);
+        comp.studentExamId.set(3);
         comp.onExamEndConfirmed();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
@@ -1181,19 +1181,19 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
-        comp.exam = new Exam();
-        comp.exam.startDate = dayjs().subtract(1, 'hours');
-        comp.studentExam = new StudentExam();
-        comp.studentExam.submitted = false;
-        comp.studentExam.exercises = [exercise0, exercise1];
-        comp.examStartConfirmed = true;
-        comp.individualStudentEndDate = dayjs().add(1, 'hours');
-        comp.individualStudentEndDateWithGracePeriod = dayjs().add(1, 'hours').add(1, 'minutes');
+        comp.exam.set(new Exam());
+        comp.exam().startDate = dayjs().subtract(1, 'hours');
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.studentExam().exercises = [exercise0, exercise1];
+        comp.examStartConfirmed.set(true);
+        comp.individualStudentEndDate.set(dayjs().add(1, 'hours'));
+        comp.individualStudentEndDateWithGracePeriod.set(dayjs().add(1, 'hours').add(1, 'minutes'));
         vi.spyOn(comp, 'isVisible').mockReturnValue(true);
         vi.spyOn(comp, 'isActive').mockReturnValue(true);
         vi.spyOn(comp, 'isOver').mockReturnValue(false);
-        comp.activeExamPage = new ExamPage();
-        comp.activeExamPage.exercise = exercise1;
+        comp.activeExamPage.set(new ExamPage());
+        comp.activeExamPage().exercise = exercise1;
         vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
 
         fixture.changeDetectorRef.detectChanges();
@@ -1212,72 +1212,72 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should get whether student failed to submit', () => {
-        comp.studentExam = new StudentExam();
-        comp.testRunId = 1;
+        comp.studentExam.set(new StudentExam());
+        comp.testRunId.set(1);
 
         expect(comp.studentFailedToSubmit).toBe(false);
 
-        comp.testRunId = 0;
+        comp.testRunId.set(0);
         const startDate = dayjs();
         const now = dayjs();
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
-        comp.exam.startDate = startDate.subtract(2, 'hours');
-        comp.exam.testExam = false;
-        comp.studentExam.workingTime = 3600;
-        comp.exam.gracePeriod = 1;
-        comp.studentExam.submitted = false;
+        comp.exam().startDate = startDate.subtract(2, 'hours');
+        comp.exam().testExam = false;
+        comp.studentExam().workingTime = 3600;
+        comp.exam().gracePeriod = 1;
+        comp.studentExam().submitted = false;
         expect(comp.studentFailedToSubmit).toBe(true);
     });
 
     it('should get whether student failed to submit a TestExam', () => {
-        comp.studentExam = new StudentExam();
-        comp.testRunId = 0;
-        comp.exam.testExam = true;
+        comp.studentExam.set(new StudentExam());
+        comp.testRunId.set(0);
+        comp.exam().testExam = true;
 
-        comp.studentExam.started = false;
+        comp.studentExam().started = false;
         expect(comp.studentFailedToSubmit).toBe(false);
 
-        comp.studentExam.started = true;
-        comp.studentExam.startedDate = undefined;
+        comp.studentExam().started = true;
+        comp.studentExam().startedDate = undefined;
         expect(comp.studentFailedToSubmit).toBe(false);
 
         const now = dayjs();
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
-        comp.studentExam.startedDate = now.subtract(2, 'hours');
-        comp.studentExam.workingTime = 3600;
-        comp.exam.gracePeriod = 1;
-        comp.studentExam.submitted = false;
+        comp.studentExam().startedDate = now.subtract(2, 'hours');
+        comp.studentExam().workingTime = 3600;
+        comp.exam().gracePeriod = 1;
+        comp.studentExam().submitted = false;
         expect(comp.studentFailedToSubmit).toBe(true);
 
-        comp.studentExam.startedDate = now.subtract(1, 'hours');
-        comp.studentExam.workingTime = 3600;
-        comp.exam.gracePeriod = 1;
-        comp.studentExam.submitted = false;
+        comp.studentExam().startedDate = now.subtract(1, 'hours');
+        comp.studentExam().workingTime = 3600;
+        comp.exam().gracePeriod = 1;
+        comp.studentExam().submitted = false;
         expect(comp.studentFailedToSubmit).toBe(false);
     });
 
     it('should initialize individualStudentEndDateWithGracePeriod', () => {
         let now = dayjs();
-        comp.studentExam = new StudentExam();
+        comp.studentExam.set(new StudentExam());
 
         // Case test run
-        comp.studentExam.workingTime = 1;
-        comp.exam.gracePeriod = 1;
-        comp.exam.startDate = now;
-        comp.studentExam.testRun = true;
+        comp.studentExam().workingTime = 1;
+        comp.exam().gracePeriod = 1;
+        comp.exam().startDate = now;
+        comp.studentExam().testRun = true;
         comp.initIndividualEndDates(now);
 
-        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+        expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
 
         // Case test exam
         now = dayjs();
-        comp.studentExam.workingTime = 1;
-        comp.exam.testExam = true;
-        comp.exam.gracePeriod = 1;
-        comp.exam.startDate = dayjs().subtract(4, 'hours');
+        comp.studentExam().workingTime = 1;
+        comp.exam().testExam = true;
+        comp.exam().gracePeriod = 1;
+        comp.exam().startDate = dayjs().subtract(4, 'hours');
 
         comp.initIndividualEndDates(now);
 
-        expect(comp.individualStudentEndDateWithGracePeriod).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+        expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
     });
 });
