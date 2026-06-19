@@ -47,44 +47,107 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         }
     });
 
-    it('calls initSplitter when fullscreen with sidebar', async () => {
-        const initSplitterSpy = vi.spyOn(component as any, 'initSplitter');
-
+    it('renders the vertical p-splitter when fullscreen with sidebar', async () => {
         fixture.componentRef.setInput('showSidebar', true);
         component.open();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(initSplitterSpy).toHaveBeenCalled();
+        expect(component.showVerticalSplitter()).toBe(true);
+        const splitter = (fixture.nativeElement as HTMLElement).querySelector('p-splitter.p-splitter-horizontal');
+        expect(splitter).toBeTruthy();
     });
 
-    it('calls initHorizontalSplitter when horizontal split is enabled', async () => {
-        const topEl = document.createElement('div');
-        const bottomEl = document.createElement('div');
-        const initHorizontalSplitterSpy = vi.spyOn(component as any, 'initHorizontalSplitter');
+    it('does not render the vertical p-splitter without sidebar', async () => {
+        component.open();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        document.body.appendChild(topEl);
-        document.body.appendChild(bottomEl);
+        expect(component.showVerticalSplitter()).toBe(false);
+        expect((fixture.nativeElement as HTMLElement).querySelector('p-splitter')).toBeNull();
+    });
 
-        try {
-            fixture.componentRef.setInput('horizontalSplit', {
-                enabled: true,
-                sizes: [50, 50],
-                minSizes: [80, 80],
-                defaultSizes: [50, 50],
-                topElement: { nativeElement: topEl },
-                bottomElement: { nativeElement: bottomEl },
-            });
+    it('renders the horizontal p-splitter when horizontal split is enabled', async () => {
+        fixture.componentRef.setInput('horizontalSplit', {
+            enabled: true,
+            sizes: [50, 50],
+            minSizes: [80, 80],
+            defaultSizes: [50, 50],
+        });
 
-            component.open();
-            await fixture.whenStable();
-            fixture.detectChanges();
+        component.open();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-            expect(initHorizontalSplitterSpy).toHaveBeenCalled();
-        } finally {
-            topEl.remove();
-            bottomEl.remove();
-        }
+        expect(component.showHorizontalSplitter()).toBe(true);
+        const splitter = (fixture.nativeElement as HTMLElement).querySelector('p-splitter.p-splitter-vertical');
+        expect(splitter).toBeTruthy();
+    });
+
+    it('nests the horizontal splitter inside the vertical splitter when both are active', async () => {
+        fixture.componentRef.setInput('showSidebar', true);
+        fixture.componentRef.setInput('horizontalSplit', {
+            enabled: true,
+            sizes: [50, 50],
+            minSizes: [80, 80],
+            defaultSizes: [50, 50],
+        });
+
+        component.open();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.showVerticalSplitter()).toBe(true);
+        expect(component.showHorizontalSplitter()).toBe(true);
+
+        const host = fixture.nativeElement as HTMLElement;
+        const outer = host.querySelector('p-splitter.p-splitter-horizontal');
+        const inner = host.querySelector('p-splitter.p-splitter-vertical');
+        expect(outer).toBeTruthy();
+        expect(inner).toBeTruthy();
+        // The inner (video|pdf) splitter lives inside the outer (main|sidebar) splitter's first panel.
+        expect(outer!.contains(inner!)).toBe(true);
+    });
+
+    it('onVerticalResize emits splitSizesChange with numeric sizes', () => {
+        const splitSizesChangeSpy = vi.fn();
+        component.splitSizesChange.subscribe(splitSizesChangeSpy);
+
+        component['onVerticalResize']({ sizes: [60, '40'] });
+
+        expect(splitSizesChangeSpy).toHaveBeenCalledWith([60, 40]);
+    });
+
+    it('onHorizontalResize emits horizontalSplitSizesChange with numeric sizes', () => {
+        const horizontalSplitSizesChangeSpy = vi.fn();
+        component.horizontalSplitSizesChange.subscribe(horizontalSplitSizesChangeSpy);
+
+        component['onHorizontalResize']({ sizes: ['70', 30] });
+
+        expect(horizontalSplitSizesChangeSpy).toHaveBeenCalledWith([70, 30]);
+    });
+
+    it('converts px minSizes to percentages', () => {
+        // 220px / 1600px reference width => 14% (rounded); see toPercentMinSizes.
+        fixture.componentRef.setInput('verticalSplit', {
+            sizes: [50, 50],
+            minSizes: [220, 220],
+            defaultSizes: [50, 50],
+        });
+        fixture.detectChanges();
+
+        expect(component.verticalMinSizes()).toEqual([14, 14]);
+
+        // 140px / 900px reference height => 16% (rounded).
+        fixture.componentRef.setInput('horizontalSplit', {
+            enabled: true,
+            sizes: [50, 50],
+            minSizes: [140, 140],
+            defaultSizes: [50, 50],
+        });
+        fixture.detectChanges();
+
+        expect(component.horizontalMinSizes()).toEqual([16, 16]);
     });
 
     it('window resize updates top offset in fullscreen', () => {
@@ -142,16 +205,14 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(component.isFullscreen()).toBe(false);
     });
 
-    it('ngOnDestroy cleans up splitters and event listeners', () => {
-        const destroySplitterSpy = vi.spyOn(component as any, 'destroySplitter');
-        const destroyHorizontalSplitterSpy = vi.spyOn(component as any, 'destroyHorizontalSplitter');
+    it('ngOnDestroy cleans up fullscreen state and event listeners', () => {
         const clearFullscreenTopOffsetSpy = vi.spyOn(component as any, 'clearFullscreenTopOffset');
+        const cleanupFullscreenAccessibilitySpy = vi.spyOn(component as any, 'cleanupFullscreenAccessibility');
 
         component.ngOnDestroy();
 
-        expect(destroySplitterSpy).toHaveBeenCalled();
-        expect(destroyHorizontalSplitterSpy).toHaveBeenCalled();
         expect(clearFullscreenTopOffsetSpy).toHaveBeenCalled();
+        expect(cleanupFullscreenAccessibilitySpy).toHaveBeenCalled();
     });
 
     it('focus trap wraps focus at both tab boundaries', async () => {

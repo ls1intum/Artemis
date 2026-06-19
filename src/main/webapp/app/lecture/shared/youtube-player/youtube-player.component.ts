@@ -1,9 +1,9 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
-import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
@@ -16,11 +16,15 @@ const YT_STATE_PAUSED = 2;
 const YT_STATE_ENDED = 0;
 const YT_STATE_BUFFERING = 3;
 const MIN_TRANSCRIPT_HEIGHT = 500;
+/** Minimum width of the video column in pixels. */
+const MIN_VIDEO_WIDTH = 300;
+/** Minimum width reserved for the transcript column in pixels. */
+const MIN_TRANSCRIPT_WIDTH = 250;
 
 @Component({
     selector: 'jhi-youtube-player',
     standalone: true,
-    imports: [YouTubePlayer, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [YouTubePlayer, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,7 +50,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     /** FontAwesome icon for the resizer grip */
     protected readonly faGripLinesVertical = faGripLinesVertical;
 
-    // view refs for the interact.js resizer (mirror VideoPlayerComponent)
+    // view refs for the resizer (mirror VideoPlayerComponent)
     videoWrapper = viewChild<ElementRef<HTMLDivElement>>('videoWrapper');
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
@@ -55,11 +59,22 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
-    private interactInstance: ReturnType<typeof interact> | undefined;
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
     private lastInitialTimestamp: number | undefined;
     protected readonly isResizing = signal<boolean>(false);
+
+    /**
+     * Width constraints for the resizable video column. The maximum width is derived from the live
+     * wrapper width so the transcript always keeps at least {@link MIN_TRANSCRIPT_WIDTH} px of space.
+     * When the wrapper is too narrow to fit both columns at their minimums, the maximum is pinned to
+     * the minimum so dragging cannot squeeze the transcript below its reserved space.
+     */
+    protected get resizableConstraints(): ResizableConstraints {
+        const wrapperWidth = this.videoWrapper()?.nativeElement.getBoundingClientRect().width ?? 0;
+        const maxWidth = Math.max(MIN_VIDEO_WIDTH, wrapperWidth - MIN_TRANSCRIPT_WIDTH);
+        return { minWidth: MIN_VIDEO_WIDTH, maxWidth };
+    }
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -104,50 +119,21 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.destroyed = true;
         this.clearPolling();
         this.clearReadiness();
-        this.interactInstance?.unset();
         if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
         this.resizeObserver?.disconnect();
         this.isResizing.set(false);
     }
 
+    /**
+     * Wires up the window-resize listener and ResizeObserver that keep the transcript column height in
+     * sync with the video column. The drag handling itself is provided by the {@link ResizableDirective}.
+     */
     private initializeResizer(): void {
         const wrapperEl = this.videoWrapper()?.nativeElement;
         const videoColumnEl = this.videoColumn()?.nativeElement;
-        const resizerEl = this.resizerHandle()?.nativeElement;
-        if (!videoColumnEl || !wrapperEl || !resizerEl) {
+        if (!videoColumnEl || !wrapperEl) {
             return;
         }
-        this.interactInstance = interact(resizerEl).draggable({
-            listeners: {
-                start: () => {
-                    this.isResizing.set(true);
-                },
-                move: (event) => {
-                    const wrapperRect = wrapperEl.getBoundingClientRect();
-                    const minWidth = 300;
-                    const minTranscriptWidth = 250;
-                    const wrapperWidth = wrapperRect.width;
-
-                    // Skip resize if wrapper is too narrow
-                    if (wrapperWidth <= minWidth + minTranscriptWidth) {
-                        return;
-                    }
-
-                    const maxWidth = wrapperWidth - minTranscriptWidth;
-                    const newWidth = event.clientX - wrapperRect.left;
-                    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-                    // Use percentage-based flex-basis for natural scaling
-                    const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
-                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
-                    videoColumnEl.style.width = '';
-                },
-                end: () => {
-                    this.isResizing.set(false);
-                },
-            },
-            cursorChecker: () => 'col-resize',
-        });
         this.resizeHandler = () => {
             this.syncTranscriptHeight();
         };
@@ -157,6 +143,16 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         });
         this.resizeObserver.observe(videoColumnEl);
         this.syncTranscriptHeight();
+    }
+
+    /** Disables pointer events on the iframe while the divider is being dragged. */
+    protected onResizeStart(): void {
+        this.isResizing.set(true);
+    }
+
+    /** Re-enables pointer events on the iframe once the drag finishes. */
+    protected onResizeEnd(): void {
+        this.isResizing.set(false);
     }
 
     /**

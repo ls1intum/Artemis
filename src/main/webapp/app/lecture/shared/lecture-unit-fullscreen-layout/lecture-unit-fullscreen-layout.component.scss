@@ -28,13 +28,25 @@
         }
     }
 
-    &.content-container--with-sidebar {
-        > .main-content {
-            flex: unset;
-            min-width: 120px;
-        }
+    // When the vertical splitter is active, the main content and sidebar live inside p-splitter panels.
+    .main-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
 
-        > .iris-sidebar {
+        > [content-main] {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+    }
+
+    &.content-container--with-sidebar {
+        .iris-sidebar {
             position: relative;
             min-width: 120px;
             display: flex;
@@ -85,58 +97,92 @@
             font-size: 1.25rem;
         }
     }
+}
 
-    .split-gutter-handle {
+// PrimeNG p-splitter styling: reproduce the previous split.js look (transparent gutter
+// with two small grip bars) and let panels fill the fullscreen container.
+:host ::ng-deep .fullscreen-splitter {
+    &.p-splitter {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        // Strip PrimeNG's default chrome so the splitter blends into the fullscreen surface (matches the old split.js layout).
+        border: 0 none;
+        background: transparent;
+        border-radius: 0;
+    }
+
+    .p-splitterpanel {
         display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .p-splitter-gutter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        flex-shrink: 0;
+    }
+
+    // The gutter handle renders the two grip bars via ::before / ::after (was the old .split-gutter-handle).
+    .p-splitter-gutter-handle {
+        position: relative;
+        background: transparent;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         gap: 1px;
-        pointer-events: none;
-        flex-direction: row;
 
         &::before,
         &::after {
             content: '';
             display: block;
-            width: 2px;
-            height: 12px;
             background: var(--bs-body-color);
             border-radius: 1px;
         }
     }
 
-    .gutter.gutter-horizontal {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 12px;
-        cursor: col-resize;
-        background-color: transparent;
-        flex-shrink: 0;
-    }
+    // Horizontal layout (side-by-side) => vertical divider => col-resize and vertical grip bars.
+    &.p-splitter-horizontal {
+        > .p-splitter-gutter {
+            min-width: 12px;
+            cursor: col-resize;
 
-    .gutter.gutter-horizontal::before {
-        display: none;
-    }
-
-    .gutter.gutter-vertical {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 12px;
-        cursor: row-resize;
-        background-color: transparent;
-        flex-shrink: 0;
-
-        &::before {
-            display: none;
-        }
-
-        .split-gutter-handle {
-            flex-direction: column;
-
-            &::before,
-            &::after {
+            > .p-splitter-gutter-handle {
+                flex-direction: row;
                 width: 12px;
-                height: 2px;
+                height: 12px;
+
+                &::before,
+                &::after {
+                    width: 2px;
+                    height: 12px;
+                }
+            }
+        }
+    }
+
+    // Vertical layout (stacked) => horizontal divider => row-resize and horizontal grip bars.
+    &.p-splitter-vertical {
+        > .p-splitter-gutter {
+            min-height: 12px;
+            cursor: row-resize;
+
+            > .p-splitter-gutter-handle {
+                flex-direction: column;
+                width: 12px;
+                height: 12px;
+
+                &::before,
+                &::after {
+                    width: 12px;
+                    height: 2px;
+                }
             }
         }
     }

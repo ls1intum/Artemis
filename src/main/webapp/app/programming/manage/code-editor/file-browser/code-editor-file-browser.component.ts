@@ -1,11 +1,9 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
@@ -53,12 +51,10 @@ import { findItemInList } from 'app/programming/shared/code-editor/treeview/help
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 export type InteractableEvent = {
-    // Click event object; contains target information
+    // Click event object; contains target information (used to blur the clicked header)
     event: any;
-    // Used to decide which height to use for the collapsed element
+    // Whether the collapsed element collapses horizontally (true) or vertically (false)
     horizontal: boolean;
-    // The interactjs element, used to en-/disable resizing
-    interactable: Interactable;
 };
 
 export interface FileTreeItem extends TreeItem<string> {
@@ -84,7 +80,7 @@ export interface FileTreeItem extends TreeItem<string> {
         ArtemisTranslatePipe,
     ],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, OnDestroy, IFileDeleteDelegate {
+export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileDeleteDelegate {
     modalService = inject(NgbModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private repositoryService = inject(CodeEditorRepositoryService);
@@ -183,10 +179,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
     treeViewMaxHeight: 5000;
 
-    /** Resizable constants **/
-    resizableMinWidth = 100;
-    interactResizable: Interactable;
-
     gitConflictState: GitConflictState;
     conflictSubscription: Subscription;
 
@@ -245,17 +237,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     ngOnDestroy(): void {
         this.conflictSubscription?.unsubscribe();
-        this.interactResizable?.unset();
-    }
-
-    /**
-     * After the view was initialized, we create an interact.js resizable object,
-     * designate the edges which can be used to resize the target element and set min and max values.
-     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinWidth = window.screen.width / 6;
-        this.interactResizable = interact('.resizable-filebrowser');
     }
 
     /**
@@ -530,7 +511,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     toggleEditorCollapse(event: any) {
         this.collapsed.update((value) => !value);
-        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
+        this.onToggleCollapse.emit({ event, horizontal: true });
     }
 
     /**

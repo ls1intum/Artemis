@@ -14,6 +14,7 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -64,6 +65,7 @@ type SplitSizes = [number, number];
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
+        NgTemplateOutlet,
         LectureUnitComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -100,8 +102,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
-    readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
-    readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -183,8 +183,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         sizes: this.horizontalSplitSizes(),
         minSizes: this.minHorizontalSplitSizes,
         defaultSizes: this.defaultHorizontalSplitSizes,
-        topElement: this.videoContainerElement(),
-        bottomElement: this.pdfContainerElement(),
     }));
 
     readonly fullscreenAriaLabel = computed(() => {

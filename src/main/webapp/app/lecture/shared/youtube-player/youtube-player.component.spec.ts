@@ -1,18 +1,5 @@
-// ---- Mock interactjs BEFORE importing the component ----
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
-vi.mock('interactjs', () => {
-    const mockInstance = {
-        draggable: vi.fn().mockReturnThis(),
-        unset: vi.fn(),
-    };
-    const mockInteract = vi.fn(() => mockInstance);
-    return {
-        __esModule: true,
-        default: mockInteract,
-    };
-});
 
 // ---- Mock ResizeObserver ----
 class MockResizeObserver {
@@ -219,6 +206,51 @@ describe('YouTubePlayerComponent', () => {
 
         expect(videoColumnEl.style.flex).toBe('');
         expect(videoColumnEl.style.width).toBe('');
+    });
+
+    it('toggles isResizing while the divider is dragged', async () => {
+        await render();
+
+        expect(component['isResizing']()).toBe(false);
+
+        component['onResizeStart']();
+        expect(component['isResizing']()).toBe(true);
+
+        component['onResizeEnd']();
+        expect(component['isResizing']()).toBe(false);
+    });
+
+    it('exposes width constraints derived from the live wrapper width', async () => {
+        await render();
+
+        const wrapperEl = component.videoWrapper()!.nativeElement;
+        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            width: 1000,
+            top: 0,
+            right: 1000,
+            bottom: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+
+        // maxWidth = wrapperWidth (1000) - minTranscript (250)
+        expect((component as any).resizableConstraints).toEqual({ minWidth: 300, maxWidth: 750 });
+    });
+
+    it('disconnects the ResizeObserver and resets isResizing on destroy', async () => {
+        await render();
+
+        const observer = (component as any).resizeObserver as MockResizeObserver;
+        expect(observer).toBeDefined();
+        component['onResizeStart']();
+
+        component.ngOnDestroy();
+
+        expect(observer.disconnect).toHaveBeenCalled();
+        expect(component['isResizing']()).toBe(false);
     });
 
     it('clears timeout on destroy', () => {

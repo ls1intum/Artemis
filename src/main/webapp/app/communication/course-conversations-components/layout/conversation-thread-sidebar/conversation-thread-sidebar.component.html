@@ -1,6 +1,13 @@
 <!-- expanded post to display post and answerPosts as thread -->
 <div class="h-100">
-    <div class="postings-container expanded-thread" #threadContainer [ngClass]="{ expanded: isExpanded() }">
+    <div
+        class="postings-container expanded-thread"
+        #threadContainer
+        [ngClass]="{ expanded: isExpanded() }"
+        jhiResizable
+        [resizableEdges]="{ left: '.draggable-left' }"
+        [resizableConstraints]="resizableConstraints"
+    >
         @if (!isExpanded()) {
             <div class="draggable-left">
                 <fa-icon [icon]="faGripLinesVertical" />

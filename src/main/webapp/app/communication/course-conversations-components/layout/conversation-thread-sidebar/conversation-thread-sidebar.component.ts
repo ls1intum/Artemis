@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import interact from 'interactjs';
+import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -15,14 +14,25 @@ import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostComponent,
+        MessageReplyInlineInputComponent,
+        ArtemisTranslatePipe,
+        NgClass,
+        TutorSuggestionComponent,
+        ResizableDirective,
+    ],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit, OnDestroy {
+export class ConversationThreadSidebarComponent {
     readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
@@ -105,38 +115,12 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         this.conversationSelectionState.setOpenPostId(undefined);
     }
 
-    private interactable: ReturnType<typeof interact> | undefined;
-
     /**
-     * makes message thread section expandable by configuring 'interact'
+     * Width constraints for the resizable thread section, based on the current viewport width.
+     * Mirrors the previous interact.js restrictSize modifier (min 30% of the window width, max full width).
      */
-    ngAfterViewInit(): void {
-        this.interactable = interact('.expanded-thread')
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: window.innerWidth * 0.3, height: 0 },
-                        max: { width: window.innerWidth, height: 0 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                target.style.width = event.rect.width + 'px';
-            });
-    }
-
-    ngOnDestroy(): void {
-        this.interactable?.unset();
+    get resizableConstraints(): ResizableConstraints {
+        return { minWidth: window.innerWidth * 0.3, maxWidth: window.innerWidth };
     }
 
     scrollEditorIntoView(): void {

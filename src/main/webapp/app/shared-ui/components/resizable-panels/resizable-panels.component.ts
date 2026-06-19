@@ -1,25 +1,10 @@
-import {
-    AfterViewInit,
-    Component,
-    Directive,
-    ElementRef,
-    OnDestroy,
-    TemplateRef,
-    computed,
-    contentChildren,
-    effect,
-    inject,
-    input,
-    signal,
-    untracked,
-    viewChildren,
-} from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, OnDestroy, TemplateRef, computed, contentChildren, effect, inject, input, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import Split from 'split.js';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
+import { SplitterModule } from 'primeng/splitter';
 import { TabsModule } from 'primeng/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,16 +18,11 @@ export class PanelDirective {
     readonly templateRef = inject(TemplateRef);
 }
 
-@Directive({ selector: '[jhiSplitPane]' })
-export class SplitPaneDirective {
-    readonly elementRef = inject(ElementRef);
-}
-
 @Component({
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
@@ -72,11 +52,14 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     /** In narrow (combined) mode the tab header is only useful when there is more than one panel to switch between. */
     readonly showCombinedTabHeader = computed(() => this.panels().length > 1);
 
-    readonly splitPanes = viewChildren(SplitPaneDirective);
-    private splitInstance?: Split.Instance;
+    /**
+     * Split sizes (in percent) of the two splitter panels, persisted across mode switches.
+     * Bound to p-splitter via [panelSizes] and updated on (onResizeEnd).
+     */
+    readonly savedSizes = signal<number[] | undefined>(undefined);
+
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
-    private savedSizes?: number[];
 
     protected readonly faChevronRight = faChevronRight;
 
@@ -116,22 +99,6 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 }
             });
         });
-
-        // (Re-)initialize split.js whenever panes enter or leave the DOM,
-        // i.e. when switching between wide and narrow mode.
-        effect(() => {
-            const panes = this.splitPanes();
-            untracked(() => {
-                if (this.splitInstance) {
-                    this.savedSizes = this.splitInstance.getSizes();
-                    this.splitInstance.destroy();
-                    this.splitInstance = undefined;
-                }
-                if (panes.length >= 2) {
-                    this.initSplit(panes.map((p) => p.elementRef.nativeElement));
-                }
-            });
-        });
     }
 
     ngAfterViewInit(): void {
@@ -144,7 +111,6 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.splitInstance?.destroy();
         this.resizeObserver?.disconnect();
     }
 
@@ -171,23 +137,5 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         if (value !== undefined) {
             this._activeSingleIndex.set(Number(value));
         }
-    }
-
-    private initSplit(elements: HTMLElement[]): void {
-        this.splitInstance = Split(elements, {
-            sizes: this.savedSizes ?? [65, 35],
-            minSize: 0,
-            snapOffset: 150,
-            gutterSize: 12,
-            cursor: 'col-resize',
-            gutter: (_index, direction) => {
-                const gutter = document.createElement('div');
-                gutter.className = `gutter gutter-${direction}`;
-                const handle = document.createElement('div');
-                handle.className = 'split-gutter-handle';
-                gutter.appendChild(handle);
-                return gutter;
-            },
-        });
     }
 }

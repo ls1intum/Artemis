@@ -1,23 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('interactjs', () => {
-    const interactFn = vi.fn(() => {
-        return {
-            resizable: vi.fn().mockReturnThis(),
-            draggable: vi.fn().mockReturnThis(),
-            unset: vi.fn(),
-        };
-    });
-
-    (interactFn as unknown as { modifiers: unknown }).modifiers = {
-        restrictEdges: vi.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
-        restrictSize: vi.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
-        restrictRect: vi.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
-    };
-
-    return { __esModule: true, default: interactFn };
-});
-
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -30,19 +11,11 @@ import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import interact from 'interactjs';
 
-type InteractResizeMoveEvent = {
-    target: HTMLElement;
-    rect: { width: number; height: number };
-    deltaRect: { left: number; top: number };
-};
-
-type InteractDragMoveEvent = {
-    target: HTMLElement;
-    dx: number;
-    dy: number;
-};
+/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button, which is all the component reads. */
+function pointer(target: EventTarget, type: string, clientX: number, clientY: number): void {
+    target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 }));
+}
 
 describe('IrisChatbotWidgetComponent', () => {
     setupTestBed({ zoneless: true });
@@ -191,76 +164,77 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(() => component.setPositionAndScale()).not.toThrow();
     });
 
-    it('should update widget size/position and fullSize from interactjs move listeners', () => {
-        // DOM required by the handlers
+    /** Builds the overlay container + a chat widget (with header) in the DOM and wires the pointer handlers. */
+    function setupWidget(rect: { left: number; top: number; width: number; height: number }): { overlay: HTMLElement; widget: HTMLElement; header: HTMLElement } {
+        // Ensure the component binds to OUR test widget (not the one rendered by the fixture template).
+        document.querySelectorAll('.chat-widget, .cdk-overlay-container').forEach((el) => el.remove());
         const overlay = document.createElement('div');
         overlay.className = 'cdk-overlay-container';
-        overlay.getBoundingClientRect = vi.fn(() => ({
-            x: 0,
-            y: 0,
-            width: 1000,
-            height: 1000,
-            top: 0,
-            right: 1000,
-            bottom: 1000,
-            left: 0,
-            toJSON: () => {},
-        }));
+        overlay.getBoundingClientRect = vi.fn(() => ({ x: 0, y: 0, width: 1000, height: 1000, top: 0, right: 1000, bottom: 1000, left: 0, toJSON: () => {} }));
         document.body.appendChild(overlay);
 
         const widget = document.createElement('div');
         widget.className = 'chat-widget';
-        widget.setAttribute('data-x', '10');
-        widget.setAttribute('data-y', '20');
+        widget.setAttribute('data-x', String(rect.left - 100));
+        widget.setAttribute('data-y', String(rect.top - 80));
+        widget.getBoundingClientRect = vi.fn(
+            () =>
+                ({
+                    x: rect.left,
+                    y: rect.top,
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    right: rect.left + rect.width,
+                    bottom: rect.top + rect.height,
+                    toJSON: () => {},
+                }) as DOMRect,
+        );
+        const header = document.createElement('div');
+        header.className = 'chat-header';
+        widget.appendChild(header);
         document.body.appendChild(widget);
 
-        const interactMock = interact as unknown as ReturnType<typeof vi.fn>;
-        interactMock.mockClear();
-
         component.ngAfterViewInit();
+        return { overlay, widget, header };
+    }
 
-        expect(interactMock).toHaveBeenCalledWith('.chat-widget');
+    it('resizes the widget from the right edge, clamping to the minimum width', () => {
+        const { overlay, widget } = setupWidget({ left: 110, top: 100, width: 600, height: 600 });
+        // ngAfterViewInit -> setPositionAndScale repositions the widget; pin a known translate for the math.
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
 
-        const chain = (interactMock as ReturnType<typeof vi.fn>).mock.results[0].value as {
-            resizable: ReturnType<typeof vi.fn>;
-            draggable: ReturnType<typeof vi.fn>;
-        };
+        // pointerdown within EDGE_MARGIN of the right border (right = 710) -> right-edge resize. startWidth 600 -> right anchor 610.
+        pointer(widget, 'pointerdown', 705, 400);
+        pointer(widget, 'pointermove', 755, 400); // +50 -> width 650
+        expect(widget.style.width).toBe('650px');
+        expect(widget.style.transform).toBe('translate(10px, 20px)'); // x unchanged on right-edge resize
+        expect(component.fullSize()).toBe(false); // 650 < 1000 * 0.93
 
-        const resizableConfig = chain.resizable.mock.calls[0][0] as {
-            listeners: { move: (e: InteractResizeMoveEvent) => void };
-        };
-        const draggableConfig = chain.draggable.mock.calls[0][0] as {
-            listeners: { move: (e: InteractDragMoveEvent) => void };
-        };
+        // shrink well past the minimum (initialWidth 450) -> clamped
+        pointer(widget, 'pointermove', 405, 400); // -300 -> 300, clamped to 450
+        expect(widget.style.width).toBe('450px');
+        pointer(widget, 'pointerup', 405, 400);
 
-        // Resize move -> should set width/height, transform, data-x/y, and fullSize
-        resizableConfig.listeners.move({
-            target: widget,
-            rect: { width: 950, height: 900 },
-            deltaRect: { left: 5, top: 10 },
-        });
+        overlay.remove();
+        widget.remove();
+    });
 
-        expect(widget.style.width).toBe('950px');
-        expect(widget.style.height).toBe('900px');
-        expect(widget.style.transform).toBe('translate(15px,30px)');
-        expect(widget.getAttribute('data-x')).toBe('15');
-        expect(widget.getAttribute('data-y')).toBe('30');
-        expect(component.fullSize()).toBe(true);
+    it('drags the widget from the header and keeps it inside the overlay container', () => {
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
 
-        // Shrink -> should flip fullSize back
-        resizableConfig.listeners.move({
-            target: widget,
-            rect: { width: 500, height: 500 },
-            deltaRect: { left: -2, top: -3 },
-        });
-        expect(component.fullSize()).toBe(false);
+        // pointerdown on the header, away from all edges -> drag.
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 330, 295); // dx +30, dy -5 -> translate from (10,20) to (40,15)
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
+        expect(widget.getAttribute('data-x')).toBe('40');
+        expect(widget.getAttribute('data-y')).toBe('15');
+        pointer(widget, 'pointerup', 330, 295);
 
-        // Drag move -> should update transform and data-x/y
-        draggableConfig.listeners.move({ target: widget, dx: 7, dy: -3 });
-
-        expect(widget.style.transform).toBe(`translate(${widget.getAttribute('data-x')}px, ${widget.getAttribute('data-y')}px)`);
-
-        // cleanup
         overlay.remove();
         widget.remove();
     });

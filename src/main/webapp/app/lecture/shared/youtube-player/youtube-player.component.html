@@ -1,5 +1,13 @@
 <div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
-    <div class="video-column" #videoColumn>
+    <div
+        class="video-column"
+        #videoColumn
+        jhiResizable
+        [resizableEdges]="{ right: '.resizer-handle' }"
+        [resizableConstraints]="resizableConstraints"
+        (resizeStart)="onResizeStart()"
+        (resizeEnd)="onResizeEnd()"
+    >
         <youtube-player
             [videoId]="videoId()"
             [disableCookies]="true"
@@ -10,17 +18,17 @@
             (stateChange)="onStateChange($event)"
             (error)="onPlayerError($event)"
         />
+        <button
+            type="button"
+            class="resizer-handle"
+            #resizerHandle
+            (dblclick)="resetSplitRatio()"
+            (keydown.enter)="resetSplitRatio()"
+            (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+            [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+        >
+            <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
+        </button>
     </div>
-    <button
-        type="button"
-        class="resizer-handle"
-        #resizerHandle
-        (dblclick)="resetSplitRatio()"
-        (keydown.enter)="resetSplitRatio()"
-        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
-        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
-    >
-        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
-    </button>
     <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

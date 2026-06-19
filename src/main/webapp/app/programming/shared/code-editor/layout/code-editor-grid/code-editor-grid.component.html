@@ -3,10 +3,24 @@
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
     </nav>
-    <div class="editor-main">
+    <div
+        class="editor-main"
+        jhiResizable
+        [resizableEdges]="{ bottom: '.rg-main-bottom' }"
+        [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: resizableMaxHeightMain }"
+        (resizeEnd)="onResize.emit(ResizeType.MAIN_BOTTOM)"
+    >
         <div class="editor-main__content">
             <!-- File browser -->
-            <div #fileBrowser class="editor-sidebar-left collapsable">
+            <div
+                #fileBrowser
+                class="editor-sidebar-left collapsable"
+                jhiResizable
+                [resizableEdges]="{ right: '.rg-sidebar-left' }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthLeft, maxWidth: resizableMaxWidthLeft }"
+                [resizableEnabled]="!fileBrowserIsCollapsed()"
+                (resizeEnd)="onResize.emit(ResizeType.SIDEBAR_LEFT)"
+            >
                 <ng-content select="[editorSidebarLeft]" />
                 <!-- Required for resizing; don't remove empty span -->
                 @if (!fileBrowserIsCollapsed()) {
@@ -23,7 +37,16 @@
                 <ng-content select="[editorCenter]" />
             </div>
             <!-- Instructions -->
-            <div #instructions class="editor-sidebar-right collapsable" [hidden]="!showEditorSidebarRight()">
+            <div
+                #instructions
+                class="editor-sidebar-right collapsable"
+                [hidden]="!showEditorSidebarRight()"
+                jhiResizable
+                [resizableEdges]="{ left: '.rg-sidebar-right' }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthRight, maxWidth: resizableMaxWidthRight }"
+                [resizableEnabled]="!rightPanelIsCollapsed()"
+                (resizeEnd)="onResize.emit(ResizeType.SIDEBAR_RIGHT)"
+            >
                 @if (!rightPanelIsCollapsed()) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
                         <span></span>
@@ -39,7 +62,15 @@
         <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
     </div>
     <!-- Build Output -->
-    <div #buildOutput class="editor-bottom collapsable">
+    <div
+        #buildOutput
+        class="editor-bottom collapsable"
+        jhiResizable
+        [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
+        [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: resizableMaxHeightBottom }"
+        [resizableEnabled]="!buildOutputIsCollapsed()"
+        (resizeEnd)="onResize.emit(ResizeType.BOTTOM)"
+    >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->
         @if (!buildOutputIsCollapsed()) {

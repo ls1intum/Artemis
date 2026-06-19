@@ -1,20 +1,19 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, inject, input, output, signal, viewChild } from '@angular/core';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
+import { Component, ElementRef, Renderer2, ViewEncapsulation, inject, input, output, signal, viewChild } from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, ResizableDirective],
 })
-export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
+export class CodeEditorGridComponent {
     private renderer = inject(Renderer2);
 
     readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
@@ -30,149 +29,25 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     readonly rightPanelIsCollapsed = signal(false);
     readonly buildOutputIsCollapsed = signal(false);
 
-    interactResizableMain: Interactable;
-    resizableMinHeightMain = 480;
-    resizableMaxHeightMain = 1200;
+    // Resizable constraints (px). The min values mirror the previous interact.js configuration,
+    // which derived them from the screen dimensions at view init.
+    readonly resizableMinHeightMain = window.screen.height / 3;
+    readonly resizableMaxHeightMain = 1200;
 
-    interactResizableLeft: Interactable;
-    resizableMinWidthLeft: number;
-    resizableMaxWidthLeft = 2000;
+    readonly resizableMinWidthLeft = window.screen.width / 7;
+    readonly resizableMaxWidthLeft = window.screen.width / 2;
 
-    interactResizableRight: Interactable;
-    resizableMinWidthRight: number;
-    resizableMaxWidthRight = 2000;
+    readonly resizableMinWidthRight = window.screen.width / 6;
+    readonly resizableMaxWidthRight = window.screen.width / 1.3;
 
-    interactResizableBottom: Interactable;
-    resizableMinHeightBottom = 300;
-    resizableMaxHeightBottom = 600;
+    readonly resizableMinHeightBottom = window.screen.height / 6;
+    readonly resizableMaxHeightBottom = 600;
+
+    protected readonly ResizeType = ResizeType;
 
     // Icons
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
-
-    ngOnDestroy(): void {
-        this.interactResizableMain?.unset();
-        this.interactResizableLeft?.unset();
-        this.interactResizableRight?.unset();
-        this.interactResizableBottom?.unset();
-    }
-
-    /**
-     * After the view was initialized, we create an interact.js resizable object,
-     * designate the edges which can be used to resize the target element and set min and max values.
-     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinHeightMain = window.screen.height / 3;
-        this.interactResizableMain = interact('.editor-main')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: '.rg-main-bottom', top: false },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeightMain },
-                        max: { width: 2000, height: this.resizableMaxHeightMain },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.onResize.emit(ResizeType.MAIN_BOTTOM);
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.height = event.rect.height + 'px';
-            });
-
-        this.resizableMinWidthLeft = window.screen.width / 7;
-        this.resizableMaxWidthLeft = window.screen.width / 2;
-        this.interactResizableLeft = interact('.editor-sidebar-left')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: '.rg-sidebar-left', bottom: false, top: false },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidthLeft, height: 0 },
-                        max: { width: this.resizableMaxWidthLeft, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.onResize.emit(ResizeType.SIDEBAR_LEFT);
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.width = event.rect.width + 'px';
-            });
-
-        this.resizableMinWidthRight = window.screen.width / 6;
-        this.resizableMaxWidthRight = window.screen.width / 1.3;
-        this.interactResizableRight = interact('.editor-sidebar-right')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: '.rg-sidebar-right', right: false, bottom: false, top: false },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: this.resizableMinWidthRight, height: 0 },
-                        max: { width: this.resizableMaxWidthRight, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.onResize.emit(ResizeType.SIDEBAR_RIGHT);
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.width = event.rect.width + 'px';
-            });
-
-        this.resizableMinHeightBottom = window.screen.height / 6;
-        this.interactResizableBottom = interact('.editor-bottom')
-            .resizable({
-                // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
-                // Set min and max height
-                modifiers: [
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: this.resizableMinHeightBottom },
-                        max: { width: window.screen.width, height: this.resizableMaxHeightBottom },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.onResize.emit(ResizeType.BOTTOM);
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                // Update element height
-                target.style.height = event.rect.height + 'px';
-            });
-    }
 
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
         switch (collapsableElement) {
@@ -193,7 +68,6 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     toggleCollapse(interactableEvent: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
-        const interactResizable = interactableEvent.interactable;
         const target = event.event?.toElement || event.relatedTarget || event.target;
         target.blur();
         const cardElement = this.elementRefForCollapsableElement(collapsableElement);
@@ -202,24 +76,23 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
 
         if (cardElement.nativeElement.classList.contains(collapsed)) {
             this.renderer.removeClass(cardElement.nativeElement, collapsed);
-            interactResizable.resizable({ enabled: true });
         } else {
             this.renderer.addClass(cardElement.nativeElement, collapsed);
-            interactResizable.resizable({ enabled: false });
         }
 
-        // used to disable draggable icons
-        switch (interactResizable.target) {
-            case '.resizable-instructions': {
-                this.rightPanelIsCollapsed.update((collapsed) => !collapsed);
+        // Toggle the collapse signals. They both hide the draggable grip icons and disable the
+        // matching panel's resizing (bound via [resizableEnabled] in the template).
+        switch (collapsableElement) {
+            case CollapsableCodeEditorElement.Instructions: {
+                this.rightPanelIsCollapsed.update((value) => !value);
                 break;
             }
-            case '.resizable-filebrowser': {
-                this.fileBrowserIsCollapsed.update((collapsed) => !collapsed);
+            case CollapsableCodeEditorElement.FileBrowser: {
+                this.fileBrowserIsCollapsed.update((value) => !value);
                 break;
             }
-            case '.resizable-buildoutput': {
-                this.buildOutputIsCollapsed.update((collapsed) => !collapsed);
+            case CollapsableCodeEditorElement.BuildOutput: {
+                this.buildOutputIsCollapsed.update((value) => !value);
                 break;
             }
         }

@@ -2,17 +2,22 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal,
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
-import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+
+/** Minimum width of the video column in pixels. */
+const MIN_VIDEO_WIDTH = 300;
+/** Minimum width reserved for the transcript column in pixels. */
+const MIN_TRANSCRIPT_WIDTH = 250;
 
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -53,9 +58,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** FontAwesome icon for the resizer grip */
     faGripLinesVertical = faGripLinesVertical;
 
-    /** Interact.js instance for cleanup */
-    private interactInstance: ReturnType<typeof interact> | undefined = undefined;
-
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
@@ -67,6 +69,18 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
+
+    /**
+     * Width constraints for the resizable video column. The maximum width is derived from the live
+     * wrapper width so the transcript always keeps at least {@link MIN_TRANSCRIPT_WIDTH} px of space.
+     * When the wrapper is too narrow to fit both columns at their minimums, the maximum is pinned to
+     * the minimum so dragging cannot squeeze the transcript below its reserved space.
+     */
+    protected get resizableConstraints(): ResizableConstraints {
+        const wrapperWidth = this.videoWrapper()?.nativeElement.getBoundingClientRect().width ?? 0;
+        const maxWidth = Math.max(MIN_VIDEO_WIDTH, wrapperWidth - MIN_TRANSCRIPT_WIDTH);
+        return { minWidth: MIN_VIDEO_WIDTH, maxWidth };
+    }
 
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
@@ -147,58 +161,25 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         };
         videoElement.addEventListener('timeupdate', this.timeupdateHandler);
 
-        // Initialize resizable panel
+        // Initialize transcript height syncing for the resizable panel
         this.initializeResizer();
     }
 
     /**
-     * Initializes the interact.js resizer for dragging the divider between video and transcript.
+     * Wires up the window-resize listener and ResizeObserver that keep the transcript column height in
+     * sync with the video column. The drag handling itself is provided by the {@link ResizableDirective}.
      */
     private initializeResizer(): void {
         const videoColumnEl = this.videoColumn()?.nativeElement;
         const wrapperEl = this.videoWrapper()?.nativeElement;
-        const resizerEl = this.resizerHandle()?.nativeElement;
 
-        if (!videoColumnEl || !wrapperEl || !resizerEl) {
+        if (!videoColumnEl || !wrapperEl) {
             return;
         }
 
-        this.interactInstance = interact(resizerEl).draggable({
-            listeners: {
-                move: (event) => {
-                    const wrapperRect = wrapperEl.getBoundingClientRect();
-                    const minWidth = 300;
-                    const minTranscriptWidth = 250;
-                    const wrapperWidth = wrapperRect.width;
-
-                    // Skip resize if wrapper is too narrow to accommodate both columns
-                    if (wrapperWidth <= minWidth + minTranscriptWidth) {
-                        return;
-                    }
-
-                    const maxWidth = wrapperWidth - minTranscriptWidth; // Leave space for transcript
-
-                    // Calculate new width based on drag position
-                    const newWidth = event.clientX - wrapperRect.left;
-                    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-                    // Calculate percentage for flex-basis (allows natural scaling on resize)
-                    const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
-
-                    // Use percentage-based flex-basis so layout naturally follows container resizes
-                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
-                    videoColumnEl.style.width = '';
-                    // ResizeObserver will automatically sync transcript height
-                },
-            },
-            cursorChecker: () => 'col-resize',
-        });
-
-        // On window resize, sync transcript height (percentage-based flex scales automatically)
+        // On window resize, sync transcript height
         this.resizeHandler = () => {
-            if (wrapperEl && videoColumnEl) {
-                this.syncTranscriptHeight();
-            }
+            this.syncTranscriptHeight();
         };
         window.addEventListener('resize', this.resizeHandler);
 
@@ -334,12 +315,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (this.hls) {
             this.hls.destroy();
             this.hls = undefined;
-        }
-
-        // Clean up interact instance
-        if (this.interactInstance) {
-            this.interactInstance.unset();
-            this.interactInstance = undefined;
         }
 
         // Clean up window resize listener

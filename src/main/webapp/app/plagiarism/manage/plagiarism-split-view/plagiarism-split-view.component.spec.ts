@@ -20,16 +20,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
 
-const collapse = vi.fn();
-const setSizes = vi.fn();
-
-vi.mock('split.js', () => ({
-    default: vi.fn().mockImplementation(() => ({
-        collapse,
-        setSizes,
-    })),
-}));
-
 describe('Plagiarism Split View Component', () => {
     setupTestBed({ zoneless: true });
 
@@ -109,28 +99,24 @@ describe('Plagiarism Split View Component', () => {
         expect(subscribeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should collapse the left pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the right pane so the left pane takes all space', () => {
         comp.handleSplitControl('left');
 
-        expect(collapse).toHaveBeenCalledWith(1);
+        expect(comp.panelSizes()).toEqual([100, 0]);
     });
 
-    it('should collapse the right pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the left pane so the right pane takes all space', () => {
         comp.handleSplitControl('right');
 
-        expect(collapse).toHaveBeenCalledWith(0);
+        expect(comp.panelSizes()).toEqual([0, 100]);
     });
 
     it('should reset the split panes', () => {
-        comp.split = { setSizes } as unknown as Split.Instance;
+        comp.panelSizes.set([100, 0]);
 
         comp.handleSplitControl('even');
 
-        expect(setSizes).toHaveBeenCalledWith([50, 50]);
+        expect(comp.panelSizes()).toEqual([50, 50]);
     });
 
     it('should get the first text submission', () => {

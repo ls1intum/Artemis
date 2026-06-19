@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Split from 'split.js';
+import { SplitterModule } from 'primeng/splitter';
 
 type SplitSizes = [number, number];
 
@@ -28,14 +28,25 @@ interface SplitConfig {
 
 interface HorizontalSplitConfig extends SplitConfig {
     enabled: boolean;
-    topElement?: ElementRef;
-    bottomElement?: ElementRef;
 }
+
+/**
+ * Reference container dimensions (in px) used to approximate the legacy split.js
+ * pixel-based `minSize` values as PrimeNG `p-splitter` percentage `minSizes`.
+ *
+ * split.js accepted absolute pixel minimums; `p-splitter` only accepts percentages.
+ * We convert `px -> %` against a representative fullscreen viewport so the panels
+ * keep a comparable minimum footprint. The result is clamped to a small sensible
+ * floor so the conversion never collapses a panel entirely on small screens.
+ */
+const TYPICAL_FULLSCREEN_WIDTH_PX = 1600;
+const TYPICAL_FULLSCREEN_HEIGHT_PX = 900;
+const MIN_PANEL_PERCENT = 5;
 
 @Component({
     selector: 'jhi-lecture-unit-fullscreen-layout',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, SplitterModule],
     templateUrl: './lecture-unit-fullscreen-layout.component.html',
     styleUrl: './lecture-unit-fullscreen-layout.component.scss',
     encapsulation: ViewEncapsulation.None,
@@ -72,8 +83,6 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     readonly isFullscreen = this.fullscreenState.asReadonly();
 
     readonly contentContainer = viewChild<ElementRef<HTMLElement>>('contentContainer');
-    readonly mainContentElement = viewChild<ElementRef<HTMLElement>>('mainContent');
-    readonly sidebarElement = viewChild<ElementRef<HTMLElement>>('sidebar');
 
     readonly contentContainerClasses = computed(() => ({
         'content-container--hidden': this.isCollapsed() && !this.isFullscreen(),
@@ -81,8 +90,24 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         'content-container--with-sidebar': this.isFullscreen() && this.showSidebar(),
     }));
 
-    private splitInstance?: Split.Instance;
-    private horizontalSplitInstance?: Split.Instance;
+    /** Whether the vertical (main | sidebar) splitter should be rendered (same gate as the old split.js instance). */
+    readonly showVerticalSplitter = computed(() => this.isFullscreen() && this.showSidebar());
+
+    /** Whether the horizontal (top | bottom) splitter should be rendered (same gate as the old split.js instance). */
+    readonly showHorizontalSplitter = computed(() => this.isFullscreen() && this.horizontalSplit().enabled);
+
+    /**
+     * Vertical splitter minimum panel sizes converted from the legacy px `minSizes`
+     * to percentages (p-splitter only supports %). See {@link TYPICAL_FULLSCREEN_WIDTH_PX}.
+     */
+    readonly verticalMinSizes = computed<SplitSizes>(() => this.toPercentMinSizes(this.verticalSplit().minSizes, TYPICAL_FULLSCREEN_WIDTH_PX));
+
+    /**
+     * Horizontal splitter minimum panel sizes converted from the legacy px `minSizes`
+     * to percentages (p-splitter only supports %). See {@link TYPICAL_FULLSCREEN_HEIGHT_PX}.
+     */
+    readonly horizontalMinSizes = computed<SplitSizes>(() => this.toPercentMinSizes(this.horizontalSplit().minSizes, TYPICAL_FULLSCREEN_HEIGHT_PX));
+
     private focusTrapHandler?: (event: KeyboardEvent) => void;
     private focusTrapContainer?: HTMLElement;
     private inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
@@ -92,35 +117,6 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
     constructor() {
-        // Vertical splitter lifecycle (main content | sidebar)
-        effect(() => {
-            const needsSplitter = this.isFullscreen() && this.showSidebar();
-            const mainEl = this.mainContentElement()?.nativeElement;
-            const sidebarEl = this.sidebarElement()?.nativeElement;
-
-            untracked(() => {
-                this.destroySplitter();
-                if (needsSplitter && mainEl && sidebarEl) {
-                    this.initSplitter([mainEl, sidebarEl]);
-                }
-            });
-        });
-
-        // Horizontal splitter lifecycle (top | bottom)
-        effect(() => {
-            const hSplit = this.horizontalSplit();
-            const needsSplitter = this.isFullscreen() && hSplit.enabled;
-            const topEl = hSplit.topElement?.nativeElement;
-            const bottomEl = hSplit.bottomElement?.nativeElement;
-
-            untracked(() => {
-                this.destroyHorizontalSplitter();
-                if (needsSplitter && topEl && bottomEl) {
-                    this.initHorizontalSplitter([topEl, bottomEl]);
-                }
-            });
-        });
-
         effect(() => {
             const fullscreen = this.isFullscreen();
             untracked(() => {
@@ -143,8 +139,6 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.destroySplitter();
-        this.destroyHorizontalSplitter();
         this.clearFullscreenTopOffset();
         this.setGlobalFullscreenState(false);
         this.cleanupFullscreenAccessibility();
@@ -192,55 +186,30 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         this.fullscreenChange.emit(false);
     }
 
-    private initSplitter(elements: HTMLElement[]): void {
-        const config = this.verticalSplit();
-        this.splitInstance = Split(elements, {
-            sizes: config.sizes,
-            minSize: config.minSizes,
-            gutterSize: 12,
-            cursor: 'col-resize',
-            direction: 'horizontal',
-            onDragEnd: (sizes) => {
-                this.splitSizesChange.emit([sizes[0], sizes[1]]);
-            },
-            gutter: (_index, direction) => this.createSplitGutter(direction),
-        });
+    /**
+     * Forwards the PrimeNG vertical (main | sidebar) splitter resize end to consumers,
+     * mirroring the legacy split.js `onDragEnd` -> `splitSizesChange` wiring.
+     * `p-splitter` emits sizes as numbers (percentages) but the type allows strings, so coerce.
+     */
+    protected onVerticalResize(event: { sizes: (number | string)[] }): void {
+        this.splitSizesChange.emit([Number(event.sizes[0]), Number(event.sizes[1])]);
     }
 
-    private createSplitGutter(direction: string): HTMLElement {
-        const gutter = document.createElement('div');
-        gutter.className = `gutter gutter-${direction}`;
-
-        const handle = document.createElement('div');
-        handle.className = 'split-gutter-handle';
-        gutter.appendChild(handle);
-
-        return gutter;
+    /**
+     * Forwards the PrimeNG horizontal (top | bottom) splitter resize end to consumers,
+     * mirroring the legacy split.js `onDragEnd` -> `horizontalSplitSizesChange` wiring.
+     */
+    protected onHorizontalResize(event: { sizes: (number | string)[] }): void {
+        this.horizontalSplitSizesChange.emit([Number(event.sizes[0]), Number(event.sizes[1])]);
     }
 
-    private destroySplitter(): void {
-        this.splitInstance?.destroy();
-        this.splitInstance = undefined;
-    }
-
-    private initHorizontalSplitter(elements: HTMLElement[]): void {
-        const config = this.horizontalSplit();
-        this.horizontalSplitInstance = Split(elements, {
-            sizes: config.sizes,
-            minSize: config.minSizes,
-            gutterSize: 12,
-            cursor: 'row-resize',
-            direction: 'vertical',
-            onDragEnd: (sizes) => {
-                this.horizontalSplitSizesChange.emit([sizes[0], sizes[1]]);
-            },
-            gutter: (_index, direction) => this.createSplitGutter(direction),
-        });
-    }
-
-    private destroyHorizontalSplitter(): void {
-        this.horizontalSplitInstance?.destroy();
-        this.horizontalSplitInstance = undefined;
+    /**
+     * Converts legacy px `minSize` pairs into `p-splitter` percentage `minSizes`, clamped
+     * to a small floor so a panel never collapses entirely on smaller viewports.
+     */
+    private toPercentMinSizes(minSizesPx: SplitSizes, referencePx: number): SplitSizes {
+        const toPercent = (px: number) => Math.max(MIN_PANEL_PERCENT, Math.round((px / referencePx) * 100));
+        return [toPercent(minSizesPx[0]), toPercent(minSizesPx[1])];
     }
 
     private resetSplitSizesToDefaults(): void {

@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
-import Split from 'split.js';
 import { Subject } from 'rxjs';
 import { Exercise, ExerciseType, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
@@ -13,19 +12,15 @@ import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/Plagiarism
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
-@Directive({ selector: '[jhiPane]' })
-export class SplitPaneDirective {
-    elementRef = inject(ElementRef);
-}
+import { SplitterModule } from 'primeng/splitter';
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
-    imports: [SplitPaneDirective, TextSubmissionViewerComponent, FaIconComponent],
+    imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent],
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
     readonly comparison = input<PlagiarismComparison | undefined>(undefined!);
@@ -34,14 +29,16 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly sortByStudentLogin = input<string>();
     readonly forStudent = input<boolean>();
 
-    readonly panes = viewChildren(SplitPaneDirective);
-
     readonly plagiarismComparison = signal<PlagiarismComparison | undefined>(undefined);
     fileSelectedSubject = new Subject<PlagiarismFileElement>();
     showFilesSubject = new Subject<boolean>();
     dropdownHoverSubject = new Subject<PlagiarismFileElement>();
 
-    public split: Split.Instance;
+    /**
+     * Sizes (in percent) of the two splitter panels. Bound to p-splitter via [panelSizes];
+     * updating this signal re-applies the panel sizes at runtime through the panelSizes setter.
+     */
+    readonly panelSizes = signal<number[]>([50, 50]);
 
     readonly isProgrammingOrTextExercise = signal(false);
 
@@ -52,19 +49,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
-
-    /**
-     * Initialize third-party libraries inside this lifecycle hook.
-     */
-    ngAfterViewInit(): void {
-        const paneElements = this.panes().map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
-
-        this.split = Split(paneElements, {
-            minSize: 100,
-            sizes: [50, 50],
-            gutterSize: 8,
-        });
-    }
 
     ngOnInit(): void {
         this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
@@ -173,15 +157,17 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     handleSplitControl(pane: string) {
         switch (pane) {
             case 'left': {
-                this.split.collapse(1);
+                // collapse the right pane: the left pane takes all the space
+                this.panelSizes.set([100, 0]);
                 return;
             }
             case 'right': {
-                this.split.collapse(0);
+                // collapse the left pane: the right pane takes all the space
+                this.panelSizes.set([0, 100]);
                 return;
             }
             case 'even': {
-                this.split.setSizes([50, 50]);
+                this.panelSizes.set([50, 50]);
             }
         }
     }

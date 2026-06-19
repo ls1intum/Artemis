@@ -7,13 +7,55 @@
     [attr.aria-label]="dialogAriaLabel()"
     [attr.tabindex]="isFullscreen() ? '0' : null"
 >
-    <div #mainContent class="main-content">
-        <ng-content select="[content-main]" />
-    </div>
+    <!--
+        The main area optionally splits its content vertically into video (top) | pdf (bottom).
+        It is rendered either directly (no sidebar) or as the first panel of the outer (main | sidebar) splitter.
+    -->
+    <ng-template #mainArea>
+        @if (showHorizontalSplitter()) {
+            <!-- Horizontal splitter (top | bottom). layout="vertical" = stacked panels (was split.js direction 'vertical'). -->
+            <p-splitter
+                class="fullscreen-splitter"
+                layout="vertical"
+                [panelSizes]="horizontalSplit().sizes"
+                [minSizes]="horizontalMinSizes()"
+                [gutterSize]="12"
+                (onResizeEnd)="onHorizontalResize($event)"
+            >
+                <ng-template #panel>
+                    <ng-content select="[content-top]" />
+                </ng-template>
+                <ng-template #panel>
+                    <ng-content select="[content-bottom]" />
+                </ng-template>
+            </p-splitter>
+        } @else {
+            <div class="main-content">
+                <ng-content select="[content-main]" />
+            </div>
+        }
+    </ng-template>
 
-    @if (isFullscreen() && showSidebar()) {
-        <div #sidebar class="iris-sidebar" role="complementary" [attr.aria-label]="sidebarAriaLabel()">
-            <ng-content select="[content-sidebar]" />
-        </div>
+    @if (showVerticalSplitter()) {
+        <!-- Vertical splitter (main area | sidebar). layout="horizontal" = side-by-side panels (was split.js direction 'horizontal'). -->
+        <p-splitter
+            class="fullscreen-splitter"
+            layout="horizontal"
+            [panelSizes]="verticalSplit().sizes"
+            [minSizes]="verticalMinSizes()"
+            [gutterSize]="12"
+            (onResizeEnd)="onVerticalResize($event)"
+        >
+            <ng-template #panel>
+                <ng-container [ngTemplateOutlet]="mainArea" />
+            </ng-template>
+            <ng-template #panel>
+                <div class="iris-sidebar" role="complementary" [attr.aria-label]="sidebarAriaLabel()">
+                    <ng-content select="[content-sidebar]" />
+                </div>
+            </ng-template>
+        </p-splitter>
+    } @else {
+        <ng-container [ngTemplateOutlet]="mainArea" />
     }
 </div>

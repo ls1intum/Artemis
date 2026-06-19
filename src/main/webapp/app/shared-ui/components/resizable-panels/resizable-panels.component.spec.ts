@@ -9,10 +9,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 
-vi.mock('split.js', () => ({
-    default: vi.fn(() => ({ destroy: vi.fn() })),
-}));
-
 class ResizeObserverMock {
     static instances: ResizeObserverMock[] = [];
 
@@ -74,6 +70,41 @@ describe('ResizablePanelsComponent', () => {
         expect(component.isRightPanelCollapsed()).toBe(false);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Right Content');
+    });
+
+    it('should render the resizable splitter in wide expanded mode', () => {
+        const component = createFixture();
+
+        expect(component.isNarrow()).toBe(false);
+        expect(component.isRightPanelCollapsed()).toBe(false);
+        expect(fixture.nativeElement.querySelector('p-splitter')).not.toBeNull();
+    });
+
+    it('should not render the splitter when the right panel is collapsed', () => {
+        const component = createFixture(true);
+
+        expect(component.isRightPanelCollapsed()).toBe(true);
+        expect(fixture.nativeElement.querySelector('p-splitter')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).not.toBeNull();
+    });
+
+    it('should not render the splitter in narrow mode', () => {
+        const component = createFixture();
+        component['_isNarrow'].set(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('p-splitter')).toBeNull();
+    });
+
+    it('should default the split sizes and persist them from the splitter resize end event', () => {
+        const component = createFixture();
+
+        expect(component.savedSizes()).toBeUndefined();
+
+        const splitter = fixture.debugElement.query(By.css('p-splitter'));
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: [40, 60] });
+
+        expect(component.savedSizes()).toEqual([40, 60]);
     });
 
     it('should start collapsed without changing the active right panel', () => {

@@ -1,8 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import interact from 'interactjs';
-import { Interactable } from '@interactjs/core/Interactable';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
@@ -25,6 +23,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private router = inject(Router);
     private dialog = inject(MatDialog);
     private chatService = inject(IrisChatService);
+    private renderer = inject(Renderer2);
 
     readonly isMobile = getIsMobileSignal(this.breakpointObserver);
 
@@ -35,7 +34,20 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     readonly fullHeightFactor = 0.85;
     readonly fullSize = signal(false);
     public ButtonType = ButtonType;
-    private interactable: Interactable | undefined;
+
+    /** Distance (px) from a border within which a pointerdown starts an edge resize. */
+    private static readonly EDGE_MARGIN = 10;
+    private widgetEl?: HTMLElement;
+    private pointerDownCleanup?: () => void;
+    private gestureCleanup?: () => void;
+    private gesture?: 'drag' | 'resize';
+    private resizeEdges = { left: false, right: false, top: false, bottom: false };
+    private startPointerX = 0;
+    private startPointerY = 0;
+    private startWidth = 0;
+    private startHeight = 0;
+    private startTranslateX = 0;
+    private startTranslateY = 0;
 
     constructor() {
         this.router.events
@@ -52,75 +64,143 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.interactable = interact('.chat-widget')
-            .resizable({
-                // resize from all edges and corners
-                edges: { left: true, right: true, bottom: true, top: '.chat-widget-top-resize-area' },
-
-                listeners: {
-                    move: (event) => {
-                        const target = event.target;
-                        let x = parseFloat(target.getAttribute('data-x')) || 0;
-                        let y = parseFloat(target.getAttribute('data-y')) || 0;
-
-                        // update the element's style
-                        target.style.width = event.rect.width + 'px';
-                        target.style.height = event.rect.height + 'px';
-
-                        // Reset fullsize if widget smaller than the full size factors times the overlay container size
-                        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement).getBoundingClientRect();
-                        this.fullSize.set(!(event.rect.width < cntRect.width * this.fullWidthFactor || event.rect.height < cntRect.height * this.fullHeightFactor));
-
-                        // translate when resizing from top or left edges
-                        x += event.deltaRect.left;
-                        y += event.deltaRect.top;
-
-                        target.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-
-                        target.setAttribute('data-x', x);
-                        target.setAttribute('data-y', y);
-                    },
-                },
-                modifiers: [
-                    // keep the edges inside the parent
-                    interact.modifiers.restrictEdges({
-                        outer: '.cdk-overlay-container',
-                    }),
-
-                    // minimum size
-                    interact.modifiers.restrictSize({
-                        min: { width: this.initialWidth, height: this.initialHeight },
-                    }),
-                ],
-
-                inertia: true,
-            })
-            .draggable({
-                allowFrom: '.chat-header',
-                listeners: {
-                    move: (event: any) => {
-                        const target = event.target,
-                            // keep the dragged position in the data-x/data-y attributes
-                            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-                            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                        // translate the element
-                        target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-
-                        // update the posiion attributes
-                        target.setAttribute('data-x', x);
-                        target.setAttribute('data-y', y);
-                    },
-                },
-                inertia: true,
-                modifiers: [
-                    interact.modifiers.restrictRect({
-                        restriction: '.cdk-overlay-container',
-                        endOnly: true,
-                    }),
-                ],
-            });
+        // In-house Pointer-Events drag + resize (replaces interact.js). Drag from `.chat-header`,
+        // resize from the left/right/bottom borders and the `.chat-widget-top-resize-area`; the
+        // widget is kept inside the `.cdk-overlay-container` and never shrinks below its initial size.
+        const widget = this.document.querySelector<HTMLElement>('.chat-widget') ?? undefined;
+        this.widgetEl = widget;
+        if (widget) {
+            this.pointerDownCleanup = this.renderer.listen(widget, 'pointerdown', (event: PointerEvent) => this.onPointerDown(event));
+        }
         this.setPositionAndScale();
+    }
+
+    private onPointerDown(event: PointerEvent): void {
+        const widget = this.widgetEl;
+        if (!widget || (event.pointerType === 'mouse' && event.button !== 0)) {
+            return;
+        }
+        const target = event.target as Element | null;
+        const rect = widget.getBoundingClientRect();
+        const margin = IrisChatbotWidgetComponent.EDGE_MARGIN;
+        const edges = {
+            left: event.clientX - rect.left <= margin,
+            right: rect.right - event.clientX <= margin,
+            bottom: rect.bottom - event.clientY <= margin,
+            top: !!target?.closest('.chat-widget-top-resize-area'),
+        };
+        const resizing = edges.left || edges.right || edges.top || edges.bottom;
+        const dragging = !resizing && !!target?.closest('.chat-header');
+        if (!resizing && !dragging) {
+            return;
+        }
+        event.preventDefault();
+
+        this.gesture = resizing ? 'resize' : 'drag';
+        this.resizeEdges = edges;
+        this.startPointerX = event.clientX;
+        this.startPointerY = event.clientY;
+        this.startWidth = rect.width;
+        this.startHeight = rect.height;
+        this.startTranslateX = parseFloat(widget.getAttribute('data-x') ?? '') || 0;
+        this.startTranslateY = parseFloat(widget.getAttribute('data-y') ?? '') || 0;
+
+        widget.setPointerCapture?.(event.pointerId);
+        const move = (e: PointerEvent) => this.onPointerMove(e);
+        const up = (e: PointerEvent) => {
+            widget.releasePointerCapture?.(e.pointerId);
+            this.endGesture();
+        };
+        const unMove = this.renderer.listen(widget, 'pointermove', move);
+        const unUp = this.renderer.listen(widget, 'pointerup', up);
+        const unCancel = this.renderer.listen(widget, 'pointercancel', up);
+        this.gestureCleanup = () => {
+            unMove();
+            unUp();
+            unCancel();
+        };
+    }
+
+    private onPointerMove(event: PointerEvent): void {
+        const widget = this.widgetEl;
+        if (!this.gesture || !widget) {
+            return;
+        }
+        const containerRect = this.document.querySelector<HTMLElement>('.cdk-overlay-container')?.getBoundingClientRect();
+        const dx = event.clientX - this.startPointerX;
+        const dy = event.clientY - this.startPointerY;
+
+        if (this.gesture === 'drag') {
+            let x = this.startTranslateX + dx;
+            let y = this.startTranslateY + dy;
+            if (containerRect) {
+                x = Math.max(0, Math.min(x, containerRect.width - this.startWidth));
+                y = Math.max(0, Math.min(y, containerRect.height - this.startHeight));
+            }
+            this.applyTransform(widget, x, y);
+            return;
+        }
+
+        let width = this.startWidth;
+        let height = this.startHeight;
+        let x = this.startTranslateX;
+        let y = this.startTranslateY;
+        const rightAnchor = this.startTranslateX + this.startWidth;
+        const bottomAnchor = this.startTranslateY + this.startHeight;
+
+        if (this.resizeEdges.right) {
+            width = Math.max(this.initialWidth, this.startWidth + dx);
+        }
+        if (this.resizeEdges.left) {
+            width = Math.max(this.initialWidth, this.startWidth - dx);
+            x = rightAnchor - width;
+        }
+        if (this.resizeEdges.bottom) {
+            height = Math.max(this.initialHeight, this.startHeight + dy);
+        }
+        if (this.resizeEdges.top) {
+            height = Math.max(this.initialHeight, this.startHeight - dy);
+            y = bottomAnchor - height;
+        }
+
+        // Keep the widget edges inside the overlay container (interact.js restrictEdges).
+        if (containerRect) {
+            if (this.resizeEdges.left && x < 0) {
+                x = 0;
+                width = rightAnchor;
+            }
+            if (this.resizeEdges.top && y < 0) {
+                y = 0;
+                height = bottomAnchor;
+            }
+            if (this.resizeEdges.right && x + width > containerRect.width) {
+                width = containerRect.width - x;
+            }
+            if (this.resizeEdges.bottom && y + height > containerRect.height) {
+                height = containerRect.height - y;
+            }
+        }
+
+        this.renderer.setStyle(widget, 'width', `${width}px`);
+        this.renderer.setStyle(widget, 'height', `${height}px`);
+        this.applyTransform(widget, x, y);
+
+        if (containerRect) {
+            // Reset fullSize when the widget is smaller than the full-size factors times the container.
+            this.fullSize.set(!(width < containerRect.width * this.fullWidthFactor || height < containerRect.height * this.fullHeightFactor));
+        }
+    }
+
+    private applyTransform(widget: HTMLElement, x: number, y: number): void {
+        this.renderer.setStyle(widget, 'transform', `translate(${x}px, ${y}px)`);
+        widget.setAttribute('data-x', String(x));
+        widget.setAttribute('data-y', String(y));
+    }
+
+    private endGesture(): void {
+        this.gesture = undefined;
+        this.gestureCleanup?.();
+        this.gestureCleanup = undefined;
     }
 
     setPositionAndScale() {
@@ -156,7 +236,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
-        this.interactable?.unset();
+        this.pointerDownCleanup?.();
+        this.gestureCleanup?.();
         this.toggleScrollLock(false);
     }
 
