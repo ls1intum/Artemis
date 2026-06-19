@@ -146,7 +146,15 @@ export class CourseManagementExercisesPage {
         await endButton.scrollIntoViewIfNeeded();
         await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
+        // Wait for the end-now request to actually complete before returning. Otherwise a follow-up step (e.g. a student
+        // loading the exercise to practice) can race the in-flight end-now and observe the quiz as still "Waiting for
+        // Start", with no Practice option — the root cause of the practice-mode flake.
+        const endResponse = this.page.waitForResponse(
+            (resp) => resp.url().includes(`/quiz-exercises/${quizExercise.id}/end-now`) && resp.request().method() === 'PUT' && resp.ok(),
+            { timeout: 20000 },
+        );
         await this.page.getByTestId('delete-dialog-confirm-button').click();
+        await endResponse;
     }
 
     async shouldContainExerciseWithName(exerciseID: number) {

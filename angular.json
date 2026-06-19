@@ -31,6 +31,7 @@
                             "interactjs",
                             "is-mobile",
                             "localforage",
+                            "pako",
                             "papaparse",
                             "pepjs",
                             "prop-types",
