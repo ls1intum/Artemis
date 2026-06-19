@@ -30,7 +30,8 @@ import 'app/foundation/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
@@ -507,6 +508,71 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         const lastMessage = messages.last();
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
+    });
+
+    describe('message ordering', () => {
+        const sessionWithNoMessages = () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id, true)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(websocketSubject.asObservable());
+            return websocketSubject;
+        };
+
+        const websocketMessage = (messageId: number, sentAt: string): IrisChatWebsocketDTO =>
+            ({
+                type: IrisChatWebsocketPayloadType.MESSAGE,
+                message: {
+                    sender: IrisSender.LLM,
+                    id: messageId,
+                    content: [{ type: 'text', textContent: 'x' }],
+                    sentAt,
+                },
+                stages: [],
+            }) as IrisChatWebsocketDTO;
+
+        it('should order messages by sentAt regardless of which channel delivered them', async () => {
+            // A message can reach the client over the websocket and via the sendMessage HTTP response, so
+            // arrival order is racy. Here the HTTP-response message is processed first but carries the later
+            // sentAt, while the websocket message arrives afterwards with an earlier sentAt: it must end up
+            // first. (This is what guarantees a CTXSWAP divider renders before the message that triggered it.)
+            const websocketSubject = sessionWithNoMessages();
+            const httpMessage: IrisMessageResponseDTO = {
+                sender: IrisSender.USER,
+                id: 51,
+                content: [{ type: 'text', textContent: 'second' }],
+                sentAt: '2024-01-01T10:00:01Z',
+            };
+            vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: httpMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+            await firstValueFrom(service.sendMessage('second'));
+            websocketSubject.next(websocketMessage(50, '2024-01-01T10:00:00Z'));
+
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages.map((message) => message.id)).toEqual([50, 51]);
+        });
+
+        it('should break ties on equal sentAt by id so the earlier-saved message comes first', async () => {
+            const websocketSubject = sessionWithNoMessages();
+            const sentAt = '2024-01-01T10:00:00Z';
+            const httpMessage: IrisMessageResponseDTO = {
+                sender: IrisSender.USER,
+                id: 61,
+                content: [{ type: 'text', textContent: 'tie' }],
+                sentAt,
+            };
+            vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: httpMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+            await firstValueFrom(service.sendMessage('tie'));
+            websocketSubject.next(websocketMessage(60, sentAt));
+
+            const messages = await firstValueFrom(service.currentMessages());
+            expect(messages.map((message) => message.id)).toEqual([60, 61]);
+        });
     });
 
     it('should emit sessionId when set', async () => {

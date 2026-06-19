@@ -326,7 +326,18 @@ export class IrisChatService implements OnDestroy {
             if (message.sender === IrisSender.LLM) {
                 this.newIrisMessage.next(message);
             }
-            this.messages.next([...this.messages.getValue(), message]);
+            // Keep the list ordered by send time: a message can arrive over the websocket and via the
+            // sendMessage HTTP response, so arrival order is racy. sentAt is a dayjs object for runtime
+            // messages but a raw ISO string for session-loaded ones, hence dayjs(); ties break by id.
+            const messages = [...this.messages.getValue(), message];
+            messages.sort((a, b) => {
+                const timeDifference = dayjs(a.sentAt).valueOf() - dayjs(b.sentAt).valueOf();
+                if (timeDifference !== 0) {
+                    return timeDifference;
+                }
+                return (a.id ?? 0) - (b.id ?? 0);
+            });
+            this.messages.next(messages);
         }
     }
 
