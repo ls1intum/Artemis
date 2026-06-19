@@ -256,6 +256,36 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
+    it('should resolve the exercise id from the mapping for websocket submission errors and ignore errors for cleaned-up participations', () => {
+        const exerciseIdA = 10;
+        const exerciseIdB = 20;
+        const participationIdA = participationId; // 1
+        const participationIdB = 2;
+        const emissionsA: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        const emissionsB: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        httpGetStub.mockReturnValue(of(undefined));
+
+        // Both participations share the personal /user/topic/newSubmissions subscription. The subscription is created
+        // for participation A, so its callback closure captures exerciseIdA.
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdA, exerciseIdA, true).subscribe((s) => emissionsA.push(s));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdB, exerciseIdB, true).subscribe((s) => emissionsB.push(s));
+        expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
+
+        // An error for participation B must be attributed to exerciseIdB (resolved via the mapping), not the
+        // callback-captured exerciseIdA.
+        wsSubmissionSubject.next({ error: 'build failed', participationId: participationIdB } as any);
+        expect(emissionsB.at(-1)).toEqual({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: participationIdB });
+        expect(priv(submissionService).exerciseBuildStateValue[exerciseIdB]?.[participationIdB]?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        expect(priv(submissionService).exerciseBuildStateValue[exerciseIdA]?.[participationIdB]).toBeUndefined();
+
+        // Participation B is cleaned up (mapping removed) while the shared subscription stays alive for participation A.
+        // A late error for the removed participation must be ignored instead of recreating its build state.
+        const emissionsBeforeStaleEvent = emissionsB.length;
+        priv(submissionService).participationIdToExerciseId.delete(participationIdB);
+        wsSubmissionSubject.next({ error: 'late build failed', participationId: participationIdB } as any);
+        expect(emissionsB).toHaveLength(emissionsBeforeStaleEvent);
+    });
+
     it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
         vi.useFakeTimers();
         try {

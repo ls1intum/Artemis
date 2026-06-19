@@ -308,7 +308,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
-                                this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
+                                // Resolve the exercise id through the mapping instead of the callback-captured exerciseId:
+                                // the shared /user/topic/newSubmissions subscription can carry errors for other participations
+                                // (different exercises), and the mapping is gone once a participation has been cleaned up.
+                                const errorExerciseId = this.participationIdToExerciseId.get(programmingSubmissionError.participationId);
+                                if (errorExerciseId === undefined) {
+                                    return;
+                                }
+                                this.emitFailedSubmission(programmingSubmissionError.participationId, errorExerciseId);
                                 return;
                             }
                             const programmingSubmission = submission as ProgrammingSubmission;
