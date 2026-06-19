@@ -4,6 +4,7 @@
             "home": {
                 "title": "Math Exercises",
                 "createLabel": "Create a new Math Exercise",
+                "editLabel": "Edit Math Exercise",
                 "createOrEditLabel": "Create or edit a Math Exercise"
             },
             "detail": {

@@ -1,4 +1,4 @@
-@if (internalMathExercises() && filteredMathExercises.length > 0) {
+@if (internalMathExercises() && filteredMathExercises().length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -11,11 +11,11 @@
                 </tr>
             </thead>
             <tbody>
-                @for (mathExercise of filteredMathExercises; track trackId($index, mathExercise)) {
+                @for (mathExercise of filteredMathExercises(); track trackId($index, mathExercise)) {
                     <tr id="exercise-card-{{ mathExercise.id }}">
                         <td>
                             @if (mathExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', courseContext.id, 'math-exercises', mathExercise.id]">{{ mathExercise.title }}</a>
+                                <a [routerLink]="['/course-management', courseContext()?.id, 'math-exercises', mathExercise.id]">{{ mathExercise.title }}</a>
                             } @else {
                                 {{ mathExercise.title }}
                             }
@@ -45,7 +45,7 @@
                         <td class="text-end" style="white-space: nowrap">
                             <div class="d-flex gap-1 justify-content-end flex-nowrap">
                                 @if (mathExercise.isAtLeastTutor) {
-                                    <a pButton size="small" severity="info" [routerLink]="['/course-management', courseContext.id, 'math-exercises', mathExercise.id, 'scores']">
+                                    <a pButton size="small" severity="info" [routerLink]="['/course-management', courseContext()?.id, 'math-exercises', mathExercise.id, 'scores']">
                                         <fa-icon [icon]="faTable" />
                                         <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.scores">Scores</span>
                                     </a>
@@ -55,21 +55,32 @@
                                         pButton
                                         size="small"
                                         severity="primary"
-                                        [routerLink]="['/course-management', courseContext.id, 'math-exercises', mathExercise.id, 'participations']"
+                                        [routerLink]="['/course-management', courseContext()?.id, 'math-exercises', mathExercise.id, 'participations']"
                                     >
                                         <fa-icon [icon]="faListAlt" />
                                         <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                     </a>
                                 }
-                                <a pButton size="small" severity="warn" [routerLink]="['/course-management', courseContext.id, 'math-exercises', mathExercise.id, 'edit']">
+                                <a pButton size="small" severity="warn" [routerLink]="['/course-management', courseContext()?.id, 'math-exercises', mathExercise.id, 'edit']">
                                     <fa-icon [icon]="faWrench" />
                                     <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.edit">Edit</span>
                                 </a>
                                 <button
+                                    pButton
                                     jhiDeleteButton
+                                    severity="danger"
+                                    size="small"
+                                    [renderButtonStyle]="false"
+                                    [renderButtonText]="false"
                                     [entityTitle]="mathExercise.title!"
                                     deleteQuestion="artemisApp.exercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    [translateValues]="{
+                                        courseTitle: courseContext()?.title,
+                                        courseType: courseContext()?.testCourse
+                                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                    }"
                                     (delete)="deleteExercise(mathExercise.id)"
                                     [dialogError]="dialogError$"
                                 >

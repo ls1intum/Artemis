@@ -19,6 +19,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonModule } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-math-exercise',
@@ -34,6 +35,7 @@ import { ButtonModule } from 'primeng/button';
         ArtemisDatePipe,
         DeleteButtonDirective,
         ButtonModule,
+        ArtemisTranslatePipe,
     ],
 })
 export class MathExerciseComponent extends ExerciseComponent {
@@ -45,7 +47,7 @@ export class MathExerciseComponent extends ExerciseComponent {
 
     mathExercises = input<MathExercise[]>([]);
     internalMathExercises = signal<MathExercise[]>([]);
-    filteredMathExercises: (MathExercise & { id: number })[] = [];
+    readonly filteredMathExercises = signal<(MathExercise & { id: number })[]>([]);
 
     // Icons
     faSort = faSort;
@@ -69,11 +71,11 @@ export class MathExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllMathExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllMathExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<MathExercise[]>) => {
                 const exercises = res.body ?? [];
                 exercises.forEach((exercise) => {
-                    exercise.course = this.courseContext;
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.internalMathExercises.set(exercises);
@@ -85,10 +87,10 @@ export class MathExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredMathExercises = this.internalMathExercises().filter(
-            (exercise): exercise is MathExercise & { id: number } => exercise.id !== undefined && this.filter.matchesExercise(exercise),
+        this.filteredMathExercises.set(
+            this.internalMathExercises().filter((exercise): exercise is MathExercise & { id: number } => exercise.id !== undefined && this.filter.matchesExercise(exercise)),
         );
-        this.emitFilteredExerciseCount(this.filteredMathExercises.length);
+        this.emitFilteredExerciseCount(this.filteredMathExercises().length);
     }
 
     deleteExercise(exerciseId: number) {

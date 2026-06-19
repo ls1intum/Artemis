@@ -323,7 +323,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.exerciseTitles.set(ExerciseType.PROGRAMMING, new ExerciseTitle(this.translateService.instant('artemisApp.course.programmingExercises'), PROGRAMMING_EXERCISE_COLOR));
         this.exerciseTitles.set(ExerciseType.TEXT, new ExerciseTitle(this.translateService.instant('artemisApp.course.textExercises'), TEXT_EXERCISE_COLOR));
         this.exerciseTitles.set(ExerciseType.FILE_UPLOAD, new ExerciseTitle(this.translateService.instant('artemisApp.course.fileUploadExercises'), FILE_UPLOAD_EXERCISE_COLOR));
-        this.exerciseTitles.set(ExerciseType.MATH, new ExerciseTitle(this.translateService.instant('artemisApp.courseStatistics.math'), MATH_EXERCISE_COLOR));
+        this.exerciseTitles.set(ExerciseType.MATH, new ExerciseTitle(this.translateService.instant('artemisApp.course.mathExercises'), MATH_EXERCISE_COLOR));
     }
 
     ngAfterViewInit() {

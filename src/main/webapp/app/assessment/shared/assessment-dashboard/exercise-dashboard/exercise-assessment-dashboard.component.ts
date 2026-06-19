@@ -350,8 +350,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
                         break;
                     case ExerciseType.MATH: {
-                        const mathExercise = this.exercise as MathExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(mathExercise.exampleSolution);
+                        const mathExercise = exercise as MathExercise;
+                        this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(mathExercise.exampleSolution));
                         break;
                     }
                     case ExerciseType.PROGRAMMING:

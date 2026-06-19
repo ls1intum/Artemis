@@ -4,6 +4,7 @@
             "home": {
                 "title": "Mathematik-Aufgaben",
                 "createLabel": "Neue Mathematik-Aufgabe erstellen",
+                "editLabel": "Mathematik-Aufgabe bearbeiten",
                 "createOrEditLabel": "Mathematik-Aufgabe erstellen oder bearbeiten"
             },
             "detail": {

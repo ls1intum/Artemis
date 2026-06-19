@@ -12,8 +12,8 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -31,8 +31,8 @@ import { TooltipModule } from 'primeng/tooltip';
         MarkdownEditorMonacoComponent,
         FormDateTimePickerComponent,
         ArtemisTranslatePipe,
+        DocumentationButtonComponent,
         ButtonModule,
-        CardModule,
         CheckboxModule,
         InputTextModule,
         TextareaModule,
@@ -45,8 +45,20 @@ export class MathExerciseUpdateComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private router = inject(Router);
 
-    mathExercise: MathExercise;
-    isSaving: boolean;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+
+    // mathExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route;
+    // using a getter/setter-over-signal facade satisfies prefer-signal-template-state while
+    // keeping the existing synchronous reads/writes ([(ngModel)] bindings, this.mathExercise = ... assignments) unchanged.
+    private readonly _mathExercise = signal<MathExercise>(undefined!);
+    get mathExercise(): MathExercise {
+        return this._mathExercise();
+    }
+    set mathExercise(value: MathExercise) {
+        this._mathExercise.set(value);
+    }
+
+    readonly isSaving = signal(false);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
 
@@ -56,7 +68,7 @@ export class MathExerciseUpdateComponent implements OnInit {
     assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
 
     ngOnInit() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.activatedRoute.data.subscribe(({ mathExercise }) => {
             this.mathExercise = mathExercise;
             this.exerciseCategories.set(this.mathExercise.categories || []);
@@ -72,7 +84,7 @@ export class MathExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.mathExercise.id !== undefined) {
             this.mathExerciseService.update(this.mathExercise).subscribe({
                 next: () => this.onSaveSuccess(),
@@ -91,11 +103,11 @@ export class MathExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.previousState();
     }
 
     private onSaveError() {
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }
