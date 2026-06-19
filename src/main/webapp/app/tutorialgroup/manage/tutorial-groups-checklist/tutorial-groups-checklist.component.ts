@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -26,12 +26,11 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private cdr = inject(ChangeDetectorRef);
 
-    isLoading = false;
-    course: Course;
-    isTimeZoneConfigured = false;
-    isTutorialGroupConfigurationCreated = false;
+    readonly isLoading = signal(false);
+    readonly course = signal<Course>(undefined!);
+    readonly isTimeZoneConfigured = signal(false);
+    readonly isTutorialGroupConfigurationCreated = signal(false);
 
     protected readonly faCog = faCog;
     protected readonly faPlus = faPlus;
@@ -39,11 +38,11 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
 
     get isFullyConfigured(): boolean {
-        return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;
+        return this.isTimeZoneConfigured() && this.isTutorialGroupConfigurationCreated();
     }
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.activatedRoute.paramMap
             .pipe(
                 take(1),
@@ -51,23 +50,22 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                     const courseId = Number(params.get('courseId'));
                     return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: ([courseResult, configurationResult]) => {
                     if (courseResult.body) {
-                        this.course = courseResult.body;
-                        this.isTimeZoneConfigured = !!this.course.timeZone;
+                        this.course.set(courseResult.body);
+                        this.isTimeZoneConfigured.set(!!this.course().timeZone);
                     }
                     if (configurationResult.body) {
-                        this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResult.body);
-                        this.isTutorialGroupConfigurationCreated = !!this.course.tutorialGroupsConfiguration;
+                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResult.body);
+                        this.isTutorialGroupConfigurationCreated.set(!!this.course().tutorialGroupsConfiguration);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     ngOnDestroy(): void {

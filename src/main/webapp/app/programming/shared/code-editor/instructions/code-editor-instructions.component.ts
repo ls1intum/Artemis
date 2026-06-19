@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, input, output } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, input, output, signal } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -32,7 +32,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
-    collapsed = false;
+    readonly collapsed = signal(false);
 
     // Icons
     faChevronRight = faChevronRight;
@@ -64,7 +64,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
             event?.stopPropagation();
             return;
         }
-        this.collapsed = !this.collapsed;
+        this.collapsed.update((collapsed) => !collapsed);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 }

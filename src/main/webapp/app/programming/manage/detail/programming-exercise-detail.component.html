@@ -1,24 +1,24 @@
 <div class="row justify-content-center programming-exercise-detail-wrapper-class">
     <div class="col-md-8">
-        @if (programmingExercise) {
+        @if (programmingExercise()) {
             <div>
                 <div class="d-flex align-items-center">
-                    <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span> {{ programmingExercise.id }}</h2>
+                    <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span> {{ programmingExercise().id }}</h2>
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
                 <div class="button-header">
                     <div class="d-flex flex-wrap gap-2">
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <a [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
+                        @if (programmingExercise().isAtLeastEditor) {
+                            <a [routerLink]="[baseResource(), 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"></span>
                             </a>
                             <!-- Edit in editor button -->
-                            @if (programmingExercise.templateParticipation) {
+                            @if (programmingExercise().templateParticipation) {
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                    [routerLink]="[baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation.id!]"
+                                    [routerLink]="[baseResource(), 'code-editor', RepositoryType.TEMPLATE, programmingExercise().templateParticipation!.id!]"
                                     class="btn btn-warning btn-sm"
                                 >
                                     <fa-icon [icon]="faPencilAlt" />
@@ -26,57 +26,63 @@
                                 </a>
                             }
                             <!-- Edit build plan button -->
-                            @if (isBuildPlanEditable) {
-                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" [routerLink]="[baseResource, 'edit-build-plan']" class="btn btn-warning btn-sm">
+                            @if (isBuildPlanEditable()) {
+                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" [routerLink]="[baseResource(), 'edit-build-plan']" class="btn btn-warning btn-sm">
                                     <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editBuildPlan"></span>
                                 </a>
                             }
-                            <a [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
+                            <a [routerLink]="[baseResource(), 'grading', 'test-cases']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faFileSignature" />
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                             </a>
                         }
-                        @if (canAccessParticipationsAndScores) {
-                            <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
+                        @if (canAccessParticipationsAndScores()) {
+                            <a [routerLink]="[baseResource(), 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations"></span>
                             </a>
                         }
                         <!-- Teams -->
-                        @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
-                            <a [routerLink]="[teamBaseResource, 'teams']" class="btn btn-primary btn-sm">
+                        @if (programmingExercise().teamMode && programmingExercise().isAtLeastTutor) {
+                            <a [routerLink]="[teamBaseResource(), 'teams']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faUsers" />
                                 <span jhiTranslate="artemisApp.exercise.teams"></span>
                             </a>
                         }
-                        @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments) {
-                            <a [routerLink]="[shortBaseResource, 'assessment-dashboard', programmingExercise.id]" class="btn btn-info btn-sm">
+                        @if (programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise().allowComplaintsForAutomaticAssessments) {
+                            <a [routerLink]="[shortBaseResource(), 'assessment-dashboard', programmingExercise().id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faUserCheck" />
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
                             </a>
                         }
-                        @if (programmingExercise.isAtLeastEditor && plagiarismCheckSupported) {
-                            <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                        @if (programmingExercise().isAtLeastEditor && plagiarismCheckSupported()) {
+                            <jhi-feature-overlay [enabled]="plagiarismEnabled()">
                                 <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
                                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism"></span>
                                 </a>
                             </jhi-feature-overlay>
                         }
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <a [routerLink]="[baseResource, 'version-history']" class="btn btn-info btn-sm">
+                        @if (programmingExercise().isAtLeastEditor) {
+                            <a [routerLink]="[baseResource(), 'version-history']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faHistory" />
                                 <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
                             </a>
                         }
-                        @if (canAccessParticipationsAndScores) {
-                            <a [routerLink]="[baseResource, 'scores']" class="btn btn-info btn-sm">
+                        @if (canAccessParticipationsAndScores()) {
+                            <a [routerLink]="[baseResource(), 'scores']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
                             </a>
-                            @if (programmingExercise.course && !isExamExercise) {
+                            @if (programmingExercise().course && !isExamExercise()) {
                                 <a
-                                    [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        programmingExercise().course!.id!,
+                                        'programming-exercises',
+                                        programmingExercise().id!,
+                                        'exercise-statistics',
+                                    ]"
                                     class="btn btn-info btn-sm"
                                 >
                                     <fa-icon [icon]="faChartBar" />&nbsp;<span jhiTranslate="statistics.statistics-title"></span>
@@ -86,13 +92,13 @@
                     </div>
                     <hr />
                     <div>
-                        @if (programmingExercise.isAtLeastInstructor) {
-                            <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise.id!" class="me-1" />
-                            @if (isExportToSharingEnabled) {
-                                <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise.id!" class="me-1" />
+                        @if (programmingExercise().isAtLeastInstructor) {
+                            <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise().id!" class="me-1" />
+                            @if (isExportToSharingEnabled()) {
+                                <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise().id!" class="me-1" />
                             }
                         }
-                        @if (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor) {
+                        @if (programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise().isAtLeastEditor) {
                             <span class="me-1">
                                 <button
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -105,17 +111,17 @@
                                 </button>
                             </span>
                         }
-                        @if (programmingExercise.isAtLeastEditor) {
+                        @if (programmingExercise().isAtLeastEditor) {
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                (click)="checkConsistencies(programmingExercise)"
+                                (click)="checkConsistencies(programmingExercise())"
                                 class="btn btn-outline-primary btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
                                 <fa-icon [icon]="faCheckDouble" />
                                 <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                             </button>
-                            @if (atlasModuleActive && programmingExercise.isAtLeastInstructor && !isExamExercise) {
+                            @if (atlasModuleActive && programmingExercise().isAtLeastInstructor && !isExamExercise()) {
                                 <button
                                     type="button"
                                     [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
@@ -136,30 +142,30 @@
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                 jhiProgrammingExerciseResetButton
-                                [programmingExercise]="programmingExercise"
+                                [programmingExercise]="programmingExercise()"
                                 class="me-1"
                             >
                                 <fa-icon [icon]="faUndo" />
                                 <span jhiTranslate="entity.action.reset"></span>
                             </button>
                         }
-                        @if (programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor) {
+                        @if (programmingExercise().course !== undefined && programmingExercise().isAtLeastInstructor) {
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="programmingExercise.title || ''"
+                                [entityTitle]="programmingExercise().title || ''"
                                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                 [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                 [translateValues]="{
-                                    courseTitle: programmingExercise.course!.title,
-                                    courseType: programmingExercise.course!.testCourse
+                                    courseTitle: programmingExercise().course!.title,
+                                    courseType: programmingExercise().course!.testCourse
                                         ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                         : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                 }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
                                 [additionalChecks]="
-                                    localCIEnabled
+                                    localCIEnabled()
                                         ? {}
                                         : {
                                               deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -174,11 +180,11 @@
                         }
                     </div>
                 </div>
-                @if (!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())) {
+                @if (!programmingExercise().releaseDate || dayjs(programmingExercise().releaseDate).isBefore(dayjs())) {
                     <div class="mt-3">
                         <jhi-exercise-detail-statistics
-                            [exercise]="programmingExercise"
-                            [doughnutStats]="doughnutStats"
+                            [exercise]="programmingExercise()"
+                            [doughnutStats]="doughnutStats()"
                             [exerciseType]="PROGRAMMING"
                             class="d-flex justify-content-around"
                         />
@@ -186,22 +192,22 @@
                 }
                 <!-- Live Creation Assistance progress: the run is started and driven from the code editor; here the card only reattaches (read-only) to an active/recent run via /status
                      so the instructor can follow it from the detail page too. It self-hides when there is no run. -->
-                @if (hyperionModuleActive && programmingExercise.isAtLeastEditor && programmingExercise.id) {
+                @if (hyperionModuleActive && programmingExercise().isAtLeastEditor && programmingExercise().id) {
                     <div class="mt-3">
                         <jhi-hyperion-exercise-generation
-                            [exerciseId]="programmingExercise.id"
+                            [exerciseId]="programmingExercise().id"
                             [autoStart]="false"
                             [reviewCommentsLink]="
-                                programmingExercise.templateParticipation?.id
-                                    ? [baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation!.id!]
+                                programmingExercise().templateParticipation?.id
+                                    ? [baseResource(), 'code-editor', RepositoryType.TEMPLATE, programmingExercise().templateParticipation!.id!]
                                     : undefined
                             "
                             (generationCompleted)="onExerciseGenerated($event)"
                         />
                     </div>
                 }
-                @if (exerciseDetailSections) {
-                    <jhi-detail-overview-list [sections]="exerciseDetailSections" />
+                @if (exerciseDetailSections()) {
+                    <jhi-detail-overview-list [sections]="exerciseDetailSections()" />
                 }
             </div>
         }

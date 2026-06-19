@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -50,7 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
 
-    globalSearchEnabled = false;
+    readonly globalSearchEnabled = signal(false);
     private examStartedSubscription: Subscription;
     private testRunSubscription: Subscription;
     private ltiSubscription: Subscription;
@@ -60,14 +60,14 @@ export class AppComponent implements OnInit, OnDestroy {
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
      * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
      */
-    showSkeleton = true;
+    readonly showSkeleton = signal(true);
     isProduction = true;
     isTestServer = false;
-    isExamStarted = false;
-    isTestRunExam = false;
-    isShownViaLti = false;
-    usesModuleBackground = false;
-    showPageRibbon = true;
+    readonly isExamStarted = signal(false);
+    readonly isTestRunExam = signal(false);
+    readonly isShownViaLti = signal(false);
+    readonly usesModuleBackground = signal(false);
+    readonly showPageRibbon = signal(true);
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -100,7 +100,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+        this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
 
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -114,27 +114,27 @@ export class AppComponent implements OnInit, OnDestroy {
                 itself.
                  */
                 const shouldShowSkeletonNow = this.shouldShowSkeleton(event.url);
-                if (!shouldShowSkeletonNow && this.showSkeleton) {
+                if (!shouldShowSkeletonNow && this.showSkeleton()) {
                     // If we already show the skeleton but do not want to show the skeleton anymore, we need to remove the background
                     this.renderer.addClass(this.document.body, 'transparent-background');
-                } else if (shouldShowSkeletonNow && !this.showSkeleton) {
+                } else if (shouldShowSkeletonNow && !this.showSkeleton()) {
                     // If we want to show the skeleton but weren't showing it previously, we need to remove the class to show the skeleton again
                     this.renderer.removeClass(this.document.body, 'transparent-background');
                 }
                 // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
-                this.showSkeleton = shouldShowSkeletonNow;
+                this.showSkeleton.set(shouldShowSkeletonNow);
             }
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
-                this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
-                this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+                this.usesModuleBackground.set(this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root));
+                this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
                 const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
                 if (showSkeletonFromRoute !== undefined) {
-                    if (!showSkeletonFromRoute && this.showSkeleton) {
-                        this.showSkeleton = false;
+                    if (!showSkeletonFromRoute && this.showSkeleton()) {
+                        this.showSkeleton.set(false);
                         this.renderer.addClass(this.document.body, 'transparent-background');
-                    } else if (showSkeletonFromRoute && !this.showSkeleton) {
-                        this.showSkeleton = true;
+                    } else if (showSkeletonFromRoute && !this.showSkeleton()) {
+                        this.showSkeleton.set(true);
                         this.renderer.removeClass(this.document.body, 'transparent-background');
                     }
                 }
@@ -149,18 +149,18 @@ export class AppComponent implements OnInit, OnDestroy {
         this.isProduction = this.profileService.isProduction();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
-            this.isExamStarted = isStarted;
+            this.isExamStarted.set(isStarted);
         });
 
         this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
-            this.isTestRunExam = isStarted;
+            this.isTestRunExam.set(isStarted);
         });
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
-            this.isShownViaLti = isShownViaLti;
+            this.isShownViaLti.set(isShownViaLti);
         });
         this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
-            this.globalSearchEnabled = isActive;
+            this.globalSearchEnabled.set(isActive);
         });
         this.themeService.initialize();
     }

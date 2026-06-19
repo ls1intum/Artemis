@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, OnInit, effect, inject, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -36,11 +36,11 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     examId?: number;
-    plagiarismCases: PlagiarismCase[] = [];
-    groupedPlagiarismCases: GroupedPlagiarismCases;
-    exercisesWithPlagiarismCases: Exercise[] = [];
+    readonly plagiarismCases = signal<PlagiarismCase[]>([]);
+    readonly groupedPlagiarismCases = signal<GroupedPlagiarismCases>({});
+    readonly exercisesWithPlagiarismCases = signal<Exercise[]>([]);
 
     exerciseWithPlagCasesElements = viewChildren<ElementRef>('plagExerciseElement');
 
@@ -63,16 +63,17 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const plagiarismCasesForInstructor$ = this.examId
-            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
-            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
+            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId(), this.examId)
+            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId());
 
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
-                this.plagiarismCases = res.body!;
-                this.groupedPlagiarismCases = this.getGroupedPlagiarismCasesByExercise(this.plagiarismCases);
+                const plagiarismCases = res.body!;
+                this.plagiarismCases.set(plagiarismCases);
+                this.groupedPlagiarismCases.set(this.getGroupedPlagiarismCasesByExercise(plagiarismCases));
             },
         });
     }
@@ -183,7 +184,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     exportPlagiarismCases(): void {
         const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
         const blobParts: string[] = [headers.join(';') + '\n'];
-        this.plagiarismCases.reduce((acc, plagiarismCase) => {
+        this.plagiarismCases().reduce((acc, plagiarismCase) => {
             const fields = [
                 this.sanitizeCSVField(plagiarismCase.student?.login),
                 this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
@@ -215,7 +216,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * @private return object containing grouped cases
      */
     private getGroupedPlagiarismCasesByExercise(cases: PlagiarismCase[]): GroupedPlagiarismCases {
-        return cases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase: PlagiarismCase) => {
+        const exercisesWithPlagiarismCases: Exercise[] = [];
+        const grouped = cases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase: PlagiarismCase) => {
             const caseExerciseId = plagiarismCase.exercise?.id;
             if (caseExerciseId === undefined) {
                 return acc;
@@ -224,7 +226,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             // Group initialization
             if (!acc[caseExerciseId]) {
                 acc[caseExerciseId] = [];
-                this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
+                exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
             }
 
             // Grouping
@@ -232,5 +234,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
             return acc;
         }, {});
+        this.exercisesWithPlagiarismCases.set(exercisesWithPlagiarismCases);
+        return grouped;
     }
 }

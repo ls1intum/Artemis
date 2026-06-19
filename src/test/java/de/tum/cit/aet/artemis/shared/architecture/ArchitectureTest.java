@@ -131,6 +131,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoShadedDependencies() {
+        ArchRule noShadedDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("..shaded..", "..repackaged..")
+                .because("Depending on a third-party library's shaded/relocated internal copy (e.g. org.apache.velocity.shaded.commons.io.FilenameUtils) is fragile: "
+                        + "the host library can drop or relocate the shaded package on any version bump, silently breaking the build (this happened during the OpenSAML/Velocity "
+                        + "upgrade in the Spring Boot 4.1 bump). Depend on the real, explicitly-declared library instead (e.g. commons-io for FilenameUtils).");
+        noShadedDependencies.check(allClasses);
+    }
+
+    @Test
     void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);

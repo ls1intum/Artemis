@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
@@ -39,14 +39,13 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
-    private cdr = inject(ChangeDetectorRef);
 
     readonly createFreePeriodDialog = viewChild<CreateTutorialGroupFreePeriodComponent>('createFreePeriodDialog');
 
-    isLoading = false;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
-    course: Course;
+    readonly isLoading = signal(false);
+    readonly tutorialGroupsConfiguration = signal<TutorialGroupsConfiguration>(undefined!);
+    readonly tutorialGroupFreePeriods = signal<TutorialGroupFreePeriod[]>([]);
+    readonly course = signal<Course>(undefined!);
     faTimes = faTimes;
     faPlus = faPlus;
 
@@ -66,7 +65,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     get freeDays(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
     }
     public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
         const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
@@ -76,7 +75,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     get freePeriods(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
     }
 
     public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
@@ -84,7 +83,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
+        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
     }
 
     public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
@@ -96,31 +95,31 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.data])
             .pipe(
                 take(1),
                 switchMap(([{ course }]) => {
-                    this.course = course;
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
+                    this.course.set(course);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
-                        if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', false);
+                        this.tutorialGroupsConfiguration.set(tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body));
+                        const freePeriods = this.tutorialGroupsConfiguration().tutorialGroupFreePeriods;
+                        if (freePeriods) {
+                            this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(freePeriods, 'start', false));
                         } else {
-                            this.tutorialGroupFreePeriods = [];
+                            this.tutorialGroupFreePeriods.set([]);
                         }
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     openCreateFreePeriodDialog(event: MouseEvent) {

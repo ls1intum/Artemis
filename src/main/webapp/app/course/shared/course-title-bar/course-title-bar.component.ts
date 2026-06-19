@@ -1,11 +1,8 @@
 import { Component, Signal, TemplateRef, computed, inject, input, output } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { facSidebar } from 'app/foundation/icons/icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgTemplateOutlet } from '@angular/common';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 /**
  * Shared title bar component used by both course overview and course management components
@@ -14,11 +11,9 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
     selector: 'jhi-course-title-bar',
     templateUrl: './course-title-bar.component.html',
     styleUrls: ['./course-title-bar.component.scss'],
-    imports: [NgClass, NgbTooltip, FaIconComponent, NgTemplateOutlet, CourseTitleBarTitleComponent],
+    imports: [NgTemplateOutlet, CourseTitleBarTitleComponent, CourseSidebarToggleButtonComponent],
 })
 export class CourseTitleBarComponent {
-    protected readonly facSidebar = facSidebar;
-    protected readonly faChevronRight = faChevronRight;
     readonly displayStyle = computed(() => (this.isExamStarted() ? 'none' : 'flex'));
     hasSidebar = input(false);
     isSidebarCollapsed = input(false);

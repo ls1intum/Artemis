@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -9,7 +9,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
@@ -17,12 +17,8 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: [
-        '../../../../exercise/chart/vertical-bar-chart.scss',
-        '../quiz-point-statistic/quiz-point-statistic.component.scss',
-        './short-answer-question-statistic.component.scss',
-    ],
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
@@ -30,7 +26,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     declare question: ShortAnswerQuestion;
 
-    textParts: string[][];
+    readonly textParts = signal<string[][]>(undefined!);
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] = [];
@@ -59,7 +55,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
     generateShortAnswerStructure() {
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
     }
 
     generateLettersForSolutions() {

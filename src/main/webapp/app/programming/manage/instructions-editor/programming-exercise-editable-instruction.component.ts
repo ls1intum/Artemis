@@ -83,9 +83,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     private previousExercise?: ProgrammingExercise;
 
-    unsavedChangesValue = false;
+    readonly unsavedChangesValue = signal(false);
 
-    exerciseTestCases: string[] = [];
+    readonly exerciseTestCases = signal<string[]>([]);
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
@@ -110,7 +110,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
-    savingInstructions = false;
+    readonly savingInstructions = signal(false);
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -173,7 +173,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set unsavedChanges(hasChanges: boolean) {
-        this.unsavedChangesValue = hasChanges;
+        this.unsavedChangesValue.set(hasChanges);
         // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
         // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
@@ -251,7 +251,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private persistProblemStatement(): Observable<void> {
-        this.savingInstructions = true;
+        this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
@@ -265,7 +265,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 return EMPTY;
             }),
             finalize(() => {
-                this.savingInstructions = false;
+                this.savingInstructions.set(false);
             }),
         );
     }
@@ -343,8 +343,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         return of();
                     }),
                     tap((testCaseNames: string[]) => {
-                        this.exerciseTestCases = testCaseNames;
-                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.exerciseTestCases.set(testCaseNames);
+                        const cases = this.exerciseTestCases().map((value) => ({ value, id: value }));
                         this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
@@ -498,7 +498,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param payload The thread id whose consistency inline fix was applied in the editor.
      */
     onApplyInlineFix(payload: { threadId: number }): void {
-        if (this.savingInstructions) {
+        if (this.savingInstructions()) {
             return;
         }
 

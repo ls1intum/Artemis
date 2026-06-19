@@ -432,7 +432,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -460,7 +460,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -534,7 +534,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(alertSpy).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'error-message',
@@ -736,7 +736,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
 
             expect(comp.isGeneratingWithAi()).toBe(false);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should treat null id as a new exercise and use empty repositories setup', () => {
@@ -921,9 +921,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
         });
     });
 
@@ -948,9 +948,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode()).toBe(false);
         });
     });
 
@@ -1146,7 +1146,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.exerciseGroup).toBe(exerciseGroup);
             expect(comp.programmingExercise.course).toBeUndefined();
             expect(comp.isImportFromExistingExercise).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
         });
 
@@ -1251,7 +1251,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(findSpy).toHaveBeenCalledWith(course.id);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.exerciseCategories).toBe(categories);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
         });
@@ -1282,7 +1282,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
 
             expect(comp.exerciseCategories).toEqual([]);
@@ -1332,13 +1332,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 
             // THEN
             expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
     });
 
@@ -1424,7 +1424,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 
@@ -1445,7 +1445,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
-            comp.courseId = course.id!;
+            comp.courseId.set(course.id!);
             // WHEN
             comp.save();
 

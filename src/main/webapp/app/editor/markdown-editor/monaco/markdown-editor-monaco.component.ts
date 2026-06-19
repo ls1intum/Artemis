@@ -302,7 +302,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
     protected readonly visualTabActivated = signal<boolean>(false);
     protected readonly previewTabActivated = signal<boolean>(false);
-    readonly uniqueMarkdownEditorId: string;
+    readonly uniqueMarkdownEditorId = signal<string>(undefined!);
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
     private selectionChangeDisposable?: { dispose: () => void };
@@ -391,7 +391,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+        this.uniqueMarkdownEditorId.set('markdown-editor-' + window.crypto.randomUUID().toString());
 
         // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
         // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards

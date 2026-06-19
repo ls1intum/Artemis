@@ -146,7 +146,7 @@ describe('OnlineUnitFormComponent', () => {
         onlineUnitFormComponentFixture.detectChanges();
 
         onlineUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        onlineUnitFormComponent.ngOnChanges();
+        onlineUnitFormComponentFixture.detectChanges();
 
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(formData.name);
         expect(onlineUnitFormComponent.releaseDateControl?.value).toEqual(formData.releaseDate);
@@ -170,7 +170,7 @@ describe('OnlineUnitFormComponent', () => {
         onlineUnitFormComponentFixture.componentRef.setInput('formData', {
             source: 'example.com',
         });
-        onlineUnitFormComponent.ngOnChanges();
+        onlineUnitFormComponentFixture.detectChanges();
 
         // WHEN
         onlineUnitFormComponent.onLinkChanged();
