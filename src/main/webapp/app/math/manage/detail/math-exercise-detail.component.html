@@ -20,21 +20,21 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <p-card>
-                            <ng-template pTemplate="header">
+                            <ng-template #header>
                                 <div class="d-flex align-items-center justify-content-between px-3 pt-3">
                                     <h4 class="mb-0" jhiTranslate="artemisApp.mathExercise.detail.submittedMaths">Submitted Maths</h4>
                                     <p-tag severity="secondary" [value]="submissions.length.toString()" />
                                 </div>
                             </ng-template>
                             <p-table [value]="submissions" styleClass="p-datatable-sm p-datatable-hover">
-                                <ng-template pTemplate="header">
+                                <ng-template #header>
                                     <tr>
                                         <th jhiTranslate="artemisApp.mathExercise.detail.tableStudent">Student</th>
                                         <th jhiTranslate="artemisApp.mathExercise.detail.tableSubmitted">Submitted</th>
                                         <th jhiTranslate="artemisApp.mathExercise.detail.tableScore">Score</th>
                                     </tr>
                                 </ng-template>
-                                <ng-template pTemplate="body" let-sub>
+                                <ng-template #body let-sub>
                                     <tr>
                                         <td>{{ sub.participation?.studentName ?? sub.participation?.studentLogin ?? '—' }}</td>
                                         <td>{{ sub.submissionDate | artemisDate }}</td>
