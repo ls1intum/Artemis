@@ -640,6 +640,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param fetchPending whether the latest pending submission should be fetched from the server
      */
     public getLatestPendingSubmissionByParticipationId(participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false, fetchPending = true) {
+        // Record the participation -> exercise mapping eagerly and synchronously, the moment a subscriber expresses
+        // interest in this participation. The shared websocket handlers (/user/topic/newSubmissions and
+        // /user/topic/submissionProcessing) gate on participationIdToExerciseId.has(...) to drop events for
+        // participations the client no longer tracks. The mapping was previously only set inside
+        // setupWebsocketSubscriptionForLatestPendingSubmission, which runs AFTER the per-participation
+        // latest-pending-submission GET resolves. While that GET is in flight, a build triggered right after
+        // (re)subscribing pushes its "building" event on the already-open shared topic (opened by another
+        // participation's card) before the mapping exists, so the guard silently drops it — the course-overview
+        // sidebar card then never shows the building indicator (a flaky, timing-dependent miss). Setting it here closes
+        // that window and also restores the mapping on the cached-subject fast path below, which a prior
+        // navigate-away cleanup (unsubscribeForLatestSubmissionOfParticipation) may have deleted.
+        this.participationIdToExerciseId.set(participationId, exerciseId);
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
@@ -815,6 +827,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
                     this.emitFailedSubmission(participationId, exerciseId);
                     return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
+                }
+                // The initial latest-pending-submission GET returned no pending submission. This GET is a point-in-time
+                // snapshot taken when the subscription was (re)created; under load it can resolve AFTER a build's
+                // submission event has already arrived on the websocket and moved this participation into a live
+                // building/queued state. Emitting HAS_NO_PENDING_SUBMISSION here would clobber that live state, and
+                // under coalesced zoneless change detection the building indicator would then never paint (e.g. the
+                // course-overview sidebar card flickers straight back to the result). Only emit "no pending" when we are
+                // not already tracking a live building/queued state for this participation.
+                const liveState = this.exerciseBuildState[exerciseId]?.[participationId];
+                if (
+                    liveState &&
+                    (liveState.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION || liveState.submissionState === ProgrammingSubmissionState.IS_QUEUED)
+                ) {
+                    return liveState;
                 }
                 this.emitNoPendingSubmission(participationId, exerciseId);
                 return { participationId, submission: undefined, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
