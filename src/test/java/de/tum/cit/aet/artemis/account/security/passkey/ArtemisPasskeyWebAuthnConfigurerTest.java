@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -26,10 +25,10 @@ class ArtemisPasskeyWebAuthnConfigurerTest {
     void setUp() {
         configurer = new ArtemisPasskeyWebAuthnConfigurer(null, null, null, null, null, null, null, null, mock(AndroidFingerprintService.class), null, null, null, null, null);
         androidFingerprintService = mock(AndroidFingerprintService.class);
-        when(androidFingerprintService.getFingerprints()).thenReturn(Collections.emptyList());
+        when(androidFingerprintService.getFingerprints()).thenReturn(List.of());
         ReflectionTestUtils.setField(configurer, "androidFingerprintService", androidFingerprintService);
         ReflectionTestUtils.setField(configurer, "passkeyEnabled", true);
-        ReflectionTestUtils.setField(configurer, "additionalAllowedOrigins", Collections.emptyList());
+        ReflectionTestUtils.setField(configurer, "additionalAllowedOrigins", List.of());
         ReflectionTestUtils.setField(configurer, "relyingPartyIdOverride", "");
     }
 

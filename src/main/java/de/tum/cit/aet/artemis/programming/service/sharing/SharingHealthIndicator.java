@@ -61,7 +61,7 @@ public class SharingHealthIndicator implements HealthIndicator {
                 SharingConnectorService.HealthStatus hs = lastStati.get(i);
                 ZonedDateTime zonedTimestamp = hs.getTimeStamp().atZone(UTC);
                 String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
-                health.withDetail(String.format("%3d: %s", i + 1, timeStamp), hs.getStatusMessage());
+                health.withDetail("%3d: %s".formatted(i + 1, timeStamp), hs.getStatusMessage());
             }
 
         }
