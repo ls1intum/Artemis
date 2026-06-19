@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points, @NotNull ScoringType scoringType,
         Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationCreateDTO> dropLocations, @NotEmpty List<@Valid DragItemCreateDTO> dragItems,
-        @NotEmpty List<@Valid DragAndDropMappingCreateDTO> correctMappings) implements QuizQuestionCreateDTO {
+        @NotEmpty List<@Valid DragAndDropMappingCreateDTO> correctDndMappings) implements QuizQuestionCreateDTO {
 
     /**
      * Converts this DTO to a {@link DragAndDropQuestion} domain object.
@@ -63,7 +63,7 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
             tempToDropLocation.put(dropLocations.get(i).tempID(), locations.get(i));
         }
 
-        Set<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
+        Set<DragAndDropMapping> mappings = correctDndMappings.stream().map(m -> {
             DragItem dragItem = tempToDragItem.get(m.dragItemTempId());
             DropLocation dropLocation = tempToDropLocation.get(m.dropLocationTempId());
             if (dragItem == null || dropLocation == null) {

@@ -85,7 +85,7 @@ describe('QuizReEvaluateService', () => {
             invalid: true,
             dropLocations: [dndDropLocation],
             dragItems: [dndDragItem],
-            correctMappings: [dndMapping],
+            correctDndMappings: [dndMapping],
         };
 
         const saSpot = { id: 31, invalid: false };
