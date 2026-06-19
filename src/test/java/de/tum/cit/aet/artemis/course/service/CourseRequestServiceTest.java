@@ -108,8 +108,7 @@ class CourseRequestServiceTest {
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 
-        verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
-        verify(channelService).createDefaultChannels(courseCaptor.getValue());
+        verify(channelService).createDefaultChannels(courseCaptor.capture());
         verify(courseAccessService).addUserToCourse(eq(requester), eq(courseCaptor.getValue()), eq(CourseRole.INSTRUCTOR));
         verify(mailSendingService).buildAndSendAsync(eq(MailRecipientDTO.from(requester)), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());

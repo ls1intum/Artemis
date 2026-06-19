@@ -136,20 +136,20 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Create regular admin users
         List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 1, 2);
-        admins = admins.stream().map(userRepository::saveOrUpdate).toList();
+        admins = userRepository.saveAll(admins);
 
         // Create an inactive admin user (should not be included)
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
         inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         inactiveAdmin.setActivated(false);
-        inactiveAdmin = userRepository.saveOrUpdate(inactiveAdmin);
+        inactiveAdmin = userRepository.save(inactiveAdmin);
 
         // Create a deleted admin user (should not be included)
         User deletedAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedadmin");
         deletedAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         deletedAdmin.setActivated(true);
         deletedAdmin.setDeleted(true);
-        deletedAdmin = userRepository.saveOrUpdate(deletedAdmin);
+        deletedAdmin = userRepository.save(deletedAdmin);
 
         // Create a regular user (should not be included)
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");

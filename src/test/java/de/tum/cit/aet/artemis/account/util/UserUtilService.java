@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -382,19 +381,10 @@ public class UserUtilService {
         // Before adding new users, remove all user_course_role entries so AuthorizationCheckService sees no
         // stale roles from a previous test. Courses created afterwards re-populate via
         // CourseUtilService.enrollPrefixedUsersInCourse().
-        // Use bulk JPQL delete to avoid loading UCR entities (with uninitialized User proxies) into the Hibernate
-        // session — the entity-loading deleteAll() would leave PersistentSet snapshots (sn=null) on those
-        // proxies, causing a NullPointerException in sortCollectionActions when saveOrUpdate() flushes.
         if (!usersToAdd.isEmpty()) {
             userCourseRoleTestRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
-            // Use saveOrUpdate instead of saveAll: for existing users (with ID), saveAll triggers JPA merge(),
-            // which loads the managed entity with a lazy PersistentSet(sn=null) for the legacy `groups`
-            // ElementCollection, then replaces it with a new PersistentSet(loaded=true, sn=null) built from
-            // the detached user's plain HashSet. At flush, PersistentSet.hasDeletes() → NPE (sn is null).
-            // saveOrUpdate loads the user WITH groups eagerly (initialising sn) and updates fields in-place,
-            // avoiding the NPE. This workaround is removed in the follow-up PR for #12788 when the groups field is dropped.
-            usersToAdd = usersToAdd.stream().map(userTestRepository::saveOrUpdate).collect(Collectors.toCollection(ArrayList::new));
+            usersToAdd = new ArrayList<>(userTestRepository.saveAll(usersToAdd));
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -410,9 +400,7 @@ public class UserUtilService {
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
-        // Use saveOrUpdate instead of saveAll: saveAll uses JPA merge() which leaves the legacy `groups`
-        // PersistentSet with sn=null, causing NPE in PersistentSet.hasDeletes() at flush time.
-        students.stream().map(userTestRepository::saveOrUpdate).collect(Collectors.toCollection(ArrayList::new));
+        userTestRepository.saveAll(students);
     }
 
     /**

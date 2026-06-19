@@ -232,12 +232,9 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
-            final User user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + login)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login));
-            user.getGroups().clear();
-            return userTestRepository.save(user);
-        }).collect(Collectors.toSet());
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1")
+                .map(login -> userTestRepository.findOneByLogin(TEST_PREFIX + login).orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login)))
+                .collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
         request.delete("/api/account/admin/users", HttpStatus.OK, logins);
