@@ -13,11 +13,13 @@ import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-component',
-    template: '<button jhiDeleteButton [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
+    template:
+        '<button jhiDeleteButton [actionType]="actionType" [renderButtonText]="renderButtonText" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
     imports: [DeleteButtonDirective],
 })
 class TestComponent {
     actionType = ActionType.Delete;
+    renderButtonText = true;
 }
 
 describe('DeleteDialogDirective', () => {
@@ -66,13 +68,15 @@ describe('DeleteDialogDirective', () => {
         expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.delete');
 
-        // Check that button was assigned with proper classes and type.
-        const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
+        // Styled as a PrimeNG danger button matching the pButton View/Edit siblings: normal padding, NOT
+        // icon-only (the label is present, only hidden below md).
+        const deleteButton = debugElement.query(By.css('.p-button.p-component.p-button-sm.p-button-danger'));
         expect(deleteButton).not.toBeNull();
+        expect(deleteButton.nativeElement.classList.contains('p-button-icon-only')).toBe(false);
         expect(deleteButton.properties['type']).toBe('submit');
 
-        // Check that delete text span was added to the DOM.
-        const deleteTextSpan = debugElement.query(By.css('.d-none.d-xl-inline'));
+        // The label span carries p-button-label and collapses below md (shown from md upwards), like sibling pButton labels.
+        const deleteTextSpan = debugElement.query(By.css('.p-button-label.hidden.md\\:inline'));
         expect(deleteTextSpan).not.toBeNull();
         expect(deleteTextSpan.nativeElement.textContent).not.toBeNull();
 
@@ -83,6 +87,14 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.entityTitle()).toBe('title');
         expect(directiveInstance.deleteQuestion()).toBe('question');
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
+    });
+
+    it('renders icon-only with no label span when renderButtonText is false', () => {
+        comp.renderButtonText = false;
+        fixture.detectChanges();
+        const iconOnly = debugElement.query(By.css('.p-button.p-component.p-button-sm.p-button-danger.p-button-icon-only'));
+        expect(iconOnly).not.toBeNull();
+        expect(debugElement.query(By.css('.p-button-label'))).toBeNull();
     });
 
     it('on click should call delete dialog service', () => {
