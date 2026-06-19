@@ -1,7 +1,11 @@
 :host ::ng-deep .iris-kpi-card.p-card {
     height: 100%;
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
+
+    // Use Artemis theme tokens (not PrimeNG --surface-*): the admin page paints with --module-bg
+    // (= the neutral dark base), so an elevated card needs the lightened card-cap surface plus the
+    // stronger themed border to stay distinguishable in dark mode. Both tokens are defined for light + dark.
+    background: var(--card-cap-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
 }
 
