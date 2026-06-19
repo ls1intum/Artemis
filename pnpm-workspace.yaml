@@ -77,6 +77,11 @@ overrides:
     piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
+    # @tumaet/apollon 4.7.0 requires react/react-dom ^19 as peers. Artemis embeds
+    # Apollon but has no direct React code, so force the whole React subtree to 19
+    # (matches the version used in the documentation/ project).
+    react: '19.2.7'
+    react-dom: '19.2.7'
     semver: '7.8.0'
     serialize-javascript: '7.0.5'
     tmp: '0.2.5'
