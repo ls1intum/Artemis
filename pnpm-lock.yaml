@@ -178,9 +178,6 @@ importers:
       dompurify:
         specifier: 3.4.10
         version: 3.4.10
-      export-to-csv:
-        specifier: 1.4.0
-        version: 1.4.0
       fflate:
         specifier: 0.8.3
         version: 0.8.3
@@ -205,9 +202,6 @@ importers:
       markdown-it:
         specifier: 14.2.0
         version: 14.2.0
-      markdown-it-highlightjs:
-        specifier: 4.3.0
-        version: 4.3.0
       monaco-editor:
         specifier: 0.55.1
         version: 0.55.1
@@ -4410,10 +4404,6 @@ packages:
   exponential-backoff@3.1.3:
     resolution: {integrity: sha512-ZgEeZXj30q+I0EN+CbSSpIyPaJ5HVQD18Z1m+u1FXbAeT94mr1zw50q4q6jiiC447Nl/YTcIYSAftiGqetwXCA==}
 
-  export-to-csv@1.4.0:
-    resolution: {integrity: sha512-6CX17Cu+rC2Fi2CyZ4CkgVG3hLl6BFsdAxfXiZkmDFIDY4mRx2y2spdeH6dqPHI9rP+AsHEfGeKz84Uuw7+Pmg==}
-    engines: {node: ^v12.20.0 || >=v14.13.0}
-
   express-rate-limit@8.5.2:
     resolution: {integrity: sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==}
     engines: {node: '>= 16'}
@@ -5166,9 +5156,6 @@ packages:
   make-fetch-happen@15.0.6:
     resolution: {integrity: sha512-Je0fLJ0F5atA7F+eIlLzk+Wkcl57JDf4kf+EW8xiP5E31xOQxkIxTbgf1Oi1Lw9tRI9UEMRdI5Vz2xTzoNU1Jw==}
     engines: {node: ^20.17.0 || >=22.9.0}
-
-  markdown-it-highlightjs@4.3.0:
-    resolution: {integrity: sha512-dTEXpTV2J9WJiO8TA/FJ4DxidrYtTNcfBAdl+CLjQ3UFWj8s4dJyCPTcvoXNLmN5U5ZTCGu7TSkSvBvi4fUqkQ==}
 
   markdown-it@14.2.0:
     resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
@@ -11229,8 +11216,6 @@ snapshots:
 
   exponential-backoff@3.1.3: {}
 
-  export-to-csv@1.4.0: {}
-
   express-rate-limit@8.5.2(express@5.2.1):
     dependencies:
       express: 5.2.1
@@ -12049,10 +12034,6 @@ snapshots:
       ssri: 13.0.1
     transitivePeerDependencies:
       - supports-color
-
-  markdown-it-highlightjs@4.3.0:
-    dependencies:
-      highlight.js: 11.11.1
 
   markdown-it@14.2.0:
     dependencies:
