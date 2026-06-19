@@ -8,7 +8,7 @@
          are treated as LocalCI legacy exercises. Invalid or incomplete legacy JSON falls back to the default
          docker image and an empty result path list. -->
     <changeSet id="20260619084135-1" author="matyasht" dbms="mysql">
-        <sql splitStatements="false"><![CDATA[
+        <sql splitStatements="true" endDelimiter=";"><![CDATA[
             -- Migration candidates with the old build script wrapped as a build phase script.
             CREATE TEMPORARY TABLE tmp_legacy_build_plan_candidates AS
             SELECT id,
