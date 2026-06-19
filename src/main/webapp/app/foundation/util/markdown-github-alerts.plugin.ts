@@ -1,12 +1,11 @@
 import type { PluginSimple } from 'markdown-it';
 
 /**
- * Local replacement for the `markdown-it-github-alerts` dependency, used with its default options.
- * Converts GitHub-style alert blockquotes (e.g. `> [!NOTE]`) into
+ * markdown-it plugin that converts GitHub-style alert blockquotes (e.g. `> [!NOTE]`) into
  * `<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">…</p>…</div>`
- * blocks. The emitted markup (class names and inline octicon SVGs) matches the former dependency,
- * so the vendored github-alerts styles (`content/scss/_github-alerts.scss`) keep applying. Output
- * still flows through DOMPurify in the markdown conversion util.
+ * blocks. The emitted markup (class names and inline octicon SVGs) is styled by the github-alerts
+ * styles in `content/scss/_github-alerts.scss`. Output flows through DOMPurify in the markdown
+ * conversion util.
  *
  * This implementation is based on markdown-it-github-alerts by Anthony Fu.
  * Original: https://github.com/antfu/markdown-it-github-alerts
@@ -34,7 +33,7 @@ import type { PluginSimple } from 'markdown-it';
  * SOFTWARE.
  */
 
-/** Inline octicon SVGs for each alert type (verbatim from markdown-it-github-alerts' defaults). */
+/** Inline octicon SVGs for each alert type. */
 const ALERT_ICONS: Record<string, string> = {
     note: '<svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>',
     tip: '<svg class="octicon octicon-light-bulb mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>',
