@@ -39,102 +39,88 @@
         <!-- Row 1: Sessions & Users -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.totalSessions">Total Sessions</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.totalSessions" helpKey="artemisApp.irisDashboard.help.totalSessions">
                     <span class="fs-3 fw-bold">{{ o.totalSessions }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.activeSessions">Active Sessions</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.activeSessions" helpKey="artemisApp.irisDashboard.help.activeSessions">
                     <span class="fs-3 fw-bold">{{ o.activeSessions }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.engagementRate">Engagement Rate</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.engagementRate" helpKey="artemisApp.irisDashboard.help.engagementRate">
                     <span class="fs-3 fw-bold">{{ o.engagementRate | number: '1.1-1' }}%</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.uniqueUsers">Unique Users</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.uniqueUsers" helpKey="artemisApp.irisDashboard.help.uniqueUsers">
                     <span class="fs-3 fw-bold">{{ o.uniqueUsers }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
         </div>
 
         <!-- Row 2: No-Response -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseRate">No-Response Rate</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseRate" helpKey="artemisApp.irisDashboard.help.noResponseRate">
                     <span class="fs-3 fw-bold" [class.text-danger]="o.noResponseRate > 10">{{ o.noResponseRate | number: '1.1-1' }}%</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseMessages">No-Response Messages</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseMessages" helpKey="artemisApp.irisDashboard.help.noResponseMessages">
                     <span class="fs-3 fw-bold">{{ o.noResponseMessageCount }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseSessions">No-Response Sessions</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseSessions" helpKey="artemisApp.irisDashboard.help.noResponseSessions">
                     <span class="fs-3 fw-bold">{{ o.noResponseSessionCount }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
         </div>
 
         <!-- Row 3: Ratings -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.thumbsUpRatio">Thumbs Up Ratio</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsUpRatio" helpKey="artemisApp.irisDashboard.help.thumbsUpRatio">
                     <span class="fs-3 fw-bold">{{ o.thumbsUpRatio | number: '1.1-1' }}%</span>
                     <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.thumbsDownRatio">Thumbs Down Ratio</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsDownRatio" helpKey="artemisApp.irisDashboard.help.thumbsDownRatio">
                     <span class="fs-3 fw-bold">{{ o.thumbsDownRatio | number: '1.1-1' }}%</span>
                     <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%</div>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.sessionsWithThumbsUp">Sessions with Thumbs Up</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsUp" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsUp">
                     <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsUp }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-3">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.sessionsWithThumbsDown">Sessions with Thumbs Down</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsDown" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsDown">
                     <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsDown }}</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
         </div>
 
         <!-- Row 4: Response Time & Cost -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.avgResponseTime">Avg Response Time</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.avgResponseTime" helpKey="artemisApp.irisDashboard.help.avgResponseTime">
                     <span class="fs-3 fw-bold">{{ o.avgResponseTimeSeconds | number: '1.1-1' }}s</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.p50p95">P50 / P95</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.p50p95" helpKey="artemisApp.irisDashboard.help.p50p95">
                     <span class="fs-3 fw-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
             <div class="col-md-4">
-                <p-card>
-                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.tokenCost">Token Cost</div></ng-template>
+                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.tokenCost" helpKey="artemisApp.irisDashboard.help.tokenCost">
                     <span class="fs-3 fw-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
-                </p-card>
+                </jhi-iris-kpi-card>
             </div>
         </div>
 

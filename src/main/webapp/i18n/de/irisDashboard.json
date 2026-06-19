@@ -20,6 +20,22 @@
             "avgResponseTime": "Durchschn. Antwortzeit",
             "p50p95": "P50 / P95",
             "tokenCost": "Token-Kosten",
+            "help": {
+                "totalSessions": "Gesamtzahl der im gewählten Zeitraum erstellten Iris-Chat-Sitzungen (inkl. Kurs-/Übungs-Chats und Tutor-Vorschlagssitzungen).",
+                "activeSessions": "Im gewählten Zeitraum erstellte Sitzungen, die mindestens eine Nutzernachricht erhalten haben.",
+                "engagementRate": "Anteil aller Sitzungen, die aktiv waren (mindestens eine Nutzernachricht erhielten): aktiv ÷ gesamt × 100.",
+                "uniqueUsers": "Anzahl eindeutiger Nutzer, die im gewählten Zeitraum mindestens eine Nachricht gesendet haben.",
+                "noResponseRate": "Anteil der berücksichtigten Nutzernachrichten ohne Iris-Antwort. Es zählen nur Nachrichten, die alt genug sind, um plausibel beantwortet worden zu sein (älter als der Schwellenwert für ausstehende Antworten).",
+                "noResponseMessages": "Anzahl der berücksichtigten Nutzernachrichten ohne Iris-Antwort.",
+                "noResponseSessions": "Anzahl eindeutiger Sitzungen mit mindestens einer unbeantworteten Nutzernachricht.",
+                "thumbsUpRatio": "Anteil der mit 'Daumen hoch' bewerteten Iris-Nachrichten an allen Iris-Nachrichten. 'Absolut' ist der Anteil aller Sitzungen mit mindestens einem 'Daumen hoch'.",
+                "thumbsDownRatio": "Anteil der mit 'Daumen runter' bewerteten Iris-Nachrichten an allen Iris-Nachrichten. 'Absolut' ist der Anteil aller Sitzungen mit mindestens einem 'Daumen runter'.",
+                "sessionsWithThumbsUp": "Anzahl eindeutiger Sitzungen mit mindestens einer 'Daumen hoch'-Bewertung.",
+                "sessionsWithThumbsDown": "Anzahl eindeutiger Sitzungen mit mindestens einer 'Daumen runter'-Bewertung.",
+                "avgResponseTime": "Durchschnittliche Zeit zwischen einer Nutzernachricht und der darauffolgenden Iris-Antwort, in Sekunden.",
+                "p50p95": "Median (P50) und 95. Perzentil (P95) der Antwortzeit zwischen einer Nutzernachricht und der Iris-Antwort, in Sekunden.",
+                "tokenCost": "Geschätzte LLM-Token-Kosten, die Iris im gewählten Zeitraum zugeordnet werden, in Euro (Summe aus Eingabe- und Ausgabe-Token-Kosten)."
+            },
             "breakdown": {
                 "byChatMode": "Nach Chat-Modus",
                 "byCourse": "Nach Kurs (Top 10)",

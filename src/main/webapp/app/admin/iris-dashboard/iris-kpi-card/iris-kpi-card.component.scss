@@ -1,0 +1,19 @@
+:host ::ng-deep .iris-kpi-card.p-card {
+    height: 100%;
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+}
+
+.iris-kpi-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.iris-kpi-card__title {
+    font-weight: 600;
+    color: var(--text-color-secondary);
+}

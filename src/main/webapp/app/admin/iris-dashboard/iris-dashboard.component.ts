@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
-import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { PanelModule } from 'primeng/panel';
@@ -16,6 +15,7 @@ import { IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview
 import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
+import { IrisKpiCardComponent } from './iris-kpi-card/iris-kpi-card.component';
 
 type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
 
@@ -25,7 +25,6 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
     imports: [
         DecimalPipe,
         JsonPipe,
-        CardModule,
         TableModule,
         TabsModule,
         PanelModule,
@@ -35,6 +34,7 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
+        IrisKpiCardComponent,
     ],
     templateUrl: './iris-dashboard.component.html',
     styleUrls: ['./iris-dashboard.component.scss'],
