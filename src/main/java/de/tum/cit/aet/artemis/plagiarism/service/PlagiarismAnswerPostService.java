@@ -59,7 +59,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      */
     public AnswerPost createAnswerPost(Long courseId, PlagiarismAnswerPostCreateRequestDTO request) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        final Course course = preCheckUserAndCourseForMessaging(user, courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         Post post = postRepository.findPostByIdElseThrow(request.post().id());
         parseUserMentions(course, request.content());

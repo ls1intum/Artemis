@@ -111,12 +111,10 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
         var answerPostCount = answerPostRepository.count();
 
-        AnswerPostResponseDTO notCreatedAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest,
-                AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
-        assertThat(notCreatedAnswerPost).isNull();
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isZero();
+        assertThat(newAnswerPostCount).isOne();
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
