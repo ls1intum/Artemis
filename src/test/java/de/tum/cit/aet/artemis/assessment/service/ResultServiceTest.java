@@ -375,7 +375,8 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         result = resultRepository.save(result);
         Long resultId = result.getId();
 
-        complaintUtilService.addComplaintToSubmission(result.getSubmission(), TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        Submission submissionWithResults = submissionTestRepository.findWithEagerResultsAndAssessorById(result.getSubmission().getId()).orElseThrow();
+        complaintUtilService.addComplaintToSubmission(submissionWithResults, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
 
         assertThat(complaintRepository.findByResultId(resultId)).isPresent();
 
