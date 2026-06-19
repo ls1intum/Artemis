@@ -9,11 +9,13 @@ import { MathSubmission } from 'app/math/shared/entities/math-submission.model';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { TextareaModule } from 'primeng/textarea';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 
 /**
  * Minimal scaffold editor for math exercises: it loads the participation's latest submission and lets the
@@ -23,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-math-submission',
     templateUrl: './math-submission.component.html',
     styleUrls: ['./math-submission.component.scss'],
-    imports: [FormsModule, TranslateDirective, ButtonModule, CardModule, TextareaModule, ConfirmDialog],
+    imports: [FormsModule, TranslateDirective, ButtonModule, TextareaModule, ConfirmDialog, FaIconComponent, ResizeableContainerComponent],
     providers: [ConfirmationService],
 })
 export class MathSubmissionComponent implements OnInit {
@@ -34,6 +36,9 @@ export class MathSubmissionComponent implements OnInit {
     private translatePipe = inject(ArtemisTranslatePipe);
 
     participationId = input<number>();
+
+    // Icons
+    protected readonly farListAlt = faListAlt;
 
     submission = signal<MathSubmission | undefined>(undefined);
     exercise = signal<MathExercise | undefined>(undefined);

@@ -1,25 +1,32 @@
-<p-card>
-    <ng-template #header>
-        <h4 class="px-3 pt-3 mb-0">{{ exercise()?.title }}</h4>
-    </ng-template>
+@if (exercise()) {
+    <jhi-resizeable-container [isExerciseParticipation]="true">
+        <!--region Left Panel-->
+        <div left-body class="ps-2 pb-2 w-100">
+            <div class="form-group">
+                <label for="math-content" jhiTranslate="artemisApp.mathExercise.editor.content">Your solution</label>
+                <textarea id="math-content" pTextarea class="w-100" rows="10" [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
+            </div>
 
-    @if (exercise()?.problemStatement) {
-        <p class="text-muted">{{ exercise()?.problemStatement }}</p>
-    }
+            <div class="d-flex gap-2 mt-2">
+                <button pButton type="button" id="save-submission" severity="secondary" [disabled]="isSaving()" (click)="save()">
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </button>
+                <button pButton type="button" id="submit-submission" [disabled]="isSaving()" (click)="submit()">
+                    <span jhiTranslate="entity.action.submit">Submit</span>
+                </button>
+            </div>
+        </div>
+        <!--endregion-->
+        <!--region Right Panel-->
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
+        <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
+        <ng-container right-body>
+            @if (exercise()?.problemStatement) {
+                <p class="text-muted mb-0">{{ exercise()?.problemStatement }}</p>
+            }
+        </ng-container>
+        <!--endregion-->
+    </jhi-resizeable-container>
+}
 
-    <div class="form-group">
-        <label for="math-content" jhiTranslate="artemisApp.mathExercise.editor.content">Your solution</label>
-        <textarea id="math-content" pTextarea class="w-100" rows="10" [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
-    </div>
-
-    <div class="d-flex gap-2 mt-2">
-        <button pButton type="button" id="save-submission" severity="secondary" [disabled]="isSaving()" (click)="save()">
-            <span jhiTranslate="entity.action.save">Save</span>
-        </button>
-        <button pButton type="button" id="submit-submission" [disabled]="isSaving()" (click)="submit()">
-            <span jhiTranslate="entity.action.submit">Submit</span>
-        </button>
-    </div>
-
-    <p-confirmDialog />
-</p-card>
+<p-confirmDialog />
