@@ -11,7 +11,8 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
+import { FormsModule } from '@angular/forms';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
@@ -30,7 +31,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         FaIconComponent,
         TooltipModule,
         ButtonModule,
-        ModePickerComponent,
+        FormsModule,
+        SelectButtonModule,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         UnsavedChangesWarningComponent,
@@ -49,7 +51,6 @@ export class LegalDocumentUpdateComponent implements OnInit {
     protected readonly LANGUAGE_OPTIONS = this.SUPPORTED_LANGUAGES.map((language) => ({
         value: language,
         labelKey: 'artemisApp.legal.language.' + language,
-        btnClass: 'btn-primary',
     }));
     protected readonly DEFAULT_LANGUAGE = LegalDocumentLanguage.GERMAN;
     protected readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;

@@ -14,8 +14,8 @@
                 [imageUrl]="addPublicFilePrefix(u.imageUrl)"
             />
         </div>
-        <dl class="jh-entity-details">
-            <dt><span jhiTranslate="artemisApp.userManagement.login"></span></dt>
+        <dl class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-x-4 gap-y-1">
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.login"></span></dt>
             <dd>
                 <span>{{ u.login }}</span>
                 @if (u.activated) {
@@ -25,27 +25,27 @@
                     <p-tag severity="danger" [value]="'artemisApp.userManagement.deactivated' | artemisTranslate" data-testid="user-deactivated-tag" />
                 }
             </dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.internal"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.internal"></span></dt>
             <dd>{{ (u.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.firstName"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.firstName"></span></dt>
             <dd>{{ u.firstName }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.lastName"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.lastName"></span></dt>
             <dd>{{ u.lastName }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.email"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.email"></span></dt>
             <dd>{{ u.email }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.registrationNumber"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.registrationNumber"></span></dt>
             <dd>{{ u.visibleRegistrationNumber }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.langKey"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.langKey"></span></dt>
             <dd>{{ u.langKey }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.createdBy"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.createdBy"></span></dt>
             <dd>{{ u.createdBy }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.createdDate"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.createdDate"></span></dt>
             <dd>{{ u.createdDate | artemisDate }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span></dt>
             <dd>{{ u.lastModifiedBy }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span></dt>
             <dd>{{ u.lastModifiedDate | artemisDate }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.globalRoles"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.globalRoles"></span></dt>
             <dd>
                 <ul class="m-0 flex list-none flex-col gap-1 p-0">
                     @for (authority of u.authorities; track authority) {
@@ -55,7 +55,7 @@
                     }
                 </ul>
             </dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
             <dd>
                 <ul class="m-0 list-none p-0">
                     @for (group of u.groups; track group) {
@@ -65,11 +65,13 @@
                     }
                 </ul>
             </dd>
+        </dl>
+        <div class="mt-4">
             <a [routerLink]="['edit']" pButton size="small" severity="warn" data-testid="edit-user-button">
                 <fa-icon [icon]="faPencil" />
                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>
-        </dl>
+        </div>
     </div>
 }
 <router-outlet />

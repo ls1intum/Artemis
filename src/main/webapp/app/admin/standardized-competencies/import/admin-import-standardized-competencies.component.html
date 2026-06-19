@@ -40,7 +40,7 @@
                     </ng-template>
                 </jhi-knowledge-area-tree>
                 @if (selectedCompetency(); as competency) {
-                    <div class="ms-1 flex h-full w-full grow rounded-lg border light-background p-3" data-testid="competency-detail">
+                    <div class="ms-1 flex h-full w-full grow rounded-lg border bg-surface-0 dark:bg-surface-900 p-3" data-testid="competency-detail">
                         <jhi-standardized-competency-detail
                             [competency]="competency"
                             [knowledgeAreaTitle]="knowledgeAreaTitle()"

@@ -1,10 +1,11 @@
 import { Component, inject, model, signal } from '@angular/core';
-import { Observable, OperatorFunction, catchError, map, of, switchMap, tap } from 'rxjs';
+import { Observable, OperatorFunction, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/account/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
+import { TagModule } from 'primeng/tag';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
     styleUrls: ['./type-ahead-user-search-field.component.scss'],
-    imports: [TranslateDirective, FormsModule, NgbTypeahead, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, AutoCompleteModule, TagModule, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
     private readonly userService = inject(UserService);
@@ -25,10 +26,21 @@ export class TypeAheadUserSearchFieldComponent {
     readonly searchNoResults = signal(false);
     readonly searchQueryTooShort = signal(true);
 
+    /** Suggestions shown in the autocomplete dropdown. */
+    readonly suggestions = signal<User[]>([]);
+
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
-    search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
+    /** Drives the search pipeline from the PrimeNG (completeMethod) event. */
+    private readonly query$ = new Subject<string>();
+
+    constructor() {
+        // Wire the existing search pipeline into the suggestions signal.
+        this.search(this.query$).subscribe((users) => this.suggestions.set(users));
+    }
+
+    search: OperatorFunction<string, User[]> = (login: Observable<string>) => {
         return login.pipe(
             tap(() => {
                 // Reset all status flags at the beginning before any branching
@@ -59,6 +71,17 @@ export class TypeAheadUserSearchFieldComponent {
             }),
         );
     };
+
+    /** Called by p-autoComplete on each keystroke; forwards the query into the search pipeline. */
+    onComplete(event: AutoCompleteCompleteEvent): void {
+        this.query$.next(event.query);
+    }
+
+    /** Called by p-autoComplete when a user is picked from the dropdown. */
+    onSelectUser(event: AutoCompleteSelectEvent): void {
+        this.loginOrName.set(event.value as User);
+        this.onChange();
+    }
 
     onChange(): void {
         const currentValue = this.loginOrName();

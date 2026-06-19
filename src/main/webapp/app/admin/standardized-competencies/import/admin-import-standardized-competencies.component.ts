@@ -43,7 +43,6 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
-    styleUrls: ['./admin-import-standardized-competencies.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FontAwesomeModule,

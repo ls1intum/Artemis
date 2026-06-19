@@ -27,9 +27,9 @@
     >
         @if (showCaption()) {
             <ng-template #caption>
-                <div class="d-flex align-items-center gap-2">
+                <div class="flex items-center gap-2">
                     @if (resolvedOptions().showSearch) {
-                        <div class="flex-grow-1">
+                        <div class="grow">
                             <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
                         </div>
                     }
@@ -42,7 +42,7 @@
         <ng-template #header let-columns>
             <!-- Nested here so p-sortIcon can inject Table from within p-table's context -->
             <ng-template #colHeaderContent let-col="col">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="flex justify-between items-center">
                     <div>
                         @if (col?.headerKey) {
                             <span [jhiTranslate]="col.headerKey"></span>
@@ -54,7 +54,7 @@
                         }
                     </div>
                     @if (col?.filterType && col?.field) {
-                        <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
+                        <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ms-auto" />
                     }
                 </div>
             </ng-template>

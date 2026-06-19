@@ -10,14 +10,14 @@
     appendTo="body"
 >
     <form id="userImportDialogForm" name="importForm" role="form" novalidate>
-        <div class="form-group">
-            <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText"></p>
-            <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
-            <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
+        <div class="flex flex-col gap-2">
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.introText"></p>
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.dialogText"></p>
+            <p class="intro-text text-color" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
         </div>
         @if (!examUserMode()) {
-            <div class="d-flex justify-content-center align-items-center">
-                <table class="table table-bordered w-auto">
+            <div class="flex justify-center items-center">
+                <table class="csv-example-table w-auto">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -48,8 +48,8 @@
             </div>
         }
         @if (examUserMode()) {
-            <div class="d-flex justify-content-center align-items-center">
-                <table class="table table-bordered w-auto">
+            <div class="flex justify-center items-center">
+                <table class="csv-example-table w-auto">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -73,10 +73,10 @@
                 <span>user_1</span>
             </div>
         }
-        <div class="form-group">
-            <div class="d-flex align-items-end">
+        <div class="flex flex-col gap-2">
+            <div class="flex items-end">
                 <div>
-                    <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
+                    <label for="importCSV" class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing()) {
@@ -106,13 +106,13 @@
             </div>
         </div>
         @if (usersToImport() && usersToImport().length > 0 && !examUserMode()) {
-            <div class="form-group mt-4">
+            <div class="flex flex-col gap-2 mt-4">
                 <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
-                <table class="table table-striped table-sm header-fixed mt-2">
-                    <thead>
+                <p-table [value]="usersToImport()" [scrollable]="true" scrollHeight="max(300px, 100vh - 500px)" class="p-datatable-sm p-datatable-striped header-fixed mt-2">
+                    <ng-template #header>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col" style="width: 300px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
@@ -121,30 +121,28 @@
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
                         </tr>
-                    </thead>
-                    <tbody class="table-body--students">
-                        @for (user of usersToImport(); track user; let i = $index) {
-                            <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
-                                <th scope="row">{{ i + 1 }}</th>
-                                <td style="width: 300px">{{ user.registrationNumber }}</td>
-                                <td>{{ user.login }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.firstName }}</td>
-                                <td>{{ user.lastName }}</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                    </ng-template>
+                    <ng-template #body let-user let-i="rowIndex">
+                        <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
+                            <th scope="row">{{ i + 1 }}</th>
+                            <td style="width: 300px">{{ user.registrationNumber }}</td>
+                            <td>{{ user.login }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.firstName }}</td>
+                            <td>{{ user.lastName }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         }
         @if (examUsersToImport() && examUsersToImport().length > 0 && examUserMode()) {
-            <div class="form-group mt-4 table-responsive">
+            <div class="flex flex-col gap-2 mt-4">
                 <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
-                <table class="table table-striped table-sm header-fixed mt-2">
-                    <thead>
+                <p-table [value]="examUsersToImport()" [scrollable]="true" scrollHeight="max(300px, 100vh - 500px)" class="p-datatable-sm p-datatable-striped header-fixed mt-2">
+                    <ng-template #header>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col" style="width: 350px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
@@ -155,29 +153,27 @@
                             <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.room'">Room</th>
                             <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.seat'">Seat</th>
                         </tr>
-                    </thead>
-                    <tbody class="table-body--students">
-                        @for (user of examUsersToImport(); track user; let i = $index) {
-                            <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
-                                <th scope="row">{{ i + 1 }}</th>
-                                <td style="width: 350px">{{ user.registrationNumber }}</td>
-                                <td>{{ user.login }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.firstName }}</td>
-                                <td>{{ user.lastName }}</td>
-                                <td>{{ user.room }}</td>
-                                <td>{{ user.seat }}</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                    </ng-template>
+                    <ng-template #body let-user let-i="rowIndex">
+                        <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
+                            <th scope="row">{{ i + 1 }}</th>
+                            <td style="width: 350px">{{ user.registrationNumber }}</td>
+                            <td>{{ user.login }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.firstName }}</td>
+                            <td>{{ user.lastName }}</td>
+                            <td>{{ user.room }}</td>
+                            <td>{{ user.seat }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         }
     </form>
     <ng-template pTemplate="footer">
-        <div class="d-flex justify-content-between w-100">
+        <div class="flex justify-between w-full">
             @if (usersToImport() && usersToImport().length > 0) {
-                <div class="flex-shrink-0 me-2 d-flex">
+                <div class="flex-shrink-0 me-2 flex">
                     @if (!hasImported()) {
                         <div>
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
@@ -191,14 +187,14 @@
                         <div class="ms-2">
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                             <span
-                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                                ><b class="text-danger">{{ numberOfUsersNotImported }}</b></span
                             >
                         </div>
                     }
                 </div>
             }
             @if (examUsersToImport() && examUsersToImport().length > 0) {
-                <div class="flex-shrink-0 me-2 d-flex">
+                <div class="flex-shrink-0 me-2 flex">
                     @if (!hasImported()) {
                         <div>
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
@@ -212,24 +208,24 @@
                         <div class="ms-2">
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                             <span
-                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                                ><b class="text-danger">{{ numberOfUsersNotImported }}</b></span
                             >
                         </div>
                     }
                 </div>
             }
-            <div class="flex-grow-1 d-flex justify-content-end">
+            <div class="grow flex justify-end">
                 @if (!hasImported()) {
-                    <button type="button" class="btn btn-secondary cancel me-2" (click)="clear()">
+                    <button pButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                    <button pButton type="submit" id="import" name="importButton" severity="primary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
                         <fa-icon [icon]="faUpload" class="me-2" />
                         <span jhiTranslate="entity.action.to-import"></span>
                         <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                     </button>
                 } @else {
-                    <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                    <button pButton severity="success" size="small" id="finish-button" (click)="onFinish()">
                         <fa-icon [icon]="faCheck" class="me-2" />
                         <span jhiTranslate="entity.action.finish"></span>
                     </button>

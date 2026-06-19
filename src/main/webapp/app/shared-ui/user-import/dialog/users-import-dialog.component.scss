@@ -34,7 +34,7 @@ $error-bg-color: #f8d7da;
     }
 }
 
-table.table.table-striped .import-success {
+.import-success {
     td,
     th {
         color: $success-text-color;
@@ -42,7 +42,7 @@ table.table.table-striped .import-success {
     }
 }
 
-table.table.table-striped .import-fail {
+.import-fail {
     td,
     th {
         color: $error-text-color;
@@ -53,43 +53,8 @@ table.table.table-striped .import-fail {
 .header-fixed {
     width: 100%;
 
-    thead,
-    tbody,
-    thead > tr,
-    tbody > tr,
-    thead > tr > th,
-    tbody > tr > td,
-    th {
-        display: block;
-    }
-
-    tbody > tr::after,
-    thead > tr::after {
-        content: ' ';
-        display: block;
-        visibility: hidden;
-        clear: both;
-    }
-
-    thead {
-        overflow-y: scroll;
-    }
-
-    tbody {
-        overflow-y: scroll;
+    .p-datatable-table-container {
         min-height: 150px;
-        max-height: max(300px, 100vh - 500px);
-    }
-
-    tbody > tr > td,
-    tbody > tr > td,
-    th {
-        width: 25%; // divide by the number of table columns: calc(100% / 4)
-        float: left;
-    }
-
-    tr {
-        display: flex !important;
     }
 
     td,
@@ -100,8 +65,16 @@ table.table.table-striped .import-fail {
     }
 }
 
-.modal-footer {
-    button[disabled] {
-        cursor: not-allowed;
+.csv-example-table {
+    border-collapse: collapse;
+
+    th,
+    td {
+        border: 1px solid var(--p-content-border-color, #dee2e6);
+        padding: 0.4rem 0.75rem;
     }
+}
+
+button[disabled] {
+    cursor: not-allowed;
 }

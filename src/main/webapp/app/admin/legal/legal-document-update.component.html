@@ -43,7 +43,19 @@
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </button>
-            <jhi-mode-picker [options]="LANGUAGE_OPTIONS" [value]="currentLanguage()" (valueChange)="onLanguageChange($event!)" />
+            <p-selectButton
+                size="small"
+                [options]="LANGUAGE_OPTIONS"
+                [ngModel]="currentLanguage()"
+                (ngModelChange)="onLanguageChange($event)"
+                optionLabel="labelKey"
+                optionValue="value"
+                [allowEmpty]="false"
+            >
+                <ng-template let-option #item>
+                    {{ option.labelKey | artemisTranslate }}
+                </ng-template>
+            </p-selectButton>
         </div>
     </div>
 </div>
