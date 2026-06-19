@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -23,7 +23,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     styleUrls: ['./doughnut-chart.component.scss'],
     imports: [RouterLink, NgClass, FaIconComponent, ChartModule, ArtemisTranslatePipe],
 })
-export class DoughnutChartComponent implements OnChanges, OnInit {
+export class DoughnutChartComponent implements OnInit {
     protected readonly faSpinner = faSpinner;
 
     private readonly router = inject(Router);
@@ -36,10 +36,10 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     readonly currentAbsolute = input<number>();
     readonly currentMax = input<number>();
 
-    receivedStats = false;
-    doughnutChartTitle: string;
+    readonly receivedStats = signal(false);
+    readonly doughnutChartTitle = signal<string>(undefined!);
     stats: number[];
-    titleLink: string[] | undefined;
+    readonly titleLink = signal<string[] | undefined>(undefined);
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([
         { name: 'Done', value: 0 },
@@ -53,22 +53,29 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     readonly chartOptions = computed(() =>
         doughnutChartOptions({
             legend: false,
-            tooltip: { label: (item) => `${item.label}: ${this.valueFormatting({ value: item.parsed })}` },
+            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
         }),
     );
 
-    ngOnChanges() {
-        // [0, 0, 0] will lead to the chart not being displayed,
-        // assigning [0, 0, 0] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
-        const currentAbsolute = this.currentAbsolute();
-        if (currentAbsolute == undefined && !this.receivedStats) {
-            this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
-        } else {
-            this.receivedStats = true;
-            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax()! - currentAbsolute!, this.course());
-            this.stats = [currentAbsolute!, remaining, 0]; // done, not done, na
-            return this.currentMax() === 0 ? this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE) : this.updatePieChartData(this.stats);
-        }
+    constructor() {
+        // Recompute the doughnut data whenever the inputs change (replaces ngOnChanges).
+        // Track the inputs, but run the chartEntries read+write inside untracked() to avoid a self-triggering loop.
+        effect(() => {
+            const currentAbsolute = this.currentAbsolute();
+            const currentMax = this.currentMax();
+            const course = this.course();
+            untracked(() => {
+                // [0, 0, 0] would hide the chart; PIE_CHART_NA_FALLBACK_VALUE displays 0 %, 0 / 0 with a grey circle.
+                if (currentAbsolute == undefined && !this.receivedStats()) {
+                    this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
+                } else {
+                    this.receivedStats.set(true);
+                    const remaining = roundValueSpecifiedByCourseSettings(currentMax! - currentAbsolute!, course);
+                    this.stats = [currentAbsolute!, remaining, 0]; // done, not done, na
+                    this.updatePieChartData(currentMax === 0 ? PIE_CHART_NA_FALLBACK_VALUE : this.stats);
+                }
+            });
+        });
     }
 
     /**
@@ -77,20 +84,20 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     ngOnInit(): void {
         switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                this.doughnutChartTitle = 'averageScore';
-                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
+                this.doughnutChartTitle.set('averageScore');
+                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`]);
                 break;
             case DoughnutChartType.PARTICIPATIONS:
-                this.doughnutChartTitle = 'participationRate';
-                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
+                this.doughnutChartTitle.set('participationRate');
+                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
                 break;
             case DoughnutChartType.QUESTIONS:
-                this.doughnutChartTitle = 'resolved_posts';
-                this.titleLink = [`/courses/${this.course().id}/exercises/${this.exerciseId()}`];
+                this.doughnutChartTitle.set('resolved_posts');
+                this.titleLink.set([`/courses/${this.course().id}/exercises/${this.exerciseId()}`]);
                 break;
             default:
-                this.doughnutChartTitle = '';
-                this.titleLink = undefined;
+                this.doughnutChartTitle.set('');
+                this.titleLink.set(undefined);
         }
     }
 
@@ -99,8 +106,9 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        if (this.course().id && this.exerciseId() && this.titleLink) {
-            this.router.navigate(this.titleLink);
+        const titleLink = this.titleLink();
+        if (this.course().id && this.exerciseId() && titleLink) {
+            this.router.navigate(titleLink);
         }
     }
 

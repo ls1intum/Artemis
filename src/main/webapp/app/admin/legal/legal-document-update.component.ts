@@ -84,7 +84,7 @@ export class LegalDocumentUpdateComponent implements OnInit {
     readonly warningTextMessage = signal('');
 
     /** Translation key for the page title */
-    titleKey: string;
+    readonly titleKey = signal<string>(undefined!);
 
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement
@@ -97,11 +97,11 @@ export class LegalDocumentUpdateComponent implements OnInit {
             )
             .subscribe();
         if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
-            this.titleKey = 'artemisApp.legal.imprint.updateImprint';
+            this.titleKey.set('artemisApp.legal.imprint.updateImprint');
         } else {
-            this.titleKey = 'artemisApp.legal.privacyStatement.updatePrivacyStatement';
+            this.titleKey.set('artemisApp.legal.privacyStatement.updatePrivacyStatement');
         }
-        this.languageHelper.updateTitle(this.titleKey);
+        this.languageHelper.updateTitle(this.titleKey());
 
         this.legalDocument.set(new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE));
         this.getLegalDocumentForUpdate(this.legalDocumentType, this.DEFAULT_LANGUAGE).subscribe((document) => {

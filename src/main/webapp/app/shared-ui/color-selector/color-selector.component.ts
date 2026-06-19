@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, Renderer2, inject, input, output } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2, inject, input, output, signal } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { NgStyle } from '@angular/common';
 
@@ -36,9 +36,9 @@ export class ColorSelectorComponent implements OnInit {
     private elementRef = inject(ElementRef);
     private renderer = inject(Renderer2);
 
-    colorSelectorPosition: Coordinates;
-    showColorSelector = false;
-    height = 220;
+    readonly colorSelectorPosition = signal<Coordinates>(undefined!);
+    readonly showColorSelector = signal(false);
+    readonly height = signal(220);
     tagColors = input<string[]>(DEFAULT_COLORS);
     selectedColor = output<string>();
 
@@ -46,19 +46,19 @@ export class ColorSelectorComponent implements OnInit {
      * set default position on init
      */
     ngOnInit(): void {
-        this.colorSelectorPosition = { left: 0, top: 0 };
+        this.colorSelectorPosition.set({ left: 0, top: 0 });
 
         this.addEventListenerToCloseComponentOnClickOutside();
     }
 
     private addEventListenerToCloseComponentOnClickOutside() {
         this.renderer.listen('document', 'click', (event: Event) => {
-            if (this.showColorSelector) {
+            if (this.showColorSelector()) {
                 const target = event.target as HTMLElement;
 
                 const isClickOutsideOfComponent = !this.elementRef.nativeElement.contains(target);
                 if (isClickOutsideOfComponent) {
-                    this.showColorSelector = false;
+                    this.showColorSelector.set(false);
                 }
             }
         });
@@ -80,13 +80,12 @@ export class ColorSelectorComponent implements OnInit {
         const clickedElement = event.target as HTMLElement;
         const parentElement = clickedElement.closest('.category-chip') as HTMLElement;
 
-        this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
-        this.colorSelectorPosition.top = marginTop ?? 65;
+        this.colorSelectorPosition.set({ left: parentElement ? parentElement.offsetLeft : 0, top: marginTop ?? 65 });
         if (height !== undefined) {
-            this.height = height;
+            this.height.set(height);
         }
 
-        this.showColorSelector = !this.showColorSelector;
+        this.showColorSelector.update((show) => !show);
     }
 
     /**
@@ -94,7 +93,7 @@ export class ColorSelectorComponent implements OnInit {
      * @param {string} selectedColor
      */
     selectColorForTag(selectedColor: string) {
-        this.showColorSelector = false;
+        this.showColorSelector.set(false);
         this.selectedColor.emit(selectedColor);
     }
 
@@ -102,6 +101,6 @@ export class ColorSelectorComponent implements OnInit {
      * close colorSelector
      */
     cancelColorSelector() {
-        this.showColorSelector = false;
+        this.showColorSelector.set(false);
     }
 }

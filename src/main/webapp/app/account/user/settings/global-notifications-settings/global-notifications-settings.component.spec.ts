@@ -66,18 +66,18 @@ describe('GlobalNotificationsSettingsComponent', () => {
         await firstValueFrom(mockService.getAll());
 
         expect(mockService.getAll).toHaveBeenCalled();
-        expect(component.notificationSettings).toEqual(mockSettings);
+        expect(component.notificationSettings()).toEqual(mockSettings);
     });
 
     it('should update a notification setting', async () => {
         mockService.update.mockReturnValue(of({}));
-        component.notificationSettings = { ...mockSettings };
+        component.notificationSettings.set({ ...mockSettings });
 
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
         await firstValueFrom(mockService.update());
 
         expect(mockService.update).toHaveBeenCalledWith(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
-        expect(component.notificationSettings?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalsy();
+        expect(component.notificationSettings()?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalsy();
     });
 
     it('should generate the correct i18n label key', () => {
@@ -100,7 +100,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         vi.spyOn(globalUtils, 'onError');
         mockService.update.mockReturnValue(throwError(() => error));
 
-        component.notificationSettings = { ...mockSettings };
+        component.notificationSettings.set({ ...mockSettings });
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED, false);
         await vi.waitFor(() => {
             expect(globalUtils.onError).toHaveBeenCalledWith(alertService, error);

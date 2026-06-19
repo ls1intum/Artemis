@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model } from '@angular/core';
+import { Component, DestroyRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -92,18 +92,21 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly showProgressBar = input(false);
     readonly showProgressBarBorder = input(false);
 
-    textColorClass: string;
-    resultIconClass: IconProp;
-    resultString: string;
-    templateStatus: ResultTemplateStatus;
+    // These fields back template bindings and are also written from async callbacks (the estimated-duration interval,
+    // the automatic-feedback timeout, and the language-change subscription), i.e. outside any change-detection cycle.
+    // Signals are used so each write schedules change detection under zoneless.
+    readonly textColorClass = signal<string>(undefined!);
+    readonly resultIconClass = signal<IconProp>(undefined!);
+    readonly resultString = signal<string>(undefined!);
+    readonly templateStatus = signal<ResultTemplateStatus>(undefined!);
     submission?: Submission;
-    badge: Badge;
-    resultTooltip?: string;
+    readonly badge = signal<Badge>(undefined!);
+    readonly resultTooltip = signal<string | undefined>(undefined);
     latestDueDate: dayjs.Dayjs | undefined;
 
     estimatedDurationInterval?: ReturnType<typeof setInterval>;
-    estimatedRemaining: number = 0;
-    estimatedDuration: number = 0;
+    readonly estimatedRemaining = signal<number>(0);
+    readonly estimatedDuration = signal<number>(0);
 
     // Icons
     readonly faCircleNotch = faCircleNotch;
@@ -117,8 +120,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         // Subscribed in the constructor (not ngOnInit) so language changes are wired up exactly once.
         // ngOnChanges re-invokes ngOnInit when participation/result changes, which would otherwise stack subscriptions.
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short());
+            if (this.resultString()) {
+                this.resultString.set(this.resultService.getResultString(this.result(), this.exercise(), this.participation(), this.short()));
             }
         });
     }
@@ -183,7 +186,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         this.evaluate();
 
         if (this.showBadge() && this.result()) {
-            this.badge = ResultService.evaluateBadge(this.participation(), this.result()!);
+            this.badge.set(ResultService.evaluateBadge(this.participation(), this.result()!));
         }
     }
 
@@ -218,10 +221,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         if (changes.isBuilding?.currentValue && changes.isBuilding?.currentValue === true) {
             // If it's building, we change the templateStatus to building regardless of any other settings.
-            this.templateStatus = ResultTemplateStatus.IS_BUILDING;
+            this.templateStatus.set(ResultTemplateStatus.IS_BUILDING);
         } else if (changes.isQueued?.currentValue && changes.isQueued?.currentValue === true) {
             // If it's queued, we change the templateStatus to queued regardless of any other settings.
-            this.templateStatus = ResultTemplateStatus.IS_QUEUED;
+            this.templateStatus.set(ResultTemplateStatus.IS_QUEUED);
         } else if (changes.missingResultInfo || changes.isBuilding?.previousValue) {
             // If ...
             // ... the result was building and is not building anymore, or
@@ -232,11 +235,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         clearInterval(this.estimatedDurationInterval);
         if (this.estimatedCompletionDate() && this.buildStartDate()) {
-            this.estimatedDurationInterval = setInterval(() => {
-                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds'));
-                this.estimatedDuration = dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds');
-            });
+            // The displayed value has second granularity — update once immediately, then once per second
+            // (an interval without delay would schedule zoneless change detection as fast as the browser allows).
+            this.updateEstimatedBuildDuration();
+            this.estimatedDurationInterval = setInterval(() => this.updateEstimatedBuildDuration(), 1000);
         }
+    }
+
+    private updateEstimatedBuildDuration() {
+        this.estimatedRemaining.set(Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds')));
+        this.estimatedDuration.set(dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds'));
     }
 
     /**
@@ -246,25 +254,26 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         const result = this.result();
         const exercise = this.exercise();
         const participation = this.participation();
-        this.templateStatus = evaluateTemplateStatus(exercise, participation, result, this.isBuilding(), this.missingResultInfo(), this.isQueued());
-        if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = getTextColorClass(result, participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(result, participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(result, exercise, participation, this.short());
+        const templateStatus = evaluateTemplateStatus(exercise, participation, result, this.isBuilding(), this.missingResultInfo(), this.isQueued());
+        this.templateStatus.set(templateStatus);
+        if (templateStatus === ResultTemplateStatus.LATE) {
+            this.textColorClass.set(getTextColorClass(result, participation, templateStatus));
+            this.resultIconClass.set(getResultIconClass(result, participation, templateStatus));
+            this.resultString.set(this.resultService.getResultString(result, exercise, participation, this.short()));
         } else if (result && ((result.score !== undefined && (result.rated || result.rated == undefined || this.showUngradedResults())) || isAthenaAIResult(result))) {
-            this.textColorClass = getTextColorClass(result, participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(result, participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(result, exercise, participation, this.short());
-            this.resultTooltip = this.buildResultTooltip();
-        } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
+            this.textColorClass.set(getTextColorClass(result, participation, templateStatus));
+            this.resultIconClass.set(getResultIconClass(result, participation, templateStatus));
+            this.resultString.set(this.resultService.getResultString(result, exercise, participation, this.short()));
+            this.resultTooltip.set(this.buildResultTooltip());
+        } else if (templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
-            this.templateStatus = ResultTemplateStatus.NO_RESULT;
+            this.templateStatus.set(ResultTemplateStatus.NO_RESULT);
             this.result.set(undefined);
-            this.resultString = '';
+            this.resultString.set('');
         }
 
-        if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result()?.completionDate) {
+        if (this.templateStatus() === ResultTemplateStatus.IS_GENERATING_FEEDBACK && this.result()?.completionDate) {
             const dueTime = -dayjs().diff(this.result()!.completionDate, 'milliseconds');
             this.resultUpdateSubscription = setTimeout(() => {
                 this.evaluate();
@@ -286,13 +295,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         // Automatically generated feedback section
         if (result) {
-            if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
+            if (this.templateStatus() === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
+            } else if (this.templateStatus() === ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
+            } else if (this.templateStatus() === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(result)) {
+            } else if (this.templateStatus() === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(result)) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
             }
         }
@@ -341,7 +350,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             return undefined;
         }
 
-        const feedbackComponentParameters = prepareFeedbackComponentParameters(exercise, result, participation, this.templateStatus, this.latestDueDate, exerciseService);
+        const feedbackComponentParameters = prepareFeedbackComponentParameters(exercise, result, participation, this.templateStatus(), this.latestDueDate, exerciseService);
 
         if (exercise?.type === ExerciseType.QUIZ) {
             // There is no feedback for quiz exercises.
