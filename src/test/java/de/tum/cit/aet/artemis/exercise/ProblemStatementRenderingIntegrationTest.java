@@ -148,22 +148,63 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldShowNotExecutedWhenTestMissing() throws Exception {
         var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
-        var body = new ProblemStatementRenderRequestDTO("[task][Task](<testid>1</testid>,<testid>999</testid>)", testResults, null, "en", false, true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Task](<testid>1</testid>,<testid>999</testid>)", testResults, null, "en", false, false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).contains("artemis-icon-no-result");
+        assertThat(result.html()).doesNotContain("artemis-icon-fail");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldRenderWithoutFeedbackWhenNoTestResults() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "en", false, false, null, null);
+    void shouldShowNoResultWhenNoTestResults() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "en", false, false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).doesNotContain("data-feedback");
-        assertThat(result.html()).doesNotContain("data-test-status");
+        assertThat(result.html()).contains("artemis-task-no-result");
+        assertThat(result.html()).contains("data-test-status=\"no-result\"");
+        assertThat(result.html()).contains("artemis-icon-no-result");
+        assertThat(result.html()).contains("No results");
+        assertThat(result.html()).doesNotContain("artemis-icon-fail");
+        assertThat(result.html()).doesNotContain("artemis-icon-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsWhenTaskHasNoTests() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Empty]()", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("data-test-status=\"no-tests\"");
+        assertThat(result.html()).contains("No tests");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsEvenWithTestResults() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Empty]()", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("No tests");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLocalizeNoResultInGerman() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "de", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("Keine Ergebnisse");
     }
 
     @Test

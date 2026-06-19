@@ -319,29 +319,37 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total,
-            @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
+    private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int total, @Nullable Map<Long, TestFeedbackInputDTO> testResults,
+            Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
-        String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
 
         StringBuilder html = new StringBuilder();
-        html.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(HtmlEscaper.escapeAttribute(taskName)).append("\" data-test-ids=\"")
-                .append(testIdsStr).append("\"").append(statusAttr);
+        html.append("<span class=\"artemis-task artemis-task-").append(testStatus).append("\" data-task-name=\"").append(HtmlEscaper.escapeAttribute(taskName))
+                .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\"");
 
         if (testResults != null) {
             html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
         }
 
         html.append(">");
-        if (testStatus != null) {
-            String iconClass = "success".equals(testStatus) ? "fa-check-circle artemis-icon-success" : "fa-times-circle artemis-icon-fail";
-            html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
-        }
+        String iconClass = switch (testStatus) {
+            case "success" -> "fa-check-circle artemis-icon-success";
+            case "fail" -> "fa-times-circle artemis-icon-fail";
+            default -> "fa-circle artemis-icon-no-result"; // not-executed, no-result, no-tests
+        };
+        html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
         html.append(HtmlEscaper.escapeText(taskName));
         if (testResults != null && !testIds.isEmpty()) {
             String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, total }, locale);
             html.append(" <span class=\"artemis-task-stats\">").append(HtmlEscaper.escapeText(statsText)).append("</span>");
+        }
+        else if ("no-result".equals(testStatus)) {
+            String text = messageSource.getMessage("exercise.problemStatement.noResult", null, locale);
+            html.append(" <span class=\"artemis-task-no-result-text\">").append(HtmlEscaper.escapeText(text)).append("</span>");
+        }
+        else if ("no-tests".equals(testStatus)) {
+            String text = messageSource.getMessage("exercise.problemStatement.noTests", null, locale);
+            html.append(" <span class=\"artemis-task-no-result-text\">").append(HtmlEscaper.escapeText(text)).append("</span>");
         }
         html.append("</span><br>");
         return html.toString();
@@ -386,9 +394,12 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static @Nullable String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        if (testResults == null || testIds.isEmpty()) {
-            return null;
+    private static String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        if (testIds.isEmpty()) {
+            return "no-tests";
+        }
+        if (testResults == null) {
+            return "no-result";
         }
         boolean anyFailed = false;
         boolean anyNotExecuted = false;
