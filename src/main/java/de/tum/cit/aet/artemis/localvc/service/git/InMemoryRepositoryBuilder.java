@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -238,7 +237,7 @@ public class InMemoryRepositoryBuilder {
             objectWalk.markStart(tip);
 
             // This drives the traversal from `objectWalk` and prevents null ids inside preparePack
-            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Collections.singleton(commitId), PackWriter.NONE, PackWriter.NONE);
+            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Set.of(commitId), PackWriter.NONE, PackWriter.NONE);
 
             // Write .pack and derive its canonical name from JGit
             ByteArrayOutputStream packOut = new ByteArrayOutputStream();
@@ -355,7 +354,7 @@ public class InMemoryRepositoryBuilder {
     private static String toHex(byte[] bytes) {
         StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
-            stringBuilder.append(String.format("%02x", b));
+            stringBuilder.append("%02x".formatted(b));
         }
         return stringBuilder.toString();
     }

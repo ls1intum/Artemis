@@ -46,16 +46,16 @@ public abstract class ExerciseWithSubmissionsExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = String.format("\\[.*] *\\(%smarkdown/.*\\)", ARTEMIS_FILE_PATH_PREFIX);
+    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(%smarkdown/.*\\)".formatted(ARTEMIS_FILE_PATH_PREFIX);
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = String.format("\\(%smarkdown/.* \".*\"\\)", ARTEMIS_FILE_PATH_PREFIX);
+    private static final String EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = "\\(%smarkdown/.* \".*\"\\)".formatted(ARTEMIS_FILE_PATH_PREFIX);
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = String.format("<img src=\"%smarkdown/.*\".*>", ARTEMIS_FILE_PATH_PREFIX);
+    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"%smarkdown/.*\".*>".formatted(ARTEMIS_FILE_PATH_PREFIX);
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final String API_MARKDOWN_FILE_PATH = String.format("%smarkdown/", ARTEMIS_FILE_PATH_PREFIX);
+    private static final String API_MARKDOWN_FILE_PATH = "%smarkdown/".formatted(ARTEMIS_FILE_PATH_PREFIX);
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 

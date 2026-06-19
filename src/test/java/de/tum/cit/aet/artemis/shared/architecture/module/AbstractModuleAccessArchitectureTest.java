@@ -47,7 +47,7 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
                         // target explicitly ignored
                         boolean isIgnored = getIgnoredClasses().contains(target.reflect());
                         if (!isIgnored) {
-                            String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
+                            String message = "%s depends on %s which is not in an allowed package or explicitly ignored".formatted(origin.getName(), target.getName());
                             events.add(SimpleConditionEvent.violated(origin, message));
                         }
                     }
@@ -99,7 +99,7 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
                 boolean isAnnotatedWithController = javaClass.isAnnotatedWith(Controller.class);
 
                 if (!isAbstract && !isAnnotatedWithController) {
-                    String message = String.format("Class %s is neither abstract nor annotated with @Controller", javaClass.getName());
+                    String message = "Class %s is neither abstract nor annotated with @Controller".formatted(javaClass.getName());
                     events.add(SimpleConditionEvent.violated(javaClass, message));
                 }
             }
