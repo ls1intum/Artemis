@@ -104,7 +104,7 @@ describe('DragAndDropQuestionComponent', () => {
         // Mappings do not have any of drop locations so no selected item
         fixture.componentRef.setInput('mappings', [correctMapping4]);
         fixture.changeDetectorRef.detectChanges();
-        comp.dragAndDropQuestion().correctMappings = [correctMapping1, correctMapping2, correctMapping4];
+        comp.dragAndDropQuestion().correctDndMappings = [correctMapping1, correctMapping2, correctMapping4];
         fixture.changeDetectorRef.detectChanges();
         /*
          *   without selected items it should not set correct answers to drop locations without valid drag item

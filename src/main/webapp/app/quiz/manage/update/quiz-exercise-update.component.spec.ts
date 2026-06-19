@@ -2111,7 +2111,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason for no correct mappings', () => {
-                    question.correctDmdMappings = [];
+                    question.correctDndMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 

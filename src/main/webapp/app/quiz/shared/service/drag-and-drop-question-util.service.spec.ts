@@ -77,7 +77,7 @@ describe('DragAndDropQuestionUtil', () => {
             const correctMapping2: DragAndDropMapping = { dragItem: dragItem2, dropLocation: dropLocation2, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctDmdMappings: [correctMapping1, correctMapping2],
+                correctDndMappings: [correctMapping1, correctMapping2],
                 dragItems: [dragItem1, dragItem2],
                 dropLocations: [dropLocation1, dropLocation2],
             } as DragAndDropQuestion;
