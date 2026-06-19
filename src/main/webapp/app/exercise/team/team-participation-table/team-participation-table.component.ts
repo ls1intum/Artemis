@@ -90,8 +90,9 @@ export class TeamParticipationTableComponent implements OnInit {
         const participationCol: ColumnDef<ExerciseForTeam>[] = this.isAdmin()
             ? [
                   {
+                      field: 'participation.id',
                       headerKey: 'artemisApp.team.detail.participationsTable.columns.participationId.label',
-                      sort: false,
+                      sort: true,
                       width: '9rem',
                       templateRef: this.participationTemplate(),
                   },
@@ -132,7 +133,13 @@ export class TeamParticipationTableComponent implements OnInit {
             },
             { header: '', width: '8rem', frozen: true, alignFrozen: 'left', templateRef: this.viewTemplate() },
             ...participationCol,
-            { headerKey: 'artemisApp.participation.initializationDate', sort: false, width: '12rem', templateRef: this.initDateTemplate() },
+            {
+                field: 'participation.initializationDate',
+                headerKey: 'artemisApp.participation.initializationDate',
+                sort: true,
+                width: '12rem',
+                templateRef: this.initDateTemplate(),
+            },
             ...assessmentCol,
         ];
     });

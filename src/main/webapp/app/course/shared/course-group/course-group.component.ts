@@ -50,10 +50,12 @@ const FLASH_ANIMATION_DURATION_MS = 1650;
 })
 export class CourseGroupComponent {
     constructor() {
-        // Keep the parent's filteredUsersSize in sync with the total member count so that
-        // the "X out of Y" counter in the header never shows a stale value of 0.
+        // Keep the parent's filteredUsersSize in sync with the *filtered* member count so the header
+        // "X out of Y" counter tracks the autocomplete search. Reads filteredGroupUsers() so it re-emits
+        // whenever either allGroupUsers or the search query changes; with no active query the filtered
+        // list equals the full list, so the parent hides the counter instead of showing a stale "0".
         effect(() => {
-            this.handleUsersSizeChange()(this.allGroupUsers().length);
+            this.handleUsersSizeChange()(this.filteredGroupUsers().length);
         });
     }
 

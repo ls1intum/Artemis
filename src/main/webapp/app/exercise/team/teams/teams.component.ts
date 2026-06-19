@@ -69,6 +69,9 @@ export class TeamsComponent implements OnInit, OnDestroy {
     teamCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
     exercise = signal<Exercise | undefined>(undefined);
 
+    /** Number of teams currently visible in the table after the search filter; undefined until the table reports it. */
+    readonly filteredTeamsSize = signal<number | undefined>(undefined);
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -85,7 +88,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     readonly tableOptions: TableViewOptions = {
         lazy: false,
         searchPlaceholder: 'artemisApp.exercise.searchForTeams',
-        globalFilterFields: ['name', 'shortName', 'studentsSearchText'],
+        globalFilterFields: ['name', 'shortName', 'owner.name', 'owner.login', 'studentsSearchText'],
         striped: true,
     };
 
@@ -185,6 +188,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     onTeamsImport(teams: Team[]) {
         this.teams.set(teams);
+    }
+
+    /**
+     * Called by jhi-table-view whenever the search filter changes; keeps the header count in sync with
+     * the number of teams actually shown in the table.
+     * @param filteredSize Number of teams visible after the table search filter
+     */
+    onFilteredTeamsSizeChange(filteredSize: number) {
+        this.filteredTeamsSize.set(filteredSize);
     }
 
     /**

@@ -1,7 +1,7 @@
 <div>
     <div class="mb-3 d-flex align-items-center justify-content-between">
         <h2 class="mb-0">
-            <span>{{ exercise()?.title }} - </span>{{ teams().length }} <span jhiTranslate="artemisApp.team.home.title"></span>
+            <span>{{ exercise()?.title }} - </span>{{ filteredTeamsSize() ?? teams().length }} <span jhiTranslate="artemisApp.team.home.title"></span>
         </h2>
         <div class="d-flex align-items-center gap-2">
             @if (exercise()?.isAtLeastEditor && teams().length > 0) {
@@ -14,7 +14,15 @@
         </div>
     </div>
 
-    <jhi-table-view [cols]="columns()" [vals]="teamsForTable()" [loading]="isLoading()" [rowActions]="rowActionsRef" [tableActions]="tableActionsRef" [options]="tableOptions" />
+    <jhi-table-view
+        [cols]="columns()"
+        [vals]="teamsForTable()"
+        [loading]="isLoading()"
+        [rowActions]="rowActionsRef"
+        [tableActions]="tableActionsRef"
+        [options]="tableOptions"
+        (filteredRowsChange)="onFilteredTeamsSizeChange($event)"
+    />
 
     <!-- Filter in the table caption bar (rendered next to the search box) -->
     <ng-template #tableActionsRef>

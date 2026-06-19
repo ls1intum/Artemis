@@ -18,6 +18,8 @@ import { CourseGroupComponent } from 'app/course/shared/course-group/course-grou
 import { ExportUserInformationRow } from 'app/shared-ui/user-import/util/write-users-to-csv';
 import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('CourseGroupComponent', () => {
     setupTestBed({ zoneless: true });
@@ -41,6 +43,7 @@ describe('CourseGroupComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -378,6 +381,24 @@ describe('CourseGroupComponent', () => {
         comp.exportUserInformation();
 
         expect(exportUserInformationAsCsvMock).not.toHaveBeenCalled();
+    });
+
+    describe('header member count callback', () => {
+        it('should report the filtered member count so the "X out of Y" header tracks the search', () => {
+            const sizeSpy = vi.fn();
+            fixture.componentRef.setInput('handleUsersSizeChange', sizeSpy);
+            comp.allGroupUsers.set([
+                { ...courseGroupUser, id: 1, login: 'alice', name: 'Alice Smith', email: 'alice@example.com' },
+                { ...courseGroupUser2, id: 2, login: 'bob', name: 'Bob Jones', email: 'bob@example.com' },
+            ]);
+            fixture.detectChanges();
+            // No active search → full count, so the parent hides the counter rather than showing a stale value.
+            expect(sizeSpy).toHaveBeenLastCalledWith(2);
+
+            comp['filterQuery'].set('alice');
+            fixture.detectChanges();
+            expect(sizeSpy).toHaveBeenLastCalledWith(1);
+        });
     });
 
     describe('dataTableRowClass', () => {

@@ -196,6 +196,19 @@ describe('TeamParticipationTableComponent', () => {
         expect(datatable).not.toBeNull();
     });
 
+    it('should keep the initialization date column sortable via its dot-path field', () => {
+        const initDateColumn = comp.columns().find((column) => column.field === 'participation.initializationDate');
+        expect(initDateColumn).toBeDefined();
+        expect(initDateColumn!.sort).toBe(true);
+    });
+
+    it('should keep the participation id column sortable for admins', () => {
+        fixture.componentRef.setInput('isAdmin', true);
+        const participationColumn = comp.columns().find((column) => column.field === 'participation.id');
+        expect(participationColumn).toBeDefined();
+        expect(participationColumn!.sort).toBe(true);
+    });
+
     it('Assessment Action "continue" is triggered', () => {
         const expectedAssessmentAction = comp.assessmentAction(submission2);
         expect(expectedAssessmentAction).toBe('continue');

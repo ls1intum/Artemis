@@ -163,6 +163,12 @@ export class TableViewComponent<T> {
 
     onLazyLoad = output<TableLazyLoadEvent>();
     onRowSelect = output<T | T[] | undefined>();
+    /**
+     * Emits the number of rows currently visible after PrimeNG applies a client-side filter (e.g. the global
+     * search). Equals the full row count when no filter is active. Only meaningful in non-lazy mode; in lazy
+     * mode filtering is delegated to the server, so prefer {@link totalRows}.
+     */
+    filteredRowsChange = output<number>();
 
     dt = viewChild.required<Table>('dt');
     private searchFilter = viewChild(SearchFilterComponent);
@@ -304,6 +310,14 @@ export class TableViewComponent<T> {
 
     handleRowSelectChange(): void {
         this.onRowSelect.emit(this.tableSelection);
+    }
+
+    /**
+     * Fired by p-table whenever a client-side filter is applied. Emits the resulting visible row count
+     * (PrimeNG sets filteredValue to null when the filter is cleared, in which case all rows are shown).
+     */
+    onFilter(event: { filteredValue?: T[] | null }): void {
+        this.filteredRowsChange.emit(event.filteredValue?.length ?? this.vals().length);
     }
 
     pageChange(event: TablePageEvent): void {

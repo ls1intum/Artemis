@@ -652,4 +652,20 @@ describe('TableViewComponent', () => {
             expect(component.rowClass()?.(mockData[1])).toBe('');
         });
     });
+
+    describe('onFilter (filtered row count)', () => {
+        it('should emit the number of rows remaining after a client-side filter', () => {
+            const spy = vi.fn();
+            component.filteredRowsChange.subscribe(spy);
+            component.onFilter({ filteredValue: [mockData[0], mockData[1]] });
+            expect(spy).toHaveBeenCalledWith(2);
+        });
+
+        it('should emit the full row count when the filter is cleared (filteredValue is null)', () => {
+            const spy = vi.fn();
+            component.filteredRowsChange.subscribe(spy);
+            component.onFilter({ filteredValue: null });
+            expect(spy).toHaveBeenCalledWith(mockData.length);
+        });
+    });
 });
