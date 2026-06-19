@@ -298,6 +298,8 @@ public class ProblemStatementRenderingService {
             String taskName = matcher.group("name");
             String testsStr = matcher.group("tests");
 
+            boolean hasTestRefs = testsStr != null && !testsStr.isBlank();
+
             List<Long> testIds = new ArrayList<>();
             if (testsStr != null && !testsStr.isEmpty()) {
                 Matcher testIdMatcher = TESTID_PATTERN.matcher(testsStr);
@@ -306,7 +308,12 @@ public class ProblemStatementRenderingService {
                 }
             }
 
-            String testStatus = computeTaskTestStatus(testIds, testResults);
+            // A task may reference tests by name (e.g. on an unbuilt exercise) instead of by <testid>, possibly
+            // mixed with ids. Name refs cannot be mapped to feedback here; detect whether any unresolved ref remains
+            // by stripping the <testid> wrappers and the separators and checking for leftover content.
+            boolean hasUnresolvedRefs = hasTestRefs && !TESTID_PATTERN.matcher(testsStr).replaceAll("").replace(",", "").isBlank();
+
+            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, hasUnresolvedRefs, testResults);
             int successCount = countPassedTests(testIds, testResults);
             int total = testIds.size();
 
@@ -394,15 +401,16 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        if (testIds.isEmpty()) {
+    private static String computeTaskTestStatus(List<Long> testIds, boolean hasTestRefs, boolean hasUnresolvedRefs, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        if (!hasTestRefs) {
             return "no-tests";
         }
         if (testResults == null) {
             return "no-result";
         }
         boolean anyFailed = false;
-        boolean anyNotExecuted = false;
+        // Unresolved (name-only) refs cannot be matched to feedback, so they count as not executed.
+        boolean anyNotExecuted = hasUnresolvedRefs;
         for (Long testId : testIds) {
             TestFeedbackInputDTO detail = testResults.get(testId);
             if (detail == null) {

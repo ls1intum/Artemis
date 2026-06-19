@@ -116,8 +116,7 @@ body.artemis-ssr-body {
     color: var(--secondary, #6c757d);
 }
 
-.artemis-task-no-result,
-.artemis-task-no-tests {
+.artemis-task:not([data-feedback]) {
     cursor: default;
 }
 

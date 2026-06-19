@@ -199,6 +199,55 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoResultForNamedTestRefWithoutSubmission() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](testBubbleSort())", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-result");
+        assertThat(result.html()).contains("data-test-status=\"no-result\"");
+        assertThat(result.html()).contains("No results");
+        assertThat(result.html()).doesNotContain("artemis-task-no-tests");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNotExecutedForNamedTestRefWithSubmission() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](testBubbleSort())", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+        assertThat(result.html()).doesNotContain("artemis-icon-fail");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNotExecutedForMixedRefsWithSubmission() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>,testB())", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsForWhitespaceOnlyRefs() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort]( )", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("No tests");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLocalizeNoResultInGerman() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "de", false, false, false, null);
 
