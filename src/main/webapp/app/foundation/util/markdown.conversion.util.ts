@@ -34,9 +34,8 @@ const turndownService = new TurndownService();
 type MarkdownRenderRule = NonNullable<MarkdownIt['renderer']['rules']['fence']>;
 
 /**
- * Highlights a code block with highlight.js, mirroring the behavior of the previously used
- * `markdown-it-highlightjs` plugin (auto-detect the language when none is given, otherwise
- * highlight with the explicit language, and fall back to escaped HTML on any error).
+ * Highlights a code block with highlight.js: auto-detect the language when none is given, highlight
+ * with the explicit language otherwise, and fall back to escaped HTML when the language is unknown.
  */
 function highlightWithHljs(md: MarkdownIt, code: string, language: string): string {
     if (language) {
@@ -49,9 +48,9 @@ function highlightWithHljs(md: MarkdownIt, code: string, language: string): stri
 }
 
 /**
- * Wraps a code renderer so the rendered `<code>` element gains the `hljs` CSS class, matching the
- * markup `markdown-it-highlightjs` produced. The highlight.js themes (vs.css / monokai.css) target
- * this class, so preserving it keeps syntax highlighting styled in both the light and dark theme.
+ * Wraps a code renderer so the rendered `<code>` element gains the `hljs` CSS class. The highlight.js
+ * themes (vs.css / monokai.css) target this class, so it is required for highlighted code to be
+ * styled in both the light and dark theme.
  */
 function addHljsClass(renderer: MarkdownRenderRule): MarkdownRenderRule {
     return (...args: Parameters<MarkdownRenderRule>) =>
@@ -61,9 +60,8 @@ function addHljsClass(renderer: MarkdownRenderRule): MarkdownRenderRule {
 }
 
 /**
- * Local replacement for the `markdown-it-highlightjs` dependency, configured to match the default
- * options it was previously used with (auto language detection, highlight fenced and indented code
- * blocks, ignore illegal sequences). The highlight.js engine itself stays a direct dependency.
+ * markdown-it plugin that highlights fenced and indented code blocks with highlight.js (auto language
+ * detection, ignoring illegal sequences) and tags each rendered `<code>` element with the `hljs` class.
  */
 const markdownItHighlightjs: PluginSimple = (md) => {
     md.options.highlight = (code, language) => highlightWithHljs(md, code, language);
