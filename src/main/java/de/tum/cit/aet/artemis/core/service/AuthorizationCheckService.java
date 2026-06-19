@@ -56,11 +56,11 @@ public class AuthorizationCheckService {
     }
 
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
-        return user.getCourseRoles().stream().anyMatch(r -> course.getId().equals(r.getCourse().getId()) && r.getRole() == role);
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
     }
 
-    private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole role) {
-        return user.getCourseRoles().stream().anyMatch(r -> course.getId().equals(r.getCourse().getId()) && r.getRole().isAtLeast(role));
+    private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), course.getId(), CourseRole.valuesAtLeast(minimum));
     }
 
     /**
@@ -761,12 +761,11 @@ public class AuthorizationCheckService {
 
     private User loadUserIfNeeded(@Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithCourseRolesAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
-        else if (user.getCourseRoles() == null || !Hibernate.isInitialized(user.getCourseRoles())) {
-            user = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
+        else if (user.getAuthorities() == null || !Hibernate.isInitialized(user.getAuthorities())) {
+            user = userRepository.getUserWithAuthorities(user.getLogin());
         }
-
         return user;
     }
 

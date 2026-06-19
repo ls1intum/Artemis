@@ -114,6 +114,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(String registrationNumber);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Optional<User> findOneWithAuthoritiesByLoginAndInternal(String login, boolean internal);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
@@ -956,6 +959,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return currentUserLogin.get();
         }
         throw new EntityNotFoundException("ERROR: No current user login found!");
+    }
+
+    @NonNull
+    default User getUserWithAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithAuthoritiesByLogin(currentUserLogin));
+    }
+
+    @NonNull
+    default User getUserWithAuthorities(@NonNull String login) {
+        return getValueElseThrow(findOneWithAuthoritiesByLogin(login));
     }
 
     @NonNull

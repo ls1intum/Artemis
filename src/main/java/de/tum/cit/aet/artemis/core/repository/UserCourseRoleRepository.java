@@ -35,6 +35,13 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("""
                 SELECT CASE WHEN COUNT(ucr) > 0 THEN TRUE ELSE FALSE END
                 FROM UserCourseRole ucr
+                WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN :roles
+            """)
+    boolean existsByUser_IdAndCourse_IdAndRoleIn(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
+
+    @Query("""
+                SELECT CASE WHEN COUNT(ucr) > 0 THEN TRUE ELSE FALSE END
+                FROM UserCourseRole ucr
                 WHERE ucr.user.id = :userId AND ucr.role IN :roles
             """)
     boolean existsByUser_IdAndRoleIn(@Param("userId") Long userId, @Param("roles") Collection<CourseRole> roles);
