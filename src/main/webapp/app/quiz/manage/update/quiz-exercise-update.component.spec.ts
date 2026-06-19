@@ -122,7 +122,7 @@ describe('QuizExerciseUpdateComponent', () => {
         dropLocation.height = 80;
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
-        question.correctMappings = [correctDragAndDropMapping];
+        question.correctDndMappings = [correctDragAndDropMapping];
         question.points = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };
@@ -873,7 +873,7 @@ describe('QuizExerciseUpdateComponent', () => {
             };
 
             const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
-                question.correctMappings = [];
+                question.correctDndMappings = [];
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1625,7 +1625,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     dropLocationCopy.id = 2;
 
                     const mapping = new DragAndDropMapping(dragItemCopy, dropLocationCopy);
-                    dndQuestion.correctMappings = [mapping];
+                    dndQuestion.correctDndMappings = [mapping];
 
                     comp.quizExercise().quizQuestions = [dndQuestion];
 
@@ -1643,8 +1643,8 @@ describe('QuizExerciseUpdateComponent', () => {
                     expect(processedLocation.id).toBeUndefined();
                     expect(processedLocation.tempID).toBeDefined();
 
-                    expect(processedQuestion.correctMappings![0].dragItem).toBe(processedItem);
-                    expect(processedQuestion.correctMappings![0].dropLocation).toBe(processedLocation);
+                    expect(processedQuestion.correctDndMappings![0].dragItem).toBe(processedItem);
+                    expect(processedQuestion.correctDndMappings![0].dropLocation).toBe(processedLocation);
                 });
 
                 it('should fully reset Short Answer questions (IDs, TempIDs, Mappings)', () => {
@@ -1697,7 +1697,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     dndQuestion.type = QuizQuestionType.DRAG_AND_DROP;
                     dndQuestion.dragItems = undefined;
                     dndQuestion.dropLocations = undefined;
-                    dndQuestion.correctMappings = undefined;
+                    dndQuestion.correctDndMappings = undefined;
 
                     comp.quizExercise().quizQuestions = [dndQuestion];
                     comp.init();
@@ -1727,7 +1727,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     dndQuestion.dragItems = [item];
 
                     const mapping = new DragAndDropMapping(undefined, undefined);
-                    dndQuestion.correctMappings = [mapping];
+                    dndQuestion.correctDndMappings = [mapping];
 
                     comp.quizExercise().quizQuestions = [dndQuestion];
 
@@ -1829,7 +1829,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 // 10 * 10 * 10 = 1000 < 2197
                 question.dragItems = new Array(10).fill(new DragItem());
                 question.dropLocations = new Array(10).fill(new DropLocation());
-                question.correctMappings = new Array(10).fill(new DragAndDropMapping(undefined, undefined));
+                question.correctDndMappings = new Array(10).fill(new DragAndDropMapping(undefined, undefined));
 
                 expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
             });
@@ -1839,7 +1839,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 // 14 * 13 * 13 = 2366 > 2197
                 question.dragItems = new Array(14).fill(new DragItem());
                 question.dropLocations = new Array(13).fill(new DropLocation());
-                question.correctMappings = new Array(13).fill(new DragAndDropMapping(undefined, undefined));
+                question.correctDndMappings = new Array(13).fill(new DragAndDropMapping(undefined, undefined));
 
                 expect(comp.checkItemCountDragAndDrop([question])).toBeTruthy();
             });
@@ -1848,7 +1848,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 const question = new DragAndDropQuestion();
                 question.dragItems = undefined;
                 question.dropLocations = undefined;
-                question.correctMappings = undefined;
+                question.correctDndMappings = undefined;
 
                 // calculation becomes 1 * 1 * 1 = 1
                 expect(comp.checkItemCountDragAndDrop([question])).toBeFalsy();
@@ -2111,7 +2111,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason for no correct mappings', () => {
-                    question.correctMappings = [];
+                    question.correctDmdMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 

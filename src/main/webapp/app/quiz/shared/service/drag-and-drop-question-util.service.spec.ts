@@ -27,7 +27,7 @@ describe('DragAndDropQuestionUtil', () => {
     describe('solve', () => {
         it('should return empty array when no correct mappings', () => {
             const question: DragAndDropQuestion = {
-                correctMappings: undefined,
+                correctDndMappings: undefined,
             } as DragAndDropQuestion;
 
             const result = service.solve(question);
@@ -37,7 +37,7 @@ describe('DragAndDropQuestionUtil', () => {
 
         it('should return empty array when correct mappings is empty', () => {
             const question = {
-                correctMappings: [],
+                correctDndMappings: [],
                 dragItems: [{ id: 1, invalid: false }],
                 dropLocations: [{ id: 1, invalid: false }],
                 randomizeOrder: true,
@@ -56,7 +56,7 @@ describe('DragAndDropQuestionUtil', () => {
             const correctMapping: DragAndDropMapping = { dragItem, dropLocation, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctMappings: [correctMapping],
+                correctDndMappings: [correctMapping],
                 dragItems: [dragItem],
                 dropLocations: [dropLocation],
             } as DragAndDropQuestion;
@@ -77,7 +77,7 @@ describe('DragAndDropQuestionUtil', () => {
             const correctMapping2: DragAndDropMapping = { dragItem: dragItem2, dropLocation: dropLocation2, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctMappings: [correctMapping1, correctMapping2],
+                correctDmdMappings: [correctMapping1, correctMapping2],
                 dragItems: [dragItem1, dragItem2],
                 dropLocations: [dropLocation1, dropLocation2],
             } as DragAndDropQuestion;
@@ -97,7 +97,7 @@ describe('DragAndDropQuestionUtil', () => {
             const correctMapping2: DragAndDropMapping = { dragItem: dragItem2, dropLocation: dropLocation2, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctMappings: [correctMapping1, correctMapping2],
+                correctDndMappings: [correctMapping1, correctMapping2],
                 dragItems: [dragItem1, dragItem2],
                 dropLocations: [dropLocation1, dropLocation2],
             } as DragAndDropQuestion;
@@ -120,7 +120,7 @@ describe('DragAndDropQuestionUtil', () => {
             const correctMapping2: DragAndDropMapping = { dragItem: dragItem2, dropLocation: dropLocation2, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctMappings: [correctMapping1, correctMapping2],
+                correctDndMappings: [correctMapping1, correctMapping2],
                 dragItems: [dragItem1, dragItem2],
                 dropLocations: [dropLocation1, dropLocation2],
             } as DragAndDropQuestion;
@@ -137,7 +137,7 @@ describe('DragAndDropQuestionUtil', () => {
     describe('validateNoMisleadingCorrectMapping', () => {
         it('should return true when no correct mappings', () => {
             const question: DragAndDropQuestion = {
-                correctMappings: undefined,
+                correctDndMappings: undefined,
                 dragItems: [{ id: 1, invalid: false }],
             } as DragAndDropQuestion;
 
@@ -148,7 +148,7 @@ describe('DragAndDropQuestionUtil', () => {
 
         it('should return true when no drag items', () => {
             const question = {
-                correctMappings: [],
+                correctDndMappings: [],
                 dragItems: undefined,
                 randomizeOrder: true,
                 invalid: false,
@@ -167,7 +167,7 @@ describe('DragAndDropQuestionUtil', () => {
             const dropLocation2: DropLocation = { id: 2, invalid: false };
 
             const question: DragAndDropQuestion = {
-                correctMappings: [
+                correctDndMappings: [
                     { dragItem: dragItem1, dropLocation: dropLocation1, invalid: false },
                     { dragItem: dragItem2, dropLocation: dropLocation2, invalid: false },
                 ],
@@ -189,7 +189,7 @@ describe('DragAndDropQuestionUtil', () => {
             // Both drag items can go to dropLocation1, but only dragItem1 can go to dropLocation2
             // This is misleading because they share one drop location but not all
             const question: DragAndDropQuestion = {
-                correctMappings: [
+                correctDndMappings: [
                     { dragItem: dragItem1, dropLocation: dropLocation1, invalid: false },
                     { dragItem: dragItem2, dropLocation: dropLocation1, invalid: false },
                     { dragItem: dragItem1, dropLocation: dropLocation2, invalid: false },
@@ -211,7 +211,7 @@ describe('DragAndDropQuestionUtil', () => {
 
             // Both drag items can go to both drop locations - not misleading
             const question: DragAndDropQuestion = {
-                correctMappings: [
+                correctDndMappings: [
                     { dragItem: dragItem1, dropLocation: dropLocation1, invalid: false },
                     { dragItem: dragItem2, dropLocation: dropLocation1, invalid: false },
                     { dragItem: dragItem1, dropLocation: dropLocation2, invalid: false },

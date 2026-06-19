@@ -278,13 +278,13 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.currentDropLocation = dropLocation;
         const q = component.question();
         q.dropLocations = [dropLocation, alternativeDropLocation];
-        q.correctMappings = undefined;
+        q.correctDndMappings = undefined;
 
         component.mouseUp();
 
         expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBeUndefined();
-        expect(q.correctMappings).toHaveLength(0);
+        expect(q.correctDndMappings).toHaveLength(0);
         expect(q.dropLocations).toEqual([alternativeDropLocation]);
     });
 
@@ -411,12 +411,12 @@ describe('DragAndDropQuestionEditComponent', () => {
         const mapping = new DragAndDropMapping(newItem, new DropLocation());
         const q = component.question();
         q.dragItems = [item];
-        q.correctMappings = [mapping];
+        q.correctDndMappings = [mapping];
 
         component.deleteDragItem(item);
 
         expect(q.dragItems).toHaveLength(0);
-        expect(q.correctMappings).toEqual([mapping]);
+        expect(q.correctDndMappings).toEqual([mapping]);
     });
 
     it('should delete mapping', () => {
@@ -424,11 +424,11 @@ describe('DragAndDropQuestionEditComponent', () => {
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
         const q = component.question();
-        q.correctMappings = [mapping];
+        q.correctDndMappings = [mapping];
 
         component.deleteMapping(mapping);
 
-        expect(q.correctMappings).toHaveLength(0);
+        expect(q.correctDndMappings).toHaveLength(0);
     });
 
     it('should drop a drag item on a drop location', () => {
@@ -439,7 +439,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = component.question();
         q.dragItems = [item];
         const mapping = new DragAndDropMapping(item, location);
-        q.correctMappings = [mapping];
+        q.correctDndMappings = [mapping];
         const alternativeLocation = new DropLocation();
         const alternativeItem = new DragItem();
         alternativeLocation.id = 3;
@@ -451,7 +451,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.onDragDrop(alternativeLocation, event);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(q.correctMappings).toEqual([mapping, expectedMapping]);
+        expect(q.correctDndMappings).toEqual([mapping, expectedMapping]);
     });
 
     it('should get mapping index for mapping', () => {
@@ -468,7 +468,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const mapping3 = new DragAndDropMapping(item3, location3);
         const mapping4 = new DragAndDropMapping(item4, location4); // unused mapping
         const q = component.question();
-        q.correctMappings = [mapping1, mapping2, mapping3];
+        q.correctDndMappings = [mapping1, mapping2, mapping3];
 
         expect(component.getMappingIndex(mapping1)).toBe(1);
         expect(component.getMappingIndex(mapping2)).toBe(2);
@@ -481,7 +481,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
         const q = component.question();
-        q.correctMappings = [mapping];
+        q.correctDndMappings = [mapping];
 
         expect(component.getMappingsForDropLocation(location)).toEqual([mapping]);
     });
@@ -491,7 +491,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
         const q = component.question();
-        q.correctMappings = [mapping];
+        q.correctDndMappings = [mapping];
 
         expect(component.getMappingsForDragItem(item)).toEqual([mapping]);
     });
@@ -601,7 +601,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             title,
             dropLocations: [dropLocation],
             dragItems: [item],
-            correctMappings: [],
+            correctDndMappings: [],
             backgroundFilePath: 'filepath',
             text: 'newText',
             explanation: 'explanation',
@@ -722,7 +722,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
         component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
-        dragAndDropQuestion.correctMappings = [];
+        dragAndDropQuestion.correctDndMappings = [];
         dragAndDropQuestion.dragItems = [];
 
         const { mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,cropped');
@@ -746,7 +746,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
         expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
         expect(dragAndDropQuestion.dragItems).toHaveLength(2);
-        expect(dragAndDropQuestion.correctMappings).toHaveLength(2);
+        expect(dragAndDropQuestion.correctDndMappings).toHaveLength(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
 
         cleanup();

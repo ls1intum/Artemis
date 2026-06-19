@@ -57,7 +57,7 @@ const makeDragAndDropQuestion = () => {
     const mapping = new DragAndDropMapping(dragItem, dropLocation);
     question.dragItems = [dragItem];
     question.dropLocations = [dropLocation];
-    question.correctMappings = [mapping];
+    question.correctDndMappings = [mapping];
     question.type = QuizQuestionType.DRAG_AND_DROP;
     return question;
 };

@@ -152,11 +152,11 @@ describe('QuizExercise Generator', () => {
             const question = await generateDragAndDropQuizExercise(course, 'Mapping Test', v3Model);
 
             // Each drag item should have at least one correct mapping
-            expect(question.correctMappings!.length).toBeGreaterThanOrEqual(question.dragItems!.length);
+            expect(question.correctDndMappings!.length).toBeGreaterThanOrEqual(question.dragItems!.length);
 
             // Verify each drag item has a corresponding mapping
             for (const dragItem of question.dragItems!) {
-                const hasMapping = question.correctMappings!.some((m) => m.dragItem === dragItem);
+                const hasMapping = question.correctDndMappings!.some((m) => m.dragItem === dragItem);
                 expect(hasMapping).toBe(true);
             }
         });
@@ -188,7 +188,7 @@ describe('QuizExercise Generator', () => {
 
             expect(question.dragItems).toHaveLength(0);
             expect(question.dropLocations).toHaveLength(0);
-            expect(question.correctMappings).toHaveLength(0);
+            expect(question.correctDndMappings).toHaveLength(0);
         });
 
         it('should handle v3 model with only relationship interactive elements', async () => {

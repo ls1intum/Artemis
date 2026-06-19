@@ -35,7 +35,7 @@ const dragAndDropQuestion = { id: 2, type: QuizQuestionType.DRAG_AND_DROP } as D
 const dragItem = { id: 1, question: dragAndDropQuestion, text: 'dragItem' } as DragItem;
 const dropLocation = { id: 1, question: dragAndDropQuestion, posX: 1, posY: 1, width: 1, height: 1 } as DropLocation;
 const correctDragAndDropMapping = { id: 1, dragItemIndex: 1, dropLocationIndex: 1, dragItem, dropLocation, question: dragAndDropQuestion } as DragAndDropMapping;
-dragAndDropQuestion.correctMappings = [correctDragAndDropMapping];
+dragAndDropQuestion.correctDndMappings = [correctDragAndDropMapping];
 dragAndDropQuestion.dragItems = [dragItem];
 dragAndDropQuestion.dropLocations = [dropLocation];
 
