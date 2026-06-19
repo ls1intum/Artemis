@@ -51,9 +51,9 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
 @Service
 @Lazy
 @Conditional(GocastEnabled.class)
-public class GocastConnector {
+public class GocastConnectorService {
 
-    private static final Logger log = LoggerFactory.getLogger(GocastConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(GocastConnectorService.class);
 
     private static final String HEADER_ON_BEHALF_OF = "X-On-Behalf-Of";
 
@@ -62,7 +62,7 @@ public class GocastConnector {
     private final String bearerToken;
 
     /**
-     * Constructs a {@link GocastConnector} using the provided pre-configured {@link RestClient} bean
+     * Constructs a {@link GocastConnectorService} using the provided pre-configured {@link RestClient} bean
      * and the service-account bearer token.
      * <p>
      * The {@link RestClient} bean is qualified as {@code gocastIntegrationRestClient} and is
@@ -72,7 +72,7 @@ public class GocastConnector {
      * @param restClient the gocast integration {@link RestClient} (pre-configured with the base URL)
      * @param token      the service-account bearer token from {@code artemis.tum-live.service-account-token}
      */
-    public GocastConnector(@Qualifier("gocastIntegrationRestClient") RestClient restClient, @Value("${artemis.tum-live.service-account-token}") String token) {
+    public GocastConnectorService(@Qualifier("gocastIntegrationRestClient") RestClient restClient, @Value("${artemis.tum-live.service-account-token}") String token) {
         this.restClient = restClient;
         this.bearerToken = "Bearer " + token;
     }

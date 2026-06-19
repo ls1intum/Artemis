@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.videosource.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Fields not present in the response are silently ignored.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GocastCourseDTO(@JsonProperty("id") long id, @JsonProperty("name") String name, @JsonProperty("slug") String slug, @JsonProperty("year") int year,
         @JsonProperty("teachingTerm") String teachingTerm, @JsonProperty("vodEnabled") boolean vodEnabled, @JsonProperty("visibility") String visibility) {
 }

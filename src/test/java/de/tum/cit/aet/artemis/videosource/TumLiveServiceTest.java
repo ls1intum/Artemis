@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO.StreamDTO;
+import de.tum.cit.aet.artemis.videosource.service.GocastStreamRef;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,6 +78,52 @@ class TumLiveServiceTest {
                 .thenThrow(new RestClientException("boom"));
 
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+        assertThat(result).isEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // extractStreamRef tests
+    // -----------------------------------------------------------------------
+
+    @Test
+    void extractStreamRef_tumLiveHost_returnsRef() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/w/eidi/1234");
+        assertThat(result).isPresent();
+        assertThat(result.get().slug()).isEqualTo("eidi");
+        assertThat(result.get().streamId()).isEqualTo(1234L);
+    }
+
+    @Test
+    void extractStreamRef_rbgTumDeHost_returnsRef() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://live.rbg.tum.de/w/abc-course/12345");
+        assertThat(result).isPresent();
+        assertThat(result.get().slug()).isEqualTo("abc-course");
+        assertThat(result.get().streamId()).isEqualTo(12345L);
+    }
+
+    @Test
+    void extractStreamRef_withTrailingParams_returnsRef() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/w/eidi/1234?quality=PRES&speed=1.5");
+        assertThat(result).isPresent();
+        assertThat(result.get().slug()).isEqualTo("eidi");
+        assertThat(result.get().streamId()).isEqualTo(1234L);
+    }
+
+    @Test
+    void extractStreamRef_nonTumLiveHost_returnsEmpty() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://example.com/w/eidi/1234");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void extractStreamRef_invalidPath_returnsEmpty() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/course/eidi");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void extractStreamRef_malformedUrl_returnsEmpty() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("not a url at all");
         assertThat(result).isEmpty();
     }
 }
