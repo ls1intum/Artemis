@@ -1,5 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,6 +11,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { forkJoin } from 'rxjs';
 
 /**
@@ -30,6 +31,7 @@ export class CourseExerciseGroupDetailComponent {
     private readonly mockDataService = inject(MockDataService);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly exerciseService = inject(ExerciseService);
+    private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faLayerGroup = faLayerGroup;
@@ -74,6 +76,14 @@ export class CourseExerciseGroupDetailComponent {
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({ next: (response) => this.courseExercises.set(response.body?.exercises ?? []) });
         }
+
+        toObservable(this.group)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((g) => {
+                if (g?.id !== undefined && g.title) {
+                    this.entityTitleService.setTitle(EntityType.EXERCISE_VARIANT_GROUP, [g.id], g.title);
+                }
+            });
 
         // The dashboard omits problem statements; with real data, fetch each variant's details once the
         // group is resolved so the preview can be shown (mock exercises already carry their statement).

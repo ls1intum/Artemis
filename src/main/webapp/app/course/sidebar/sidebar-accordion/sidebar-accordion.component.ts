@@ -164,7 +164,8 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
-        if (!group.routerLink || (event.target as HTMLElement).closest('.sidebar-group-variant')) {
+        const target = event.target as HTMLElement;
+        if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
             return;
         }
         this.router.navigateByUrl(group.routerLink);

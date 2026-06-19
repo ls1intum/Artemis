@@ -29,7 +29,10 @@
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
                 <div class="alert alert-info mb-4" role="alert">
-                    This exercise has several variants. You can work on <strong>all</strong> of them — pick whichever variant you like and open it below.
+                    This exercise has several variants. You can work on <strong>all</strong> of them. Pick whichever variant you like and open it below.
+                    @if (group.maxPoints) {
+                        Your combined score from all variants counts towards a maximum of <strong>{{ group.maxPoints }} points</strong> in the course score.
+                    }
                 </div>
                 <h3 class="h5 mb-2">Variants</h3>
                 <div class="d-flex flex-column" [style.gap]="'calc(0.5rem - 2px)'">

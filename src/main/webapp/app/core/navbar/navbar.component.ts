@@ -487,6 +487,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 case 'exercises':
                     this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                     return;
+                case 'group':
+                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE_VARIANT_GROUP, [Number(segment)], currentPath, segment);
+                    return;
                 case 'tutorial-lectures':
                     this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                     return;
@@ -618,6 +621,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         switch (segment) {
             // No breadcrumbs for those segments
             case 'reset':
+            case 'group':
             case 'groups':
             case 'code-editor':
             case 'repository':

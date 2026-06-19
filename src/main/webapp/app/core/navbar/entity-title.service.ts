@@ -14,6 +14,7 @@ export enum EntityType {
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
     TUTORIAL_GROUP = 'TUTORIAL_GROUP',
+    EXERCISE_VARIANT_GROUP = 'EXERCISE_VARIANT_GROUP',
 }
 
 const FETCH_FALLBACK_TIMEOUT = 3000;
@@ -146,6 +147,9 @@ export class EntityTitleService implements OnDestroy {
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
      */
     private fetchTitle(type: EntityType, ids: number[]): void {
+        if (type === EntityType.EXERCISE_VARIANT_GROUP) {
+            return;
+        }
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:

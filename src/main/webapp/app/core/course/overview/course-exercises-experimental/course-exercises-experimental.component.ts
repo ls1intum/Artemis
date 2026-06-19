@@ -1,5 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -59,6 +60,7 @@ export class CourseExercisesExperimentalComponent {
     private readonly mockDataService = inject(MockDataService);
     private readonly courseOverviewService = inject(CourseOverviewService);
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly _exerciseSelected = signal(false);
@@ -168,6 +170,8 @@ export class CourseExercisesExperimentalComponent {
             id: group.id ?? '',
             targetComponentSubRoute: 'group',
             icon: faLayerGroup,
+            // Show the group's due date in the header card, mirroring how exercise tiles display theirs (see mapExerciseToSidebarCardElement).
+            subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translateService.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             startDate: dueDate,
             size: 'M',
             groupHeaderStyle: 'card',
