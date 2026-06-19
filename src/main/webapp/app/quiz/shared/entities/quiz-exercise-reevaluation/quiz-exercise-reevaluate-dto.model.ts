@@ -69,7 +69,7 @@ export interface DragAndDropQuestionReEvaluateDTO {
     invalid?: boolean;
     dropLocations?: DropLocationReEvaluateDTO[];
     dragItems?: DragItemReEvaluateDTO[];
-    correctMappings?: CorrectMappingReEvaluateDTO[];
+    correctDndMappings?: CorrectMappingReEvaluateDTO[];
 }
 
 /**
@@ -224,7 +224,7 @@ function convertDragAndDropQuestionToReEvaluateDTO(question: DragAndDropQuestion
         invalid: question.invalid,
         dropLocations: question.dropLocations?.map(convertDropLocationToReEvaluateDTO),
         dragItems: question.dragItems?.map(convertDragItemToReEvaluateDTO),
-        correctMappings: question.correctDndMappings?.map(convertCorrectMappingToReEvaluateDTO),
+        correctDndMappings: question.correctDndMappings?.map(convertCorrectMappingToReEvaluateDTO),
     };
 }
 
