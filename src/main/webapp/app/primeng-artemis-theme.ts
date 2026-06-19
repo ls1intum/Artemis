@@ -12,6 +12,28 @@ import Aura from '@primeuix/themes/aura';
  */
 export const AuraArtemis = definePreset(Aura, {
     semantic: {
+        colorScheme: {
+            // Bind PrimeNG's DARK surface ramp to the Artemis slate family (hue ~213, low saturation,
+            // lightness-only steps) so PrimeNG components match the chrome by construction. surface-900 IS
+            // --module-bg, so a PrimeNG card/table sitting inside an Artemis panel has no temperature seam.
+            // Light is left as stock Aura slate (already coherent with the cool light chrome).
+            dark: {
+                surface: {
+                    0: '#ffffff',
+                    50: '#f4f5f6',
+                    100: '#e2e5e9',
+                    200: '#c6cbd2',
+                    300: '#a4acb7',
+                    400: '#7e8b9a',
+                    500: '#5e6a78',
+                    600: '#434c56',
+                    700: '#343a42',
+                    800: '#262b31',
+                    900: 'var(--module-bg)',
+                    950: '#101214',
+                },
+            },
+        },
         primary: {
             // Reference the --primary CSS variable from your theme
             50: 'color-mix(in srgb, var(--primary) 10%, white)',

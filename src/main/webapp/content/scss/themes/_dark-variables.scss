@@ -9,7 +9,7 @@ $gray-400: #ced4da;
 $gray-500: #adb5bd;
 $gray-600: #888;
 $gray-700: #444;
-$gray-800: #303030;
+$gray-800: #22272e; // cool-slate (h213 s12); was pure-neutral #303030. Unifies the dark backdrop + $gray-800-derived surfaces with the navbar/module temperature
 $gray-900: #222;
 $black: #000;
 
@@ -121,8 +121,11 @@ $link-color: #3e8acc;
 // Border
 $border-color: lighten($body-bg, 10);
 
-// Base for dark spaces
-$neutral-dark: rgb(24, 26, 24); // (not bootstrap)
+// Base for dark spaces — cool-slate (h214 s14 l10); was faint-green rgb(24, 26, 24).
+// This is the de-facto app-wide dark surface token (--module-bg, --card-bg, panels). Keeping it on the
+// same hue as the navbar ($artemis-dark #353d47, h213) and varying only lightness via the lighten()
+// steps below makes every dark surface one cohesive cool-slate family. (not bootstrap)
+$neutral-dark: #16191d;
 
 $neutral-dark-l-5: lighten($neutral-dark, 5%);
 $neutral-dark-l-10: lighten($neutral-dark, 10%);
@@ -683,8 +686,8 @@ $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
 
 // Tutorial Groups
-$registration-suggestion-panel-bg: #18181b;
-$registration-suggestion-panel-selection-bg: #27272a;
+$registration-suggestion-panel-bg: $neutral-dark; // track the slate surface family (was hardcoded zinc #18181b)
+$registration-suggestion-panel-selection-bg: $neutral-dark-l-10; // (was hardcoded zinc #27272a)
 
 // LLM Selection Popup
 $ai-modal-card-bg: $neutral-dark-l-10;
