@@ -85,13 +85,12 @@ describe('CourseGroupComponent', () => {
             expect(comp.isSearching()).toBe(false);
         });
 
-        it('should set searchNoResults when the server returns no users', () => {
+        it('should return empty suggestions when the server returns no users', () => {
             searchStub.mockReturnValue(of(new HttpResponse({ body: [] })));
 
             comp.onUserSearchComplete(makeEvent('testLoginOrName'));
 
             expect(comp.userSuggestions()).toEqual([]);
-            expect(comp.searchNoResults()).toBe(true);
         });
 
         it('should return empty suggestions when query is shorter than three characters', () => {
@@ -127,15 +126,13 @@ describe('CourseGroupComponent', () => {
             expect(searchStub).toHaveBeenCalledWith('testLoginOrName');
         });
 
-        it('should reset searchFailed and searchNoResults before each new search', () => {
+        it('should reset searchFailed before each new search', () => {
             comp.searchFailed.set(true);
-            comp.searchNoResults.set(true);
             searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
 
             comp.onUserSearchComplete(makeEvent('testUser'));
 
             expect(comp.searchFailed()).toBe(false);
-            expect(comp.searchNoResults()).toBe(false);
         });
 
         it('should set isSearching to false after the search completes', () => {

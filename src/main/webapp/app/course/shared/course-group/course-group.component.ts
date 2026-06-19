@@ -130,29 +130,35 @@ export class CourseGroupComponent {
     protected readonly faUsers = faUsers;
     protected readonly faUserPlus = faUserPlus;
 
+    private latestSearchRequestId = 0;
+
     /**
      * Triggered by p-autocomplete on each keystroke (after minLength chars are typed).
      * Updates the table filter query and fetches matching users from the server for the dropdown.
      */
     onUserSearchComplete(event: AutoCompleteCompleteEvent): void {
-        this.filterQuery.set(event.query);
+        const query = event.query.trim();
+        this.filterQuery.set(query);
         this.searchFailed.set(false);
 
-        if (event.query.length < 3) {
+        if (query.length < 3) {
+            this.isSearching.set(false);
             this.userSuggestions.set([]);
             return;
         }
 
         this.isSearching.set(true);
-        this.userSearch()(event.query)
+        const requestId = ++this.latestSearchRequestId;
+        this.userSearch()(query)
             .pipe(
-                map((response) => response.body!),
+                map((response) => response.body ?? []),
                 catchError(() => {
                     this.searchFailed.set(true);
                     return of([]);
                 }),
             )
             .subscribe((users) => {
+                if (requestId !== this.latestSearchRequestId) return;
                 this.isSearching.set(false);
                 this.userSuggestions.set(users);
             });

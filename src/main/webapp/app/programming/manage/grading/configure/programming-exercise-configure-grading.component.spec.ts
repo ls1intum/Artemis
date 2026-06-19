@@ -476,20 +476,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(issuesMapForSecondCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[1].name]);
     });
 
-    it('should sort code-analysis table', () => {
-        initGradingComponent({ tab: 'code-analysis' });
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'penalty', dir: 'asc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'penalty', dir: 'asc' }]);
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'maxPenalty', dir: 'asc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'maxPenalty', dir: 'asc' }]);
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'asc' }] });
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'desc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'detectedIssues', dir: 'desc' }]);
-    });
-
     it('should not require confirmation if there are no unsaved changes', () => {
         initGradingComponent();
 

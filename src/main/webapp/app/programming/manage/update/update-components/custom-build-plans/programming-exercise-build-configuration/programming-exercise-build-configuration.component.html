@@ -109,7 +109,7 @@
 </ng-template>
 
 <ng-template #envVarActionsRef let-row>
-    <button class="btn btn-sm btn-danger" (click)="removeEnvVar(row)">
+    <button type="button" class="btn btn-sm btn-danger" (click)="removeEnvVar(row)">
         <fa-icon [icon]="faTrash" />
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
     </button>
