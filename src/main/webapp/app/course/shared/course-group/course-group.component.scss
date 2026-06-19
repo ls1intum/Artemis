@@ -1,7 +1,6 @@
 // only place declarations within this manual scope (otherwise other components could be affected)
 jhi-course-group {
-    $dropdown-item: (
-        active-color: #28a745,
+    $autocomplete-item: (
         already-member: (
             color: #212529,
             background-color: #e9f6ec,
@@ -9,7 +8,7 @@ jhi-course-group {
         ),
     );
 
-    $datatable-row: (
+    $table-row: (
         newly-added-member: (
             background-color: #c4e7cc,
             animation-delay: 150ms,
@@ -17,25 +16,18 @@ jhi-course-group {
         ),
     );
 
-    ngb-typeahead-window {
-        min-width: 400px;
-
-        .dropdown-item {
-            display: flex;
-            justify-content: space-between;
-
-            &.active {
-                background-color: map-get($dropdown-item, active-color);
-            }
-
-            &.already-member {
-                $vars: map-get($dropdown-item, already-member);
+    // Styles for already-member entries in the p-autocomplete dropdown
+    .p-autocomplete-overlay {
+        .p-autocomplete-option {
+            &:has(.already-member) {
+                $vars: map-get($autocomplete-item, already-member);
 
                 color: map-get($vars, color);
                 background-color: map-get($vars, background-color);
                 opacity: 0.5;
 
-                &.active {
+                &.p-focus,
+                &.p-autocomplete-option-selected {
                     background-color: map-get($vars, background-color-hover);
                     opacity: 0.8;
                 }
@@ -43,19 +35,28 @@ jhi-course-group {
         }
     }
 
-    .datatable-body-row {
-        &.newly-added-member {
-            $vars: map-get($datatable-row, newly-added-member);
+    .p-datatable-header {
+        p-autocomplete {
+            flex: 1;
 
-            animation-name: flash-animation;
-            animation-delay: map-get($vars, animation-delay);
-            animation-duration: map-get($vars, animation-duration);
-            animation-timing-function: ease-out;
+            .p-autocomplete-input {
+                flex-grow: 1;
+            }
+        }
+    }
 
-            @keyframes flash-animation {
-                30% {
-                    background-color: map-get($vars, background-color);
-                }
+    // Flash animation applied to all rows briefly when a new member is added
+    tr.newly-added-member {
+        $vars: map-get($table-row, newly-added-member);
+
+        animation-name: flash-animation;
+        animation-delay: map-get($vars, animation-delay);
+        animation-duration: map-get($vars, animation-duration);
+        animation-timing-function: ease-out;
+
+        @keyframes flash-animation {
+            30% {
+                background-color: map-get($vars, background-color);
             }
         }
     }
