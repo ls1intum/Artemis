@@ -260,7 +260,7 @@ export class DragAndDropQuestionComponent {
 
     /**
      * Check if the assigned drag item from the given location is correct
-     * (Only possible if this.question.correctMappings is available)
+     * (Only possible if this.question.correctDndMappings is available)
      *
      * @param dropLocation {object} the drop location to check for correctness
      * @return {MappingResult} MAPPED_CORRECT, if the drop location is correct, MAPPED_INCORRECT if not and NOT_MAPPED if the location is correctly left blank
@@ -291,7 +291,7 @@ export class DragAndDropQuestionComponent {
 
     /**
      * Check if there is a drag item assigned to the given location in the solution of the question
-     * (Only possible if this.question.correctMappings is available)
+     * (Only possible if this.question.correctDndMappings is available)
      *
      * @param dropLocation {object} the drop location to check for mapping
      * @return {boolean} true, if the drop location is part of a mapping, otherwise false.

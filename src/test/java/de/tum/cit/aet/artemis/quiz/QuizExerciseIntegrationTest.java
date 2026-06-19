@@ -2492,7 +2492,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         DropLocation removedDropLocation = dnd.getDropLocations().removeFirst();
         DragItem removedDragItem = dnd.getDragItems().removeFirst();
         // Remove any mapping that references the removed drag item or drop location to keep the graph consistent.
-        // (correctMappings is a Set; iteration order is not guaranteed across loads, so we filter by reference equality
+        // (correctDndMappings is a Set; iteration order is not guaranteed across loads, so we filter by reference equality
         // instead of relying on positional removeFirst.)
         dnd.getCorrectMappings().removeIf(m -> m.getDragItem() == removedDragItem || m.getDropLocation() == removedDropLocation);
 

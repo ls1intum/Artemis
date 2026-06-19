@@ -68,8 +68,8 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     // Stored as a Set: position carries no semantic meaning — each mapping is identified by its (dragItem, dropLocation)
     // pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the sibling dragItems /
-    // dropLocations Lists, never in correctMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
-    // products that would otherwise appear when callers JOIN FETCH correctMappings alongside another collection,
+    // dropLocations Lists, never in correctDndMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
+    // products that would otherwise appear when callers JOIN FETCH correctDndMappings alongside another collection,
     // avoids MultipleBagFetchException risk if a sibling ever drops @OrderColumn, and matches the conceptual model
     // (a set of mapping pairs). HashSet membership is contract-safe across transient → persisted transitions because
     // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
@@ -421,7 +421,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // correctDndMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
             // spuriously triggering recalculation when the only difference is row order.
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
                     || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());

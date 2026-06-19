@@ -148,7 +148,7 @@ describe('ShortAnswerQuestionUtil', () => {
     });
 
     it('should check for misleading mappings', () => {
-        // This is done as the correctMappings is undefined (see previous test)
+        // This is done as the correctDndMappings is undefined (see previous test)
         shortAnswerQuestion.correctMappings = [mapping];
 
         const spot2 = new ShortAnswerSpot();

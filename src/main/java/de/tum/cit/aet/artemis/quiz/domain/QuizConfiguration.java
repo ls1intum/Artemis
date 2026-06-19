@@ -61,7 +61,7 @@ public interface QuizConfiguration {
                 setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
                 // reconnect dragItems
                 setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
-                // reconnect correctMappings
+                // reconnect correctDndMappings
                 setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
                 // reconnect dropLocationCounters (statistic is null on transient questions before initializeStatistic())
                 if (dragAndDropStatistic != null) {
@@ -74,7 +74,7 @@ public interface QuizConfiguration {
                 setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
                 // reconnect solutions
                 setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
-                // reconnect correctMappings
+                // reconnect correctDndMappings
                 setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
                 // reconnect spotCounters (statistic is null on transient questions before initializeStatistic())
                 if (shortAnswerStatistic != null) {

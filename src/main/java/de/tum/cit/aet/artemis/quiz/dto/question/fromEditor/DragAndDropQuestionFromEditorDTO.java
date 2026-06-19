@@ -37,13 +37,13 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param backgroundFilePath the background image file path
  * @param dropLocations      the list of drop locations
  * @param dragItems          the list of drag items
- * @param correctMappings    the list of correct mappings
+ * @param correctDndMappings the list of correct mappings
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationFromEditorDTO> dropLocations,
-        @NotEmpty List<@Valid DragItemFromEditorDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingFromEditorDTO> correctMappings) implements QuizQuestionFromEditorDTO {
+        @NotEmpty List<@Valid DragItemFromEditorDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingFromEditorDTO> correctDndMappings) implements QuizQuestionFromEditorDTO {
 
     /**
      * Creates a DragAndDropQuestionFromEditorDTO from the given DragAndDropQuestion domain object.
@@ -93,7 +93,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
             effectiveIdToDropLocation.put(dropLocations.get(i).effectiveId(), locations.get(i));
         }
 
-        Set<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
+        Set<DragAndDropMapping> mappings = correctDndMappings.stream().map(m -> {
             DragItem dragItem = effectiveIdToDragItem.get(m.dragItemTempId());
             DropLocation dropLocation = effectiveIdToDropLocation.get(m.dropLocationTempId());
             if (dragItem == null || dropLocation == null) {
