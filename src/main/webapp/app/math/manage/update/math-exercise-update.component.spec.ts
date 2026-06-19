@@ -53,7 +53,7 @@ describe('MathExerciseUpdateComponent', () => {
 
     it('initialises with the resolved exercise', () => {
         expect(component.mathExercise).toBeTruthy();
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving()).toBe(false);
     });
 
     it('save() routes through create when the exercise has no id', () => {
