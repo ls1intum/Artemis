@@ -202,9 +202,6 @@ importers:
       markdown-it:
         specifier: 14.2.0
         version: 14.2.0
-      markdown-it-github-alerts:
-        specifier: 1.0.1
-        version: 1.0.1(markdown-it@14.2.0)
       monaco-editor:
         specifier: 0.55.1
         version: 0.55.1
@@ -5159,11 +5156,6 @@ packages:
   make-fetch-happen@15.0.6:
     resolution: {integrity: sha512-Je0fLJ0F5atA7F+eIlLzk+Wkcl57JDf4kf+EW8xiP5E31xOQxkIxTbgf1Oi1Lw9tRI9UEMRdI5Vz2xTzoNU1Jw==}
     engines: {node: ^20.17.0 || >=22.9.0}
-
-  markdown-it-github-alerts@1.0.1:
-    resolution: {integrity: sha512-NNATF4QdoGI07hyCitoB2YqJ1YcNVCKT89ut2VtfFY9rkeFCXe/V2lOonKQLpJiq5DjiZZepf97BJx5xOjFIAw==}
-    peerDependencies:
-      markdown-it: '>= 13.0.0'
 
   markdown-it@14.2.0:
     resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
@@ -12042,10 +12034,6 @@ snapshots:
       ssri: 13.0.1
     transitivePeerDependencies:
       - supports-color
-
-  markdown-it-github-alerts@1.0.1(markdown-it@14.2.0):
-    dependencies:
-      markdown-it: 14.2.0
 
   markdown-it@14.2.0:
     dependencies:
