@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -77,6 +78,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonProperty("correctDndMappings")
     private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
     public String getBackgroundFilePath() {
