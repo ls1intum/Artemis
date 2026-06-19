@@ -3,15 +3,25 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IrisJsonMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { iconForEntityMode, routeForContext } from './iris-context.util';
 
-type ContextSwitchTransition = 'added' | 'removed' | 'changed';
+/** Transition values are a contract shared with the server and Pyris. */
+type IrisContextSwitchTransition = 'added' | 'removed' | 'changed';
+
+/** Server's CTXSWAP marker payload, read with a single cast rather than validated field-by-field. */
+interface ContextSwitchMarker {
+    transition?: IrisContextSwitchTransition;
+    entityMode?: ChatServiceMode;
+    entityId?: number;
+    name?: string;
+}
 
 interface ContextSwitchInfo {
-    transition: ContextSwitchTransition;
+    transition: IrisContextSwitchTransition;
     entityIcon: IconProp | undefined;
     entityRoute: string | undefined;
     name: string;
@@ -31,16 +41,13 @@ export class IrisContextSwitchDividerComponent {
     readonly message = input.required<IrisMessage>();
 
     readonly contextSwitch = computed<ContextSwitchInfo>(() => {
-        const jsonContent = this.message().content?.find((c) => isJsonContent(c)) as IrisJsonMessageContent | undefined;
-        const transition = jsonContent?.attributes?.['transition'] as ContextSwitchTransition | undefined;
-        const entityMode = jsonContent?.attributes?.['entityMode'] as string | undefined;
-        const entityId = jsonContent?.attributes?.['entityId'] as number | undefined;
-        const name = (jsonContent?.attributes?.['name'] as string | undefined) ?? '';
+        const contents: IrisMessageContent[] = this.message().content;
+        const marker = (contents.find(isJsonContent)?.attributes ?? {}) as ContextSwitchMarker;
         return {
-            transition: transition ?? 'added',
-            entityIcon: iconForEntityMode(entityMode),
-            entityRoute: routeForContext(this.chatService.getCourseId(), entityMode as ChatServiceMode | undefined, entityId),
-            name,
+            transition: marker.transition ?? 'added',
+            entityIcon: iconForEntityMode(marker.entityMode),
+            entityRoute: routeForContext(this.chatService.getCourseId(), marker.entityMode, marker.entityId),
+            name: marker.name ?? '',
         };
     });
 }

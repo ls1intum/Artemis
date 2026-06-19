@@ -314,7 +314,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
         }
 
         @Test
-        void switchingBackToCourseLabelsMarkerWithRemovedEntityName() {
+        void switchingBackToCourseLabelsMarkerAsRemovedWithoutEntity() {
             User user = student1();
             IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
 
@@ -324,9 +324,9 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
             assertThat(markerContent.getJsonNode().get("transition").asText()).isEqualTo("removed");
-            assertThat(markerContent.getJsonNode().get("entityMode").asText()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
-            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
-            assertThat(markerContent.getJsonNode().get("name").asText()).isEqualTo(lecture.getTitle());
+            assertThat(markerContent.getJsonNode().has("entityMode")).isFalse();
+            assertThat(markerContent.getJsonNode().has("entityId")).isFalse();
+            assertThat(markerContent.getJsonNode().has("name")).isFalse();
         }
 
         @Test

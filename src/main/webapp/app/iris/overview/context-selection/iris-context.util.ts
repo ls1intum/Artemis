@@ -1,8 +1,8 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 
-export function iconForEntityMode(entityMode: string | undefined): IconProp | undefined {
+export function iconForEntityMode(entityMode: ChatServiceMode | undefined): IconProp | undefined {
     switch (entityMode) {
         case ChatServiceMode.LECTURE:
             return faChalkboardUser;

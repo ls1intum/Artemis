@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisContextSwitchMarker;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -437,43 +438,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
         String newEntityName = resolved.entityName();
 
-        // Classify the transition so the client can pick the right label:
-        // - "removed": back to COURSE_CHAT — label with the lecture/exercise being removed (the old one).
-        // - "added": from COURSE_CHAT into a lecture/exercise — label with the new entity.
-        // - "changed": swapping one lecture/exercise for another — label with the new entity.
-        // The marker also carries the displayed entity's chat mode so the client can render the
-        // matching lecture/exercise icon next to the name.
-        String transition;
-        String markerName;
-        IrisChatMode entityMode;
-        Long markerEntityId;
         IrisChatMode previousMode = session.getMode();
-        if (newMode == IrisChatMode.COURSE_CHAT) {
-            transition = "removed";
-            markerName = lookupRemovedContextName(previousMode, session.getEntityId());
-            entityMode = previousMode;
-            markerEntityId = session.getEntityId();
-        }
-        else if (previousMode == IrisChatMode.COURSE_CHAT) {
-            transition = "added";
-            markerName = newEntityName;
-            entityMode = newMode;
-            markerEntityId = newEntityId;
-        }
-        else {
-            transition = "changed";
-            markerName = newEntityName;
-            entityMode = newMode;
-            markerEntityId = newEntityId;
-        }
+        var marker = IrisContextSwitchMarker.forSwitch(previousMode, newMode, newEntityId, newEntityName);
 
-        var markerAttributes = JsonObjectMapper.get().createObjectNode();
-        markerAttributes.put("transition", transition);
-        markerAttributes.put("entityMode", entityMode.name());
-        markerAttributes.put("entityId", markerEntityId);
-        markerAttributes.put("name", markerName);
         IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisJsonMessageContent(markerAttributes));
+        markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
         IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
 
         session.setMode(newMode);
@@ -481,19 +450,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         irisChatSessionRepository.save(session);
 
         sendOverWebsocket(session, savedMarker);
-    }
-
-    /**
-     * Looks up the title of the previous lecture/exercise context for a CTXSWAP marker that signals
-     * "context removed" (switch back to COURSE_CHAT). Returns an empty string if the previous entity
-     * cannot be resolved (e.g., was deleted) so the marker still renders cleanly.
-     */
-    private String lookupRemovedContextName(IrisChatMode previousMode, long previousEntityId) {
-        return switch (previousMode) {
-            case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> exerciseRepository.findById(previousEntityId).map(Exercise::getTitle).orElse("");
-            case LECTURE_CHAT -> lectureRepositoryApi.flatMap(api -> api.findById(previousEntityId)).map(Lecture::getTitle).orElse("");
-            default -> "";
-        };
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {

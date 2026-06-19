@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 import { iconForEntityMode, routeForContext } from './iris-context.util';
 
 describe('iconForEntityMode', () => {
@@ -22,10 +22,6 @@ describe('iconForEntityMode', () => {
 
     it('returns undefined for undefined input', () => {
         expect(iconForEntityMode(undefined)).toBeUndefined();
-    });
-
-    it('returns undefined for unknown string', () => {
-        expect(iconForEntityMode('UNKNOWN_MODE')).toBeUndefined();
     });
 });
 
