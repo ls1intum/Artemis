@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -69,7 +71,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-import-test");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, Exam.class, CREATED);
+        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
 
         assertThat(importedExam.getId()).isNotNull();
         assertThat(importedExam.getExerciseGroups()).hasSize(4);
@@ -101,7 +103,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-empty-import");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, Exam.class, CREATED);
+        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
 
         assertThat(importedExam.getId()).isNotNull();
 
@@ -120,8 +122,8 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
         List<ExerciseGroup> exerciseGroupsToImport = sourceExam.getExerciseGroups();
 
-        List<ExerciseGroup> importedGroups = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
-                exerciseGroupsToImport, ExerciseGroup.class, HttpStatus.OK);
+        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                exerciseGroupsToImport, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         // The target exam originally had no exercise groups, so all returned groups are newly imported
         // Filter to only the groups that actually have exercises (the empty group from source is skipped)

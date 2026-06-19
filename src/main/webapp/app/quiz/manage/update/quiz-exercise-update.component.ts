@@ -495,7 +495,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizExercise()?.quizBatches?.forEach((batch) => {
             // validate release < start and start + duration > due
             const startTime = dayjs(batch.startTime);
-            const endTime = startTime.add(dayjs.duration(this.duration.minutes, 'minutes')).add(dayjs.duration(this.duration.seconds, 'seconds'));
+            const endTime = startTime.add(dayjs.duration(this.quizExercise().duration ?? 0, 'seconds'));
             batch.startTimeError = startTime.isBefore(this.quizExercise().releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
     }
@@ -824,9 +824,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     onDurationChange(): void {
         if (!this.isExamMode()) {
-            const duration = dayjs.duration(this.duration.minutes, 'minutes').add(this.duration.seconds, 'seconds');
-            this.quizExercise().duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
-            this.updateDuration();
+            const duration = dayjs
+                .duration(this.duration.hours ?? 0, 'hours')
+                .add(this.duration.minutes ?? 0, 'minutes')
+                .add(this.duration.seconds ?? 0, 'seconds');
+            this.quizExercise().duration = Math.max(round(duration.asSeconds()), 0);
             this.cacheValidation();
         } else if (this.quizExercise().releaseDate && this.quizExercise().dueDate) {
             const duration = dayjs(this.quizExercise().dueDate).diff(this.quizExercise().releaseDate, 's');
@@ -840,10 +842,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Update ui to current value of duration
      */
     updateDuration(): void {
-        const duration = dayjs.duration(this.quizExercise().duration!, 'seconds');
+        const duration = dayjs.duration(Math.max(this.quizExercise().duration ?? 0, 0), 'seconds');
         // when input fields are empty do not update their values
+        if (this.duration.hours !== undefined) {
+            this.duration.hours = Math.floor(duration.asHours());
+        }
         if (this.duration.minutes !== undefined) {
-            this.duration.minutes = 60 * duration.hours() + duration.minutes();
+            this.duration.minutes = duration.minutes();
         }
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
