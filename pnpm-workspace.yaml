@@ -109,3 +109,17 @@ allowBuilds:
     lmdb: true
     msgpackr-extract: true
     unrs-resolver: true
+
+# Acknowledged audit advisories that `pnpm audit` should not flag.
+# GHSA-8988-4f7v-96qf (@opentelemetry/core < 2.8.0, moderate: unbounded memory
+# allocation in W3C Baggage propagation) reaches us only through the dev-only
+# chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
+# bundled into the production WAR and processes no untrusted baggage in our usage.
+# The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
+# requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
+# so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
+# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
+# opentelemetry_version=1.62.0 in gradle.properties.)
+auditConfig:
+    ignoreGhsas:
+        - 'GHSA-8988-4f7v-96qf'
