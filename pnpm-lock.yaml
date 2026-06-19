@@ -187,9 +187,6 @@ importers:
       franc-min:
         specifier: 6.2.0
         version: 6.2.0
-      graphemer:
-        specifier: 1.4.0
-        version: 1.4.0
       highlight.js:
         specifier: 11.11.1
         version: 11.11.1
@@ -217,9 +214,6 @@ importers:
       markdown-it-github-alerts:
         specifier: 1.0.1
         version: 1.0.1(markdown-it@14.2.0)
-      markdown-it-highlightjs:
-        specifier: 4.3.0
-        version: 4.3.0
       monaco-editor:
         specifier: 0.55.1
         version: 0.55.1
@@ -4658,9 +4652,6 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  graphemer@1.4.0:
-    resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
-
   handle-thing@2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
 
@@ -5242,9 +5233,6 @@ packages:
     resolution: {integrity: sha512-NNATF4QdoGI07hyCitoB2YqJ1YcNVCKT89ut2VtfFY9rkeFCXe/V2lOonKQLpJiq5DjiZZepf97BJx5xOjFIAw==}
     peerDependencies:
       markdown-it: '>= 13.0.0'
-
-  markdown-it-highlightjs@4.3.0:
-    resolution: {integrity: sha512-dTEXpTV2J9WJiO8TA/FJ4DxidrYtTNcfBAdl+CLjQ3UFWj8s4dJyCPTcvoXNLmN5U5ZTCGu7TSkSvBvi4fUqkQ==}
 
   markdown-it@14.2.0:
     resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
@@ -11582,8 +11570,6 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphemer@1.4.0: {}
-
   handle-thing@2.0.1: {}
 
   has-flag@4.0.0: {}
@@ -12209,10 +12195,6 @@ snapshots:
   markdown-it-github-alerts@1.0.1(markdown-it@14.2.0):
     dependencies:
       markdown-it: 14.2.0
-
-  markdown-it-highlightjs@4.3.0:
-    dependencies:
-      highlight.js: 11.11.1
 
   markdown-it@14.2.0:
     dependencies:

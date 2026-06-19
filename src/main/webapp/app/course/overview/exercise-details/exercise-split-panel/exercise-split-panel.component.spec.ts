@@ -96,6 +96,29 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(component.irisPanelStartsCollapsed()).toBe(false);
     });
 
+    it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {
+        const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
+
+        // Programming exercise with the online editor: navigating to the code editor is expected on the first run.
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 5], expect.anything());
+
+        navigateSpy.mockClear();
+
+        // An incoming result replaces the participation object but keeps its id. This must NOT re-navigate — otherwise
+        // navigation thrashes and re-creates the code-editor subtree in a loop, flooding the server with requests.
+        fixture.componentRef.setInput('studentParticipation', { id: 5, submissions: [{ id: 9 }] } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        // A genuine switch to a different participation still navigates.
+        fixture.componentRef.setInput('studentParticipation', { id: 6 } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 6], expect.anything());
+    });
+
     it('should keep the problem statement open for users who opted out of AI when an editor panel is shown', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);

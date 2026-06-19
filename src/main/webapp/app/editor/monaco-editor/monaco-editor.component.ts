@@ -9,7 +9,6 @@ import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
-import Graphemer from 'graphemer';
 
 import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
@@ -21,6 +20,8 @@ import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.t
 export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
+
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -36,6 +37,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
+    private static readonly CUSTOM_BACKSPACE_ACTION_ID = 'artemis-grapheme-backspace';
 
     /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor: monaco.editor.IStandaloneCodeEditor;
@@ -105,11 +107,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private focusEditorTextListener?: Disposable;
     private lastEditableEditor?: monaco.editor.IStandaloneCodeEditor;
 
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
+    // Disposables for the registered backspace actions, keyed by editor so transient diff editors can be released
+    // when they are disposed instead of waiting for the whole component to be destroyed.
+    private readonly customBackspaceActionDisposables = new Map<monaco.editor.IStandaloneCodeEditor, Disposable>();
 
     private diffUpdateListener?: Disposable;
     private diffLayoutListener?: Disposable;
@@ -281,7 +285,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
-        this.focusEditorTextListener?.dispose();
+        this.customBackspaceActionDisposables.forEach((disposable) => disposable.dispose());
+        this.customBackspaceActionDisposables.clear();
         this.diffUpdateListener?.dispose();
         this.diffLayoutListener?.dispose();
 
@@ -359,6 +364,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.diffListenersAttached = false;
 
         if (this._diffEditor) {
+            this.disposeCustomBackspaceAction(this._diffEditor.getModifiedEditor());
             // Clear cached editor before disposing to prevent race conditions
             // (e.g., ResizeObserver callback reading mode() as 'diff' during transition)
             this.lastEditableEditor = undefined;
@@ -450,11 +456,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.textChangedListener = editor.onDidChangeModelContent(() => {
             this.emitTextChangeEvent();
-        });
-
-        this.focusEditorTextListener?.dispose();
-        this.focusEditorTextListener = editor.onDidFocusEditorText(() => {
-            this.registerCustomBackspaceAction(editor);
         });
 
         this.registerCustomBackspaceAction(editor);
@@ -1015,48 +1016,70 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param editor The editor to register the command for.
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
-        this.customBackspaceCommandId =
-            editor.addCommand(
-                monaco.KeyCode.Backspace,
-                () => {
-                    const model = editor.getModel();
-                    const selection = editor.getSelection();
-                    if (!model || !selection) return;
+        // Register the grapheme-aware backspace command at most once per editor. `editor.addCommand` registers a
+        // globally-tracked command whose handler captures the editor; re-registering it (previously done on every
+        // focus event) leaked those editors and their DOM, because Monaco only disposes the most recently registered
+        // command on editor.dispose(). The command is editor-scoped, so a single registration suffices.
+        if (this.customBackspaceActionDisposables.has(editor)) {
+            return;
+        }
+        this.customBackspaceCommandId = MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID;
+        const disposable = editor.addAction({
+            id: MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID,
+            label: 'Delete previous grapheme cluster',
+            keybindings: [monaco.KeyCode.Backspace],
+            precondition: 'editorTextFocus && !findWidgetVisible && !editorReadonly',
+            run: (actionEditor) => this.deletePreviousGraphemeCluster(actionEditor),
+        });
+        this.customBackspaceActionDisposables.set(editor, disposable);
+    }
 
-                    if (!selection.isEmpty()) {
-                        editor.trigger('keyboard', 'deleteLeft', null);
-                        return;
-                    }
+    private disposeCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor): void {
+        this.customBackspaceActionDisposables.get(editor)?.dispose();
+        this.customBackspaceActionDisposables.delete(editor);
+    }
 
-                    const lineNumber = selection.startLineNumber;
-                    const column = selection.startColumn;
-                    const lineContent = model.getLineContent(lineNumber);
+    /**
+     * Deletes the grapheme cluster before the cursor (or the current selection), so combined emojis and other
+     * multi-codepoint clusters are removed with a single backspace. Uses a targeted delete range (only the grapheme)
+     * instead of replacing the whole line, so collaborative editing (y-monaco) sees a minimal edit and cursor
+     * positions stay correct.
+     */
+    private deletePreviousGraphemeCluster(editor: monaco.editor.ICodeEditor): void {
+        const model = editor.getModel();
+        const selection = editor.getSelection();
+        if (!model || !selection) return;
 
-                    const textBeforeCursor = lineContent.substring(0, column - 1);
-                    const splitter = new Graphemer();
-                    const graphemes = splitter.splitGraphemes(textBeforeCursor);
+        if (!selection.isEmpty()) {
+            editor.trigger('keyboard', 'deleteLeft', null);
+            return;
+        }
 
-                    if (textBeforeCursor.length === 0) {
-                        editor.trigger('keyboard', 'deleteLeft', null);
-                        return;
-                    }
+        const lineNumber = selection.startLineNumber;
+        const column = selection.startColumn;
+        const lineContent = model.getLineContent(lineNumber);
 
-                    const lastGrapheme = graphemes.pop();
-                    const deletedLength = lastGrapheme?.length ?? 1;
-                    const deleteStartColumn = column - deletedLength;
+        const textBeforeCursor = lineContent.substring(0, column - 1);
+        const graphemes = Array.from(GRAPHEME_SEGMENTER.segment(textBeforeCursor), (segment) => segment.segment);
 
-                    model.pushEditOperations(
-                        [],
-                        [
-                            {
-                                range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
-                                text: '',
-                            },
-                        ],
-                        () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
-                    );
+        if (textBeforeCursor.length === 0) {
+            editor.trigger('keyboard', 'deleteLeft', null);
+            return;
+        }
+
+        const lastGrapheme = graphemes.pop();
+        const deletedLength = lastGrapheme?.length ?? 1;
+        const deleteStartColumn = column - deletedLength;
+
+        model.pushEditOperations(
+            [],
+            [
+                {
+                    range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
+                    text: '',
                 },
-                'editorTextFocus && !findWidgetVisible && !editorReadonly',
-            ) || undefined;
+            ],
+            () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
+        );
     }
 }
