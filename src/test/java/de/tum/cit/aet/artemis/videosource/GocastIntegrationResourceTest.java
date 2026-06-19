@@ -1,0 +1,341 @@
+package de.tum.cit.aet.artemis.videosource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
+import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
+import de.tum.cit.aet.artemis.videosource.dto.GocastBindingDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastBindingWithApprovalDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastCourseDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastCreateBindingRequestDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastPlaybackTokenDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
+import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
+import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
+
+/**
+ * Spring integration tests for {@link de.tum.cit.aet.artemis.videosource.web.GocastIntegrationResource}.
+ * <p>
+ * Exercises the authorization matrix (instructor vs. student vs. non-member) and the binding
+ * state-machine (PENDING → ACTIVE when EP7 returns true; PENDING → REVOKED when EP7 returns 403;
+ * no status change on transport errors).
+ * <p>
+ * {@link de.tum.cit.aet.artemis.videosource.service.GocastConnectorService} and
+ * {@link de.tum.cit.aet.artemis.videosource.service.GocastApprovalLinkService} are provided as
+ * {@code @MockitoBean} fields inherited from {@code AbstractSpringIntegrationIndependentTestBase}.
+ * The gocast integration properties that activate the {@code GocastEnabled} condition are set in
+ * {@code AbstractSpringIntegrationIndependentTest}'s {@code @TestPropertySource}.
+ */
+class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "gocastresource";
+
+    @Autowired
+    private GocastCourseBindingRepository bindingRepository;
+
+    private Course course;
+
+    @BeforeEach
+    void setUp() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+    }
+
+    @AfterEach
+    void tearDown() {
+        bindingRepository.deleteAll();
+    }
+
+    // ── Authorization matrix — instructor-only endpoints ─────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void listAdministeredCourses_asStudent_returnsForbidden() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void listCourseStreams_asStudent_returnsForbidden() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createBinding_asStudent_returnsForbidden() throws Exception {
+        GocastCreateBindingRequestDTO body = new GocastCreateBindingRequestDTO(42L, "eidi");
+        request.post("/api/videosource/courses/" + course.getId() + "/binding", body, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getBinding_asStudent_returnsForbidden() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteBinding_asStudent_returnsForbidden() throws Exception {
+        request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.FORBIDDEN);
+    }
+
+    // ── listAdministeredCourses (EP1) ─────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listAdministeredCourses_asInstructor_returnsOk() throws Exception {
+        GocastCourseDTO dto = new GocastCourseDTO(10L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
+        when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(dto));
+
+        List<GocastCourseDTO> result = request.getList("/api/videosource/courses/" + course.getId() + "/tumlive-courses", HttpStatus.OK, GocastCourseDTO.class);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().id()).isEqualTo(10L);
+        verify(gocastConnectorService).listAdministeredCourses(TEST_PREFIX + "instructor1", 0, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listAdministeredCourses_withYearAndTerm_passesParameters() throws Exception {
+        when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of());
+
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses?year=2026&term=W", HttpStatus.OK, String.class);
+
+        verify(gocastConnectorService).listAdministeredCourses(TEST_PREFIX + "instructor1", 2026, "W");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listAdministeredCourses_gocastError_propagatesStatus() throws Exception {
+        when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("gocast unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses", HttpStatus.SERVICE_UNAVAILABLE, String.class);
+    }
+
+    // ── listCourseStreams (EP8) ────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listCourseStreams_noBinding_returnsNotFound() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listCourseStreams_withBinding_returnsStreams() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        GocastStreamDTO streamDTO = new GocastStreamDTO(1001L, "Lecture 1", false, null, null);
+        when(gocastConnectorService.listCourseStreams(42L)).thenReturn(List.of(streamDTO));
+
+        List<GocastStreamDTO> result = request.getList("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.OK, GocastStreamDTO.class);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().streamId()).isEqualTo(1001L);
+        verify(gocastConnectorService).listCourseStreams(42L);
+    }
+
+    // ── createBinding ─────────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createBinding_asInstructor_returnsPendingBindingWithApprovalUrl() throws Exception {
+        when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
+
+        GocastCreateBindingRequestDTO body = new GocastCreateBindingRequestDTO(42L, "eidi");
+        GocastBindingWithApprovalDTO response = request.postWithResponseBody("/api/videosource/courses/" + course.getId() + "/binding", body, GocastBindingWithApprovalDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.approvalUrl()).isEqualTo("https://gocast.test/approve");
+        assertThat(response.binding()).isNotNull();
+        assertThat(response.binding().status()).isEqualTo(GocastBindingStatus.PENDING);
+        assertThat(response.binding().gocastCourseId()).isEqualTo(42L);
+        assertThat(response.binding().gocastCourseSlug()).isEqualTo("eidi");
+
+        // Verify the binding was persisted
+        assertThat(bindingRepository.findByCourseId(course.getId())).isPresent();
+    }
+
+    // ── getBinding (EP7 state-machine) ───────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_noBinding_returnsNotFound() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NOT_FOUND, GocastBindingDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_pendingAndEp7ReturnsTrue_flipsToActive() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+        when(gocastConnectorService.getBindingStatus(42L)).thenReturn(true);
+
+        GocastBindingDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingDTO.class);
+
+        assertThat(result.status()).isEqualTo(GocastBindingStatus.ACTIVE);
+        // Verify the DB was updated
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.ACTIVE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_pendingAndEp7ReturnsFalse_remainsPending() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+        when(gocastConnectorService.getBindingStatus(42L)).thenReturn(false);
+
+        GocastBindingDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingDTO.class);
+
+        assertThat(result.status()).isEqualTo(GocastBindingStatus.PENDING);
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_pendingAndEp7Returns403_flipsToRevoked() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+        when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
+
+        GocastBindingDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingDTO.class);
+
+        assertThat(result.status()).isEqualTo(GocastBindingStatus.REVOKED);
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_pendingAndEp7Returns503_returnsPendingWithoutMutation() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+        when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+        // Response is still 200 — we return the stale binding without erroring out
+        GocastBindingDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingDTO.class);
+
+        assertThat(result.status()).isEqualTo(GocastBindingStatus.PENDING);
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getBinding_alreadyActive_doesNotCallEp7() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+
+        GocastBindingDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingDTO.class);
+
+        assertThat(result.status()).isEqualTo(GocastBindingStatus.ACTIVE);
+        verify(gocastConnectorService, never()).getBindingStatus(anyLong());
+    }
+
+    // ── deleteBinding ─────────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteBinding_noBinding_returnsNotFound() throws Exception {
+        request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteBinding_withBinding_returnsNoContent() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+
+        request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NO_CONTENT);
+
+        assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+    }
+
+    // ── getPlaybackToken (EP2) — student endpoint ─────────────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_asStudentWithBinding_returnsSignedUrls() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        GocastPlaybackTokenDTO tokenDTO = new GocastPlaybackTokenDTO("https://cdn.test/playlist.m3u8", null, null, 7200);
+        when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString())).thenReturn(tokenDTO);
+
+        GocastPlaybackTokenDTO result = request.postWithResponseBody("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null,
+                GocastPlaybackTokenDTO.class, HttpStatus.OK);
+
+        assertThat(result).isNotNull();
+        assertThat(result.playlistUrl()).isEqualTo("https://cdn.test/playlist.m3u8");
+        assertThat(result.expiresIn()).isEqualTo(7200);
+        verify(gocastConnectorService).getPlaybackToken(42L, 1001L, 7200, TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "outsider", roles = "USER")
+    void getPlaybackToken_asNonMember_returnsForbidden() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_noBinding_returnsNotFound() throws Exception {
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_gocastReturns403_propagates403() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("user not eligible", org.springframework.http.HttpStatus.FORBIDDEN));
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_pendingBinding_returnsConflict() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
+
+        // EP2 must not be called for a non-ACTIVE binding
+        verify(gocastConnectorService, never()).getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_revokedBinding_returnsConflict() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.REVOKED);
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
+
+        verify(gocastConnectorService, never()).getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString());
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private GocastCourseBinding persistBinding(long courseId, long gocastCourseId, String slug, GocastBindingStatus status) {
+        GocastCourseBinding binding = new GocastCourseBinding();
+        binding.setCourseId(courseId);
+        binding.setGocastCourseId(gocastCourseId);
+        binding.setGocastCourseSlug(slug);
+        binding.setStatus(status);
+        return bindingRepository.save(binding);
+    }
+}

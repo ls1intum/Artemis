@@ -28,7 +28,11 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.lti.enabled=true", "artemis.atlas.enabled=true",
         "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
-        "artemis.continuous-integration.build-job.retention-period=30" })
+        "artemis.continuous-integration.build-job.retention-period=30",
+        // Gocast integration test properties — activate GocastEnabled condition so the resource and its beans are registered;
+        // GocastConnectorService and GocastApprovalLinkService are replaced with @MockitoBean in the base test class.
+        "artemis.tum-live.api-base-url=http://gocast.test", "artemis.tum-live.service-account-token=test-token", "artemis.tum-live.web-base-url=http://gocast.test",
+        "artemis.tum-live.service-account-user-id=999" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
 
     protected static final WeaviateContainer weaviateContainer;

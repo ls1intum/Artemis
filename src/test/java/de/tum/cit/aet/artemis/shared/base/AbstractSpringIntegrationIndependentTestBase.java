@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.videosource.service.GocastApprovalLinkService;
+import de.tum.cit.aet.artemis.videosource.service.GocastConnectorService;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
@@ -86,6 +88,15 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
     protected TumLiveService tumLiveService;
+
+    // Mocks for the gocast integration — the connector and approval-link builder require
+    // external configuration (gocast base URL and service-account token). They are replaced
+    // with Mockito beans so no real HTTP calls are made in tests.
+    @MockitoBean
+    protected GocastConnectorService gocastConnectorService;
+
+    @MockitoBean
+    protected GocastApprovalLinkService gocastApprovalLinkService;
 
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
@@ -134,6 +145,12 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (gocastConnectorService != null) {
+            Mockito.reset(gocastConnectorService);
+        }
+        if (gocastApprovalLinkService != null) {
+            Mockito.reset(gocastApprovalLinkService);
         }
         if (chatMemoryRepository != null) {
             Mockito.reset(chatMemoryRepository);
