@@ -69,7 +69,9 @@
         </p-table>
 
         @if (totalRecords() > 0) {
-            <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="onPageChange($event)" />
+            <div class="flex justify-center mt-3">
+                <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="onPageChange($event)" />
+            </div>
         }
     }
 </div>

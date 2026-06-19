@@ -81,7 +81,7 @@
             <div class="flex justify-center">
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
-            <div class="flex justify-center mt-2">
+            <div class="flex justify-center">
                 <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
             </div>
         </div>
