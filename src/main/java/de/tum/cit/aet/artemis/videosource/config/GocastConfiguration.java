@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient;
  * {@code artemis.tum-live.api-base-url} and {@code artemis.tum-live.service-account-token} are non-blank.
  * <p>
  * The service-account bearer token and {@code X-On-Behalf-Of} header are <em>not</em> added as
- * global interceptors here; they are set per-request in {@code GocastConnector} because the token
+ * global interceptors here; they are set per-request in {@code GocastConnectorService} because the token
  * is the same for every call but the on-behalf-of user varies per request.
  */
 @Configuration

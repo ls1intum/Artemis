@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.videosource.dto;
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Fields not present in the response are silently ignored.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GocastStreamDTO(@JsonProperty("streamId") long streamId, @JsonProperty("name") String name, @JsonProperty("private") boolean isPrivate,
         @JsonProperty("start") Instant start, @JsonProperty("end") Instant end) {
 }

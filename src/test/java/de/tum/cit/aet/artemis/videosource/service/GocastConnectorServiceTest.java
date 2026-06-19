@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastPlaybackTokenDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
 
 /**
- * Unit tests for {@link GocastConnector}.
+ * Unit tests for {@link GocastConnectorService}.
  * <p>
  * Uses {@link MockRestServiceServer} bound to a {@link RestClient.Builder} to spin up an in-memory HTTP
  * server that verifies:
@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
  * <li>HTTP error responses are wrapped in {@link GocastIntegrationException} carrying the upstream status.</li>
  * </ul>
  */
-class GocastConnectorTest {
+class GocastConnectorServiceTest {
 
     private static final String BASE_URL = "https://tum.live";
 
@@ -51,13 +51,13 @@ class GocastConnectorTest {
 
     private MockRestServiceServer mockServer;
 
-    private GocastConnector connector;
+    private GocastConnectorService connector;
 
     @BeforeEach
     void setUp() {
         RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
         mockServer = MockRestServiceServer.bindTo(builder).build();
-        connector = new GocastConnector(builder.build(), TOKEN);
+        connector = new GocastConnectorService(builder.build(), TOKEN);
     }
 
     // ── EP1: listAdministeredCourses ──────────────────────────────────────────
