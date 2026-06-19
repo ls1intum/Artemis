@@ -1,5 +1,5 @@
-<div class="mx-auto max-w-[1200px] p-4">
-    <h2 jhiTranslate="artemisApp.adminPasskeyManagement.title"></h2>
+<div>
+    <h5 *adminTitleBarTitle id="passkey-management-page-heading" class="mb-0" jhiTranslate="artemisApp.adminPasskeyManagement.title"></h5>
 
     @if (isLoading()) {
         <div class="flex justify-center" data-testid="passkey-loading">
@@ -10,7 +10,7 @@
     } @else {
         <p-table [value]="passkeys()" [paginator]="true" [rows]="20" size="small" data-testid="passkey-table">
             <ng-template #header>
-                <tr>
+                <tr class="whitespace-nowrap">
                     <th pSortableColumn="userLogin">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.userLogin"></span>
                         <p-sortIcon field="userLogin" />

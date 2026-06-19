@@ -42,12 +42,12 @@
                     [sortOrder]="ascending() ? 1 : -1"
                     (onSort)="onTableSort($event)"
                     size="small"
-                    styleClass="mt-3"
+                    styleClass="mt-3 overflow-x-auto"
                     aria-describedby="lti-configuration-heading"
                     data-testid="lti-platforms-table"
                 >
                     <ng-template #header>
-                        <tr>
+                        <tr class="whitespace-nowrap">
                             <th pSortableColumn="id">
                                 <span jhiTranslate="global.field.id"></span>
                                 <p-sortIcon field="id" />

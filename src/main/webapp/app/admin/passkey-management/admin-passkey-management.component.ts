@@ -9,6 +9,7 @@ import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 
@@ -16,7 +17,17 @@ import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
     selector: 'jhi-admin-passkey-management',
     templateUrl: './admin-passkey-management.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TableModule, ToggleSwitchModule, MessageModule, ProgressSpinnerModule, FormsModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        TableModule,
+        ToggleSwitchModule,
+        MessageModule,
+        ProgressSpinnerModule,
+        FormsModule,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class AdminPasskeyManagementComponent implements OnInit {
     private readonly adminPasskeyService = inject(AdminPasskeyManagementService);
