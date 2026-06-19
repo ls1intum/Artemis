@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -184,7 +183,7 @@ public class AutomaticAfterDueDateService {
         }
 
         if (updatedExercises.isEmpty()) {
-            return Collections.emptySet();
+            return Set.of();
         }
 
         return programmingExerciseRepository.saveAll(updatedExercises).stream().map(ProgrammingExercise::getId).collect(Collectors.toSet());

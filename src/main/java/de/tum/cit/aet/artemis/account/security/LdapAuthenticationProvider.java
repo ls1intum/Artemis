@@ -99,7 +99,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         }
 
         // Use the given password to authenticate the user in the LDAP
-        boolean isAuthenticated = ldapTemplate.authenticate("", String.format("(uid=%s)", ldapUserDto.getLogin()), password);
+        boolean isAuthenticated = ldapTemplate.authenticate("", "(uid=%s)".formatted(ldapUserDto.getLogin()), password);
         if (!isAuthenticated) {
             throw new BadCredentialsException("Wrong credentials");
         }

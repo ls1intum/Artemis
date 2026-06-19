@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -422,9 +421,9 @@ public class LearningPathService {
 
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
-                competency.setUserProgress(Collections.emptySet());
-                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Collections.emptySet()));
-                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Collections.emptySet()));
+                competency.setUserProgress(Set.of());
+                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Set.of()));
+                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Set.of()));
             });
             return learningPath;
         }
@@ -447,14 +446,14 @@ public class LearningPathService {
                 competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));
             }
             else {
-                competency.setUserProgress(Collections.emptySet());
+                competency.setUserProgress(Set.of());
             }
             competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).forEach(lectureUnit -> {
                 if (completions.containsKey(lectureUnit.getId())) {
                     lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
                 }
                 else {
-                    lectureUnit.setCompletedUsers(Collections.emptySet());
+                    lectureUnit.setCompletedUsers(Set.of());
                 }
             });
             competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
@@ -462,7 +461,7 @@ public class LearningPathService {
                     exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
                 }
                 else {
-                    exercise.setStudentParticipations(Collections.emptySet());
+                    exercise.setStudentParticipations(Set.of());
                 }
             });
         });
