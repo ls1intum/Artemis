@@ -477,7 +477,7 @@ public class DataExportExerciseCreationService {
     private void addInfoThatFileForFileUploadSubmissionNoLongerExists(Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         var exercise = fileUploadSubmission.getParticipation().getExercise();
         FileUtils.writeStringToFile(outputDir.resolve("submission_file_no_longer_exists.md").toFile(),
-                String.format("Your submitted file for the exercise %s no longer exists on the file system.", exercise), StandardCharsets.UTF_8);
+                "Your submitted file for the exercise %s no longer exists on the file system.".formatted(exercise), StandardCharsets.UTF_8);
     }
 
     /**
