@@ -177,7 +177,7 @@ public class ProgrammingExerciseImportFromFileService {
     private Optional<String> readBuildPlanIfExisting(Path importExerciseDir) throws IOException {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
-            return Optional.of(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8));
+            return Optional.of(Files.readString(buildPlanPath, StandardCharsets.UTF_8));
         }
         return Optional.empty();
     }

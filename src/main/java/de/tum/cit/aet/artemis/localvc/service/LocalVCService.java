@@ -64,8 +64,14 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void deleteProject(String projectKey) {
+        // Validate that the resolved path is a direct child of the configured local VC base directory before accessing the file system.
+        // Requiring a direct child rejects values such as "", ".", "ABC/.." (which resolve to the base itself) and nested or escaping paths.
+        Path basePath = localVCBasePath.normalize();
+        Path projectPath = localVCBasePath.resolve(projectKey).normalize();
+        if (!projectPath.startsWith(basePath) || !basePath.equals(projectPath.getParent())) {
+            throw new LocalVCInternalException("Resolved project path is outside the local VC base path for project key: " + projectKey);
+        }
         try {
-            Path projectPath = localVCBasePath.resolve(projectKey);
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
@@ -82,7 +88,13 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(LocalVCRepositoryUri localVCRepositoryUri) {
 
-        Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        // Validate that the resolved repository path is a direct child of its project directory within the local VC base directory before accessing the file system.
+        Path basePath = localVCBasePath.normalize();
+        Path expectedProjectPath = basePath.resolve(localVCRepositoryUri.getProjectKey()).normalize();
+        Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).normalize();
+        if (!localRepositoryPath.startsWith(basePath) || !expectedProjectPath.equals(localRepositoryPath.getParent())) {
+            throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
+        }
 
         try {
             FileUtils.deleteDirectory(localRepositoryPath.toFile());
@@ -115,13 +127,25 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = localVCBasePath.resolve(projectKey);
+        // Validate that the resolved path is a direct child of the configured local VC base directory before accessing the file system.
+        Path basePath = localVCBasePath.normalize();
+        Path projectPath = localVCBasePath.resolve(projectKey).normalize();
+        if (!projectPath.startsWith(basePath) || !basePath.equals(projectPath.getParent())) {
+            throw new LocalVCInternalException("Resolved project path is outside the local VC base path for project key: " + projectKey);
+        }
         return Files.exists(projectPath);
     }
 
     @Override
     protected boolean repositoryExists(LocalVCRepositoryUri repositoryUri) {
-        return Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath));
+        // Validate that the resolved repository path is a direct child of its project directory within the local VC base directory before accessing the file system.
+        Path basePath = localVCBasePath.normalize();
+        Path expectedProjectPath = basePath.resolve(repositoryUri.getProjectKey()).normalize();
+        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath).normalize();
+        if (!repositoryPath.startsWith(basePath) || !expectedProjectPath.equals(repositoryPath.getParent())) {
+            throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
+        }
+        return Files.exists(repositoryPath);
     }
 
     /**
@@ -134,9 +158,14 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
+        // Validate that the resolved path is a direct child of the configured local VC base directory before accessing the file system.
+        Path basePath = localVCBasePath.normalize();
+        Path projectPath = localVCBasePath.resolve(projectKey).normalize();
+        if (!projectPath.startsWith(basePath) || !basePath.equals(projectPath.getParent())) {
+            throw new LocalVCInternalException("Resolved project path is outside the local VC base path for project key: " + projectKey);
+        }
         try {
             // Create a directory that will contain all repositories.
-            Path projectPath = localVCBasePath.resolve(projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
         }
@@ -156,7 +185,13 @@ public class LocalVCService extends AbstractVersionControlService {
     public void createRepository(String projectKey, String repositorySlug) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
-        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        // Validate that the resolved repository path is a direct child of its project directory within the local VC base directory before accessing the file system.
+        Path basePath = localVCBasePath.normalize();
+        Path expectedProjectPath = basePath.resolve(projectKey).normalize();
+        Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).normalize();
+        if (!remoteDirPath.startsWith(basePath) || !expectedProjectPath.equals(remoteDirPath.getParent())) {
+            throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
+        }
 
         try {
             Files.createDirectories(remoteDirPath);

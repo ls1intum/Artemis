@@ -198,7 +198,7 @@ public class AtlasMLService {
             HttpHeaders headers = buildHeadersWithAuth();
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            String url = config.getAtlasmlBaseUrl() + String.format(SUGGEST_RELATIONS_ENDPOINT, courseId);
+            String url = config.getAtlasmlBaseUrl() + SUGGEST_RELATIONS_ENDPOINT.formatted(courseId);
             ResponseEntity<String> response = atlasmlRestTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
             String responseBody = response.getBody();
