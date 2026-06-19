@@ -383,7 +383,8 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
 
         test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
@@ -397,7 +398,8 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
 
         test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
