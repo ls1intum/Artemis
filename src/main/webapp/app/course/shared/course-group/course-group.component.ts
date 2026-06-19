@@ -25,6 +25,12 @@ const cssClasses = {
     newlyAddedMember: 'newly-added-member',
 };
 
+/**
+ * Duration (ms) the `newly-added-member` flash class stays applied so the CSS flash animation can play
+ * through before being cleared (animation-delay 150ms + animation-duration 1.5s, see course-group.component.scss).
+ */
+const FLASH_ANIMATION_DURATION_MS = 1650;
+
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
@@ -251,7 +257,8 @@ export class CourseGroupComponent {
      */
     flashRowClass = (className: string): void => {
         this.rowClass.set(className);
-        setTimeout(() => this.rowClass.set(''));
+        // Keep the class applied long enough for the CSS flash animation to play before clearing it.
+        setTimeout(() => this.rowClass.set(''), FLASH_ANIMATION_DURATION_MS);
     };
 
     /**

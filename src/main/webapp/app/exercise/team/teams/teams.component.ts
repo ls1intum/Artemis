@@ -59,10 +59,12 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     teams = signal<Team[]>([]);
     readonly teamsForTable = computed<TeamRow[]>(() =>
-        this.teams().map((team) => ({
-            ...team,
-            studentsSearchText: team.students?.map((s) => [s.login, s.name].filter(Boolean)).join(' ') ?? '',
-        })),
+        this.teams().map((team) => {
+            // Clone via Object.assign rather than object spread, per the repository TypeScript guidelines.
+            const row = Object.assign({} as TeamRow, team);
+            row.studentsSearchText = team.students?.flatMap((student) => [student.login, student.name].filter(Boolean)).join(' ') ?? '';
+            return row;
+        }),
     );
     teamCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
     exercise = signal<Exercise | undefined>(undefined);

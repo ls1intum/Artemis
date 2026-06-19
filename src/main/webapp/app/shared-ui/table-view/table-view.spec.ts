@@ -510,4 +510,146 @@ describe('TableViewComponent', () => {
         expect(paramsForEachCol[1].value).toBe('Item 1'); // name
         expect(paramsForEachCol[2].value).toBe(100); // value
     });
+
+    describe('resolvedOptions - sort and global-filter additions', () => {
+        it('should default globalFilterFields/initialSortField to undefined and initialSortOrder to 1', () => {
+            const resolved = component['resolvedOptions']();
+            expect(resolved.globalFilterFields).toBeUndefined();
+            expect(resolved.initialSortField).toBeUndefined();
+            expect(resolved.initialSortOrder).toBe(1);
+        });
+
+        it('should merge globalFilterFields and initial sort settings from options', () => {
+            fixture.componentRef.setInput('options', { globalFilterFields: ['name', 'value'], initialSortField: 'name', initialSortOrder: -1 });
+            const resolved = component['resolvedOptions']();
+            expect(resolved.globalFilterFields).toEqual(['name', 'value']);
+            expect(resolved.initialSortField).toBe('name');
+            expect(resolved.initialSortOrder).toBe(-1);
+        });
+    });
+
+    describe('dot-path value resolution', () => {
+        it('should resolve a nested dot-path field via lodash get', () => {
+            const nested = { id: 1, owner: { name: 'Alice' } } as unknown as TestData;
+            const params = component.buildRendererParams(nested, { field: 'owner.name' }, 0);
+            expect(params.value).toBe('Alice');
+        });
+
+        it('should resolve array-index fields (tuple access)', () => {
+            const tuple = ['key', 'value'] as unknown as TestData;
+            expect(component.buildRendererParams(tuple, { field: '0' }, 0).value).toBe('key');
+            expect(component.buildRendererParams(tuple, { field: '1' }, 0).value).toBe('value');
+        });
+
+        it('should yield undefined for a missing nested path', () => {
+            const params = component.buildRendererParams(mockData[0], { field: 'owner.name' }, 0);
+            expect(params.value).toBeUndefined();
+        });
+    });
+
+    describe('hasCustomSort', () => {
+        const comparator = (a: TestData, b: TestData) => a.value - b.value;
+
+        it('should be false when no column defines a comparator', () => {
+            expect(component['hasCustomSort']()).toBe(false);
+        });
+
+        it('should be true when a column defines a comparator in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: comparator }]);
+            expect(component['hasCustomSort']()).toBe(true);
+        });
+
+        it('should be false in lazy mode even when a column defines a comparator', () => {
+            fixture.componentRef.setInput('options', { lazy: true });
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: comparator }]);
+            expect(component['hasCustomSort']()).toBe(false);
+        });
+    });
+
+    describe('onCustomSort', () => {
+        const byValue = (a: TestData, b: TestData) => a.value - b.value;
+        const unsorted = (): TestData[] => [
+            { id: 1, name: 'a', value: 300 },
+            { id: 2, name: 'b', value: 100 },
+            { id: 3, name: 'c', value: 200 },
+        ];
+
+        it('should sort in place using a column comparator (ascending)', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: byValue }]);
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 200, 300]);
+        });
+
+        it('should negate the comparator result for descending order', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: byValue }]);
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: -1 });
+            expect(data.map((d) => d.value)).toEqual([300, 200, 100]);
+        });
+
+        it('should fall back to numeric field comparison for columns without a comparator', () => {
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 200, 300]);
+        });
+
+        it('should fall back to localeCompare for string fields', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'Charlie', value: 1 },
+                { id: 2, name: 'alpha', value: 2 },
+                { id: 3, name: 'Bravo', value: 3 },
+            ];
+            component.onCustomSort({ data, field: 'name', order: 1 });
+            expect(data.map((d) => d.name)).toEqual(['alpha', 'Bravo', 'Charlie']);
+        });
+
+        it('should sort nullish values last in the ascending fallback', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'a', value: 300 },
+                { id: 2, name: 'b', value: undefined as unknown as number },
+                { id: 3, name: 'c', value: 100 },
+            ];
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 300, undefined]);
+        });
+
+        it('should resolve dot-path fields in the fallback comparison', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'owner.name', sort: true }]);
+            const data = [
+                { id: 1, owner: { name: 'Charlie' } },
+                { id: 2, owner: { name: 'alpha' } },
+                { id: 3, owner: { name: 'Bravo' } },
+            ] as unknown as TestData[];
+            component.onCustomSort({ data, field: 'owner.name', order: 1 });
+            expect(data.map((d) => (d as unknown as { owner: { name: string } }).owner.name)).toEqual(['alpha', 'Bravo', 'Charlie']);
+        });
+
+        it('should default to ascending order when order is undefined', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'a', value: 200 },
+                { id: 2, name: 'b', value: 100 },
+            ];
+            component.onCustomSort({ data, field: 'value' });
+            expect(data.map((d) => d.value)).toEqual([100, 200]);
+        });
+
+        it('should be a no-op when event.data is undefined', () => {
+            expect(() => component.onCustomSort({ data: undefined as unknown as TestData[], field: 'value', order: 1 })).not.toThrow();
+        });
+    });
+
+    describe('rowClass input', () => {
+        it('should default to null', () => {
+            expect(component.rowClass()).toBeNull();
+        });
+
+        it('should expose the provided row-class function', () => {
+            const rowClassFn = (row: TestData) => (row.id === 1 ? 'highlight' : '');
+            fixture.componentRef.setInput('rowClass', rowClassFn);
+            expect(component.rowClass()?.(mockData[0])).toBe('highlight');
+            expect(component.rowClass()?.(mockData[1])).toBe('');
+        });
+    });
 });

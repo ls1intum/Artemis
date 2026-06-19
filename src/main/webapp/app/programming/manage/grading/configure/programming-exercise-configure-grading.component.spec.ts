@@ -545,4 +545,59 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual(expectedCategories);
         });
     });
+
+    describe('SCA category sort comparators', () => {
+        const categoryColumnComparator = (field: string) => comp.codeAnalysisColumns().find((column) => column.field === field)!.sortComparator!;
+
+        const makeCategory = (overrides: Partial<StaticCodeAnalysisCategory>): StaticCodeAnalysisCategory =>
+            ({ id: 0, name: 'cat', state: StaticCodeAnalysisCategoryState.Inactive, penalty: 0, maxPenalty: 0, ...overrides }) as StaticCodeAnalysisCategory;
+
+        it('should order categories by semantic state (Inactive < Feedback < Graded)', () => {
+            const comparator = categoryColumnComparator('state');
+            const inactive = makeCategory({ state: StaticCodeAnalysisCategoryState.Inactive });
+            const feedback = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback });
+            const graded = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded });
+
+            const sorted = [graded, inactive, feedback].sort(comparator);
+            expect(sorted.map((category) => category.state)).toEqual([
+                StaticCodeAnalysisCategoryState.Inactive,
+                StaticCodeAnalysisCategoryState.Feedback,
+                StaticCodeAnalysisCategoryState.Graded,
+            ]);
+        });
+
+        it('should order by state first, then by penalty within graded categories (penalty ignored for non-graded)', () => {
+            const comparator = categoryColumnComparator('penalty');
+            const gradedLow = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, penalty: 1 });
+            const gradedHigh = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, penalty: 5 });
+            const feedbackHighPenalty = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback, penalty: 99 });
+
+            const sorted = [gradedHigh, feedbackHighPenalty, gradedLow].sort(comparator);
+            expect(sorted).toEqual([feedbackHighPenalty, gradedLow, gradedHigh]);
+        });
+
+        it('should order by state first, then by maxPenalty within graded categories', () => {
+            const comparator = categoryColumnComparator('maxPenalty');
+            const gradedLow = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, maxPenalty: 3 });
+            const gradedHigh = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, maxPenalty: 10 });
+            const feedbackHighMax = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback, maxPenalty: 99 });
+
+            const sorted = [gradedHigh, feedbackHighMax, gradedLow].sort(comparator);
+            expect(sorted).toEqual([feedbackHighMax, gradedLow, gradedHigh]);
+        });
+
+        it('should order by total detected issues, using state as a tie-breaker', () => {
+            comp.gradingStatistics.set(gradingStatistics);
+            const comparator = categoryColumnComparator('detectedIssues');
+            // 'Bad Practice' (Graded) and 'Styling' (Feedback) both sum to 5 issues → the tie is broken by state.
+            const badPractice = codeAnalysisCategories1[0];
+            const styling = codeAnalysisCategories1[1];
+            const noIssues = makeCategory({ name: 'Unknown', state: StaticCodeAnalysisCategoryState.Graded });
+
+            expect(comparator(styling, badPractice)).toBeLessThan(0);
+            expect(comparator(badPractice, styling)).toBeGreaterThan(0);
+            // 0 issues sorts before categories with 5 issues regardless of state.
+            expect(comparator(noIssues, badPractice)).toBeLessThan(0);
+        });
+    });
 });

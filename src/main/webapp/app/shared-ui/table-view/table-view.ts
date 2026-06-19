@@ -213,11 +213,14 @@ export class TableViewComponent<T> {
     });
 
     /**
-     * True when at least one column defines a custom sort comparator.
-     * Switches the entire p-table into customSort mode so (sortFunction) fires for every column click.
-     * Columns without a comparator are handled by the default field-value fallback in onCustomSort().
+     * True when at least one column defines a custom sort comparator AND the table runs in client-side
+     * (non-lazy) mode. Switches the entire p-table into customSort mode so (sortFunction) fires for every
+     * column click; columns without a comparator are handled by the default field-value fallback in
+     * onCustomSort(). Always false in lazy mode — sorting is delegated to the server there — which
+     * structurally enforces the "sortComparator must not be used in lazy mode" contract documented on
+     * {@link ColumnDef.sortComparator}.
      */
-    protected readonly hasCustomSort = computed(() => this.cols().some((c) => !!c.sortComparator));
+    protected readonly hasCustomSort = computed(() => !this.resolvedOptions().lazy && this.cols().some((c) => !!c.sortComparator));
 
     /** Falls back to vals().length in non-lazy mode. */
     protected readonly effectiveTotalRows = computed(() => this.totalRows() ?? this.vals().length);
