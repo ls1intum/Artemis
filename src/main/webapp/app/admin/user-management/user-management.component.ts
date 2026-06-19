@@ -222,7 +222,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     protected readonly faWrench = faWrench;
 
     /** Button constants */
-    protected readonly medium = ButtonSize.MEDIUM;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 

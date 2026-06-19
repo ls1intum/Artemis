@@ -27,10 +27,10 @@
                     <jhi-delete-users-button (deletionCompleted)="this.deleteNotEnrolledUsersComplete()" />
                     <button
                         jhiDeleteButton
-                        [buttonSize]="medium"
                         [entityTitle]="selectedUsers().length.toString()"
                         deleteQuestion="artemisApp.userManagement.batch.delete.question"
                         deleteConfirmationText="artemisApp.userManagement.batch.delete.typeNumberToConfirm"
+                        [buttonSize]="ButtonSize.SMALL"
                         (delete)="deleteAllSelectedUsers()"
                         [dialogError]="dialogError"
                         [disabled]="!selectedUsers().length"
@@ -55,12 +55,12 @@
             [sortOrder]="ascending() ? 1 : -1"
             (onSort)="onTableSort($event)"
             size="small"
-            styleClass="mt-3"
+            styleClass="mt-3 overflow-x-auto"
             aria-describedby="user-management-page-heading"
             data-testid="user-management-table"
         >
             <ng-template #header>
-                <tr>
+                <tr class="whitespace-nowrap">
                     <th class="min-w-[70px]">
                         <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
                         <p-checkbox
