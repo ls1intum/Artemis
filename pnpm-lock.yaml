@@ -149,8 +149,8 @@ importers:
         specifier: 7.3.0
         version: 7.3.0
       '@tumaet/apollon':
-        specifier: 4.6.0
-        version: 4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 4.7.0
+        version: 4.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vscode/codicons':
         specifier: 0.0.45
         version: 0.0.45
@@ -3258,16 +3258,16 @@ packages:
     resolution: {integrity: sha512-Y8cK9aggNRsqJVaKUlEYs4s7CvQ1b1ta2DVPyAimb0I2qhzjNk+A+mxvll/klL0RlfuIUei8BF7YWiua4kQqww==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  '@tumaet/apollon@4.6.0':
-    resolution: {integrity: sha512-hrwM2F6vjDZH/hecehi4lJ46w10gFrdu5nf9/J/w0y/rD2mIYwVkCO7KhSa9ej0+7oZeDz7jYsamQvFiQ6Lq8w==}
+  '@tumaet/apollon@4.7.0':
+    resolution: {integrity: sha512-aHoLIVRVlM3p+BA/U7D2LdbYGQq3klO82gd6KK69nkqm0AfvXmdn++6uy+4vxQmgKyc/2OT/ffGPw/BNNMEzqw==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
-      '@emotion/react': ^11.11.0
-      '@emotion/styled': ^11.11.0
+      '@emotion/react': ^11.12.0
+      '@emotion/styled': ^11.12.0
       '@mui/material': ^6.4.0
       '@xyflow/react': ^12.3.0
-      react: ^18.3.0
-      react-dom: ^18.3.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
     peerDependenciesMeta:
       '@emotion/react':
         optional: true
@@ -9941,7 +9941,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 10.2.5
 
-  '@tumaet/apollon@4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@tumaet/apollon@4.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@chenglou/pretext': 0.0.6
       '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
