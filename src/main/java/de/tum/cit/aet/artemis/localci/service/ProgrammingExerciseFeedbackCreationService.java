@@ -158,7 +158,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         // Replace all "." with "\\." and join with regex alternative symbol "|"
         String assertionRegex = jvmExceptionsToFilter.stream().map(s -> s.replaceAll("\\.", "\\\\.")).reduce("", (a, b) -> String.join("|", a, b));
         // Match any of the exceptions at the start of the line and with ": " after it
-        String pattern = String.format("^(?:%s): \n*", assertionRegex);
+        String pattern = "^(?:%s): \n*".formatted(assertionRegex);
 
         return Pattern.compile(pattern, Pattern.MULTILINE);
     }
