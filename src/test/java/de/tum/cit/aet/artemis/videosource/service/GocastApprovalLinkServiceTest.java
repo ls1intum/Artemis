@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -8,7 +9,8 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link GocastApprovalLinkService}.
  * <p>
  * Verifies that the approval-page URL is assembled and URL-encoded correctly for the
- * approval flow described in the integration spec (§5 binding flow, §7 approval-link bullet).
+ * approval flow described in the integration spec (§5 binding flow, §7 approval-link bullet),
+ * and that the service fails fast when its required configuration is missing.
  */
 class GocastApprovalLinkServiceTest {
 
@@ -25,20 +27,6 @@ class GocastApprovalLinkServiceTest {
     // ── happy-path: simple callback URL ───────────────────────────────────────
 
     @Test
-    void buildApprovalLink_returnsCorrectUrlStructure() {
-        String artemisCallback = "https://artemis.tum.de/callback";
-
-        String result = service(WEB_BASE_URL).buildApprovalLink(GOCAST_COURSE_ID, artemisCallback);
-
-        // expected: <base>/admin/course/99/integration/confirm?service=42&redirect=<encoded>
-        assertThat(result).startsWith(WEB_BASE_URL + "/admin/course/" + GOCAST_COURSE_ID + "/integration/confirm");
-        assertThat(result).contains("service=" + SERVICE_USER_ID);
-        // the plain callback URL contains no special chars so it can appear encoded or as-is
-        assertThat(result).contains("redirect=");
-        assertThat(result).contains("artemis.tum.de");
-    }
-
-    @Test
     void buildApprovalLink_encodesRedirectWithSpecialChars() {
         // redirect URL contains '?', '&', and a space — must all be percent-encoded inside the query value
         String artemisCallback = "https://artemis.tum.de/cb?courseId=5&x=a b";
@@ -51,11 +39,18 @@ class GocastApprovalLinkServiceTest {
         assertThat(result).doesNotContain("redirect=https://artemis.tum.de/cb?courseId=5&x=a b");
         // space must be encoded
         assertThat(result).doesNotContain(" ");
-        // '?' inside the callback must be encoded
+
         String encodedRedirectValue = result.substring(result.indexOf("redirect=") + "redirect=".length());
+        // negative: no bare special chars leak into the outer query string
         assertThat(encodedRedirectValue).doesNotContain("?");
         assertThat(encodedRedirectValue).doesNotContain("&");
         assertThat(encodedRedirectValue).doesNotContain(" ");
+        // positive: the expected single-level percent-encoded forms are present (guards against
+        // double-encoding, which would produce %253F / %2526 / %2520 instead of %3F / %26 / %20)
+        assertThat(encodedRedirectValue).contains("%3F"); // '?'
+        assertThat(encodedRedirectValue).contains("%26"); // '&'
+        assertThat(encodedRedirectValue).contains("%20"); // space
+        assertThat(encodedRedirectValue).doesNotContain("%25"); // no double-encoded '%'
     }
 
     @Test
@@ -76,7 +71,32 @@ class GocastApprovalLinkServiceTest {
         String result = service(WEB_BASE_URL).buildApprovalLink(GOCAST_COURSE_ID, artemisCallback);
 
         // The redirect value must be percent-encoded (the colon in "https:" → "%3A", slashes → "%2F")
-        // UriComponentsBuilder encodes the value correctly when set via queryParam(name, value)
         assertThat(result).isEqualTo("https://tum.live/admin/course/99/integration/confirm?service=42&redirect=https%3A%2F%2Fartemis.tum.de%2Fcallback");
+    }
+
+    @Test
+    void buildApprovalLink_throwsOnNullCallbackUrl() {
+        assertThatThrownBy(() -> service(WEB_BASE_URL).buildApprovalLink(GOCAST_COURSE_ID, null)).isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("artemisCallbackUrl");
+    }
+
+    // ── fail-fast on missing required configuration ───────────────────────────
+
+    @Test
+    void construction_throwsWhenWebBaseUrlBlank() {
+        assertThatThrownBy(() -> new GocastApprovalLinkService("", SERVICE_USER_ID)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artemis.tum-live.web-base-url");
+    }
+
+    @Test
+    void construction_throwsWhenWebBaseUrlWhitespaceOnly() {
+        assertThatThrownBy(() -> new GocastApprovalLinkService("   ", SERVICE_USER_ID)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artemis.tum-live.web-base-url");
+    }
+
+    @Test
+    void construction_throwsWhenServiceUserIdBlank() {
+        assertThatThrownBy(() -> new GocastApprovalLinkService(WEB_BASE_URL, "")).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artemis.tum-live.service-account-user-id");
     }
 }
