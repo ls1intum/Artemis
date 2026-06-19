@@ -256,6 +256,105 @@ describe('ProgrammingSubmissionService', () => {
         ]);
     });
 
+    it('should resolve the exercise id from the mapping for websocket submission errors and ignore errors for cleaned-up participations', () => {
+        const exerciseIdA = 10;
+        const exerciseIdB = 20;
+        const participationIdA = participationId; // 1
+        const participationIdB = 2;
+        const emissionsA: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        const emissionsB: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        httpGetStub.mockReturnValue(of(undefined));
+
+        // Both participations share the personal /user/topic/newSubmissions subscription. The subscription is created
+        // for participation A, so its callback closure captures exerciseIdA.
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdA, exerciseIdA, true).subscribe((s) => emissionsA.push(s));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdB, exerciseIdB, true).subscribe((s) => emissionsB.push(s));
+        expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
+
+        // An error for participation B must be attributed to exerciseIdB (resolved via the mapping), not the
+        // callback-captured exerciseIdA.
+        wsSubmissionSubject.next({ error: 'build failed', participationId: participationIdB } as any);
+        expect(emissionsB.at(-1)).toEqual({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: participationIdB });
+        expect(priv(submissionService).exerciseBuildStateValue[exerciseIdB]?.[participationIdB]?.submissionState).toBe(ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        expect(priv(submissionService).exerciseBuildStateValue[exerciseIdA]?.[participationIdB]).toBeUndefined();
+
+        // Participation B is cleaned up (mapping removed) while the shared subscription stays alive for participation A.
+        // A late error for the removed participation must be ignored instead of recreating its build state.
+        const emissionsBeforeStaleEvent = emissionsB.length;
+        priv(submissionService).participationIdToExerciseId.delete(participationIdB);
+        wsSubmissionSubject.next({ error: 'late build failed', participationId: participationIdB } as any);
+        expect(emissionsB).toHaveLength(emissionsBeforeStaleEvent);
+    });
+
+    it('records the participation -> exercise mapping synchronously, before the latest-pending-submission GET resolves', () => {
+        // A GET that stays in flight for the duration of this test: the mapping must already be set regardless, so the
+        // shared-topic guard (participationIdToExerciseId.has(...)) accepts events that arrive during the GET window.
+        httpGetStub.mockReturnValue(new Subject<ProgrammingSubmission | undefined>().asObservable());
+
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true).subscribe();
+
+        expect(priv(submissionService).participationIdToExerciseId.get(participationId)).toBe(exerciseId);
+    });
+
+    it('delivers a building event that arrives while the participation latest-pending-submission GET is still in flight', () => {
+        // Regression test for the flaky course-overview sidebar: a build triggered right after (re)subscribing pushes its
+        // building event on the already-open shared /user/topic/newSubmissions topic before this participation's own
+        // GET resolves (and thus before setupWebsocketSubscription would have set the mapping). The eager mapping makes
+        // the guard accept it; without it the event is silently dropped and the building indicator never renders.
+        submissionService.isLocalCIEnabled = false;
+        const participationIdA = participationId; // 1 — opens the shared topic subscription with a resolved GET
+        const participationIdB = 2;
+        const exerciseIdB = 20;
+
+        httpGetStub.mockReturnValueOnce(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdA, exerciseId, true).subscribe();
+        expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
+
+        // Participation B subscribes, but its GET never resolves within this test (the in-flight window).
+        httpGetStub.mockReturnValue(new Subject<ProgrammingSubmission | undefined>().asObservable());
+        const emissionsB: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdB, exerciseIdB, true).subscribe((s) => emissionsB.push(s));
+
+        const buildingSubmissionForB = { id: 99, submissionDate: dayjs(), participation: { id: participationIdB } } as any;
+        wsSubmissionSubject.next(buildingSubmissionForB);
+
+        expect(emissionsB.at(-1)).toEqual(
+            expect.objectContaining({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, participationId: participationIdB }),
+        );
+    });
+
+    it('does not let a stale latest-pending-submission GET clobber a live building state set by a websocket event', () => {
+        // Regression test for the flaky course-overview sidebar (second mechanism): the initial latest-pending-submission
+        // GET is a point-in-time snapshot. Under load it can resolve AFTER the build's submission event has already moved
+        // the participation into a live building state. The GET's "no pending submission" result must not emit
+        // HAS_NO_PENDING_SUBMISSION over the live building state — under coalesced zoneless change detection that flip
+        // would mean the building indicator never paints.
+        submissionService.isLocalCIEnabled = false;
+        const participationIdA = participationId; // 1 — opens the shared topic subscription with a resolved GET
+        const participationIdB = 2;
+        const exerciseIdB = 20;
+
+        httpGetStub.mockReturnValueOnce(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdA, exerciseId, true).subscribe();
+
+        // Participation B subscribes; its latest-pending GET stays in flight (the under-load window).
+        const deferredGetB = new Subject<ProgrammingSubmission | undefined>();
+        httpGetStub.mockReturnValue(deferredGetB.asObservable());
+        const emissionsB: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        submissionService.getLatestPendingSubmissionByParticipationId(participationIdB, exerciseIdB, true).subscribe((s) => emissionsB.push(s));
+
+        // A build for B arrives on the shared topic -> live building state.
+        wsSubmissionSubject.next({ id: 99, submissionDate: dayjs(), participation: { id: participationIdB } } as any);
+        expect(emissionsB.at(-1)).toEqual(expect.objectContaining({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION }));
+
+        // Now B's stale GET resolves with no pending submission. It must NOT clobber the live building state.
+        const countBefore = emissionsB.length;
+        deferredGetB.next(undefined);
+        deferredGetB.complete();
+        expect(emissionsB.slice(countBefore).some((s) => s?.submissionState === ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION)).toBe(false);
+        expect(emissionsB.at(-1)).toEqual(expect.objectContaining({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION }));
+    });
+
     it('should emit the failed submission state when the result waiting timer runs out AND accept a late result', async () => {
         vi.useFakeTimers();
         try {
@@ -487,6 +586,27 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
         expect((submissionService as any).submissionSubjects[participationId]).toBeUndefined();
         expect(submissionTopicSubscriptions.has(submissionTopic)).toBe(false);
+    });
+
+    it('should release the per-participation result subscriptions and timers once the participation is no longer observed', () => {
+        const inner = submissionService as any;
+        // Result-side state that is set up alongside the submission subscription (subscribeForNewResult / timers).
+        inner.submissionSubjects = { [participationId]: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
+        const resultSub = of(0).subscribe();
+        const resultUnsubscribeSpy = vi.spyOn(resultSub, 'unsubscribe');
+        inner.resultSubscriptions = { [participationId]: resultSub };
+        inner.resultTimerSubscriptions = { [participationId]: of(0).subscribe() };
+        inner.queueEstimateTimerSubscriptions = { [participationId]: of(0).subscribe() };
+        inner.participationIdToExerciseId.set(participationId, 10);
+
+        // No component observes the submission subject, so cleanup proceeds and must release the result-side state too.
+        submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+
+        expect(resultUnsubscribeSpy).toHaveBeenCalled();
+        expect(inner.resultSubscriptions[participationId]).toBeUndefined();
+        expect(inner.resultTimerSubscriptions[participationId]).toBeUndefined();
+        expect(inner.queueEstimateTimerSubscriptions[participationId]).toBeUndefined();
+        expect(inner.participationIdToExerciseId.has(participationId)).toBe(false);
     });
 
     it('should only unsubscribe if no other participations use the topic with localci', () => {
