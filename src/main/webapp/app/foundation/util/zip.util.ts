@@ -1,7 +1,7 @@
 import { strToU8, unzipSync, zipSync } from 'fflate';
 
 /**
- * Minimal ZIP helpers built on `fflate`, replacing the small subset of `jszip` that Artemis used.
+ * Minimal ZIP helpers (building and reading archives) built on `fflate`.
  */
 
 /** A map of file name to its raw bytes, as produced by {@link readZipEntries}. */
@@ -22,9 +22,8 @@ async function toUint8Array(content: Blob | string | Uint8Array): Promise<Uint8A
 }
 
 /**
- * Accumulates files and produces a ZIP archive as a Blob. Files are queued synchronously (mirroring
- * JSZip's `file(name, content)`) and only read/compressed when {@link generateBlob} is called
- * (mirroring JSZip's `generateAsync({ type: 'blob' })`).
+ * Accumulates files and produces a ZIP archive as a Blob. Files are queued synchronously via
+ * {@link ZipBuilder.file} and only read/compressed when {@link generateBlob} is called.
  */
 export class ZipBuilder {
     private readonly entries: { name: string; content: Blob | string | Uint8Array }[] = [];
@@ -46,7 +45,7 @@ export class ZipBuilder {
 
 /**
  * Reads a ZIP Blob/File into a map of file name to raw bytes. Directory entries (names ending with
- * `/`) are omitted, matching how JSZip's file lookups behaved for the archives Artemis handles.
+ * `/`) are omitted, so the map contains only the actual files.
  */
 export async function readZipEntries(file: Blob): Promise<ZipEntries> {
     const data = new Uint8Array(await file.arrayBuffer());
