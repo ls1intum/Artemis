@@ -1,12 +1,10 @@
 /**
- * Small statistics helpers replacing the `simple-statistics` dependency for the few functions
- * Artemis used: arithmetic mean, median and population standard deviation. The implementations
- * mirror simple-statistics exactly so previously computed values do not change.
+ * Small statistics helpers: arithmetic mean, median and population standard deviation.
  */
 
 /**
  * Sum of the given numbers using the Kahan-Babuska algorithm, which corrects for floating-point
- * round-off. This matches the summation simple-statistics uses for {@link mean}.
+ * round-off. Used by {@link mean}.
  */
 function kahanBabuskaSum(values: number[]): number {
     if (values.length === 0) {
@@ -29,7 +27,7 @@ function kahanBabuskaSum(values: number[]): number {
 
 /**
  * The arithmetic mean (average) of one or more data points.
- * @throws Error if the input is empty (matching simple-statistics).
+ * @throws Error if the input is empty.
  */
 export function mean(values: number[]): number {
     if (values.length === 0) {
@@ -42,7 +40,7 @@ export function mean(values: number[]): number {
  * The median of one or more data points. Uses the linear-interpolation quantile at 0.5 (numpy/R
  * type 7), which is the middle value for an odd-length input and the average of the two middle
  * values for an even-length input.
- * @throws Error if the input is empty (matching simple-statistics).
+ * @throws Error if the input is empty.
  */
 export function median(values: number[]): number {
     if (values.length === 0) {
@@ -60,8 +58,8 @@ export function median(values: number[]): number {
 
 /**
  * The population standard deviation (square root of the population variance, dividing by n). Returns
- * 0 for a single data point, matching simple-statistics.
- * @throws Error if the input is empty (matching simple-statistics).
+ * 0 for a single data point.
+ * @throws Error if the input is empty.
  */
 export function standardDeviation(values: number[]): number {
     if (values.length === 0) {

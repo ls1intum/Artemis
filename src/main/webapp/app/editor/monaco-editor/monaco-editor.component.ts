@@ -20,11 +20,9 @@ export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-edi
 export const MAX_TAB_SIZE = 8;
 
 /**
- * Maps the ASCII emoticons that {@link MonacoEditorComponent.convertTextToEmoji} can reach to their
- * Unicode emoji. This reproduces the subset of the former `emoji-js` dependency's `replace_emoticons`
- * (unified mode) that the editor used: only emoticons starting with ':' are listed, because
- * convertTextToEmoji only processes words starting with ':'. ':>' and ':->' are intentionally absent
- * since emoji-js stored them HTML-escaped and never converted their literal forms.
+ * Maps the ASCII emoticons that {@link MonacoEditorComponent.convertTextToEmoji} converts to their
+ * Unicode emoji. Only emoticons starting with ':' are listed, because convertTextToEmoji only
+ * processes words starting with ':'.
  */
 const EMOTICON_TO_EMOJI: Record<string, string> = {
     ':o)': '🐵',
@@ -57,8 +55,7 @@ const EMOTICON_TO_EMOJI: Record<string, string> = {
 
 /**
  * Matches an emoticon preceded by the start of the string or whitespace and followed by the end of
- * the string or a delimiter, mirroring the matching rules of the former `emoji-js` dependency.
- * Emoticons are ordered longest-first so e.g. ':o)' wins over ':o'.
+ * the string or a delimiter. Emoticons are ordered longest-first so e.g. ':o)' wins over ':o'.
  */
 const EMOTICON_REGEX = new RegExp(
     '(^|\\s)(' +
