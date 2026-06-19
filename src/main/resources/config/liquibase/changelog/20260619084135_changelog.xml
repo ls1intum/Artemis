@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Convert legacy LocalCI build plans from the old build_script + build_plan_configuration format
+         to the build phases format. Jenkins exercises did not use build_script, so rows with a build_script
+         are treated as LocalCI legacy exercises. Invalid or incomplete legacy JSON falls back to the default
+         docker image and an empty result path list. -->
+    <changeSet id="20260619084135-1" author="matyasht" dbms="mysql">
+        <sql splitStatements="false"><![CDATA[
+            -- Migration candidates with the old build script wrapped as a build phase script.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_candidates AS
+            SELECT id,
+                   CONCAT('# feel free to remove the code surrounding your script and split your script into multiple phases\n',
+                          'cd /var/tmp/testing-dir\n',
+                          'local tmp_file=$(mktemp)\n',
+                          'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase\n',
+                          build_script,
+                          '\n__LEGACY_INNER_SCRIPT_END__\n',
+                          'chmod +x "${tmp_file}"\n',
+                          '"${tmp_file}" "$@"\n') AS wrapped_script,
+                   IF(
+                       JSON_VALID(build_plan_configuration),
+                       IF(
+                           JSON_TYPE(JSON_EXTRACT(build_plan_configuration, '$.metadata.docker.image')) = 'STRING',
+                           TRIM(JSON_UNQUOTE(JSON_EXTRACT(build_plan_configuration, '$.metadata.docker.image'))),
+                           NULL
+                       ),
+                       NULL
+                   ) AS docker_image,
+                   IF(
+                       JSON_VALID(build_plan_configuration),
+                       IF(
+                           JSON_TYPE(JSON_EXTRACT(build_plan_configuration, '$.actions')) = 'ARRAY',
+                           JSON_EXTRACT(build_plan_configuration, '$.actions'),
+                           JSON_ARRAY()
+                       ),
+                       JSON_ARRAY()
+                   ) AS actions
+            FROM programming_exercise_build_config
+            WHERE build_script IS NOT NULL;
+
+            -- One row per textual result path.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_paths AS
+            SELECT candidates.id AS build_config_id,
+                   TRIM(JSON_UNQUOTE(JSON_EXTRACT(results.result, '$.path'))) AS path
+            FROM tmp_legacy_build_plan_candidates candidates
+                JOIN JSON_TABLE(candidates.actions, '$[*].results[*]' COLUMNS (result JSON PATH '$' NULL ON EMPTY NULL ON ERROR)) results
+            WHERE JSON_TYPE(JSON_EXTRACT(results.result, '$.path')) = 'STRING';
+
+            -- Aggregate extracted paths back into the JSON array expected by build phases.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_path_arrays AS
+            SELECT build_config_id,
+                   JSON_ARRAYAGG(path) AS paths
+            FROM tmp_legacy_build_plan_result_paths
+            GROUP BY build_config_id;
+
+            -- Build the final phases JSON before updating the real table.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_converted AS
+            SELECT candidates.id,
+                   JSON_OBJECT(
+                       'phases', JSON_ARRAY(JSON_OBJECT(
+                           'name', 'script',
+                           'script', candidates.wrapped_script,
+                           'condition', 'ALWAYS',
+                           'forceRun', FALSE,
+                           'resultPaths', COALESCE(path_arrays.paths, JSON_ARRAY())
+                       )),
+                       'dockerImage', candidates.docker_image
+                   ) AS build_plan_configuration
+            FROM tmp_legacy_build_plan_candidates candidates
+                LEFT JOIN tmp_legacy_build_plan_result_path_arrays path_arrays ON path_arrays.build_config_id = candidates.id;
+
+            UPDATE programming_exercise_build_config pebc
+                JOIN tmp_legacy_build_plan_converted converted ON converted.id = pebc.id
+            SET pebc.build_plan_configuration = converted.build_plan_configuration
+            WHERE pebc.build_script IS NOT NULL;
+
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_converted;
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_result_path_arrays;
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_result_paths;
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_candidates;
+        ]]></sql>
+    </changeSet>
+
+    <changeSet id="20260619084135-2" author="matyasht" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+            CREATE OR REPLACE FUNCTION pg_temp.try_parse_jsonb(input text)
+                RETURNS jsonb
+                LANGUAGE plpgsql
+            AS
+            $$
+            BEGIN
+                RETURN input::jsonb;
+            EXCEPTION
+                WHEN others THEN
+                    RETURN NULL;
+            END;
+            $$;
+
+            -- Migration candidates with the old build script wrapped as a build phase script.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_candidates ON COMMIT DROP AS
+            SELECT pebc.id,
+                   concat(
+                           '# feel free to remove the code surrounding your script and split your script into multiple phases', E'\n',
+                           'cd /var/tmp/testing-dir', E'\n',
+                           'local tmp_file=$(mktemp)', E'\n',
+                           'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase', E'\n',
+                           pebc.build_script, E'\n',
+                           '__LEGACY_INNER_SCRIPT_END__', E'\n',
+                           'chmod +x "${tmp_file}"', E'\n',
+                           '"${tmp_file}" "$@"', E'\n') AS wrapped_script,
+                   CASE
+                       WHEN jsonb_typeof(legacy_json.config #> '{metadata,docker,image}') = 'string' THEN trim(legacy_json.config #>> '{metadata,docker,image}')
+                       END AS docker_image,
+                   CASE
+                       WHEN jsonb_typeof(legacy_json.config -> 'actions') = 'array' THEN legacy_json.config -> 'actions'
+                       ELSE '[]'::jsonb
+                       END AS actions
+            FROM programming_exercise_build_config pebc
+                     LEFT JOIN LATERAL (SELECT pg_temp.try_parse_jsonb(pebc.build_plan_configuration) AS config) legacy_json ON true
+            WHERE pebc.build_script IS NOT NULL;
+
+            -- One row per textual result path.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_paths ON COMMIT DROP AS
+            SELECT candidates.id                   AS build_config_id,
+                   trim(results.result ->> 'path') AS path
+            FROM tmp_legacy_build_plan_candidates candidates
+                     JOIN LATERAL jsonb_path_query(candidates.actions, '$[*].results[*]') results(result) ON true
+            WHERE jsonb_typeof(results.result -> 'path') = 'string';
+
+            -- Aggregate extracted paths back into the JSON array expected by build phases.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_path_arrays ON COMMIT DROP AS
+            SELECT build_config_id,
+                   jsonb_agg(to_jsonb(path)) AS paths
+            FROM tmp_legacy_build_plan_result_paths
+            GROUP BY build_config_id;
+
+            -- Build the final phases JSON before updating the real table.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_converted ON COMMIT DROP AS
+            SELECT candidates.id,
+                   jsonb_build_object(
+                       'phases', jsonb_build_array(jsonb_build_object(
+                           'name', 'script',
+                           'script', candidates.wrapped_script,
+                           'condition', 'ALWAYS',
+                           'forceRun', false,
+                           'resultPaths', COALESCE(path_arrays.paths, '[]'::jsonb)
+                        )),
+                       'dockerImage', candidates.docker_image
+                   )::text AS build_plan_configuration
+            FROM tmp_legacy_build_plan_candidates candidates
+                     LEFT JOIN tmp_legacy_build_plan_result_path_arrays path_arrays
+                               ON path_arrays.build_config_id = candidates.id;
+
+            UPDATE programming_exercise_build_config pebc
+            SET build_plan_configuration = converted.build_plan_configuration
+            FROM tmp_legacy_build_plan_converted converted
+            WHERE converted.id = pebc.id;
+            ]]></sql>
+    </changeSet>
+
+    <changeSet id="20260619084135-3" author="matyasht">
+        <dropColumn tableName="programming_exercise_build_config" columnName="build_script"/>
+    </changeSet>
+</databaseChangeLog>

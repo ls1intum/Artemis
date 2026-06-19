@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -37,7 +38,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_configuration", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
-    @Column(name = "build_script", columnDefinition = "longtext")
+    @Transient
     private String buildScript;
 
     /**
@@ -142,7 +143,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * We store the bash script in the database
+     * Legacy build script for imported exercises using the old LocalCI build plan format.
      *
      * @return the build script or null if the build script does not exist
      */
@@ -151,7 +152,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * Update the build script
+     * Update the legacy build script.
      *
      * @param buildScript the new build script for the programming exercise
      */
