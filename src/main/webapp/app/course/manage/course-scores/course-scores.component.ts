@@ -16,7 +16,7 @@ import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
-import { mean, median, standardDeviation } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import * as XLSX from '@e965/xlsx';

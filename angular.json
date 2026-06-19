@@ -27,7 +27,6 @@
                             "crypto",
                             "dayjs/locale/de",
                             "dompurify",
-                            "emoji-js",
                             "export-to-csv",
                             "hoist-non-react-statics",
                             "interactjs",
