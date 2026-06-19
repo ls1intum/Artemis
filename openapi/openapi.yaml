@@ -1305,9 +1305,9 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
-        correctMappings:
+        correctDndMappings:
           type: array
-          items: {$ref: '#/components/schemas/ShortAnswerMapping'}
+          items: {$ref: '#/components/schemas/DragAndDropMapping'}
         spots:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerSpot'}
@@ -1316,6 +1316,9 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+        correctMappings:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerMapping'}
     TutorialGroupExportData:
       type: object
       properties:

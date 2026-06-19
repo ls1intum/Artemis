@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.quiz.dto.DragAndDropMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionWithSolutionDTO(@JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
-        List<DragAndDropMappingDTO> correctMappings) {
+        List<DragAndDropMappingDTO> correctDndMappings) {
 
     public static DragAndDropQuestionWithSolutionDTO of(DragAndDropQuestion dragAndDropQuestion) {
         return new DragAndDropQuestionWithSolutionDTO(DragAndDropQuestionWithoutSolutionDTO.of(dragAndDropQuestion),
