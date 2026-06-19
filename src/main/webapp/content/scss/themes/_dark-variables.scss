@@ -10,7 +10,7 @@ $gray-500: #adb5bd;
 $gray-600: #888;
 $gray-700: #444;
 $gray-800: #22272e; // cool-slate (h213 s12); was pure-neutral #303030. Unifies the dark backdrop + $gray-800-derived surfaces with the navbar/module temperature
-$gray-900: #222;
+$gray-900: #1f242b; // cool-slate (h213); was pure-neutral #222. Keeps gray-900-derived dark surfaces (text-exercise editor, Monaco suggest widget, link-item) on the slate family
 $black: #000;
 
 $blue: #3e8acc;

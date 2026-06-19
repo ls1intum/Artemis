@@ -9,7 +9,7 @@
 >
     <ng-template let-node pTemplate="knowledgeArea">
         <div class="flex items-center" data-testid="knowledge-area-node">
-            <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
+            <h5 class="mb-0 me-2 clickable" (click)="toggle(node.data)">{{ node.data.title }}</h5>
             <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
         </div>
     </ng-template>

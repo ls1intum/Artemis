@@ -115,6 +115,26 @@ export class KnowledgeAreaTreeComponent {
     }
 
     /**
+     * Toggles the expansion of a knowledge area. Restores the whole-title click-to-toggle affordance the
+     * previous MatTree row had; the built-in p-tree chevron remains the keyboard-accessible toggle.
+     * @param knowledgeArea the knowledge area whose expansion to toggle
+     */
+    protected toggle(knowledgeArea: KnowledgeAreaForTree): void {
+        if (knowledgeArea.id === undefined) {
+            return;
+        }
+        this.expandedIds.update((ids) => {
+            const next = new Set(ids);
+            if (next.has(knowledgeArea.id!)) {
+                next.delete(knowledgeArea.id!);
+            } else {
+                next.add(knowledgeArea.id!);
+            }
+            return next;
+        });
+    }
+
+    /**
      * Returns whether the given knowledge area is currently expanded.
      * @param knowledgeArea the knowledge area to check
      */
