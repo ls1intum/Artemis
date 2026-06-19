@@ -5,7 +5,7 @@ import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Observable, Subject } from 'rxjs';
-import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -41,6 +41,7 @@ export class CleanupOperationModalComponent {
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faCheckCircle = faCheckCircle;
 
     /** Keys from the CleanupCount object for iteration */

@@ -1,7 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
     <div *adminTitleBarActions>
-        <p-button size="small" (onClick)="refresh()" data-testid="refresh-button">
+        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="refresh()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span jhiTranslate="health.refresh.button"></span>
         </p-button>
@@ -36,9 +36,16 @@
                             </td>
                             <td class="py-2 px-3 text-center">
                                 @if (componentHealth.value!.details) {
-                                    <a class="cursor-pointer" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })" data-testid="details-link">
+                                    <p-button
+                                        size="small"
+                                        severity="info"
+                                        pTooltip="{{ 'health.details.details' | artemisTranslate }}"
+                                        [attr.aria-label]="'health.details.details' | artemisTranslate"
+                                        (onClick)="showHealth({ key: componentHealth.key, value: componentHealth.value! })"
+                                        data-testid="details-link"
+                                    >
                                         <fa-icon [icon]="faEye" />
-                                    </a>
+                                    </p-button>
                                 }
                             </td>
                         </tr>
@@ -46,7 +53,11 @@
                     <tr id="websocketConnection" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                         <td class="py-2 px-3">Websocket Connection (Client -> Server)</td>
                         <td class="py-2 px-3 text-center" data-testid="status-cell">
-                            <jhi-connection-status />
+                            <p-tag
+                                [severity]="websocketConnected() ? 'success' : 'danger'"
+                                [value]="(websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate"
+                                data-testid="status-tag"
+                            />
                         </td>
                         <td class="py-2 px-3 text-center">-</td>
                     </tr>

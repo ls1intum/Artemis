@@ -1,8 +1,12 @@
 <div>
     <h5 *adminTitleBarTitle id="user-management-page-heading" class="mb-0" jhiTranslate="artemisApp.userManagement.home.title"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <jhi-user-import-button [adminUserMode]="true" [buttonType]="ButtonType.PRIMARY_OUTLINE" [buttonSize]="ButtonSize.SMALL" />
-        <a class="jh-create-entity" pButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
+        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="importDialog.open()" data-testid="import-users-button">
+            <fa-icon [icon]="faFileImport" />
+            <span class="hidden md:inline" jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
+        </p-button>
+        <jhi-users-import-dialog #importDialog [adminUserMode]="true" />
+        <a pButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
         </a>
@@ -35,7 +39,7 @@
                         [dialogError]="dialogError"
                         [disabled]="!selectedUsers().length"
                     >
-                        <fa-icon [icon]="faTimes" />
+                        <fa-icon [icon]="faTrash" />
                     </button>
                     <p-button size="small" [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'" (onClick)="openFilterModal()" data-testid="open-filter-button">
                         <fa-icon [icon]="faFilter" />
@@ -172,13 +176,13 @@
                     <td>{{ user.lastModifiedBy }}</td>
                     <td>{{ user.lastModifiedDate | artemisDate }}</td>
                     <td class="text-end">
-                        <p-buttongroup>
+                        <div class="flex items-center justify-end gap-2">
                             <a [routerLink]="['./', user.login]" pButton size="small" severity="info">
                                 <fa-icon [icon]="faEye" />
                                 <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
                             </a>
                             <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" pButton size="small" severity="warn">
-                                <fa-icon [icon]="faWrench" />
+                                <fa-icon [icon]="faPencil" />
                                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                             </a>
                             @if (isLdapEnabled() && !user.internal) {
@@ -192,9 +196,9 @@
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                             >
-                                <fa-icon [icon]="faTimes" />
+                                <fa-icon [icon]="faTrash" />
                             </button>
-                        </p-buttongroup>
+                        </div>
                     </td>
                 </tr>
             </ng-template>
@@ -373,7 +377,7 @@
         </div>
     </div>
     <ng-template #footer>
-        <p-button severity="secondary" (onClick)="filterModalVisible.set(false)" [label]="'artemisApp.userManagement.filter.modal.close' | artemisTranslate" />
-        <p-button (onClick)="applyFilter()" [label]="'artemisApp.userManagement.filter.apply' | artemisTranslate" data-testid="apply-filter-button" />
+        <p-button size="small" severity="secondary" (onClick)="filterModalVisible.set(false)" [label]="'artemisApp.userManagement.filter.modal.close' | artemisTranslate" />
+        <p-button size="small" (onClick)="applyFilter()" [label]="'artemisApp.userManagement.filter.apply' | artemisTranslate" data-testid="apply-filter-button" />
     </ng-template>
 </p-dialog>

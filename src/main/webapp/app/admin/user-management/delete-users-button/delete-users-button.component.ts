@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
 
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -18,7 +20,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ButtonComponent],
+    imports: [ButtonModule, FaIconComponent],
 })
 export class DeleteUsersButtonComponent {
     private readonly adminUserService = inject(AdminUserService);
@@ -37,7 +39,6 @@ export class DeleteUsersButtonComponent {
 
     /** Icons */
     protected readonly faEraser = faEraser;
-    protected readonly ButtonType = ButtonType;
 
     /**
      * Load the list of users to user confirmation and delete.

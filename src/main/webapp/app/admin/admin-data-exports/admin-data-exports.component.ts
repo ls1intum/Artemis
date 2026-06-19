@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
-import { faBan, faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -69,7 +69,7 @@ export class AdminDataExportsComponent implements OnInit {
     readonly totalRecords = signal<number>(0);
 
     // Icons for UI
-    protected readonly faBan = faBan;
+    protected readonly faTrash = faTrash;
     protected readonly faDownload = faDownload;
     protected readonly faPlus = faPlus;
     protected readonly faSpinner = faSpinner;

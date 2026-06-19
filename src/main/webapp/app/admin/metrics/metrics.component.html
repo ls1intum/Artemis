@@ -1,13 +1,13 @@
 <div>
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
     <div *adminTitleBarActions class="flex flex-wrap gap-2 items-center">
-        <span class="font-medium text-muted-color text-sm">Jump to:</span>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</p-button>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</p-button>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</p-button>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</p-button>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</p-button>
-        <p-button size="small" [outlined]="true" (onClick)="scrollToSection('datasource-metrics')" data-testid="nav-datasource">Datasource</p-button>
+        <span class="font-medium text-muted-color text-sm" jhiTranslate="metrics.jumpTo"></span>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('datasource-metrics')" data-testid="nav-datasource">Datasource</p-button>
         @if (nodeOptions().length > 1) {
             <p-select
                 [(ngModel)]="selectedNodeId"
@@ -20,7 +20,7 @@
                 [style]="{ height: '31px', 'font-size': '0.875rem' }"
             />
         }
-        <p-button size="small" (onClick)="refresh()" data-testid="refresh-button">
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="refresh()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span jhiTranslate="metrics.refresh.button"></span>
         </p-button>

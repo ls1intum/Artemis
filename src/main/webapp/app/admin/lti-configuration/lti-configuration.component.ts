@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { Subject } from 'rxjs';
@@ -11,6 +11,8 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
@@ -35,6 +37,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     imports: [
         FormsModule,
         TranslateDirective,
+        ArtemisTranslatePipe,
+        TooltipModule,
         TabsModule,
         HelpIconComponent,
         CopyToClipboardButtonComponent,
@@ -72,7 +76,7 @@ export class LtiConfigurationComponent implements OnInit {
     /** Total items count */
     readonly totalItems = signal(0);
 
-    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPencil = faPencil;
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
 

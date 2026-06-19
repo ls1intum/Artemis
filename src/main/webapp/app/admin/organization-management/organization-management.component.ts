@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
-import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -51,8 +51,8 @@ export class OrganizationManagementComponent {
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
-    faWrench = faWrench;
+    faTrash = faTrash;
+    faPencil = faPencil;
 
     private lastLoadEvent: TableLazyLoadEvent | undefined;
     private loadRequestId = 0;

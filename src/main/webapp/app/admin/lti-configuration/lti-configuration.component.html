@@ -94,21 +94,21 @@
                             <td>{{ platform.jwkSetUri }}</td>
                             <td>{{ platform.tokenUri }}</td>
                             <td class="text-end">
-                                <div class="flex justify-center gap-1">
-                                    <a [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']" pButton size="small" data-testid="edit-platform-button">
-                                        <fa-icon [icon]="faPencilAlt" />
-                                        <span jhiTranslate="entity.action.edit"></span>
-                                    </a>
-                                    <button
-                                        jhiDeleteButton
-                                        [renderButtonStyle]="false"
-                                        [renderButtonText]="false"
-                                        (delete)="deleteLtiPlatform(platform.id!)"
-                                        [dialogError]="dialogError$"
-                                        data-testid="delete-platform-button"
+                                <div class="flex items-center justify-end gap-2">
+                                    <a
+                                        [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']"
+                                        pButton
+                                        size="small"
+                                        severity="warn"
+                                        [pTooltip]="'entity.action.edit' | artemisTranslate"
+                                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                        data-testid="edit-platform-button"
                                     >
+                                        <fa-icon [icon]="faPencil" />
+                                        <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button jhiDeleteButton (delete)="deleteLtiPlatform(platform.id!)" [dialogError]="dialogError$" data-testid="delete-platform-button">
                                         <fa-icon [icon]="faTrash" />
-                                        <span jhiTranslate="entity.action.delete"></span>
                                     </button>
                                 </div>
                             </td>

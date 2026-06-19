@@ -16,7 +16,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
 import { TooltipModule } from 'primeng/tooltip';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -24,7 +23,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,7 +53,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         RouterLink,
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
-        ButtonComponent,
         KnowledgeAreaTreeComponent,
         TooltipModule,
         StandardizedCompetencyEditComponent,
@@ -115,8 +112,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
     // Other constants for template
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
 

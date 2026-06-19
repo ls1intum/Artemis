@@ -2,6 +2,7 @@
     "metrics": {
         "title": "Anwendungs-Metriken",
         "refresh.button": "Aktualisieren",
+        "jumpTo": "Springe zu:",
         "filter": "Filter",
         "matches": "Suchergebnis(se)",
         "updating": "Aktualisierung...",
@@ -20,6 +21,8 @@
                 "timedwaiting": "Wartezeit",
                 "waiting": "Wartend",
                 "blocked": "Geblockt",
+                "total": "Gesamt:",
+                "expand": "Erweitern",
                 "dump": {
                     "title": "Threads dump",
                     "id": "Id: ",

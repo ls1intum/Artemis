@@ -251,9 +251,10 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <p-button severity="secondary" (onClick)="previousState()"> <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span> </p-button>
-                <button type="submit" pButton [disabled]="editForm.invalid || isSaving()" data-testid="save-user-button">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                <p-button severity="secondary" size="small" (onClick)="previousState()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></p-button>
+                <button type="submit" pButton size="small" [disabled]="editForm.invalid || isSaving()" data-testid="save-user-button">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
         </form>

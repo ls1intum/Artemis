@@ -2,7 +2,8 @@
     <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
     <div *adminTitleBarActions>
         <button pButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
-            <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </div>
     <div class="flex-1 min-h-0">
@@ -25,7 +26,7 @@
 </ng-template>
 
 <ng-template #organizationActions let-organization>
-    <div class="flex gap-1" data-testid="organization-row-actions">
+    <div class="flex items-center justify-end gap-2" data-testid="organization-row-actions">
         <button
             pButton
             size="small"
@@ -36,7 +37,7 @@
             (click)="$event.stopPropagation()"
             data-testid="edit-organization-btn"
         >
-            <fa-icon [icon]="faWrench" />
+            <fa-icon [icon]="faPencil" />
             <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
         </button>
         <button
@@ -48,7 +49,7 @@
             (click)="$event.stopPropagation()"
             data-testid="delete-organization-btn"
         >
-            <fa-icon [icon]="faTimes" />
+            <fa-icon [icon]="faTrash" />
         </button>
     </div>
 </ng-template>

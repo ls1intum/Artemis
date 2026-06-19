@@ -1,7 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
     <div *adminTitleBarActions>
-        <p-button size="small" severity="primary" (onClick)="openCreateModal()" data-testid="create-export-btn">
+        <p-button size="small" (onClick)="openCreateModal()" data-testid="create-export-btn">
             <fa-icon [icon]="faPlus" class="me-1" />
             <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
         </p-button>
@@ -38,7 +38,7 @@
                         </p-tag>
                     </td>
                     <td>
-                        <div class="flex gap-1">
+                        <div class="flex items-center justify-end gap-2">
                             @if (dataExport.downloadable) {
                                 <p-button severity="success" size="small" (onClick)="downloadExport(dataExport)" data-testid="download-btn" styleClass="download-btn">
                                     <fa-icon [icon]="faDownload" class="me-1" />
@@ -52,7 +52,7 @@
                                     [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
                                     (delete)="cancelExport(dataExport)"
                                 >
-                                    <fa-icon [icon]="faBan" />
+                                    <fa-icon [icon]="faTrash" />
                                 </button>
                             }
                         </div>

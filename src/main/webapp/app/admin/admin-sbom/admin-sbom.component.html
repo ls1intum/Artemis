@@ -14,19 +14,27 @@
             <fa-icon [icon]="faRefresh" [animation]="loadingVulnerabilities() ? 'spin' : undefined" />
             <span jhiTranslate="artemisApp.dependencies.refreshVulnerabilities"></span>
         </button>
-        <button pButton severity="info" size="small" [outlined]="true" (click)="sendVulnerabilityEmail()" [disabled]="sendingEmail()" data-testid="send-vulnerability-email-button">
+        <button
+            pButton
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            (click)="sendVulnerabilityEmail()"
+            [disabled]="sendingEmail()"
+            data-testid="send-vulnerability-email-button"
+        >
             <fa-icon [icon]="sendingEmail() ? faSpinner : faEnvelope" [animation]="sendingEmail() ? 'spin' : undefined" />
             <span jhiTranslate="artemisApp.dependencies.sendEmail"></span>
         </button>
     }
     @if (combinedSbom()?.server) {
-        <button pButton size="small" [outlined]="true" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
+        <button pButton severity="secondary" size="small" [outlined]="true" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadServer"></span>
         </button>
     }
     @if (combinedSbom()?.client) {
-        <button pButton size="small" [outlined]="true" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
+        <button pButton severity="secondary" size="small" [outlined]="true" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadClient"></span>
         </button>
@@ -66,6 +74,7 @@
                         pButton
                         size="small"
                         [severity]="upgradeUrgency() === 'critical' ? 'danger' : upgradeUrgency() === 'high' ? 'warn' : 'info'"
+                        data-testid="view-release-button"
                     >
                         <span jhiTranslate="artemisApp.dependencies.viewRelease"></span>
                     </a>
@@ -179,25 +188,26 @@
             </p-iconfield>
         </div>
         <p-buttongroup>
-            <button pButton type="button" [severity]="selectedSource() === 'all' ? null : 'secondary'" (click)="updateSource('all')" data-testid="source-filter-all">
+            <p-button size="small" [severity]="selectedSource() === 'all' ? null : 'secondary'" (onClick)="updateSource('all')" data-testid="source-filter-all">
                 <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
                 <p-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
-            </button>
-            <button pButton type="button" [severity]="selectedSource() === 'server' ? null : 'secondary'" (click)="updateSource('server')" data-testid="source-filter-server">
+            </p-button>
+            <p-button size="small" [severity]="selectedSource() === 'server' ? null : 'secondary'" (onClick)="updateSource('server')" data-testid="source-filter-server">
                 <fa-icon [icon]="faServer" class="me-1" />
                 <span jhiTranslate="artemisApp.dependencies.sourceServer"></span>
                 <p-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
-            </button>
-            <button pButton type="button" [severity]="selectedSource() === 'client' ? null : 'secondary'" (click)="updateSource('client')" data-testid="source-filter-client">
+            </p-button>
+            <p-button size="small" [severity]="selectedSource() === 'client' ? null : 'secondary'" (onClick)="updateSource('client')" data-testid="source-filter-client">
                 <fa-icon [icon]="faDesktop" class="me-1" />
                 <span jhiTranslate="artemisApp.dependencies.sourceClient"></span>
                 <p-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
-            </button>
+            </p-button>
         </p-buttongroup>
         @if (vulnerabilities()?.totalVulnerabilities) {
             <button
                 pButton
                 type="button"
+                size="small"
                 [severity]="showOnlyVulnerable() ? 'danger' : 'secondary'"
                 [outlined]="!showOnlyVulnerable()"
                 (click)="toggleVulnerableOnly()"

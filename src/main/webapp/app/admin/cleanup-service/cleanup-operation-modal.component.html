@@ -53,6 +53,7 @@
                 <span jhiTranslate="cleanupService.button.close"></span>
             </button>
             <button pButton type="button" severity="danger" size="small" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" data-testid="execute-button">
+                <fa-icon [icon]="faTrash" />
                 <span jhiTranslate="cleanupService.button.execute"></span>
             </button>
         </div>

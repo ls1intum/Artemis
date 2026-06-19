@@ -20,60 +20,48 @@
                     </td>
                     <td>
                         <p-buttongroup>
-                            <button
-                                pButton
+                            <p-button
                                 size="small"
                                 data-testid="log-level-trace"
                                 [severity]="logger.level === 'TRACE' ? null : 'secondary'"
-                                (click)="changeLevel(logger.name, 'TRACE')"
-                            >
-                                TRACE
-                            </button>
-                            <button
-                                pButton
+                                (onClick)="changeLevel(logger.name, 'TRACE')"
+                                label="TRACE"
+                            />
+                            <p-button
                                 size="small"
                                 data-testid="log-level-debug"
                                 [severity]="logger.level === 'DEBUG' ? 'success' : 'secondary'"
-                                (click)="changeLevel(logger.name, 'DEBUG')"
-                            >
-                                DEBUG
-                            </button>
-                            <button
-                                pButton
+                                (onClick)="changeLevel(logger.name, 'DEBUG')"
+                                label="DEBUG"
+                            />
+                            <p-button
                                 size="small"
                                 data-testid="log-level-info"
                                 [severity]="logger.level === 'INFO' ? 'info' : 'secondary'"
-                                (click)="changeLevel(logger.name, 'INFO')"
-                            >
-                                INFO
-                            </button>
-                            <button
-                                pButton
+                                (onClick)="changeLevel(logger.name, 'INFO')"
+                                label="INFO"
+                            />
+                            <p-button
                                 size="small"
                                 data-testid="log-level-warn"
                                 [severity]="logger.level === 'WARN' ? 'warn' : 'secondary'"
-                                (click)="changeLevel(logger.name, 'WARN')"
-                            >
-                                WARN
-                            </button>
-                            <button
-                                pButton
+                                (onClick)="changeLevel(logger.name, 'WARN')"
+                                label="WARN"
+                            />
+                            <p-button
                                 size="small"
                                 data-testid="log-level-error"
                                 [severity]="logger.level === 'ERROR' ? 'danger' : 'secondary'"
-                                (click)="changeLevel(logger.name, 'ERROR')"
-                            >
-                                ERROR
-                            </button>
-                            <button
-                                pButton
+                                (onClick)="changeLevel(logger.name, 'ERROR')"
+                                label="ERROR"
+                            />
+                            <p-button
                                 size="small"
                                 data-testid="log-level-off"
                                 [severity]="logger.level === 'OFF' ? 'contrast' : 'secondary'"
-                                (click)="changeLevel(logger.name, 'OFF')"
-                            >
-                                OFF
-                            </button>
+                                (onClick)="changeLevel(logger.name, 'OFF')"
+                                label="OFF"
+                            />
                         </p-buttongroup>
                     </td>
                 </tr>

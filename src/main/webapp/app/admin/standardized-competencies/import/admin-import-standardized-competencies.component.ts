@@ -17,7 +17,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -30,6 +29,7 @@ import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standard
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { MessageModule } from 'primeng/message';
+import { ButtonModule } from 'primeng/button';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -53,9 +53,9 @@ interface ImportCount {
         HtmlForMarkdownPipe,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        ButtonComponent,
         AdminTitleBarTitleDirective,
         MessageModule,
+        ButtonModule,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
@@ -87,7 +87,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly faChevronRight = faChevronRight;
     //Other constants
     protected readonly getIcon = getIcon;
-    protected readonly ButtonType = ButtonType;
     protected readonly importExample = `\`\`\`json
 {
     "knowledgeAreas": [{

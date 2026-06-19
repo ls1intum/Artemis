@@ -16,8 +16,8 @@
             <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.expireDate"></span></dt>
             <dd class="md:col-span-9">{{ notif.expireDate | artemisDate }}</dd>
         </dl>
-        <a id="editButton" [routerLink]="['edit']" pButton severity="warn">
-            <fa-icon [icon]="faWrench" />
+        <a id="editButton" [routerLink]="['edit']" pButton size="small" severity="warn">
+            <fa-icon [icon]="faPencil" />
             <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
         </a>
     </div>

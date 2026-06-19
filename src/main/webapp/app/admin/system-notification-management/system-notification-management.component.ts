@@ -10,7 +10,7 @@ import { SystemNotification } from 'app/admin/system-notification-management/sys
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -18,7 +18,7 @@ import { ItemCountComponent } from 'app/foundation/pagination/item-count.compone
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { SortEvent } from 'primeng/api';
-import { ButtonGroupModule } from 'primeng/buttongroup';
+import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,7 +51,7 @@ enum NotificationState {
         ItemCountComponent,
         PaginatorModule,
         TableModule,
-        ButtonGroupModule,
+        ButtonModule,
         TagModule,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -105,9 +105,9 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
 
     /** Icons for the template */
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
 
     constructor() {
         // Subscribe to route data for paging parameters

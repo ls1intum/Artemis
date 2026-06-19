@@ -3,12 +3,12 @@
         <h5 *adminTitleBarTitle id="standardized-competency-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h5>
         <jhi-documentation-button [type]="documentationType" />
     </div>
-    <div *adminTitleBarActions class="flex items-center gap-2">
-        <a pButton size="small" [routerLink]="['/admin', 'standardized-competencies', 'import']" data-testid="import-button">
+    <div *adminTitleBarActions class="flex items-center justify-end gap-2">
+        <a pButton size="small" severity="secondary" [outlined]="true" [routerLink]="['/admin', 'standardized-competencies', 'import']" data-testid="import-button">
             <fa-icon [icon]="faFileImport" />
             <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
         </a>
-        <button pButton size="small" (click)="exportStandardizedCompetencyCatalog()" data-testid="export-button">
+        <button pButton size="small" severity="secondary" [outlined]="true" (click)="exportStandardizedCompetencyCatalog()" data-testid="export-button">
             <fa-icon [icon]="faFileExport" />
             <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
         </button>
@@ -20,28 +20,38 @@
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
         (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
     />
-    <div class="mt-3 mb-2 flex flex-wrap items-center">
-        <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
-        <jhi-button
-            class="me-3"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faPlus"
+    <div class="mt-3 mb-2 flex flex-wrap items-center gap-2">
+        <h3 class="me-1 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
+        <p-button
+            size="small"
+            severity="secondary"
+            [outlined]="true"
             (onClick)="openNewKnowledgeArea(undefined)"
-            tooltip="artemisApp.knowledgeArea.manage.createButtonTooltip"
-        />
-        <jhi-button
-            class="me-1"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faMinimize"
+            [pTooltip]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faPlus" />
+        </p-button>
+        <p-button
+            size="small"
+            severity="secondary"
+            [outlined]="true"
             (onClick)="knowledgeAreaTreeComponent?.collapseAll()"
-            tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
-        />
-        <jhi-button
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faMaximize"
+            [pTooltip]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faMinimize" />
+        </p-button>
+        <p-button
+            size="small"
+            severity="secondary"
+            [outlined]="true"
             (onClick)="knowledgeAreaTreeComponent?.expandAll()"
-            tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip"
-        />
+            [pTooltip]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faMaximize" />
+        </p-button>
     </div>
     @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
         @if (dataSource.data?.length && (selectedCompetency() || selectedKnowledgeArea())) {
@@ -174,7 +184,7 @@
 >
     <div [jhiTranslate]="confirmDialogTextKey()" [translateValues]="confirmDialogTextParams()"></div>
     <ng-template #footer>
-        <p-button severity="secondary" [outlined]="true" (onClick)="onConfirmDialogCancel()" [label]="'global.form.cancel' | artemisTranslate" data-testid="confirm-cancel" />
-        <p-button severity="danger" (onClick)="onConfirmDialogConfirm()" [label]="'global.form.confirm' | artemisTranslate" data-testid="confirm-confirm" />
+        <p-button severity="secondary" size="small" (onClick)="onConfirmDialogCancel()" [label]="'global.form.cancel' | artemisTranslate" data-testid="confirm-cancel" />
+        <p-button severity="danger" size="small" (onClick)="onConfirmDialogConfirm()" [label]="'global.form.confirm' | artemisTranslate" data-testid="confirm-confirm" />
     </ng-template>
 </p-dialog>

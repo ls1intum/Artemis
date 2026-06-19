@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
-import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPencil } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -40,7 +40,7 @@ export class UserManagementDetailComponent implements OnInit {
     readonly user = signal<User | undefined>(undefined);
 
     /** Icons */
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
 
     /** Utility function to add public file prefix to image URLs */
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

@@ -54,12 +54,14 @@
                     </div>
                 }
             </div>
-            <div class="mt-3 flex gap-2">
-                <button id="cancelButton" type="button" pButton severity="secondary" (click)="goToOverview()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+            <div class="mt-3 flex items-center gap-2">
+                <button id="cancelButton" type="button" pButton size="small" severity="secondary" (click)="goToOverview()">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="saveButton" type="submit" pButton [disabled]="editForm.form.invalid || isSaving()">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                <button id="saveButton" type="submit" pButton size="small" [disabled]="editForm.form.invalid || isSaving()">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
         </form>

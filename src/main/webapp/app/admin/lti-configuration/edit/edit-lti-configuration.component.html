@@ -98,13 +98,15 @@
                     </div>
                 </div>
 
-                <div class="mt-3 flex gap-2">
-                    <button type="submit" id="save-entity" pButton [disabled]="isSaving() || platformConfigurationForm.invalid" data-testid="save-platform-button">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                    </button>
-                    <p-button type="button" id="cancel-save" severity="secondary" (onClick)="navigateToLtiConfigurationPage()" data-testid="cancel-platform-button">
-                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                <div class="mt-3 flex items-center justify-end gap-2">
+                    <p-button type="button" id="cancel-save" size="small" severity="secondary" (onClick)="navigateToLtiConfigurationPage()" data-testid="cancel-platform-button">
+                        <fa-icon [icon]="faBan" />
+                        <span jhiTranslate="entity.action.cancel"></span>
                     </p-button>
+                    <button type="submit" id="save-entity" pButton size="small" [disabled]="isSaving() || platformConfigurationForm.invalid" data-testid="save-platform-button">
+                        <fa-icon [icon]="faSave" />
+                        <span jhiTranslate="entity.action.save"></span>
+                    </button>
                 </div>
             </form>
         }

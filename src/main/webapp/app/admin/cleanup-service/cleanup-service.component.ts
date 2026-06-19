@@ -4,6 +4,8 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -34,11 +36,14 @@ import { DatePickerModule } from 'primeng/datepicker';
         TableModule,
         ButtonModule,
         DatePickerModule,
+        FaIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupServiceComponent implements OnInit {
     private readonly dataCleanupService = inject(DataCleanupService);
+
+    protected readonly faTrash = faTrash;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);

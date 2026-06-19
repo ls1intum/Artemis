@@ -77,12 +77,14 @@
                     }
                 </div>
             </div>
-            <div class="flex gap-2 mt-4">
-                <button id="cancelButton" type="button" pButton severity="secondary" (click)="previousState()" data-testid="cancel-btn">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+            <div class="flex items-center justify-end gap-2 mt-4">
+                <button id="cancelButton" type="button" pButton size="small" severity="secondary" (click)="previousState()" data-testid="cancel-btn">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="saveButton" type="submit" pButton [disabled]="editForm.form.invalid || isSaving()" data-testid="save-btn">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                <button id="saveButton" type="submit" pButton size="small" [disabled]="editForm.form.invalid || isSaving()" data-testid="save-btn">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
         </form>

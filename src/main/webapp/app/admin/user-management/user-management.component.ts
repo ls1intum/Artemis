@@ -12,23 +12,22 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFilter, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { SortEvent } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
 import { InputTextModule } from 'primeng/inputtext';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { MessageModule } from 'primeng/message';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -117,7 +116,7 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        UsersImportButtonComponent,
+        UsersImportDialogComponent,
         RouterLink,
         FaIconComponent,
         FormsModule,
@@ -130,7 +129,6 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         PaginatorModule,
         TableModule,
         ButtonModule,
-        ButtonGroupModule,
         InputTextModule,
         CheckboxModule,
         RadioButtonModule,
@@ -217,12 +215,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     /** Icons */
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
+    protected readonly faFileImport = faFileImport;
 
     /** Button constants */
-    protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
     /**

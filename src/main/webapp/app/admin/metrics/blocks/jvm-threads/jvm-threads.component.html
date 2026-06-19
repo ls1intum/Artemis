@@ -29,10 +29,12 @@
         </p-progressbar>
     </div>
 
-    <div class="text-sm text-muted-color">Total: {{ threadStats().all }}</div>
+    <div class="text-sm text-muted-color"><span jhiTranslate="metrics.jvm.threads.total"></span> {{ threadStats().all }}</div>
 
     <div>
-        <p-button size="small" (onClick)="open()" data-testid="expand-threads-button">Expand</p-button>
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="open()" data-testid="expand-threads-button">
+            <span jhiTranslate="metrics.jvm.threads.expand"></span>
+        </p-button>
     </div>
 </div>
 

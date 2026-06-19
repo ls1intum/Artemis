@@ -1,7 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="system-notification-management-page-heading" class="mb-0" jhiTranslate="artemisApp.systemNotification.systemNotifications"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <a class="jh-create-entity" pButton size="small" [routerLink]="['./new']" data-testid="create-notification-button">
+        <a pButton size="small" [routerLink]="['./new']" data-testid="create-notification-button">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
         </a>
@@ -70,13 +70,13 @@
                     <td>{{ notification.notificationDate | artemisDate }}</td>
                     <td>{{ notification.expireDate | artemisDate }}</td>
                     <td class="text-end">
-                        <p-buttongroup>
+                        <div class="flex items-center justify-end gap-2">
                             <a id="viewButton" [routerLink]="['./', notification.id]" pButton size="small" severity="info">
                                 <fa-icon [icon]="faEye" />
                                 <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
                             </a>
                             <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" pButton size="small" severity="warn">
-                                <fa-icon [icon]="faWrench" />
+                                <fa-icon [icon]="faPencil" />
                                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                             </a>
                             <button
@@ -86,9 +86,9 @@
                                 (delete)="deleteNotification(notification.id!)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="faTimes" />
+                                <fa-icon [icon]="faTrash" />
                             </button>
-                        </p-buttongroup>
+                        </div>
                     </td>
                 </tr>
             </ng-template>

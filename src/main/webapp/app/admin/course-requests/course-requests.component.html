@@ -1,7 +1,7 @@
 <div class="container py-4">
     <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
     <div *adminTitleBarActions>
-        <p-button severity="secondary" size="small" (onClick)="load()" [disabled]="loading()" data-testid="refresh-button">
+        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="load()" [disabled]="loading()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span jhiTranslate="health.refresh.button"></span>
         </p-button>
@@ -67,16 +67,17 @@
                 </td>
                 <td class="break-words">{{ request.reason }}</td>
                 <td class="text-end">
-                    <div class="flex justify-end gap-2">
+                    <div class="flex items-center justify-end gap-2">
                         <p-button
-                            severity="secondary"
+                            severity="warn"
                             size="small"
                             (onClick)="openEditModal(request)"
                             [pTooltip]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
                             [ariaLabel]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
                             data-testid="edit-button"
                         >
-                            <fa-icon [icon]="faEdit" />
+                            <fa-icon [icon]="faPencil" />
+                            <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.edit"></span>
                         </p-button>
                         <p-button
                             severity="success"
@@ -87,6 +88,7 @@
                             data-testid="accept-button"
                         >
                             <fa-icon [icon]="faCheck" />
+                            <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.accept"></span>
                         </p-button>
                         <p-button
                             severity="danger"
@@ -97,6 +99,7 @@
                             data-testid="reject-button"
                         >
                             <fa-icon [icon]="faTimes" />
+                            <span class="hidden md:inline" jhiTranslate="artemisApp.courseRequest.admin.reject"></span>
                         </p-button>
                     </div>
                 </td>
@@ -220,8 +223,20 @@
         }
     </div>
     <ng-template #footer>
-        <p-button severity="secondary" (onClick)="rejectModalVisible.set(false)" [label]="'entity.action.cancel' | artemisTranslate" data-testid="cancel-reject-button" />
-        <p-button severity="danger" (onClick)="reject()" [label]="'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate" data-testid="confirm-reject-button">
+        <p-button
+            severity="secondary"
+            size="small"
+            (onClick)="rejectModalVisible.set(false)"
+            [label]="'entity.action.cancel' | artemisTranslate"
+            data-testid="cancel-reject-button"
+        />
+        <p-button
+            severity="danger"
+            size="small"
+            (onClick)="reject()"
+            [label]="'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate"
+            data-testid="confirm-reject-button"
+        >
             <fa-icon [icon]="faTimes" />
         </p-button>
     </ng-template>
@@ -239,8 +254,8 @@
         <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
     </form>
     <ng-template #footer>
-        <p-button severity="secondary" (onClick)="editModalVisible.set(false)" [label]="'entity.action.cancel' | artemisTranslate" data-testid="cancel-edit-button" />
-        <p-button severity="primary" (onClick)="saveEdit()" [disabled]="isSubmittingEdit()" [label]="'entity.action.save' | artemisTranslate" data-testid="save-edit-button">
+        <p-button severity="secondary" size="small" (onClick)="editModalVisible.set(false)" [label]="'entity.action.cancel' | artemisTranslate" data-testid="cancel-edit-button" />
+        <p-button size="small" (onClick)="saveEdit()" [disabled]="isSubmittingEdit()" [label]="'entity.action.save' | artemisTranslate" data-testid="save-edit-button">
             <fa-icon [icon]="faCheck" />
         </p-button>
     </ng-template>

@@ -8,6 +8,7 @@
             }
             <p-button
                 severity="secondary"
+                size="small"
                 [text]="true"
                 [rounded]="true"
                 icon="pi pi-times"
@@ -16,9 +17,12 @@
                 data-testid="close-button"
             />
         </div>
-        <div>
+        <div class="flex items-center justify-end gap-2">
             @if (!isEditing()) {
-                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faPencil" (onClick)="edit()" />
+                <p-button severity="warn" size="small" (onClick)="edit()">
+                    <fa-icon [icon]="faPencil" />
+                    <span jhiTranslate="entity.action.edit"></span>
+                </p-button>
             }
             <!-- do not display the delete button when creating new competencies -->
             @if (competency().id) {
@@ -87,16 +91,15 @@
         </div>
     </div>
     @if (isEditing()) {
-        <div>
-            <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.SMALL"
-                [title]="'entity.action.save'"
-                [icon]="faSave"
-                (onClick)="save()"
-                [disabled]="this.form.invalid"
-            />
+        <div class="flex items-center justify-end gap-2">
+            <p-button severity="secondary" size="small" (onClick)="cancel()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </p-button>
+            <p-button size="small" (onClick)="save()" [disabled]="this.form.invalid">
+                <fa-icon [icon]="faSave" />
+                <span jhiTranslate="entity.action.save"></span>
+            </p-button>
         </div>
     }
 </div>

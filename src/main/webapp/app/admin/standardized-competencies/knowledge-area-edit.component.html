@@ -8,6 +8,7 @@
             }
             <p-button
                 severity="secondary"
+                size="small"
                 [text]="true"
                 [rounded]="true"
                 icon="pi pi-times"
@@ -18,23 +19,34 @@
         </div>
         <!-- do not allow these actions when creating a new knowledge area because it is not saved yet -->
         @if (knowledgeArea().id) {
-            <div class="mb-1">
-                <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createCompetencyButton" (onClick)="openNewCompetency()" />
-                <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createKnowledgeAreaButton" (onClick)="openNewKnowledgeArea()" />
+            <div class="mb-1 flex flex-wrap items-center gap-2">
+                <p-button size="small" (onClick)="openNewCompetency()">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.knowledgeArea.details.createCompetencyButton"></span>
+                </p-button>
+                <p-button size="small" (onClick)="openNewKnowledgeArea()">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.knowledgeArea.details.createKnowledgeAreaButton"></span>
+                </p-button>
             </div>
-            @if (!isEditing()) {
-                <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" title="entity.action.edit" [icon]="faPencil" (onClick)="edit()" />
-            }
-            <button
-                jhiDeleteButton
-                [entityTitle]="knowledgeArea().title ?? ''"
-                [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
-                [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
-                (delete)="delete()"
-                [dialogError]="dialogError()!"
-            >
-                <fa-icon [icon]="faTrash" />
-            </button>
+            <div class="flex items-center justify-end gap-2">
+                @if (!isEditing()) {
+                    <p-button severity="warn" size="small" (onClick)="edit()">
+                        <fa-icon [icon]="faPencil" />
+                        <span jhiTranslate="entity.action.edit"></span>
+                    </p-button>
+                }
+                <button
+                    jhiDeleteButton
+                    [entityTitle]="knowledgeArea().title ?? ''"
+                    [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
+                    [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
+                    (delete)="delete()"
+                    [dialogError]="dialogError()!"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+            </div>
         }
     </div>
     <div class="flex flex-col" [formGroup]="form">
@@ -103,16 +115,15 @@
         </div>
     </div>
     @if (isEditing()) {
-        <div>
-            <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                [btnSize]="ButtonSize.SMALL"
-                [title]="'entity.action.save'"
-                [icon]="faSave"
-                (onClick)="save()"
-                [disabled]="this.form.invalid"
-            />
+        <div class="flex items-center justify-end gap-2">
+            <p-button severity="secondary" size="small" (onClick)="cancel()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </p-button>
+            <p-button size="small" (onClick)="save()" [disabled]="this.form.invalid">
+                <fa-icon [icon]="faSave" />
+                <span jhiTranslate="entity.action.save"></span>
+            </p-button>
         </div>
     }
 </div>

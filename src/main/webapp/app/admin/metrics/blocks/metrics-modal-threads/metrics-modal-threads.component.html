@@ -66,6 +66,8 @@
         </div>
     }
     <ng-template #footer>
-        <p-button severity="secondary" (onClick)="dismiss()" data-testid="dismiss-button">Done</p-button>
+        <p-button severity="secondary" size="small" (onClick)="dismiss()" data-testid="dismiss-button">
+            <span jhiTranslate="entity.action.done"></span>
+        </p-button>
     </ng-template>
 </p-dialog>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
-import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPencil } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,7 +25,7 @@ export class SystemNotificationManagementDetailComponent implements OnInit {
     readonly notification = signal<SystemNotification | undefined>(undefined);
 
     /** Icon for the edit button */
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
 
     /**
      * Subscribes to route data to load the notification from the resolver.
