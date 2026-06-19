@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Introduces the gocast_course_binding table that persists the link between an Artemis course
+         and a gocast (TUM Live) course. One binding per course (unique constraint on course_id).
+         Status tracks the binding lifecycle: PENDING (approval link not yet visited), ACTIVE
+         (service account confirmed as course admin via EP7), REVOKED (binding removed). -->
+    <changeSet id="20260619000000-1" author="artemis">
+        <createTable tableName="gocast_course_binding">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gocast_course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gocast_course_slug" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Unique constraint: one binding per Artemis course -->
+        <addUniqueConstraint tableName="gocast_course_binding" columnNames="course_id"
+                             constraintName="uc_gocast_course_binding_course_id"/>
+
+        <!-- Named FK to course(id) for referential integrity -->
+        <addForeignKeyConstraint baseTableName="gocast_course_binding" baseColumnNames="course_id"
+                                 constraintName="fk_gocast_course_binding_course"
+                                 referencedTableName="course" referencedColumnNames="id"
+                                 deferrable="false" initiallyDeferred="false"
+                                 onDelete="CASCADE" onUpdate="NO ACTION"
+                                 validate="true"/>
+
+        <!-- Index to speed up lookups by course_id -->
+        <createIndex tableName="gocast_course_binding" indexName="idx_gocast_course_binding_course_id">
+            <column name="course_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="gocast_course_binding" indexName="idx_gocast_course_binding_course_id"/>
+            <dropForeignKeyConstraint baseTableName="gocast_course_binding" constraintName="fk_gocast_course_binding_course"/>
+            <dropTable tableName="gocast_course_binding"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
