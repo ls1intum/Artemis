@@ -206,7 +206,7 @@ function convertDragAndDropQuestionToUpdateDTO(question: DragAndDropQuestion): D
         backgroundFilePath: question.backgroundFilePath,
         dropLocations: (question.dropLocations ?? []).map(convertDropLocationToUpdateDTO),
         dragItems: (question.dragItems ?? []).map(convertDragItemToUpdateDTO),
-        correctMappings: (question.correctMappings ?? []).map(convertDragAndDropMappingToUpdateDTO),
+        correctMappings: (question.correctDndMappings ?? []).map(convertDragAndDropMappingToUpdateDTO),
     };
 }
 

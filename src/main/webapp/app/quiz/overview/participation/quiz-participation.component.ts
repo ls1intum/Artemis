@@ -852,7 +852,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     case QuizQuestionType.DRAG_AND_DROP:
                         const dndClientQuestion = clientQuestion as DragAndDropQuestion;
                         const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
-                        dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                        dndClientQuestion.correctDndMappings = dndFullQuestionFromServer.correctDndMappings;
                         break;
                     case QuizQuestionType.SHORT_ANSWER:
                         const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;

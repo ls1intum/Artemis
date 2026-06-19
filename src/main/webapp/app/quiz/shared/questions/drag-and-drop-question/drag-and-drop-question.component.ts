@@ -266,11 +266,11 @@ export class DragAndDropQuestionComponent {
      * @return {MappingResult} MAPPED_CORRECT, if the drop location is correct, MAPPED_INCORRECT if not and NOT_MAPPED if the location is correctly left blank
      */
     isLocationCorrect(dropLocation: DropLocation): MappingResult {
-        if (!this.dragAndDropQuestion().correctMappings) {
+        if (!this.dragAndDropQuestion().correctDndMappings) {
             return MappingResult.MAPPED_INCORRECT;
         }
         const validDragItems = this.dragAndDropQuestion()
-            .correctMappings!.filter(function (mapping) {
+            .correctDndMappings!.filter(function (mapping) {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
             }, this)
             .map(function (mapping) {
@@ -298,10 +298,10 @@ export class DragAndDropQuestionComponent {
      */
 
     isAssignedLocation(dropLocation: DropLocation): boolean {
-        if (!this.dragAndDropQuestion().correctMappings) {
+        if (!this.dragAndDropQuestion().correctDndMappings) {
             return false;
         }
-        return this.dragAndDropQuestion().correctMappings!.some((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation));
+        return this.dragAndDropQuestion().correctDndMappings!.some((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation));
     }
 
     /**

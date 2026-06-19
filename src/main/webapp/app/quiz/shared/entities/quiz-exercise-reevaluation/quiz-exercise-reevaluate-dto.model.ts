@@ -224,7 +224,7 @@ function convertDragAndDropQuestionToReEvaluateDTO(question: DragAndDropQuestion
         invalid: question.invalid,
         dropLocations: question.dropLocations?.map(convertDropLocationToReEvaluateDTO),
         dragItems: question.dragItems?.map(convertDragItemToReEvaluateDTO),
-        correctMappings: question.correctMappings?.map(convertCorrectMappingToReEvaluateDTO),
+        correctMappings: question.correctDndMappings?.map(convertCorrectMappingToReEvaluateDTO),
     };
 }
 

@@ -93,7 +93,7 @@ export function resetQuizQuestionForImport(question: QuizQuestion): void {
                 idToDropLocationMap.set(oldId, dropLocation);
             }
         }
-        for (const mapping of dragAndDropQuestion.correctMappings || []) {
+        for (const mapping of dragAndDropQuestion.correctDndMappings || []) {
             const dragItem = mapping.dragItem;
             const dropLocation = mapping.dropLocation;
             if (dragItem && dragItem.id !== undefined) {

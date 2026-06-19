@@ -139,7 +139,7 @@ function convertDragAndDropQuestionToDTO(question: DragAndDropQuestion): DragAnd
             text: di.text,
             pictureFilePath: di.pictureFilePath,
         })),
-        correctMappings: (question.correctMappings ?? []).map((mapping) => ({
+        correctMappings: (question.correctDndMappings ?? []).map((mapping) => ({
             dragItemTempId: mapping.dragItem?.tempID ?? 0,
             dropLocationTempId: mapping.dropLocation?.tempID ?? 0,
         })),

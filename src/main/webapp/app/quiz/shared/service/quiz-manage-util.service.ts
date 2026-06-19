@@ -69,8 +69,8 @@ export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionU
                 question.title &&
                 question.title !== '' &&
                 question.title.length < MAX_QUIZ_QUESTION_LENGTH_THRESHOLD &&
-                dndQuestion.correctMappings &&
-                dndQuestion.correctMappings.length > 0 &&
+                dndQuestion.correctDndMappings &&
+                dndQuestion.correctDndMappings.length > 0 &&
                 dragAndDropQuestionUtil.solve(dndQuestion).length &&
                 dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
             );
@@ -192,7 +192,7 @@ export function computeQuizQuestionInvalidReason(
 
     if (question.type === QuizQuestionType.DRAG_AND_DROP) {
         const dndQuestion = question as DragAndDropQuestion;
-        if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
+        if (!dndQuestion.correctDndMappings || dndQuestion.correctDndMappings.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                 translateValues: { index: index + 1 },
@@ -284,7 +284,7 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
             pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
         } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
             pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-            pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
+            pushToInvalidElements((<DragAndDropQuestion>question).correctDndMappings, invalidElements);
             pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
         } else {
             pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
