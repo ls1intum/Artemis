@@ -180,6 +180,28 @@ set course(course: Course) {
 
 **Reach for `effect()` last.** [Effects](https://angular.dev/guide/signals/effect) are for syncing signal state _out_ to non-reactive APIs (imperative third-party libraries, the DOM, logging) — not for deriving state (use `computed`) and not for general reactivity. An `effect` that reads a signal and also writes another signal it reads will re-trigger itself forever; if an effect must both read and write, read its triggers explicitly and wrap the writes in [`untracked()`](https://angular.dev/api/core/untracked). To run code once **after** the view has rendered (e.g. measuring the DOM), use [`afterNextRender()`](https://angular.dev/api/core/afterNextRender) rather than `setTimeout` — it self-schedules a change-detection tick under zoneless.
 
+**Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
+
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions, route guards/resolvers, or `ngOnChanges`. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
+
+```ts
+// Don't - navigate directly in an effect: object-reference churn re-runs it → infinite re-navigation
+effect(() => {
+    const participation = this.studentParticipation();
+    this.router.navigate(['code-editor', participation.id]);
+});
+
+// Do - depend on a stable identity key; navigate untracked so only the key re-runs the effect
+private readonly targetKey = computed(() => `${this.exercise().id}:${this.studentParticipation()?.id}`);
+constructor() {
+    effect(() => {
+        if (!this.targetKey()) return;
+        untracked(() => this.router.navigate(['code-editor', this.studentParticipation()!.id]));
+    });
+}
+```
+
 **The handful of legitimate non-signal cases** (an impure self-updating pipe such as a time-ago pipe; CD on dynamically injected components living outside the template tree) require an explicit, commented justification. If you ever think you need `NgZone`, you don't — it is a no-op under zoneless and is banned.
 
 | Member                                          | Signal API                                          |

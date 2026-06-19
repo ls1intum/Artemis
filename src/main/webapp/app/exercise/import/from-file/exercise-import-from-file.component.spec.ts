@@ -5,7 +5,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -191,9 +191,9 @@ describe('ExerciseImportFromFileComponent', () => {
 
         (progEx as any).categories = ['{"color":"#0d3cc2","category":"Testing categories"}', '{"color":"#691b0b","category":"Issue"}'];
 
-        const zip = new JSZip();
+        const zip = new ZipBuilder();
         zip.file('exercise.json', JSON.stringify(progEx));
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipBlob = await zip.generateBlob();
 
         component.fileForImport.set(zipBlob as any);
         const openImportSpy = vi.spyOn(component, 'openImport');
@@ -228,9 +228,9 @@ describe('ExerciseImportFromFileComponent', () => {
 
         delete (progEx as any).categories;
 
-        const zip = new JSZip();
+        const zip = new ZipBuilder();
         zip.file('exercise.json', JSON.stringify(progEx));
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipBlob = await zip.generateBlob();
 
         component.fileForImport.set(zipBlob as any);
         const openImportSpy = vi.spyOn(component, 'openImport');
@@ -250,7 +250,7 @@ describe('ExerciseImportFromFileComponent', () => {
 });
 
 async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType, oldStyleBuildConfig: boolean = false): Promise<Blob> {
-    const zip = new JSZip();
+    const zip = new ZipBuilder();
     let exercise;
 
     switch (exerciseType) {
@@ -279,20 +279,19 @@ async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseTy
     }
     exercise.id = 1246;
     exercise.title = 'Test exercise';
-    const zipFile = zip.file('test.json', JSON.stringify(exercise));
-    return zipFile.generateAsync({ type: 'blob' });
+    zip.file('test.json', JSON.stringify(exercise));
+    return zip.generateBlob();
 }
 
 async function generateTestZipFileWithoutJsonFile(): Promise<Blob> {
-    const zip = new JSZip();
-    const zipFile = zip.file('test.txt', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
-    return zipFile.generateAsync({ type: 'blob' });
+    const zip = new ZipBuilder();
+    zip.file('test.txt', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
+    return zip.generateBlob();
 }
 
 async function generateTestZipFileWithTwoJsonFiles(): Promise<Blob> {
-    const zip = new JSZip();
-    const zipFile = zip
-        .file('test.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }')
-        .file('test2.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
-    return zipFile.generateAsync({ type: 'blob' });
+    const zip = new ZipBuilder();
+    zip.file('test.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
+    zip.file('test2.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
+    return zip.generateBlob();
 }

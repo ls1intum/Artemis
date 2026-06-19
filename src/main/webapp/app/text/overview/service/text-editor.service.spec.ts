@@ -32,6 +32,12 @@ describe('TextEditorService', () => {
         const testString = 'Das ist ein kurzer, deutscher Satz';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
     });
+    it.each(['Vielen Dank', 'Danke', 'Viele Grüße', 'Schöne Grüße'])('Can detect a short German courtesy phrase: %s', (testString) => {
+        expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
+    });
+    it.each(['Thanks', 'Thank you', 'Best regards'])('Can detect a short English courtesy phrase: %s', (testString) => {
+        expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
+    });
     it("Can detect that a French sentence isn't German or English", () => {
         const testString = "Il s'agit d'une courte phrase en français";
         expect(textEditorService.predictLanguage(testString)).toBeUndefined();
