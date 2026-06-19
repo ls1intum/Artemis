@@ -9,8 +9,6 @@ import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
-
-import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -20,6 +18,54 @@ import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.t
 export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
+
+/**
+ * Maps the ASCII emoticons that {@link MonacoEditorComponent.convertTextToEmoji} converts to their
+ * Unicode emoji. Only emoticons starting with ':' are listed, because convertTextToEmoji only
+ * processes words starting with ':'.
+ */
+const EMOTICON_TO_EMOJI: Record<string, string> = {
+    ':o)': '🐵',
+    ':D': '😄',
+    ':-D': '😄',
+    ':|': '😐',
+    ':-|': '😐',
+    ':\\': '😕',
+    ':-\\': '😕',
+    ':/': '😕',
+    ':-/': '😕',
+    ':*': '😘',
+    ':-*': '😘',
+    ':p': '😛',
+    ':-p': '😛',
+    ':P': '😛',
+    ':-P': '😛',
+    ':b': '😛',
+    ':-b': '😛',
+    ':(': '😞',
+    ':-(': '😞',
+    ":'(": '😢',
+    ':o': '😮',
+    ':-o': '😮',
+    ':O': '😮',
+    ':-O': '😮',
+    ':)': '🙂',
+    ':-)': '🙂',
+};
+
+/**
+ * Matches an emoticon preceded by the start of the string or whitespace and followed by the end of
+ * the string or a delimiter. Emoticons are ordered longest-first so e.g. ':o)' wins over ':o'.
+ */
+const EMOTICON_REGEX = new RegExp(
+    '(^|\\s)(' +
+        Object.keys(EMOTICON_TO_EMOJI)
+            .sort((a, b) => b.length - a.length)
+            .map((emoticon) => emoticon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|') +
+        ')(?=$|[\\s|?.,!])',
+    'g',
+);
 
 const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
@@ -50,8 +96,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private monacoEditorContainerElement: HTMLElement;
     /** Container element for the diff editor — created in the constructor and never replaced. */
     private diffEditorContainerElement: HTMLElement;
-
-    private readonly emojiConvertor = new EmojiConvertor();
 
     /*
      * Elements, models, and actions of the editor.
@@ -139,9 +183,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
          */
         this.initializeDiffEditorContainer();
 
-        this.emojiConvertor.replace_mode = 'unified';
-        this.emojiConvertor.allow_native = true;
-
         effect(() => {
             // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
             const enabled = this.shrinkToFit();
@@ -222,12 +263,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @returns The transformed string with applicable emoticons replaced by emojis.
      */
     convertTextToEmoji(text: string): string {
-        const words = text.split(' ');
-        const convertedWords = words.map((word) => {
-            return word.startsWith(':') ? this.emojiConvertor.replace_emoticons(word) : word;
-        });
-
-        return convertedWords.join(' ');
+        return text
+            .split(' ')
+            .map((word) => (word.startsWith(':') ? word.replace(EMOTICON_REGEX, (_match, prefix, emoticon) => prefix + EMOTICON_TO_EMOJI[emoticon]) : word))
+            .join(' ');
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
