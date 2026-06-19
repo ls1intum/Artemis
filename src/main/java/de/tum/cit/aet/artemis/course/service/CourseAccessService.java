@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
@@ -38,8 +37,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
  * Service for managing course access, including enrollment and unenrollment of users.
- * Membership is tracked via the {@code user_course_role} table (authoritative) with a dual-write
- * to the legacy {@code user_groups} table until the follow-up PR for #12788 removes it.
+ * Membership is tracked via the {@code user_course_role} table.
  */
 @Service
 @Profile(PROFILE_CORE)
@@ -193,33 +191,6 @@ public class CourseAccessService {
      */
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         userService.removeUserFromCourse(user, course, role);
-    }
-
-    // TODO (follow-up PR for #12788): remove this method once the *GroupName columns are dropped from the course table and user_groups dual-write is removed
-
-    /**
-     * Sets the default group names on a course for any role whose group name is not yet set.
-     * <p>
-     * Default names are derived from the course's {@code shortName} (e.g.
-     * {@code artemis-<shortName>-students}). This ensures that the dual-write path in
-     * {@link de.tum.cit.aet.artemis.account.service.user.UserService#addUserToCourse} can still
-     * sync memberships to the legacy {@code user_groups} column during the migration period.
-     *
-     * @param course the course whose group names should be populated
-     */
-    public void setDefaultGroupsIfNotSet(Course course) {
-        if (!StringUtils.hasText(course.getStudentGroupName())) {
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-        }
-        if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-        }
-        if (!StringUtils.hasText(course.getEditorGroupName())) {
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-        }
-        if (!StringUtils.hasText(course.getInstructorGroupName())) {
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-        }
     }
 
 }

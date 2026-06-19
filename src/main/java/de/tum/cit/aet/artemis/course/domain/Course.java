@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.course.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -69,18 +67,6 @@ public class Course extends DomainObject {
 
     @Column(name = "short_name", unique = true)
     private String shortName;
-
-    @Column(name = "student_group_name")
-    private String studentGroupName;
-
-    @Column(name = "teaching_assistant_group_name")
-    private String teachingAssistantGroupName;
-
-    @Column(name = "editor_group_name")
-    private String editorGroupName;
-
-    @Column(name = "instructor_group_name")
-    private String instructorGroupName;
 
     @Column(name = "start_date")
     private ZonedDateTime startDate;
@@ -328,58 +314,6 @@ public class Course extends DomainObject {
 
     public void setShortName(String shortName) {
         this.shortName = shortName;
-    }
-
-    public String getStudentGroupName() {
-        return studentGroupName;
-    }
-
-    public void setStudentGroupName(String studentGroupName) {
-        this.studentGroupName = studentGroupName;
-    }
-
-    public String getTeachingAssistantGroupName() {
-        return teachingAssistantGroupName;
-    }
-
-    public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
-        this.teachingAssistantGroupName = teachingAssistantGroupName;
-    }
-
-    public String getEditorGroupName() {
-        return editorGroupName;
-    }
-
-    public void setEditorGroupName(String editorGroupName) {
-        this.editorGroupName = editorGroupName;
-    }
-
-    public String getInstructorGroupName() {
-        return instructorGroupName;
-    }
-
-    public void setInstructorGroupName(String instructorGroupName) {
-        this.instructorGroupName = instructorGroupName;
-    }
-
-    @JsonIgnore
-    public String getDefaultStudentGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-students";
-    }
-
-    @JsonIgnore
-    public String getDefaultTeachingAssistantGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
-    }
-
-    @JsonIgnore
-    public String getDefaultEditorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
-    }
-
-    @JsonIgnore
-    public String getDefaultInstructorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
     }
 
     public ZonedDateTime getStartDate() {
@@ -697,13 +631,11 @@ public class Course extends DomainObject {
 
     @Override
     public String toString() {
-        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
-                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
-                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + "}";
+        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'" + ", startDate='"
+                + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='"
+                + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='" + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='"
+                + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'"
+                + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'" + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -989,38 +921,6 @@ public class Course extends DomainObject {
         if (getUnenrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }
-    }
-
-    /**
-     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
-     * use this method to return the customized courseGroup name
-     *
-     * @param courseGroup the courseGroup we want to add the user to
-     * @return the customized userGroupName
-     */
-    public String defineCourseGroupName(String courseGroup) {
-        return switch (courseGroup) {
-            case "students" -> getStudentGroupName();
-            case "tutors" -> getTeachingAssistantGroupName();
-            case "instructors" -> getInstructorGroupName();
-            case "editors" -> getEditorGroupName();
-            default -> throw new IllegalArgumentException("The course group does not exist");
-        };
-    }
-
-    /**
-     * Returns the course group name corresponding to the given {@link CourseRole}.
-     *
-     * @param role the course role to look up.
-     * @return the group name associated with the given role.
-     */
-    public String getGroupNameForRole(CourseRole role) {
-        return switch (role) {
-            case STUDENT -> studentGroupName;
-            case TEACHING_ASSISTANT -> teachingAssistantGroupName;
-            case EDITOR -> editorGroupName;
-            case INSTRUCTOR -> instructorGroupName;
-        };
     }
 
     public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {

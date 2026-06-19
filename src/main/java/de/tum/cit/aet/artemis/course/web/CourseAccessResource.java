@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -378,13 +377,6 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        // Courses created before Artemis 4.11.9 may not have an editor group name set.
-        // Lazily populate it so the legacy dual-write into user_groups still works during the migration period.
-        // TODO (follow-up PR for #12788): remove once the user_groups table and group-name columns are dropped.
-        if (!StringUtils.hasText(course.getEditorGroupName())) {
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            courseRepository.save(course);
-        }
         return addUserToCourseWithRole(editorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.EDITOR);
     }
 

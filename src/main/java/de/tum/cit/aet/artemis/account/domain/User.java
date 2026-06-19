@@ -11,9 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -150,11 +148,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "user_groups")
-    private Set<String> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
@@ -369,14 +362,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setVisibleRegistrationNumber() {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
-    }
-
-    public Set<String> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(Set<String> groups) {
-        this.groups = groups;
     }
 
     public Set<UserCourseRole> getCourseRoles() {

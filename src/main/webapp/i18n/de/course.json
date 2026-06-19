@@ -198,14 +198,6 @@
                 "title": "Frist für Feedbackanfragen von Studierenden in Tagen nach dem Ergebnis",
                 "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können nach Ablauf dieser Frist nicht mehr Feedback anfragen."
             },
-            "customizeGroupNames": {
-                "title": "Passe Gruppennamen an",
-                "description": "Das Anpassen der Gruppennamen sollte nicht nötig sein und kann dazu führen, dass Nutzer:innen den Zugang zum Kurs verlieren. Stelle sicher, dass du einen guten Grund für das Anpassen der Gruppennamen hast."
-            },
-            "studentGroupName": "Gruppe der Studierenden",
-            "teachingAssistantGroupName": "Gruppe der Tutor:innen",
-            "editorGroupName": "Gruppe der Editor:innen",
-            "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",

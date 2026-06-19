@@ -124,9 +124,7 @@ public class UserResource {
     @PutMapping("users/initialize")
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        // TODO (follow-up PR for #12788): switch back to getUserWithCourseRolesAndAuthorities() once user_groups table is dropped;
-        // groups must be loaded now so userRepository.save(user) does not trigger a PersistentSet merge NPE on the uninitialized groups collection
-        User user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
+        User user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

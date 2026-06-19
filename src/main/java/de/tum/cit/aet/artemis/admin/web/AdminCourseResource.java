@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
@@ -85,8 +84,6 @@ public class AdminCourseResource {
 
     private static final int MAX_TITLE_LENGTH = 255;
 
-    private final CourseAccessService courseAccessService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -113,8 +110,8 @@ public class AdminCourseResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
+            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -123,7 +120,6 @@ public class AdminCourseResource {
         this.ltiApi = ltiApi;
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
-        this.courseAccessService = courseAccessService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
@@ -141,7 +137,6 @@ public class AdminCourseResource {
      * <li>Date range validation (start date before end date)</li>
      * </ul>
      * <p>
-     * If no group names are provided, default groups are created using the ARTEMIS_GROUP_DEFAULT_PREFIX.
      * For online courses with LTI enabled, an online course configuration is automatically created.
      * Default channels (announcements, general, etc.) are created for the course.
      *
@@ -181,9 +176,6 @@ public class AdminCourseResource {
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);
         }
-
-        // TODO (follow-up PR for #12788): remove once the *GroupName columns are dropped from the course table and user_groups dual-write is removed
-        courseAccessService.setDefaultGroupsIfNotSet(course);
 
         Course createdCourse = courseRepository.save(course);
 

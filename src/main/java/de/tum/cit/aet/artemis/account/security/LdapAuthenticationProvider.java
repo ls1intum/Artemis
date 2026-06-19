@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.account.security;
 
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -117,16 +116,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     /**
      * Creates a new Artemis user based on the given LDAP user DTO and stores it in the database.
-     * Initially, the user does not belong to any groups and has only the STUDENT authority assigned
+     * Initially, the user has only the STUDENT authority assigned.
      *
      * @param ldapUserDto The LDAP user DTO containing the user information
      * @return The created Artemis user
      */
     private User createUser(LdapUserDto ldapUserDto) {
-        User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
+        User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                 ldapUserDto.getRegistrationNumber(), null, "en", false);
 
-        newUser.setGroups(new HashSet<>());
         newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
         if (!newUser.getActivated()) {

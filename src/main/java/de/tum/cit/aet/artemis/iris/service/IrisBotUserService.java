@@ -82,7 +82,6 @@ public class IrisBotUserService {
                 bot.setImageUrl(IRIS_BOT_IMAGE_URL);
                 bot.setPassword(passwordService.hashPassword(UUID.randomUUID().toString()));
                 bot.setAuthorities(new HashSet<>(Set.of(new Authority("ROLE_USER"))));
-                bot.setGroups(new HashSet<>());
                 bot.setLangKey("en");
                 userRepository.save(bot);
                 log.info("Iris bot user created successfully");

@@ -58,7 +58,6 @@ public class UserCreationService {
      *
      * @param login              user login string
      * @param password           user password, if set to null, the password will be set randomly
-     * @param groups             The groups the user should belong to
      * @param firstName          first name of user
      * @param lastName           last name of the user
      * @param email              email of the user
@@ -68,8 +67,8 @@ public class UserCreationService {
      * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            @Nullable String registrationNumber, String imageUrl, String langKey, boolean isInternal) {
+    public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, @Nullable String registrationNumber, String imageUrl,
+            String langKey, boolean isInternal) {
         User newUser = new User();
 
         if (isInternal) {
@@ -85,8 +84,6 @@ public class UserCreationService {
         newUser.setLogin(login);
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
-        // needs to be mutable --> new HashSet<>(Set.of())
-        newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
@@ -151,7 +148,6 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        user.setGroups(new HashSet<>());
         user.setActivated(true);
         user.setInternal(true);
         // an empty string is considered as null to satisfy the unique constraint on registration number

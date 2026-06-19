@@ -5,7 +5,6 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +136,7 @@ public class LtiService {
     protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
-            final User newUser = userCreationService.createUser(login, password, null, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setLtiCreated(true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
@@ -165,34 +164,15 @@ public class LtiService {
 
     /**
      * Enrolls a user as a student in the given course.
-     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync
-     * until the follow-up PR for #12788 removes it.
-     * <p>
-     * Lti13Service loads users via {@code findOneWithCourseRolesAndAuthoritiesByLogin}, which does
-     * NOT include the groups entity graph. Calling {@code user.getGroups()} on such an entity either
-     * throws {@code LazyInitializationException} (session closed) or produces a
-     * {@code PersistentSet(sn=null)} that causes NPE at flush time. The fix is to re-fetch the user
-     * with groups initialized before the legacy write when Hibernate reports the collection as
-     * uninitialized.
      *
-     * @param user   the user to enroll; groups collection need not be initialized
+     * @param user   the user to enroll
      * @param course the course to enroll the user in
      */
     private void enrollUserInCourse(User user, Course course) {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
         }
-        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
-        // Dual-write: also write to legacy user_groups table.
-        // Re-fetch with groups if the caller loaded the user without that entity graph so the legacy
-        // write is always correct and saveUser never receives a PersistentSet(sn=null) at flush time.
-        if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        }
-        String groupName = course.getStudentGroupName();
-        if (groupName != null && !user.getGroups().contains(groupName)) {
-            user.getGroups().add(groupName);
-        }
+        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         userCreationService.saveUser(user);
     }

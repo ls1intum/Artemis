@@ -17,7 +17,6 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -27,7 +26,6 @@ import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -440,7 +438,7 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
                 // load the user with groups and authorities because they might be needed later
                 return userRepository.findOneWithCourseRolesAndAuthoritiesById(user.getId());
@@ -491,7 +489,6 @@ public class UserService {
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
-        user.setGroups(Collections.emptySet());
 
         List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
 
@@ -586,20 +583,7 @@ public class UserService {
     }
 
     /**
-     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
-     * This is more efficient than loading, modifying, and saving each user individually.
-     *
-     * @param groupName the group that should be removed from all existing users
-     */
-    public void removeGroupFromAllUsers(String groupName) {
-        log.info("Remove group {} from all users", groupName);
-        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
-        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
-    }
-
-    /**
      * Add the user to a course with the given role.
-     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
      *
      * @param user   the user to add
      * @param course the course to add the user to
@@ -610,29 +594,13 @@ public class UserService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, role));
         }
-        // Dual-write: also write to legacy user_groups table until the follow-up PR for #12788 removes it.
-        // If the caller loaded the user without the groups entity graph, re-fetch with groups
-        // so the legacy write always happens — silently skipping it would leave user_groups stale.
-        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
-        // Always ensure groups are initialized before saveUser() to avoid:
-        // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
-        // and merge() is called on the detached entity.
-        // - LazyInitializationException when groupName != null and groups must be mutated
-        // outside the original session.
-        if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        }
-        String groupName = course.getGroupNameForRole(role);
-        if (groupName != null && !user.getGroups().contains(groupName)) {
-            user.getGroups().add(groupName);
-        }
+        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
     }
 
     /**
      * Remove the user from a course role.
-     * Removes from user_course_role and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
      *
      * @param user   the user to remove
      * @param course the course from which the user should be removed
@@ -641,22 +609,7 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        // Dual-write: also remove from legacy user_groups table until the follow-up PR for #12788 removes it.
-        // If the caller loaded the user without the groups entity graph, re-fetch with groups
-        // so the legacy write always happens — silently skipping it would leave user_groups stale.
-        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
-        // Always ensure groups are initialized before saveUser() to avoid:
-        // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
-        // and merge() is called on the detached entity.
-        // - LazyInitializationException when groupName != null and groups must be mutated
-        // outside the original session.
-        if (!Hibernate.isInitialized(user.getGroups())) {
-            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        }
-        String groupName = course.getGroupNameForRole(role);
-        if (groupName != null) {
-            user.getGroups().remove(groupName);
-        }
+        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
     }
