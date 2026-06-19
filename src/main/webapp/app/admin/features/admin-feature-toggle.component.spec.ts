@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, PROFILE_JENKINS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_JENKINS } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     setupTestBed({ zoneless: true });
@@ -164,6 +164,20 @@ describe('AdminFeatureToggleComponentTest', () => {
             const iris = modules.find((m) => m.feature === MODULE_FEATURE_IRIS);
             expect(iris?.documentationLink).toBeDefined();
             expect(iris?.documentationLink).toContain('docs.artemis.tum.de');
+        });
+
+        it('should include the passkey admin requirement module feature', () => {
+            vi.spyOn(mockProfileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return feature === MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN;
+            });
+
+            comp.ngOnInit();
+            const modules = comp.moduleFeatures();
+
+            const passkeyAdmin = modules.find((m) => m.feature === MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+            expect(passkeyAdmin).toBeDefined();
+            expect(passkeyAdmin?.isActive).toBe(true);
+            expect(passkeyAdmin?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 

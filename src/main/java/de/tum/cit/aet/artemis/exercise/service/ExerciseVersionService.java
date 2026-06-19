@@ -176,7 +176,7 @@ public class ExerciseVersionService {
             previousVersion.ifPresent(prev -> {
                 try {
                     List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
-                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
+                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).toList();
                     for (CommentThreadDTO updatedThread : updatedThreads) {
                         exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
                     }

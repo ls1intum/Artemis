@@ -69,7 +69,7 @@ public enum ExerciseType {
             case "FileUploadExercise" -> FILE_UPLOAD;
             case "QuizExercise" -> QUIZ;
             case "MathExercise" -> MATH;
-            default -> throw new IllegalArgumentException(String.format("Received unexecpted exercise class name %s", exerciseClass.getSimpleName()));
+            default -> throw new IllegalArgumentException("Received unexecpted exercise class name %s".formatted(exerciseClass.getSimpleName()));
         };
     }
 }

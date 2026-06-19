@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +35,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
                     HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/prerequisites/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/bulk", List.of(), HttpStatus.FORBIDDEN);
             // import
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
@@ -44,7 +43,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-standardized", List.of(), HttpStatus.FORBIDDEN);
         }
 
         @Test

@@ -1,5 +1,5 @@
-import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
@@ -33,34 +33,6 @@ export const hasSolutionParticipationChanged = (changes: SimpleChanges) => {
         changes.solutionParticipation &&
         changes.solutionParticipation.currentValue &&
         (!changes.solutionParticipation.previousValue || changes.solutionParticipation.previousValue.id !== changes.solutionParticipation.currentValue.id)
-    );
-};
-/**
- * Checks if given participation is related to a programming or quiz exercise.
- *
- * @param participation
- */
-export const isProgrammingOrQuiz = (participation: Participation) => {
-    if (!participation) {
-        return false;
-    }
-    const exercise = getExercise(participation);
-    return exercise && (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.QUIZ);
-};
-/**
- * Checks if given participation is related to a modeling, text or file-upload exercise.
- * Math exercises are intentionally grouped here as well, since they share the same manual-assessment handling.
- *
- * @param participation
- */
-export const isModelingOrTextOrFileUpload = (participation: Participation) => {
-    if (!participation) {
-        return false;
-    }
-    const exercise = getExercise(participation);
-    return (
-        exercise &&
-        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.MATH)
     );
 };
 /**

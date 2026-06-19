@@ -451,31 +451,31 @@ public class ExamImportService {
                         yield fileUploadImportApi.get().importFileUploadExercise(sourceExerciseId, (FileUploadExercise) exerciseToCopy);
                     }
 
-                case QUIZ -> {
-                    // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
-                    final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
-                            .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
-                    if (optionalOriginalQuizExercise.isEmpty()) {
-                        yield Optional.empty();
+                    case QUIZ -> {
+                        // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
+                        final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
+                                .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
+                        if (optionalOriginalQuizExercise.isEmpty()) {
+                            yield Optional.empty();
+                        }
+                        var originalQuizExercise = optionalOriginalQuizExercise.get();
+                        // The import service mutates the second parameter (importedExercise) in-place
+                        // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
+                        // same managed entity for both parameters, as that would corrupt the original
+                        // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
+                        // exercise group, title, shortName, etc. from the DTO conversion.
+                        // However, the skeleton does not contain quiz questions or batches (these are
+                        // not part of ExerciseImportDTO), so we must copy them from the original.
+                        QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
+                        quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
+                        quizSkeleton.setQuizBatches(originalQuizExercise.getQuizBatches());
+                        // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
+                        yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                     }
-                    var originalQuizExercise = optionalOriginalQuizExercise.get();
-                    // The import service mutates the second parameter (importedExercise) in-place
-                    // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
-                    // same managed entity for both parameters, as that would corrupt the original
-                    // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
-                    // exercise group, title, shortName, etc. from the DTO conversion.
-                    // However, the skeleton does not contain quiz questions or batches (these are
-                    // not part of ExerciseImportDTO), so we must copy them from the original.
-                    QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
-                    quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
-                    quizSkeleton.setQuizBatches(originalQuizExercise.getQuizBatches());
-                    // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
-                }
 
-                case MATH -> throw new BadRequestAlertException("Math exercises cannot be imported into an exam", "exam", "mathNotAllowedInExam");
-            };
-            // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.
+                    case MATH -> throw new BadRequestAlertException("Math exercises cannot be imported into an exam", "exam", "mathNotAllowedInExam");
+                };
+                // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.
                 // An empty result means the exercise could not be imported (e.g. the responsible import module is
                 // unavailable or the source exercise no longer exists). Record it as a failure instead of silently
                 // dropping it, otherwise the caller would report a full success while exercises went missing.
