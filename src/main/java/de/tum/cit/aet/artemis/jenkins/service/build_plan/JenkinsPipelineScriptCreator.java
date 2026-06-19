@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -78,7 +77,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         final Resource resource = resourceLoaderService.getResource(pipelinePath);
 
         try (InputStream inputStream = resource.getInputStream()) {
-            return IOUtils.toString(inputStream, Charset.defaultCharset());
+            return new String(inputStream.readAllBytes(), Charset.defaultCharset());
         }
         catch (IOException e) {
             throw new JenkinsException("Could not load pipeline script definition.", e);
