@@ -161,17 +161,17 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         String feedbackText;
                         if (Objects.nonNull(individualFeedbackItem.lineStart())) {
                             if (Objects.nonNull(individualFeedbackItem.lineEnd()) && !individualFeedbackItem.lineStart().equals(individualFeedbackItem.lineEnd())) {
-                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d", individualFeedbackItem.filePath(),
+                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d").formatted(individualFeedbackItem.filePath(),
                                         individualFeedbackItem.lineStart(), individualFeedbackItem.lineEnd());
                             }
                             else {
-                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d", individualFeedbackItem.filePath(),
+                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d").formatted(individualFeedbackItem.filePath(),
                                         individualFeedbackItem.lineStart());
                             }
-                            feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
+                            feedback.setReference("file:%s_line:%d".formatted(individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
                         }
                         else {
-                            feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s", individualFeedbackItem.filePath());
+                            feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s").formatted(individualFeedbackItem.filePath());
                         }
                         feedback.setText(feedbackText);
                         feedback.setDetailText(individualFeedbackItem.description());
