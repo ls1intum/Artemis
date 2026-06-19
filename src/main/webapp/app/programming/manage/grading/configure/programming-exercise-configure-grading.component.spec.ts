@@ -4,7 +4,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -193,7 +192,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgxDatatableModule,
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 ProgrammingExerciseConfigureGradingComponent,
@@ -337,8 +335,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should reset all categories when the reset button is clicked', () => {
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
 
         comp.updateEditedField(codeAnalysisCategories1[0], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
@@ -399,8 +395,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
 
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
 
         const button = debugElement.query(By.css('#import-configuration-button'));
@@ -465,8 +459,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should load the grading statistics correctly', () => {
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
         fixture.changeDetectorRef.detectChanges();
 
@@ -519,8 +511,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     describe('test chart interaction', () => {
         it('should filter sca table correctly', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-            comp.tableSorts = { testCases: [], codeAnalysis: [] };
             fixture.changeDetectorRef.detectChanges();
             const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts();
             const expectedCategory = {
@@ -540,8 +530,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         it('should update category accordingly if modified while chart filtering', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-            comp.tableSorts = { testCases: [], codeAnalysis: [] };
             fixture.changeDetectorRef.detectChanges();
             fixture.changeDetectorRef.detectChanges();
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
