@@ -132,6 +132,8 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             """)
     long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
 
+    // The hasAssistantResponse column treats any non-user message as a response (sender <> 'USER') rather than an allow-list
+    // of assistant types, so it stays correct if new (non-user) message senders are added to IrisMessageSender in the future.
     @Query(nativeQuery = true, value = """
             SELECT u.id AS userMsgId, u.session_id AS sessionId, u.sent_at AS sentAt,
                 (SELECT m2.sender FROM iris_message m2
@@ -144,7 +146,13 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSentAt,
-                CASE WHEN s.discriminator = 'TUTOR_SUGGESTION' THEN 'TUTOR_SUGGESTION' ELSE s.chat_mode END AS modeLabel
+                CASE WHEN s.discriminator = 'TUTOR_SUGGESTION' THEN 'TUTOR_SUGGESTION' ELSE s.chat_mode END AS modeLabel,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM iris_message m3
+                    WHERE m3.session_id = u.session_id
+                      AND m3.sender <> 'USER'
+                      AND (m3.sent_at > u.sent_at OR (m3.sent_at = u.sent_at AND m3.id > u.id))
+                ) THEN 1 ELSE 0 END AS hasAssistantResponse
             FROM iris_message u
             JOIN iris_session s ON s.id = u.session_id
             WHERE u.sender = 'USER'

@@ -70,8 +70,8 @@ class IrisAdminDashboardServiceTest {
         stubAllRepositoryMethods();
         // Two user messages: one with LLM response, one without (both within staleBefore)
         when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
-                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT" },
-                        new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT" }));
+                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
+                        new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT", 0 }));
         var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.noResponseRate()).isEqualTo(50.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(1);
@@ -88,8 +88,8 @@ class IrisAdminDashboardServiceTest {
         Timestamp asTimestamp = Timestamp.from(expected);
         OffsetDateTime asOffsetDateTime = expected.atOffset(ZoneOffset.UTC);
 
-        var rows = List.<Object[]>of(new Object[] { 1L, 100L, asLocalDateTime, "LLM", asLocalDateTime, "CHAT" }, new Object[] { 2L, 101L, asTimestamp, null, null, "CHAT" },
-                new Object[] { 3L, 102L, asOffsetDateTime, "LLM", asOffsetDateTime, "CHAT" }, new Object[] { 4L, 103L, expected, null, null, "CHAT" });
+        var rows = List.<Object[]>of(new Object[] { 1L, 100L, asLocalDateTime, "LLM", asLocalDateTime, "CHAT", 1 }, new Object[] { 2L, 101L, asTimestamp, null, null, "CHAT", 0 },
+                new Object[] { 3L, 102L, asOffsetDateTime, "LLM", asOffsetDateTime, "CHAT", 1 }, new Object[] { 4L, 103L, expected, null, null, "CHAT", 0 });
 
         var mapped = service.mapResults(rows);
 
@@ -97,6 +97,23 @@ class IrisAdminDashboardServiceTest {
         assertThat(mapped).allSatisfy(dto -> assertThat(dto.sentAt()).isEqualTo(expected));
         assertThat(mapped.get(0).nextSentAt()).isEqualTo(expected);
         assertThat(mapped.get(1).nextSentAt()).isNull();
+        assertThat(mapped.get(0).hasAssistantResponse()).isTrue();
+        assertThat(mapped.get(1).hasAssistantResponse()).isFalse();
+    }
+
+    @Test
+    void computeNoResponseRate_consecutiveUserMessagesWithoutAssistantReply_bothCountAsNoResponse() {
+        stubAllRepositoryMethods();
+        // Two consecutive USER messages with no assistant reply: the first message's immediate next is another USER message
+        // (so the old nextSender==null check treated it as handled), but neither has a later assistant response, so both must
+        // count as no-response. hasAssistantResponse is 0 for both.
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "USER", Instant.parse("2026-05-26T10:00:30Z"), "CHAT", 0 },
+                        new Object[] { 2L, 100L, Instant.parse("2026-05-26T10:00:30Z"), null, null, "CHAT", 0 }));
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+        assertThat(overview.noResponseMessageCount()).isEqualTo(2);
+        assertThat(overview.noResponseRate()).isEqualTo(100.0);
+        assertThat(overview.noResponseSessionCount()).isEqualTo(1);
     }
 
     @Test
@@ -136,8 +153,8 @@ class IrisAdminDashboardServiceTest {
         stubAllRepositoryMethods();
         // Two messages with LLM responses: 5s and 10s response times
         when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
-                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT" },
-                        new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT" }));
+                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
+                        new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT", 1 }));
         var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(7.5);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(7.5);
@@ -295,8 +312,8 @@ class IrisAdminDashboardServiceTest {
         when(repository.findSessionsWithMode(any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "CHAT", 1 },
                 new Object[] { 2L, Instant.parse("2026-05-25T11:00:00Z"), "CHAT", 0 }, new Object[] { 3L, Instant.parse("2026-05-26T09:00:00Z"), "TUTOR_SUGGESTION", 1 }));
         when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
-                .thenReturn(List.of(new Object[] { 10L, 1L, Instant.parse("2026-05-25T10:00:00Z"), "LLM", Instant.parse("2026-05-25T10:00:05Z"), "CHAT" },
-                        new Object[] { 11L, 3L, Instant.parse("2026-05-26T09:00:00Z"), null, null, "TUTOR_SUGGESTION" }));
+                .thenReturn(List.of(new Object[] { 10L, 1L, Instant.parse("2026-05-25T10:00:00Z"), "LLM", Instant.parse("2026-05-25T10:00:05Z"), "CHAT", 1 },
+                        new Object[] { 11L, 3L, Instant.parse("2026-05-26T09:00:00Z"), null, null, "TUTOR_SUGGESTION", 0 }));
 
         var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.CHAT_MODE);
         assertThat(result).hasSize(2);
@@ -338,7 +355,7 @@ class IrisAdminDashboardServiceTest {
 
     @Test
     void mapResults_handlesInstantColumns() {
-        var rows = List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT" });
+        var rows = List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 });
         var results = service.mapResults(rows);
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().userMsgId()).isEqualTo(1L);
@@ -348,7 +365,7 @@ class IrisAdminDashboardServiceTest {
 
     @Test
     void mapResults_handlesNullNextSender() {
-        var rows = List.<Object[]>of(new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT" });
+        var rows = List.<Object[]>of(new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT", 0 });
         var results = service.mapResults(rows);
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().nextSender()).isNull();

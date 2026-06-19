@@ -96,7 +96,7 @@ public class IrisAdminDashboardService {
         for (IrisDashboardUserMessageResultDTO msg : allUserMessages) {
             if (msg.sentAt().isBefore(staleBefore)) {
                 eligibleMessages++;
-                if (msg.nextSender() == null) {
+                if (!msg.hasAssistantResponse()) {
                     noResponseMessageCount++;
                     noResponseSessionIds.add(msg.sessionId());
                 }
@@ -262,7 +262,8 @@ public class IrisAdminDashboardService {
             IrisMessageSender nextSender = row[3] != null ? IrisMessageSender.valueOf(row[3].toString()) : null;
             Instant nextSentAt = row[4] != null ? toInstant(row[4]) : null;
             String modeLabel = row[5] != null ? row[5].toString() : null;
-            results.add(new IrisDashboardUserMessageResultDTO(userMsgId, sessionId, sentAt, nextSender, nextSentAt, modeLabel));
+            boolean hasAssistantResponse = row[6] != null && ((Number) row[6]).intValue() == 1;
+            results.add(new IrisDashboardUserMessageResultDTO(userMsgId, sessionId, sentAt, nextSender, nextSentAt, modeLabel, hasAssistantResponse));
         }
         return results;
     }
@@ -423,7 +424,7 @@ public class IrisAdminDashboardService {
             for (IrisDashboardUserMessageResultDTO msg : messages) {
                 if (!msg.sentAt().isBefore(bucketStart) && msg.sentAt().isBefore(bucketEnd)) {
                     eligible++;
-                    if (msg.nextSender() == null) {
+                    if (!msg.hasAssistantResponse()) {
                         noResponse++;
                     }
                 }
@@ -605,7 +606,7 @@ public class IrisAdminDashboardService {
         for (IrisDashboardUserMessageResultDTO msg : userMessages) {
             String mode = msg.modeLabel() != null ? msg.modeLabel() : "UNKNOWN";
             eligibleByMode.merge(mode, 1L, Long::sum);
-            if (msg.nextSender() == null) {
+            if (!msg.hasAssistantResponse()) {
                 noResponseByMode.merge(mode, 1L, Long::sum);
             }
         }
