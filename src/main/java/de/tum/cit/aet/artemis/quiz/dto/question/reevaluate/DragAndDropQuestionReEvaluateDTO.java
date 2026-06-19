@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionReEvaluateDTO(@NotNull Long id, @NotBlank String title, String text, String hint, String explanation, @NotNull ScoringType scoringType,
         @NotNull Boolean randomizeOrder, @NotNull Boolean invalid, @NotEmpty List<@Valid DropLocationReEvaluateDTO> dropLocations,
-        @NotEmpty List<@Valid DragItemReEvaluateDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingReEvaluateDTO> correctMappings) implements QuizQuestionReEvaluateDTO {
+        @NotEmpty List<@Valid DragItemReEvaluateDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingReEvaluateDTO> correctDndMappings) implements QuizQuestionReEvaluateDTO {
 
     /**
      * Builds a DragAndDropQuestionReEvaluateDTO from the given domain entity.
