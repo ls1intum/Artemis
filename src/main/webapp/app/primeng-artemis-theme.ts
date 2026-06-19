@@ -12,46 +12,6 @@ import Aura from '@primeuix/themes/aura';
  */
 export const AuraArtemis = definePreset(Aura, {
     semantic: {
-        colorScheme: {
-            // Force the surface/neutral family to Tailwind `slate` in BOTH light and dark.
-            // Stock Aura uses slate for light but zinc for dark, which creates a hue/temperature
-            // break (cool blue-grey in light vs. near-neutral grey in dark) that clashes with the
-            // cool-blue brand (--primary #3e8acc, h208) and the slate-tinted navbar/body chrome.
-            // We override ONLY the `surface` ramp; all content/text/border/formField consumer
-            // mappings are inherited from Aura, so per-scheme light/dark contrast logic is preserved.
-            light: {
-                surface: {
-                    0: '#ffffff', // literal hex in Aura; there is no `slate.0` primitive
-                    50: '{slate.50}',
-                    100: '{slate.100}',
-                    200: '{slate.200}',
-                    300: '{slate.300}',
-                    400: '{slate.400}',
-                    500: '{slate.500}',
-                    600: '{slate.600}',
-                    700: '{slate.700}',
-                    800: '{slate.800}',
-                    900: '{slate.900}',
-                    950: '{slate.950}',
-                },
-            },
-            dark: {
-                surface: {
-                    0: '#ffffff', // literal hex in Aura; there is no `slate.0` primitive
-                    50: '{slate.50}',
-                    100: '{slate.100}',
-                    200: '{slate.200}',
-                    300: '{slate.300}',
-                    400: '{slate.400}',
-                    500: '{slate.500}',
-                    600: '{slate.600}',
-                    700: '{slate.700}',
-                    800: '{slate.800}',
-                    900: '{slate.900}',
-                    950: '{slate.950}',
-                },
-            },
-        },
         primary: {
             // Reference the --primary CSS variable from your theme
             50: 'color-mix(in srgb, var(--primary) 10%, white)',
