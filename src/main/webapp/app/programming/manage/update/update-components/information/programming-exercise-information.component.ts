@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, input, model, signal, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, input, model, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -23,7 +23,6 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -31,8 +30,9 @@ import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repos
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -48,7 +48,6 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         CustomNotIncludedInValidatorDirective,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         ProgrammingExerciseEditCheckoutDirectoriesComponent,
-        NgxDatatableModule,
         TableEditableFieldComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
         NgbAlert,
@@ -57,8 +56,8 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         CategorySelectorComponent,
         ProgrammingExerciseDifficultyComponent,
         KeyValuePipe,
-        ArtemisTranslatePipe,
         RemoveKeysPipe,
+        TableViewComponent,
     ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -86,6 +85,35 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     recreateBuildPlansField = viewChild<NgModel>('recreateBuildPlans');
     updateTemplateFilesField = viewChild<NgModel>('updateTemplateFiles');
     programmingExerciseEditCheckoutDirectories = viewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent);
+
+    readonly auxRepoNameTemplate = viewChild<CellTemplateRef<AuxiliaryRepository>>('auxRepoNameTemplate');
+    readonly auxCheckoutDirTemplate = viewChild<CellTemplateRef<AuxiliaryRepository>>('auxCheckoutDirTemplate');
+    readonly auxDescriptionTemplate = viewChild<CellTemplateRef<AuxiliaryRepository>>('auxDescriptionTemplate');
+
+    readonly auxiliaryRepoTableOptions: TableViewOptions = {
+        lazy: false,
+        paginated: false,
+        showSearch: false,
+        striped: true,
+    };
+
+    readonly auxiliaryRepoColumns = computed<ColumnDef<AuxiliaryRepository>[]>(() => [
+        {
+            field: 'name',
+            headerKey: 'artemisApp.programmingExercise.auxiliaryRepository.repositoryName',
+            templateRef: this.auxRepoNameTemplate(),
+        },
+        {
+            field: 'checkoutDirectory',
+            headerKey: 'artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory',
+            templateRef: this.auxCheckoutDirTemplate(),
+        },
+        {
+            field: 'description',
+            headerKey: 'artemisApp.programmingExercise.auxiliaryRepository.description',
+            templateRef: this.auxDescriptionTemplate(),
+        },
+    ]);
 
     private readonly exerciseService = inject(ExerciseService);
     private readonly alertService = inject(AlertService);
