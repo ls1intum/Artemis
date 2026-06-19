@@ -69,7 +69,7 @@ export interface DragAndDropQuestionUpdateDTO {
     backgroundFilePath?: string;
     dropLocations: DropLocationUpdateDTO[];
     dragItems: DragItemUpdateDTO[];
-    correctMappings: DragAndDropMappingUpdateDTO[];
+    correctDndMappings: DragAndDropMappingUpdateDTO[];
 }
 
 export interface DropLocationUpdateDTO {
@@ -206,7 +206,7 @@ function convertDragAndDropQuestionToUpdateDTO(question: DragAndDropQuestion): D
         backgroundFilePath: question.backgroundFilePath,
         dropLocations: (question.dropLocations ?? []).map(convertDropLocationToUpdateDTO),
         dragItems: (question.dragItems ?? []).map(convertDragItemToUpdateDTO),
-        correctMappings: (question.correctDndMappings ?? []).map(convertDragAndDropMappingToUpdateDTO),
+        correctDndMappings: (question.correctDndMappings ?? []).map(convertDragAndDropMappingToUpdateDTO),
     };
 }
 
