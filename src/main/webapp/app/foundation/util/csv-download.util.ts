@@ -2,7 +2,7 @@ import { downloadFile } from 'app/foundation/util/download.util';
 
 /** UTF-8 byte-order mark so spreadsheet applications detect the encoding. */
 const UTF8_BOM = '\uFEFF';
-/** CSV line ending (matches the former export-to-csv dependency). */
+/** CSV line ending (CRLF, for broad spreadsheet compatibility). */
 const LINE_ENDING = '\r\n';
 
 export type CsvCellValue = string | number | boolean | null | undefined;
@@ -58,7 +58,7 @@ function quoteString(value: string, options: ResolvedOptions): string {
     return options.quoteCharacter + escaped + options.quoteCharacter;
 }
 
-/** Formats a number, applying the decimal separator to non-integer values (matching export-to-csv). */
+/** Formats a number, applying the decimal separator to non-integer values. */
 function formatNumber(value: number, decimalSeparator: string): string {
     const isFractionalOrInfinite = value === value && (!isFinite(value) || Boolean(value % 1));
     if (isFractionalOrInfinite) {
@@ -90,10 +90,9 @@ function formatCell(value: CsvCellValue, options: ResolvedOptions): string {
 }
 
 /**
- * Builds a CSV from the given rows and triggers its download. Reproduces the output format of the
- * former `export-to-csv` dependency (UTF-8 BOM, CRLF line endings, a header row built from
- * `columnHeaders`, strings optionally quoted, numbers/booleans unquoted) and additionally guards
- * every string cell against CSV/formula injection.
+ * Builds a CSV from the given rows and triggers its download: UTF-8 BOM, CRLF line endings, a header
+ * row built from `columnHeaders`, strings optionally quoted and numbers/booleans unquoted. Every
+ * string cell (including the headers) is guarded against CSV/formula injection.
  */
 export function downloadCsv(rows: readonly CsvRow[], options: CsvDownloadOptions): void {
     const resolved: ResolvedOptions = {
