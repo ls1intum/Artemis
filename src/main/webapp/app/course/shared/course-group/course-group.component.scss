@@ -16,7 +16,7 @@ jhi-course-group {
         ),
     );
 
-    // Styles for already-member entries in the p-autocomplete dropdown
+    /* Styles for already-member entries in the p-autocomplete dropdown */
     .p-autocomplete-overlay {
         .p-autocomplete-option {
             &:has(.already-member) {
@@ -45,7 +45,7 @@ jhi-course-group {
         }
     }
 
-    // Flash animation applied to all rows briefly when a new member is added
+    /* Flash animation applied to all rows briefly when a new member is added */
     tr.newly-added-member {
         $vars: map-get($table-row, newly-added-member);
 
