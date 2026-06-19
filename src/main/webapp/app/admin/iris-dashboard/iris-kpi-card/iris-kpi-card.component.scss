@@ -4,7 +4,9 @@
     // Use Artemis theme tokens (not PrimeNG --surface-*): the admin page paints with --module-bg
     // (= the neutral dark base), so an elevated card needs the lightened card-cap surface plus the
     // stronger themed border to stay distinguishable in dark mode. Both tokens are defined for light + dark.
-    background: var(--card-cap-bg);
+    // --card-cap-bg is only defined in the dark theme (elevated surface); fall back to --card-bg
+    // (defined in both themes) so light mode keeps the canonical white card surface.
+    background: var(--card-cap-bg, var(--card-bg));
     border: 1px solid var(--border-color);
     border-radius: 8px;
 }
