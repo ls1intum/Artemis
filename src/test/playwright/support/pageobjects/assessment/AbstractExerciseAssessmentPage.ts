@@ -66,12 +66,12 @@ export abstract class AbstractExerciseAssessmentPage {
         return await responsePromise;
     }
 
-    async rejectComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
-        return await this.handleComplaint(response, false, exerciseType, examMode);
+    async rejectComplaint(response: string, examMode: boolean, exerciseType: ExerciseType, complaintExerciseTitle?: string) {
+        return await this.handleComplaint(response, false, exerciseType, examMode, complaintExerciseTitle);
     }
 
-    async acceptComplaint(response: string, examMode: boolean, exerciseType: ExerciseType) {
-        return await this.handleComplaint(response, true, exerciseType, examMode);
+    async acceptComplaint(response: string, examMode: boolean, exerciseType: ExerciseType, complaintExerciseTitle?: string) {
+        return await this.handleComplaint(response, true, exerciseType, examMode, complaintExerciseTitle);
     }
 
     async checkComplaintMessage(message: string) {
@@ -83,9 +83,17 @@ export abstract class AbstractExerciseAssessmentPage {
         await this.page.locator('#assessNextButton').waitFor({ state: 'hidden' });
     }
 
-    private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
+    private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean, complaintExerciseTitle?: string) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
-            await this.page.locator('#show-complaint').first().click();
+            // The course-wide complaints list intermingles complaints from every assessment test that shares the seed
+            // course (e.g. file-upload and modeling both use the exerciseAssessment course). Clicking the first
+            // #show-complaint therefore races those other tests and can open an unrelated — possibly different-type —
+            // complaint whose response editor never enables for this flow (the observed flake). When the caller knows
+            // the exercise title, open that exercise's own complaint row instead of the first one.
+            const showComplaintButton = complaintExerciseTitle
+                ? this.page.locator('tr', { hasText: complaintExerciseTitle }).locator('#show-complaint')
+                : this.page.locator('#show-complaint').first();
+            await showComplaintButton.click();
         }
         // The response textarea starts as readonly/disabled while the complaint data loads.
         // Wait for it to become editable before filling.
