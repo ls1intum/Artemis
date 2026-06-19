@@ -76,9 +76,7 @@ export class FileUploadSubmissionService {
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<FileUploadSubmissionDTO[]>) =>
-                    res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null }),
-                ),
+                map((res: HttpResponse<FileUploadSubmissionDTO[]>) => res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null })),
             );
     }
 
