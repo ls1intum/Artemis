@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.hazelcast.config.properties.PropertyDefinition;
@@ -69,6 +69,6 @@ public class EurekaHazelcastDiscoveryStrategyFactory implements DiscoveryStrateg
      */
     @Override
     public Collection<PropertyDefinition> getConfigurationProperties() {
-        return Collections.emptyList();
+        return List.of();
     }
 }

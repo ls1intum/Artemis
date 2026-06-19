@@ -244,7 +244,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                         JavaClass repositoryClass = fieldType.toErasure();
 
                         if (!repositoryClass.getSubclasses().isEmpty() && !isDeclaredInProdClass(testClass, repositoryClass)) {
-                            String message = String.format("Test class %s uses repository %s which has subclasses: %s", testClass.getName(), repositoryClass.getName(),
+                            String message = "Test class %s uses repository %s which has subclasses: %s".formatted(testClass.getName(), repositoryClass.getName(),
                                     repositoryClass.getSubclasses());
                             events.add(SimpleConditionEvent.violated(testClass, message));
                         }
