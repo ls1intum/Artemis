@@ -23,6 +23,7 @@ export class ExerciseGroupEditModalComponent {
     readonly visibleChange = output<boolean>();
     readonly group = input.required<CourseExerciseGroup>();
     readonly save = output<CourseExerciseGroup>();
+    readonly cancelled = output<void>();
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
@@ -68,6 +69,7 @@ export class ExerciseGroupEditModalComponent {
     }
 
     onCancel(): void {
+        this.cancelled.emit();
         this.visibleChange.emit(false);
     }
 }

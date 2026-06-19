@@ -95,11 +95,12 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly addModalMode = signal<AddModalMode>('create');
     readonly groupEditModalVisible = signal(false);
     readonly groupEditModalId = signal<number | undefined>(undefined);
+    readonly pendingNewGroup = signal<CourseExerciseGroup | undefined>(undefined);
 
     readonly isGroup = computed(() => this.view() === 'group');
     /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
     readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
-    readonly groupEditModalGroup = computed(() => this.groups().find((g) => g.id === this.groupEditModalId()));
+    readonly groupEditModalGroup = computed(() => this.pendingNewGroup() ?? this.groups().find((g) => g.id === this.groupEditModalId()));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly courseId = computed(() => this.course()?.id);
     readonly selectedCount = computed(() => this.selectedIds().size);
@@ -287,23 +288,9 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onAddModalGroupCreate(): void {
         this.view.set('group');
-        const courseId = this.course()?.id;
-        if (!this.mockDataService.enabled() && courseId !== undefined) {
-            this.exerciseVariantGroupService.createGroup(courseId, { title: this.defaultGroupTitle() }).subscribe((dto) => {
-                const created = toCourseExerciseGroup(dto, this.exercisesById());
-                this.groups.set([...this.groups(), created]);
-                this.buildBuckets();
-                if (created.id !== undefined) {
-                    this.openGroupEditModal(created.id);
-                }
-            });
-            return;
-        }
-        const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
-        const newGroup: CourseExerciseGroup = { id: nextId, title: `Group ${nextId}`, order: nextId, exercises: [] };
-        this.groups.set([...this.groups(), newGroup]);
-        this.buildBuckets();
-        this.openGroupEditModal(nextId);
+        // Open the edit modal with a blank draft — the group is only persisted when the user saves.
+        this.pendingNewGroup.set({ title: this.defaultGroupTitle(), exercises: [] });
+        this.groupEditModalVisible.set(true);
     }
 
     onTableGroupChange(event: TableGroupChange): void {
@@ -463,7 +450,35 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     onGroupEditModalSave(updated: CourseExerciseGroup): void {
+        const isNew = this.pendingNewGroup() !== undefined;
+        this.pendingNewGroup.set(undefined);
+
         const courseId = this.course()?.id;
+        if (isNew) {
+            if (!this.mockDataService.enabled() && courseId !== undefined) {
+                this.exerciseVariantGroupService
+                    .createGroup(courseId, {
+                        title: updated.title || this.defaultGroupTitle(),
+                        maxPoints: updated.maxPoints,
+                        releaseDate: updated.releaseDate,
+                        startDate: updated.startDate,
+                        dueDate: updated.dueDate,
+                        assessmentDueDate: updated.assessmentDueDate,
+                    })
+                    .subscribe((dto) => {
+                        const created = toCourseExerciseGroup(dto, this.exercisesById());
+                        this.groups.set([...this.groups(), created]);
+                        this.buildBuckets();
+                    });
+                return;
+            }
+            const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
+            const newGroup: CourseExerciseGroup = { id: nextId, ...updated, order: nextId, exercises: [] };
+            this.groups.set([...this.groups(), newGroup]);
+            this.buildBuckets();
+            return;
+        }
+
         if (!this.mockDataService.enabled() && courseId !== undefined && updated.id !== undefined) {
             this.exerciseVariantGroupService
                 .updateGroup(courseId, {
@@ -488,6 +503,10 @@ export class CourseManagementExercisesComponent implements OnInit {
         saved?.exercises?.forEach((exercise) => this.applyGroupTimeline(exercise, saved));
         this.exercises.set([...this.exercises()]);
         this.buildBuckets();
+    }
+
+    onGroupEditModalCancel(): void {
+        this.pendingNewGroup.set(undefined);
     }
 
     /** Loads the course's variant groups from the server and maps them to the view model (non-mock mode only). */

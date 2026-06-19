@@ -159,6 +159,7 @@
             [group]="groupEditModalGroup()!"
             (visibleChange)="groupEditModalVisible.set($event)"
             (save)="onGroupEditModalSave($event)"
+            (cancelled)="onGroupEditModalCancel()"
         />
     }
 }
