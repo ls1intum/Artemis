@@ -33,12 +33,12 @@ class CustomFeedbackParserTest {
     @ValueSource(booleans = { true, false })
     void shouldParseCustomFeedback(final boolean successful) {
         final var message = "This is info about what went wrong / right";
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": "%b",
                   "message": "%s"
-                }""", testCaseName, successful, message);
+                }""".formatted(testCaseName, successful, message);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -53,12 +53,12 @@ class CustomFeedbackParserTest {
 
     @Test
     void shouldParseSuccessfulCustomFeedbackWithEmptyMessage() {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": true,
                   "message": ""
-                }""", testCaseName);
+                }""".formatted(testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -70,12 +70,12 @@ class CustomFeedbackParserTest {
 
     @Test
     void shouldParseSuccessfulCustomFeedbackWithNullMessage() {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": true,
                   "message": null
-                }""", testCaseName);
+                }""".formatted(testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -88,12 +88,12 @@ class CustomFeedbackParserTest {
     @ParameterizedTest
     @ValueSource(strings = { "", " " })
     void shouldNotParseFailedCustomFeedbackWithEmptyMessage(String name) {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": false,
                   "message": "%s"
-                }""", testCaseName, name);
+                }""".formatted(testCaseName, name);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -103,12 +103,12 @@ class CustomFeedbackParserTest {
     @ParameterizedTest
     @ValueSource(strings = { "", " " })
     void shouldNotParseFailedCustomFeedbackWithNullMessage() {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": false,
                   "message": null
-                }""", testCaseName);
+                }""".formatted(testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -118,12 +118,12 @@ class CustomFeedbackParserTest {
     @ParameterizedTest
     @ValueSource(strings = { "", " " })
     void shouldNotParseCustomFeedbackWithoutName(String name) {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": "%s",
                   "successful": true,
                   "message": "%s"
-                }""", name, testCaseName);
+                }""".formatted(name, testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
@@ -132,12 +132,12 @@ class CustomFeedbackParserTest {
 
     @Test
     void shouldNotParseCustomFeedbackWithNullName() {
-        final var fileContent = String.format("""
+        final var fileContent = """
                 {
                   "name": null,
                   "successful": true,
                   "message": "%s"
-                }""", testCaseName);
+                }""".formatted(testCaseName);
 
         CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
 
