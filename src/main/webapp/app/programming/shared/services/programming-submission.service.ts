@@ -308,11 +308,21 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
-                                this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
+                                // Resolve the exercise id through the mapping instead of the callback-captured exerciseId:
+                                // the shared /user/topic/newSubmissions subscription can carry errors for other participations
+                                // (different exercises), and the mapping is gone once a participation has been cleaned up.
+                                const errorExerciseId = this.participationIdToExerciseId.get(programmingSubmissionError.participationId);
+                                if (errorExerciseId === undefined) {
+                                    return;
+                                }
+                                this.emitFailedSubmission(programmingSubmissionError.participationId, errorExerciseId);
                                 return;
                             }
                             const programmingSubmission = submission as ProgrammingSubmission;
                             const submissionParticipationId = programmingSubmission.participation!.id!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIEnabled) {
@@ -370,6 +380,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
                             const submissionParticipationId = submissionProcessing.participationId!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
 
                             if (!this.isNewestSubmission(submissionProcessing, exerciseId, submissionParticipationId)) {
@@ -962,6 +975,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (this.submissionSubjects[participationId]?.observed) {
             return;
         }
+        // The participation is no longer observed, so also release the result-side subscriptions and timers that were
+        // set up alongside the submission subscription (subscribeForNewResult / startResultWaitingTimer /
+        // startQueueEstimateTimer). These were previously only cleared on logout (resetState), so they accumulated for
+        // every distinct participation a user visited within a session — a memory leak on navigate-away-and-back.
+        this.resultSubscriptions[participationId]?.unsubscribe();
+        delete this.resultSubscriptions[participationId];
+        this.resetResultWaitingTimer(participationId);
+        delete this.resultTimerSubscriptions[participationId];
+        this.resetQueueEstimateTimer(participationId);
+        delete this.queueEstimateTimerSubscriptions[participationId];
+        this.participationIdToExerciseId.delete(participationId);
         const submissionTopic = this.submissionTopicsSubscribed.get(participationId);
         if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);
