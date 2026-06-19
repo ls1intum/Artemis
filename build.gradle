@@ -1,5 +1,14 @@
 
 buildscript {
+    // Force the patched Handlebars onto the build-script / plugin classpath. The
+    // org.openapi.generator plugin pulls com.github.jknack:handlebars transitively, and
+    // versions < 4.5.2 are vulnerable to CVE-2026-55760 (FileTemplateLoader path traversal).
+    // This is a build-time-only dependency (client code generation), not shipped in the WAR.
+    configurations.classpath {
+        resolutionStrategy {
+            force "com.github.jknack:handlebars:4.5.2"
+        }
+    }
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
