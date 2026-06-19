@@ -28,6 +28,13 @@ export interface ColumnDef<T> {
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
     templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
+    /**
+     * Custom comparator for client-side sorting of this column. Return negative if rowA < rowB,
+     * positive if rowA > rowB, 0 if equal. When any column in the table defines this, the table
+     * switches to PrimeNG's customSort mode; columns without a comparator fall back to standard
+     * field-value comparison. Must not be used in lazy (server-side) mode.
+     */
+    sortComparator?: (rowA: T, rowB: T) => number;
 }
 
 export interface CellRendererParams<T> {
@@ -82,6 +89,10 @@ export interface TableConfig {
      * (PrimeNG falls back to all column `field` values).
      */
     globalFilterFields: string[] | undefined;
+    /** Field to sort by on initial render. Works for both default and custom sort modes. Default: undefined (unsorted). */
+    initialSortField: string | undefined;
+    /** Initial sort direction. 1 = ascending, -1 = descending. Default: 1. */
+    initialSortOrder: 1 | -1;
 }
 
 /**
@@ -109,6 +120,8 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     scrollHeight: undefined,
     rowActionsFrozen: false,
     globalFilterFields: undefined,
+    initialSortField: undefined,
+    initialSortOrder: 1,
 };
 
 @Component({
@@ -193,9 +206,18 @@ export class TableViewComponent<T> {
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
             globalFilterFields: opts.globalFilterFields ?? DEFAULT_TABLE_CONFIG.globalFilterFields,
+            initialSortField: opts.initialSortField ?? DEFAULT_TABLE_CONFIG.initialSortField,
+            initialSortOrder: opts.initialSortOrder ?? DEFAULT_TABLE_CONFIG.initialSortOrder,
         };
         return tableConfig;
     });
+
+    /**
+     * True when at least one column defines a custom sort comparator.
+     * Switches the entire p-table into customSort mode so (sortFunction) fires for every column click.
+     * Columns without a comparator are handled by the default field-value fallback in onCustomSort().
+     */
+    protected readonly hasCustomSort = computed(() => this.cols().some((c) => !!c.sortComparator));
 
     /** Falls back to vals().length in non-lazy mode. */
     protected readonly effectiveTotalRows = computed(() => this.totalRows() ?? this.vals().length);
@@ -246,6 +268,30 @@ export class TableViewComponent<T> {
             rowIndex,
         };
         return params;
+    }
+
+    /**
+     * Called by p-table when customSort is active (i.e. at least one column has a sortComparator).
+     * Sorts event.data in place — PrimeNG re-renders from the mutated array.
+     * Columns with a sortComparator use it; all others fall back to standard field-value comparison.
+     */
+    onCustomSort(event: { data: T[]; field?: string; order?: number }): void {
+        if (!event.data) return;
+        const col = this.cols().find((c) => c.field === event.field);
+        const comparator = col?.sortComparator;
+        const order = event.order ?? 1;
+        event.data.sort((rowA: T, rowB: T) => {
+            if (comparator) {
+                return order * comparator(rowA, rowB);
+            }
+            // Fallback: standard value sort for columns without a custom comparator
+            const val1 = col?.field ? get(rowA, col.field) : undefined;
+            const val2 = col?.field ? get(rowB, col.field) : undefined;
+            if (val1 == null && val2 == null) return 0;
+            if (val1 == null) return order;
+            if (val2 == null) return -order;
+            return typeof val1 === 'string' && typeof val2 === 'string' ? order * val1.localeCompare(val2) : order * (val1 < val2 ? -1 : val1 > val2 ? 1 : 0);
+        });
     }
 
     handleLazyLoad(event: TableLazyLoadEvent): void {

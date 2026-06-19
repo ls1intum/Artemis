@@ -25,6 +25,10 @@
         [scrollable]="resolvedOptions().scrollable"
         [scrollHeight]="resolvedOptions().scrollHeight"
         [globalFilterFields]="resolvedOptions().globalFilterFields"
+        [customSort]="hasCustomSort()"
+        (sortFunction)="onCustomSort($event)"
+        [sortField]="resolvedOptions().initialSortField"
+        [sortOrder]="resolvedOptions().initialSortOrder"
     >
         @if (showCaption()) {
             <ng-template #caption>
