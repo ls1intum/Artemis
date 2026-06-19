@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { KeyValuePipe, NgStyle } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
@@ -57,7 +57,7 @@ type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, NgStyle, DialogModule, TagModule, ButtonModule],
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule],
 })
 export class HealthModalComponent {
     readonly visible = model<boolean>(false);

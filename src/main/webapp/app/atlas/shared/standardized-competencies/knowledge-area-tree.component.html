@@ -1,6 +1,7 @@
 <p-tree
-    class="knowledge-area-tree w-full"
+    class="block w-full"
     styleClass="w-full"
+    [pt]="{ nodeContent: { class: 'bg-surface-0 dark:bg-surface-900' } }"
     [value]="nodes()"
     (onNodeExpand)="onNodeExpand($event.node)"
     (onNodeCollapse)="onNodeCollapse($event.node)"

@@ -1,8 +1,0 @@
-// Feature card hover border uses the primary color token injected by PrimeNG theme.
-// All layout/spacing/color is handled by Tailwind utilities in the template.
-// Custom CSS vars for semantic card backgrounds used by [class.*] bindings.
-:host {
-    --feature-card-active-bg: var(--p-surface-50);
-    --feature-card-inactive-bg: var(--p-surface-100);
-    --feature-card-disabled-bg: var(--p-surface-100);
-}

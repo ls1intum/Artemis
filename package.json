@@ -164,6 +164,7 @@
         "test:ci": "pnpm run prebuild && pnpm run vitest:ci && pnpm run vitest:monaco",
         "test": "pnpm run prebuild && pnpm exec vitest run",
         "test:one": "pnpm run prebuild && pnpm exec vitest run",
+        "test:rules": "vitest run --config rules/vitest.config.mjs",
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",

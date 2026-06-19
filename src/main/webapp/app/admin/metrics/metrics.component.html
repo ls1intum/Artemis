@@ -1,7 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
     <div *adminTitleBarActions class="flex flex-wrap gap-2 items-center">
-        <span class="quick-nav-label">Jump to:</span>
+        <span class="font-medium text-muted-color text-sm">Jump to:</span>
         <p-button size="small" [outlined]="true" (onClick)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</p-button>
         <p-button size="small" [outlined]="true" (onClick)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</p-button>
         <p-button size="small" [outlined]="true" (onClick)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</p-button>

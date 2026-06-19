@@ -238,19 +238,14 @@
                     <label jhiTranslate="artemisApp.userManagement.globalRoles"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (authority of sortedAuthorities(); track authority) {
-                            <div
+                            <label
                                 class="flex cursor-pointer select-none items-center gap-2 rounded-md border px-3 py-2"
                                 [class.role-item-active]="hasAuthority(authority)"
-                                (click)="toggleAuthority(authority)"
-                                (keydown.enter)="toggleAuthority(authority)"
-                                tabindex="0"
-                                role="checkbox"
-                                [attr.aria-checked]="hasAuthority(authority)"
                                 data-testid="global-role-item"
                             >
                                 <p-checkbox [binary]="true" [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (onChange)="toggleAuthority(authority)" />
                                 <span class="font-medium">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
-                            </div>
+                            </label>
                         }
                     </div>
                 </div>

@@ -2,16 +2,14 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
+import { TableModule } from 'primeng/table';
+import { SortEvent } from 'primeng/api';
 
 /**
  * Component for viewing application configuration.
@@ -21,7 +19,7 @@ import { TagModule } from 'primeng/tag';
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective, InputTextModule, TagModule],
+    imports: [TranslateDirective, FormsModule, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective, InputTextModule, TagModule, TableModule],
 })
 export class ConfigurationComponent implements OnInit {
     private readonly configurationService = inject(ConfigurationService);
@@ -51,9 +49,6 @@ export class ConfigurationComponent implements OnInit {
     /** Property sources from configuration */
     readonly propertySources = signal<PropertySource[]>([]);
 
-    /** Icons */
-    protected readonly faSort = faSort;
-
     /**
      * Loads beans and property sources on initialization.
      */
@@ -76,10 +71,12 @@ export class ConfigurationComponent implements OnInit {
     }
 
     /**
-     * Updates sort direction.
-     * @param ascending - Sort direction
+     * Handles a PrimeNG table sort event. The table runs in `[customSort]` mode and only sorts by
+     * the single `prefix` field, so the handler just mirrors the resolved order onto the
+     * `beansAscending` signal that drives the client-side sort in `beans()`.
+     * @param event - The PrimeNG sort event
      */
-    updateBeansAscending(ascending: boolean): void {
-        this.beansAscending.set(ascending);
+    onTableSort(event: SortEvent): void {
+        this.beansAscending.set((event.order ?? 1) === 1);
     }
 }

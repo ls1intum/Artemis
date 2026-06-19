@@ -215,20 +215,29 @@
     </div>
 
     <!-- Components Table -->
-    <p-table [value]="filteredComponents()" [tableStyle]="{ 'min-width': '100%' }" aria-describedby="sbom-page-heading" data-testid="components-table">
+    <p-table
+        [value]="filteredComponents()"
+        [tableStyle]="{ 'min-width': '100%' }"
+        [customSort]="true"
+        [sortField]="sortField()"
+        [sortOrder]="sortAscending() ? 1 : -1"
+        (onSort)="onTableSort($event)"
+        aria-describedby="sbom-page-heading"
+        data-testid="components-table"
+    >
         <ng-template #header>
-            <tr jhiSort [predicate]="sortField()" [ascending]="sortAscending()" (ascendingChange)="updateSortAscending($event)">
-                <th scope="col" class="sortable" (click)="updateSortField('name')">
+            <tr>
+                <th scope="col" pSortableColumn="name">
                     <span jhiTranslate="artemisApp.dependencies.componentName"></span>
-                    <fa-icon [icon]="faSort" />
+                    <p-sortIcon field="name" />
                 </th>
-                <th scope="col" class="sortable" (click)="updateSortField('group')">
+                <th scope="col" pSortableColumn="group">
                     <span jhiTranslate="artemisApp.dependencies.componentGroup"></span>
-                    <fa-icon [icon]="faSort" />
+                    <p-sortIcon field="group" />
                 </th>
-                <th scope="col" class="sortable" (click)="updateSortField('version')">
+                <th scope="col" pSortableColumn="version">
                     <span jhiTranslate="artemisApp.dependencies.componentVersion"></span>
-                    <fa-icon [icon]="faSort" />
+                    <p-sortIcon field="version" />
                 </th>
                 <th scope="col">
                     <span jhiTranslate="artemisApp.dependencies.componentSecurity"></span>

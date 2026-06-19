@@ -213,6 +213,11 @@ jobs:
         run: pnpm run compile:tests
       - name: TypeScript Test Without Typechecking
         run: pnpm run test:ci
+      - name: Custom ESLint Rule Tests
+        # Runs the RuleTester specs (rules/*.spec.mjs) for our guardrail ESLint rules. Uses a
+        # separate Vitest config (rules/vitest.config.mjs, plain-Node env) so these .spec.mjs do
+        # not run under the Angular jsdom/Vite environment of the client suite above.
+        run: pnpm run test:rules
       - name: Per-Module Coverage Gate
         # Enforces the per-module client coverage thresholds (admin, etc.) defined in
         # supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs.

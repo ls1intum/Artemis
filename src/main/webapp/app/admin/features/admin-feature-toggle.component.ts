@@ -65,7 +65,6 @@ type ModuleFeatureInfo = {
 @Component({
     selector: 'jhi-feature-toggles',
     templateUrl: './admin-feature-toggle.component.html',
-    styleUrl: './admin-feature-toggle.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FaIconComponent,

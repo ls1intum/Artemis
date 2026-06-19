@@ -37,6 +37,8 @@
  * would hide every expanded Bootstrap collapse panel app-wide). Add each module here as it is migrated.
  */
 @source './app/admin';
+@source './app/atlas/shared/standardized-competencies';
+@source './app/atlas/manage/import-standardized-competencies';
 
 /* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
 @custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));

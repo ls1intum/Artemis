@@ -13,72 +13,64 @@
             />
         </div>
         <h3 id="spring-configuration">Spring configuration</h3>
-        <div class="overflow-x-auto" data-testid="spring-configuration-table">
-            <table class="w-full border-collapse text-sm" aria-describedby="spring-configuration">
-                <thead>
-                    <tr
-                        jhiSort
-                        predicate="prefix"
-                        [ascending]="beansAscending()"
-                        (ascendingChange)="updateBeansAscending($event)"
-                        class="border-b border-surface-200 dark:border-surface-700"
-                    >
-                        <th jhiSortBy="prefix" scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">
-                            <span jhiTranslate="configuration.table.prefix"></span> <fa-icon [icon]="faSort" />
-                        </th>
-                        <th scope="col" class="w-3/5 px-3 py-2 text-start font-semibold">
-                            <span jhiTranslate="configuration.table.properties"></span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (bean of beans(); track bean) {
-                        <tr class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
-                            <td class="px-3 py-2 break">
-                                <span>{{ bean.prefix }}</span>
-                            </td>
-                            <td class="px-3 py-2">
-                                @for (property of bean.properties | keyvalue; track property) {
-                                    <div class="flex items-start gap-2 py-1">
-                                        <div class="w-2/5">{{ property.key }}</div>
-                                        <div class="w-3/5 flex justify-end">
-                                            <p-tag severity="secondary" [value]="property.value | json" styleClass="break" data-testid="bean-property-value" />
-                                        </div>
-                                    </div>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        <p-table
+            [value]="beans()"
+            [size]="'small'"
+            [stripedRows]="true"
+            [customSort]="true"
+            [sortField]="'prefix'"
+            [sortOrder]="beansAscending() ? 1 : -1"
+            (onSort)="onTableSort($event)"
+            aria-describedby="spring-configuration"
+            data-testid="spring-configuration-table"
+        >
+            <ng-template #header>
+                <tr>
+                    <th pSortableColumn="prefix" scope="col" class="w-2/5"><span jhiTranslate="configuration.table.prefix"></span> <p-sortIcon field="prefix" /></th>
+                    <th scope="col" class="w-3/5"><span jhiTranslate="configuration.table.properties"></span></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-bean>
+                <tr>
+                    <td class="break">
+                        <span>{{ bean.prefix }}</span>
+                    </td>
+                    <td>
+                        @for (property of bean.properties | keyvalue; track property) {
+                            <div class="flex items-start gap-2 py-1">
+                                <div class="w-2/5">{{ property.key }}</div>
+                                <div class="w-3/5 flex justify-end">
+                                    <p-tag severity="secondary" [value]="property.value | json" styleClass="break" data-testid="bean-property-value" />
+                                </div>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
         @for (propertySource of propertySources(); track propertySource; let i = $index) {
             <div class="mt-4" data-testid="property-source-section">
                 <h4 [id]="'property-source-' + i">
                     <span>{{ propertySource.name }}</span>
                 </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full border-collapse text-sm" [attr.aria-describedby]="'property-source-' + i">
-                        <thead>
-                            <tr class="border-b border-surface-200 dark:border-surface-700">
-                                <th scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">Property</th>
-                                <th scope="col" class="w-3/5 px-3 py-2 text-start font-semibold">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (property of propertySource.properties | keyvalue; track property) {
-                                <tr class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
-                                    <td class="px-3 py-2 break">{{ property.key }}</td>
-                                    <td class="px-3 py-2 break">
-                                        <div class="flex justify-end">
-                                            <p-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <p-table [value]="propertySource.properties | keyvalue" [size]="'small'" [stripedRows]="true" [attr.aria-describedby]="'property-source-' + i">
+                    <ng-template #header>
+                        <tr>
+                            <th scope="col" class="w-2/5">Property</th>
+                            <th scope="col" class="w-3/5">Value</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-property>
+                        <tr>
+                            <td class="break">{{ property.key }}</td>
+                            <td class="break">
+                                <div class="flex justify-end">
+                                    <p-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         }
     </div>

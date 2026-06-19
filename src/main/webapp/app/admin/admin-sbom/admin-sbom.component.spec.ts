@@ -307,15 +307,15 @@ describe('AdminSbomComponent', () => {
             expect(components[2].name).toBe('spring-core');
         });
 
-        it('should toggle sort direction when clicking same field', () => {
+        it('should apply descending order from a sort event', () => {
             expect(component.sortAscending()).toBe(true);
-            component.updateSortField('name');
+            component.onTableSort({ field: 'name', order: -1 });
+            expect(component.sortField()).toBe('name');
             expect(component.sortAscending()).toBe(false);
         });
 
-        it('should reset to ascending when clicking different field', () => {
-            component.updateSortField('name'); // Toggle to descending
-            component.updateSortField('version');
+        it('should switch the sort field from a sort event', () => {
+            component.onTableSort({ field: 'version', order: 1 });
             expect(component.sortField()).toBe('version');
             expect(component.sortAscending()).toBe(true);
         });
@@ -668,7 +668,7 @@ describe('AdminSbomComponent', () => {
         });
 
         it('should sort descending when sortAscending is false', () => {
-            component.updateSortAscending(false);
+            component.onTableSort({ field: 'name', order: -1 });
             const components = component.filteredComponents();
 
             expect(components[0].name).toBe('spring-core');
@@ -677,7 +677,7 @@ describe('AdminSbomComponent', () => {
         });
 
         it('should sort by group field', () => {
-            component.updateSortField('group');
+            component.onTableSort({ field: 'group', order: 1 });
             const components = component.filteredComponents();
 
             expect(components[0].group).toBe('@angular');

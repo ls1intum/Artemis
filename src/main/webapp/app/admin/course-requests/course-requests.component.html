@@ -10,7 +10,7 @@
 
     <!-- Pending Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>
-    <p-table [value]="pendingRequests()" styleClass="p-datatable-sm p-datatable-striped" class="mb-5 block" data-testid="pending-table">
+    <p-table [value]="pendingRequests()" [size]="'small'" [stripedRows]="true" class="mb-5 block" data-testid="pending-table">
         <ng-template #header>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
@@ -71,9 +71,9 @@
                         <p-button
                             severity="secondary"
                             size="small"
-                            [icon]="''"
                             (onClick)="openEditModal(request)"
                             [pTooltip]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.courseRequest.admin.edit' | artemisTranslate"
                             data-testid="edit-button"
                         >
                             <fa-icon [icon]="faEdit" />
@@ -83,6 +83,7 @@
                             size="small"
                             (onClick)="accept(request)"
                             [pTooltip]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.courseRequest.admin.accept' | artemisTranslate"
                             data-testid="accept-button"
                         >
                             <fa-icon [icon]="faCheck" />
@@ -92,6 +93,7 @@
                             size="small"
                             (onClick)="openRejectModal(request)"
                             [pTooltip]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.courseRequest.admin.reject' | artemisTranslate"
                             data-testid="reject-button"
                         >
                             <fa-icon [icon]="faTimes" />
@@ -109,7 +111,7 @@
 
     <!-- Decided Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
-    <p-table [value]="decidedRequests()" styleClass="p-datatable-sm p-datatable-striped" data-testid="decided-table">
+    <p-table [value]="decidedRequests()" [size]="'small'" [stripedRows]="true" data-testid="decided-table">
         <ng-template #header>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>

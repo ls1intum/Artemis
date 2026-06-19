@@ -1,4 +1,4 @@
-import { Component, TemplateRef, computed, contentChild, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, computed, contentChild, input, signal } from '@angular/core';
 import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { TreeNode } from 'primeng/api';
 import { TreeModule } from 'primeng/tree';
@@ -41,8 +41,8 @@ export interface CompetencyNodeData {
 @Component({
     selector: 'jhi-knowledge-area-tree',
     templateUrl: './knowledge-area-tree.component.html',
-    styleUrls: ['./knowledge-area-tree.component.scss'],
     imports: [TreeModule, TranslateDirective, NgTemplateOutlet],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KnowledgeAreaTreeComponent {
     readonly dataSource = input<KnowledgeAreaTreeDataSource>({ data: [] });
@@ -67,10 +67,6 @@ export class KnowledgeAreaTreeComponent {
 
     /** Incremented to force {@link nodes} to recompute after in-place data mutations. */
     private readonly rebuildTrigger = signal(0);
-
-    protected readonly KNOWLEDGE_AREA_NODE_TYPE = KNOWLEDGE_AREA_NODE_TYPE;
-    protected readonly COMPETENCY_NODE_TYPE = COMPETENCY_NODE_TYPE;
-    protected readonly EMPTY_NODE_TYPE = EMPTY_NODE_TYPE;
 
     /**
      * Forces the tree to rebuild its nodes from the current (possibly mutated in place) data source.

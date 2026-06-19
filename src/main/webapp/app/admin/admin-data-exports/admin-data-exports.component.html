@@ -37,23 +37,25 @@
                             {{ 'artemisApp.dataExport.admin.state.' + dataExport.dataExportState | artemisTranslate }}
                         </p-tag>
                     </td>
-                    <td class="flex gap-1">
-                        @if (dataExport.downloadable) {
-                            <p-button severity="success" size="small" (onClick)="downloadExport(dataExport)" data-testid="download-btn" styleClass="download-btn">
-                                <fa-icon [icon]="faDownload" class="me-1" />
-                                <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
-                            </p-button>
-                        }
-                        @if (canCancel(dataExport)) {
-                            <button
-                                jhiDeleteButton
-                                [entityTitle]="dataExport.userLogin ?? ''"
-                                [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
-                                (delete)="cancelExport(dataExport)"
-                            >
-                                <fa-icon [icon]="faBan" />
-                            </button>
-                        }
+                    <td>
+                        <div class="flex gap-1">
+                            @if (dataExport.downloadable) {
+                                <p-button severity="success" size="small" (onClick)="downloadExport(dataExport)" data-testid="download-btn" styleClass="download-btn">
+                                    <fa-icon [icon]="faDownload" class="me-1" />
+                                    <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
+                                </p-button>
+                            }
+                            @if (canCancel(dataExport)) {
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="dataExport.userLogin ?? ''"
+                                    [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
+                                    (delete)="cancelExport(dataExport)"
+                                >
+                                    <fa-icon [icon]="faBan" />
+                                </button>
+                            }
+                        </div>
                     </td>
                 </tr>
             </ng-template>

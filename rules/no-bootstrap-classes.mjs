@@ -75,6 +75,24 @@ function scanClassList(text, node, context) {
     }
 }
 
+// Matches single- or double-quoted string literals (e.g. the keys of `[ngClass]="{ 'btn': x }"` or the
+// segments of `[class]="'d-flex ' + x"`). Class names only ever live inside string literals in a binding
+// expression, so scanning the literal contents avoids false positives from identifiers/operators.
+const STRING_LITERAL = /'([^']*)'|"([^"]*)"/g;
+
+// The bound source of `[class]` / `[ngClass]` is an Angular expression, not a class list. Extract its
+// string literals and scan their whitespace-separated tokens with the same per-token isBanned() check.
+function scanBindingExpression(source, node, context) {
+    if (typeof source !== 'string') {
+        return;
+    }
+    STRING_LITERAL.lastIndex = 0;
+    let match;
+    while ((match = STRING_LITERAL.exec(source)) !== null) {
+        scanClassList(match[1] ?? match[2], node, context);
+    }
+}
+
 export default {
     meta: {
         type: 'problem',
@@ -96,7 +114,9 @@ export default {
             },
             BoundAttribute(node) {
                 if (node.name === 'class' || node.name === 'ngClass') {
-                    scanClassList(node.value?.source, node, context);
+                    // `[class]`/`[ngClass]` bind an expression (object map or string concat), not a raw
+                    // class list — scan the string literals inside it.
+                    scanBindingExpression(node.value?.source, node, context);
                 } else if (typeof node.name === 'string') {
                     // [class.btn]="..." -> the class token is the attribute name
                     scanClassList(node.name, node, context);

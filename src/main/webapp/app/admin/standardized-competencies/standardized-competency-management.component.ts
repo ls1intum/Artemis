@@ -43,7 +43,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
-    styleUrls: ['standardized-competency-management.component.scss'],
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },

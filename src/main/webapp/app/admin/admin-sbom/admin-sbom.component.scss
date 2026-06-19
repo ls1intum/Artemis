@@ -1,12 +1,3 @@
-.sortable {
-    cursor: pointer;
-    user-select: none;
-
-    &:hover {
-        background-color: var(--p-surface-100);
-    }
-}
-
 // Vulnerable row highlighting
 tr.vulnerable-row {
     background-color: var(--artemis-alert-danger-background);

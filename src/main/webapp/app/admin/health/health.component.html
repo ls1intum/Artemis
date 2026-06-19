@@ -22,7 +22,9 @@
                             <td class="py-2 px-3">
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
                                 @if (componentHealth.value?.details?.url) {
-                                    <p-tag severity="info" [value]="$any(componentHealth.value!.details!.url)" class="ms-1" data-testid="url-tag" />
+                                    <a [href]="componentHealth.value!.details!.url" target="_blank" rel="noopener noreferrer" class="ms-1" data-testid="url-tag">{{
+                                        componentHealth.value!.details!.url
+                                    }}</a>
                                 }
                             </td>
                             <td class="py-2 px-3 text-center" data-testid="status-cell">

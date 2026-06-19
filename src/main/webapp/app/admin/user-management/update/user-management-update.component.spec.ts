@@ -753,3 +753,63 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 });
+
+/**
+ * Renders the real template (no overrideTemplate) to guard against the global-role checkbox firing
+ * toggleAuthority twice per click — the regression where the role wrapper's bubbled click re-fired the
+ * inner p-checkbox's onChange, cancelling the toggle. A single rendered control must toggle exactly once.
+ */
+describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: UserManagementUpdateComponent;
+    let fixture: ComponentFixture<UserManagementUpdateComponent>;
+
+    const parentRoute = { data: of({ user: undefined }) } as unknown as ActivatedRoute;
+    const mockRoute = { parent: parentRoute } as unknown as ActivatedRoute;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UserManagementUpdateComponent],
+            providers: [
+                { provide: ActivatedRoute, useValue: mockRoute },
+                LocalStorageService,
+                SessionStorageService,
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(UserManagementUpdateComponent);
+        component = fixture.componentInstance;
+        const adminUserService = TestBed.inject(AdminUserService);
+        // ROLE_INSTRUCTOR is not filtered out for non-super-admins, so the role item renders for any current user.
+        vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.INSTRUCTOR]));
+
+        component.ngOnInit();
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should toggle the authority exactly once per checkbox click', () => {
+        const toggleSpy = vi.spyOn(component, 'toggleAuthority');
+
+        const roleItem = fixture.nativeElement.querySelector('[data-testid="global-role-item"]') as HTMLLabelElement;
+        expect(roleItem).not.toBeNull();
+        const checkboxInput = roleItem.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(checkboxInput).not.toBeNull();
+
+        checkboxInput.click();
+        fixture.detectChanges();
+
+        expect(toggleSpy).toHaveBeenCalledExactlyOnceWith(Authority.INSTRUCTOR);
+        expect(component.hasAuthority(Authority.INSTRUCTOR)).toBe(true);
+    });
+});

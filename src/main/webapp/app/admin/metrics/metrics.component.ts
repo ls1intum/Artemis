@@ -28,7 +28,6 @@ interface NodeOption {
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
-    styleUrl: './metrics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

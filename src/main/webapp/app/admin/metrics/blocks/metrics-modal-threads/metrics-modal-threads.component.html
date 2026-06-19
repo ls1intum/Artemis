@@ -2,38 +2,22 @@
     <ng-template #header>
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
-    <div class="flex flex-wrap gap-2 mb-3">
-        <p-tag class="cursor-pointer" severity="secondary" (click)="selectedThreadState = undefined" data-testid="filter-all">
-            @if (selectedThreadState === undefined) {
-                <fa-icon [icon]="faCheck" class="me-1" />
-            }
-            All <span class="ms-1">{{ threadDumpAll() }}</span>
-        </p-tag>
-        <p-tag class="cursor-pointer" severity="success" (click)="selectedThreadState = ThreadState.Runnable" data-testid="filter-runnable">
-            @if (selectedThreadState === ThreadState.Runnable) {
-                <fa-icon [icon]="faCheck" class="me-1" />
-            }
-            Runnable <span class="ms-1">{{ threadDumpRunnable() }}</span>
-        </p-tag>
-        <p-tag class="cursor-pointer" severity="info" (click)="selectedThreadState = ThreadState.Waiting" data-testid="filter-waiting">
-            @if (selectedThreadState === ThreadState.Waiting) {
-                <fa-icon [icon]="faCheck" class="me-1" />
-            }
-            Waiting <span class="ms-1">{{ threadDumpWaiting() }}</span>
-        </p-tag>
-        <p-tag class="cursor-pointer" severity="warn" (click)="selectedThreadState = ThreadState.TimedWaiting" data-testid="filter-timed-waiting">
-            @if (selectedThreadState === ThreadState.TimedWaiting) {
-                <fa-icon [icon]="faCheck" class="me-1" />
-            }
-            Timed Waiting <span class="ms-1">{{ threadDumpTimedWaiting() }}</span>
-        </p-tag>
-        <p-tag class="cursor-pointer" severity="danger" (click)="selectedThreadState = ThreadState.Blocked" data-testid="filter-blocked">
-            @if (selectedThreadState === ThreadState.Blocked) {
-                <fa-icon [icon]="faCheck" class="me-1" />
-            }
-            Blocked <span class="ms-1">{{ threadDumpBlocked() }}</span>
-        </p-tag>
-    </div>
+    <p-selectButton
+        class="block mb-3"
+        [options]="filterOptions"
+        [(ngModel)]="selectedThreadState"
+        optionValue="value"
+        size="small"
+        [allowEmpty]="false"
+        aria-label="Filter threads by state"
+    >
+        <ng-template let-option #item>
+            <span class="flex items-center gap-2" [attr.data-testid]="option.testId">
+                <p-tag [severity]="option.severity" [value]="option.label" />
+                <span>{{ option.count() }}</span>
+            </span>
+        </ng-template>
+    </p-selectButton>
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
     <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {

@@ -14,7 +14,6 @@ import {
     faSearch,
     faServer,
     faShieldAlt,
-    faSort,
     faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,12 +23,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { TableModule } from 'primeng/table';
+import { SortEvent } from 'primeng/api';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
 import { InputTextModule } from 'primeng/inputtext';
@@ -58,7 +57,6 @@ type PrimeNgSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'c
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        SortDirective,
         HelpIconComponent,
         ButtonModule,
         ButtonGroupModule,
@@ -75,7 +73,6 @@ export class AdminSbomComponent implements OnInit {
     private readonly alertService = inject(AlertService);
 
     // Icons
-    protected readonly faSort = faSort;
     protected readonly faSearch = faSearch;
     protected readonly faSpinner = faSpinner;
     protected readonly faServer = faServer;
@@ -415,22 +412,17 @@ export class AdminSbomComponent implements OnInit {
     }
 
     /**
-     * Updates the sort direction.
+     * Handles a PrimeNG table sort event. PrimeNG already resolves the toggled field/order
+     * (the table runs in `[customSort]` mode), so the handler only mirrors that state onto the
+     * `sortField`/`sortAscending` signals that drive the client-side sort in `filteredComponents()`.
+     * @param event - The PrimeNG sort event
      */
-    updateSortAscending(ascending: boolean): void {
-        this.sortAscending.set(ascending);
-    }
-
-    /**
-     * Updates the sort field.
-     */
-    updateSortField(field: 'name' | 'group' | 'version' | 'type'): void {
-        if (this.sortField() === field) {
-            this.sortAscending.set(!this.sortAscending());
-        } else {
+    onTableSort(event: SortEvent): void {
+        const field = event.field;
+        if (field === 'name' || field === 'group' || field === 'version' || field === 'type') {
             this.sortField.set(field);
-            this.sortAscending.set(true);
         }
+        this.sortAscending.set((event.order ?? 1) === 1);
     }
 
     /**

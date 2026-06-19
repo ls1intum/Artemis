@@ -86,7 +86,7 @@ describe('MetricsModalThreadsComponent', () => {
         it('should return all threads when no filter is applied', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
-            comp.selectedThreadState = undefined;
+            comp.selectedThreadState.set('ALL');
 
             expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
         });
@@ -94,7 +94,7 @@ describe('MetricsModalThreadsComponent', () => {
         it('should filter threads by selected thread state', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
-            comp.selectedThreadState = ThreadState.Runnable;
+            comp.selectedThreadState.set(ThreadState.Runnable);
 
             expect(comp.filteredThreads()).toEqual(runnableThreads);
         });
@@ -119,7 +119,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
             comp.threadFilter = '2';
-            comp.selectedThreadState = ThreadState.Waiting;
+            comp.selectedThreadState.set(ThreadState.Waiting);
 
             expect(comp.filteredThreads()).toEqual([]);
         });

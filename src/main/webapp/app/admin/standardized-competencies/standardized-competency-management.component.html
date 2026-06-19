@@ -47,7 +47,9 @@
         @if (dataSource.data?.length && (selectedCompetency() || selectedKnowledgeArea())) {
             <!-- both tree and detail visible: resizable splitter -->
             <p-splitter
-                styleClass="sc-splitter"
+                styleClass="items-start max-h-[calc(100vh-var(--sidebar-header-footer-combined-height,105px))]"
+                panelStyleClass="overflow-auto"
+                [dt]="{ root: { background: 'transparent', borderColor: 'transparent' } }"
                 layout="horizontal"
                 [panelSizes]="splitterPanelSizes()"
                 [minSizes]="[20, 20]"
@@ -127,7 +129,7 @@
 
 <ng-template #detailTemplate>
     @if (selectedCompetency(); as competency) {
-        <div class="rounded-lg border light-background p-3" data-testid="competency-detail">
+        <div class="rounded-lg border bg-surface-0 p-3 dark:bg-surface-900" data-testid="competency-detail">
             <jhi-standardized-competency-edit
                 [competency]="competency"
                 [knowledgeAreas]="knowledgeAreasForSelect"
@@ -141,7 +143,7 @@
             />
         </div>
     } @else if (selectedKnowledgeArea(); as knowledgeArea) {
-        <div class="rounded-lg border light-background p-3" data-testid="knowledge-area-detail">
+        <div class="rounded-lg border bg-surface-0 p-3 dark:bg-surface-900" data-testid="knowledge-area-detail">
             <jhi-knowledge-area-edit
                 [knowledgeArea]="knowledgeArea"
                 [knowledgeAreas]="knowledgeAreasForSelect"
