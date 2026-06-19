@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -114,7 +114,7 @@ class PlagiarismDetectionServiceTest {
                 .thenReturn(programmingPlagiarismResult);
 
         // and
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, List.of(), false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
@@ -129,7 +129,7 @@ class PlagiarismDetectionServiceTest {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setPlagiarismDetectionConfig(config);
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, List.of(), false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
@@ -147,7 +147,7 @@ class PlagiarismDetectionServiceTest {
                 .thenReturn(zipFile);
 
         // and
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, emptyList(), false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, true, false, false, List.of(), false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // when
@@ -162,7 +162,7 @@ class PlagiarismDetectionServiceTest {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setPlagiarismDetectionConfig(config);
-        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, emptyList(), false);
+        var programmingLanguageFeature = new ProgrammingLanguageFeature(null, false, false, false, false, false, List.of(), false);
         when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(programmingLanguageFeature);
 
         // expect
@@ -224,7 +224,7 @@ class PlagiarismDetectionServiceTest {
     void testCountTokensInFile_ReachesMinimumSize() throws IOException {
         StringBuilder content = new StringBuilder();
         for (int i = 0; i < 50; i++) {
-            content.append(String.format(COMPLEX_JAVA_CONTENT_TEMPLATE, i)).append(" ");
+            content.append(COMPLEX_JAVA_CONTENT_TEMPLATE.formatted(i)).append(" ");
         }
         Path testFile = createTestFile("large.java", content.toString());
 
@@ -317,7 +317,7 @@ class PlagiarismDetectionServiceTest {
         // Create multiple Java files
         for (int i = 0; i < 3; i++) {
             Path javaFile = repoPath.resolve("Test" + i + ".java");
-            String content = String.format(COMPLEX_JAVA_CONTENT_TEMPLATE, i);
+            String content = COMPLEX_JAVA_CONTENT_TEMPLATE.formatted(i);
             FileUtils.writeStringToFile(javaFile.toFile(), content, StandardCharsets.UTF_8);
         }
     }

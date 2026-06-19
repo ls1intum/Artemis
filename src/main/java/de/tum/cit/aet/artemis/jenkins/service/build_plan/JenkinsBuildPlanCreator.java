@@ -11,7 +11,6 @@ import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -112,7 +111,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final Resource resource = resourceLoaderService.getResource(Path.of("templates", "jenkins", "Jenkinsfile"));
 
         try (InputStream inputStream = resource.getInputStream()) {
-            return IOUtils.toString(inputStream, Charset.defaultCharset());
+            return new String(inputStream.readAllBytes(), Charset.defaultCharset());
         }
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Could not load Jenkinsfile.", e);

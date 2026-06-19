@@ -11,7 +11,7 @@ import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { multiSeriesToLineData, referenceLineDataset } from 'app/shared-ui/chart/chart-adapters';
 import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
-import { mean } from 'simple-statistics';
+import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';

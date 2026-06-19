@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +81,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
         courseRepository.save(course);
 
         List<String> exportErrors = new ArrayList<>();
-        assertThatNoException().isThrownBy(() -> courseExamExportService.exportCourseForArchive(course, submissionExportPath, exportErrors, Collections.emptyMap()));
+        assertThatNoException().isThrownBy(() -> courseExamExportService.exportCourseForArchive(course, submissionExportPath, exportErrors, Map.of()));
 
         assertThat(exportErrors).isEmpty();
     }

@@ -22,11 +22,10 @@ public class WeaviateAuthenticationFailureAnalyzer extends AbstractFailureAnalyz
 
     private String buildDescription(WeaviateAuthenticationException cause) {
         String scheme = cause.isSecure() ? ConfigurationValidator.HTTPS_SCHEME : ConfigurationValidator.HTTP_SCHEME;
-        return String.format(
-                "Authentication to Weaviate failed (HTTP 401).%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n%n"
-                        + "The Weaviate server requires API key authentication, but the Artemis configuration does not provide a valid API key.%n%n" + "Error: %s%n",
-                cause.getHttpHost(), cause.getHttpPort(), scheme, cause.getHttpHost(), cause.getHttpPort(),
-                cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
+        return ("Authentication to Weaviate failed (HTTP 401).%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n%n"
+                + "The Weaviate server requires API key authentication, but the Artemis configuration does not provide a valid API key.%n%n" + "Error: %s%n")
+                .formatted(cause.getHttpHost(), cause.getHttpPort(), scheme, cause.getHttpHost(), cause.getHttpPort(),
+                        cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
     }
 
     private String buildAction() {
