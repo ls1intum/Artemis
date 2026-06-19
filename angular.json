@@ -27,7 +27,6 @@
                             "crypto",
                             "dayjs/locale/de",
                             "dompurify",
-                            "export-to-csv",
                             "hoist-non-react-statics",
                             "interactjs",
                             "is-mobile",
