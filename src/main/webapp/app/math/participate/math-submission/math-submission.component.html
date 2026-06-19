@@ -1,5 +1,5 @@
 <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h4 class="px-3 pt-3 mb-0">{{ exercise()?.title }}</h4>
     </ng-template>
 
@@ -9,7 +9,7 @@
 
     <div class="form-group">
         <label for="math-content" jhiTranslate="artemisApp.mathExercise.editor.content">Your solution</label>
-        <textarea id="math-content" pTextarea class="form-control w-100" rows="10" [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
+        <textarea id="math-content" pTextarea class="w-100" rows="10" [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
     </div>
 
     <div class="d-flex gap-2 mt-2">
