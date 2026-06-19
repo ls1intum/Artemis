@@ -474,18 +474,34 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             }
-            // Propagate the newly created participation into the cached course so the course-overview sidebar re-maps
-            // and reflects the started exercise live (otherwise the card stays at "Not yet started" until a page reload).
-            const course = this.courseStorageService.getCourse(this.courseId);
-            const cachedExercise = course?.exercises?.find((exercise) => exercise.id === this.exercise?.id);
-            if (course && cachedExercise && this.exercise) {
-                cachedExercise.studentParticipations = this.exercise.studentParticipations;
-                this.courseStorageService.updateCourse(course);
-            }
         }
+        this.propagateParticipationsToCachedCourse();
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
+        }
+    }
+
+    /**
+     * Propagates the currently resolved student participations into the cached course (via {@link CourseStorageService})
+     * so the course-overview sidebar re-maps and reflects the started exercise live — its card transitions from
+     * "Not yet started" to the started/result state and shows the score without a page reload.
+     *
+     * This must run for both a participation that is new to this component instance and one that is already present:
+     * starting a programming exercise immediately navigates to the code editor, which re-resolves this component with
+     * the participation already loaded. In that case {@link onNewParticipation} takes the "already present" branch, so
+     * scoping the propagation to only newly created participations left the sidebar card stuck at "Not yet started".
+     */
+    private propagateParticipationsToCachedCourse(): void {
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId);
+        const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
+        if (course && cachedExercise) {
+            cachedExercise.studentParticipations = this._studentParticipations();
+            this.courseStorageService.updateCourse(course);
         }
     }
 

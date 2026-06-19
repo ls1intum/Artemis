@@ -612,4 +612,26 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
         expect(cachedExercise.studentParticipations).toContain(newParticipation);
     });
+
+    it('should propagate an already-present participation into the cached course (start navigates to the code editor, re-resolving it)', () => {
+        // Starting a programming exercise navigates to the code editor, which re-resolves this component with the
+        // participation already loaded into _studentParticipations. onNewParticipation then takes the "already present"
+        // branch, so the cached-course propagation must still run — otherwise the sidebar card stays at "Not yet started".
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const existingParticipation = { id: 778 } as StudentParticipation;
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [existingParticipation] } as Exercise;
+        // The participation is already resolved on this component instance before onNewParticipation fires.
+        (comp as unknown as { _studentParticipations: { set: (value: StudentParticipation[]) => void } })._studentParticipations.set([existingParticipation]);
+
+        comp.onNewParticipation(existingParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(cachedExercise.studentParticipations).toContain(existingParticipation);
+    });
 });

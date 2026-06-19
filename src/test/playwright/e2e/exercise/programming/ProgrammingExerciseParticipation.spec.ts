@@ -100,6 +100,37 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         });
     });
 
+    // Reproduces tester feedback (@laadvo): when a student starts an exercise in place on the course overview, the
+    // sidebar card must update live (from "Not yet started" to the started/result state) WITHOUT a page reload — it
+    // previously stayed at "Not yet started" until refreshing. No build is required: the participation creation alone
+    // must flip the sidebar card.
+    test.describe('Updates the course-overview sidebar live when starting an exercise', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Sidebar card leaves "Not yet started" right after starting (no reload)', async ({ page, login, courseOverview }) => {
+            test.slow();
+            await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+            const card = courseOverview.getExerciseSidebarCard(exercise.title!);
+            await expect(card).toContainText('Not yet started', { timeout: 30000 });
+
+            const startButton = courseOverview.getStartExerciseButton(exercise.id!);
+            await startButton.waitFor({ state: 'visible', timeout: 30000 });
+            const participationResponse = page.waitForResponse(
+                (resp) => resp.url().includes(`/exercises/${exercise.id}/participations`) && resp.request().method() === 'POST' && resp.status() === 201,
+            );
+            await startButton.click();
+            await participationResponse;
+
+            // Without any reload, the sidebar card must no longer show "Not yet started".
+            await expect(card).not.toContainText('Not yet started', { timeout: 15000 });
+        });
+    });
+
     // Covers the result-only ("Bucket C") placement of jhi-result in the instructor/admin build overview
     // (finished-jobs-table), where the component receives a [result] without a participation or exercise.
     // evaluateTemplateStatus short-circuits to HAS_RESULT there, so the score badge must render.
