@@ -140,6 +140,29 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
 
+    it('does not re-fetch build logs when the participation object is replaced with the same id and latest result (prevents the constructor-effect buildlogs loop, #12976)', () => {
+        const makeParticipation = (resultId: number) => ({ id: 1, submissions: [{ id: 1, results: [{ id: resultId }] }] }) as Participation;
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getBuildLogsStub.mockReturnValue(of(buildLogs));
+
+        fixture.componentRef.setInput('participation', makeParticipation(5));
+        fixture.detectChanges();
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+
+        getBuildLogsStub.mockClear();
+        // Replace the participation with a NEW object carrying the same id and same latest result id → must NOT re-fetch,
+        // otherwise the constructor effect re-fetches build logs on every change-detection cycle in an infinite loop.
+        fixture.componentRef.setInput('participation', makeParticipation(5));
+        fixture.detectChanges();
+        expect(getBuildLogsStub).not.toHaveBeenCalled();
+
+        // A genuinely new result (different result id) re-fetches.
+        fixture.componentRef.setInput('participation', makeParticipation(6));
+        fixture.detectChanges();
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+    });
+
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
