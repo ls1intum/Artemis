@@ -100,7 +100,7 @@ describe('ExerciseSplitPanelComponent', () => {
         const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
 
         // Programming exercise with the online editor: navigating to the code editor is expected on the first run.
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as Exercise);
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
         fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
         fixture.detectChanges();
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 5], expect.anything());
