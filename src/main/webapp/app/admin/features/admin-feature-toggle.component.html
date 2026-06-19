@@ -40,7 +40,9 @@
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
                     [class.bg-surface-50]="profileInfo.isActive"
+                    [class.dark:bg-surface-800]="profileInfo.isActive"
                     [class.bg-surface-100]="!profileInfo.isActive"
+                    [class.dark:bg-surface-700]="!profileInfo.isActive"
                     data-testid="profile-feature-card"
                 >
                     <div class="mb-3 flex items-start justify-between">
@@ -83,7 +85,9 @@
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
                     [class.bg-surface-50]="moduleInfo.isActive"
+                    [class.dark:bg-surface-800]="moduleInfo.isActive"
                     [class.bg-surface-100]="!moduleInfo.isActive"
+                    [class.dark:bg-surface-700]="!moduleInfo.isActive"
                     data-testid="module-feature-card"
                 >
                     <div class="mb-3 flex items-start justify-between">
@@ -126,6 +130,7 @@
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
                     [class.bg-surface-100]="!featureInfo.isActive"
+                    [class.dark:bg-surface-700]="!featureInfo.isActive"
                     data-testid="runtime-toggle-card"
                 >
                     <div class="mb-3 flex items-start justify-between">

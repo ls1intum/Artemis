@@ -9,7 +9,7 @@
     <div class="overflow-x-auto">
         <table id="healthCheck" class="w-full border-collapse" aria-describedby="health-page-heading">
             <thead>
-                <tr class="border-b border-surface-200">
+                <tr class="border-b border-surface-200 dark:border-surface-700">
                     <th scope="col" class="py-2 px-3 text-start" jhiTranslate="health.table.service"></th>
                     <th scope="col" class="py-2 px-3 text-center" jhiTranslate="health.table.status"></th>
                     <th scope="col" class="py-2 px-3 text-center" jhiTranslate="health.details.details"></th>
@@ -18,7 +18,7 @@
             @if (health()) {
                 <tbody>
                     @for (componentHealth of health()!.components | keyvalue; track componentHealth) {
-                        <tr [id]="componentHealth.key" class="border-b border-surface-100 odd:bg-surface-50">
+                        <tr [id]="componentHealth.key" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                             <td class="py-2 px-3">
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
                                 @if (componentHealth.value?.details?.url) {
@@ -41,7 +41,7 @@
                             </td>
                         </tr>
                     }
-                    <tr id="websocketConnection" class="border-b border-surface-100 odd:bg-surface-50">
+                    <tr id="websocketConnection" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                         <td class="py-2 px-3">Websocket Connection (Client -> Server)</td>
                         <td class="py-2 px-3 text-center" data-testid="status-cell">
                             <jhi-connection-status />

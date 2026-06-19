@@ -12,21 +12,21 @@
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse" aria-describedby="showHealthLabel">
                     <thead>
-                        <tr class="border-b border-surface-200">
+                        <tr class="border-b border-surface-200 dark:border-surface-700">
                             <th scope="col" class="py-2 px-3 text-start" jhiTranslate="health.details.name"></th>
                             <th scope="col" class="py-2 px-3 text-start" jhiTranslate="health.details.value"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @for (healthDetail of h.value.details! | keyvalue; track healthDetail) {
-                            <tr class="border-b border-surface-100">
+                            <tr class="border-b border-surface-100 dark:border-surface-700">
                                 <td class="py-2 px-3 align-top">{{ healthDetail.key }}</td>
                                 <td class="py-2 px-3">
                                     @if (isBuildAgentsArray(healthDetail.value, healthDetail.key)) {
                                         <!-- Special formatting for LocalCI build agents -->
                                         <div class="build-agents-health">
                                             @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.name) {
-                                                <div class="mb-3 rounded-lg border border-surface-200 p-2">
+                                                <div class="mb-3 rounded-lg border border-surface-200 dark:border-surface-700 p-2">
                                                     <div class="mb-1 flex items-center justify-between">
                                                         <strong>{{ agent.displayName }}</strong>
                                                         <p-tag [severity]="getStatusBadgeSeverity(agent.status)" [value]="agent.status" data-testid="agent-status-tag" />

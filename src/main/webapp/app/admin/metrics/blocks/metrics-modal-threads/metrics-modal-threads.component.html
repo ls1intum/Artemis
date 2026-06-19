@@ -37,7 +37,7 @@
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
     <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {
-        <div class="py-2 border-b border-surface-200">
+        <div class="py-2 border-b border-surface-200 dark:border-surface-700">
             <h6 class="flex items-center gap-2 flex-wrap">
                 <p-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
                 {{ thread.threadName }} (ID {{ thread.threadId }})
@@ -46,7 +46,7 @@
                     <span [hidden]="!thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.hide"></span>
                 </a>
             </h6>
-            <div class="rounded-lg border border-surface-200 p-3 font-mono text-sm" [hidden]="!thread.showThreadDump">
+            <div class="rounded-lg border border-surface-200 dark:border-surface-700 p-3 font-mono text-sm" [hidden]="!thread.showThreadDump">
                 @for (st of thread.stackTrace; track st) {
                     <div class="mb-1">
                         <samp

@@ -16,7 +16,13 @@
         <div class="overflow-x-auto" data-testid="spring-configuration-table">
             <table class="w-full border-collapse text-sm" aria-describedby="spring-configuration">
                 <thead>
-                    <tr jhiSort predicate="prefix" [ascending]="beansAscending()" (ascendingChange)="updateBeansAscending($event)" class="border-b border-surface-200">
+                    <tr
+                        jhiSort
+                        predicate="prefix"
+                        [ascending]="beansAscending()"
+                        (ascendingChange)="updateBeansAscending($event)"
+                        class="border-b border-surface-200 dark:border-surface-700"
+                    >
                         <th jhiSortBy="prefix" scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">
                             <span jhiTranslate="configuration.table.prefix"></span> <fa-icon [icon]="faSort" />
                         </th>
@@ -27,7 +33,7 @@
                 </thead>
                 <tbody>
                     @for (bean of beans(); track bean) {
-                        <tr class="border-b border-surface-100 odd:bg-surface-50">
+                        <tr class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                             <td class="px-3 py-2 break">
                                 <span>{{ bean.prefix }}</span>
                             </td>
@@ -54,14 +60,14 @@
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse text-sm" [attr.aria-describedby]="'property-source-' + i">
                         <thead>
-                            <tr class="border-b border-surface-200">
+                            <tr class="border-b border-surface-200 dark:border-surface-700">
                                 <th scope="col" class="w-2/5 px-3 py-2 text-start font-semibold">Property</th>
                                 <th scope="col" class="w-3/5 px-3 py-2 text-start font-semibold">Value</th>
                             </tr>
                         </thead>
                         <tbody>
                             @for (property of propertySource.properties | keyvalue; track property) {
-                                <tr class="border-b border-surface-100 odd:bg-surface-50">
+                                <tr class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                                     <td class="px-3 py-2 break">{{ property.key }}</td>
                                     <td class="px-3 py-2 break">
                                         <div class="flex justify-end">

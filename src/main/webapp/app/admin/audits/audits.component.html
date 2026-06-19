@@ -26,31 +26,31 @@
                             (ascendingChange)="ascending.set($event)"
                             (sortChange)="transition()"
                         >
-                            <th scope="col" jhiSortBy="auditEventDate" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" jhiSortBy="auditEventDate" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="principal" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" jhiSortBy="principal" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="auditEventType" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" jhiSortBy="auditEventType" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.data"></span>
                             </th>
                         </tr>
                     } @else {
                         <tr>
-                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.date"></span>
                             </th>
-                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.principal"></span>
                             </th>
-                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.status"></span>
                             </th>
-                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200">
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
                                 <span jhiTranslate="audits.table.header.data"></span>
                             </th>
                         </tr>
@@ -58,13 +58,13 @@
                 </thead>
                 <tbody>
                     @for (audit of audits(); track audit) {
-                        <tr class="odd:bg-surface-50 even:bg-surface-0">
-                            <td class="px-3 py-2 border-b border-surface-100">{{ audit.timestamp | artemisDate: 'long' : true }}</td>
-                            <td class="px-3 py-2 border-b border-surface-100">
+                        <tr class="odd:bg-surface-50 even:bg-surface-0 dark:odd:bg-surface-800 dark:even:bg-surface-900">
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">{{ audit.timestamp | artemisDate: 'long' : true }}</td>
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">
                                 <small>{{ audit.principal }}</small>
                             </td>
-                            <td class="px-3 py-2 border-b border-surface-100">{{ audit.type }}</td>
-                            <td class="px-3 py-2 border-b border-surface-100">
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">{{ audit.type }}</td>
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">
                                 @if (audit.data?.message) {
                                     <span>{{ audit.data.message }}</span>
                                 }
