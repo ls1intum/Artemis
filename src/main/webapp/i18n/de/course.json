@@ -303,6 +303,7 @@
                     }
                 }
             },
+            "toggleSidebar": "Sidebar ein/ausblenden (⇧ + Ctrl + B)",
             "students": "Studierende",
             "participations": "Teilnahmen",
             "tutors": "Tutor:innen",

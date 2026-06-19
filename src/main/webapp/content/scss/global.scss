@@ -14,10 +14,8 @@
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
-// Needed for markdown-it-github-alerts and markdown callouts
-@import 'markdown-it-github-alerts/styles/github-colors-light.css';
-@import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
-@import 'markdown-it-github-alerts/styles/github-base.css';
+// Needed for the in-house GitHub-style markdown alerts and markdown callouts
+@import 'src/main/webapp/content/scss/github-alerts';
 
 @import 'primeicons/primeicons.css';
 
@@ -642,6 +640,12 @@ code.password:hover {
     margin-bottom: 0;
 }
 
+.tiny-icon-button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+}
+
 .assessments {
     width: calc(100% - 30px);
     height: 100vh;
@@ -967,6 +971,11 @@ body[data-onboarding-active-step='1'] > .p-select-overlay {
     pointer-events: none;
 }
 
+.small-tooltip {
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
 /* Boostrap 5 Print Styles (https://github.com/coliff/bootstrap-print-css/) */
 @media print {
     *,
@@ -1219,7 +1228,12 @@ body.transparent-background {
 }
 
 .scrollable-content {
+    &.no-header-bar-height {
+        --header-height: 16px !important;
+    }
+
     @include dynamic-content-height(--header-height);
+
     overflow-y: auto;
 }
 
