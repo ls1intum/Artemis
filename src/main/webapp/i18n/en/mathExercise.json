@@ -7,6 +7,9 @@
                 "editLabel": "Edit Math Exercise",
                 "createOrEditLabel": "Create or edit a Math Exercise"
             },
+            "created": "Created new Math Exercise with identifier {{ param }}",
+            "updated": "Updated Math Exercise with identifier {{ param }}",
+            "deleted": "Deleted Math Exercise with identifier {{ param }}",
             "detail": {
                 "title": "Math Exercise Detail",
                 "submittedMaths": "Submitted Maths",
