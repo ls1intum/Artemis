@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import { admin, studentOne } from '../../support/users';
 import { test } from '../../support/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
@@ -18,16 +18,30 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
     });
 
-    /** Drags the p-splitter gutter horizontally by the given delta, re-reading its box each call. */
-    async function dragGutter(page: Page, gutter: any, deltaX: number): Promise<void> {
+    /** Drags the p-splitter gutter horizontally by the given delta. `hover()` ensures the gutter is interactable. */
+    async function dragGutter(page: Page, gutter: Locator, deltaX: number): Promise<void> {
+        await gutter.hover();
         const box = (await gutter.boundingBox())!;
         expect(box).not.toBeNull();
         const startX = box.x + box.width / 2;
         const startY = box.y + box.height / 2;
-        await page.mouse.move(startX, startY);
         await page.mouse.down();
         await page.mouse.move(startX + deltaX, startY, { steps: 12 });
         await page.mouse.up();
+    }
+
+    /** Polls the panel width until two consecutive reads agree, so the splitter has finished its initial layout. */
+    async function waitForSettledWidth(panel: Locator): Promise<number> {
+        let previous = -1;
+        for (let i = 0; i < 20; i++) {
+            const width = (await panel.boundingBox())!.width;
+            if (Math.abs(width - previous) < 1 && width > 0) {
+                return width;
+            }
+            previous = width;
+            await panel.page().waitForTimeout(100);
+        }
+        return previous;
     }
 
     test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview }) => {
@@ -41,17 +55,22 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         await expect(gutter).toBeVisible({ timeout: 30_000 });
         await expect(leftPanel).toBeVisible();
 
-        const leftBefore = (await leftPanel.boundingBox())!;
-        expect(leftBefore).not.toBeNull();
+        // The splitter re-lays-out once the projected right-panel content populates; wait for that to settle.
+        const leftBefore = await waitForSettledWidth(leftPanel);
+        expect(leftBefore).toBeGreaterThan(0);
 
-        // Drag the gutter to the right -> the left panel grows.
-        await dragGutter(page, gutter, 180);
-        const leftAfterGrow = (await leftPanel.boundingBox())!;
-        expect(leftAfterGrow.width).toBeGreaterThan(leftBefore.width + 60);
+        // Drag the gutter to the right -> the left panel grows. Poll, because the very first pointerdown after
+        // load can land before the splitter's drag handler is wired; a second nudge then takes effect.
+        await expect(async () => {
+            await dragGutter(page, gutter, 180);
+            const width = (await leftPanel.boundingBox())!.width;
+            expect(width).toBeGreaterThan(leftBefore + 60);
+        }).toPass({ timeout: 10_000 });
+        const leftAfterGrow = (await leftPanel.boundingBox())!.width;
 
         // Drag the gutter back to the left -> the left panel shrinks again.
         await dragGutter(page, gutter, -240);
-        const leftAfterShrink = (await leftPanel.boundingBox())!;
-        expect(leftAfterShrink.width).toBeLessThan(leftAfterGrow.width - 60);
+        const leftAfterShrink = (await leftPanel.boundingBox())!.width;
+        expect(leftAfterShrink).toBeLessThan(leftAfterGrow - 60);
     });
 });

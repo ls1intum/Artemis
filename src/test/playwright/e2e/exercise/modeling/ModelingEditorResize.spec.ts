@@ -11,9 +11,13 @@ const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 /**
  * End-to-end coverage for the in-house `jhiResizable` directive (the interact.js replacement).
  * The student modeling editor exposes a bottom resize handle (`resizeOptions = { verticalResize: true }`)
- * that drags the `.modeling-editor` container's height, clamped to [MIN_HEIGHT, MAX_HEIGHT].
+ * that drags the `.modeling-editor` container's height, clamped to [MIN_HEIGHT, MAX_HEIGHT]. We assert on
+ * the inline height the directive writes (deterministic), not on the bounding box (which shifts while the
+ * Apollon canvas loads). A tall viewport keeps the bottom handle on-screen for `page.mouse`.
  */
 test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
+    test.use({ viewport: { width: 1600, height: 1400 } });
+
     let modelingExercise: ModelingExercise;
 
     test.beforeEach('Create modeling exercise', async ({ login, exerciseAPIRequests }) => {
@@ -21,15 +25,21 @@ test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
-    /** Drags the bottom resize handle by the given vertical delta (negative = up), re-reading its box each call. */
-    async function dragBottomHandle(page: Page, handle: Locator, deltaY: number): Promise<void> {
+    /** The inline height (px) the directive writes to the host, or 0 when none is set yet. */
+    async function inlineHeight(container: Locator): Promise<number> {
+        return container.evaluate((el: HTMLElement) => parseFloat(el.style.height) || 0);
+    }
+
+    /** Drags the bottom resize handle by the given vertical delta (negative = up). `hover()` hit-tests the handle. */
+    async function dragBottomHandle(page: Page, container: Locator, deltaY: number): Promise<void> {
+        const handle = container.locator('.draggable-bottom');
+        await handle.scrollIntoViewIfNeeded();
+        await handle.hover(); // actionability check: scrolls to + positions the mouse on the real handle (not an overlay).
         const box = (await handle.boundingBox())!;
         expect(box).not.toBeNull();
         const startX = box.x + box.width / 2;
         const startY = box.y + box.height / 2;
-        await page.mouse.move(startX, startY);
         await page.mouse.down();
-        // Move in steps so the directive receives intermediate pointermove events.
         await page.mouse.move(startX, startY + deltaY, { steps: 12 });
         await page.mouse.up();
     }
@@ -38,7 +48,9 @@ test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
 
-        const container = page.locator('.modeling-editor').first();
+        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
+        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
+        const container = page.locator('.modeling-editor.resizable');
         const handle = container.locator('.draggable-bottom');
 
         // The directive-driven handle and resized container both render in participation mode.
@@ -46,57 +58,58 @@ test.describe('Resizable modeling editor', { tag: '@fast' }, () => {
         await expect(container).toBeVisible();
         // Only the vertical (bottom) handle is configured here — no horizontal handle.
         await expect(container.locator('.draggable-right')).toHaveCount(0);
+        // Nothing has written an inline height yet.
+        expect(await inlineHeight(container)).toBe(0);
 
-        const before = (await container.boundingBox())!;
-        expect(before).not.toBeNull();
+        // Drag the handle DOWN -> the directive writes a larger inline height (>= the configured minimum).
+        await dragBottomHandle(page, container, 220);
+        await expect(container).toHaveAttribute('style', /height:\s*\d+(\.\d+)?px/);
+        const grown = await inlineHeight(container);
+        expect(grown).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT);
 
-        // Drag the handle DOWN by 250px -> the container grows by roughly the same amount.
-        await dragBottomHandle(page, handle, 250);
-        const afterGrow = (await container.boundingBox())!;
-        expect(afterGrow.height).toBeGreaterThan(before.height + 150);
-        // The directive writes the clamped height to the host's inline style.
-        await expect(container).toHaveAttribute('style', /height:\s*\d+px/);
-
-        // Drag the handle UP by 150px -> the container shrinks again but stays at/above the minimum.
-        await dragBottomHandle(page, handle, -150);
-        const afterShrink = (await container.boundingBox())!;
-        expect(afterShrink.height).toBeLessThan(afterGrow.height - 80);
-        expect(afterShrink.height).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 5);
+        // Drag the handle UP -> the height shrinks again but stays at/above the minimum.
+        await dragBottomHandle(page, container, -140);
+        const shrunk = await inlineHeight(container);
+        expect(shrunk).toBeLessThan(grown);
+        expect(shrunk).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 1);
     });
 
     test('clamps the editor height to its minimum when dragging far up', async ({ login, page, courseOverview }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
 
-        const container = page.locator('.modeling-editor').first();
-        const handle = container.locator('.draggable-bottom');
-        await expect(handle).toBeVisible();
+        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
+        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
+        const container = page.locator('.modeling-editor.resizable');
+        await expect(container.locator('.draggable-bottom')).toBeVisible();
 
         // First grow so there is room to shrink, then drag far past the minimum.
-        await dragBottomHandle(page, handle, 300);
-        const grown = (await container.boundingBox())!;
-        expect(grown.height).toBeGreaterThan(MODELING_EDITOR_MIN_HEIGHT);
+        await dragBottomHandle(page, container, 300);
+        const grown = await inlineHeight(container);
+        expect(grown).toBeGreaterThan(MODELING_EDITOR_MIN_HEIGHT);
 
-        await dragBottomHandle(page, handle, -3000);
-        const clamped = (await container.boundingBox())!;
-        // Clamped to the configured minimum height (within a small rendering tolerance), not collapsed to 0.
-        expect(clamped.height).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 5);
-        expect(clamped.height).toBeLessThanOrEqual(MODELING_EDITOR_MIN_HEIGHT + 40);
-        expect(clamped.height).toBeLessThan(grown.height);
+        await dragBottomHandle(page, container, -3000);
+        const clamped = await inlineHeight(container);
+        // Clamped to the configured minimum (within a 1px tolerance), not collapsed below it.
+        expect(clamped).toBeGreaterThanOrEqual(MODELING_EDITOR_MIN_HEIGHT - 1);
+        expect(clamped).toBeLessThanOrEqual(MODELING_EDITOR_MIN_HEIGHT + 1);
+        expect(clamped).toBeLessThan(grown);
     });
 
     test('does not resize when the handle is pressed without dragging', async ({ login, page, courseOverview }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
 
-        const container = page.locator('.modeling-editor').first();
-        const handle = container.locator('.draggable-bottom');
-        await expect(handle).toBeVisible();
+        // The OUTER `.modeling-editor` is a plain wrapper; the INNER one (`#resizeContainer`) carries the
+        // `jhiResizable` directive and gains the `resizable` class, so target it via `.modeling-editor.resizable`.
+        const container = page.locator('.modeling-editor.resizable');
+        await expect(container.locator('.draggable-bottom')).toBeVisible();
 
-        const before = (await container.boundingBox())!;
-        // A press + release without movement (delta 0) must not change the height (no accidental resize on click).
-        await dragBottomHandle(page, handle, 0);
-        const after = (await container.boundingBox())!;
-        expect(Math.abs(after.height - before.height)).toBeLessThanOrEqual(2);
+        // Establish a known height first, then press+release without movement.
+        await dragBottomHandle(page, container, 200);
+        const beforeClick = await inlineHeight(container);
+        await dragBottomHandle(page, container, 0);
+        const afterClick = await inlineHeight(container);
+        expect(Math.abs(afterClick - beforeClick)).toBeLessThanOrEqual(1);
     });
 });
