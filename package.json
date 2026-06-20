@@ -60,7 +60,6 @@
         "markdown-it": "14.2.0",
         "monaco-editor": "0.55.1",
         "ngx-extended-pdf-viewer": "27.0.0",
-        "ngx-infinite-scroll": "21.0.0",
         "papaparse": "5.5.3",
         "pdf-lib": "1.17.1",
         "pdfjs-dist": "6.0.227",
