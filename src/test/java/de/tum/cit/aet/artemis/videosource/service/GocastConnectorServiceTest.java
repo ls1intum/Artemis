@@ -195,6 +195,18 @@ class GocastConnectorServiceTest {
                 .satisfies(ex -> assertThat(((GocastIntegrationException) ex).getUpstreamStatus()).isEqualTo(HttpStatus.UNAUTHORIZED));
     }
 
+    @Test
+    void getBindingStatus_throwsGocastIntegrationException_onEmptyBody_ratherThanReturnFalse() {
+        // A 2xx with an empty body must NOT coerce to false (which would look like "not bound"
+        // and could trigger a false REVOKE). Instead it must throw BAD_GATEWAY so the resource's
+        // EP7-error path leaves the binding ACTIVE.
+        mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/binding-status")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andRespond(withStatus(HttpStatus.OK)); // 200 with no body
+
+        assertThatThrownBy(() -> connector.getBindingStatus(42L)).isInstanceOf(GocastIntegrationException.class)
+                .satisfies(ex -> assertThat(((GocastIntegrationException) ex).getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
+    }
+
     // ── Transport / I-O errors (no HTTP response) → synthetic 503 ─────────────
 
     @Test

@@ -14,8 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { GocastStreamPickerComponent } from 'app/videosource/gocast/gocast-stream-picker.component';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -51,13 +50,14 @@ function urlValidator(control: AbstractControl) {
         FaIconComponent,
         ArtemisTranslatePipe,
         GocastStreamPickerComponent,
-        FeatureToggleHideDirective,
     ],
 })
 export class OnlineUnitFormComponent {
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faTimes = faTimes;
-    protected readonly FeatureToggle = FeatureToggle;
+
+    private readonly featureToggleService = inject(FeatureToggleService);
+    protected readonly isGocastActive = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Gocast), { initialValue: false });
 
     formData = input<OnlineUnitFormData>();
     isEditMode = input<boolean>(false);

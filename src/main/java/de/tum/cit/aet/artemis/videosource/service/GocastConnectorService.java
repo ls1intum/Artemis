@@ -177,7 +177,10 @@ public class GocastConnectorService {
         try {
             BindingStatusResponse response = restClient.get().uri("/integration/courses/{courseId}/binding-status", gocastCourseId).header(HttpHeaders.AUTHORIZATION, bearerToken)
                     .retrieve().body(BindingStatusResponse.class);
-            return response != null && response.bound();
+            if (response == null) {
+                throw new GocastIntegrationException("EP7 getBindingStatus returned an empty body for courseId=" + gocastCourseId, HttpStatus.BAD_GATEWAY);
+            }
+            return response.bound();
         }
         catch (RestClientException ex) {
             throw translate("EP7 getBindingStatus failed for courseId=" + gocastCourseId, ex);
