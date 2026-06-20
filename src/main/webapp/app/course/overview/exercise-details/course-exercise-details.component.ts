@@ -23,7 +23,8 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -414,25 +415,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        // Keep the existing participation's fields (the websocket payload may only carry a result delta)
+                        // and merge in the changed submissions so prior attempts are not lost (see mergeSubmissions).
                         updatedParticipations = currentParticipations.map((participation) => {
                             if (participation.id !== changedParticipation.id) {
                                 return participation;
                             }
-
-                            const existingSubmissions = participation.submissions ?? [];
-                            const incomingSubmissions = changedParticipation.submissions ?? [];
-                            const existingIds = new Set(existingSubmissions.map((s) => s.id));
-
-                            const updatedExisting = existingSubmissions.map((existing) => {
-                                const incoming = incomingSubmissions.find((s) => s.id === existing.id);
-                                return incoming ?? existing;
-                            });
-                            const newSubmissions = incomingSubmissions.filter((s) => !existingIds.has(s.id));
-
-                            return { ...participation, submissions: [...updatedExisting, ...newSubmissions] };
+                            const merged = deepClone(participation);
+                            merged.submissions = this.mergeSubmissions(participation.submissions, changedParticipation.submissions);
+                            return merged;
                         });
                     } else {
-                        updatedParticipations = [...currentParticipations, changedParticipation];
+                        updatedParticipations = currentParticipations.concat(changedParticipation);
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
@@ -455,21 +449,52 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    this.exercise = { ...this.exercise!, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+                    const updatedExercise = deepClone(this.exercise!);
+                    updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
+                    updatedExercise.studentParticipations = teamAssignment.studentParticipations;
+                    this.exercise = updatedExercise;
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
     }
 
+    /**
+     * Merges incoming submissions into the existing ones, deduplicating by id so the full attempt history is preserved.
+     *
+     * Practice quiz submits (and websocket result deltas) deliver a participation payload that only carries the latest
+     * submission. Replacing the stored submissions with that payload would drop every prior attempt from the
+     * result-history dropdown until a page refresh reloads the full participation. Existing submissions are therefore
+     * kept in place (an incoming submission with the same id replaces its older version), and genuinely new
+     * submissions are appended. Submissions without an id are never deduplicated away.
+     */
+    private mergeSubmissions(existingSubmissions: Submission[] = [], incomingSubmissions: Submission[] = []): Submission[] {
+        const incomingById = new Map(incomingSubmissions.filter((submission) => submission.id !== undefined).map((submission) => [submission.id, submission]));
+        const updatedExisting = existingSubmissions.map((submission) => (submission.id !== undefined ? (incomingById.get(submission.id) ?? submission) : submission));
+        const existingIds = new Set(existingSubmissions.map((submission) => submission.id));
+        const newSubmissions = incomingSubmissions.filter((submission) => submission.id === undefined || !existingIds.has(submission.id));
+        return updatedExisting.concat(newSubmissions);
+    }
+
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();
         if (current.some((p) => p.id === participation.id)) {
-            this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
+            // Keep the incoming participation's fields (it is the freshly started/changed one) but preserve the full
+            // attempt history by merging submissions rather than replacing them (see mergeSubmissions for the why).
+            this._studentParticipations.set(
+                current.map((p) => {
+                    if (p.id !== participation.id) {
+                        return p;
+                    }
+                    const merged = deepClone(participation);
+                    merged.submissions = this.mergeSubmissions(p.submissions, participation.submissions);
+                    return merged;
+                }),
+            );
         } else {
-            this._studentParticipations.set([...current, participation]);
+            this._studentParticipations.set(current.concat(participation));
 
             if (this.exercise) {
-                this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                this.exercise.studentParticipations = (this.exercise.studentParticipations ?? []).concat(participation);
             }
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
@@ -542,11 +567,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (participation.id !== graded.id) {
                 return participation;
             }
-            const existingSubmissions = participation.submissions ?? [];
-            const submissions = existingSubmissions.some((existing) => existing.id === submission.id)
-                ? existingSubmissions.map((existing) => (existing.id === submission.id ? submission : existing))
-                : [...existingSubmissions, submission];
-            return { ...participation, submissions };
+            const merged = deepClone(participation);
+            merged.submissions = this.mergeSubmissions(participation.submissions, [submission]);
+            return merged;
         });
         this._studentParticipations.set(updatedParticipations);
     }
@@ -611,10 +634,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     createInstructorActions() {
         const items: InstructorActionItem[] = [];
         if (this.exercise?.isAtLeastTutor) {
-            items.push(...this.createTutorActions());
+            this.createTutorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastEditor) {
-            items.push(...this.createEditorActions());
+            this.createEditorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
             items.push(this.getReEvaluateItem());
@@ -623,9 +646,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     createTutorActions(): InstructorActionItem[] {
-        const tutorActionItems = [...this.getDefaultItems()];
+        const tutorActionItems = this.getDefaultItems().slice();
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            tutorActionItems.push(...this.getQuizItems());
+            this.getQuizItems().forEach((item) => tutorActionItems.push(item));
         } else {
             tutorActionItems.push(this.getParticipationItem());
         }
