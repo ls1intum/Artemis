@@ -1314,9 +1314,6 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
-        correctDndMappings:
-          type: array
-          items: {$ref: '#/components/schemas/DragAndDropMapping'}
         spots:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerSpot'}
@@ -1457,7 +1454,7 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
-        correctDndMappings:
+        correctMappings:
           type: array
           items: {$ref: '#/components/schemas/DragAndDropMapping'}
     ProblemStatementRewriteResponse:
