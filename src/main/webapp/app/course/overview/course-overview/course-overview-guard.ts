@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, catchError, from, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -15,6 +16,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 })
 export class CourseOverviewGuard implements CanActivate {
     private courseStorageService = inject(CourseStorageService);
+    private courseManagementService = inject(CourseManagementService);
     private accountService = inject(AccountService);
     private router = inject(Router);
     private serverDateService = inject(ArtemisServerDateService);
@@ -39,15 +41,22 @@ export class CourseOverviewGuard implements CanActivate {
         const user$: Observable<User | undefined> =
             path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
         const course = this.courseStorageService.getCourse(courseIdNumber);
-        // On the first navigation into a course, either nothing is stored yet or only the slim course from the
-        // course list (which e.g. always has empty exams and would produce wrong access decisions). The guard
-        // deliberately does NOT issue the expensive for-dashboard call: it allows the activation, the course
-        // container fetches the full course exactly once afterwards (which stores it for all later guard
-        // activations) and re-checks access for the target route.
-        if (!course || !this.courseStorageService.isCourseFullyLoaded(courseIdNumber)) {
-            return of(true);
+        if (course && this.courseStorageService.isCourseFullyLoaded(courseIdNumber)) {
+            // Fast path: the full course is already loaded (e.g. when switching between tabs), so decide without a request.
+            return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));
         }
-        return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));
+        // First navigation into the course: only the slim course from the course list might be stored (it e.g. always
+        // has empty exams and would produce wrong access decisions). Load the full course once and decide BEFORE
+        // activating the route, so an inaccessible tab never briefly mounts. findOneForDashboard stores the result, so
+        // the course container reuses it instead of fetching again. On a load error (e.g. 403 for an unregistered user)
+        // allow activation; the container's loadCourse then handles it (course registration redirect / alert).
+        return forkJoin({
+            courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),
+            user: user$,
+        }).pipe(
+            switchMap(({ courseRes, user }) => this.handleReturn(courseRes.body ?? undefined, path, user)),
+            catchError(() => of(true)),
+        );
     }
 
     handleReturn = (course?: Course, type?: string, user?: User): Observable<boolean> => {

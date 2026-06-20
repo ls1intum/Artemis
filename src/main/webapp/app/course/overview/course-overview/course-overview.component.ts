@@ -248,11 +248,22 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
-        const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
+        const courseId = this.courseId();
+        const storedCourse = this.courseStorageService.getCourse(courseId);
+        if (!refresh && storedCourse && this.courseStorageService.isCourseFullyLoaded(courseId)) {
+            // The CourseOverviewGuard already loaded and stored the full course before activating the route, so reuse it
+            // instead of issuing a second for-dashboard call (load once). Re-check access for the target child route,
+            // because on an in-place course switch the guard is not re-evaluated.
+            this.checkChildRouteAccess(storedCourse);
+            this.course.set(storedCourse);
+            this.refreshingCourse.set(false);
+            return of(undefined);
+        }
+        const observable = this.courseManagementService.findOneForDashboard(courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
-                    // The guard skips the access check when no course is stored yet (first navigation into the course);
-                    // re-check the target child route now that the course is loaded
+                    // Unguarded routes and in-place switches reach loadCourse without the guard having decided; re-check
+                    // the target child route now that the course is loaded so an inaccessible tab is redirected away.
                     this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
                 }
@@ -518,8 +529,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     /**
      * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
-     * This complements the {@link CourseOverviewGuard}, which cannot decide on the first navigation into a course
-     * because it deliberately does not load the course itself.
+     * This complements the {@link CourseOverviewGuard}: the guard decides on the first navigation into a course, but it is
+     * not re-evaluated on an in-place course switch (different courseId without re-creating this container), so the access
+     * check for the new target route has to run here once the course has been (re)loaded.
      */
     private checkChildRouteAccess(course: Course): void {
         const childPath = this.route.snapshot.firstChild?.routeConfig?.path;

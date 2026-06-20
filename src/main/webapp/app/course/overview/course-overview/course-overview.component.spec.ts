@@ -460,7 +460,8 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
+        // getCourse is read both in ngOnInit (initial cache lookup) and in loadCourse (reuse-vs-fetch decision)
+        expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
@@ -536,9 +537,33 @@ describe('CourseOverviewComponent', () => {
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
+    it('should reuse the cached full course without fetching when the guard already loaded it', async () => {
+        // The guard loads + stores the full course before activation; loadCourse must reuse it instead of fetching again (load once)
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(component.course()).toEqual(course1);
+    });
+
+    it('should still re-check access on the reused cached course (in-place switch) and redirect when inaccessible', async () => {
+        // On an in-place course switch the guard is not re-evaluated, so the reuse path must run the access check itself
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course1, lectures: undefined } as Course);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
     it('should re-check access for the target child route after loading the course and redirect when it is not accessible', async () => {
-        // Deep link into the lectures tab of a course without lectures: nothing is stored yet,
-        // so the guard allows the activation optimistically and the container must redirect after the load.
+        // Deep link into the lectures tab of a course without lectures, reaching loadCourse without the guard having
+        // decided (e.g. unguarded entry / in-place switch): the container fetches and must redirect after the load.
         (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: undefined } as Course, headers: new HttpHeaders() })));
         const navigateSpy = vi.spyOn(router, 'navigate');
