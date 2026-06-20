@@ -34,7 +34,6 @@ public class GocastConfiguration {
      * @return a {@link RestClient} targeting the gocast integration endpoints
      */
     @Bean
-    @Conditional(GocastEnabled.class)
     public RestClient gocastIntegrationRestClient(RestClient.Builder builder, @Value("${artemis.tum-live.api-base-url}") String baseUrl) {
         return builder.baseUrl(baseUrl).build();
     }
