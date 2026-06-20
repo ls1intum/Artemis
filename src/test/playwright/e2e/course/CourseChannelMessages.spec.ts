@@ -365,4 +365,56 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await courseCommunication.checkDiscussionPost(oldestPost.id!, 'Oldest discussion infinite scroll message');
         });
     });
+
+    test.describe('Infinite scroll in course-wide search', () => {
+        let oldestPost: Post;
+        // A unique token placed in every seeded message so the search returns exactly this set of three pages.
+        const searchToken = 'infscroll' + generateUUID().slice(0, 8);
+        const messagesToSeed = 120;
+
+        test.beforeEach('Create a channel with three pages of searchable messages', async ({ login, communicationAPIRequests }) => {
+            await login(admin);
+            const channelName = 'cws-' + generateUUID().slice(0, 8);
+            const channel = await communicationAPIRequests.createCourseMessageChannel({ id: writeCourse.id } as any, channelName, 'Course-wide search channel', false, true);
+            await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
+
+            // Seed as the student who will search, so the messages are part of their conversations and already read.
+            await login(studentOne);
+            oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', `${searchToken} oldest message`);
+            const fillerCount = messagesToSeed - 2;
+            for (let batchStart = 0; batchStart < fillerCount; batchStart += 20) {
+                await Promise.all(
+                    Array.from({ length: Math.min(20, fillerCount - batchStart) }, (_, index) =>
+                        communicationAPIRequests.createCourseMessage(
+                            { id: writeCourse.id } as any,
+                            channel.id!,
+                            'channel',
+                            `${searchToken} filler message ${batchStart + index + 1}`,
+                        ),
+                    ),
+                );
+            }
+            await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', `${searchToken} newest message`);
+            await communicationAPIRequests.markConversationAsRead(writeCourse.id, channel.id!);
+        });
+
+        test('Scrolling up repeatedly chain-loads earlier pages of course-wide search results', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication`);
+            await courseMessages.acceptCodeOfConductButton();
+
+            // Search the whole course for the unique token; the first page of matching results renders.
+            await courseMessages.searchCourseWide(searchToken);
+            await expect.poll(() => courseMessages.getRenderedSearchResultCount(), { timeout: 30000 }).toBeGreaterThan(0);
+
+            // The oldest match sits on the last result page. Scroll to the top repeatedly to chain-load earlier
+            // pages until it is rendered. Before this fix the results container was not the scroll container and
+            // was recreated on every fetch, so course-wide search never loaded a second page.
+            await expect(async () => {
+                await courseMessages.scrollMessagesToTop();
+                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
+            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+
+            await courseMessages.checkMessage(oldestPost.id!, `${searchToken} oldest message`);
+        });
+    });
 });

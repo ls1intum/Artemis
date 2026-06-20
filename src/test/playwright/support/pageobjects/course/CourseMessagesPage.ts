@@ -1007,4 +1007,20 @@ export class CourseMessagesPage {
     async getRenderedPostCount(): Promise<number> {
         return this.page.locator('.post-item').count();
     }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
+    }
 }
