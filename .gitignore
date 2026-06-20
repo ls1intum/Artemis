@@ -266,3 +266,6 @@ deferredEagerBeanInstantiationViolations.dot
 # Local planning notes
 ######################
 /docs/superpowers/plans/
+
+# Playwright MCP browser snapshot dumps (local debugging artifacts)
+.playwright-mcp/

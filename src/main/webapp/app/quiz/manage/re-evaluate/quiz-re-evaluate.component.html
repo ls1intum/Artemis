@@ -57,10 +57,15 @@
                         </div>
                         <div class="row">
                             <div class="form-group quiz-duration">
-                                <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration"></label>
+                                <label jhiTranslate="artemisApp.quizExercise.duration"></label>
                                 <div class="d-flex align-items-center">
+                                    <label for="quiz-duration-hours" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.hours"></label>
+                                    <input id="quiz-duration-hours" class="form-control me-2" title="Duration" [value]="duration().hours" type="number" disabled />
+                                    <span jhiTranslate="artemisApp.quizExercise.hours"></span>
+                                    <label for="quiz-duration-minutes" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.minutes"></label>
                                     <input id="quiz-duration-minutes" class="form-control me-2" title="Duration" [value]="duration().minutes" type="number" disabled />
                                     <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                    <label for="quiz-duration-seconds" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.seconds"></label>
                                     <input id="quiz-duration-seconds" class="form-control me-2 ms-2" title="Duration" type="number" [value]="duration().seconds" disabled />
                                     <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                                 </div>

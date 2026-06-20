@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.lti.config;
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -82,7 +82,7 @@ public class Lti13TokenRetriever {
 
         MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         try {
             URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
             RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
