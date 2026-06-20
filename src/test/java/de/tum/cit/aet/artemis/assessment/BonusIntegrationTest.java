@@ -308,6 +308,41 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateBonusWithoutSourceGradingScaleBadRequest() throws Exception {
+        bonusRepository.delete(courseBonus);
+
+        // A create request without a source grading scale must fail with 400 rather than a 500 from findById(null).
+        request.postWithResponseBody(bonusesUrl(), new BonusRequestDTO(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, null), BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        // A source reference that is present but carries a null id is rejected the same way.
+        request.postWithResponseBody(bonusesUrl(), new BonusRequestDTO(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, new BonusRequestDTO.GradingScaleIdDTO(null)),
+                BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        // The rejected requests created no bonus row.
+        assertThat(bonusRepository.findAllByBonusToExamId(examId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusValidationFailureDoesNotPersistBonusToStrategy() throws Exception {
+        // The bonusTo grading scale currently carries the original (continuous) strategy.
+        assertThat(gradingScaleRepository.findById(bonusToExamGradingScale.getId()).orElseThrow().getBonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+
+        // An invalid source grading scale (GradeType.GRADE instead of BONUS) makes BonusService.saveBonus reject the update.
+        Exam otherExam = examUtilService.addExamWithExerciseGroup(course, true);
+        GradingScale invalidSource = GradingScaleFactory.generateGradingScaleForExam(otherExam, GradeType.GRADE);
+        gradingScaleRepository.save(invalidSource);
+
+        // Switching the strategy to POINTS and the source to the invalid scale in one update is rejected with 400.
+        request.put(bonusesUrl() + "/" + courseBonus.getId(), bonusRequest(courseBonus.getId(), -1.0, BonusStrategy.POINTS, invalidSource.getId()), HttpStatus.BAD_REQUEST);
+
+        // Regression guard: because validation now runs before persisting, the bonusTo grading scale's strategy must be
+        // unchanged when reloaded from the DB. Previously the strategy was saved before validation, leaving a partial update.
+        assertThat(gradingScaleRepository.findById(bonusToExamGradingScale.getId()).orElseThrow().getBonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteBonus() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
