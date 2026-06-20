@@ -31,12 +31,13 @@ export interface GocastBinding {
 }
 
 /**
- * Mirrors GocastBindingWithApprovalDTO: the response from POST /binding.
- * Contains the newly-created binding (always PENDING) and the TUM Live approval URL.
+ * Mirrors GocastBindingWithApprovalDTO: the response from POST /binding and GET /binding.
+ * Contains the binding and, for PENDING bindings only, the TUM Live approval URL.
+ * The approvalUrl is absent/undefined for ACTIVE and REVOKED bindings.
  */
 export interface GocastBindingWithApproval {
     binding: GocastBinding;
-    approvalUrl: string;
+    approvalUrl?: string;
 }
 
 export interface GocastPlaybackToken {

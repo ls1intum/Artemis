@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GocastBinding, GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
+import { GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
 
 /**
  * Angular service for the gocast (TUM Live) integration.
@@ -51,9 +51,10 @@ export class GocastService {
     /**
      * Get the current binding status for the Artemis course.
      * This triggers an EP7 server-to-server verification; the server flips PENDING→ACTIVE when gocast confirms.
+     * Returns GocastBindingWithApproval; the approvalUrl is present only for PENDING bindings.
      */
-    getBinding(courseId: number): Observable<GocastBinding> {
-        return this.http.get<GocastBinding>(`${this.baseUrl}/${courseId}/binding`);
+    getBinding(courseId: number): Observable<GocastBindingWithApproval> {
+        return this.http.get<GocastBindingWithApproval>(`${this.baseUrl}/${courseId}/binding`);
     }
 
     /**

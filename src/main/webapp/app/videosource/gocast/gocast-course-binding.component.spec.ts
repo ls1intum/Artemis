@@ -11,7 +11,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GocastCourseBindingComponent } from './gocast-course-binding.component';
 import { GocastService } from './gocast.service';
-import { GocastBinding, GocastBindingWithApproval, GocastCourse } from './gocast.model';
+import { GocastBindingWithApproval, GocastCourse } from './gocast.model';
 
 describe('GocastCourseBindingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -26,23 +26,23 @@ describe('GocastCourseBindingComponent', () => {
         { id: 2, name: 'GDB', slug: 'gdb', year: 2026, teachingTerm: 'W', vodEnabled: false, visibility: 'public' },
     ];
 
-    const pendingBinding: GocastBinding = {
-        courseId: 10,
-        gocastCourseId: 1,
-        gocastCourseSlug: 'eidi',
-        status: 'PENDING',
-    };
-
     const pendingBindingWithApproval: GocastBindingWithApproval = {
-        binding: pendingBinding,
+        binding: {
+            courseId: 10,
+            gocastCourseId: 1,
+            gocastCourseSlug: 'eidi',
+            status: 'PENDING',
+        },
         approvalUrl: 'https://tum.live/admin/course/1/integration/confirm?service=99&redirect=https://artemis.tum.de/callback',
     };
 
-    const activeBinding: GocastBinding = {
-        courseId: 10,
-        gocastCourseId: 1,
-        gocastCourseSlug: 'eidi',
-        status: 'ACTIVE',
+    const activeBindingWithApproval: GocastBindingWithApproval = {
+        binding: {
+            courseId: 10,
+            gocastCourseId: 1,
+            gocastCourseSlug: 'eidi',
+            status: 'ACTIVE',
+        },
     };
 
     beforeEach(async () => {
@@ -54,7 +54,7 @@ describe('GocastCourseBindingComponent', () => {
         gocastService = TestBed.inject(GocastService);
         alertService = TestBed.inject(AlertService);
 
-        // Default stubs
+        // Default stubs — getBinding returns GocastBindingWithApproval now
         vi.spyOn(gocastService, 'listAdministeredTumLiveCourses').mockReturnValue(of(mockCourses));
         vi.spyOn(gocastService, 'getBinding').mockReturnValue(throwError(() => ({ status: 404 })));
     });
@@ -124,7 +124,7 @@ describe('GocastCourseBindingComponent', () => {
 
     it('should open the approval URL in a new tab', () => {
         createComponent();
-        component.binding.set(pendingBinding);
+        component.binding.set(pendingBindingWithApproval.binding);
         component.approvalUrl.set('https://tum.live/admin/course/1/integration/confirm?service=99&redirect=https://artemis.tum.de/callback');
 
         const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
@@ -138,11 +138,11 @@ describe('GocastCourseBindingComponent', () => {
     });
 
     it('should flip binding to ACTIVE when checkBindingStatus returns ACTIVE', () => {
-        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBinding));
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBindingWithApproval));
         vi.spyOn(alertService, 'success');
 
         createComponent();
-        component.binding.set(pendingBinding);
+        component.binding.set(pendingBindingWithApproval.binding);
         component.checkBindingStatus();
 
         expect(component.binding()?.status).toBe('ACTIVE');
@@ -150,12 +150,15 @@ describe('GocastCourseBindingComponent', () => {
     });
 
     it('should keep binding as PENDING when gocast has not yet confirmed', () => {
-        const stillPending: GocastBinding = { ...pendingBinding, status: 'PENDING' };
-        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(stillPending));
+        const stillPendingWithApproval: GocastBindingWithApproval = {
+            binding: { ...pendingBindingWithApproval.binding, status: 'PENDING' },
+            approvalUrl: pendingBindingWithApproval.approvalUrl,
+        };
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(stillPendingWithApproval));
         vi.spyOn(alertService, 'info');
 
         createComponent();
-        component.binding.set(pendingBinding);
+        component.binding.set(pendingBindingWithApproval.binding);
         component.checkBindingStatus();
 
         expect(component.binding()?.status).toBe('PENDING');
@@ -167,7 +170,7 @@ describe('GocastCourseBindingComponent', () => {
         vi.spyOn(alertService, 'success');
 
         createComponent();
-        component.binding.set(activeBinding);
+        component.binding.set(activeBindingWithApproval.binding);
         component.revokeBinding();
 
         expect(gocastService.deleteBinding).toHaveBeenCalledWith(10);
@@ -186,8 +189,8 @@ describe('GocastCourseBindingComponent', () => {
     });
 
     it('should load existing ACTIVE binding on init', () => {
-        // Override getBinding to return an active binding
-        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBinding));
+        // Override getBinding to return an active binding (wrapped in GocastBindingWithApproval)
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBindingWithApproval));
 
         createComponent();
 
