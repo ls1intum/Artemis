@@ -546,6 +546,40 @@ export class CourseMessagesPage {
         await membersButton.waitFor({ state: 'visible', timeout: 10000 });
     }
 
+    /**
+     * Opens a conversation and waits until a specific post has rendered in the message list.
+     *
+     * {@link openConversation} only guarantees the conversation has *activated* (its members button
+     * is shown). Under heavy parallel multi-node load the initial message-list fetch/render occasionally
+     * races a freshly created post (or the activation itself), so the post is briefly absent from an
+     * otherwise-active conversation and the subsequent {@link checkMessage} times out. A full reload
+     * re-issues the message-list request — which, against the shared database, returns the persisted
+     * post — and re-renders the list. Retrying the reload before failing keeps callers testing their
+     * actual behavior rather than this load-induced rendering race (the same mitigation
+     * {@link openConversation} already uses for activation and the bookmark-persistence test uses after
+     * its reload).
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     * @param postID - The ID of the post that must be visible before returning.
+     */
+    async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await this.getSinglePost(postID).waitFor({ state: 'visible', timeout: 12000 });
+                return;
+            } catch {
+                // Post not rendered yet — fall through to a reload, which re-fetches the message list.
+            }
+        }
+        throw new Error(`Post #item-${postID} did not render in conversation ${conversationID} after activating and reloading`);
+    }
+
     async listMembersButton(courseID: number, conversationID: number) {
         const membersButton = this.page.locator('.members');
         try {

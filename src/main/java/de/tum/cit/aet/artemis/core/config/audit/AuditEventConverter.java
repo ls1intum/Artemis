@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config.audit;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class AuditEventConverter {
      */
     public List<AuditEvent> convertToAuditEvent(Iterable<PersistentAuditEvent> persistentAuditEvents) {
         if (persistentAuditEvents == null) {
-            return Collections.emptyList();
+            return List.of();
         }
         List<AuditEvent> auditEvents = new ArrayList<>();
         for (PersistentAuditEvent persistentAuditEvent : persistentAuditEvents) {
