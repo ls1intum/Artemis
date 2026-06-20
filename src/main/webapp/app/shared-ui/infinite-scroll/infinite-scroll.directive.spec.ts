@@ -122,11 +122,11 @@ describe('InfiniteScrollDirective', () => {
         expect(container().querySelectorAll('.item')).toHaveLength(4);
     });
 
-    it('observes the host element with a rootMargin derived from the distance inputs', () => {
+    it('observes the host element at the content edge (rootMargin 0)', () => {
         flush();
 
         expect(observer().options?.root).toBe(container());
-        expect(observer().options?.rootMargin).toBe('15% 0px 20% 0px');
+        expect(observer().options?.rootMargin).toBe('0px');
     });
 
     it('observes the viewport (null root) when scrollWindow is true', () => {
@@ -144,7 +144,7 @@ describe('InfiniteScrollDirective', () => {
         expect(host.ups).toBe(0);
     });
 
-    it('emits scrolledUp exactly once each time the top sentinel re-enters', () => {
+    it('emits scrolledUp exactly once each time the top sentinel leaves and re-enters', () => {
         flush();
         const top = sentinel('top');
 
@@ -158,6 +158,33 @@ describe('InfiniteScrollDirective', () => {
         observer().trigger([{ target: top, isIntersecting: false }]); // leave -> re-arm
         observer().trigger([{ target: top, isIntersecting: true }]); // enter -> emit
         expect(host.ups).toBe(2);
+    });
+
+    it('keeps paging chained when the container is hidden during the fetch: a hidden-box callback arms the next page', () => {
+        flush();
+        const top = sentinel('top');
+
+        // First page: scroll to the top, fire once.
+        observer().trigger([{ target: top, isIntersecting: false }]);
+        observer().trigger([{ target: top, isIntersecting: true }]);
+        expect(host.ups).toBe(1);
+
+        // While loading, the consumer hides the list (`display: none`), collapsing the sentinel to a
+        // zero-area box. This is the only callback the observer produces for that cycle, so it must arm
+        // the sentinel — otherwise the next scroll back to the edge could not load the following page.
+        observer().trigger([{ target: top, isIntersecting: false, boundingClientRect: { width: 0, height: 0 } }]);
+        // The list is shown again at the nudged position and the user scrolls back to the edge -> next page.
+        observer().trigger([{ target: top, isIntersecting: true }]);
+        expect(host.ups).toBe(2);
+    });
+
+    it('never fires from a hidden (zero-area) box on its own', () => {
+        flush();
+        const top = sentinel('top');
+
+        // A hidden box is reported as not intersecting, so it can only arm, never emit by itself.
+        observer().trigger([{ target: top, isIntersecting: false, boundingClientRect: { width: 0, height: 0 } }]);
+        expect(host.ups).toBe(0);
     });
 
     it('emits scrolled when the bottom sentinel re-enters', () => {
@@ -194,22 +221,6 @@ describe('InfiniteScrollDirective', () => {
         host.disabled.set(false);
         fixture.detectChanges();
         observer().trigger([{ target: top, isIntersecting: false }]);
-        observer().trigger([{ target: top, isIntersecting: true }]);
-        expect(host.ups).toBe(1);
-    });
-
-    it('ignores zero-area callbacks (hidden container) so it neither re-arms nor double-fires on restore', () => {
-        flush();
-        const top = sentinel('top');
-
-        // Genuine scroll up to the top fires once.
-        observer().trigger([{ target: top, isIntersecting: false }]);
-        observer().trigger([{ target: top, isIntersecting: true }]);
-        expect(host.ups).toBe(1);
-
-        // Container hidden during the fetch (e.g. `display: none`): the sentinel has no layout box.
-        observer().trigger([{ target: top, isIntersecting: false, boundingClientRect: { width: 0, height: 0 } }]);
-        // Container restored with the sentinel still inside the zone: must NOT fire again.
         observer().trigger([{ target: top, isIntersecting: true }]);
         expect(host.ups).toBe(1);
     });

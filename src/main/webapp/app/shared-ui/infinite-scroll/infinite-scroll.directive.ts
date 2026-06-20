@@ -12,15 +12,35 @@ import { DestroyRef, Directive, ElementRef, Renderer2, afterNextRender, inject, 
  * </div>
  * ```
  *
- * Why IntersectionObserver instead of scroll listeners: it needs no throttling or scroll-position
- * math and is naturally edge-triggered. The observer reports a sentinel "entering" the viewport only
- * once per visit, so the directive fires the matching event a single time when the user reaches an
- * edge and re-arms only after they scroll away again. This prevents the page-skipping over-fetch that
- * a level-triggered scroll listener is prone to, and matches `ngx-infinite-scroll`'s default
- * `immediateCheck=false` behaviour (no event on the initial, already-at-the-top render).
+ * ## How it triggers
  *
- * Configuration inputs (`scrollWindow`, `infiniteScrollUpDistance`, `infiniteScrollDistance`) are read
- * once when the observer is created; `infiniteScrollDisabled` is evaluated live on every callback.
+ * The observer watches the sentinels against the true content edge (`rootMargin: 0`). A sentinel is
+ * *armed* whenever it is reported as having left the viewport, and fires its event exactly once when
+ * it next re-enters. Both sentinels start un-armed, so the initial render (already at the top) does
+ * not emit — matching `ngx-infinite-scroll`'s default `immediateCheck=false`. Firing on re-entry
+ * (rather than on every scroll tick) avoids the page-skipping over-fetch a level-triggered scroll
+ * listener is prone to.
+ *
+ * ## Why the trigger sits at the content edge (and not a prefetch margin)
+ *
+ * The consumers load the next page in response to `scrolledUp`, then nudge the scroll position by a
+ * small fixed amount (e.g. `scrollTop += 50`) so the user is no longer pinned to the edge. For chained
+ * paging to keep working, that nudge must move the sentinel *across* the trigger boundary so the next
+ * scroll back to the edge re-arms and re-fires. A prefetch `rootMargin` (a percentage of the root
+ * height, typically larger than the nudge) keeps the sentinel inside the trigger zone after the nudge,
+ * so no further `IntersectionObserver` callback is produced and paging stalls after the first page.
+ * Anchoring the trigger at the content edge keeps each scroll-to-edge gesture loading exactly one page,
+ * which is what `ngx-infinite-scroll` did via its scroll listener. `infiniteScrollUpDistance` /
+ * `infiniteScrollDistance` are still accepted for drop-in compatibility but no longer widen the zone.
+ *
+ * ## Hidden container during a fetch
+ *
+ * While loading, the consumers hide the list (`display: none`), which collapses the sentinels to a
+ * zero-area box. The observer reports that as "left the viewport", which *arms* the sentinel — and
+ * crucially it must, because once the list is shown again at the nudged position the sentinel sits just
+ * outside the viewport with no further threshold crossing, so this is the only callback that can arm it
+ * for the next scroll. A hidden box is never reported as intersecting, so it can never *fire*; it only
+ * ever arms. `infiniteScrollDisabled` is evaluated live on every callback.
  */
 @Directive({
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
@@ -32,23 +52,24 @@ export class InfiniteScrollDirective {
 
     /** When false, the host element itself is the scroll container; when true, the browser viewport is observed. */
     readonly scrollWindow = input(true);
-    /** Top prefetch threshold; mapped to the observer's top `rootMargin` as `infiniteScrollUpDistance * 10`% of the root height. */
+    /** Accepted for `ngx-infinite-scroll` drop-in compatibility; no longer widens the trigger zone (see class docs). */
     readonly infiniteScrollUpDistance = input(1.5);
-    /** Bottom prefetch threshold; mapped to the observer's bottom `rootMargin` as `infiniteScrollDistance * 10`% of the root height. */
+    /** Accepted for `ngx-infinite-scroll` drop-in compatibility; no longer widens the trigger zone (see class docs). */
     readonly infiniteScrollDistance = input(2);
     /** When true, edge events are suppressed (the observer keeps running, but nothing is emitted). */
     readonly infiniteScrollDisabled = input(false);
 
-    /** Emitted when the user scrolls to (near) the top of the scroll content. */
+    /** Emitted when the user scrolls to the top of the scroll content. */
     readonly scrolledUp = output<void>();
-    /** Emitted when the user scrolls to (near) the bottom of the scroll content. Not consumed today, kept for reuse. */
+    /** Emitted when the user scrolls to the bottom of the scroll content. Not consumed today, kept for reuse. */
     readonly scrolled = output<void>();
 
     private observer?: IntersectionObserver;
     private topSentinel?: HTMLElement;
     private bottomSentinel?: HTMLElement;
     // Both start un-armed so the initial render (already at the top) does not emit. A sentinel is
-    // (re-)armed once it leaves the trigger zone and fires once when it next re-enters.
+    // (re-)armed once it leaves the viewport (including when the container is hidden mid-fetch) and
+    // fires once when it next re-enters.
     private armedUp = false;
     private armedDown = false;
 
@@ -69,7 +90,9 @@ export class InfiniteScrollDirective {
 
         this.observer = new IntersectionObserver((entries) => this.onIntersect(entries), {
             root: this.scrollWindow() ? null : hostEl,
-            rootMargin: `${this.infiniteScrollUpDistance() * 10}% 0px ${this.infiniteScrollDistance() * 10}% 0px`,
+            // Trigger at the true content edge so the consumer's post-load scroll nudge re-arms the
+            // sentinel and chained paging keeps working (see class docs).
+            rootMargin: '0px',
             threshold: 0,
         });
         this.observer.observe(this.topSentinel);
@@ -78,19 +101,11 @@ export class InfiniteScrollDirective {
 
     private onIntersect(entries: IntersectionObserverEntry[]): void {
         for (const entry of entries) {
-            // Ignore callbacks fired because the scroll container is detached or hidden (e.g. a
-            // `display: none` toggle while loading more, but also `visibility: hidden`, a collapsed
-            // height, or a zero-width parent): the sentinel then has no usable layout box, so this is
-            // not a real scroll movement and must not (re-)arm or fire the trigger. A shown sentinel is
-            // always `width: 100%` / `height: 1px`, so neither dimension is ever legitimately zero —
-            // hence `||` (any zero dimension means hidden) has no false positives and catches more
-            // hidden states than a strict `&&` would.
-            if (entry.boundingClientRect.width === 0 || entry.boundingClientRect.height === 0) {
-                continue;
-            }
             const isTop = entry.target === this.topSentinel;
             if (!entry.isIntersecting) {
-                // Left the trigger zone: arm so the next entry fires exactly once.
+                // Left the viewport (or the container was hidden, e.g. a `display: none` toggle while
+                // loading more): arm so the next re-entry fires exactly once. A hidden box reports
+                // `isIntersecting === false`, so it can only ever arm here, never fire below.
                 if (isTop) {
                     this.armedUp = true;
                 } else {
