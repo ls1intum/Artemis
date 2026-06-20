@@ -7,7 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -38,8 +37,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_configuration", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
-    @Transient
-    private String buildScript;
+    private transient String buildScript;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).

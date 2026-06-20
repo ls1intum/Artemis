@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
+
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -11,6 +14,20 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 class LegacyBuildPlanConverterServiceTest {
 
     private final LegacyBuildPlanConverterService legacyBuildPlanConverterService = new LegacyBuildPlanConverterService();
+
+    @Test
+    void deserializeBuildConfig_shouldKeepLegacyBuildScriptWithHibernateModule() throws Exception {
+        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Hibernate7Module());
+
+        final ProgrammingExerciseBuildConfig buildConfig = objectMapper.readValue("""
+                {
+                    "buildPlanConfiguration": "{}",
+                    "buildScript": "echo hi"
+                }
+                """, ProgrammingExerciseBuildConfig.class);
+
+        assertThat(buildConfig.getBuildScript()).isEqualTo("echo hi");
+    }
 
     @Test
     void adaptLegacyBuildPlanConfiguration_shouldConvertLegacyConfiguration() {
