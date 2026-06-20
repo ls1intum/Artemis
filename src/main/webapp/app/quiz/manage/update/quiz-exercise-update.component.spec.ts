@@ -873,12 +873,7 @@ describe('QuizExerciseUpdateComponent', () => {
             };
 
             const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
-                if (question instanceof ShortAnswerQuestion) {
-                    question.correctMappings = [];
-                }
-                if (question instanceof DragAndDropQuestion) {
-                    question.correctMappings = [];
-                }
+                question.correctMappings = [];
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
