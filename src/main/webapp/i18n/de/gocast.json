@@ -26,6 +26,10 @@
                     "revoke": "TUM Live Kursverknüpfung konnte nicht aufgehoben werden. Bitte versuche es erneut."
                 }
             },
+            "player": {
+                "poweredByTumLive": "Bereitgestellt von TUM Live",
+                "tokenError": "Video konnte nicht geladen werden. Das Wiedergabe-Token konnte nicht abgerufen werden."
+            },
             "streamPicker": {
                 "label": "TUM Live Stream auswählen",
                 "selectPlaceholder": "-- Stream auswählen --",
