@@ -479,20 +479,23 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_gocastReturns403AndEp7Returns403_marksRevokedAndReturnsConflict() throws Exception {
-        // EP2 returns 403 and EP7 itself returns 403 → the service account is definitively not a course admin.
-        // This must be treated as a definitive revocation: mark REVOKED and return 409.
+    void getPlaybackToken_gocastReturns403AndEp7Returns403_staysActiveAndReturnsOriginal403() throws Exception {
+        // EP2 returns 403 and EP7 itself throws a 403.
+        // A thrown EP7 exception (including 403) is NOT a definitive "unbound" signal — only an explicit
+        // false return value from EP7 revokes the binding. The binding must stay ACTIVE and the original
+        // EP2 403 must be propagated to the caller.
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("service account forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
-        // EP7 throws a 403 — definitively not bound
+        // EP7 throws a 403 (auth/service-account error, not a per-course revocation signal)
         when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
 
-        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
+        // The original EP2 403 is propagated unchanged.
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.FORBIDDEN);
 
-        // Binding must be marked REVOKED
+        // Binding must remain ACTIVE — a thrown EP7 exception must never cause a false REVOKED transition.
         GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
-        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.ACTIVE);
     }
 
     @Test

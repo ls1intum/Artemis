@@ -882,6 +882,14 @@ describe('AttachmentVideoUnitComponent — Gocast EP2 wiring', () => {
         const component = createComponentWith(true, 'https://vimeo.com/123456', 4);
         expect(component.gocastIdentity()).toBeUndefined();
     });
+
+    it('correctly parses gocastIdentity from a TUM Live URL with ?video_only=1 query param', () => {
+        // The attachment-video-unit-form autofills https://tum.live/w/{slug}/{streamId}?video_only=1
+        // so the validator accepts it. The parseTumLiveUrl function must still extract slug+streamId
+        // correctly from the pathname regardless of query parameters.
+        const component = createComponentWith(true, 'https://tum.live/w/eidi/4242?video_only=1', 5);
+        expect(component.gocastIdentity()).toEqual({ courseId: 7, streamId: 4242, slug: 'eidi' });
+    });
 });
 
 describe('AttachmentVideoUnitComponent — template wiring: gocastIdentity reaches jhi-video-player', () => {
