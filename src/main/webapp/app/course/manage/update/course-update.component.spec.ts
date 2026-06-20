@@ -309,6 +309,67 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('save organization sync', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        it('should persist added and removed organizations via the dedicated admin endpoints on save', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should not call any organization endpoint when the selection is unchanged', async () => {
+            // GIVEN
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+    });
+
     describe('onSelectedColor', () => {
         it('should update form', () => {
             const selectedColor = 'testSelectedColor';

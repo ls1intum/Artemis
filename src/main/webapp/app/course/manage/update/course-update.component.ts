@@ -5,7 +5,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -138,6 +138,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly requestMoreFeedbackEnabled = signal(true);
     readonly customizeGroupNames = signal(false);
     readonly courseOrganizations = signal<Organization[]>(undefined!);
+    /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
+    private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
 
     communicationEnabled = true;
@@ -168,6 +170,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.croppedImage.set(course.courseIconPath);
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations.set(organizations);
+                    this.initialOrganizationIds = new Set(organizations.map((organization) => organization.id!));
                 });
                 this.originalTimeZone = this.course.timeZone;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
@@ -236,7 +239,6 @@ export class CourseUpdateComponent implements OnInit {
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                organizations: new FormControl(this.courseOrganizations()),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
@@ -338,9 +340,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving.set(true);
-        if (this.courseForm.controls['organizations'] !== undefined) {
-            this.courseForm.controls['organizations'].setValue(this.courseOrganizations());
-        }
         let file = undefined;
         const croppedImage = this.croppedImage();
         if (this.courseImageUploadFile && croppedImage) {
@@ -393,9 +392,49 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Action on successful course creation or edit
+     * Action on successful course creation or edit.
+     * Organization assignments are persisted via dedicated admin endpoints (the course update payload
+     * intentionally does not carry organizations), so the diff is synced here before finalizing.
      */
     private onSaveSuccess(updatedCourse: Course | null) {
+        if (updatedCourse?.id !== undefined && this.isAdmin()) {
+            this.syncCourseOrganizations(updatedCourse.id).subscribe({
+                next: () => this.finalizeSave(updatedCourse),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
+        } else {
+            this.finalizeSave(updatedCourse);
+        }
+    }
+
+    /**
+     * Persists the difference between the initially loaded organizations and the current selection by
+     * calling the dedicated admin endpoints. Completes once all add/remove requests have finished.
+     * @param courseId the id of the saved course
+     */
+    private syncCourseOrganizations(courseId: number): Observable<unknown> {
+        const currentOrganizations = this.courseOrganizations() ?? [];
+        const currentOrganizationIds = new Set(currentOrganizations.map((organization) => organization.id!));
+
+        const requests: Observable<HttpResponse<void>>[] = [];
+        for (const organization of currentOrganizations) {
+            if (!this.initialOrganizationIds.has(organization.id!)) {
+                requests.push(this.organizationService.addCourseToOrganization(organization.id!, courseId));
+            }
+        }
+        for (const organizationId of this.initialOrganizationIds) {
+            if (!currentOrganizationIds.has(organizationId)) {
+                requests.push(this.organizationService.removeCourseFromOrganization(organizationId, courseId));
+            }
+        }
+
+        return requests.length > 0 ? forkJoin(requests) : of(undefined);
+    }
+
+    /**
+     * Broadcasts the modification, updates the local course store and navigates back to the course.
+     */
+    private finalizeSave(updatedCourse: Course | null) {
         this.isSaving.set(false);
 
         if (this.course != updatedCourse) {
