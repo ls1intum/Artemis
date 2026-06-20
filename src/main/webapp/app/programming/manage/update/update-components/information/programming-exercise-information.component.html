@@ -16,6 +16,7 @@
             [isImport]="isImport()"
             [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             [courseId]="courseId()"
+            (onTitleChange)="updateShortName($event)"
         />
     </div>
     @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {

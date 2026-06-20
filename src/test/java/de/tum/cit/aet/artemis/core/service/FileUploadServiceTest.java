@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,7 +96,7 @@ class FileUploadServiceTest {
     @Test
     void shouldHandleInvalidPathWhenDeletingFileUploads() {
         FileUpload fileUpload = mock(FileUpload.class);
-        List<FileUpload> fileUploads = Collections.singletonList(fileUpload);
+        List<FileUpload> fileUploads = List.of(fileUpload);
 
         when(fileUpload.getServerFilePath()).thenThrow(new InvalidPathException("", ""));
         when(fileUpload.getPath()).thenReturn("/invalid/path");
@@ -109,7 +108,7 @@ class FileUploadServiceTest {
 
     @Test
     void shouldHandleEmptyFileUploadListWhenDeleting() {
-        List<FileUpload> emptyFileUploads = Collections.emptyList();
+        List<FileUpload> emptyFileUploads = List.of();
 
         fileUploadService.deleteFileUploads(emptyFileUploads);
 

@@ -526,9 +526,19 @@ public class Exam extends DomainObject {
         this.quizExamMaxPoints = quizExamMaxPoints;
     }
 
+    /**
+     * Returns the exam title in a form that is safe to use in file or directory names.
+     *
+     * @return the sanitized exam title, or a stable unique fallback if the title has no ASCII representation
+     */
     @JsonIgnore
     public String getSanitizedExamTitle() {
-        // exam titles are non-nullable
-        return StringUtil.sanitizeStringForFileName(this.title);
+        // exam titles are non-nullable, but may sanitize to an empty string when they consist only of non-ASCII letters
+        // (sanitizeStringForFileName reduces the input to ASCII). Fall back to a stable, unique name in that case.
+        String sanitizedTitle = this.title == null ? "" : StringUtil.sanitizeStringForFileName(this.title);
+        if (sanitizedTitle.isBlank()) {
+            return getId() != null ? "exam_" + getId() : "exam";
+        }
+        return sanitizedTitle;
     }
 }

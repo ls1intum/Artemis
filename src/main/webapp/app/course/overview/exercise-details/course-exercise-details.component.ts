@@ -7,6 +7,7 @@ import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -69,11 +70,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
 
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
     protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -146,6 +152,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
 
     // Sorted results signal
     private readonly _sortedHistoryResults = signal<Result[]>([]);
@@ -464,9 +475,33 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             }
         }
+        this.propagateParticipationsToCachedCourse();
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
+        }
+    }
+
+    /**
+     * Propagates the currently resolved student participations into the cached course (via {@link CourseStorageService})
+     * so the course-overview sidebar re-maps and reflects the started exercise live — its card transitions from
+     * "Not yet started" to the started/result state and shows the score without a page reload.
+     *
+     * This must run for both a participation that is new to this component instance and one that is already present:
+     * starting a programming exercise immediately navigates to the code editor, which re-resolves this component with
+     * the participation already loaded. In that case {@link onNewParticipation} takes the "already present" branch, so
+     * scoping the propagation to only newly created participations left the sidebar card stuck at "Not yet started".
+     */
+    private propagateParticipationsToCachedCourse(): void {
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId);
+        const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
+        if (course && cachedExercise) {
+            cachedExercise.studentParticipations = this._studentParticipations();
+            this.courseStorageService.updateCourse(course);
         }
     }
 
