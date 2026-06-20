@@ -19,7 +19,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faThLarge, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faThLarge, faThList, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -36,10 +36,10 @@ import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
 
 @Component({
     selector: 'jhi-navbar',
@@ -66,7 +66,6 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
         ArtemisTranslatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        ServerAdministrationComponent,
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
@@ -100,7 +99,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faBook = faBook;
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
+    protected readonly faUserShield = faUserShield;
 
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);
@@ -132,6 +133,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.currentCourseContextService.course;
+    readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
+    readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly studentViewLink = getSignalBasedOnRoute(this.router, this.getStudentViewLinkFromRoute);
+    readonly managementViewLink = getSignalBasedOnRoute(this.router, this.getManagementViewLinkFromRoute);
 
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
@@ -168,15 +173,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
-            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
             const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
                 neededWidthToDisplayCollapsedOptionsHorizontally += 200;
-            }
-            if (hasServerAdminOption) {
-                neededWidthToNotRequireCollapse += 225;
-                neededWidthToDisplayCollapsedOptionsHorizontally += 225;
             }
         } else {
             // For login screen, we only see language and theme selectors which are smaller
@@ -830,6 +830,63 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return undefined;
         }
         return this.router.url.startsWith('/course-management') ? ['/course-management', courseId] : ['/courses', courseId];
+    }
+
+    private isStudentCourseViewRoute(url: string): boolean {
+        return /(^|\/)courses(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private isCourseManagementViewRoute(url: string): boolean {
+        return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private getStudentViewLinkFromRoute(url: string): string[] {
+        const courseId = url.match(/\/(?:courses|course-management)\/(\d+)/)?.[1];
+
+        const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseStudentPath, 'lectures'] },
+            { urlParts: ['communication'], targetPath: [...baseStudentPath, 'communication'] },
+            { urlParts: ['learning-path-management'], targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlParts: ['competency-management'], targetPath: [...baseStudentPath, 'competencies'] },
+            { urlParts: ['faqs'], targetPath: [...baseStudentPath, 'faq'] },
+            { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
+            { urlParts: ['course-statistics'], targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+
+        if (matchedRoute) {
+            return matchedRoute.targetPath;
+        }
+        return baseStudentPath;
+    }
+
+    private getManagementViewLinkFromRoute(url: string): string[] {
+        const courseId = url.match(/\/(?:courses|course-management)\/(\d+)/)?.[1];
+
+        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseManagementPath, 'lectures'] },
+            { urlParts: ['communication'], targetPath: [...baseManagementPath, 'communication'] },
+            { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-paths-management'] },
+            { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
+            { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
+            { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+
+        return matchedRoute ? matchedRoute.targetPath : baseManagementPath;
     }
 
     toggleNavbar() {

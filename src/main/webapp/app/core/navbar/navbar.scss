@@ -157,6 +157,36 @@ a:not(.btn):hover {
             }
         }
 
+        .navbar-perspective-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            line-height: 1;
+            color: var(--bs-navbar-brand-color);
+
+            a {
+                color: var(--bs-navbar-brand-color);
+
+                &:hover {
+                    color: var(--navbar-foreground) !important;
+                }
+
+                &.subtle {
+                    color: var(--navbar-dark-color);
+                }
+            }
+
+            .disabled {
+                color: var(--bs-navbar-brand-color);
+            }
+
+            .navbar-course-view-separator,
+            .navbar-course-view-divider {
+                color: var(--navbar-dark-color);
+            }
+        }
+
         .navbar-course-image,
         .course-circle {
             flex: 0 0 1.3rem;
