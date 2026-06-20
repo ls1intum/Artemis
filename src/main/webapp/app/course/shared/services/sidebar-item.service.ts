@@ -21,6 +21,7 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -298,6 +299,18 @@ export class CourseSidebarItemService {
             hidden: false,
         };
     }
+
+    getGocastBindingItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/gocast-binding`,
+            icon: faVideo,
+            title: 'TUM Live',
+            translation: 'artemisApp.gocast.binding.sidebarTitle',
+            testId: 'gocast-binding',
+            hidden: false,
+        };
+    }
+
     getNotificationSettingsItem(): SidebarItem {
         return {
             routerLink: 'settings',

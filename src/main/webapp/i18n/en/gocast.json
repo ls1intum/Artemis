@@ -2,6 +2,7 @@
     "artemisApp": {
         "gocast": {
             "binding": {
+                "sidebarTitle": "TUM Live",
                 "pageTitle": "TUM Live Course Link",
                 "title": "Link TUM Live Course",
                 "selectCourse": "Select a TUM Live course to link",

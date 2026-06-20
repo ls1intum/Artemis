@@ -98,9 +98,13 @@ export class GocastStreamPickerComponent implements OnInit {
                     this.loadStreams();
                 }
             },
-            error: () => {
-                // 404 or other error → treat as no binding; show the hint
-                this.bindingStatus.set('REVOKED');
+            error: (err: { status?: number }) => {
+                if (err.status === 404) {
+                    // 404 → no binding exists; show the "no binding" hint via REVOKED state
+                    this.bindingStatus.set('REVOKED');
+                }
+                // 5xx / other transient errors: leave bindingStatus undefined so the component
+                // renders nothing (avoids misleading "no binding" hint for upstream outages)
             },
         });
     }

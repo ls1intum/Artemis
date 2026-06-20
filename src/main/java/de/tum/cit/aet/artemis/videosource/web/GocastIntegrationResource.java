@@ -119,16 +119,26 @@ public class GocastIntegrationResource {
     /**
      * GET /courses/:courseId/tumlive-streams : List the streams of the bound gocast course.
      * <p>
-     * Requires an existing (any status) binding for the course. Calls EP8 on gocast (bearer-only, no OBO).
+     * Requires an {@code ACTIVE} binding for the course. A {@code PENDING} or {@code REVOKED} binding yields a
+     * raw 403 from gocast (EP8 rejects the service account when it is not yet a confirmed admin), so we
+     * guard early with a {@code 409 CONFLICT} — the same pattern as {@link #getPlaybackToken}.
+     * Calls EP8 on gocast (bearer-only, no OBO).
      *
      * @param courseId the Artemis course id
-     * @return 200 with the list of streams; 404 if no binding exists; 502/503 if gocast is unreachable
+     * @return 200 with the list of streams; 404 if no binding exists; 409 if the binding is not
+     *         {@code ACTIVE}; 502/503 if gocast is unreachable
      */
     @GetMapping("courses/{courseId}/tumlive-streams")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<GocastStreamDTO>> listCourseStreams(@PathVariable long courseId) {
         log.debug("REST request to list TUM Live streams for Artemis course {}", courseId);
         GocastCourseBinding binding = bindingService.getBindingByCourseIdElseThrow(courseId);
+        if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
+            // EP8 requires the service account to be a confirmed course admin (ACTIVE binding). Reject early
+            // with a clear 409 instead of forwarding the request and surfacing an opaque upstream 403.
+            log.debug("Stream list requested for non-ACTIVE binding (status={}) on course {}", binding.getStatus(), courseId);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
         try {
             List<GocastStreamDTO> streams = connectorService.listCourseStreams(binding.getGocastCourseId());
             return ResponseEntity.ok(streams);

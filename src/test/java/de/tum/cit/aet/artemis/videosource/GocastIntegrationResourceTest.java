@@ -152,6 +152,27 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
         verify(gocastConnectorService).listCourseStreams(42L);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listCourseStreams_pendingBinding_returnsConflict() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
+
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.CONFLICT, String.class);
+
+        // EP8 must not be called for a non-ACTIVE binding
+        verify(gocastConnectorService, never()).listCourseStreams(anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listCourseStreams_revokedBinding_returnsConflict() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.REVOKED);
+
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.CONFLICT, String.class);
+
+        verify(gocastConnectorService, never()).listCourseStreams(anyLong());
+    }
+
     // ── createBinding ─────────────────────────────────────────────────────────
 
     @Test

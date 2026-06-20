@@ -103,6 +103,16 @@ describe('GocastStreamPickerComponent', () => {
             expect(component.bindingStatus()).toBe('REVOKED');
             expect(component.streams()).toHaveLength(0);
         });
+
+        it('should leave bindingStatus undefined (render nothing) on a 5xx/other transient error', () => {
+            vi.spyOn(gocastService, 'getBinding').mockReturnValue(throwError(() => ({ status: 503 })));
+
+            createComponent(10);
+
+            // 5xx: do NOT set REVOKED — that would show a misleading "no binding" hint
+            expect(component.bindingStatus()).toBeUndefined();
+            expect(component.streams()).toHaveLength(0);
+        });
     });
 
     it('should show the stream dropdown when binding is ACTIVE', () => {

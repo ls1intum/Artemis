@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  */
 @Component({
     selector: 'jhi-tum-live-attribution',
-    standalone: true,
     imports: [ArtemisTranslatePipe],
     template: `
         <div class="tum-live-attribution">
