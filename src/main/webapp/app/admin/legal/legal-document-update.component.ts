@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -26,7 +26,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         TranslateDirective,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
-        NgbTooltip,
+        TooltipModule,
         ModePickerComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -84,7 +84,7 @@ export class LegalDocumentUpdateComponent implements OnInit {
     readonly warningTextMessage = signal('');
 
     /** Translation key for the page title */
-    titleKey: string;
+    readonly titleKey = signal<string>(undefined!);
 
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement
@@ -97,11 +97,11 @@ export class LegalDocumentUpdateComponent implements OnInit {
             )
             .subscribe();
         if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
-            this.titleKey = 'artemisApp.legal.imprint.updateImprint';
+            this.titleKey.set('artemisApp.legal.imprint.updateImprint');
         } else {
-            this.titleKey = 'artemisApp.legal.privacyStatement.updatePrivacyStatement';
+            this.titleKey.set('artemisApp.legal.privacyStatement.updatePrivacyStatement');
         }
-        this.languageHelper.updateTitle(this.titleKey);
+        this.languageHelper.updateTitle(this.titleKey());
 
         this.legalDocument.set(new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE));
         this.getLegalDocumentForUpdate(this.legalDocumentType, this.DEFAULT_LANGUAGE).subscribe((document) => {

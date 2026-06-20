@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -60,7 +60,11 @@ describe('CompetencyGraphModalComponent', () => {
                     provide: AlertService,
                     useClass: MockAlertService,
                 },
-                MockProvider(NgbActiveModal),
+                MockProvider(DynamicDialogRef),
+                {
+                    provide: DynamicDialogConfig,
+                    useValue: { data: { learningPathId } },
+                },
                 MockProvider(ScienceService),
             ],
         })
@@ -77,8 +81,6 @@ describe('CompetencyGraphModalComponent', () => {
 
         fixture = TestBed.createComponent(CompetencyGraphModalComponent);
         component = fixture.componentInstance;
-
-        fixture.componentRef.setInput('learningPathId', learningPathId);
     });
 
     it('should initialize', () => {

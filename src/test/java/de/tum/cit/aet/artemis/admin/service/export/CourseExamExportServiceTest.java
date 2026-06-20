@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exam_export";
 
@@ -81,7 +81,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.save(course);
 
         List<String> exportErrors = new ArrayList<>();
-        assertThatNoException().isThrownBy(() -> courseExamExportService.exportCourseForArchive(course, submissionExportPath, exportErrors, Collections.emptyMap()));
+        assertThatNoException().isThrownBy(() -> courseExamExportService.exportCourseForArchive(course, submissionExportPath, exportErrors, Map.of()));
 
         assertThat(exportErrors).isEmpty();
     }

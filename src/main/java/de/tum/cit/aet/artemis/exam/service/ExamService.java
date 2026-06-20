@@ -1211,7 +1211,7 @@ public class ExamService {
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
         List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
         List<DueDateStat[]> numberOfAssessmentsFinishedOfCorrectionRoundsByExercise = new ArrayList<>();
-        List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
+        List<Long> numberOfInitializedParticipationsByExercise = new ArrayList<>();
         List<Long> numberOfParticipationsForAssessmentGeneratedByExercise = new ArrayList<>();
 
         // loop over all exercises and retrieve all needed counts for the properties at once
@@ -1240,8 +1240,9 @@ public class ExamService {
                 }
             }
 
-            // get number of all generated participations
-            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
+            // get number of successfully initialized participations for current exercise and exam
+            numberOfInitializedParticipationsByExercise
+                    .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1253,13 +1254,13 @@ public class ExamService {
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
         Long[] totalNumberOfAssessmentsFinished = new Long[numberOfCorrectionRoundsInExam];
-        long totalNumberOfParticipationsGenerated = 0;
+        long totalNumberOfInitializedParticipations = 0;
         long totalNumberOfParticipationsForAssessment = 0;
 
         if (isInstructor) {
             // sum up all counts for the different properties
-            for (Long numberOfParticipations : numberOfParticipationsGeneratedByExercise) {
-                totalNumberOfParticipationsGenerated += numberOfParticipations != null ? numberOfParticipations : 0;
+            for (Long numberOfInitialized : numberOfInitializedParticipationsByExercise) {
+                totalNumberOfInitializedParticipations += numberOfInitialized != null ? numberOfInitialized : 0;
             }
         }
         // sum up all counts for the different properties
@@ -1300,8 +1301,9 @@ public class ExamService {
             }
 
             // check if all exercises have been prepared for all students;
+            // exercises are only considered prepared if ALL participations are properly initialized
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
-                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipationsGenerated;
+                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfInitializedParticipations;
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
@@ -1366,7 +1368,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(List.of(exam));
     }
 
     /**
@@ -1692,5 +1694,15 @@ public class ExamService {
             }
         }
         return events;
+    }
+
+    /**
+     * Get one exam by an exercise id.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exam
+     */
+    public Optional<Exam> findByExerciseId(final Long exerciseId) {
+        return examRepository.findByExerciseId(exerciseId);
     }
 }

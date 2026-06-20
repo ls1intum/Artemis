@@ -3,12 +3,11 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -53,15 +52,21 @@ public class AtlasAgentDelegationService {
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
         ChatClient.Builder clientBuilder = chatClient.mutate();
-        if (chatMemory != null && saveToMemory) {
-            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+        boolean withMemory = chatMemory != null && saveToMemory;
+        if (withMemory) {
+            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
         ChatClient sessionClient = clientBuilder.build();
 
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
+        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature);
 
         ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
+        if (withMemory) {
+            // Spring AI 2.0.0-M6 removed the advisor-level conversation id (fix for GHSA-q62f-h9x2-gcqc):
+            // the per-(course,user) session id must be supplied as a request-time advisor param instead.
+            promptSpec = promptSpec.advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, sessionId));
+        }
         if (toolCallbackProvider != null) {
             promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
         }

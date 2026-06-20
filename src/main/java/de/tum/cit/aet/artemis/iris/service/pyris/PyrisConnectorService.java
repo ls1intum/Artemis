@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,7 +91,7 @@ public class PyrisConnectorService {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return new MemirisMemoryDataDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                return new MemirisMemoryDataDTO(List.of(), List.of(), List.of());
             }
             return response.getBody();
         }
@@ -190,14 +190,15 @@ public class PyrisConnectorService {
     /**
      * Searches for lecture units in Pyris using a query string.
      *
-     * @param query the search query
-     * @param limit the maximum number of results to return
+     * @param query     the search query
+     * @param limit     the maximum number of results to return
+     * @param courseIds optional list of course IDs to restrict the search scope; null means global search across all courses
      * @return list of matching lecture search results
      */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit) {
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();

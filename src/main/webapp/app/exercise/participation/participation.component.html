@@ -148,7 +148,7 @@
 
 <ng-template #teamStudentsCellTemplate let-cell>
     <div style="max-width: 20vw; overflow-x: auto">
-        <jhi-team-students-list [students]="cell.data.teamStudents" />
+        <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
     </div>
 </ng-template>
 

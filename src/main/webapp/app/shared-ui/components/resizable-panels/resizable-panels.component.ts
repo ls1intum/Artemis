@@ -3,7 +3,6 @@ import {
     Component,
     Directive,
     ElementRef,
-    NgZone,
     OnDestroy,
     TemplateRef,
     computed,
@@ -15,18 +14,22 @@ import {
     untracked,
     viewChildren,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import Split from 'split.js';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
     readonly iconTemplate = input<TemplateRef<unknown>>();
+    readonly startsCollapsed = input(false);
     readonly templateRef = inject(TemplateRef);
 }
 
@@ -39,14 +42,16 @@ export class SplitPaneDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule, TranslateDirective],
+    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
-    private readonly ngZone = inject(NgZone);
     private readonly elementRef = inject(ElementRef);
+    private readonly document = inject(DOCUMENT);
 
     /** Width in px below which the split collapses into a single tabbed panel */
     readonly collapseBelowPx = input(768);
+    /** Use the viewport width for the responsive breakpoint instead of this component's content width. */
+    readonly useViewportWidthForCollapse = input(false);
 
     readonly panels = contentChildren(PanelDirective);
     readonly leftPanel = computed(() => this.panels()[0]);
@@ -61,9 +66,19 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly _isNarrow = signal(false);
     readonly isNarrow = this._isNarrow.asReadonly();
 
+    private readonly _isRightPanelCollapsed = signal(false);
+    readonly isRightPanelCollapsed = this._isRightPanelCollapsed.asReadonly();
+
+    /** In narrow (combined) mode the tab header is only useful when there is more than one panel to switch between. */
+    readonly showCombinedTabHeader = computed(() => this.panels().length > 1);
+
     readonly splitPanes = viewChildren(SplitPaneDirective);
     private splitInstance?: Split.Instance;
     private resizeObserver?: ResizeObserver;
+    private rightPanelCollapseChangedByUser = false;
+    private savedSizes?: number[];
+
+    protected readonly faChevronRight = faChevronRight;
 
     constructor() {
         // Clamp _activeRightIndex when rightPanels shrinks.
@@ -86,26 +101,46 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             });
         });
 
+        // Apply the requested collapsed start state once, unless the user already
+        // controlled the right panel in this component instance.
+        effect(() => {
+            const collapsedPanelIndex = this.rightPanels().findIndex((panel) => panel.startsCollapsed());
+            untracked(() => {
+                if (this.rightPanelCollapseChangedByUser) {
+                    return;
+                }
+                if (collapsedPanelIndex >= 0) {
+                    this._isRightPanelCollapsed.set(true);
+                } else {
+                    this._isRightPanelCollapsed.set(false);
+                }
+            });
+        });
+
         // (Re-)initialize split.js whenever panes enter or leave the DOM,
         // i.e. when switching between wide and narrow mode.
         effect(() => {
             const panes = this.splitPanes();
             untracked(() => {
-                this.splitInstance?.destroy();
-                this.splitInstance = undefined;
+                if (this.splitInstance) {
+                    this.savedSizes = this.splitInstance.getSizes();
+                    this.splitInstance.destroy();
+                    this.splitInstance = undefined;
+                }
                 if (panes.length >= 2) {
-                    this.ngZone.runOutsideAngular(() => this.initSplit(panes.map((p) => p.elementRef.nativeElement)));
+                    this.initSplit(panes.map((p) => p.elementRef.nativeElement));
                 }
             });
         });
     }
 
     ngAfterViewInit(): void {
+        const observedElement = this.useViewportWidthForCollapse() ? this.document.documentElement : this.elementRef.nativeElement;
         this.resizeObserver = new ResizeObserver((entries) => {
             const width = entries[0].contentRect.width;
-            this.ngZone.run(() => this._isNarrow.set(width < this.collapseBelowPx()));
+            this._isNarrow.set(width < this.collapseBelowPx());
         });
-        this.resizeObserver.observe(this.elementRef.nativeElement);
+        this.resizeObserver.observe(observedElement);
     }
 
     ngOnDestroy(): void {
@@ -119,6 +154,19 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    expandRightPanel(index?: number): void {
+        if (index !== undefined) {
+            this._activeRightIndex.set(index);
+        }
+        this.rightPanelCollapseChangedByUser = true;
+        this._isRightPanelCollapsed.set(false);
+    }
+
+    collapseRightPanel(): void {
+        this.rightPanelCollapseChangedByUser = true;
+        this._isRightPanelCollapsed.set(true);
+    }
+
     setActiveSingle(value: string | number | undefined): void {
         if (value !== undefined) {
             this._activeSingleIndex.set(Number(value));
@@ -127,7 +175,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     private initSplit(elements: HTMLElement[]): void {
         this.splitInstance = Split(elements, {
-            sizes: [65, 35],
+            sizes: this.savedSizes ?? [65, 35],
             minSize: 0,
             snapOffset: 150,
             gutterSize: 12,

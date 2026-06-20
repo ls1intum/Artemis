@@ -21,10 +21,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfigurationId;
+import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBodyDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
@@ -137,14 +140,31 @@ public class PushNotificationResource {
 
     /**
      * API Endpoint used by native clients to unregister for push notifications.
+     * <p>
+     * The token and device type should be passed as query parameters. Passing them in a request body is
+     * <strong>deprecated</strong> and only kept temporarily for backwards compatibility with older mobile app versions;
+     * it will be removed once those clients have migrated (tracked in {@code DELETE_REQUEST_BODY_BASELINE}).
      *
-     * @param body contains information on which device token should be removed for what user
+     * @param token      the device token that should be removed for the current user (query parameter)
+     * @param deviceType the type of the device the token belongs to (query parameter)
+     * @param body       deprecated: the token and device type passed in the request body (older clients only)
      * @return HttpStatus as ResponseEntity
      */
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequestDTO body) {
-        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
+    public ResponseEntity<Void> unregister(@RequestParam(required = false) String token, @RequestParam(required = false) PushNotificationDeviceType deviceType,
+            @RequestBody(required = false) PushNotificationUnregisterRequestDTO body) {
+        // Prefer the query parameters; fall back to the deprecated request body for older (mobile) clients.
+        String effectiveToken = StringUtils.hasText(token) ? token : (body != null ? body.token() : null);
+        PushNotificationDeviceType effectiveDeviceType = deviceType != null ? deviceType : (body != null ? body.deviceType() : null);
+        if (!StringUtils.hasText(effectiveToken) || effectiveDeviceType == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (body != null) {
+            log.warn("Deprecated request body used to unregister a push-notification device; clients should pass 'token' and 'deviceType' as query parameters instead.");
+        }
+
+        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), effectiveToken, effectiveDeviceType);
 
         if (!pushNotificationDeviceConfigurationRepository.existsById(deviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

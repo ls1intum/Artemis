@@ -7,6 +7,7 @@
             [studentParticipation]="gradedStudentParticipation()"
             [practiceParticipation]="practiceStudentParticipation()"
             [submissionPolicy]="submissionPolicy()"
+            [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
             [onRestartPractice]="restartPractice"
             [submitDisabled]="splitPanel()?.quizSubmitDisabled() ?? false"
@@ -14,8 +15,12 @@
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             [athenaEnabled]="athenaEnabled"
+            [quizLiveHeaderInfo]="splitPanel()?.quizLiveHeaderInfo()"
+            [showSidebarToggle]="showSidebarToggle()"
+            [isSidebarCollapsed]="isSidebarCollapsed()"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
+            (toggleSidebar)="toggleSidebar()"
         />
 
         <jhi-exercise-split-panel
@@ -31,6 +36,10 @@
             [resultWithComplaint]="resultWithComplaint()"
             [allowComplaintsForAutomaticAssessments]="allowComplaintsForAutomaticAssessments()"
             [exampleSolutionInfo]="exampleSolutionInfo()"
+            (quizSubmitted)="onQuizSubmitted($event)"
+            (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
+            (quizPracticeParticipationChanged)="onNewParticipation($event)"
+            (liveQuizResultParticipation)="onNewParticipation($event)"
         />
     </div>
 }

@@ -1,5 +1,6 @@
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -318,37 +319,34 @@ let results: Exercise[];
 const courseExercises = [...modelingExercises, programmingExercise, quizExercise, fileUploadExercise];
 
 describe('ChartCategoryFilter', () => {
+    setupTestBed({ zoneless: true });
     let categoryFilter: ChartCategoryFilter;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({})
-            .compileComponents()
-            .then(() => {
-                categoryFilter = TestBed.inject(ChartCategoryFilter);
-                categoryFilter.setupCategoryFilter(courseExercises);
-            });
+        categoryFilter = TestBed.inject(ChartCategoryFilter);
+        categoryFilter.setupCategoryFilter(courseExercises);
     });
 
     it('should deselect and select all categories', () => {
         // 3 Filters: Exercises with no categories, programming1 and quiz1
         expect(categoryFilter.numberOfActiveFilters).toBe(3);
-        expect(categoryFilter.filterMap.get('quiz1')).toBeTrue();
-        expect(categoryFilter.filterMap.get('programming1')).toBeTrue();
-        expect(categoryFilter.allCategoriesSelected).toBeTrue();
+        expect(categoryFilter.filterMap.get('quiz1')).toBe(true);
+        expect(categoryFilter.filterMap.get('programming1')).toBe(true);
+        expect(categoryFilter.allCategoriesSelected).toBe(true);
 
         results = categoryFilter.toggleAllCategories(courseExercises);
 
-        expect(categoryFilter.allCategoriesSelected).toBeFalse();
-        expect(categoryFilter.filterMap.get('quiz1')).toBeFalse();
-        expect(categoryFilter.filterMap.get('programming1')).toBeFalse();
+        expect(categoryFilter.allCategoriesSelected).toBe(false);
+        expect(categoryFilter.filterMap.get('quiz1')).toBe(false);
+        expect(categoryFilter.filterMap.get('programming1')).toBe(false);
         expect(categoryFilter.numberOfActiveFilters).toBe(0);
         expect(results).toEqual([]);
 
         results = categoryFilter.toggleAllCategories(courseExercises);
 
-        expect(categoryFilter.allCategoriesSelected).toBeTrue();
-        expect(categoryFilter.filterMap.get('quiz1')).toBeTrue();
-        expect(categoryFilter.filterMap.get('programming1')).toBeTrue();
+        expect(categoryFilter.allCategoriesSelected).toBe(true);
+        expect(categoryFilter.filterMap.get('quiz1')).toBe(true);
+        expect(categoryFilter.filterMap.get('programming1')).toBe(true);
         expect(categoryFilter.numberOfActiveFilters).toBe(3);
         expect(results).toEqual(courseExercises);
     });
@@ -357,14 +355,14 @@ describe('ChartCategoryFilter', () => {
         results = categoryFilter.toggleCategory(courseExercises, 'programming1');
 
         expect(categoryFilter.numberOfActiveFilters).toBe(2);
-        expect(categoryFilter.filterMap.get('programming1')).toBeFalse();
+        expect(categoryFilter.filterMap.get('programming1')).toBe(false);
         expect(results).toEqual([...modelingExercises, quizExercise, fileUploadExercise]);
 
         results = categoryFilter.toggleCategory(courseExercises, 'quiz1');
 
         expect(categoryFilter.numberOfActiveFilters).toBe(1);
-        expect(categoryFilter.filterMap.get('programming1')).toBeFalse();
-        expect(categoryFilter.filterMap.get('quiz1')).toBeFalse();
+        expect(categoryFilter.filterMap.get('programming1')).toBe(false);
+        expect(categoryFilter.filterMap.get('quiz1')).toBe(false);
         expect(results).toEqual([...modelingExercises, fileUploadExercise]);
 
         results = categoryFilter.toggleExercisesWithNoCategory(courseExercises);
@@ -375,7 +373,7 @@ describe('ChartCategoryFilter', () => {
         results = categoryFilter.toggleCategory(courseExercises, 'programming1');
 
         expect(categoryFilter.numberOfActiveFilters).toBe(1);
-        expect(categoryFilter.filterMap.get('programming1')).toBeTrue();
+        expect(categoryFilter.filterMap.get('programming1')).toBe(true);
         expect(results).toEqual([programmingExercise]);
     });
 

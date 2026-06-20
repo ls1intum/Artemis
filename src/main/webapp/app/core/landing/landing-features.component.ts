@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FEATURE_CARDS, FeatureCard } from 'app/core/landing/landing-data';
+import { FEATURE_CARDS, FeatureCard, FeatureCardDownloadLink } from 'app/core/landing/landing-data';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 @Component({
@@ -81,6 +81,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
             position: relative;
         }
 
@@ -89,6 +90,37 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             object-fit: contain;
             width: 100%;
             flex: 1;
+        }
+
+        .card-downloads {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .card-download {
+            display: inline-flex;
+            line-height: 0;
+            transition:
+                transform 150ms ease,
+                opacity 150ms ease;
+        }
+
+        .card-download:hover {
+            transform: translateY(-1px);
+        }
+
+        .card-download-badge {
+            height: 44px;
+            width: auto;
+            display: block;
+        }
+
+        .card-download.is-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: not-allowed;
         }
 
         @media (max-width: 1200px) {
@@ -139,6 +171,29 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                                 width="567"
                                 height="284"
                             />
+                            @if (card.downloadLinks?.length) {
+                                <div class="card-downloads">
+                                    @for (link of card.downloadLinks; track link.href) {
+                                        <a
+                                            class="card-download"
+                                            [class.is-disabled]="link.disabled"
+                                            [href]="link.href"
+                                            [attr.aria-disabled]="link.disabled ? 'true' : null"
+                                            [attr.tabindex]="link.disabled ? -1 : null"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <img
+                                                class="card-download-badge"
+                                                [src]="downloadBadgeSrc(link)"
+                                                [alt]="link.altKey | artemisTranslate"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        </a>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -154,5 +209,9 @@ export class LandingFeaturesComponent {
 
     cardImageSrc(card: FeatureCard): string {
         return this.isDark() && card.imageSrcDark ? card.imageSrcDark : card.imageSrc;
+    }
+
+    downloadBadgeSrc(link: FeatureCardDownloadLink): string {
+        return this.isDark() ? link.badgeSrcDark : link.badgeSrc;
     }
 }

@@ -1,6 +1,6 @@
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 
 export class AnswerPost extends Posting {

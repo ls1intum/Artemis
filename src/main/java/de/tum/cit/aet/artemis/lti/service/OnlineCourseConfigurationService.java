@@ -79,10 +79,8 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         }
 
         if (ocConfiguration.getLtiPlatformConfiguration() != null) {
-            Optional<LtiPlatformConfiguration> existingLtiPlatformConfiguration = ltiPlatformConfigurationRepository
-                    .findByRegistrationId(ocConfiguration.getLtiPlatformConfiguration().getRegistrationId());
-            if (existingLtiPlatformConfiguration.isEmpty()
-                    || !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getLtiPlatformConfiguration().getId())) {
+            Long platformId = ocConfiguration.getLtiPlatformConfiguration().getId();
+            if (platformId == null || ltiPlatformConfigurationRepository.findById(platformId).isEmpty()) {
                 throw new BadRequestAlertException("No platform registration found", ENTITY_NAME, "invalidRegistrationId");
             }
         }

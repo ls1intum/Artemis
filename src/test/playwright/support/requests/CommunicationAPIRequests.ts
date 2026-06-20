@@ -189,6 +189,16 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Marks all messages in a conversation as read for the currently authenticated user.
+     *
+     * @param courseId - The id of the course.
+     * @param conversationId - The id of the conversation to mark as read.
+     */
+    async markConversationAsRead(courseId: number, conversationId: number) {
+        await this.page.request.patch(`api/communication/courses/${courseId}/conversations/${conversationId}/mark-as-read`);
+    }
+
+    /**
      * Creates a new course post reply.
      *
      * @param course - The course to which the post belongs.

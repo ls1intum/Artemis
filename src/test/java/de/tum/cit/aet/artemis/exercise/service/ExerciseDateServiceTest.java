@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exercisedateservice";
 
@@ -76,7 +76,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {
-            var submission = ParticipationFactory.generateModelingSubmission(String.format("model%d", i), true);
+            var submission = ParticipationFactory.generateModelingSubmission("model%d".formatted(i), true);
             modelingExerciseUtilService.addModelingSubmission(exercise, submission, TEST_PREFIX + "student1");
         }
 

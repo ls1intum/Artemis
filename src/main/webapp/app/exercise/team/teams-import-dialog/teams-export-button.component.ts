@@ -1,34 +1,23 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TeamService } from '../team.service';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonDirective } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-export-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
-            [icon]="faFileExport"
-            [title]="'artemisApp.team.exportTeams.buttonLabel'"
-            (onClick)="exportTeams($event)"
-        />
+        <button pButton severity="primary" size="small" (click)="exportTeams($event)">
+            <i class="pi pi-download"></i>
+            <span>{{ 'artemisApp.team.exportTeams.buttonLabel' | artemisTranslate }}</span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [ButtonDirective, ArtemisTranslatePipe],
 })
 export class TeamsExportButtonComponent {
     private teamService = inject(TeamService);
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
-
-    @Input() teams: Team[];
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
-
-    // Icons
-    faFileExport = faFileExport;
+    readonly teams = input.required<Team[]>();
 
     /**
      * Export teams or show students if there is an error
@@ -36,6 +25,6 @@ export class TeamsExportButtonComponent {
      */
     exportTeams(event: MouseEvent) {
         event.stopPropagation();
-        this.teamService.exportTeams(this.teams);
+        this.teamService.exportTeams(this.teams());
     }
 }

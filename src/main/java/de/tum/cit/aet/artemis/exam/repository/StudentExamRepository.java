@@ -5,7 +5,9 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -102,6 +105,29 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.testRun = FALSE
             """)
     Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO$StudentExamSummary(
+                se.user.id, se.id, se.workingTime, se.started, se.submitted,
+                se.startedDate, se.submissionDate, COUNT(sess.id)
+            )
+            FROM StudentExam se
+                LEFT JOIN se.examSessions sess
+            WHERE se.exam.id = :examId
+                AND se.testRun = FALSE
+                AND se.user.id IN :userIds
+            GROUP BY se.user.id, se.id, se.workingTime, se.started, se.submitted,
+                     se.startedDate, se.submissionDate
+            """)
+    /**
+     * Returns a {@link ExamStudentDTO.StudentExamSummary} for each non-test-run {@link StudentExam} whose user is in {@code userIds}.
+     * The number of exam sessions is returned as a {@code COUNT} aggregate, avoiding the cost of loading session entities.
+     *
+     * @param examId  the exam to query
+     * @param userIds the user IDs to restrict the query to (typically the current page's users)
+     * @return one summary per matching student exam, in unspecified order
+     */
+    List<ExamStudentDTO.StudentExamSummary> findSummaryByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     @Query("""
             SELECT se
@@ -527,7 +553,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         }
 
         // Sort the indices to preserve the original order
-        Collections.sort(indices);
+        indices.sort(Comparator.naturalOrder());
         return indices;
     }
 
@@ -536,6 +562,44 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         int randomIndex = random.nextInt(exercises.size());
         return exercises.get(randomIndex);
     }
+
+    /**
+     * Returns the IDs of non-test exams where the given user has a (non-test-run) StudentExam,
+     * scoped to the given course IDs. Used by global search to restrict exam visibility to
+     * registered students.
+     *
+     * @param userId    the id of the user
+     * @param courseIds the course IDs to scope the query to
+     * @return set of exam IDs where the user is registered
+     */
+    @Query("""
+            SELECT DISTINCT se.exam.id
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.testRun = FALSE
+                AND se.exam.testExam = FALSE
+                AND se.exam.course.id IN :courseIds
+            """)
+    Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);
+
+    /**
+     * Returns the IDs of exercises assigned to the given user's (non-test-run) StudentExams,
+     * scoped to the given course IDs. Used by global search to restrict exam exercise
+     * visibility to exercises included in the student's individual exam.
+     *
+     * @param userId    the id of the user
+     * @param courseIds the course IDs to scope the query to
+     * @return set of exercise IDs assigned to the user's student exams
+     */
+    @Query("""
+            SELECT DISTINCT e.id
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE se.user.id = :userId
+                AND se.testRun = FALSE
+                AND se.exam.course.id IN :courseIds
+            """)
+    Set<Long> findAssignedExamExerciseIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);
 
     /**
      * Gets the longest working time of the exam with the given id

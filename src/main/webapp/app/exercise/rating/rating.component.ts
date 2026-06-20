@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -17,11 +17,11 @@ export class RatingComponent implements OnInit, OnChanges {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
-    public rating: number;
-    public disableRating = false;
+    public readonly rating = signal<number>(undefined!);
+    public readonly disableRating = signal(false);
     private previousResultId?: number;
 
-    @Input() result?: Result;
+    readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
 
     ngOnInit(): void {
@@ -36,11 +36,12 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     loadRating() {
-        if (!this.result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const result = this.result();
+        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
             return;
         }
-        this.ratingService.getRating(this.result.id).subscribe((rating) => {
-            this.rating = rating ?? 0;
+        this.ratingService.getRating(result.id).subscribe((rating) => {
+            this.rating.set(rating ?? 0);
         });
     }
 
@@ -50,22 +51,23 @@ export class RatingComponent implements OnInit, OnChanges {
      */
     onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
-        if (this.disableRating || !this.result) {
+        const result = this.result();
+        if (this.disableRating() || !result) {
             return;
         }
 
-        const oldRating = this.rating;
-        this.rating = event.newValue;
+        const oldRating = this.rating();
+        this.rating.set(event.newValue);
 
-        this.disableRating = true;
+        this.disableRating.set(true);
         let observable: Observable<number>;
         // set/update feedback on the server
         if (oldRating) {
-            observable = this.ratingService.updateRating(this.rating, this.result.id!);
+            observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {
-            observable = this.ratingService.createRating(this.rating, this.result.id!);
+            observable = this.ratingService.createRating(this.rating(), result.id!);
         }
 
-        observable.subscribe((rating) => (this.rating = rating)).add(() => (this.disableRating = false));
+        observable.subscribe((rating) => this.rating.set(rating)).add(() => this.disableRating.set(false));
     }
 }

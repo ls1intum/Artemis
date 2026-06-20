@@ -107,6 +107,10 @@ export class ExamAPIRequests {
      * @param exam the exam object
      * */
     async deleteExam(exam: Exam) {
+        // beforeAll failures may leave exam partially initialized; teardown should stay best-effort.
+        if (!exam?.id || !exam.course?.id) {
+            return;
+        }
         await this.page.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`);
     }
 
@@ -177,6 +181,18 @@ export class ExamAPIRequests {
     async getAllStudentExams(exam: Exam) {
         const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams`);
         return await response.json();
+    }
+
+    /**
+     * Gets the exercise groups (including their exercises) of an exam.
+     * @param exam the exam to get the exercise groups for
+     */
+    async getExerciseGroups(exam: Exam): Promise<ExerciseGroup[]> {
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get exercise groups for exam ${exam.id}: ${response.status()}`);
+        }
+        return (await response.json()) as ExerciseGroup[];
     }
 
     /**

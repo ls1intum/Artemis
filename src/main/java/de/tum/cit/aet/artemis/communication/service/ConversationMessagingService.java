@@ -119,8 +119,11 @@ public class ConversationMessagingService extends PostingService {
 
         var conversationId = message.conversation().id();
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
-                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
+        var conversation = conversationService.loadConversationWithParticipantsIfGroupChat(conversationId);
+        // the path courseId is authoritative: reject messages targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty());
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
         newMessage.setConversation(conversation);
@@ -351,6 +354,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         parseUserMentions(course, messagePost.content());
@@ -385,6 +389,7 @@ public class ConversationMessagingService extends PostingService {
         // checks
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         post.setConversation(conversation);
 
@@ -420,6 +425,8 @@ public class ConversationMessagingService extends PostingService {
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        // the path courseId is authoritative: reject before isMemberOrCreateForCourseWideElseThrow can persist a course-wide auto-join for a mismatching course
+        ensureConversationBelongsToCourseElseThrow(message.getConversation(), courseId);
 
         Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
                 .orElse(message.getConversation());

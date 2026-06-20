@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { onError } from 'app/foundation/util/global.utils';
@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -23,12 +24,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private activatedRoute = inject(ActivatedRoute);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
-    exercise: Exercise;
+    readonly exercise = signal<Exercise>(undefined!);
     readonly exerciseType = ExerciseType;
-    createdExampleAssessment: boolean[];
+    readonly createdExampleAssessment = signal<boolean[]>([]);
+    private importDialogRef?: DynamicDialogRef | null;
 
     // Icons
     faPlus = faPlus;
@@ -45,14 +47,15 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.subscribe(({ exercise }) => {
             exercise.course = getCourseFromExercise(exercise);
             this.accountService.setAccessRightsForCourse(exercise.course);
-            this.exercise = exercise;
+            this.exercise.set(exercise);
 
-            this.createdExampleAssessment =
-                this.exercise.exampleSubmissions?.map((exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false) ?? [];
+            this.createdExampleAssessment.set(
+                this.exercise().exampleSubmissions?.map((exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false) ?? [],
+            );
         });
-        this.exercise?.exampleSubmissions?.forEach((exampleSubmission) => {
+        this.exercise()?.exampleSubmissions?.forEach((exampleSubmission) => {
             if (exampleSubmission.submission) {
-                exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+                exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise());
             }
         });
     }
@@ -61,9 +64,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Closes open modal on component destroy
      */
     ngOnDestroy() {
-        if (this.modalService?.hasOpenModals()) {
-            this.modalService.dismissAll();
-        }
+        this.importDialogRef?.close();
     }
 
     /**
@@ -71,11 +72,18 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * @param index in the example submissions array
      */
     deleteExampleSubmission(index: number) {
-        const submissionId = this.exercise.exampleSubmissions![index].id!;
+        const exercise = this.exercise();
+        const submissionId = exercise.exampleSubmissions![index].id!;
         this.exampleSubmissionService.delete(submissionId).subscribe({
             next: () => {
-                this.exercise.exampleSubmissions!.splice(index, 1);
-                this.createdExampleAssessment.splice(index, 1);
+                exercise.exampleSubmissions!.splice(index, 1);
+                // Re-set with a fresh reference so the signal notifies consumers (same-reference set is a no-op).
+                this.exercise.set(Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise));
+                this.createdExampleAssessment.update((created) => {
+                    const updated = [...created];
+                    updated.splice(index, 1);
+                    return updated;
+                });
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(error.message);
@@ -88,18 +96,19 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * @param exampleSubmissionId id of the submission or new for a new submission
      */
     getLinkToExampleSubmission(exampleSubmissionId: number | 'new') {
-        if (!this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', exampleSubmissionId];
+        const exercise = this.exercise();
+        if (!exercise.exerciseGroup) {
+            return ['/course-management', exercise.course!.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmissionId];
         } else {
             return [
                 '/course-management',
-                this.exercise.course!.id,
+                exercise.course!.id,
                 'exams',
-                this.exercise.exerciseGroup!.exam!.id,
+                exercise.exerciseGroup!.exam!.id,
                 'exercise-groups',
-                this.exercise.exerciseGroup!.id,
-                this.exercise.type + '-exercises',
-                this.exercise.id,
+                exercise.exerciseGroup!.id,
+                exercise.type + '-exercises',
+                exercise.id,
                 'example-submissions',
                 exampleSubmissionId,
             ];
@@ -111,13 +120,23 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Then invokes import api for selected submission
      */
     openImportModal() {
-        const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        this.importDialogRef = this.dialogService.open(ExampleSubmissionImportComponent, {
+            width: '60rem',
+            modal: true,
+            closable: false,
+            closeOnEscape: false,
+            dismissableMask: false,
+            draggable: false,
+            showHeader: false,
+            inputValues: {
+                exercise: this.exercise(),
+            },
         });
-        exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
-        exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
+        this.importDialogRef?.onClose.subscribe((selectedSubmission: Submission | undefined) => {
+            if (!selectedSubmission) {
+                return;
+            }
+            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise().id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();

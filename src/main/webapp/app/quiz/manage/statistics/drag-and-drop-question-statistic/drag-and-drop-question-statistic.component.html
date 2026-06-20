@@ -14,7 +14,7 @@
                             }
                         </h3>
                         <h4 [innerHTML]="questionTextRendered"></h4>
-                        <div #containerRef>
+                        <div>
                             <div class="row">
                                 <div class="col-md-7 text-start">
                                     <p id="text" class="chart-title-text">
@@ -32,24 +32,9 @@
                                     </p>
                                 </div>
                             </div>
-                            <ngx-charts-bar-vertical
-                                [view]="[containerRef.offsetWidth, 525]"
-                                [results]="ngxData"
-                                [scheme]="ngxColor"
-                                [showDataLabel]="true"
-                                [showXAxisLabel]="true"
-                                [showYAxisLabel]="true"
-                                [xAxisLabel]="xAxisLabel"
-                                [yAxisLabel]="yAxisLabel"
-                                [xAxis]="true"
-                                [yAxis]="true"
-                                [yScaleMax]="maxScale"
-                                [tooltipDisabled]="true"
-                                [rotateXAxisTicks]="false"
-                                [maxXAxisTickLength]="17"
-                                [dataLabelFormatting]="bindFormatting"
-                                [roundEdges]="false"
-                            />
+                            <div class="quiz-statistic-chart" style="height: 525px">
+                                <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
+                            </div>
                             <div class="col-md-12 text-center button-row">
                                 <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
                                     @if (showSolution) {

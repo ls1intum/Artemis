@@ -83,7 +83,9 @@
                 "mobileApps": {
                     "category": "Mobile Apps",
                     "description": "Dedicated iOS and Android apps let students access courses, exercises, lectures, and discussions with a seamless mobile experience.",
-                    "imageAlt": "Mobile apps"
+                    "imageAlt": "Mobile apps",
+                    "appStoreAlt": "Download on the App Store",
+                    "playStoreAlt": "Get it on Google Play"
                 }
             }
         },

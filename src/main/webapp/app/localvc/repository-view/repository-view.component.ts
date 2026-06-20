@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -48,7 +48,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;
@@ -58,22 +58,24 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub: Subscription;
-    participation: ProgrammingExerciseStudentParticipation;
-    exercise: ProgrammingExercise;
+    // These fields are set inside async callbacks (route.params subscribe, HTTP subscribe/tap, identity().then)
+    // and read in the template, so they must be signals to render under zoneless change detection.
+    readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly exercise = signal<ProgrammingExercise>(undefined!);
     userId: number;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
-    loadingParticipation = false;
-    participationCouldNotBeFetched = false;
+    readonly loadingParticipation = signal(false);
+    readonly participationCouldNotBeFetched = signal(false);
     showEditorInstructions = true;
-    routeCommitHistory: string;
-    vcsAccessLogRoute: string;
-    repositoryUri: string;
-    repositoryType: RepositoryType;
-    enableVcsAccessLog = false;
-    allowVcsAccessLog = false;
-    result: Result;
-    resultHasInlineFeedback = false;
-    showInlineFeedback = false;
+    readonly routeCommitHistory = signal<string>(undefined!);
+    readonly vcsAccessLogRoute = signal<string>(undefined!);
+    readonly repositoryUri = signal<string>(undefined!);
+    readonly repositoryType = signal<RepositoryType>(undefined!);
+    readonly enableVcsAccessLog = signal(false);
+    readonly allowVcsAccessLog = signal(false);
+    readonly result = signal<Result>(undefined!);
+    readonly resultHasInlineFeedback = signal(false);
+    readonly showInlineFeedback = signal(false);
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -98,21 +100,22 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.routeCommitHistory = this.router.url + '/commit-history';
+        this.routeCommitHistory.set(this.router.url + '/commit-history');
         this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
+            this.loadingParticipation.set(true);
+            this.participationCouldNotBeFetched.set(false);
             const exerciseId = Number(params['exerciseId']);
             const repositoryId = Number(params['repositoryId']);
-            this.repositoryType = params['repositoryType'] ?? RepositoryType.USER;
-            this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
-            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== RepositoryType.TESTS;
-            if (this.repositoryType === RepositoryType.USER) {
+            const repositoryType = params['repositoryType'] ?? RepositoryType.USER;
+            this.repositoryType.set(repositoryType);
+            this.vcsAccessLogRoute.set(this.router.url + '/vcs-access-log');
+            this.enableVcsAccessLog.set(this.router.url.includes('course-management') && params['repositoryType'] !== RepositoryType.TESTS);
+            if (repositoryType === RepositoryType.USER) {
                 this.loadStudentParticipation(repositoryId);
-            } else if (this.repositoryType === RepositoryType.AUXILIARY) {
+            } else if (repositoryType === RepositoryType.AUXILIARY) {
                 this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
-                this.loadDifferentParticipation(this.repositoryType, exerciseId);
+                this.loadDifferentParticipation(repositoryType, exerciseId);
             }
         });
     }
@@ -129,32 +132,33 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             .findWithTemplateAndSolutionParticipationAndLatestResults(exerciseId)
             .pipe(
                 tap((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
+                    const exercise = exerciseResponse.body!;
+                    this.exercise.set(exercise);
                     if (repositoryType === RepositoryType.TEMPLATE) {
-                        this.participation = this.exercise.templateParticipation!;
-                        this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
-                        this.repositoryUri = this.participation.repositoryUri!;
+                        this.participation.set(exercise.templateParticipation!);
+                        this.domainService.setDomain([DomainType.PARTICIPATION, exercise.templateParticipation!]);
+                        this.repositoryUri.set(exercise.templateParticipation!.repositoryUri!);
                     } else if (repositoryType === RepositoryType.SOLUTION) {
-                        this.participation = this.exercise.solutionParticipation!;
-                        this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
-                        this.repositoryUri = this.participation.repositoryUri!;
+                        this.participation.set(exercise.solutionParticipation!);
+                        this.domainService.setDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+                        this.repositoryUri.set(exercise.solutionParticipation!.repositoryUri!);
                     } else if (repositoryType === RepositoryType.TESTS) {
-                        this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
-                        this.repositoryUri = this.exercise.testRepositoryUri!;
+                        this.domainService.setDomain([DomainType.TEST_REPOSITORY, exercise]);
+                        this.repositoryUri.set(exercise.testRepositoryUri!);
                     } else {
-                        this.participationCouldNotBeFetched = true;
-                        this.loadingParticipation = false;
+                        this.participationCouldNotBeFetched.set(true);
+                        this.loadingParticipation.set(false);
                     }
-                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
+                    this.allowVcsAccessLog.set(this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(exercise)));
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.loadingParticipation = false;
+                    this.loadingParticipation.set(false);
                 },
                 error: () => {
-                    this.participationCouldNotBeFetched = true;
-                    this.loadingParticipation = false;
+                    this.participationCouldNotBeFetched.set(true);
+                    this.loadingParticipation.set(false);
                 },
             });
     }
@@ -168,19 +172,20 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((participationWithResults) => {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                    this.participation = participationWithResults;
-                    this.exercise = this.participation.exercise as ProgrammingExercise;
-                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
-                    this.repositoryUri = this.participation.repositoryUri!;
+                    this.participation.set(participationWithResults);
+                    const exercise = participationWithResults.exercise as ProgrammingExercise;
+                    this.exercise.set(exercise);
+                    this.allowVcsAccessLog.set(this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(exercise)));
+                    this.repositoryUri.set(participationWithResults.repositoryUri!);
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.loadingParticipation = false;
+                    this.loadingParticipation.set(false);
                 },
                 error: () => {
-                    this.participationCouldNotBeFetched = true;
-                    this.loadingParticipation = false;
+                    this.participationCouldNotBeFetched.set(true);
+                    this.loadingParticipation.set(false);
                 },
             });
     }
@@ -194,10 +199,13 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 const results = participation.submissions?.last()?.results;
                 if (results && results.length) {
-                    // connect result and submission
+                    // connect result, submission, and participation — the result component derives the
+                    // participation (and through it the exercise) from this back-reference when no
+                    // participation input is provided
                     results[0].submission = participation.submissions?.last();
-                    this.result = results[0];
-                    this.resultHasInlineFeedback = this.result.feedbacks?.some((feedback) => Feedback.getReferenceLine(feedback) !== undefined) ?? false;
+                    results[0].submission!.participation = participation;
+                    this.result.set(results[0]);
+                    this.resultHasInlineFeedback.set(results[0].feedbacks?.some((feedback) => Feedback.getReferenceLine(feedback) !== undefined) ?? false);
                 }
                 return participation;
             }),
@@ -209,20 +217,21 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             .findWithAuxiliaryRepository(exerciseId)
             .pipe(
                 tap((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === auxiliaryRepositoryId);
+                    const exercise = exerciseResponse.body!;
+                    this.exercise.set(exercise);
+                    const auxiliaryRepo = exercise.auxiliaryRepositories?.find((repo) => repo.id === auxiliaryRepositoryId);
                     if (auxiliaryRepo) {
                         this.domainService.setDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
-                        this.repositoryUri = auxiliaryRepo.repositoryUri!;
+                        this.repositoryUri.set(auxiliaryRepo.repositoryUri!);
                     }
                 }),
             )
             .subscribe({
                 next: () => {
-                    this.loadingParticipation = false;
+                    this.loadingParticipation.set(false);
                 },
                 error: () => {
-                    this.participationCouldNotBeFetched = true;
+                    this.participationCouldNotBeFetched.set(true);
                 },
             });
     }

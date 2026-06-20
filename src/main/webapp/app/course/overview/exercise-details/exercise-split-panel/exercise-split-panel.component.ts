@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,7 +10,8 @@ import { CodeEditorStudentContainerComponent } from 'app/programming/overview/co
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -34,6 +35,8 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -62,6 +65,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
+    private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
@@ -72,9 +76,19 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
+    private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
+    private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizResultSubscription: { unsubscribe(): void } | undefined;
+
+    readonly quizSubmitted = output<QuizSubmission>();
+    readonly quizPracticeParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
+    readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
@@ -97,6 +111,23 @@ export class ExerciseSplitPanelComponent {
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
+    /**
+     * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
+     * *identity* (exercise type/id, participation id, mode, online-editor flag) — never the exercise/participation
+     * object references. An incoming result replaces the participation object while keeping its id; without this key
+     * the navigation effect would re-run on every such change and re-issue router.navigate mid-transition, re-creating
+     * the whole code-editor subtree in a loop (flooding the server, see PR #12976). Returns undefined while no
+     * navigable target exists yet.
+     */
+    private readonly navigationTargetKey = computed(() => {
+        const exercise = this.exercise();
+        if (!exercise?.id) {
+            return undefined;
+        }
+        const participationId = this.studentParticipation()?.id;
+        return [exercise.type, exercise.id, participationId ?? '', this.participationMode(), (exercise as ProgrammingExercise).allowOnlineEditor ?? ''].join('|');
+    });
+
     readonly showDiscussion = computed(() => {
         const course = this.exercise().course;
         return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
@@ -117,6 +148,10 @@ export class ExerciseSplitPanelComponent {
         const exercise = this.exercise();
         return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
     });
+
+    readonly irisPanelStartsCollapsed = computed(
+        () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
+    );
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
@@ -194,32 +229,39 @@ export class ExerciseSplitPanelComponent {
             }
         });
         effect(() => {
-            const participation = this.studentParticipation();
-            const exercise = this.exercise();
-            const mode = this.participationMode();
-            if (!exercise.id) return;
+            // Depend ONLY on the stable target identity, so object-reference churn (e.g. an incoming result that
+            // replaces the participation object but keeps its id) does not re-run this navigation. The imperative
+            // navigation runs untracked so it cannot add the exercise/participation objects as dependencies — that
+            // combination prevents the navigate-thrash loop that re-created the code-editor subtree (see PR #12976).
+            if (!this.navigationTargetKey()) return;
+            untracked(() => {
+                const participation = this.studentParticipation();
+                const exercise = this.exercise();
+                const mode = this.participationMode();
+                if (!exercise.id) return;
 
-            const type = exercise.type;
-            if (type === ExerciseType.QUIZ) {
-                const targetSegment = mode === 'practice' ? 'practice' : 'live';
-                const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                if (currentSegment !== targetSegment) {
-                    this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                const type = exercise.type;
+                if (type === ExerciseType.QUIZ) {
+                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
+                    const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    if (currentSegment !== targetSegment) {
+                        this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    }
+                    return;
                 }
-                return;
-            }
-            if (!participation?.id) return;
-            const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
-            if (currentParticipationId === String(participation.id)) return;
-            if (type === ExerciseType.TEXT) {
-                this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.MODELING) {
-                this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.FILE_UPLOAD) {
-                this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            }
+                if (!participation?.id) return;
+                const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+                if (currentParticipationId === String(participation.id)) return;
+                if (type === ExerciseType.TEXT) {
+                    this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                    this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.MODELING) {
+                    this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.FILE_UPLOAD) {
+                    this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                }
+            });
         });
     }
 
@@ -273,7 +315,7 @@ export class ExerciseSplitPanelComponent {
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode === 'practice') {
+        if (quizComponent && quizComponent.mode() === 'practice') {
             quizComponent.restartPractice();
             return true;
         }
@@ -286,6 +328,18 @@ export class ExerciseSplitPanelComponent {
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);
             });
+            this.quizSubmittedSubscription = component.quizSubmittedEvent.subscribe((submission: QuizSubmission) => {
+                this.quizSubmitted.emit(submission);
+            });
+            this.liveQuizStatusSubscription = component.liveQuizStatusChange.subscribe((status: LiveQuizParticipationStatus | undefined) => {
+                this.liveQuizStatusChange.emit(status);
+            });
+            this.quizPracticeParticipationSubscription = component.practiceParticipationChanged.subscribe((participation: StudentParticipation) => {
+                this.quizPracticeParticipationChanged.emit(participation);
+            });
+            this.liveQuizResultSubscription = component.liveQuizResultParticipation.subscribe((participation: StudentParticipation) => {
+                this.liveQuizResultParticipation.emit(participation);
+            });
         }
     }
 
@@ -293,6 +347,14 @@ export class ExerciseSplitPanelComponent {
         this._quizComponent.set(undefined);
         this.quizStartedSubscription?.unsubscribe();
         this.quizStartedSubscription = undefined;
+        this.quizSubmittedSubscription?.unsubscribe();
+        this.quizSubmittedSubscription = undefined;
+        this.liveQuizStatusSubscription?.unsubscribe();
+        this.liveQuizStatusSubscription = undefined;
+        this.quizPracticeParticipationSubscription?.unsubscribe();
+        this.quizPracticeParticipationSubscription = undefined;
+        this.liveQuizResultSubscription?.unsubscribe();
+        this.liveQuizResultSubscription = undefined;
         this._quizHasStarted.set(false);
     }
 }

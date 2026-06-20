@@ -104,6 +104,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
@@ -127,6 +128,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
                         + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
+    }
+
+    @Test
+    void testNoShadedDependencies() {
+        ArchRule noShadedDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("..shaded..", "..repackaged..")
+                .because("Depending on a third-party library's shaded/relocated internal copy (e.g. org.apache.velocity.shaded.commons.io.FilenameUtils) is fragile: "
+                        + "the host library can drop or relocate the shaded package on any version bump, silently breaking the build (this happened during the OpenSAML/Velocity "
+                        + "upgrade in the Spring Boot 4.1 bump). Depend on the real, explicitly-declared library instead (e.g. commons-io for FilenameUtils).");
+        noShadedDependencies.check(allClasses);
     }
 
     @Test
@@ -365,9 +375,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testJsonIncludeNonEmptyOrNonNull() {
-        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
-        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
+    void testJsonIncludeNonEmpty() {
+        members().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
+        classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
     }
 
     /**
@@ -392,8 +402,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_NULL)") {
+    private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
 
             @Override
             public void check(T item, ConditionEvents events) {
@@ -404,8 +414,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
-                if (!value.name().equals("NON_EMPTY") && !value.name().equals("NON_NULL")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(NON_EMPTY) or @JsonInclude(NON_NULL)"));
+                if (!value.name().equals("NON_EMPTY")) {
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
                 }
             }
         };
@@ -421,8 +431,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
                 boolean hasConditionalOnProperty = item.isAnnotatedWith(ConditionalOnProperty.class);
                 if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression || hasConditionalOnProperty)) {
-                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty",
-                            item.getFullName());
+                    String message = "Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty".formatted(item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
@@ -482,6 +491,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
+                .and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
@@ -602,10 +612,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : constructor.getParameters()) {
                     if (parameter.isAnnotatedWith(Lazy.class)) {
                         events.add(violated(constructor,
-                                String.format(
-                                        "Constructor %s has parameter '%s' annotated with @Lazy. "
-                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
-                                        constructor.getFullName(), parameter.getRawType().getSimpleName())));
+                                ("Constructor %s has parameter '%s' annotated with @Lazy. "
+                                        + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.")
+                                        .formatted(constructor.getFullName(), parameter.getRawType().getSimpleName())));
                     }
                 }
             }
@@ -620,10 +629,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : method.getParameters()) {
                     if (parameter.isAnnotatedWith(Lazy.class)) {
                         events.add(violated(method,
-                                String.format(
-                                        "Method %s has parameter '%s' annotated with @Lazy. "
-                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
-                                        method.getFullName(), parameter.getRawType().getSimpleName())));
+                                ("Method %s has parameter '%s' annotated with @Lazy. "
+                                        + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.")
+                                        .formatted(method.getFullName(), parameter.getRawType().getSimpleName())));
                     }
                 }
             }
@@ -671,8 +679,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     String typeName = parameter.getRawType().getName();
                     if (typeName.equals("org.springframework.beans.factory.ObjectProvider")) {
                         events.add(violated(constructor,
-                                String.format("Constructor %s has parameter of type ObjectProvider. " + "ObjectProvider should not be used to work around circular dependencies. "
-                                        + "Refactor the code to break the dependency cycle instead.", constructor.getFullName())));
+                                ("Constructor %s has parameter of type ObjectProvider. " + "ObjectProvider should not be used to work around circular dependencies. "
+                                        + "Refactor the code to break the dependency cycle instead.").formatted(constructor.getFullName())));
                     }
                 }
             }
@@ -779,7 +787,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : parameters) {
                     if (classWithSchedulingProfile().test(parameter.getRawType())) {
                         events.add(violated(parameter,
-                                String.format("Class %s uses class %s without wrapping it with Optionals.", parameter.getOwner().getFullName(), parameter.getType().getName())));
+                                "Class %s uses class %s without wrapping it with Optionals.".formatted(parameter.getOwner().getFullName(), parameter.getType().getName())));
                     }
                 }
             }
@@ -804,7 +812,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     JavaClass caller = call.getOriginOwner();
                     if (!caller.isAssignableTo(allowedCaller)) {
                         events.add(violated(call,
-                                String.format("%s calls %s, but only %s should call this method", caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
+                                "%s calls %s, but only %s should call this method".formatted(caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
                     }
                 }
             }

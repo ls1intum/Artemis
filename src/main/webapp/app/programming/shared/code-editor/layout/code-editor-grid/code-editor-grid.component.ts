@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, Renderer2, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, inject, input, output, signal, viewChild } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -17,22 +17,18 @@ import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor
 export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private renderer = inject(Renderer2);
 
-    @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
-    @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
-    @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
+    readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
+    readonly fileBrowserElement = viewChild.required<ElementRef>('fileBrowser');
+    readonly instructionsElement = viewChild.required<ElementRef>('instructions');
 
-    @ViewChild('buildOutput') buildOutputElement: ElementRef;
-    @ViewChild('fileBrowser') fileBrowserElement: ElementRef;
-    @ViewChild('instructions') instructionsElement: ElementRef;
+    readonly isTutorAssessment = input(false);
+    readonly showEditorNavbar = input(true);
+    readonly showEditorSidebarRight = input(true);
+    readonly onResize = output<ResizeType>();
 
-    @Input() isTutorAssessment = false;
-    @Input() showEditorNavbar = true;
-    @Input() showEditorSidebarRight = true;
-    @Output() onResize = new EventEmitter<ResizeType>();
-
-    fileBrowserIsCollapsed = false;
-    rightPanelIsCollapsed = false;
-    buildOutputIsCollapsed = false;
+    readonly fileBrowserIsCollapsed = signal(false);
+    readonly rightPanelIsCollapsed = signal(false);
+    readonly buildOutputIsCollapsed = signal(false);
 
     interactResizableMain: Interactable;
     resizableMinHeightMain = 480;
@@ -181,11 +177,11 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
         switch (collapsableElement) {
             case CollapsableCodeEditorElement.BuildOutput:
-                return this.buildOutputElement;
+                return this.buildOutputElement();
             case CollapsableCodeEditorElement.FileBrowser:
-                return this.fileBrowserElement;
+                return this.fileBrowserElement();
             case CollapsableCodeEditorElement.Instructions:
-                return this.instructionsElement;
+                return this.instructionsElement();
         }
     }
 
@@ -215,15 +211,15 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
         // used to disable draggable icons
         switch (interactResizable.target) {
             case '.resizable-instructions': {
-                this.rightPanelIsCollapsed = !this.rightPanelIsCollapsed;
+                this.rightPanelIsCollapsed.update((collapsed) => !collapsed);
                 break;
             }
             case '.resizable-filebrowser': {
-                this.fileBrowserIsCollapsed = !this.fileBrowserIsCollapsed;
+                this.fileBrowserIsCollapsed.update((collapsed) => !collapsed);
                 break;
             }
             case '.resizable-buildoutput': {
-                this.buildOutputIsCollapsed = !this.buildOutputIsCollapsed;
+                this.buildOutputIsCollapsed.update((collapsed) => !collapsed);
                 break;
             }
         }

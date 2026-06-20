@@ -69,9 +69,9 @@ describe('LectureDetailComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.lecture).toEqual(mockLecture);
-        expect(component.detailSections).toBeDefined();
-        for (const detail of component.detailSections[0].details) {
+        expect(component.lecture()).toEqual(mockLecture);
+        expect(component.detailSections()).toBeDefined();
+        for (const detail of component.detailSections()[0].details) {
             expect(detail).toBeDefined();
         }
     });
@@ -83,9 +83,9 @@ describe('LectureDetailComponent', () => {
     });
 
     it('should have correct lecture-details', () => {
-        component.lecture = mockLecture;
+        component.lecture.set(mockLecture);
         component.getLectureDetailSections();
-        for (const section of component.detailSections) {
+        for (const section of component.detailSections()) {
             expect(section.headline).toBeTruthy();
             for (const detail of section.details) {
                 expect(detail).toBeTruthy();

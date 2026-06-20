@@ -108,7 +108,6 @@ describe('TableViewComponent', () => {
                 emptyMessageTranslation: 'custom.message',
                 scrollable: true,
                 scrollHeight: '400px',
-                rowActionsAlignment: 'start',
                 searchPlaceholder: 'custom.placeholder',
             };
             fixture.componentRef.setInput('options', fullOptions);
@@ -126,15 +125,13 @@ describe('TableViewComponent', () => {
             expect(resolved.emptyMessageTranslation).toBe('custom.message');
             expect(resolved.scrollable).toBe(true);
             expect(resolved.scrollHeight).toBe('400px');
-            expect(resolved.rowActionsAlignment).toBe('start');
             expect(resolved.searchPlaceholder).toBe('custom.placeholder');
         });
 
-        it('should use default scrollable, scrollHeight, rowActionsAlignment, searchPlaceholder', () => {
+        it('should use default scrollable, scrollHeight, searchPlaceholder', () => {
             const resolved = component['resolvedOptions']();
             expect(resolved.scrollable).toBe(false);
             expect(resolved.scrollHeight).toBeUndefined();
-            expect(resolved.rowActionsAlignment).toBe('end');
             expect(resolved.searchPlaceholder).toBe('artemisApp.course.exercise.search.searchPlaceholder');
         });
 
@@ -189,30 +186,30 @@ describe('TableViewComponent', () => {
 
     it('should compute item range begin correctly', () => {
         // Default state: first=0, totalRows=3
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
 
         // When total rows is 0, should be 0
         fixture.componentRef.setInput('totalRows', 0);
-        expect(component.itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
 
         // When total rows > 0
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
     });
 
     it('should compute item range end correctly', () => {
         // Default state: first=0, pageSize=50, totalRows=3
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 2 });
-        expect(component.itemRangeEnd()).toBe(2);
+        expect((component as any).itemRangeEnd()).toBe(2);
     });
 
     it('should compute item range begin from vals length when totalRows is undefined', () => {
         fixture.componentRef.setInput('totalRows', undefined);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(mockData.length);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(mockData.length);
     });
 
     it('should build renderer params correctly', () => {
@@ -258,6 +255,106 @@ describe('TableViewComponent', () => {
         expect(component['currentFirst']()).toBe(10);
         expect(onLazyLoadSpy).toHaveBeenCalledWith(lazyLoadEvent);
         expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('reset', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 5, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset pagination state and emit a lazy load event at page 0 with cleared filters', () => {
+            const mockTable = { first: 50, filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'name', sortOrder: 1 };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(component['currentPageSizeOverride']()).toBeUndefined();
+            expect(mockTable.first).toBe(0);
+            expect(mockTable.filters).toEqual({});
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.globalFilter).toBeNull();
+            expect(event.filters).toEqual({});
+        });
+
+        it('should cancel any pending search debounce and fire exactly once', () => {
+            vi.useFakeTimers();
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.onGlobalSearch('pending search');
+            component.reset();
+
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+
+            vi.advanceTimersByTime(500);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce(); // no second fire from the cancelled debounce
+        });
+    });
+
+    describe('reload', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset to page 0 and emit a lazy load event preserving sort and active filter', () => {
+            const mockTable = {
+                first: 50,
+                filters: { global: { value: 'my search', matchMode: 'contains' } },
+                sortField: 'name',
+                sortOrder: -1,
+            };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(mockTable.first).toBe(0);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.sortField).toBe('name');
+            expect(event.sortOrder).toBe(-1);
+            expect(event.globalFilter).toBe('my search');
+        });
+
+        it('should use null for globalFilter when no search is active', () => {
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.globalFilter).toBeNull();
+        });
     });
 
     it('should handle page change event', () => {
@@ -308,11 +405,11 @@ describe('TableViewComponent', () => {
         expect(onRowSelectSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle selectedRow property', () => {
-        expect(component.selectedRow).toBeUndefined();
+    it('should handle tableSelection property', () => {
+        expect(component.tableSelection).toBeUndefined();
 
-        component.selectedRow = mockData[1];
-        expect(component.selectedRow).toEqual(mockData[1]);
+        component.tableSelection = mockData[1];
+        expect(component.tableSelection).toEqual(mockData[1]);
     });
 
     it('should debounce global search - single search', () => {
@@ -381,17 +478,17 @@ describe('TableViewComponent', () => {
 
     it('should maintain correct item range with updated total rows', () => {
         // Initial state
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Update total rows
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(10);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(10);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 5 });
-        expect(component.itemRangeEnd()).toBe(5);
+        expect((component as any).itemRangeEnd()).toBe(5);
     });
 
     it('should handle empty data', () => {
@@ -400,8 +497,8 @@ describe('TableViewComponent', () => {
 
         expect(component.vals()).toEqual([]);
         expect(component.totalRows()).toBe(0);
-        expect(component.itemRangeBegin()).toBe(0);
-        expect(component.itemRangeEnd()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeEnd()).toBe(0);
     });
 
     it('should build params for each column in data row', () => {
@@ -412,5 +509,163 @@ describe('TableViewComponent', () => {
         expect(paramsForEachCol[0].value).toBe(1); // id
         expect(paramsForEachCol[1].value).toBe('Item 1'); // name
         expect(paramsForEachCol[2].value).toBe(100); // value
+    });
+
+    describe('resolvedOptions - sort and global-filter additions', () => {
+        it('should default globalFilterFields/initialSortField to undefined and initialSortOrder to 1', () => {
+            const resolved = component['resolvedOptions']();
+            expect(resolved.globalFilterFields).toBeUndefined();
+            expect(resolved.initialSortField).toBeUndefined();
+            expect(resolved.initialSortOrder).toBe(1);
+        });
+
+        it('should merge globalFilterFields and initial sort settings from options', () => {
+            fixture.componentRef.setInput('options', { globalFilterFields: ['name', 'value'], initialSortField: 'name', initialSortOrder: -1 });
+            const resolved = component['resolvedOptions']();
+            expect(resolved.globalFilterFields).toEqual(['name', 'value']);
+            expect(resolved.initialSortField).toBe('name');
+            expect(resolved.initialSortOrder).toBe(-1);
+        });
+    });
+
+    describe('dot-path value resolution', () => {
+        it('should resolve a nested dot-path field via lodash get', () => {
+            const nested = { id: 1, owner: { name: 'Alice' } } as unknown as TestData;
+            const params = component.buildRendererParams(nested, { field: 'owner.name' }, 0);
+            expect(params.value).toBe('Alice');
+        });
+
+        it('should resolve array-index fields (tuple access)', () => {
+            const tuple = ['key', 'value'] as unknown as TestData;
+            expect(component.buildRendererParams(tuple, { field: '0' }, 0).value).toBe('key');
+            expect(component.buildRendererParams(tuple, { field: '1' }, 0).value).toBe('value');
+        });
+
+        it('should yield undefined for a missing nested path', () => {
+            const params = component.buildRendererParams(mockData[0], { field: 'owner.name' }, 0);
+            expect(params.value).toBeUndefined();
+        });
+    });
+
+    describe('hasCustomSort', () => {
+        const comparator = (a: TestData, b: TestData) => a.value - b.value;
+
+        it('should be false when no column defines a comparator', () => {
+            expect(component['hasCustomSort']()).toBe(false);
+        });
+
+        it('should be true when a column defines a comparator in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: comparator }]);
+            expect(component['hasCustomSort']()).toBe(true);
+        });
+
+        it('should be false in lazy mode even when a column defines a comparator', () => {
+            fixture.componentRef.setInput('options', { lazy: true });
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: comparator }]);
+            expect(component['hasCustomSort']()).toBe(false);
+        });
+    });
+
+    describe('onCustomSort', () => {
+        const byValue = (a: TestData, b: TestData) => a.value - b.value;
+        const unsorted = (): TestData[] => [
+            { id: 1, name: 'a', value: 300 },
+            { id: 2, name: 'b', value: 100 },
+            { id: 3, name: 'c', value: 200 },
+        ];
+
+        it('should sort in place using a column comparator (ascending)', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: byValue }]);
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 200, 300]);
+        });
+
+        it('should negate the comparator result for descending order', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'value', sort: true, sortComparator: byValue }]);
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: -1 });
+            expect(data.map((d) => d.value)).toEqual([300, 200, 100]);
+        });
+
+        it('should fall back to numeric field comparison for columns without a comparator', () => {
+            const data = unsorted();
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 200, 300]);
+        });
+
+        it('should fall back to localeCompare for string fields', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'Charlie', value: 1 },
+                { id: 2, name: 'alpha', value: 2 },
+                { id: 3, name: 'Bravo', value: 3 },
+            ];
+            component.onCustomSort({ data, field: 'name', order: 1 });
+            expect(data.map((d) => d.name)).toEqual(['alpha', 'Bravo', 'Charlie']);
+        });
+
+        it('should sort nullish values last in the ascending fallback', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'a', value: 300 },
+                { id: 2, name: 'b', value: undefined as unknown as number },
+                { id: 3, name: 'c', value: 100 },
+            ];
+            component.onCustomSort({ data, field: 'value', order: 1 });
+            expect(data.map((d) => d.value)).toEqual([100, 300, undefined]);
+        });
+
+        it('should resolve dot-path fields in the fallback comparison', () => {
+            fixture.componentRef.setInput('cols', [{ field: 'owner.name', sort: true }]);
+            const data = [
+                { id: 1, owner: { name: 'Charlie' } },
+                { id: 2, owner: { name: 'alpha' } },
+                { id: 3, owner: { name: 'Bravo' } },
+            ] as unknown as TestData[];
+            component.onCustomSort({ data, field: 'owner.name', order: 1 });
+            expect(data.map((d) => (d as unknown as { owner: { name: string } }).owner.name)).toEqual(['alpha', 'Bravo', 'Charlie']);
+        });
+
+        it('should default to ascending order when order is undefined', () => {
+            const data: TestData[] = [
+                { id: 1, name: 'a', value: 200 },
+                { id: 2, name: 'b', value: 100 },
+            ];
+            component.onCustomSort({ data, field: 'value' });
+            expect(data.map((d) => d.value)).toEqual([100, 200]);
+        });
+
+        it('should be a no-op when event.data is undefined', () => {
+            expect(() => component.onCustomSort({ data: undefined as unknown as TestData[], field: 'value', order: 1 })).not.toThrow();
+        });
+    });
+
+    describe('rowClass input', () => {
+        it('should default to null', () => {
+            expect(component.rowClass()).toBeNull();
+        });
+
+        it('should expose the provided row-class function', () => {
+            const rowClassFn = (row: TestData) => (row.id === 1 ? 'highlight' : '');
+            fixture.componentRef.setInput('rowClass', rowClassFn);
+            expect(component.rowClass()?.(mockData[0])).toBe('highlight');
+            expect(component.rowClass()?.(mockData[1])).toBe('');
+        });
+    });
+
+    describe('onFilter (filtered row count)', () => {
+        it('should emit the number of rows remaining after a client-side filter', () => {
+            const spy = vi.fn();
+            component.filteredRowsChange.subscribe(spy);
+            component.onFilter({ filteredValue: [mockData[0], mockData[1]] });
+            expect(spy).toHaveBeenCalledWith(2);
+        });
+
+        it('should emit the full row count when the filter is cleared (filteredValue is null)', () => {
+            const spy = vi.fn();
+            component.filteredRowsChange.subscribe(spy);
+            component.onFilter({ filteredValue: null });
+            expect(spy).toHaveBeenCalledWith(mockData.length);
+        });
     });
 });

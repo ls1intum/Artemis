@@ -4,10 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Data, Params, Router, UrlSegment } from '@angular/router';
 
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
@@ -47,11 +47,12 @@ import { CategorySelectorComponent } from 'app/exercise/category-selector/catego
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 
 // Mock ResizeObserver globally
 class MockResizeObserverClass {
@@ -123,6 +124,8 @@ describe('ModelingExerciseUpdateComponent', () => {
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
     let calendarService: CalendarService;
+    let alertService: AlertService;
+    let navigationUtilService: ArtemisNavigationUtilService;
 
     const categories = [new ExerciseCategory('testCat', undefined), new ExerciseCategory('testCat2', undefined)];
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
@@ -244,7 +247,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
-                        MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
+                        ModelingExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
                     ],
@@ -256,6 +259,8 @@ describe('ModelingExerciseUpdateComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         exerciseService = TestBed.inject(ExerciseService);
         calendarService = TestBed.inject(CalendarService);
+        alertService = TestBed.inject(AlertService);
+        navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
     });
 
     afterEach(() => {
@@ -293,7 +298,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
 
@@ -325,7 +330,36 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
+            });
+
+            it('should show backend error alert and reset saving state on save error', async () => {
+                const error = new HttpErrorResponse({
+                    error: {
+                        title: 'modelingExercise.update.error',
+                        message: 'modelingExercise.update.error.message',
+                        params: { exerciseId: 123 },
+                    },
+                });
+                vi.spyOn(service, 'update').mockReturnValue(throwError(() => error));
+                const alertSpy = vi.spyOn(alertService, 'addErrorAlert').mockImplementation(() => undefined);
+
+                comp.save();
+                await fixture.whenStable();
+
+                expect(alertSpy).toHaveBeenCalledWith('modelingExercise.update.error', 'modelingExercise.update.error.message', { exerciseId: 123 });
+                expect(comp.isSaving()).toBe(false);
+            });
+
+            it('should show generic error alert when save error has no backend title', async () => {
+                vi.spyOn(service, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+                const alertSpy = vi.spyOn(alertService, 'error').mockReturnValue({} as ReturnType<AlertService['error']>);
+
+                comp.save();
+                await fixture.whenStable();
+
+                expect(alertSpy).toHaveBeenCalledWith('error.http.400');
+                expect(comp.isSaving()).toBe(false);
             });
         });
     });
@@ -355,13 +389,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
 
         it('should load exercise categories', async () => {
@@ -403,13 +437,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
     });
 
@@ -434,8 +468,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
@@ -465,8 +499,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -497,18 +531,30 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
     });
 
+    it('should navigate back from the exercise update form', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const navigateBackSpy = vi.spyOn(navigationUtilService, 'navigateBackFromExerciseUpdate');
+
+        comp.previousState();
+
+        expect(navigateBackSpy).toHaveBeenCalledWith(comp.modelingExercise);
+    });
+
     it('should updateCategories properly by making category available for selection again when removing it', async () => {
         fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
         comp = fixture.componentInstance;
         fixture.detectChanges();
         await fixture.whenStable();
 
-        comp.exerciseCategories = [];
+        comp.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
+        expect(comp.exerciseCategories()).toEqual(newCategories);
     });
 
     it('should properly clean up subscriptions on destroy', async () => {
@@ -579,6 +625,46 @@ describe('ModelingExerciseUpdateComponent', () => {
 
             expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
             document.body.removeChild(editableDiv);
+        });
+    });
+
+    describe('onMarkdownEditorKeydown', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should stop propagation for space key presses', () => {
+            const event = new KeyboardEvent('keydown', { code: 'Space' });
+            const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+
+            comp.onMarkdownEditorKeydown(event);
+
+            expect(stopPropagationSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should stop propagation for copy and paste shortcuts', () => {
+            const copyEvent = new KeyboardEvent('keydown', { code: 'KeyC', ctrlKey: true });
+            const pasteEvent = new KeyboardEvent('keydown', { code: 'KeyV', metaKey: true });
+            const copyStopPropagationSpy = vi.spyOn(copyEvent, 'stopPropagation');
+            const pasteStopPropagationSpy = vi.spyOn(pasteEvent, 'stopPropagation');
+
+            comp.onMarkdownEditorKeydown(copyEvent);
+            comp.onMarkdownEditorKeydown(pasteEvent);
+
+            expect(copyStopPropagationSpy).toHaveBeenCalledOnce();
+            expect(pasteStopPropagationSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not stop propagation for unrelated keys', () => {
+            const event = new KeyboardEvent('keydown', { code: 'KeyA' });
+            const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+
+            comp.onMarkdownEditorKeydown(event);
+
+            expect(stopPropagationSpy).not.toHaveBeenCalled();
         });
     });
 });

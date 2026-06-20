@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -42,14 +42,14 @@ export class PostingHeaderComponent implements OnInit {
 
     isAtLeastInstructorInCourse: boolean;
     isAtLeastTutorInCourse: boolean;
-    isAuthorOfPosting: boolean;
-    postingIsOfToday: boolean;
-    todayFlag?: string;
-    userAuthorityIcon: IconProp;
-    userAuthority: string;
-    userRoleBadge: string;
-    userAuthorityTooltip: string;
-    currentUser?: User;
+    readonly isAuthorOfPosting = signal(false);
+    readonly postingIsOfToday = signal(false);
+    readonly todayFlag = signal<string | undefined>(undefined);
+    readonly userAuthorityIcon = signal<IconProp>(undefined!);
+    readonly userAuthority = signal<string>(undefined!);
+    readonly userRoleBadge = signal<string>(undefined!);
+    readonly userAuthorityTooltip = signal<string>(undefined!);
+    readonly currentUser = signal<User | undefined>(undefined);
 
     // Icons
     readonly faPencilAlt = faPencilAlt;
@@ -93,13 +93,13 @@ export class PostingHeaderComponent implements OnInit {
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
-                    this.currentUser = user;
+                    this.currentUser.set(user);
                     this.setUserProperties();
                 }),
             )
             .subscribe();
-        this.postingIsOfToday = dayjs().isSame(this.posting()?.creationDate, 'day');
-        this.todayFlag = this.getTodayFlag();
+        this.postingIsOfToday.set(dayjs().isSame(this.posting()?.creationDate, 'day'));
+        this.todayFlag.set(this.getTodayFlag());
     }
 
     private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
@@ -131,7 +131,7 @@ export class PostingHeaderComponent implements OnInit {
      * sets a flag that replaces the date by "Today" in the posting's header if applicable
      */
     getTodayFlag(): string | undefined {
-        if (this.postingIsOfToday) {
+        if (this.postingIsOfToday()) {
             return 'artemisApp.metis.today';
         } else {
             return undefined;
@@ -146,7 +146,7 @@ export class PostingHeaderComponent implements OnInit {
      * @returns {void}
      */
     setUserProperties(): void {
-        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting()!);
+        this.isAuthorOfPosting.set(this.metisService.metisUserIsAuthorOfPosting(this.posting()!));
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -156,30 +156,30 @@ export class PostingHeaderComponent implements OnInit {
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
-        this.userAuthorityIcon = faUser;
+        this.userAuthorityIcon.set(faUser);
         if (this.posting()?.author?.bot) {
-            this.userAuthorityIcon = faRobot;
-            this.userAuthority = 'bot';
-            this.userRoleBadge = roleBadgeTranslationPath + 'bot';
-            this.userAuthorityTooltip = toolTipTranslationPath + 'bot';
+            this.userAuthorityIcon.set(faRobot);
+            this.userAuthority.set('bot');
+            this.userRoleBadge.set(roleBadgeTranslationPath + 'bot');
+            this.userAuthorityTooltip.set(toolTipTranslationPath + 'bot');
         } else if (this.posting()?.authorRole === UserRole.USER) {
-            this.userAuthority = 'student';
-            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
-            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
+            this.userAuthority.set('student');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
         } else if (this.posting()?.authorRole === UserRole.INSTRUCTOR) {
-            this.userAuthorityIcon = faUserGraduate;
-            this.userAuthority = 'instructor';
-            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
-            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
+            this.userAuthorityIcon.set(faUserGraduate);
+            this.userAuthority.set('instructor');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
         } else if (this.posting()?.authorRole === UserRole.TUTOR) {
-            this.userAuthorityIcon = faUserCheck;
-            this.userAuthority = 'tutor';
-            this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
-            this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
+            this.userAuthorityIcon.set(faUserCheck);
+            this.userAuthority.set('tutor');
+            this.userRoleBadge.set(roleBadgeTranslationPath + this.userAuthority());
+            this.userAuthorityTooltip.set(toolTipTranslationPath + this.userAuthority());
         } else {
-            this.userAuthority = 'student';
-            this.userRoleBadge = 'artemisApp.metis.userRoles.deleted';
-            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.deleted';
+            this.userAuthority.set('student');
+            this.userRoleBadge.set('artemisApp.metis.userRoles.deleted');
+            this.userAuthorityTooltip.set('artemisApp.metis.userAuthorityTooltips.deleted');
         }
     }
 
@@ -188,7 +188,7 @@ export class PostingHeaderComponent implements OnInit {
      * unless the user is the author themself or role is missing
      */
     protected userNameClicked() {
-        if (this.isAuthorOfPosting || !this.posting()?.authorRole) {
+        if (this.isAuthorOfPosting() || !this.posting()?.authorRole) {
             return;
         }
 

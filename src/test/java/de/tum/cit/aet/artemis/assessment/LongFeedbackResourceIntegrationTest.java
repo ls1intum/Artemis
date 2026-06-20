@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "longfeedbackintegration";
 
@@ -94,7 +94,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private String getUrl(final long feedbackId) {
-        return String.format("/api/assessment/feedbacks/%d/long-feedback", feedbackId);
+        return "/api/assessment/feedbacks/%d/long-feedback".formatted(feedbackId);
     }
 
     private Feedback addLongFeedbackToResult(final Result result) {

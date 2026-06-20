@@ -1,39 +1,30 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject, input, output } from '@angular/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonDirective } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
-            [icon]="faPlus"
-            [title]="'artemisApp.team.importTeams.buttonLabel'"
-            (onClick)="openTeamsImportDialog($event)"
-        />
+        <button pButton severity="primary" size="small" (click)="openTeamsImportDialog($event)">
+            <i class="pi pi-upload"></i>
+            <span>{{ 'artemisApp.team.importTeams.buttonLabel' | artemisTranslate }}</span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [ButtonDirective, ArtemisTranslatePipe],
 })
 export class TeamsImportButtonComponent {
-    private modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly exercise = input.required<Exercise>();
+    readonly teams = input.required<Team[]>();
 
-    @Input() exercise: Exercise;
-    @Input() teams: Team[];
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
-
-    @Output() save: EventEmitter<Team[]> = new EventEmitter();
-
-    // Icons
-    faPlus = faPlus;
+    readonly save = output<Team[]>();
 
     /**
      * Open up import dialog for teams
@@ -41,13 +32,23 @@ export class TeamsImportButtonComponent {
      */
     openTeamsImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TeamsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.teams = this.teams;
-
-        modalRef.result.then(
-            (teams: Team[]) => this.save.emit(teams),
-            () => {},
-        );
+        const exercise = this.exercise();
+        const titleLabel = this.translateService.instant('artemisApp.team.importTeams.buttonLabel');
+        const exerciseTitle = exercise.title;
+        const header = exerciseTitle ? `${titleLabel} (${exerciseTitle})` : titleLabel;
+        const ref = this.dialogService.open(TeamsImportDialogComponent, {
+            header,
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { exercise, teams: this.teams() },
+        });
+        ref?.onClose.subscribe((teams: Team[] | undefined) => {
+            if (teams) {
+                this.save.emit(teams);
+            }
+        });
     }
 }

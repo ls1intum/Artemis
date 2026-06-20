@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -41,8 +41,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const conversation = this.activeConversation();
             untracked(() => {
                 if (conversation) {
-                    this.conversation = conversation as ConversationDTO;
-                    this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+                    this.conversation.set(conversation as ConversationDTO);
+                    this.hasChannelModerationRights.set(getAsChannelDTO(this.conversation())?.hasChannelModerationRights ?? false);
                 }
             });
         });
@@ -50,8 +50,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const activePost = this.activePost();
             untracked(() => {
                 if (activePost) {
-                    this.post = activePost;
-                    this.createdAnswerPost = this.createEmptyAnswerPost();
+                    this.post.set(activePost);
+                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
                     // After the DOM renders the new post, pin the current pixel width
                     // so that removing or replacing content (e.g. rejecting / editing an
                     // Iris reply) never changes the sidebar width mid-session.
@@ -61,10 +61,10 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         });
     }
 
-    post?: Post;
-    createdAnswerPost: AnswerPost;
-    conversation: ConversationDTO;
-    hasChannelModerationRights = false;
+    readonly post = signal<Post | undefined>(undefined);
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
+    readonly conversation = signal<ConversationDTO>(undefined!);
+    readonly hasChannelModerationRights = signal(false);
 
     // Icons
     faXmark = faXmark;
@@ -74,7 +74,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     readonly faExpand = faExpand;
     readonly faCompress = faCompress;
 
-    isExpanded = false;
+    readonly isExpanded = signal(false);
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -83,7 +83,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
-        answerPost.post = this.post;
+        answerPost.post = this.post();
         return answerPost;
     }
 
@@ -98,7 +98,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         if (el) {
             el.style.width = '';
         }
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
         this.expandTooltip()?.close();
         if (!this.isExpanded) {
             setTimeout(() => this.lockWidth(), 0);

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -13,11 +13,13 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
     imports: [TranslateDirective, FormsModule, ProgrammingExerciseUpdateTimelineComponent, ButtonComponent, FaIconComponent],
+    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
@@ -26,13 +28,14 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(x)] two-way targets (e.g. [(releaseDate)]="newProgrammingExercise.releaseDate") whose in-place writes come from the child timeline component and cannot be intercepted to commit a signal rebuild
     newProgrammingExercise: ProgrammingExercise;
     selectedProgrammingExercises: ProgrammingExercise[];
 
-    isSaving = false;
+    readonly isSaving = signal(false);
     savedExercises = 0;
-    failedExercises: string[] = [];
-    failureOccurred = false;
+    readonly failedExercises = signal<string[]>([]);
+    readonly failureOccurred = signal(false);
     private translationBasePath = 'artemisApp.programmingExercise.';
     notificationText?: string;
 
@@ -54,7 +57,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
                 return;
             }
         }
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.newProgrammingExercise)) {
             this.alertService.addAlert({
@@ -99,8 +102,8 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private onSaveSuccess() {
         this.savedExercises++;
         if (this.savedExercises === this.selectedProgrammingExercises.length) {
-            this.isSaving = false;
-            if (!this.failureOccurred) {
+            this.isSaving.set(false);
+            if (!this.failureOccurred()) {
                 this.activeModal.close();
             }
         }
@@ -108,11 +111,11 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
     private onSaveError(error: HttpErrorResponse, exerciseTitle?: string | undefined) {
         exerciseTitle = exerciseTitle ?? 'undefined exercise';
-        this.failureOccurred = true;
-        this.failedExercises.push(exerciseTitle);
+        this.failureOccurred.set(true);
+        this.failedExercises.set([...this.failedExercises(), exerciseTitle]);
         this.savedExercises++;
         if (this.savedExercises === this.selectedProgrammingExercises.length) {
-            this.isSaving = false;
+            this.isSaving.set(false);
         }
         window.scrollTo(0, 0);
     }

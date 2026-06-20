@@ -5,7 +5,7 @@ import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -13,6 +13,7 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
+    ImportAllCourseCompetenciesModalData,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -20,9 +21,12 @@ import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import {
+    CourseCompetenciesRelationModalComponent,
+    CourseCompetenciesRelationModalData,
+} from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
-import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
+import { AgentChatModalComponent, AgentChatModalData } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -61,7 +65,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
@@ -152,25 +156,42 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     protected openCourseCompetenciesRelationModal(): void {
-        const modalRef = this.modalService.open(CourseCompetenciesRelationModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'course-competencies-relation-graph-modal',
+        this.dialogService.open(CourseCompetenciesRelationModalComponent, {
+            style: { width: '90vw', maxWidth: '90rem' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            styleClass: 'course-competencies-relation-graph-modal',
+            data: <CourseCompetenciesRelationModalData>{
+                courseId: this.courseId(),
+                courseCompetencies: this.courseCompetencies(),
+            },
         });
-        modalRef.componentInstance.courseId = signal<number>(this.courseId());
-        modalRef.componentInstance.courseCompetencies = signal<CourseCompetency[]>(this.courseCompetencies());
     }
 
     /**
      * Opens a modal for selecting a course to import all competencies from.
      */
     async openImportAllModal() {
-        const modalRef = this.modalService.open(ImportAllCourseCompetenciesModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        const dialogRef = this.dialogService.open(ImportAllCourseCompetenciesModalComponent, {
+            style: { width: '90vw', maxWidth: '50rem' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: <ImportAllCourseCompetenciesModalData>{ courseId: this.courseId() },
         });
-        modalRef.componentInstance.courseId = signal<number>(this.courseId());
-        const importResults: ImportAllCourseCompetenciesResult | undefined = await modalRef.result;
+        if (!dialogRef) {
+            return;
+        }
+        const importResults: ImportAllCourseCompetenciesResult | undefined = await firstValueFrom(dialogRef.onClose, { defaultValue: undefined });
         if (!importResults) {
             return;
         }
@@ -218,10 +239,16 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     openCourseCompetencyExplanation(): void {
-        this.modalService.open(CourseCompetencyExplanationModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'course-competency-explanation-modal',
+        this.dialogService.open(CourseCompetencyExplanationModalComponent, {
+            style: { width: '90vw', maxWidth: '90rem' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            styleClass: 'course-competency-explanation-modal',
         });
     }
 
@@ -230,14 +257,19 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * Listens for competency changes and refreshes the list immediately.
      */
     protected openAgentChatModal(): void {
-        const modalRef = this.modalService.open(AgentChatModalComponent, {
-            size: 'lg',
-            backdrop: true,
-        });
-        modalRef.componentInstance.courseId.set(this.courseId());
-
-        modalRef.componentInstance.competencyChanged.subscribe(() => {
-            this.loadCourseCompetencies(this.courseId());
+        this.dialogService.open(AgentChatModalComponent, {
+            style: { width: '90vw', maxWidth: '50rem' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: <AgentChatModalData>{
+                courseId: this.courseId(),
+                onCompetencyChanged: () => this.loadCourseCompetencies(this.courseId()),
+            },
         });
     }
 }

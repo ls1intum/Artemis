@@ -15,8 +15,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -58,6 +60,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -92,6 +95,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
@@ -120,6 +124,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -185,6 +190,8 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
@@ -193,7 +200,7 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -216,6 +223,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
@@ -276,6 +284,8 @@ public class ExamResource {
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
         ZonedDateTime originalEndDate = originalExam.getEndDate();
+        Integer originalGracePeriod = originalExam.getGracePeriod();
+        ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
@@ -303,17 +313,24 @@ public class ExamResource {
         boolean visibleOrStartDateChanged = comparator.compare(originalVisibleDate, savedExam.getVisibleDate()) != 0
                 || comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
         boolean endDateChanged = comparator.compare(originalEndDate, savedExam.getEndDate()) != 0;
-        if (visibleOrStartDateChanged) {
-            // for all programming exercises in the exam, send their ids for scheduling
-            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
-                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
-        }
+        boolean gracePeriodChanged = !Objects.equals(originalGracePeriod, savedExam.getGracePeriod());
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
         int workingTimeChange = savedExam.getDuration() - originalExamDuration;
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
+        }
+
+        boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
+        if (scheduleRelevantExamSettingsChanged) {
+            if (automaticAfterDueDateService.isPresent()) {
+                automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(examWithExercises, originalLatestEndDate);
+            }
+            final Set<Long> programmingExerciseIds = examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .filter(ProgrammingExercise.class::isInstance).map(DomainObject::getId).collect(Collectors.toSet());
+            // for all programming exercises in the exam, send their ids for scheduling
+            programmingExerciseIds.forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
         examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
@@ -350,6 +367,7 @@ public class ExamResource {
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         var originalExamDuration = exam.getDuration();
+        final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
@@ -358,6 +376,10 @@ public class ExamResource {
 
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+        if (automaticAfterDueDateService.isPresent()) {
+            automaticAfterDueDateService.orElseThrow().updateAndSaveBuildAndTestDateInProgrammingExercisesOfExam(exam, originalLatestExamEndDateWithGrace)
+                    .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
+        }
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
         examService.syncExamExercisesMetadata(exam);
@@ -397,12 +419,14 @@ public class ExamResource {
      *
      * @param courseId      the course to which the exam belongs
      * @param examImportDTO the exam import DTO containing the exam data and exercise group references
+     * @param importId      an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO) throws URISyntaxException, IOException {
+    public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
+            @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
@@ -414,11 +438,17 @@ public class ExamResource {
         // Validate the Exam dates and configuration
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Import Exam with Exercises and create a channel for the exam
-        Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
+        // Import Exam with Exercises and create a channel for the exam. When the client supplies an importId, live progress
+        // is reported to the importing user over a websocket so the UI can show a progress dialog while this request runs.
+        ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getCurrentUserLogin());
+        Exam examCopied = importResult.exam();
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
+        // The exam is always created. Any exercises that could not be imported are reported in the response body, split
+        // into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the client can
+        // give precise feedback instead of the whole import failing.
+        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle());
+
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(importResult);
     }
 
     /**
@@ -637,24 +667,17 @@ public class ExamResource {
      *
      * @param courseId           the course to which the exam belongs
      * @param examId             the exam to find
-     * @param withStudents       boolean flag whether to include all students registered for the exam
      * @param withExerciseGroups boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
-            @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
 
-        if (withStudents) {
-            examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        }
-        else {
-            examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
-        }
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        if (!withStudents && !withExerciseGroups) {
+        if (!withExerciseGroups) {
             Exam exam = examRepository.findByIdElseThrow(examId);
             Channel channel = channelRepository.findChannelByExamId(exam.getId());
             if (channel != null) {
@@ -663,21 +686,8 @@ public class ExamResource {
             return ResponseEntity.ok(exam);
         }
 
-        if (withExerciseGroups) {
-            Exam exam;
-            if (withStudents) {
-                exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
-            }
-            else {
-                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
-            }
-            examService.setExamProperties(exam);
-            return ResponseEntity.ok(exam);
-        }
-
-        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
-
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
+        examService.setExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 

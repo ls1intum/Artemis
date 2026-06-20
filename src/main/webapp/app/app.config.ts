@@ -1,11 +1,10 @@
-import './polyfills';
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -51,7 +50,7 @@ export const appConfig: ApplicationConfig = {
                 useFactory: missingTranslationHandler,
             },
         }),
-        provideZoneChangeDetection(),
+        provideZonelessChangeDetection(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently

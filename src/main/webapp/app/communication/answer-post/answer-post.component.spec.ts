@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
@@ -142,9 +142,8 @@ describe('AnswerPostComponent', () => {
 
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
-            showDropdown: true,
+            showDropdown: signal(true),
             enableBodyScroll: vi.fn(),
-            changeDetector: { detectChanges: vi.fn() },
         } as any as AnswerPostComponent;
 
         AnswerPostComponent.activeDropdownPost = previousComponent;
@@ -154,18 +153,17 @@ describe('AnswerPostComponent', () => {
         Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBe(false);
+        expect(previousComponent.showDropdown()).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
-        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(AnswerPostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
     });
 
     it('should handle click outside and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
@@ -185,18 +183,18 @@ describe('AnswerPostComponent', () => {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        component.dropdownPosition = { x: screenWidth - 50, y: 100 };
+        component.dropdownPosition.set({ x: screenWidth - 50, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(screenWidth - dropdownWidth - 10);
+        expect(component.dropdownPosition().x).toBe(screenWidth - dropdownWidth - 10);
     });
 
     it('should not adjust dropdown position if it does not overflow the screen width', () => {
         const initialX = 100;
-        component.dropdownPosition = { x: initialX, y: 100 };
+        component.dropdownPosition.set({ x: initialX, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(initialX);
+        expect(component.dropdownPosition().x).toBe(initialX);
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
@@ -245,8 +243,8 @@ describe('AnswerPostComponent', () => {
             component.onRightClick(event);
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
-            expect(component.showDropdown).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.showDropdown()).toBe(showDropdown);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
         });
     });
 
@@ -299,7 +297,7 @@ describe('AnswerPostComponent', () => {
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
@@ -341,16 +339,16 @@ describe('AnswerPostComponent', () => {
 
     it('should set mayDelete when onMayDelete is called', () => {
         component.onMayDelete(true);
-        expect(component.mayDelete).toBe(true);
+        expect(component.mayDelete()).toBe(true);
         component.onMayDelete(false);
-        expect(component.mayDelete).toBe(false);
+        expect(component.mayDelete()).toBe(false);
     });
 
     it('should set mayEdit when onMayEdit is called', () => {
         component.onMayEdit(true);
-        expect(component.mayEdit).toBe(true);
+        expect(component.mayEdit()).toBe(true);
         component.onMayEdit(false);
-        expect(component.mayEdit).toBe(false);
+        expect(component.mayEdit()).toBe(false);
     });
 
     it('should call metisService.verifyAnswerPost on approveAnswer and update posting on success', () => {
@@ -362,8 +360,8 @@ describe('AnswerPostComponent', () => {
         component.approveAnswer();
 
         expect(verifySpy).toHaveBeenCalledWith(answerPost, undefined);
-        expect(component.isVerifying).toBe(false);
-        expect(component.isEditingIrisReply).toBe(false);
+        expect(component.isVerifying()).toBe(false);
+        expect(component.isEditingIrisReply()).toBe(false);
         expect(component.posting()!.verified).toBe(true);
     });
 
@@ -384,7 +382,7 @@ describe('AnswerPostComponent', () => {
 
         component.approveAnswer();
 
-        expect(component.isVerifying).toBe(false);
+        expect(component.isVerifying()).toBe(false);
     });
 
     it('should not call verifyAnswerPost when posting has no id', () => {
@@ -400,7 +398,7 @@ describe('AnswerPostComponent', () => {
     it('should not call verifyAnswerPost when already verifying', () => {
         const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
-        component.isVerifying = true;
+        component.isVerifying.set(true);
         const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost');
 
         component.approveAnswer();
@@ -414,7 +412,7 @@ describe('AnswerPostComponent', () => {
 
         component.editAnswer();
 
-        expect(component.isEditingIrisReply).toBe(true);
+        expect(component.isEditingIrisReply()).toBe(true);
         expect(component.editedIrisContent).toBe('iris content');
     });
 
@@ -428,12 +426,12 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should reset editing state on cancelEditAnswer', () => {
-        component.isEditingIrisReply = true;
+        component.isEditingIrisReply.set(true);
         component.editedIrisContent = 'some text';
 
         component.cancelEditAnswer();
 
-        expect(component.isEditingIrisReply).toBe(false);
+        expect(component.isEditingIrisReply()).toBe(false);
         expect(component.editedIrisContent).toBe('');
     });
 
@@ -445,7 +443,7 @@ describe('AnswerPostComponent', () => {
         component.rejectAnswer();
 
         expect(deleteSpy).toHaveBeenCalledWith(answerPost);
-        expect(component.isVerifying).toBe(false);
+        expect(component.isVerifying()).toBe(false);
     });
 
     it('should not call deleteAnswerPost when posting has no id', () => {
@@ -461,7 +459,7 @@ describe('AnswerPostComponent', () => {
     it('should not call deleteAnswerPost when already verifying', () => {
         const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
-        component.isVerifying = true;
+        component.isVerifying.set(true);
         const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
 
         component.rejectAnswer();
@@ -480,17 +478,17 @@ describe('AnswerPostComponent', () => {
         component.posting.set(metisResolvingAnswerPostUser1);
         fixture.changeDetectorRef.detectChanges();
         AnswerPostComponent.activeDropdownPost = component;
-        component.showDropdown = true;
+        component.showDropdown.set(true);
 
         component.ngOnDestroy();
 
         expect(AnswerPostComponent.activeDropdownPost).toBeUndefined();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should not clean up activeDropdownPost on ngOnDestroy when another component is active', () => {
         const otherComponent = {
-            showDropdown: true,
+            showDropdown: signal(true),
             enableBodyScroll: vi.fn(),
             changeDetector: { detectChanges: vi.fn() },
         } as any as AnswerPostComponent;

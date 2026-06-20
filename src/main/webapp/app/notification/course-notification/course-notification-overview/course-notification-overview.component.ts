@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -44,18 +44,18 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected readonly faEnvelopeOpen = faEnvelopeOpen;
     protected readonly faSpinner = faSpinner;
 
-    protected courseCategories: string[];
+    protected readonly courseCategories = signal<string[]>([]);
 
-    protected isShown = false;
+    protected readonly isShown = signal(false);
     protected selectedCategory = CourseNotificationCategory.GENERAL;
     protected notifications: CourseNotification[];
-    protected notificationsForSelectedCategory: CourseNotification[] = [];
-    protected courseNotificationCount: number = 0;
+    protected readonly notificationsForSelectedCategory = signal<CourseNotification[]>([]);
+    protected readonly courseNotificationCount = signal<number>(0);
     protected queryStartSize: number = 0;
     protected queryCount: number = 1;
     protected savedScrollPosition: number = 0;
     protected pagesFinished: boolean = false;
-    protected isLoading: boolean = false;
+    protected readonly isLoading = signal<boolean>(false);
     private courseNotificationCountSubscription?: Subscription;
     private courseNotificationSubscription?: Subscription;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
@@ -63,7 +63,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected readonly CourseNotificationViewingStatus = CourseNotificationViewingStatus;
 
     constructor() {
-        this.courseCategories = Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category)));
+        this.courseCategories.set(Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category))));
     }
 
     /**
@@ -95,7 +95,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     ngOnInit(): void {
         this.courseNotificationCountSubscription = this.courseNotificationService.getNotificationCountForCourse$(this.courseId()).subscribe((count: number) => {
-            this.courseNotificationCount = count;
+            this.courseNotificationCount.set(count);
         });
         this.courseNotificationSubscription = this.courseNotificationService.getNotificationsForCourse$(this.courseId()).subscribe((notifications) => {
             this.notifications = notifications;
@@ -104,18 +104,18 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
             // Note: This is a temporary solution until server-side categorization paging is possible
             if (
-                this.isLoading &&
+                this.isLoading() &&
                 !this.pagesFinished &&
                 this.queryCount <= 3 &&
-                this.notificationsForSelectedCategory.length < this.queryStartSize + this.courseNotificationService.pageSize
+                this.notificationsForSelectedCategory().length < this.queryStartSize + this.courseNotificationService.pageSize
             ) {
                 this.queryCount++;
                 this.queryCurrentCategory();
             } else {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.queryCount = 1;
 
-                if (this.isShown) {
+                if (this.isShown()) {
                     setTimeout(() => {
                         this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
                     });
@@ -140,14 +140,14 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * When hidden, marks visible notifications as seen.
      */
     protected toggleOverlay() {
-        this.isShown = !this.isShown;
+        this.isShown.update((shown) => !shown);
 
-        if (!this.isShown) {
+        if (!this.isShown()) {
             this.updateCurrentCategoryNotificationsToSeenOnClient();
         }
 
-        if (this.notificationsForSelectedCategory.length < this.courseNotificationService.pageSize && !this.pagesFinished) {
-            this.queryStartSize = this.notificationsForSelectedCategory.length;
+        if (this.notificationsForSelectedCategory().length < this.courseNotificationService.pageSize && !this.pagesFinished) {
+            this.queryStartSize = this.notificationsForSelectedCategory().length;
             this.queryCurrentCategory();
         }
     }
@@ -178,7 +178,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
         this.updateCurrentCategoryNotificationsToSeenOnServer();
 
-        if (!this.pagesFinished && this.notificationsForSelectedCategory.length < this.courseNotificationService.pageSize) {
+        if (!this.pagesFinished && this.notificationsForSelectedCategory().length < this.courseNotificationService.pageSize) {
             this.queryCurrentCategory();
         }
     }
@@ -192,8 +192,8 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     @HostListener('document:click', ['$event.target'])
     protected onClickOutside(target: any) {
         const clickedInside = this.elementRef.nativeElement.contains(target);
-        if (!clickedInside && this.isShown) {
-            this.isShown = false;
+        if (!clickedInside && this.isShown()) {
+            this.isShown.set(false);
             this.updateCurrentCategoryNotificationsToSeenOnClient();
         }
     }
@@ -203,11 +203,11 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * Triggers loading of the next page of notifications if available.
      */
     protected onScrollReachBottom() {
-        if (this.pagesFinished || this.isLoading) {
+        if (this.pagesFinished || this.isLoading()) {
             return;
         }
 
-        this.queryStartSize = this.notificationsForSelectedCategory.length;
+        this.queryStartSize = this.notificationsForSelectedCategory().length;
         this.queryCurrentCategory();
     }
 
@@ -273,7 +273,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * @private
      */
     private getVisibleUnseenNotificationIds(): number[] {
-        return this.notificationsForSelectedCategory
+        return this.notificationsForSelectedCategory()
             .filter((notification) => {
                 return notification.status === CourseNotificationViewingStatus.UNSEEN;
             })
@@ -288,11 +288,13 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      */
     private filterNotificationsIntoCurrentCategory() {
         if (this.notifications && this.notifications.length > 0) {
-            this.notificationsForSelectedCategory = this.notifications.filter((notification) => {
-                return notification.category?.valueOf() == this.selectedCategory;
-            });
+            this.notificationsForSelectedCategory.set(
+                this.notifications.filter((notification) => {
+                    return notification.category?.valueOf() == this.selectedCategory;
+                }),
+            );
         } else {
-            this.notificationsForSelectedCategory = [];
+            this.notificationsForSelectedCategory.set([]);
         }
     }
 
@@ -307,7 +309,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
             return;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.pagesFinished = !this.courseNotificationService.getNextNotificationPage(this.courseId());
 
@@ -315,7 +317,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
             setTimeout(() => {
                 this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
             });
-            this.isLoading = false;
+            this.isLoading.set(false);
         }
     }
 

@@ -4,7 +4,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, RouterState, provideRouter } from '@angular/router';
@@ -158,7 +158,7 @@ describe('PostComponent', () => {
         component.posting.set(post);
         component.posting()!.answers = unsortedAnswerArray;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
+        expect(component.sortedAnswerPosts()).toEqual(sortedAnswerArray);
     });
 
     it('should not sort empty array of answers', () => {
@@ -166,7 +166,7 @@ describe('PostComponent', () => {
         component.posting()!.answers = unsortedAnswerArray;
         component.posting()!.answers = undefined;
         component.sortAnswerPosts();
-        expect(component.sortedAnswerPosts).toEqual([]);
+        expect(component.sortedAnswerPosts()).toEqual([]);
     });
 
     it('should set router link and query params', () => {
@@ -319,7 +319,7 @@ describe('PostComponent', () => {
 
         expect(component.deleteTimer).toBeDefined();
         expect(component.deleteInterval).toBeDefined();
-        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+        expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
     it('should not set timers when isDelete is false', () => {
@@ -341,9 +341,8 @@ describe('PostComponent', () => {
 
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
-            showDropdown: true,
+            showDropdown: signal(true),
             enableBodyScroll: vi.fn(),
-            changeDetector: { detectChanges: vi.fn() },
         } as any as PostComponent;
 
         PostComponent.activeDropdownPost = previousComponent;
@@ -353,11 +352,10 @@ describe('PostComponent', () => {
         Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBe(false);
+        expect(previousComponent.showDropdown()).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
-        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(PostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
     });
 
     it('should disable body scroll', () => {
@@ -373,10 +371,10 @@ describe('PostComponent', () => {
     });
 
     it('should handle click outside and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
@@ -411,8 +409,8 @@ describe('PostComponent', () => {
             component.onRightClick(event);
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
-            expect(component.showDropdown).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.showDropdown()).toBe(showDropdown);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
 
             vi.restoreAllMocks();
         });
@@ -420,7 +418,7 @@ describe('PostComponent', () => {
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 
@@ -483,7 +481,7 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toBeUndefined();
+        expect(component.originalPostDetails()).toBeUndefined();
     });
 
     it('should set originalPostDetails from first forwarded post if forwardedPosts is non-empty', () => {
@@ -494,7 +492,7 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toEqual(forwardedPost1);
+        expect(component.originalPostDetails()).toEqual(forwardedPost1);
     });
 
     it('should set originalPostDetails from first forwarded answer if forwardedAnswerPosts is non-empty and forwardedPosts is empty', () => {
@@ -505,31 +503,27 @@ describe('PostComponent', () => {
         fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer1, forwardedAnswer2]);
         component.fetchForwardedMessages();
 
-        expect(component.originalPostDetails).toEqual(forwardedAnswer1);
+        expect(component.originalPostDetails()).toEqual(forwardedAnswer1);
     });
 
-    it('should call markForCheck if a forwarded post is set', () => {
-        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
+    it('should set originalPostDetails when a forwarded post is set', () => {
         const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
 
         fixture.componentRef.setInput('forwardedPosts', [forwardedPost]);
         fixture.componentRef.setInput('forwardedAnswerPosts', []);
         component.fetchForwardedMessages();
 
-        expect(markForCheckSpy).toHaveBeenCalled();
-        expect(component.originalPostDetails).toBe(forwardedPost);
+        expect(component.originalPostDetails()).toBe(forwardedPost);
     });
 
-    it('should call markForCheck if a forwarded answer is set', () => {
-        const markForCheckSpy = vi.spyOn(component['changeDetector'], 'markForCheck');
+    it('should set originalPostDetails when a forwarded answer is set', () => {
         const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
 
         fixture.componentRef.setInput('forwardedPosts', []);
         fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer]);
         component.fetchForwardedMessages();
 
-        expect(markForCheckSpy).toHaveBeenCalled();
-        expect(component.originalPostDetails).toBe(forwardedAnswer);
+        expect(component.originalPostDetails()).toBe(forwardedAnswer);
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
@@ -554,39 +548,39 @@ describe('PostComponent', () => {
             filterToUnverifiedIris: false,
             sortingOrder: SortDirection.ASCENDING,
         });
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = false;
+        component.showSearchResultInAnswersHint.set(false);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] });
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(false);
+        expect(component.showSearchResultInAnswersHint()).toBe(false);
     });
 
     // update to true when selected author is in answers
@@ -594,9 +588,9 @@ describe('PostComponent', () => {
         component.posting.set({ id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] });
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
-        component.showSearchResultInAnswersHint = true;
+        component.showSearchResultInAnswersHint.set(true);
         fixture.detectChanges();
 
-        expect(component.showSearchResultInAnswersHint).toBe(true);
+        expect(component.showSearchResultInAnswersHint()).toBe(true);
     });
 });

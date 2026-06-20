@@ -59,9 +59,9 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
@@ -240,7 +240,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         attachmentVideoUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         AttachmentVideoUnit updatedAttachmentVideoUnit = request.getObjectMapper().readValue(
                 request.performMvcRequest(attachmentVideoUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.getAttachment().getLink());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentVideoUnit.getAttachment().getLink());
         request.getFile(requestUrl, HttpStatus.OK);
     }
 
@@ -459,7 +459,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(finalAttachmentVideoUnit.getAttachment().getStudentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentVideoUnit.getId() + "/student");
 
         // Verify the file can be accessed
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, finalAttachmentVideoUnit.getAttachment().getStudentVersion());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, finalAttachmentVideoUnit.getAttachment().getStudentVersion());
         request.getFile(requestUrl, HttpStatus.OK);
     }
 

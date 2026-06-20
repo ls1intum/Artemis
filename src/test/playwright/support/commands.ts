@@ -49,19 +49,37 @@ export class Commands {
         expect(response!.status()).toBe(200);
 
         // The previous user's JWT cookie has been cleared and a new one set for `username`.
-        // Verify by re-reading: the cookie jar must contain exactly one jwt that is non-empty.
-        // We do not look up the cookie by value (we only have the token after auth) — finding any
-        // jwt cookie after clearCookies + this auth POST is sufficient.
-        await expect
-            .poll(
-                async () =>
-                    page
-                        .context()
-                        .cookies()
-                        .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value),
-                { timeout: 10000 },
-            )
-            .toBeTruthy();
+        // Verify by re-reading: the cookie jar must contain a jwt that is non-empty. We do not look
+        // up the cookie by value (we only have the token after auth) — finding any jwt cookie after
+        // clearCookies + this auth POST is sufficient.
+        //
+        // Under heavy parallel multi-node load — and especially right after Playwright recycles a
+        // crashed worker process — the Set-Cookie from the auth POST has occasionally not landed in
+        // the page context's cookie jar within the poll window even though the POST returned 200.
+        // Re-issue the (idempotent) auth POST and re-check rather than failing outright; the retry
+        // re-sends the cookie and recovers the rare jar-propagation race. The final attempt rethrows
+        // so a genuine auth failure still surfaces with the original assertion error.
+        const jwtCookieValue = () =>
+            page
+                .context()
+                .cookies()
+                .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value);
+        for (let cookieAttempt = 0; ; cookieAttempt++) {
+            const isLastAttempt = cookieAttempt === 2;
+            try {
+                await expect.poll(jwtCookieValue, { timeout: isLastAttempt ? 10000 : 5000 }).toBeTruthy();
+                break;
+            } catch (error) {
+                if (isLastAttempt) {
+                    throw error;
+                }
+                const retryResponse = await page.request.post(`api/core/public/authenticate`, {
+                    data: { username, password, rememberMe: true },
+                    failOnStatusCode: false,
+                });
+                expect(retryResponse.status()).toBe(200);
+            }
+        }
 
         if (url) {
             // page.goto triggers a full document navigation, which re-bootstraps Angular and the
@@ -379,12 +397,14 @@ export class Commands {
      * @param participationId - ID of the participation to wait for.
      * @param interval - Interval in milliseconds between checks.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
+     * @param initialResultId - Latest result ID before the build starts. Pass null when there was no previous result; omit to let this helper take the snapshot.
      */
     static waitForParticipationBuildToFinish = async (
         exerciseAPIRequests: ExerciseAPIRequests,
         participationId: number,
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
+        initialResultId?: number | null,
     ) => {
         if (participationId == null || isNaN(participationId)) {
             throw new Error(`[waitForParticipationBuildToFinish] Invalid participationId: ${participationId}. Cannot poll for build result.`);
@@ -401,12 +421,14 @@ export class Commands {
 
         // Snapshot the highest result ID before the student's build starts so we can
         // detect a genuinely new result even if it arrives before the first poll.
-        let initialResultId: number | undefined;
-        try {
-            const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
-            initialResultId = getLatestResultId(participation);
-        } catch {
-            // ignore — we will poll until we see a new result ID
+        if (initialResultId === undefined) {
+            try {
+                const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                initialResultId = getLatestResultId(participation) ?? null;
+            } catch {
+                // ignore — we will poll until we see a new result ID
+                initialResultId = null;
+            }
         }
 
         while (Date.now() - startTime < timeout) {

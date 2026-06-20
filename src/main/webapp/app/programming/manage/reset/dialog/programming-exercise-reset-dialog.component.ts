@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -11,6 +11,10 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+interface ProgrammingExerciseResetDialogData {
+    programmingExercise: ProgrammingExercise;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
     templateUrl: './programming-exercise-reset-dialog.component.html',
@@ -21,20 +25,21 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
 
     programmingExerciseResetOptions: ProgrammingExerciseResetOptions;
-    isLoading = false;
-    resetInProgress: boolean;
+    readonly isLoading = signal(false);
+    readonly resetInProgress = signal(false);
     confirmText: string;
 
     versionControlName?: string;
     continuousIntegrationName?: string;
-    hasCustomizedBuildPlans = false;
+    readonly hasCustomizedBuildPlans = signal(false);
 
     // Icons
     faBan = faBan;
@@ -43,25 +48,25 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     faUndo = faUndo;
 
     ngOnInit() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const profileInfo = this.profileService.getProfileInfo();
         this.versionControlName = profileInfo.versionControlName;
         this.continuousIntegrationName = profileInfo.continuousIntegrationName;
-        this.hasCustomizedBuildPlans = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.hasCustomizedBuildPlans.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
-        this.resetInProgress = false;
+        this.resetInProgress.set(false);
         this.programmingExerciseResetOptions = {
             deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: false,
         };
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 
     /**
-     * Closes the active modal dialog and dismisses it with a 'cancel' reason
+     * Closes the dialog and dismisses it with a 'cancel' reason
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 
     /**
@@ -72,22 +77,22 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
             return;
         }
 
-        this.resetInProgress = true;
+        this.resetInProgress.set(true);
         this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
             next: this.handleResetResponse,
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');
-                this.resetInProgress = false;
+                this.resetInProgress.set(false);
             },
         });
     }
     /**
-     * Handles the reset response by showing a success message, dismissing the active modal dialog, and resetting the resetInProgress flag.
+     * Handles the reset response by showing a success message, closing the dialog, and resetting the resetInProgress flag.
      */
     handleResetResponse = () => {
         this.alertService.success('artemisApp.programmingExercise.reset.successMessage');
-        this.activeModal.dismiss(true);
-        this.resetInProgress = false;
+        this.dialogRef.close(true);
+        this.resetInProgress.set(false);
     };
 
     /**
@@ -95,7 +100,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
      * @returns {boolean} true if the user can submit, false otherwise
      */
     get canSubmit(): boolean {
-        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress;
+        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress();
     }
 
     /**

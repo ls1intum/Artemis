@@ -14,86 +14,150 @@
         (onPage)="pageChange($event)"
         [loading]="loading()"
         [selectionMode]="resolvedOptions().selectionMode"
-        [(selection)]="selectedRow"
+        [(selection)]="tableSelection"
+        [rowSelectable]="rowSelectable"
         [dataKey]="resolvedOptions().dataKey"
-        (onRowSelect)="onRowSelect.emit($event.data)"
+        (onRowSelect)="handleRowSelectChange()"
+        (onRowUnselect)="handleRowSelectChange()"
+        (onHeaderCheckboxToggle)="handleRowSelectChange()"
         [lazy]="resolvedOptions().lazy"
         (onLazyLoad)="handleLazyLoad($event)"
+        (onFilter)="onFilter($event)"
         [scrollable]="resolvedOptions().scrollable"
         [scrollHeight]="resolvedOptions().scrollHeight"
+        [globalFilterFields]="resolvedOptions().globalFilterFields"
+        [customSort]="hasCustomSort()"
+        (sortFunction)="onCustomSort($event)"
+        [sortField]="resolvedOptions().initialSortField"
+        [sortOrder]="resolvedOptions().initialSortOrder"
     >
-        <ng-template #caption>
-            <div class="d-flex align-items-center gap-2">
-                @if (resolvedOptions().showSearch) {
-                    <div class="flex-grow-1">
-                        <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
-                    </div>
-                }
-                @if (tableActions()) {
-                    <ng-container [ngTemplateOutlet]="tableActions()!" />
-                }
-            </div>
-        </ng-template>
-        <ng-template #header let-columns>
-            <tr>
-                @for (col of columns; track col) {
-                    <th
-                        [pSortableColumn]="col?.sort ? col.field : undefined"
-                        [style]="{ 'min-width': col?.width ?? 'auto' }"
-                        [pTooltip]="col?.headerTooltip | artemisTranslate"
-                        tooltipPosition="top"
-                    >
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                @if (col?.headerIcon) {
-                                    <i [class]="col.headerIcon"></i>
-                                } @else if (col?.headerKey) {
-                                    <span [jhiTranslate]="col.headerKey"></span>
-                                } @else {
-                                    <span>{{ col?.header ?? '' }}</span>
-                                }
-                                @if (col?.sort && col?.field) {
-                                    <p-sortIcon [field]="col.field" />
-                                }
-                            </div>
-                            @if (col?.filterType && col?.field) {
-                                <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
-                            }
+        @if (showCaption()) {
+            <ng-template #caption>
+                <div class="d-flex align-items-center gap-2">
+                    @if (resolvedOptions().showSearch) {
+                        <div class="flex-grow-1">
+                            <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
                         </div>
+                    }
+                    @if (tableActions()) {
+                        <ng-container [ngTemplateOutlet]="tableActions()!" />
+                    }
+                </div>
+            </ng-template>
+        }
+        <ng-template #header let-columns>
+            <!-- Nested here so p-sortIcon can inject Table from within p-table's context -->
+            <ng-template #colHeaderContent let-col="col">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        @if (col?.headerKey) {
+                            <span [jhiTranslate]="col.headerKey"></span>
+                        } @else {
+                            <span>{{ col?.header ?? '' }}</span>
+                        }
+                        @if (col?.headerIcon || col?.headerTooltip) {
+                            <i [class]="col.headerIcon ?? 'pi pi-question-circle'"></i>
+                        }
+                        @if (col?.sort && col?.field) {
+                            <p-sortIcon [field]="col.field" />
+                        }
+                    </div>
+                    @if (col?.filterType && col?.field) {
+                        <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
+                    }
+                </div>
+            </ng-template>
+            <tr>
+                @if (resolvedOptions().selectionMode === 'multiple') {
+                    <th style="width: 3rem">
+                        <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
                     </th>
                 }
+                @for (col of columns; track col) {
+                    @if (col?.frozen) {
+                        <th
+                            pFrozenColumn
+                            [alignFrozen]="col?.alignFrozen ?? 'left'"
+                            [pSortableColumn]="col?.sort ? col.field : undefined"
+                            [style]="{ 'min-width': col?.width ?? 'auto' }"
+                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
+                            tooltipPosition="top"
+                        >
+                            <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
+                        </th>
+                    } @else {
+                        <th
+                            [pSortableColumn]="col?.sort ? col.field : undefined"
+                            [style]="{ 'min-width': col?.width ?? 'auto' }"
+                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
+                            tooltipPosition="top"
+                        >
+                            <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
+                        </th>
+                    }
+                }
                 @if (rowActions()) {
-                    <th></th>
+                    @if (resolvedOptions().rowActionsFrozen) {
+                        <th pFrozenColumn alignFrozen="right"></th>
+                    } @else {
+                        <th></th>
+                    }
                 }
             </tr>
         </ng-template>
 
         <ng-template #body let-rowData let-columns="columns">
+            <!-- Nested here so any PrimeNG-injecting cell renderers have the correct context -->
+            <ng-template #cellContent let-col="col" let-colIndex="colIndex" let-rowParams="rowParams">
+                @if (col?.templateRef) {
+                    <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
+                } @else if (col?.cellRenderer) {
+                    <!-- ngComponentOutlet is used intentionally: @-syntax has no equivalent for dynamic component instantiation -->
+                    <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
+                } @else {
+                    {{ rowParams?.[colIndex]?.value }}
+                }
+            </ng-template>
             @let rowParams = renderedRows().get(rowData);
-            <tr [pSelectableRow]="rowData">
-                @for (col of columns; track col; let colIndex = $index) {
-                    <td>
-                        @if (col?.templateRef) {
-                            <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
-                        } @else if (col?.cellRenderer) {
-                            <!-- ngComponentOutlet is used intentionally: @-syntax has no equivalent for dynamic component instantiation -->
-                            <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
-                        } @else {
-                            {{ rowData?.[col?.field] }}
-                        }
+            <tr
+                [class.jhi-row-disabled]="isRowDisabled()?.(rowData)"
+                [ngClass]="rowClass()?.(rowData)"
+                [pTooltip]="isRowDisabled()?.(rowData) ? disabledRowTooltip() : undefined"
+                tooltipPosition="top"
+            >
+                @if (resolvedOptions().selectionMode === 'multiple') {
+                    <td style="width: 3rem">
+                        <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
                     </td>
                 }
+                @for (col of columns; track col; let colIndex = $index) {
+                    @if (col?.frozen) {
+                        <td pFrozenColumn [alignFrozen]="col?.alignFrozen ?? 'left'">
+                            <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
+                        </td>
+                    } @else {
+                        <td>
+                            <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
+                        </td>
+                    }
+                }
                 @if (rowActions()) {
-                    <td [class]="'text-' + resolvedOptions().rowActionsAlignment">
-                        <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
-                    </td>
+                    @if (resolvedOptions().rowActionsFrozen) {
+                        <td class="text-end" pFrozenColumn alignFrozen="right">
+                            <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
+                        </td>
+                    } @else {
+                        <td class="text-end">
+                            <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
+                        </td>
+                    }
                 }
             </tr>
         </ng-template>
 
         <ng-template #emptymessage>
             <tr>
-                <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary text-center">
+                <td [colSpan]="emptyMessageColSpan()" class="text-secondary text-center">
                     <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
                 </td>
             </tr>

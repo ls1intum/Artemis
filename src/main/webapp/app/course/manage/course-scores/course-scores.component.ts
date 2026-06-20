@@ -4,7 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -16,10 +16,10 @@ import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
-import { mean, median, standardDeviation } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
 import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
@@ -618,17 +618,14 @@ export class CourseScoresComponent implements OnInit {
      */
     exportAsCsv(keys: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const course = this.course()!;
-        const generalExportOptions = {
-            showLabels: true,
-            showTitle: false,
-            filename: `${course.title} Scores`,
-            useTextFile: false,
-            useBom: true,
+        downloadCsv(rows, {
             columnHeaders: keys,
-        };
-        const csvExportConfig = mkConfig(Object.assign(generalExportOptions, customOptions));
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
+            fileName: `${course.title} Scores`,
+            fieldSeparator: customOptions.fieldSeparator,
+            quoteStrings: customOptions.quoteStrings,
+            quoteCharacter: customOptions.quoteCharacter,
+            decimalSeparator: customOptions.decimalSeparator,
+        });
     }
 
     /**

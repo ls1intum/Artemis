@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -12,7 +12,6 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -42,6 +41,9 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
+import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -61,11 +63,12 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
         ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        ModelingExerciseTimelineComponent,
+        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -80,6 +83,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -88,38 +92,40 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
     readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    readonly releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    readonly startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    readonly dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    readonly assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
 
-    UMLDiagramType = UMLDiagramType;
-
-    modelingExercise: ModelingExercise;
+    // modelingExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
+    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.modelingExercise = ... assignments) unchanged.
+    private readonly _modelingExercise = signal<ModelingExercise>(undefined!);
+    get modelingExercise(): ModelingExercise {
+        return this._modelingExercise();
+    }
+    set modelingExercise(value: ModelingExercise) {
+        this._modelingExercise.set(value);
+    }
     backupExercise: ModelingExercise;
-    exampleSolution: UMLModel;
-    isSaving: boolean;
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    readonly exampleSolution = signal<UMLModel>(undefined!);
+    readonly isSaving = signal(false);
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
-    examCourseId?: number;
-    isImport: boolean;
-    isExamMode: boolean;
+    readonly isImport = signal<boolean>(undefined!);
+    readonly isExamMode = signal<boolean>(undefined!);
 
-    formSectionStatus: FormSectionStatus[];
+    readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
 
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     get editType(): EditType {
-        if (this.isImport) {
+        if (this.isImport()) {
             return EditType.IMPORT;
         }
 
@@ -135,6 +141,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     constructor() {
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
+        });
+        effect(() => {
+            this.timelineStatus();
+            this.validateDate();
         });
     }
 
@@ -162,25 +172,24 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
+                this.exampleSolution.set(importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel)));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
-            this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
         });
 
         this.activatedRoute.url
             .pipe(
-                tap(
-                    (segments) =>
-                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
-                ),
+                tap((segments) => {
+                    this.isExamMode.set(segments.some((segment) => segment.path === 'exercise-groups'));
+                    this.isImport.set(segments.some((segment) => segment.path === 'import'));
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     let courseId;
 
-                    if (!this.isExamMode) {
-                        this.exerciseCategories = this.modelingExercise.categories || [];
+                    if (!this.isExamMode()) {
+                        this.exerciseCategories.set(this.modelingExercise.categories || []);
                         if (this.modelingExercise.course) {
                             courseId = this.modelingExercise.course!.id!;
                         } else {
@@ -196,11 +205,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
                     }
-                    if (this.isImport) {
+                    if (this.isImport()) {
                         // The target course where we want to import into
                         courseId = params['courseId'];
 
-                        if (this.isExamMode) {
+                        if (this.isExamMode()) {
                             // The target exerciseGroupId where we want to import into
                             const { exerciseGroupId, examId } = params;
 
@@ -216,13 +225,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     }
 
                     loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
-                        this.existingCategories = existingCategories;
+                        this.existingCategories.set(existingCategories);
                     });
                 }),
             )
             .subscribe();
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
     }
 
@@ -232,7 +241,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        this.formSectionStatus = [
+        this.formSectionStatus.set([
             {
                 title: 'artemisApp.exercise.sections.general',
                 valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? true,
@@ -241,35 +250,20 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
+                valid: Boolean(
+                    this.isExamMode() || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true)),
+                ),
                 empty:
                     isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) ||
-                    (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
+                    (!this.isExamMode() && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean(
-                    (this.points()?.valid ?? true) &&
-                    (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode ||
-                        (!this.modelingExercise.startDateError &&
-                            !this.modelingExercise.dueDateError &&
-                            !this.modelingExercise.assessmentDueDateError &&
-                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
-                            (this.startDateField()?.dateInput?.valid ?? true) &&
-                            (this.dueDateField()?.dateInput?.valid ?? true) &&
-                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
-                ),
-                empty:
-                    !this.isExamMode &&
-                    // if a dayjs object contains an empty date, it is considered "invalid"
-                    (!this.modelingExercise.startDate?.isValid() ||
-                        !this.modelingExercise.dueDate?.isValid() ||
-                        !this.modelingExercise.assessmentDueDate?.isValid() ||
-                        !this.modelingExercise.releaseDate?.isValid()),
+                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                empty: !this.isExamMode() && this.timelineStatus().empty,
             },
-        ];
+        ]);
     }
 
     /**
@@ -278,7 +272,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
     }
 
     /**
@@ -331,15 +325,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.isExamMode, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 },
             });
     }
@@ -353,7 +347,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
@@ -365,6 +359,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         } else {
             onError(this.alertService, errorRes);
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

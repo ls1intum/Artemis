@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, effect, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -13,7 +13,6 @@ import {
     getExerciseTypeFilterOptions,
 } from 'app/course/sidebar/sidebar.helper';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
-import { NgClass } from '@angular/common';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -22,13 +21,14 @@ import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
     imports: [
-        NgClass,
         SearchFilterComponent,
         FaIconComponent,
         TranslateDirective,
@@ -40,40 +40,50 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
         SidebarAccordionComponent,
         SidebarCardDirective,
         SearchFilterPipe,
+        CourseTitleBarTitleComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
-export class SidebarComponent implements OnDestroy, OnChanges {
+export class SidebarComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private sidebarEventService = inject(SidebarEventService);
     private modalService = inject(NgbModal);
     private sessionStorageService = inject(SessionStorageService);
 
-    @Output() onSelectConversation = new EventEmitter<number | string>();
-    @Output() onUpdateSidebar = new EventEmitter<void>();
+    readonly onSelectConversation = output<number | string>();
+    readonly onUpdateSidebar = output<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
     onBrowsePressed = output<void>();
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
-    @Input() searchFieldEnabled = true;
-    @Input() sidebarData: SidebarData;
-    @Input() courseId?: number;
-    @Input() itemSelected?: boolean;
-    @Input() channelTypeIcon?: ChannelTypeIcons;
-    @Input() collapseState: CollapseState;
+    readonly searchFieldEnabled = input<boolean>(true);
+    readonly sidebarData = input.required<SidebarData>();
+    readonly courseId = input<number>();
+    readonly itemSelected = input<boolean>();
+    readonly channelTypeIcon = input<ChannelTypeIcons>();
+    readonly collapseState = input.required<CollapseState>();
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
-    @Input() showFilter = false;
+    readonly showFilter = input<boolean>(false);
     inCommunication = input<boolean>(false);
-    searchValue = '';
-    isCollapsed = false;
+    readonly searchValue = signal<string>('');
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
+
+    readonly pageTitle = input<string>('');
+    readonly showSidebarToggle = input<boolean>(false);
+    readonly isSidebarCollapsed = input<boolean>(false);
+    readonly toggleSidebar = output<void>();
+
+    /** Working copy of the sidebar data, seeded from the {@link sidebarData} input. It is replaced locally when
+     *  the user applies exercise filters, without mutating the parent-owned input. */
+    readonly sidebarDataInternal = signal<SidebarData>({} as SidebarData);
 
     exerciseId: string;
 
     paramSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
 
-    routeParams: Params;
+    readonly routeParams = signal<Params>({});
     private modalRef?: NgbModalRef;
 
     readonly faFilter = faFilter;
@@ -85,14 +95,28 @@ export class SidebarComponent implements OnDestroy, OnChanges {
     readonly faHashtag = faHashtag;
     readonly faCheckDouble = faCheckDouble;
 
-    sidebarDataBeforeFiltering: SidebarData;
+    readonly sidebarDataBeforeFiltering = signal<SidebarData | undefined>(undefined);
 
-    exerciseFilters?: ExerciseFilterOptions;
-    isFilterActive = false;
+    readonly exerciseFilters = signal<ExerciseFilterOptions | undefined>(undefined);
+    readonly isFilterActive = signal<boolean>(false);
 
     constructor() {
+        // Seed the working sidebar data from the input.
+        effect(() => {
+            this.sidebarDataInternal.set(this.sidebarData());
+        });
         effect(() => {
             this.subscribeToSidebarEvents();
+        });
+        // Replaces ngOnChanges: (re)subscribe to route params.
+        effect(() => {
+            // Re-run when the route changes (the ActivatedRoute itself is stable, but keep parity with the
+            // previous ngOnChanges trigger which fired on input changes).
+            this.sidebarData();
+            this.paramSubscription?.unsubscribe();
+            this.paramSubscription = this.route.params?.subscribe((params) => {
+                this.routeParams.set(params);
+            });
         });
     }
 
@@ -124,26 +148,19 @@ export class SidebarComponent implements OnDestroy, OnChanges {
         this.sidebarEventSubscription = pipe.subscribe((targetComponentRoute) => {
             if (targetComponentRoute) {
                 this.storeLastSelectedItemTargetComponentRoute(targetComponentRoute);
-                if (this.sidebarData.sidebarType == 'conversation') {
+                if (this.sidebarDataInternal().sidebarType == 'conversation') {
                     this.onSelectConversation.emit(targetComponentRoute);
                 }
             }
         });
     }
 
-    ngOnChanges() {
-        this.paramSubscription?.unsubscribe();
-        this.paramSubscription = this.route.params?.subscribe((params) => {
-            this.routeParams = params;
-        });
-    }
-
     setSearchValue(searchValue: string) {
-        this.searchValue = searchValue;
+        this.searchValue.set(searchValue);
     }
 
     storeLastSelectedItemTargetComponentRoute(targetComponentRoute: number | string) {
-        this.sessionStorageService.store('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, targetComponentRoute);
+        this.sessionStorageService.store('sidebar.lastSelectedItem.' + this.sidebarDataInternal().storageId + '.byCourse.' + this.courseId(), targetComponentRoute);
     }
 
     ngOnDestroy() {
@@ -160,14 +177,18 @@ export class SidebarComponent implements OnDestroy, OnChanges {
             ['exam']: 'L',
             ['inExam']: 'M',
         };
-        return this.sidebarData.sidebarType ? size[this.sidebarData.sidebarType] : 'M';
+        const sidebarType = this.sidebarDataInternal().sidebarType;
+        return sidebarType ? size[sidebarType] : 'M';
     }
 
+    // NOTE: This dialog still uses NgbModal because it opens ExerciseFilterModalComponent, which lives in the
+    // exercise/** carve-out (NgbActiveModal + componentInstance contract). Migrating it to PrimeNG DialogService
+    // would require changing that carve-out component, so it is deferred until the carve-out is migrated.
     openFilterExercisesDialog() {
         this.initializeFilterOptions();
 
-        if (!this.sidebarDataBeforeFiltering) {
-            this.sidebarDataBeforeFiltering = cloneDeep(this.sidebarData);
+        if (!this.sidebarDataBeforeFiltering()) {
+            this.sidebarDataBeforeFiltering.set(cloneDeep(this.sidebarDataInternal()));
         }
 
         this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
@@ -176,30 +197,31 @@ export class SidebarComponent implements OnDestroy, OnChanges {
             animation: true,
         });
 
-        this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering);
-        this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters);
+        this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering());
+        this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters());
 
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
-            this.sidebarData = exerciseFilterResults.filteredSidebarData!;
-            this.exerciseFilters = exerciseFilterResults.appliedExerciseFilters;
-            this.isFilterActive = exerciseFilterResults.isFilterActive;
+            this.sidebarDataInternal.set(exerciseFilterResults.filteredSidebarData!);
+            this.exerciseFilters.set(exerciseFilterResults.appliedExerciseFilters);
+            this.isFilterActive.set(exerciseFilterResults.isFilterActive);
         });
     }
 
     initializeFilterOptions() {
-        if (this.exerciseFilters) {
+        if (this.exerciseFilters()) {
             return;
         }
 
-        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(this.sidebarData, this.exerciseFilters);
+        const sidebarData = this.sidebarDataInternal();
+        const scoreAndPointsFilterOptions = getAchievablePointsAndAchievedScoreFilterOptions(sidebarData, this.exerciseFilters());
 
-        this.exerciseFilters = {
-            categoryFilter: getExerciseCategoryFilterOptions(this.sidebarData, this.exerciseFilters),
-            exerciseTypesFilter: getExerciseTypeFilterOptions(this.sidebarData, this.exerciseFilters),
-            difficultyFilter: getExerciseDifficultyFilterOptions(this.sidebarData, this.exerciseFilters),
+        this.exerciseFilters.set({
+            categoryFilter: getExerciseCategoryFilterOptions(sidebarData, this.exerciseFilters()),
+            exerciseTypesFilter: getExerciseTypeFilterOptions(sidebarData, this.exerciseFilters()),
+            difficultyFilter: getExerciseDifficultyFilterOptions(sidebarData, this.exerciseFilters()),
             achievedScore: scoreAndPointsFilterOptions?.achievedScore,
             achievablePoints: scoreAndPointsFilterOptions?.achievablePoints,
-        };
+        });
     }
 
     markAllMessagesAsChecked() {

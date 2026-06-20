@@ -22,7 +22,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 
 describe('Participation Service', () => {
     setupTestBed({ zoneless: true });
-
     let service: ParticipationService;
     let httpMock: HttpTestingController;
     let participationDefault: Participation;

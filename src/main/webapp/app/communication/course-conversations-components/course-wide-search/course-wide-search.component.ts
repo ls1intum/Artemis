@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -15,7 +15,7 @@ import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -39,7 +39,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     course: Course;
     currentPostContextFilter?: PostContextFilter;
-    isAtLeastTutor = false;
+    readonly isAtLeastTutor = signal(false);
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
 
@@ -54,12 +54,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly SortDirection = SortDirection;
     readonly onNavigateToPost = output<Posting>();
-    sortingOrder = SortDirection.ASCENDING;
+    readonly sortingOrder = signal(SortDirection.ASCENDING);
 
     private ngUnsubscribe = new Subject<void>();
-    public isFetchingPosts = true;
+    readonly isFetchingPosts = signal(true);
     totalNumberOfPosts = 0;
-    posts: Post[] = [];
+    readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
     previousScrollDistanceFromTop: number;
     page = 1;
@@ -72,13 +72,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private metisService = inject(MetisService);
     private metisConversationService = inject(MetisConversationService);
     private formBuilder = inject(FormBuilder);
-    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {
         this.subscribeToMetis();
-        this.isAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.isAtLeastTutor.set(this.metisService.metisUserIsAtLeastTutorInCourse());
         this.resetFormGroup();
-        this.cdr.detectChanges();
         this.commandMetisToFetchPosts(true);
     }
 
@@ -98,7 +96,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
-            this.isFetchingPosts = false;
+            this.isFetchingPosts.set(false);
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -112,12 +110,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         if (this.content()) {
             this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
         }
-        this.posts = posts.slice().reverse();
+        this.posts.set(posts.slice().reverse());
     }
 
     handleScrollOnNewMessage = () => {
         if (
-            (this.posts.length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
+            (this.posts().length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
             this.previousScrollDistanceFromTop === this.messagesContainerHeight
         ) {
             this.scrollToBottomOfMessages();
@@ -130,7 +128,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
+        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
         if (morePostsAvailable) {
             this.page += 1;
             this.commandMetisToFetchPosts();
@@ -142,7 +140,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     public commandMetisToFetchPosts(forceUpdate = false) {
         this.refreshMetisConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts = true; // will be set to false in subscription
+            this.isFetchingPosts.set(true); // will be set to false in subscription
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
         }
     }
@@ -166,7 +164,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
-            filterToUnverifiedIris: this.isAtLeastTutor && searchConfig.filterToUnverifiedIris,
+            filterToUnverifiedIris: this.isAtLeastTutor() && searchConfig.filterToUnverifiedIris,
             sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
@@ -217,7 +215,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onChangeSortDir(): void {
-        this.sortingOrder = this.sortingOrder === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.sortingOrder.update((order) => (order === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING));
         this.onSelectContext();
     }
 
@@ -227,8 +225,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
-        searchConfig.filterToUnverifiedIris = this.isAtLeastTutor && this.formGroup.get('filterToUnverifiedIris')?.value;
-        searchConfig.sortingOrder = this.sortingOrder;
+        searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
+        searchConfig.sortingOrder = this.sortingOrder();
         this.commandMetisToFetchPosts(true);
     }
 

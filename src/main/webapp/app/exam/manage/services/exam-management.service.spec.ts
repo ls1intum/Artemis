@@ -2,6 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
@@ -21,6 +24,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -49,6 +54,7 @@ describe('Exam Management Service Tests', () => {
                 ExamManagementService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         });
 
@@ -98,16 +104,18 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
+        const importId = 'import-1';
 
-        // WHEN
-        service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
+        // WHEN: the response carries the full ExamImportResultDTO so the progress dialog can show the outcome
+        service.import(course.id!, mockExam, importId).subscribe((res) => expect(res.body).toEqual({ exam: mockExam }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exam-import`);
         expect(req.request.body).toEqual(expectedDto);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExam);
+        req.flush({ exam: mockExam });
         await Promise.resolve();
     });
 
@@ -115,17 +123,34 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+        const importId = 'import-2';
 
-        // WHEN
-        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup).subscribe((res) => expect(res.body).toEqual(mockExerciseGroup));
+        // WHEN: the response carries the full ExerciseGroupImportResultDTO
+        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup, importId).subscribe((res) => expect(res.body).toEqual({ exerciseGroups: mockExerciseGroup }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne(
+            (request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group`,
+        );
         expect(req.request.body).toEqual(mockExerciseGroup);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExerciseGroup);
+        req.flush({ exerciseGroups: mockExerciseGroup });
         await Promise.resolve();
+    });
+
+    it('should subscribe to import progress on the user-specific websocket channel', () => {
+        // GIVEN
+        const websocketService = TestBed.inject(WebsocketService);
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const importId = 'import-3';
+
+        // WHEN
+        service.subscribeToImportProgress(importId);
+
+        // THEN
+        expect(subscribeSpy).toHaveBeenCalledWith(`/user/topic/exam-import/${importId}`);
     });
 
     it('should find an exam with exercises and without course id', async () => {
@@ -147,7 +172,7 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
-    it('should find an exam with no students and no exercise groups', async () => {
+    it('should find an exam without exercise groups', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
@@ -157,10 +182,9 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withStudents=false&withExerciseGroups=false`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withExerciseGroups=false`,
         });
         expect(req.request.url).toBe(`${service.resourceUrl}/${course.id!}/exams/${mockExam.id}`);
-        expect(req.request.params.get('withStudents')).toBe('false');
         expect(req.request.params.get('withExerciseGroups')).toBe('false');
 
         // CLEANUP
@@ -689,6 +713,194 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(true);
-        await Promise.resolve();
+    });
+
+    describe('findExamStudentsPaged', () => {
+        const examId = 1;
+        const baseSearch: ExamStudentSearch = {
+            page: 0,
+            pageSize: 20,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'name',
+            searchTerm: '',
+        };
+
+        it('should send GET request with correct URL and params', async () => {
+            // GIVEN
+            const mockBody: ExamStudentDTO[] = [{ id: 10, login: 'student1' }];
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('student1');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('pageSize')).toBe('20');
+            expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.ASCENDING);
+            expect(req.request.params.get('sortedColumn')).toBe('name');
+            expect(req.request.params.get('searchTerm')).toBe('');
+            expect(req.request.params.has('filterProp')).toBe(false);
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+        });
+
+        it('should include filterProp in params when provided', async () => {
+            // GIVEN
+            const searchWithFilter: ExamStudentSearch = { ...baseSearch, filterProp: 'Submitted' };
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, searchWithFilter).subscribe();
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('filterProp')).toBe('Submitted');
+
+            // CLEANUP
+            req.flush([]);
+        });
+
+        it('should read totalElements from X-Total-Count header', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '42' } });
+
+            expect(capturedTotal).toBe(42);
+        });
+
+        it('should convert startedDate and submissionDate from server format', async () => {
+            // GIVEN
+            const isoDate = '2024-06-15T10:00:00Z';
+            const mockBody: ExamStudentDTO[] = [{ id: 10, startedDate: isoDate as any, submissionDate: isoDate as any }];
+            let capturedRow: ExamStudentDTO | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedRow = result.content[0];
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+
+            expect(capturedRow?.startedDate).toBeDefined();
+            expect(capturedRow?.submissionDate).toBeDefined();
+            // convertDateFromServer wraps them in dayjs — verify they are dayjs objects
+            expect(typeof capturedRow?.startedDate?.isValid).toBe('function');
+            expect(typeof capturedRow?.submissionDate?.isValid).toBe('function');
+        });
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([]);
+
+            expect(capturedTotal).toBe(0);
+        });
+    });
+
+    describe('searchUsersForExamRegistration', () => {
+        const examId = 1;
+
+        it('should send GET request with correct URL and params', async () => {
+            // GIVEN
+            const mockUsers: UserForRegistration[] = [{ id: 1, login: 'alice', name: 'Alice', isRegistered: false }];
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('alice');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+            expect(req.request.params.get('searchTerm')).toBe('alice');
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('size')).toBe('10');
+
+            // CLEANUP
+            req.flush(mockUsers, { headers: { 'X-Total-Count': '1' } });
+        });
+
+        it('should read totalElements from X-Total-Count header', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '99' } });
+
+            expect(capturedTotal).toBe(99);
+        });
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([]);
+
+            expect(capturedTotal).toBe(0);
+        });
+
+        it('should return empty content array when response body is null', async () => {
+            // GIVEN
+            let capturedContent: UserForRegistration[] | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedContent = result.content;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush(null, { headers: { 'X-Total-Count': '0' } });
+
+            expect(capturedContent).toEqual([]);
+        });
     });
 });

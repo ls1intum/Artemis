@@ -1,51 +1,45 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { Component, OnDestroy, inject, input, output } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Subject } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { ButtonDirective } from 'primeng/button';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-team-delete-button',
     template: `
-        @if (exercise.isAtLeastInstructor) {
+        @if (exercise().isAtLeastInstructor) {
             <button
+                pButton
                 jhiDeleteButton
-                [buttonSize]="buttonSize"
-                [entityTitle]="team.shortName || ''"
+                size="small"
+                severity="danger"
+                [renderButtonStyle]="false"
+                [entityTitle]="team().shortName || ''"
                 deleteQuestion="artemisApp.team.delete.question"
                 deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
                 (delete)="removeTeam()"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="faTrashAlt" class="me-1" />
+                <i class="pi pi-trash"></i>
             </button>
         }
     `,
-    imports: [DeleteButtonDirective, FaIconComponent],
+    imports: [ButtonDirective, DeleteButtonDirective],
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly team = input.required<Team>();
+    readonly exercise = input.required<Exercise>();
 
-    @Input() team: Team;
-    @Input() exercise: Exercise;
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
-
-    @Output() delete = new EventEmitter<Team>();
+    readonly delete = output<Team>();
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    // Icons
-    faTrashAlt = faTrashAlt;
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -59,9 +53,9 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      */
     removeTeam = () => {
-        this.teamService.delete(this.exercise, this.team.id!).subscribe({
+        this.teamService.delete(this.exercise(), this.team().id!).subscribe({
             next: () => {
-                this.delete.emit(this.team);
+                this.delete.emit(this.team());
                 this.dialogErrorSource.next('');
             },
             error: () => this.alertService.error('artemisApp.team.removeTeam.error'),

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,11 +44,11 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
+class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "submissionservicetest"; // only lower case is supported
 
@@ -164,7 +163,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowanceGroupCheck() {
-        student1.setGroups(Collections.singleton("another-group"));
+        student1.setGroups(Set.of("another-group"));
         userRepository.save(student1);
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }

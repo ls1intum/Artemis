@@ -1,12 +1,13 @@
-@if (!isLoading) {
+@if (!isLoading()) {
     <div class="instructions__content border-0">
-        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResultValue" [participation]="participation" [tasks]="tasks" />
-        <!-- problem statement update & difference highlighter -->
-        @if (exercise && exercise.exerciseGroup) {
-            <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />
+        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise()" [latestResult]="latestResultValue()" [participation]="participation()" [tasks]="tasks()" />
+        @if (exercise(); as exercise) {
+            @if (exercise.exerciseGroup) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />
+            }
         }
         <!-- Empty state when problem statement is not available -->
-        @if (!renderedMarkdown && !isLoading) {
+        @if (!renderedMarkdown() && !isLoading()) {
             <div class="empty-state-container">
                 <div class="empty-state-content">
                     <fa-icon [icon]="faFileAlt" size="3x" class="empty-state-icon" />
@@ -19,8 +20,8 @@
         <div
             id="programming-exercise-instructions-content"
             class="instructions__content__markdown markdown-preview"
-            [hidden]="!renderedMarkdown"
-            [innerHtml]="renderedMarkdown"
+            [hidden]="!renderedMarkdown()"
+            [innerHtml]="renderedMarkdown()"
         ></div>
     </div>
 } @else {

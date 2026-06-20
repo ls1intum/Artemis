@@ -93,7 +93,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
     // Signals
     attachment = signal<Attachment | undefined>(undefined);
@@ -155,7 +155,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isPdfLoading.set(true);
-        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route?.parent?.snapshot.paramMap.get('courseId')));
         this.route.data.subscribe((data) => {
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
@@ -196,7 +196,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         if (fileType === 'attachment') {
             subscription = this.attachmentService
-                .getAttachmentFile(this.courseId, this.attachment()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachment()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -206,7 +206,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentSub = subscription;
         } else {
             subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(this.courseId, this.attachmentVideoUnit()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -250,7 +250,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const pdfDocument = await PDFDocument.load(arrayBuffer);
             const pageCount = pdfDocument.getPageCount();
 
-            const loadingTask = PDFJS.getDocument(fileUrl);
+            const loadingTask = PDFJS.getDocument({ url: fileUrl });
             const pdfJsDocument = await loadingTask.promise;
 
             this.sourcePDFs.update((sources) => {
@@ -1012,9 +1012,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

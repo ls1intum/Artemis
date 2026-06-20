@@ -1,13 +1,17 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -18,7 +22,8 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
@@ -29,6 +34,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
@@ -63,23 +69,41 @@ describe('ResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [ResultComponent],
+            providers: [
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ResultComponent);
-                component = fixture.componentInstance;
-            });
+            .overrideComponent(ResultComponent, {
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective, NgbTooltip] },
+                add: {
+                    imports: [
+                        MockComponent(ResultProgressBarComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisDatePipe),
+                        MockDirective(TranslateDirective),
+                        MockDirective(NgbTooltip),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ResultComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        component.result = result;
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
@@ -90,16 +114,16 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
 
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faQuestionCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
+        expect(component.result()).toEqual(result1);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faQuestionCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
     });
 
     it('should set results for modeling exercise', () => {
@@ -108,17 +132,17 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-danger');
-        expect(component.resultIconClass).toEqual(faTimesCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.result()).toEqual(result1);
+        expect(component.textColorClass()).toBe('text-danger');
+        expect(component.resultIconClass()).toEqual(faTimesCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for modeling exercise', () => {
@@ -127,17 +151,17 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.result()).toEqual(result1);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for programming exercise', () => {
@@ -146,17 +170,17 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(programmingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
-        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(component.result()).toEqual(result1);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
     it('should set (automatic athena) results for text exercise', () => {
@@ -165,16 +189,16 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(textParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('result', result1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
-        expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.result()).toEqual(result1);
+        expect(component.textColorClass()).toBe('text-secondary');
+        expect(component.resultIconClass()).toEqual(faCheckCircle);
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
     });
 
     it.each([
@@ -203,8 +227,9 @@ describe('ResultComponent', () => {
         submission = { ...submission, results: [result] };
         const participation = cloneDeep(programmingParticipation);
         participation.submissions = [submission];
-        component.short = short;
-        component.participation = participation;
+        fixture.componentRef.setInput('short', short);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
 
         const warningIcon = fixture.debugElement.nativeElement.querySelector('#code-issue-warnings-icon');
@@ -213,5 +238,237 @@ describe('ResultComponent', () => {
         } else {
             expect(warningIcon).toBeNull();
         }
+    });
+
+    // The `isInSidebarCard` placement (course-overview sidebar, rendered via jhi-updating-result) is the one
+    // jhi-result mode that is not exercised by the code-editor / exercise-header E2E flows, so it is covered here:
+    // the score badge still renders, but it must be non-clickable (no navigation to the result detail dialog).
+    it('should render a non-clickable score badge in the sidebar-card placement', () => {
+        const submission: Submission = { id: 1, participation: programmingParticipation };
+        const ratedResult: Result = { id: 7, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
+        submission.results = [ratedResult];
+        const participation = cloneDeep(programmingParticipation);
+        participation.submissions = [submission];
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', ratedResult);
+        fixture.componentRef.setInput('showCompletion', true);
+        fixture.componentRef.setInput('isInSidebarCard', true);
+        fixture.detectChanges();
+
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        const resultScore = fixture.debugElement.nativeElement.querySelector('#result-score');
+        expect(resultScore).not.toBeNull();
+        expect(resultScore.classList.contains('clickable-result')).toBe(false);
+    });
+
+    it('should render the score for a result-only input (e.g. build queue), resolving context from result.submission.participation', () => {
+        // The admin/instructor build-queue (finished-jobs-table) passes [result] only — no [participation]/[exercise].
+        // The component must resolve the exercise/participation by navigating result.submission.participation and
+        // render the score badge (HAS_RESULT). This is the only placement that relies on that navigation.
+        const submission: Submission = { id: 9, participation: programmingParticipation };
+        const standaloneResult: Result = { id: 9, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(1, 'minute') };
+
+        fixture.componentRef.setInput('result', standaloneResult);
+        fixture.componentRef.setInput('showBadge', true);
+        fixture.detectChanges();
+
+        expect(component.resolvedExercise()?.type).toBe(ExerciseType.PROGRAMMING);
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        expect(fixture.debugElement.nativeElement.querySelector('#result-score')).not.toBeNull();
+    });
+
+    it('should render a clickable score badge outside a sidebar card', () => {
+        const submission: Submission = { id: 1, participation: programmingParticipation };
+        const ratedResult: Result = { id: 8, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(2, 'minutes') };
+        submission.results = [ratedResult];
+        const participation = cloneDeep(programmingParticipation);
+        participation.submissions = [submission];
+
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('result', ratedResult);
+        fixture.componentRef.setInput('showCompletion', true);
+        fixture.componentRef.setInput('isInSidebarCard', false);
+        fixture.detectChanges();
+
+        expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+        const resultScore = fixture.debugElement.nativeElement.querySelector('#result-score');
+        expect(resultScore).not.toBeNull();
+        expect(resultScore.classList.contains('clickable-result')).toBe(true);
+    });
+
+    // Exhaustive rendering coverage: for every ResultTemplateStatus the presentational component can compute, drive
+    // the inputs that produce it and assert the corresponding DOM branch renders. This guards every visible state of
+    // this critical, widely-reused component against template/zoneless regressions.
+    describe('renders every template status', () => {
+        const query = (selector: string) => fixture.debugElement.nativeElement.querySelector(selector);
+
+        it('IS_QUEUED → queued indicator', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isQueued', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_QUEUED);
+            expect(query('#test-queued')).not.toBeNull();
+        });
+
+        it('IS_QUEUED with progress bar → progress bar component', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isQueued', true);
+            fixture.componentRef.setInput('showProgressBar', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_QUEUED);
+            expect(query('jhi-result-progress-bar')).not.toBeNull();
+        });
+
+        it('IS_BUILDING → building indicator', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isBuilding', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_BUILDING);
+            expect(query('#test-building')).not.toBeNull();
+        });
+
+        it('IS_BUILDING with progress bar → progress bar component', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('isBuilding', true);
+            fixture.componentRef.setInput('showProgressBar', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_BUILDING);
+            expect(query('jhi-result-progress-bar')).not.toBeNull();
+        });
+
+        it('IS_GENERATING_FEEDBACK (Athena being processed) → generating indicator', () => {
+            const result: Result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'hour') };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+            expect(query('#preliminary-feedback-generating')).not.toBeNull();
+        });
+
+        it('FEEDBACK_GENERATION_FAILED (Athena failed) → score still rendered', () => {
+            const result: Result = { id: 1, score: 50, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_FAILED);
+            expect(query('#result-score')).not.toBeNull();
+        });
+
+        it('FEEDBACK_GENERATION_TIMED_OUT (Athena timed out) → score still rendered', () => {
+            const result: Result = { id: 1, score: 50, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().subtract(1, 'hour') };
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
+            expect(query('#result-score')).not.toBeNull();
+        });
+
+        it('MISSING (failed programming submission) → missing message', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.MISSING);
+            expect(query('.text-danger')).not.toBeNull();
+        });
+
+        it('NO_RESULT → renders the no-result text and no score', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#result-score')).toBeNull();
+            expect(query('.text-body-secondary')).not.toBeNull();
+        });
+
+        it('NO_RESULT → still rendered as no-result (no score) when ungraded results are shown', () => {
+            fixture.componentRef.setInput('participation', programmingParticipation);
+            fixture.componentRef.setInput('showUngradedResults', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#result-score')).toBeNull();
+            expect(query('.text-body-secondary')).not.toBeNull();
+        });
+
+        it('HAS_RESULT with a rated result and showBadge → graded badge', () => {
+            const submission: Submission = { id: 1, participation: programmingParticipation };
+            const result: Result = { id: 1, submission, score: 100, rated: true, successful: true, completionDate: dayjs().subtract(1, 'minute') };
+            submission.results = [result];
+            const participation = cloneDeep(programmingParticipation);
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('showBadge', true);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
+            expect(query('#result-score')).not.toBeNull();
+            expect(query('#result-score-badge')).not.toBeNull();
+        });
+
+        it('demotes a non-displayable SUBMITTED status to NO_RESULT (component only renders LATE, MISSING, or a displayable result)', () => {
+            // evaluateTemplateStatus computes SUBMITTED here, but with no displayable result the component renders the
+            // generic "no (graded) result" instead — the "Submitted" wording comes from jhi-submission-result-status.
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().add(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#test-submitted')).toBeNull();
+        });
+
+        it('SUBMITTED_WAITING_FOR_GRADING (text, manual result, assessment period active) → waiting text', () => {
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(1, 'hour') };
+            const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
+            submission.results = [result];
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
+            expect(query('#test-submitted-waiting-grading')).not.toBeNull();
+        });
+
+        it('LATE (text, submitted after due date, has result) → late text', () => {
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
+            const result: Result = { id: 1, submission, score: 80, assessmentType: AssessmentType.MANUAL };
+            submission.results = [result];
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.componentRef.setInput('result', result);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.LATE);
+            expect(query('#test-late')).not.toBeNull();
+        });
+
+        it('demotes a non-displayable LATE_NO_FEEDBACK status to NO_RESULT', () => {
+            // evaluateTemplateStatus computes LATE_NO_FEEDBACK (late submission, no feedback); with no displayable
+            // result the component renders the generic "no (graded) result".
+            const exercise = cloneDeep(textExercise);
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            const submission: Submission = { id: 1, submissionDate: dayjs().subtract(2, 'hour') };
+            const participation = cloneDeep(textParticipation);
+            participation.exercise = exercise;
+            participation.submissions = [submission];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', participation);
+            fixture.detectChanges();
+            expect(component.templateStatus()).toBe(ResultTemplateStatus.NO_RESULT);
+            expect(query('#test-late-no-feedback')).toBeNull();
+        });
     });
 });

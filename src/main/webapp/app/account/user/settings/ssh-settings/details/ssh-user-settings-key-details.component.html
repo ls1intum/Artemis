@@ -1,7 +1,7 @@
-@if (isLoading) {
+@if (isLoading()) {
     <h2 jhiTranslate="artemisApp.userSettings.sshSettings"></h2>
 } @else {
-    @if (!isCreateMode) {
+    @if (!isCreateMode()) {
         <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h2>
     } @else {
         <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h2>
@@ -17,7 +17,7 @@
                 </p>
             </div>
 
-            @if (isCreateMode) {
+            @if (isCreateMode()) {
                 <div>
                     <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
                 </div>
@@ -27,21 +27,21 @@
                 </div>
             }
             <div>
-                <textarea class="form-control" rows="10" [readonly]="!isCreateMode" [(ngModel)]="displayedSshKey" data-testid="sshKeyField"></textarea>
+                <textarea class="form-control" rows="10" [readonly]="!isCreateMode()" [(ngModel)]="displayedSshKey" data-testid="sshKeyField"></textarea>
             </div>
 
             <!-- input fields for key creation -->
-            @if (isCreateMode) {
+            @if (isCreateMode()) {
                 <div class="d-flex flex-wrap mb-4">
                     <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.alreadyHaveKey"> </span>
-                        <code> {{ copyInstructions }} </code>
+                        <code> {{ copyInstructions() }} </code>
                     </p>
                 </div>
 
                 <div class="mb-4">
                     <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
-                    <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode" [(ngModel)]="displayedKeyLabel" maxlength="50">></textarea>
+                    <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode()" [(ngModel)]="displayedKeyLabel" maxlength="50">></textarea>
                     <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.commentUsedAsLabel"> </span>
                     </p>
@@ -74,7 +74,7 @@
                                 [(ngModel)]="displayedExpiryDate"
                                 [pickerType]="DateTimePickerType.CALENDAR"
                                 [shouldDisplayTimeZoneWarning]="false"
-                                [min]="currentDate"
+                                [min]="currentDate()"
                                 [requiredField]="true"
                                 (valueChange)="validateExpiryDate()"
                                 name="expiryDate"
@@ -85,25 +85,25 @@
                 }
             } @else {
                 <!-- View for viewing key details -->
-                @if (displayCreationDate) {
+                @if (displayCreationDate()) {
                     <div class="text-and-date large-text mt-4">
                         <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.createdOn"></div>
                         <div>
-                            {{ displayCreationDate | artemisDate: 'long-date' }}
+                            {{ displayCreationDate() | artemisDate: 'long-date' }}
                         </div>
                     </div>
                 }
-                @if (displayedLastUsedDate) {
+                @if (displayedLastUsedDate()) {
                     <div class="text-and-date large-text mt-2">
                         <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.lastUsedOn"></div>
                         <div>
-                            {{ displayedLastUsedDate | artemisDate: 'long-date' }}
+                            {{ displayedLastUsedDate() | artemisDate: 'long-date' }}
                         </div>
                     </div>
                 }
                 @if (displayedExpiryDate) {
                     <div class="text-and-date large-text mt-2">
-                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ hasExpired ? 'hasExpiredOn' : 'expiresOn' }}"></div>
+                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ hasExpired() ? 'hasExpiredOn' : 'expiresOn' }}"></div>
                         <div>
                             {{ displayedExpiryDate | artemisDate: 'long-date' }}
                         </div>
@@ -111,11 +111,11 @@
                 }
             }
             <div class="col col-auto text-right mt-4">
-                @if (isCreateMode) {
+                @if (isCreateMode()) {
                     <div class="btn-group" role="group" aria-label="Actions">
                         <jhi-button
                             [disabled]="
-                                !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid) || selectedOption !== 'useExpiration'))
+                                !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
                             "
                             [btnType]="ButtonType.PRIMARY"
                             [btnSize]="ButtonSize.SMALL"
@@ -130,7 +130,7 @@
                     <jhi-button
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.SMALL"
-                        [title]="isCreateMode ? 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' : 'artemisApp.userSettings.sshSettingsPage.back'"
+                        [title]="isCreateMode() ? 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' : 'artemisApp.userSettings.sshSettingsPage.back'"
                         (onClick)="goBack()"
                     />
                 </div>

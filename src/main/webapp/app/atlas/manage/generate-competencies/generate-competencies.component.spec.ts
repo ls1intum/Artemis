@@ -172,7 +172,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         expect(comp.canDeactivate()).toBeTruthy();
 
-        comp.isLoading = true;
+        comp.isLoading.set(true);
         expect(comp.canDeactivate()).toBeFalsy();
 
         comp.submitted = true;
@@ -254,7 +254,7 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should not deactivate when loading', () => {
-        comp.isLoading = true;
+        comp.isLoading.set(true);
         const canDeactivate = comp.canDeactivate();
         expect(canDeactivate).toBeFalsy();
     });

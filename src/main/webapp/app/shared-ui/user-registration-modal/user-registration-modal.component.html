@@ -1,0 +1,121 @@
+<p-dialog
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    [visible]="isOpen()"
+    (visibleChange)="isOpen.set($event)"
+    [style]="{ width: '50rem', maxWidth: '95vw', height: '45rem', maxHeight: '95vh' }"
+    [draggable]="false"
+    appendTo="body"
+    styleClass="user-registration-dialog"
+    headerStyleClass="pb-1"
+    contentStyleClass="pt-0"
+>
+    <ng-template pTemplate="header">
+        <h4 class="m-0 d-flex align-items-center gap-2">
+            <i class="pi pi-users" style="font-size: 1.5rem"></i>
+            <span>{{ titleKey() | artemisTranslate }}</span>
+        </h4>
+    </ng-template>
+
+    <div class="d-flex flex-column h-100 gap-3">
+        <p class="text-muted mb-0" jhiTranslate="userRegistrationModal.description"></p>
+
+        <!-- Search bar row -->
+        <div class="d-flex align-items-center gap-2">
+            <jhi-search-filter class="flex-grow-1" [placeholderKey]="searchPlaceholderKey()" [disabled]="isViewingSelected()" (newSearchEvent)="onSearch($event)" />
+            @if (selectedCount() > 0) {
+                @if (isViewingSelected()) {
+                    <button pButton type="button" size="small" variant="outlined" severity="secondary" class="flex-shrink-0" (click)="toggleViewSelected()">
+                        <i class="pi pi-search me-1"></i><span jhiTranslate="userRegistrationModal.backToSearch"></span>
+                    </button>
+                } @else {
+                    <button pButton type="button" size="small" variant="outlined" severity="info" class="flex-shrink-0" (click)="toggleViewSelected()">
+                        <i class="pi pi-eye me-1"></i><span>{{ 'userRegistrationModal.viewSelected' | artemisTranslate: { count: selectedCount() } }}</span>
+                    </button>
+                }
+            }
+        </div>
+
+        <!-- Selection info row -->
+        @if (selectedCount() > 0) {
+            <p-message severity="info" size="small" styleClass="selection-info-message w-100" [closable]="false">
+                <span>{{ 'userRegistrationModal.selectedCount' | artemisTranslate: { count: selectedCount() } }}</span>
+                <button pButton type="button" variant="text" severity="secondary" size="small" class="py-0" (click)="clearSelection()">
+                    <span jhiTranslate="userRegistrationModal.clearSelection"></span>
+                </button>
+            </p-message>
+        }
+
+        <!-- Table area -->
+        <div class="d-flex flex-column flex-grow-1" style="min-height: 0">
+            @if (showTable()) {
+                <div style="flex: 1; min-height: 0">
+                    <jhi-table-view
+                        [cols]="columns()"
+                        [vals]="tableValues()"
+                        [totalRows]="tableTotalRows()"
+                        [loading]="isLoading()"
+                        [options]="tableOptions()"
+                        [isRowDisabled]="isRowDisabledFn"
+                        [selectionSource]="selectedInCurrentResults()"
+                        [disabledRowTooltip]="'userRegistrationModal.alreadyRegisteredTooltip' | artemisTranslate"
+                        (onLazyLoad)="onTableLazyLoad($event)"
+                        (onRowSelect)="handleSelectionChange($event)"
+                    />
+                </div>
+            } @else if (noResults()) {
+                <div class="placeholder-area">
+                    <i class="pi pi-users placeholder-icon mb-3"></i>
+                    <p class="fw-semibold mb-1">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
+                    <p class="text-muted small" jhiTranslate="userRegistrationModal.noResultsHint"></p>
+                </div>
+            } @else {
+                <div class="placeholder-area">
+                    <i class="pi pi-search placeholder-icon mb-3"></i>
+                    <p class="fw-semibold mb-1" jhiTranslate="userRegistrationModal.initialTitle"></p>
+                    <p class="text-muted small" jhiTranslate="userRegistrationModal.initialHint"></p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" severity="secondary" size="small" (click)="close()" jhiTranslate="entity.action.cancel"></button>
+        <button pButton type="button" severity="primary" size="small" [disabled]="isRegisterDisabled()" (click)="register()">
+            <span>{{ 'userRegistrationModal.registerButton' | artemisTranslate: { count: selectedCount() } }}</span>
+        </button>
+    </ng-template>
+</p-dialog>
+
+<!-- Cell templates -->
+<ng-template #profilePicTemplate let-cell>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.75"
+        [isBoxShadow]="true"
+        [authorName]="cell.data.name"
+        [authorId]="cell.data.id"
+        [imageUrl]="addPublicFilePrefix(cell.data?.profilePictureUrl)"
+    />
+</ng-template>
+
+<ng-template #nameLoginTemplate let-cell>
+    <div class="name-login-cell">
+        <div class="d-flex align-items-center gap-1">
+            <span class="user-name" [innerHTML]="cell.data.name | highlightMatch: searchTerm()"></span>
+            @if (cell.data.isRegistered) {
+                <i class="pi pi-check-circle text-success flex-shrink-0"></i>
+            }
+        </div>
+        <span class="user-login text-muted" [innerHTML]="cell.data.login | highlightMatch: searchTerm()"></span>
+    </div>
+</ng-template>
+
+<ng-template #matriculationTemplate let-cell>
+    <span [innerHTML]="cell.data.registrationNumber | highlightMatch: searchTerm()"></span>
+</ng-template>
+
+<ng-template #emailTemplate let-cell>
+    <span [innerHTML]="cell.data.email | highlightMatch: searchTerm()"></span>
+</ng-template>

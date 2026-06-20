@@ -114,6 +114,7 @@
                 "feedbackRequested": "KI-Feedback angefordert",
                 "feedbackRequestSent": "KI-Feedback wurde für alle Text- und Modellierungsaufgaben angefordert. Die Ergebnisse erscheinen in Kürze.",
                 "feedbackUsageLoadFailed": "Die verbleibenden KI-Feedback-Anfragen konnten nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
+                "noFeedbackSuggestionModuleConfigured": "Für keine der Aufgaben in dieser Prüfung ist KI-Feedback konfiguriert.",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
@@ -365,6 +366,7 @@
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
+            "answersRestoredFromLocalStorage": "Deine zuvor eingegebenen Antworten wurden von diesem Gerät wiederhergestellt und werden erneut gespeichert. Bitte überprüfe, ob deine Antworten vollständig sind.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
@@ -545,7 +547,18 @@
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
             "import": {
-                "search": "Suche nach einer Klausur"
+                "search": "Suche nach einer Klausur",
+                "progress": {
+                    "title": "Klausur wird importiert",
+                    "preparing": "Import wird vorbereitet…",
+                    "importing": "{{ title }} wird importiert…",
+                    "counter": "{{ processed }} von {{ total }} Aufgaben",
+                    "success": "Alle {{ count }} Aufgaben wurden erfolgreich importiert.",
+                    "summary": "{{ imported }} von {{ total }} Aufgaben wurden importiert.",
+                    "incompleteHeader": "Konnten nicht vollständig importiert werden. Bitte überprüfe diese Aufgaben und entferne sie gegebenenfalls:",
+                    "skippedHeader": "Übersprungen (nicht importiert):",
+                    "dismiss": "Verstanden"
+                }
             },
             "testRun": {
                 "testRun": "Testlauf",
@@ -620,6 +633,20 @@
                     "viewExam": "Klausur anzeigen",
                     "remove": "Deregistrieren"
                 },
+                "filter": {
+                    "All": "Alle",
+                    "ExamMissing": "Prüfung fehlt",
+                    "NotStarted": "Nicht gestartet",
+                    "Started": "Gestartet",
+                    "Submitted": "Eingereicht",
+                    "DidNotAttend": "Nicht teilgenommen",
+                    "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
+                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                },
+                "filterGroup": {
+                    "progress": "Fortschritt",
+                    "attendance": "Anwesenheit"
+                },
                 "menu": {
                     "manageStudents": "Studierende registrieren",
                     "examLogistics": "Klausurlogistik",
@@ -683,7 +710,18 @@
                     "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
                     "duplicatedProgrammingExerciseShortName": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Kurznamen. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen",
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
-                    "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
+                    "invalidExerciseConfiguration": "Einige Titel oder Kurznamen fehlen, sind ungültig oder bereits vergeben. Bitte korrigiere die unten rot markierten Felder vor dem Import.",
+                    "error": {
+                        "groupTitleRequired": "Bitte gib einen Titel für die Aufgabengruppe ein.",
+                        "titleRequired": "Bitte gib einen Titel ein.",
+                        "titlePattern": "Der Titel enthält ungültige Zeichen.",
+                        "titleDuplicate": "Eine andere ausgewählte Aufgabe verwendet diesen Titel bereits. Jeder Titel muss eindeutig sein.",
+                        "titleAlreadyExists": "Eine Aufgabe mit diesem Titel existiert bereits im Zielkurs. Bitte wähle einen anderen Titel.",
+                        "shortNameLength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                        "shortNamePattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf nur Buchstaben und Ziffern enthalten.",
+                        "shortNameDuplicate": "Eine andere ausgewählte Aufgabe verwendet diesen Kurznamen bereits. Jeder Kurzname muss eindeutig sein.",
+                        "shortNameAlreadyExists": "Eine Aufgabe mit diesem Kurznamen existiert bereits im Zielkurs. Bitte wähle einen anderen Kurznamen."
+                    },
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
                     "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu Erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },

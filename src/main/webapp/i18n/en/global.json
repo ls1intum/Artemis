@@ -38,6 +38,8 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "tooShortQueryHint": "Please enter a longer search term.",
+            "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
             "toNavigate": "to navigate",
             "toSelect": "to select",
@@ -85,6 +87,7 @@
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
+            "courseFallbackLabel": "Course {{ id }}",
             "searchFailed": "Search failed. Please try again.",
             "irisAnswerShowMore": "Show more",
             "irisAnswerShowLess": "Show less",
@@ -221,7 +224,8 @@
                     "privacy": "Privacy",
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
-                    "dependencies": "Dependencies"
+                    "dependencies": "Dependencies",
+                    "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
@@ -320,7 +324,7 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} - {{second}} of {{total}} items."
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
     },
     "entity": {
         "actions": "Actions",
@@ -361,14 +365,6 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
-            "continueSubmission": "Continue",
-            "viewTimeline": "View Timeline",
-            "hideTimeline": "Hide Timeline",
-            "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
-            "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
-            "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",
-            "dueDateMissedTooltip": "The due date has passed. You may no longer submit any solutions!",
-            "submitDueDateMissed": "Submit (due date missed)",
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
             "retry": "Retry",

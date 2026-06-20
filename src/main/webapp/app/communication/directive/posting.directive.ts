@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input, model } from '@angular/core';
+import { Directive, OnDestroy, OnInit, inject, input, model, signal } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -19,15 +19,15 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     readonly hasChannelModerationRights = input(false);
     readonly isThreadSidebar = input<boolean | undefined>();
     abstract get reactionsBar(): any;
-    showDropdown = false;
-    dropdownPosition = { x: 0, y: 0 };
+    readonly showDropdown = signal(false);
+    readonly dropdownPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
     showReactionSelector = false;
     clickPosition = { x: 0, y: 0 };
 
     isAnswerPost = false;
     isDeleted = false;
     readonly timeToDeleteInSeconds = 6;
-    deleteTimerInSeconds = 6;
+    readonly deleteTimerInSeconds = signal(6);
     deleteTimer: NodeJS.Timeout | undefined;
     deleteInterval: NodeJS.Timeout | undefined;
 
@@ -36,7 +36,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     protected oneToOneChatService = inject(OneToOneChatService);
     protected metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
-    protected changeDetector = inject(ChangeDetectorRef);
     protected router = inject(Router);
 
     // Icons
@@ -62,7 +61,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         this.clearDeleteTimers();
 
         if (isDelete) {
-            this.deleteTimerInSeconds = this.timeToDeleteInSeconds;
+            this.deleteTimerInSeconds.set(this.timeToDeleteInSeconds);
 
             this.deleteTimer = setTimeout(
                 () => {
@@ -71,12 +70,11 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
                     this.clearDeleteTimers();
                 },
                 // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
-                this.deleteTimerInSeconds * 1000 + 1000,
+                this.deleteTimerInSeconds() * 1000 + 1000,
             );
 
             this.deleteInterval = setInterval(() => {
-                this.deleteTimerInSeconds = Math.max(0, this.deleteTimerInSeconds - 1);
-                this.changeDetector.detectChanges();
+                this.deleteTimerInSeconds.set(Math.max(0, this.deleteTimerInSeconds() - 1));
             }, 1000);
         }
     }
@@ -99,7 +97,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      */
     editPosting() {
         this.reactionsBar.editPosting();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
     }
 
     /**
@@ -108,8 +106,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      */
     togglePin() {
         this.reactionsBar.togglePin();
-        this.showDropdown = false;
-        this.changeDetector.detectChanges();
+        this.showDropdown.set(false);
     }
 
     /**
@@ -117,7 +114,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      */
     deletePost() {
         this.reactionsBar.deletePosting();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
     }
 
     /**
@@ -141,7 +138,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     addReaction(event: MouseEvent) {
         event.preventDefault();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
 
         this.clickPosition = {
             x: event.clientX,

@@ -1,6 +1,5 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     HostListener,
     OnDestroy,
@@ -11,6 +10,7 @@ import {
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -63,7 +63,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
-    changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
     private alertService = inject(AlertService);
@@ -81,7 +80,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
     isAnswerPost = true;
-    course: Course;
+    readonly course = signal<Course>(undefined!);
 
     // Icons
     faBookmark = faBookmark;
@@ -94,15 +93,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faTriangleExclamation = faTriangleExclamation;
     readonly faXmark = faXmark;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
-    mayEdit = false;
-    mayDelete = false;
-    isVerifying = false;
-    isEditingIrisReply = false;
+    readonly mayEdit = signal<boolean>(false);
+    readonly mayDelete = signal<boolean>(false);
+    readonly isVerifying = signal(false);
+    readonly isEditingIrisReply = signal(false);
     editedIrisContent = '';
 
     constructor() {
         super();
-        this.course = this.metisService.getCourse();
+        this.course.set(this.metisService.getCourse());
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
@@ -144,7 +143,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -171,12 +170,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
-        this.mayDelete = value;
+        this.mayDelete.set(value);
     }
 
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
-        this.mayEdit = value;
+        this.mayEdit.set(value);
     }
 
     /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
@@ -196,22 +195,20 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     approveAnswer(content?: string): void {
         const posting = this.posting();
-        if (!posting?.id || this.isVerifying) {
+        if (!posting?.id || this.isVerifying()) {
             return;
         }
-        this.isVerifying = true;
+        this.isVerifying.set(true);
         this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
             next: (verified) => {
                 this.posting.set(Object.assign(new AnswerPost(), verified));
-                this.isEditingIrisReply = false;
-                this.isVerifying = false;
-                this.changeDetector.detectChanges();
+                this.isEditingIrisReply.set(false);
+                this.isVerifying.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 captureException(err, { extra: { action: 'approve', postingId: posting.id } });
                 onError(this.alertService, err);
-                this.isVerifying = false;
-                this.changeDetector.detectChanges();
+                this.isVerifying.set(false);
             },
         });
     }
@@ -219,32 +216,30 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     /** Switches to inline-edit mode so the tutor can adjust the Iris content before approving. */
     editAnswer(): void {
         this.editedIrisContent = this.posting()?.content ?? '';
-        this.isEditingIrisReply = true;
+        this.isEditingIrisReply.set(true);
     }
 
     /** Cancels inline editing without making any changes. */
     cancelEditAnswer(): void {
-        this.isEditingIrisReply = false;
+        this.isEditingIrisReply.set(false);
         this.editedIrisContent = '';
     }
 
     /** Rejects an unverified Iris answer by deleting it directly (no undo timer). */
     rejectAnswer(): void {
         const posting = this.posting();
-        if (!posting?.id || this.isVerifying) {
+        if (!posting?.id || this.isVerifying()) {
             return;
         }
-        this.isVerifying = true;
+        this.isVerifying.set(true);
         this.metisService.deleteAnswerPost(posting).subscribe({
             next: () => {
-                this.isVerifying = false;
-                this.changeDetector.detectChanges();
+                this.isVerifying.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 captureException(err, { extra: { action: 'reject', postingId: posting.id } });
                 onError(this.alertService, err);
-                this.isVerifying = false;
-                this.changeDetector.detectChanges();
+                this.isVerifying.set(false);
             },
         });
     }
@@ -273,12 +268,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition = {
+            this.dropdownPosition.set({
                 x: event.clientX,
                 y: event.clientY,
-            };
+            });
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -291,8 +286,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -302,9 +297,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
             AnswerPostComponent.activeDropdownPost = undefined;
         }
     }

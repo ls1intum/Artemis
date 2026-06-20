@@ -5,12 +5,21 @@ export interface SpotlightStep {
     videoSrc?: string;
 }
 
+export interface FeatureCardDownloadLink {
+    href: string;
+    badgeSrc: string;
+    badgeSrcDark: string;
+    altKey: string;
+    disabled?: boolean;
+}
+
 export interface FeatureCard {
     categoryKey: string;
     descriptionKey: string;
     imageSrc: string;
     imageSrcDark?: string;
     imageAltKey: string;
+    downloadLinks?: FeatureCardDownloadLink[];
 }
 
 export interface FaqItem {
@@ -113,6 +122,20 @@ export const FEATURE_CARDS: FeatureCard[] = [
         imageSrc: 'content/images/landing/mobile-phone.webp',
         imageSrcDark: 'content/images/landing/mobile-phone-dark.webp',
         imageAltKey: 'landing.features.cards.mobileApps.imageAlt',
+        downloadLinks: [
+            {
+                href: 'https://apps.apple.com/app/artemis-learning/id6478965616',
+                badgeSrc: 'content/images/landing/badges/app-store-badge.svg',
+                badgeSrcDark: 'content/images/landing/badges/app-store-badge-dark.svg',
+                altKey: 'landing.features.cards.mobileApps.appStoreAlt',
+            },
+            {
+                href: 'https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis',
+                badgeSrc: 'content/images/landing/badges/google-play-badge.svg',
+                badgeSrcDark: 'content/images/landing/badges/google-play-badge-dark.svg',
+                altKey: 'landing.features.cards.mobileApps.playStoreAlt',
+            },
+        ],
     },
 ];
 

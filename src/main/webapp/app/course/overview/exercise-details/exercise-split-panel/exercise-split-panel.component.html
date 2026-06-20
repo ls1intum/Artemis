@@ -1,4 +1,4 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [useViewportWidthForCollapse]="true">
     @if (showEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
@@ -79,7 +79,7 @@
         <ng-template #irisLogoTpl>
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
         </ng-template>
-        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl">
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
             <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
         </ng-template>
     }

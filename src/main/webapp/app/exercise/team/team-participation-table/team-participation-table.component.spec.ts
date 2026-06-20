@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -20,6 +22,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamParticipationTableComponent;
     let fixture: ComponentFixture<TeamParticipationTableComponent>;
     let debugElement: DebugElement;
@@ -146,8 +149,8 @@ describe('TeamParticipationTableComponent', () => {
 
     let router: Router;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 MockProvider(TranslateService),
                 { provide: TeamService, useClass: MockTeamService },
@@ -161,37 +164,49 @@ describe('TeamParticipationTableComponent', () => {
                     schemas: [NO_ERRORS_SCHEMA],
                 },
             })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamParticipationTableComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                teamService = TestBed.inject(TeamService);
-                router = TestBed.inject(Router);
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(TeamParticipationTableComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        teamService = TestBed.inject(TeamService);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    beforeEach(fakeAsync(() => {
-        jest.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
-        comp.course = course;
-        comp.exercise = exercise4;
-        comp.team = mockTeam;
-        jest.spyOn(router, 'navigate').mockImplementation();
+    beforeEach(async () => {
+        vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise4);
+        fixture.componentRef.setInput('team', mockTeam);
+        vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
         comp.ngOnInit();
-        tick();
-    }));
+        await fixture.whenStable();
+    });
 
     it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
-        expect(comp.exercises).toHaveLength(course.exercises!.length);
+        expect(comp.exercises()).toHaveLength(course.exercises!.length);
 
-        // Check that ngx-datatable is present
-        const datatable = debugElement.query(By.css('jhi-data-table'));
+        // Check that jhi-table-view is present
+        const datatable = debugElement.query(By.css('jhi-table-view'));
         expect(datatable).not.toBeNull();
+    });
+
+    it('should keep the initialization date column sortable via its dot-path field', () => {
+        const initDateColumn = comp.columns().find((column) => column.field === 'participation.initializationDate');
+        expect(initDateColumn).toBeDefined();
+        expect(initDateColumn!.sort).toBe(true);
+    });
+
+    it('should keep the participation id column sortable for admins', () => {
+        fixture.componentRef.setInput('isAdmin', true);
+        const participationColumn = comp.columns().find((column) => column.field === 'participation.id');
+        expect(participationColumn).toBeDefined();
+        expect(participationColumn!.sort).toBe(true);
     });
 
     it('Assessment Action "continue" is triggered', () => {
@@ -209,10 +224,9 @@ describe('TeamParticipationTableComponent', () => {
         expect(expectedAssessmentAction).toBe('open');
     });
 
-    it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
+    it('Navigate to assessment editor when opening exercise submission', async () => {
         const participation = exercise2.studentParticipations![0];
-        comp.openAssessmentEditor(exercise2, participation, 'new');
-        tick();
+        await comp.openAssessmentEditor(exercise2, participation, 'new');
         expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
@@ -223,21 +237,21 @@ describe('TeamParticipationTableComponent', () => {
             'new',
             'assessment',
         ]);
-    }));
+    });
 
     it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for exercises before due date as tutor', () => {
@@ -248,7 +262,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for programming exercises before due date as instructor', () => {
@@ -259,7 +273,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
@@ -270,6 +284,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 });
