@@ -6,7 +6,7 @@ import MarkdownItKatex from '@vscode/markdown-it-katex';
 import hljs from 'highlight.js';
 import TurndownService from 'turndown';
 import MarkdownIt from 'markdown-it';
-import MarkdownItGitHubAlerts from 'markdown-it-github-alerts';
+import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -109,7 +109,7 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
             .use(MarkdownItKatex, {
                 enableMathInlineInHtml: true,
             })
-            .use(MarkdownItGitHubAlerts)
+            .use(markdownItGitHubAlerts)
             .use(MarkdownitTagClass, {
                 table: 'table',
             });
@@ -141,7 +141,7 @@ function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean):
             enableMathInlineInHtml: true,
         })
         // Github like alerts inside Markdown
-        .use(MarkdownItGitHubAlerts)
+        .use(markdownItGitHubAlerts)
         // Add custom html classes to be allowed it markdown
         .use(MarkdownitTagClass, {
             table: 'table',
