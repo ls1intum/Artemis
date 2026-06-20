@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.videosource.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,8 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
+import de.tum.cit.aet.artemis.videosource.dto.GocastCourseDTO;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 
 /**
@@ -63,13 +66,61 @@ public class GocastBindingService {
 
     /**
      * Create and persist a new {@link GocastCourseBinding} for the given Artemis course.
+     * <p>
+     * Verifies via EP1 that the requesting instructor actually administers the given gocast course
+     * before creating the binding (IDOR guard). If the instructor does not administer the course,
+     * an {@link AccessForbiddenException} is thrown.
+     * <p>
+     * If an existing {@code REVOKED} binding exists for the course, it is reset to {@code PENDING}
+     * rather than creating a new row (which would violate the unique constraint on {@code course_id}).
+     * If a {@code PENDING} or {@code ACTIVE} binding already exists, an
+     * {@link IllegalStateException} is thrown (the caller maps this to 409 CONFLICT).
      *
      * @param courseId         the Artemis course id
      * @param gocastCourseId   the numeric id of the gocast course
      * @param gocastCourseSlug the slug of the gocast course (used for watch-page links)
-     * @return the persisted binding
+     * @param instructorLrzId  the LRZ ID of the instructor; verified against EP1
+     * @return the persisted (new or reset) binding
+     * @throws AccessForbiddenException if the instructor does not administer the gocast course
+     * @throws IllegalStateException    if a non-REVOKED binding already exists for the course
      */
-    public GocastCourseBinding createBinding(long courseId, long gocastCourseId, String gocastCourseSlug) {
+    public GocastCourseBinding createBinding(long courseId, long gocastCourseId, String gocastCourseSlug, String instructorLrzId) {
+        if (connectorService == null) {
+            throw new IllegalStateException("Gocast connector is not available; cannot verify course ownership");
+        }
+
+        // IDOR guard: verify the instructor administers the requested gocast course via EP1.
+        List<GocastCourseDTO> administeredCourses;
+        try {
+            administeredCourses = connectorService.listAdministeredCourses(instructorLrzId, 0, "");
+        }
+        catch (GocastIntegrationException ex) {
+            log.warn("EP1 listAdministeredCourses failed for instructor {}: {}", instructorLrzId, ex.getMessage());
+            throw ex;
+        }
+        boolean isAdministered = administeredCourses.stream().anyMatch(c -> c.id() == gocastCourseId && gocastCourseSlug.equals(c.slug()));
+        if (!isAdministered) {
+            log.warn("Instructor {} attempted to bind gocast course {} but does not administer it", instructorLrzId, gocastCourseId);
+            throw new AccessForbiddenException("Instructor does not administer the requested gocast course");
+        }
+
+        // MEDIUM-2: handle existing binding.
+        Optional<GocastCourseBinding> existing = bindingRepository.findByCourseId(courseId);
+        if (existing.isPresent()) {
+            GocastCourseBinding existingBinding = existing.get();
+            if (existingBinding.getStatus() == GocastBindingStatus.REVOKED) {
+                // Reset the REVOKED binding to PENDING so we don't violate the unique constraint.
+                log.info("Resetting REVOKED binding for Artemis course {} to PENDING (new gocast course: {})", courseId, gocastCourseId);
+                existingBinding.setGocastCourseId(gocastCourseId);
+                existingBinding.setGocastCourseSlug(gocastCourseSlug);
+                existingBinding.setStatus(GocastBindingStatus.PENDING);
+                return bindingRepository.save(existingBinding);
+            }
+            else {
+                throw new IllegalStateException("A " + existingBinding.getStatus() + " binding already exists for course " + courseId);
+            }
+        }
+
         GocastCourseBinding binding = new GocastCourseBinding();
         binding.setCourseId(courseId);
         binding.setGocastCourseId(gocastCourseId);
