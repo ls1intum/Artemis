@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * The {@code sourceType} discriminator drives the UI icon selection.
  * The lecture search endpoint still uses {@link PyrisLectureSearchResultDTO} unchanged.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchSourceDTO(@JsonProperty("sourceType") String sourceType, @JsonProperty("entityId") long entityId,
         @JsonProperty("course") PyrisLectureSearchResultDTO.CourseDTO course, @JsonProperty("title") String title, @JsonProperty("snippet") String snippet,
         @JsonProperty("exerciseType") String exerciseType, @JsonProperty("lecture") PyrisLectureSearchResultDTO.LectureDTO lecture,

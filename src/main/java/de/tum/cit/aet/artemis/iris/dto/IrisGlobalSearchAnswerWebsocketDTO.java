@@ -20,6 +20,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSou
  * <li>{@code isThinking=false}: Pipeline finished. Show the {@code answer} card if non-null; hide otherwise.</li>
  * </ul>
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisGlobalSearchAnswerWebsocketDTO(@NotBlank String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
 }
