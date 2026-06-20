@@ -773,6 +773,35 @@ describe('VideoPlayerComponent', () => {
             vi.useRealTimers();
         });
 
+        it('switches to videoUrl via HLS when a token REFRESH fails and a fallback videoUrl is set', async () => {
+            vi.useFakeTimers();
+
+            const firstUrl = 'https://tum.live/hls/first.m3u8';
+            const fallbackUrl = 'https://cdn.example.com/public.m3u8';
+
+            // First call succeeds (initial load), second call (refresh) fails
+            mockGocastService.getPlaybackToken
+                .mockReturnValueOnce(of({ playlistUrl: firstUrl, expiresIn: 60 }))
+                .mockReturnValueOnce(throwError(() => new Error('409 binding revoked')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', fallbackUrl);
+            await render();
+
+            // Clear the initial loadSource call
+            getMockHls().loadSource.mockClear();
+
+            // Trigger the refresh timer — this fires fetchAndLoadToken again which will fail
+            vi.advanceTimersByTime(31000);
+
+            // The player must switch to fallbackUrl via hls.loadSource (not tokenError)
+            expect(component.tokenError()).toBe(false);
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+
+            vi.useRealTimers();
+        });
+
         it('restores currentTime and resumes playback when the refreshed manifest is parsed', async () => {
             vi.useFakeTimers();
 

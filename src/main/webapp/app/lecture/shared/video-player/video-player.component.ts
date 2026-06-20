@@ -227,12 +227,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     }, refreshAfterMs);
                 },
                 error: () => {
-                    // EP2 failed (e.g. 409 no ACTIVE binding, 404, 503). Fall back to the public videoUrl path
-                    // so students still see the stream via the unauthenticated HLS URL when available.
+                    // EP2 failed (initial load or refresh — 409/404/503/etc.).
+                    // Fall back to the public videoUrl path whenever available.
+                    // For a refresh failure, this.hls already exists — still switch sources so the stale
+                    // signed URL is replaced immediately rather than waiting for the CDN to expire it.
+                    this.clearTokenRefreshTimer();
                     const fallbackUrl = this.videoUrl();
                     if (fallbackUrl) {
                         this.tokenError.set(false);
-                        if (!this.hls) {
+                        if (this.hls) {
+                            this.hls.loadSource(fallbackUrl);
+                        } else {
                             this.initHls(fallbackUrl, videoElement);
                         }
                     } else {

@@ -51,6 +51,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
+import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -880,5 +881,93 @@ describe('AttachmentVideoUnitComponent — Gocast EP2 wiring', () => {
     it('returns undefined gocastIdentity for a non-TUM-Live URL even when the feature is enabled', () => {
         const component = createComponentWith(true, 'https://vimeo.com/123456', 4);
         expect(component.gocastIdentity()).toBeUndefined();
+    });
+});
+
+describe('AttachmentVideoUnitComponent — template wiring: gocastIdentity reaches jhi-video-player', () => {
+    setupTestBed({ zoneless: true });
+
+    let featureSubject: BehaviorSubject<ActiveFeatureToggles>;
+
+    class ControllableFeatureToggleService {
+        subscribeFeatureToggleUpdates() {}
+        unsubscribeFeatureToggleUpdates() {}
+        getFeatureToggles() {
+            return featureSubject.asObservable();
+        }
+        getFeatureToggleActive(feature: FeatureToggle) {
+            return featureSubject.asObservable().pipe(
+                map((activeFeatures) => activeFeatures.includes(feature)),
+                distinctUntilChanged(),
+            );
+        }
+    }
+
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        TestBed.resetTestingModule();
+
+        // Gocast ON so gocastIdentity() returns a value and the player receives it
+        featureSubject = new BehaviorSubject<ActiveFeatureToggles>([FeatureToggle.Gocast]);
+
+        await TestBed.configureTestingModule({
+            imports: [AttachmentVideoUnitComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: FileService, useClass: MockFileService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ScienceService),
+                { provide: LectureTranscriptionService, useValue: { getTranscription: vi.fn(() => of(undefined)), getTranscriptionStatus: vi.fn(() => of(undefined)) } },
+                AttachmentVideoUnitService,
+                MockProvider(NgbModal),
+                MockProvider(AlertService),
+                MockProvider(ProfileService),
+                { provide: FeatureToggleService, useClass: ControllableFeatureToggleService },
+            ],
+        }).compileComponents();
+
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('passes the computed gocastIdentity to <jhi-video-player> when the unit is expanded', async () => {
+        const src = 'https://tum.live/w/eidi/4242';
+
+        const fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('lectureUnit', { id: 1, videoSource: src } as any);
+        fixture.componentRef.setInput('initiallyExpanded', true);
+        fixture.detectChanges();
+
+        // toggleCollapse fires a playlist request; flush it with an empty response so the
+        // component skips the public HLS path and reveals the player via gocast EP2.
+        const req = httpMock.expectOne((r) => r.url === '/api/videosource/playlist');
+        req.flush(null);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // The <jhi-video-player> element must be present in the DOM.
+        const playerEl = fixture.debugElement.query(By.css('jhi-video-player'));
+        expect(playerEl).toBeTruthy();
+
+        // The player component instance must have received the computed gocastIdentity.
+        const playerComponent = playerEl.componentInstance as VideoPlayerComponent;
+        expect(playerComponent.gocastIdentity()).toEqual({
+            courseId: 7,
+            streamId: 4242,
+            slug: 'eidi',
+        });
+
+        // The video player fires the EP2 playback-token request on init (because gocastIdentity is set).
+        // Flush it here so httpMock.verify() in afterEach does not see an unexpected open request.
+        const tokenReqs = httpMock.match((r) => r.url.includes('playback-tokens'));
+        tokenReqs.forEach((r) => r.flush({ playlistUrl: 'https://tum.live/hls/test.m3u8', expiresIn: 3600 }));
     });
 });
