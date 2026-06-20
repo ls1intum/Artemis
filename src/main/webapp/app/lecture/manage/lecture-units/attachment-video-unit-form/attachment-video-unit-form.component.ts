@@ -254,7 +254,12 @@ export class AttachmentVideoUnitFormComponent {
         const currentValue = this.videoSourceControl?.value;
         const canAutoFill = !currentValue || currentValue === this.lastAutoFilledGocastUrl;
         if (canAutoFill && event.slug) {
-            const url = `https://tum.live/w/${event.slug}/${event.streamId}`;
+            // Include ?video_only=1 so the URL passes the attachment-video form validator
+            // (videoSourceUrlValidator rejects TUM Live URLs that lack this parameter).
+            // The query param does NOT affect server-side slug/streamId extraction: both the Java
+            // TumLiveService pattern (/w/([^/]+)/([0-9]+)) and the client parseTumLiveUrl regex
+            // match on the pathname only and ignore query parameters.
+            const url = `https://tum.live/w/${event.slug}/${event.streamId}?video_only=1`;
             this.videoSourceControl?.setValue(url);
             this.lastAutoFilledGocastUrl = url;
         }

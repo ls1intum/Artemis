@@ -282,17 +282,12 @@ public class GocastIntegrationResource {
                     log.debug("EP2 returned 403 but EP7 confirms still bound — student {} is ineligible for stream {}", lrzId, streamId);
                 }
                 catch (GocastIntegrationException ep7Ex) {
-                    if (HttpStatus.FORBIDDEN.isSameCodeAs(ep7Ex.getUpstreamStatus())) {
-                        // EP7 itself returned 403 — the service account is definitively not a course admin
-                        // anymore. Mark REVOKED and return 409 CONFLICT.
-                        log.warn("EP2 returned 403 and EP7 returned 403 (definitively unbound) — marking binding REVOKED for gocast course {}", binding.getGocastCourseId());
-                        bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
-                        return ResponseEntity.status(HttpStatus.CONFLICT).build();
-                    }
-                    // EP7 failed transiently/ambiguously (503/timeout/5xx/401/etc.). Do NOT mutate the binding —
-                    // leave it ACTIVE and fall through to surface the original EP2 403 to the caller.
-                    log.warn("EP2 returned 403 but EP7 failed transiently (status={}) — leaving binding ACTIVE for gocast course {}: {}", ep7Ex.getUpstreamStatus(),
-                            binding.getGocastCourseId(), ep7Ex.getMessage());
+                    // EP7 threw for any reason (403, 502, 503, timeout, etc.). A thrown exception never
+                    // constitutes a definitive "unbound" signal — only an explicit false return value does.
+                    // Do NOT mutate the binding; leave it ACTIVE and fall through to surface the original
+                    // EP2 403 to the caller.
+                    log.warn("EP2 returned 403 but EP7 threw (status={}) — leaving binding ACTIVE for gocast course {}: {}", ep7Ex.getUpstreamStatus(), binding.getGocastCourseId(),
+                            ep7Ex.getMessage());
                 }
             }
             log.warn("EP2 getPlaybackToken failed for course {}, stream {}: status={}", courseId, streamId, ex.getUpstreamStatus());
