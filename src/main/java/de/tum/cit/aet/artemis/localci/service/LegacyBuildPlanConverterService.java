@@ -43,42 +43,48 @@ public class LegacyBuildPlanConverterService {
     }
 
     /**
-     * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase.
+     * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase. If the build script is missing,
+     * the old Windfile script actions are converted into the legacy script first.
      *
      * @param buildConfig the build config that is assumed to be legacy
      * @return the converted build plan phases
      */
     public Optional<BuildPlanPhasesDTO> convertLegacyBuildPlanConfiguration(ProgrammingExerciseBuildConfig buildConfig) {
-        if (buildConfig == null || buildConfig.getBuildScript() == null) {
+        if (buildConfig == null) {
             return Optional.empty();
         }
 
         String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
-        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+        String buildScript = buildConfig.getBuildScript();
+        JsonNode node = null;
+
+        if (buildPlanConfiguration != null && !buildPlanConfiguration.isBlank()) {
+            try {
+                node = objectMapper.readTree(buildPlanConfiguration);
+                if (!node.isObject()) {
+                    node = null;
+                }
+            }
+            catch (JsonProcessingException e) {
+                if (buildScript == null) {
+                    return Optional.empty();
+                }
+            }
+        }
+
+        JsonNode actionsNode = node == null ? null : node.path("actions");
+        if (buildScript == null && !isLegacyWindfile(actionsNode)) {
             return Optional.empty();
         }
 
-        try {
-            JsonNode node = objectMapper.readTree(buildPlanConfiguration);
-            if (!node.isObject()) {
-                return Optional.empty();
-            }
-
-            String dockerImage = parseDockerImage(node);
-            if (dockerImage == null) {
-                return Optional.empty();
-            }
-
-            List<String> resultPaths = parseResultPaths(node);
-            if (resultPaths == null) {
-                return Optional.empty();
-            }
-
-            return Optional.of(new BuildPlanPhasesDTO(wrapLegacyBuildScript(buildConfig.getBuildScript(), resultPaths), dockerImage));
+        if (buildScript == null) {
+            buildScript = createLegacyBuildScriptFromActions(actionsNode);
         }
-        catch (JsonProcessingException e) {
-            return Optional.empty();
-        }
+
+        String dockerImage = node == null ? null : parseDockerImage(node);
+        List<String> resultPaths = parseResultPaths(actionsNode);
+
+        return Optional.of(new BuildPlanPhasesDTO(wrapLegacyBuildScript(buildScript, resultPaths), dockerImage));
     }
 
     private static List<BuildPhaseDTO> wrapLegacyBuildScript(String script, List<String> resultPaths) {
@@ -106,16 +112,47 @@ public class LegacyBuildPlanConverterService {
         return imageNode.asText().trim();
     }
 
-    private static List<String> parseResultPaths(JsonNode node) {
-        JsonNode actionsNode = node.path("actions");
-        if (!actionsNode.isArray()) {
-            return null;
+    private static boolean isLegacyWindfile(JsonNode actionsNode) {
+        return actionsNode != null && actionsNode.isArray();
+    }
+
+    private static String createLegacyBuildScriptFromActions(JsonNode actionsNode) {
+        StringBuilder buildScriptBuilder = new StringBuilder();
+        buildScriptBuilder.append("#!/bin/bash\n");
+        buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+
+        if (!isLegacyWindfile(actionsNode)) {
+            return buildScriptBuilder.toString();
+        }
+
+        for (JsonNode actionNode : actionsNode) {
+            if (!actionNode.isObject() || !actionNode.path("script").isTextual()) {
+                continue;
+            }
+
+            JsonNode workdirNode = actionNode.path("workdir");
+            String workdir = workdirNode.isTextual() ? workdirNode.asText().trim() : null;
+            if (workdir != null && !workdir.isBlank()) {
+                buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+            }
+            buildScriptBuilder.append(actionNode.path("script").asText()).append("\n");
+            if (workdir != null && !workdir.isBlank()) {
+                buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+            }
+        }
+
+        return buildScriptBuilder.toString();
+    }
+
+    private static List<String> parseResultPaths(JsonNode actionsNode) {
+        if (!isLegacyWindfile(actionsNode)) {
+            return List.of();
         }
 
         List<String> resultPaths = new ArrayList<>();
         for (JsonNode actionNode : actionsNode) {
             if (!actionNode.isObject()) {
-                return null;
+                continue;
             }
 
             JsonNode resultsNode = actionNode.path("results");
@@ -123,19 +160,16 @@ public class LegacyBuildPlanConverterService {
                 continue;
             }
             if (!resultsNode.isArray()) {
-                return null;
+                continue;
             }
 
             for (JsonNode resultNode : resultsNode) {
                 if (!resultNode.isObject()) {
-                    return null;
+                    continue;
                 }
                 JsonNode pathNode = resultNode.path("path");
-                if (pathNode.isMissingNode() || pathNode.isNull()) {
-                    return null;
-                }
                 if (!pathNode.isTextual()) {
-                    return null;
+                    continue;
                 }
                 resultPaths.add(pathNode.asText().trim());
             }

@@ -4,22 +4,18 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Convert legacy LocalCI build plans from the old build_script + build_plan_configuration format
-         to the build phases format. Jenkins exercises did not use build_script, so rows with a build_script
-         are treated as LocalCI legacy exercises. Invalid or incomplete legacy JSON falls back to the default
-         docker image and an empty result path list. -->
+         to the build phases format. Rows with a build_script are treated as LocalCI legacy exercises.
+         Rows without build_script are converted when build_plan_configuration still has the old Windfile
+         actions array. Rows with build_script can still be converted when the legacy JSON is invalid or
+         incomplete; in that case they fall back to the default docker image and an empty result path list. -->
     <changeSet id="20260619084135-1" author="matyasht" dbms="mysql">
         <sql splitStatements="true" endDelimiter=";"><![CDATA[
-            -- Migration candidates with the old build script wrapped as a build phase script.
+            SET SESSION group_concat_max_len = @@max_allowed_packet;
+
+            -- Migration candidates: either an old build script or old Windfile actions.
             CREATE TEMPORARY TABLE tmp_legacy_build_plan_candidates AS
             SELECT id,
-                   CONCAT('# feel free to remove the code surrounding your script and split your script into multiple phases\n',
-                          'cd /var/tmp/testing-dir\n',
-                          'local tmp_file=$(mktemp)\n',
-                          'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase\n',
-                          build_script,
-                          '\n__LEGACY_INNER_SCRIPT_END__\n',
-                          'chmod +x "${tmp_file}"\n',
-                          '"${tmp_file}" "$@"\n') AS wrapped_script,
+                   build_script,
                    IF(
                        JSON_VALID(build_plan_configuration),
                        IF(
@@ -39,7 +35,53 @@
                        JSON_ARRAY()
                    ) AS actions
             FROM programming_exercise_build_config
-            WHERE build_script IS NOT NULL;
+            WHERE build_script IS NOT NULL
+               OR IF(
+                   JSON_VALID(build_plan_configuration),
+                   JSON_TYPE(JSON_EXTRACT(build_plan_configuration, '$.actions')) = 'ARRAY',
+                   FALSE
+               );
+
+            -- One row per old Windfile script action for candidates where build_script is missing.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_action_script_segments AS
+            SELECT action_rows.id,
+                   action_rows.action_ordinal,
+                   CONCAT(
+                       IF(action_rows.workdir IS NOT NULL AND action_rows.workdir <> '', CONCAT('cd /var/tmp/testing-dir/', action_rows.workdir, '\n'), ''),
+                       action_rows.script,
+                       '\n',
+                       IF(action_rows.workdir IS NOT NULL AND action_rows.workdir <> '', 'cd /var/tmp/testing-dir\n', '')
+                   ) AS script_segment
+            FROM (
+                SELECT candidates.id,
+                       actions.action_ordinal,
+                       JSON_UNQUOTE(JSON_EXTRACT(actions.action, '$.script')) AS script,
+                       IF(
+                           JSON_TYPE(JSON_EXTRACT(actions.action, '$.workdir')) = 'STRING',
+                           TRIM(JSON_UNQUOTE(JSON_EXTRACT(actions.action, '$.workdir'))),
+                           NULL
+                       ) AS workdir
+                FROM tmp_legacy_build_plan_candidates candidates
+                    JOIN JSON_TABLE(candidates.actions, '$[*]' COLUMNS (
+                        action_ordinal FOR ORDINALITY,
+                        action JSON PATH '$' NULL ON EMPTY NULL ON ERROR
+                    )) actions
+                WHERE candidates.build_script IS NULL
+                  AND JSON_TYPE(JSON_EXTRACT(actions.action, '$.script')) = 'STRING'
+            ) action_rows;
+
+            -- Recreate the old LocalCI script from old Windfile script actions.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_action_scripts AS
+            SELECT candidates.id,
+                   CONCAT(
+                       '#!/bin/bash\n',
+                       'cd /var/tmp/testing-dir\n',
+                       COALESCE(GROUP_CONCAT(segments.script_segment ORDER BY segments.action_ordinal SEPARATOR ''), '')
+                   ) AS legacy_action_script
+            FROM tmp_legacy_build_plan_candidates candidates
+                LEFT JOIN tmp_legacy_build_plan_action_script_segments segments ON segments.id = candidates.id
+            WHERE candidates.build_script IS NULL
+            GROUP BY candidates.id;
 
             -- One row per textual result path.
             CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_paths AS
@@ -62,7 +104,14 @@
                    JSON_OBJECT(
                        'phases', JSON_ARRAY(JSON_OBJECT(
                            'name', 'script',
-                           'script', candidates.wrapped_script,
+                           'script', CONCAT('# feel free to remove the code surrounding your script and split your script into multiple phases\n',
+                                            'cd /var/tmp/testing-dir\n',
+                                            'local tmp_file=$(mktemp)\n',
+                                            'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase\n',
+                                            COALESCE(candidates.build_script, action_scripts.legacy_action_script, ''),
+                                            '\n__LEGACY_INNER_SCRIPT_END__\n',
+                                            'chmod +x "${tmp_file}"\n',
+                                            '"${tmp_file}" "$@"\n'),
                            'condition', 'ALWAYS',
                            'forceRun', FALSE,
                            'resultPaths', COALESCE(path_arrays.paths, JSON_ARRAY())
@@ -70,16 +119,19 @@
                        'dockerImage', candidates.docker_image
                    ) AS build_plan_configuration
             FROM tmp_legacy_build_plan_candidates candidates
+                LEFT JOIN tmp_legacy_build_plan_action_scripts action_scripts ON action_scripts.id = candidates.id
                 LEFT JOIN tmp_legacy_build_plan_result_path_arrays path_arrays ON path_arrays.build_config_id = candidates.id;
 
             UPDATE programming_exercise_build_config pebc
                 JOIN tmp_legacy_build_plan_converted converted ON converted.id = pebc.id
             SET pebc.build_plan_configuration = converted.build_plan_configuration
-            WHERE pebc.build_script IS NOT NULL;
+            WHERE pebc.id = converted.id;
 
             DROP TEMPORARY TABLE tmp_legacy_build_plan_converted;
             DROP TEMPORARY TABLE tmp_legacy_build_plan_result_path_arrays;
             DROP TEMPORARY TABLE tmp_legacy_build_plan_result_paths;
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_action_scripts;
+            DROP TEMPORARY TABLE tmp_legacy_build_plan_action_script_segments;
             DROP TEMPORARY TABLE tmp_legacy_build_plan_candidates;
         ]]></sql>
     </changeSet>
@@ -99,18 +151,10 @@
             END;
             $$;
 
-            -- Migration candidates with the old build script wrapped as a build phase script.
+            -- Migration candidates: either an old build script or old Windfile actions.
             CREATE TEMPORARY TABLE tmp_legacy_build_plan_candidates ON COMMIT DROP AS
             SELECT pebc.id,
-                   concat(
-                           '# feel free to remove the code surrounding your script and split your script into multiple phases', E'\n',
-                           'cd /var/tmp/testing-dir', E'\n',
-                           'local tmp_file=$(mktemp)', E'\n',
-                           'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase', E'\n',
-                           pebc.build_script, E'\n',
-                           '__LEGACY_INNER_SCRIPT_END__', E'\n',
-                           'chmod +x "${tmp_file}"', E'\n',
-                           '"${tmp_file}" "$@"', E'\n') AS wrapped_script,
+                   pebc.build_script,
                    CASE
                        WHEN jsonb_typeof(legacy_json.config #> '{metadata,docker,image}') = 'string' THEN trim(legacy_json.config #>> '{metadata,docker,image}')
                        END AS docker_image,
@@ -120,7 +164,49 @@
                        END AS actions
             FROM programming_exercise_build_config pebc
                      LEFT JOIN LATERAL (SELECT pg_temp.try_parse_jsonb(pebc.build_plan_configuration) AS config) legacy_json ON true
-            WHERE pebc.build_script IS NOT NULL;
+            WHERE pebc.build_script IS NOT NULL
+               OR jsonb_typeof(legacy_json.config -> 'actions') = 'array';
+
+            -- One row per old Windfile script action for candidates where build_script is missing.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_action_script_segments ON COMMIT DROP AS
+            SELECT action_rows.id,
+                   action_rows.action_ordinal,
+                   concat(
+                       CASE
+                           WHEN action_rows.workdir IS NOT NULL AND action_rows.workdir <> '' THEN concat('cd /var/tmp/testing-dir/', action_rows.workdir, E'\n')
+                           ELSE ''
+                           END,
+                       action_rows.script, E'\n',
+                       CASE
+                           WHEN action_rows.workdir IS NOT NULL AND action_rows.workdir <> '' THEN concat('cd /var/tmp/testing-dir', E'\n')
+                           ELSE ''
+                           END
+                   ) AS script_segment
+            FROM (
+                SELECT candidates.id,
+                       actions.action_ordinal,
+                       actions.action ->> 'script' AS script,
+                       CASE
+                           WHEN jsonb_typeof(actions.action -> 'workdir') = 'string' THEN trim(actions.action ->> 'workdir')
+                           END AS workdir
+                FROM tmp_legacy_build_plan_candidates candidates
+                         JOIN LATERAL jsonb_array_elements(candidates.actions) WITH ORDINALITY AS actions(action, action_ordinal) ON true
+                WHERE candidates.build_script IS NULL
+                  AND jsonb_typeof(actions.action -> 'script') = 'string'
+            ) action_rows;
+
+            -- Recreate the old LocalCI script from old Windfile script actions.
+            CREATE TEMPORARY TABLE tmp_legacy_build_plan_action_scripts ON COMMIT DROP AS
+            SELECT candidates.id,
+                   concat(
+                       '#!/bin/bash', E'\n',
+                       'cd /var/tmp/testing-dir', E'\n',
+                       COALESCE(string_agg(segments.script_segment, '' ORDER BY segments.action_ordinal), '')
+                   ) AS legacy_action_script
+            FROM tmp_legacy_build_plan_candidates candidates
+                     LEFT JOIN tmp_legacy_build_plan_action_script_segments segments ON segments.id = candidates.id
+            WHERE candidates.build_script IS NULL
+            GROUP BY candidates.id;
 
             -- One row per textual result path.
             CREATE TEMPORARY TABLE tmp_legacy_build_plan_result_paths ON COMMIT DROP AS
@@ -143,7 +229,16 @@
                    jsonb_build_object(
                        'phases', jsonb_build_array(jsonb_build_object(
                            'name', 'script',
-                           'script', candidates.wrapped_script,
+                           'script', concat(
+                               '# feel free to remove the code surrounding your script and split your script into multiple phases', E'\n',
+                               'cd /var/tmp/testing-dir', E'\n',
+                               'local tmp_file=$(mktemp)', E'\n',
+                               'cat << ''  __LEGACY_INNER_SCRIPT_END__'' > "${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase', E'\n',
+                               COALESCE(candidates.build_script, action_scripts.legacy_action_script, ''), E'\n',
+                               '__LEGACY_INNER_SCRIPT_END__', E'\n',
+                               'chmod +x "${tmp_file}"', E'\n',
+                               '"${tmp_file}" "$@"', E'\n'
+                           ),
                            'condition', 'ALWAYS',
                            'forceRun', false,
                            'resultPaths', COALESCE(path_arrays.paths, '[]'::jsonb)
@@ -151,8 +246,8 @@
                        'dockerImage', candidates.docker_image
                    )::text AS build_plan_configuration
             FROM tmp_legacy_build_plan_candidates candidates
-                     LEFT JOIN tmp_legacy_build_plan_result_path_arrays path_arrays
-                               ON path_arrays.build_config_id = candidates.id;
+                     LEFT JOIN tmp_legacy_build_plan_action_scripts action_scripts ON action_scripts.id = candidates.id
+                     LEFT JOIN tmp_legacy_build_plan_result_path_arrays path_arrays ON path_arrays.build_config_id = candidates.id;
 
             UPDATE programming_exercise_build_config pebc
             SET build_plan_configuration = converted.build_plan_configuration
