@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/editor/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
@@ -9,9 +9,6 @@ import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
-import Graphemer from 'graphemer';
-
-import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -21,6 +18,56 @@ import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.t
 export type { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 
 export const MAX_TAB_SIZE = 8;
+
+/**
+ * Maps the ASCII emoticons that {@link MonacoEditorComponent.convertTextToEmoji} converts to their
+ * Unicode emoji. Only emoticons starting with ':' are listed, because convertTextToEmoji only
+ * processes words starting with ':'.
+ */
+const EMOTICON_TO_EMOJI: Record<string, string> = {
+    ':o)': '🐵',
+    ':D': '😄',
+    ':-D': '😄',
+    ':|': '😐',
+    ':-|': '😐',
+    ':\\': '😕',
+    ':-\\': '😕',
+    ':/': '😕',
+    ':-/': '😕',
+    ':*': '😘',
+    ':-*': '😘',
+    ':p': '😛',
+    ':-p': '😛',
+    ':P': '😛',
+    ':-P': '😛',
+    ':b': '😛',
+    ':-b': '😛',
+    ':(': '😞',
+    ':-(': '😞',
+    ":'(": '😢',
+    ':o': '😮',
+    ':-o': '😮',
+    ':O': '😮',
+    ':-O': '😮',
+    ':)': '🙂',
+    ':-)': '🙂',
+};
+
+/**
+ * Matches an emoticon preceded by the start of the string or whitespace and followed by the end of
+ * the string or a delimiter. Emoticons are ordered longest-first so e.g. ':o)' wins over ':o'.
+ */
+const EMOTICON_REGEX = new RegExp(
+    '(^|\\s)(' +
+        Object.keys(EMOTICON_TO_EMOJI)
+            .sort((a, b) => b.length - a.length)
+            .map((emoticon) => emoticon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|') +
+        ')(?=$|[\\s|?.,!])',
+    'g',
+);
+
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -36,6 +83,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
+    private static readonly CUSTOM_BACKSPACE_ACTION_ID = 'artemis-grapheme-backspace';
 
     /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor: monaco.editor.IStandaloneCodeEditor;
@@ -48,8 +96,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private monacoEditorContainerElement: HTMLElement;
     /** Container element for the diff editor — created in the constructor and never replaced. */
     private diffEditorContainerElement: HTMLElement;
-
-    private readonly emojiConvertor = new EmojiConvertor();
 
     /*
      * Elements, models, and actions of the editor.
@@ -105,11 +151,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private focusEditorTextListener?: Disposable;
     private lastEditableEditor?: monaco.editor.IStandaloneCodeEditor;
 
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
+    // Disposables for the registered backspace actions, keyed by editor so transient diff editors can be released
+    // when they are disposed instead of waiting for the whole component to be destroyed.
+    private readonly customBackspaceActionDisposables = new Map<monaco.editor.IStandaloneCodeEditor, Disposable>();
 
     private diffUpdateListener?: Disposable;
     private diffLayoutListener?: Disposable;
@@ -122,7 +170,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
-    private readonly ngZone = inject(NgZone);
 
     constructor() {
         /*
@@ -135,9 +182,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
          * Diff editor: create container once in constructor (hidden by default) but init editor lazily.
          */
         this.initializeDiffEditorContainer();
-
-        this.emojiConvertor.replace_mode = 'unified';
-        this.emojiConvertor.allow_native = true;
 
         effect(() => {
             // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
@@ -219,12 +263,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @returns The transformed string with applicable emoticons replaced by emojis.
      */
     convertTextToEmoji(text: string): string {
-        const words = text.split(' ');
-        const convertedWords = words.map((word) => {
-            return word.startsWith(':') ? this.emojiConvertor.replace_emoticons(word) : word;
-        });
-
-        return convertedWords.join(' ');
+        return text
+            .split(' ')
+            .map((word) => (word.startsWith(':') ? word.replace(EMOTICON_REGEX, (_match, prefix, emoticon) => prefix + EMOTICON_TO_EMOJI[emoticon]) : word))
+            .join(' ');
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
@@ -255,21 +297,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.resizeObserver.observe(this.monacoEditorContainerElement);
         this.resizeObserver.observe(this.diffEditorContainerElement);
 
-        this.ngZone.runOutsideAngular(() => {
-            this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
-                if (event.contentHeightChanged) {
-                    this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
-                }
-            });
+        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+            if (event.contentHeightChanged) {
+                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
+            }
+        });
 
-            this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
-                // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
-                // See https://github.com/microsoft/monaco-editor/issues/307
-                if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
-                    (document.activeElement as HTMLElement).blur();
-                }
-                this.ngZone.run(() => this.onBlurEditor.emit());
-            });
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+            // See https://github.com/microsoft/monaco-editor/issues/307
+            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                (document.activeElement as HTMLElement).blur();
+            }
+            this.onBlurEditor.emit();
         });
 
         // Wire listeners that depend on the "editable" editor (normal or diff modified).
@@ -284,7 +324,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
-        this.focusEditorTextListener?.dispose();
+        this.customBackspaceActionDisposables.forEach((disposable) => disposable.dispose());
+        this.customBackspaceActionDisposables.clear();
         this.diffUpdateListener?.dispose();
         this.diffLayoutListener?.dispose();
 
@@ -362,6 +403,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.diffListenersAttached = false;
 
         if (this._diffEditor) {
+            this.disposeCustomBackspaceAction(this._diffEditor.getModifiedEditor());
             // Clear cached editor before disposing to prevent race conditions
             // (e.g., ResizeObserver callback reading mode() as 'diff' during transition)
             this.lastEditableEditor = undefined;
@@ -417,20 +459,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (this.diffListenersAttached || !this._diffEditor) return;
         this.diffListenersAttached = true;
 
-        this.ngZone.runOutsideAngular(() => {
-            this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
-                const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
-                const lineChange = convertMonacoLineChanges(monacoLineChanges);
-                this.ngZone.run(() => {
-                    this.diffChanged.emit({ ready: true, lineChange });
-                });
-            });
+        this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+            const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
+            const lineChange = convertMonacoLineChanges(monacoLineChanges);
+            this.diffChanged.emit({ ready: true, lineChange });
+        });
 
-            this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
-                this.ngZone.run(() => {
-                    this.diffOriginalPaneLayoutChanged.emit(info.width);
-                });
-            });
+        this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
+            this.diffOriginalPaneLayoutChanged.emit(info.width);
         });
     }
 
@@ -456,16 +492,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private attachEditableEditorListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
-        this.ngZone.runOutsideAngular(() => {
-            this.textChangedListener?.dispose();
-            this.textChangedListener = editor.onDidChangeModelContent(() => {
-                this.ngZone.run(() => this.emitTextChangeEvent());
-            });
-
-            this.focusEditorTextListener?.dispose();
-            this.focusEditorTextListener = editor.onDidFocusEditorText(() => {
-                this.ngZone.run(() => this.registerCustomBackspaceAction(editor));
-            });
+        this.textChangedListener?.dispose();
+        this.textChangedListener = editor.onDidChangeModelContent(() => {
+            this.emitTextChangeEvent();
         });
 
         this.registerCustomBackspaceAction(editor);
@@ -538,14 +567,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (existing) {
             clearTimeout(existing);
         }
-        const timeoutId = this.ngZone.runOutsideAngular(() =>
-            setTimeout(() => {
-                this.ngZone.run(() => {
-                    this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-                    this.textChangedEmitTimeouts.delete(modelKey);
-                });
-            }, delay),
-        );
+        const timeoutId = setTimeout(() => {
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            this.textChangedEmitTimeouts.delete(modelKey);
+        }, delay);
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
@@ -913,16 +938,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private registerScrollListenerOnEditors(listener: () => void): Disposable[] {
-        return this.ngZone.runOutsideAngular(() => {
-            const disposables: Disposable[] = [];
-            if (this.mode() === 'diff' && this._diffEditor) {
-                disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => this.ngZone.run(listener)));
-                disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => this.ngZone.run(listener)));
-            } else {
-                disposables.push(this._editor.onDidScrollChange(() => this.ngZone.run(listener)));
-            }
-            return disposables;
-        });
+        const disposables: Disposable[] = [];
+        if (this.mode() === 'diff' && this._diffEditor) {
+            disposables.push(this._diffEditor.getOriginalEditor().onDidScrollChange(() => listener()));
+            disposables.push(this._diffEditor.getModifiedEditor().onDidScrollChange(() => listener()));
+        } else {
+            disposables.push(this._editor.onDidScrollChange(() => listener()));
+        }
+        return disposables;
     }
 
     /**
@@ -948,22 +971,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {
-        return this.ngZone.runOutsideAngular(() => {
-            return editor.onDidChangeCursorSelection((e) => {
-                const selection = e.selection;
-                if (selection.isEmpty()) {
-                    this.ngZone.run(() => listener(undefined));
-                } else {
-                    this.ngZone.run(() =>
-                        listener({
-                            startLineNumber: selection.startLineNumber,
-                            endLineNumber: selection.endLineNumber,
-                            startColumn: selection.startColumn,
-                            endColumn: selection.endColumn,
-                        }),
-                    );
-                }
-            });
+        return editor.onDidChangeCursorSelection((e) => {
+            const selection = e.selection;
+            if (selection.isEmpty()) {
+                listener(undefined);
+            } else {
+                listener({
+                    startLineNumber: selection.startLineNumber,
+                    endLineNumber: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                });
+            }
         });
     }
 
@@ -1036,48 +1055,70 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param editor The editor to register the command for.
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
-        this.customBackspaceCommandId =
-            editor.addCommand(
-                monaco.KeyCode.Backspace,
-                () => {
-                    const model = editor.getModel();
-                    const selection = editor.getSelection();
-                    if (!model || !selection) return;
+        // Register the grapheme-aware backspace command at most once per editor. `editor.addCommand` registers a
+        // globally-tracked command whose handler captures the editor; re-registering it (previously done on every
+        // focus event) leaked those editors and their DOM, because Monaco only disposes the most recently registered
+        // command on editor.dispose(). The command is editor-scoped, so a single registration suffices.
+        if (this.customBackspaceActionDisposables.has(editor)) {
+            return;
+        }
+        this.customBackspaceCommandId = MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID;
+        const disposable = editor.addAction({
+            id: MonacoEditorComponent.CUSTOM_BACKSPACE_ACTION_ID,
+            label: 'Delete previous grapheme cluster',
+            keybindings: [monaco.KeyCode.Backspace],
+            precondition: 'editorTextFocus && !findWidgetVisible && !editorReadonly',
+            run: (actionEditor) => this.deletePreviousGraphemeCluster(actionEditor),
+        });
+        this.customBackspaceActionDisposables.set(editor, disposable);
+    }
 
-                    if (!selection.isEmpty()) {
-                        editor.trigger('keyboard', 'deleteLeft', null);
-                        return;
-                    }
+    private disposeCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor): void {
+        this.customBackspaceActionDisposables.get(editor)?.dispose();
+        this.customBackspaceActionDisposables.delete(editor);
+    }
 
-                    const lineNumber = selection.startLineNumber;
-                    const column = selection.startColumn;
-                    const lineContent = model.getLineContent(lineNumber);
+    /**
+     * Deletes the grapheme cluster before the cursor (or the current selection), so combined emojis and other
+     * multi-codepoint clusters are removed with a single backspace. Uses a targeted delete range (only the grapheme)
+     * instead of replacing the whole line, so collaborative editing (y-monaco) sees a minimal edit and cursor
+     * positions stay correct.
+     */
+    private deletePreviousGraphemeCluster(editor: monaco.editor.ICodeEditor): void {
+        const model = editor.getModel();
+        const selection = editor.getSelection();
+        if (!model || !selection) return;
 
-                    const textBeforeCursor = lineContent.substring(0, column - 1);
-                    const splitter = new Graphemer();
-                    const graphemes = splitter.splitGraphemes(textBeforeCursor);
+        if (!selection.isEmpty()) {
+            editor.trigger('keyboard', 'deleteLeft', null);
+            return;
+        }
 
-                    if (textBeforeCursor.length === 0) {
-                        editor.trigger('keyboard', 'deleteLeft', null);
-                        return;
-                    }
+        const lineNumber = selection.startLineNumber;
+        const column = selection.startColumn;
+        const lineContent = model.getLineContent(lineNumber);
 
-                    const lastGrapheme = graphemes.pop();
-                    const deletedLength = lastGrapheme?.length ?? 1;
-                    const deleteStartColumn = column - deletedLength;
+        const textBeforeCursor = lineContent.substring(0, column - 1);
+        const graphemes = Array.from(GRAPHEME_SEGMENTER.segment(textBeforeCursor), (segment) => segment.segment);
 
-                    model.pushEditOperations(
-                        [],
-                        [
-                            {
-                                range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
-                                text: '',
-                            },
-                        ],
-                        () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
-                    );
+        if (textBeforeCursor.length === 0) {
+            editor.trigger('keyboard', 'deleteLeft', null);
+            return;
+        }
+
+        const lastGrapheme = graphemes.pop();
+        const deletedLength = lastGrapheme?.length ?? 1;
+        const deleteStartColumn = column - deletedLength;
+
+        model.pushEditOperations(
+            [],
+            [
+                {
+                    range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
+                    text: '',
                 },
-                'editorTextFocus && !findWidgetVisible && !editorReadonly',
-            ) || undefined;
+            ],
+            () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
+        );
     }
 }

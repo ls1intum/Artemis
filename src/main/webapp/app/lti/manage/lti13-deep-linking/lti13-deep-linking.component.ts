@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -53,22 +53,22 @@ export class Lti13DeepLinkingComponent implements OnInit {
     protected readonly faWrench = faWrench;
 
     courseId: number;
-    exercises: Exercise[];
-    lectures: Lecture[];
+    readonly exercises = signal<Exercise[]>([]);
+    readonly lectures = signal<Lecture[]>([]);
     selectedExercises?: Set<number> = new Set();
     selectedLectures?: Set<number> = new Set();
-    isCompetencySelected = false;
-    isLearningPathSelected = false;
-    isIrisSelected = false;
-    course: Course;
+    readonly isCompetencySelected = signal(false);
+    readonly isLearningPathSelected = signal(false);
+    readonly isIrisSelected = signal(false);
+    readonly course = signal<Course | undefined>(undefined);
 
     predicate = 'type';
     reverse = false;
-    isLinking = true;
+    readonly isLinking = signal(true);
 
     //grouping
-    isExerciseGroupingActive = false;
-    isLectureGroupingActive = false;
+    readonly isExerciseGroupingActive = signal(false);
+    readonly isLectureGroupingActive = signal(false);
 
     /**
      * Initializes the component.
@@ -82,10 +82,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
             this.courseId = Number(params['courseId']);
 
             if (!this.courseId) {
-                this.isLinking = false;
+                this.isLinking.set(false);
                 return;
             }
-            if (!this.isLinking) {
+            if (!this.isLinking()) {
                 return;
             }
 
@@ -93,12 +93,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 if (user) {
                     this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
                         if (findWithExercisesResult?.body) {
-                            this.course = findWithExercisesResult.body;
+                            this.course.set(findWithExercisesResult.body);
                             if (findWithExercisesResult?.body?.exercises) {
-                                this.exercises = findWithExercisesResult.body.exercises;
+                                this.exercises.set(findWithExercisesResult.body.exercises);
                             }
                             if (findWithExercisesResult?.body?.lectures) {
-                                this.lectures = findWithExercisesResult.body.lectures;
+                                this.lectures.set(findWithExercisesResult.body.lectures);
                             }
                         }
                     });
@@ -130,7 +130,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * Sorts the list of exercises based on the selected predicate and order.
      */
     sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+        const sortedExercises = [...this.exercises()];
+        this.sortService.sortByProperty(sortedExercises, this.predicate, this.reverse);
+        this.exercises.set(sortedExercises);
     }
 
     /**
@@ -162,11 +164,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     activateExerciseGrouping() {
-        this.isExerciseGroupingActive = true;
+        this.isExerciseGroupingActive.set(true);
     }
 
     activateLectureGrouping() {
-        this.isLectureGroupingActive = true;
+        this.isLectureGroupingActive.set(true);
     }
 
     selectLecture(lectureId: number | undefined) {
@@ -184,26 +186,26 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     enableCompetency() {
-        if (!this.isCompetencySelected) {
-            this.isCompetencySelected = true;
-            this.isIrisSelected = false;
-            this.isLearningPathSelected = false;
+        if (!this.isCompetencySelected()) {
+            this.isCompetencySelected.set(true);
+            this.isIrisSelected.set(false);
+            this.isLearningPathSelected.set(false);
         }
     }
 
     enableLearningPath() {
-        if (!this.isLearningPathSelected) {
-            this.isLearningPathSelected = true;
-            this.isIrisSelected = false;
-            this.isCompetencySelected = false;
+        if (!this.isLearningPathSelected()) {
+            this.isLearningPathSelected.set(true);
+            this.isIrisSelected.set(false);
+            this.isCompetencySelected.set(false);
         }
     }
 
     enableIris() {
-        if (!this.isIrisSelected) {
-            this.isIrisSelected = true;
-            this.isLearningPathSelected = false;
-            this.isCompetencySelected = false;
+        if (!this.isIrisSelected()) {
+            this.isIrisSelected.set(true);
+            this.isLearningPathSelected.set(false);
+            this.isCompetencySelected.set(false);
         }
     }
 
@@ -212,7 +214,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * If an exercise, lecture, competency, learning path or Iris is selected, it sends a POST request to initiate deep linking.
      */
     sendDeepLinkRequest() {
-        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected || this.isLearningPathSelected || this.isIrisSelected) {
+        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected() || this.isLearningPathSelected() || this.isIrisSelected()) {
             const ltiIdToken = this.sessionStorageService.retrieve<string>('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve<string>('clientRegistrationId') ?? '';
 
@@ -224,24 +226,24 @@ export class Lti13DeepLinkingComponent implements OnInit {
             let contentIds: string | undefined = undefined;
 
             if (this.selectedExercises?.size) {
-                if (this.isExerciseGroupingActive) {
+                if (this.isExerciseGroupingActive()) {
                     resourceType = DeepLinkingType.GROUPED_EXERCISE;
                 } else {
                     resourceType = DeepLinkingType.EXERCISE;
                 }
                 contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {
-                if (this.isLectureGroupingActive) {
+                if (this.isLectureGroupingActive()) {
                     resourceType = DeepLinkingType.GROUPED_LECTURE;
                 } else {
                     resourceType = DeepLinkingType.LECTURE;
                 }
                 contentIds = Array.from(this.selectedLectures).join(',');
-            } else if (this.isCompetencySelected) {
+            } else if (this.isCompetencySelected()) {
                 resourceType = DeepLinkingType.COMPETENCY;
-            } else if (this.isLearningPathSelected) {
+            } else if (this.isLearningPathSelected()) {
                 resourceType = DeepLinkingType.LEARNING_PATH;
-            } else if (this.isIrisSelected) {
+            } else if (this.isIrisSelected()) {
                 resourceType = DeepLinkingType.IRIS;
             } else {
                 this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
@@ -265,12 +267,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                         if (response.status === 200 && response.body) {
                             window.location.replace(response.body.targetLinkUri);
                         } else {
-                            this.isLinking = false;
+                            this.isLinking.set(false);
                             this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
                         }
                     },
                     error: (error) => {
-                        this.isLinking = false;
+                        this.isLinking.set(false);
                         onError(this.alertService, error);
                     },
                 });

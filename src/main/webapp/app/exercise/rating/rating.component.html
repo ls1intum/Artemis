@@ -1,6 +1,6 @@
-<div [class.non-clickable]="disableRating" [id]="'rating'">
+<div [class.non-clickable]="disableRating()" [id]="'rating'">
     <b>
         <span jhiTranslate="artemisApp.rating.label"></span>
     </b>
-    <star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating || 0" [size]="'24'" [readOnly]="false" [totalStars]="5" (rate)="onRate($event)" />
+    <star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating() || 0" [size]="'24'" [readOnly]="false" [totalStars]="5" (rate)="onRate($event)" />
 </div>

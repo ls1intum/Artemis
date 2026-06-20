@@ -9,7 +9,7 @@
         <div class="form-group form-inline">
             <span jhiTranslate="{{ 'artemisApp.' + entityName + '.import.search' }}"></span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="search" type="text" />
-            @if (loading) {
+            @if (loading()) {
                 <span class="ms-3" jhiTranslate="{{ 'artemisApp.' + entityName + '.import.loading' }}"></span>
             }
         </div>
@@ -31,7 +31,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (entity of content.resultsOnPage; track trackId($index, entity)) {
+                @for (entity of content().resultsOnPage; track trackId($index, entity)) {
                     <tr class="flex-row">
                         <td class="col-1">
                             <span>{{ entity.id }}</span>
@@ -56,7 +56,7 @@
             <ngb-pagination
                 (pageChange)="onPageChange($event)"
                 [(page)]="state.page"
-                [collectionSize]="total"
+                [collectionSize]="total()"
                 [maxSize]="5"
                 [pageSize]="state.pageSize"
                 [rotate]="true"

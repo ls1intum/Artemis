@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, effect, inject, input } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -31,9 +31,9 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected dialogRef = inject(DynamicDialogRef, { optional: true });
     protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
-    loading = false;
-    content: SearchResult<T>;
-    total = 0;
+    readonly loading = signal(false);
+    readonly content = signal<SearchResult<T>>({ resultsOnPage: [], numberOfPages: 0 });
+    readonly total = signal(0);
     state: SearchTermPageableSearch = {
         page: 1,
         pageSize: 10,
@@ -118,14 +118,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     ngOnInit(): void {
-        this.content = { resultsOnPage: [], numberOfPages: 0 };
+        this.content.set({ resultsOnPage: [], numberOfPages: 0 });
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
+        this.sortService.sortByProperty(this.content().resultsOnPage, this.sortedColumn, this.listSorting);
     }
 
     /**
@@ -178,14 +178,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         searchSubject
             .pipe(
                 debounceTime(debounce),
-                tap(() => (this.loading = true)),
+                tap(() => this.loading.set(true)),
                 switchMap(() => this.pagingService!.search(this.state, this.createOptions())),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((resp: SearchResult<T>) => {
-                this.content = resp;
-                this.loading = false;
-                this.total = resp.numberOfPages * this.state.pageSize;
+                this.content.set(resp);
+                this.loading.set(false);
+                this.total.set(resp.numberOfPages * this.state.pageSize);
                 this.onSearchResult();
             });
     }

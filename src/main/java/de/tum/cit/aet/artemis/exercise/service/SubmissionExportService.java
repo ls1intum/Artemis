@@ -187,8 +187,9 @@ public abstract class SubmissionExportService {
                 return Optional.<Path>empty();
             }
 
-            // create file path
-            String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
+            // create file path (sanitize the title-based name so the submission file stays filesystem-safe, consistent
+            // with the zip group name above; the exercise title may contain spaces or international letters)
+            String submissionFileName = FileUtil.sanitizeFilename(exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId())
                     + this.getFileEndingForSubmission(latestSubmission);
             Path submissionFilePath = outputDir.resolve(submissionFileName);
 

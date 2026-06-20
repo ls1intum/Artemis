@@ -104,10 +104,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     exerciseTitle = signal<string | undefined>(undefined);
 
-    editRepositoryCheckoutPath = false;
-    submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
+    readonly editRepositoryCheckoutPath = signal(false);
+    readonly submissionBuildPlanCheckoutRepositories = signal<BuildPlanCheckoutDirectoriesDTO>(undefined!);
 
-    isLocalCIEnabled = true;
+    readonly isLocalCIEnabled = signal(true);
 
     constructor() {
         effect(() => {
@@ -143,7 +143,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     ngOnInit() {
-        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
     }
 
     ngAfterViewInit() {
@@ -169,19 +169,21 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         // tableEditableFields() and re-invokes this method.
         this.tableEditableFields().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
 
-        this.exerciseTitleChannelComponent()
-            .titleChannelNameComponent()
-            .field_title?.valueChanges?.subscribe((newTitle: string) => {
-                if (this.isSimpleMode()) {
-                    this.updateShortName(newTitle);
-                }
-            });
+        // Title changes are handled via the (onTitleChange) output binding of jhi-exercise-title-channel-name in the
+        // template (see updateShortName). A manual subscription to the deeply-nested title NgModel is not reliable here: it
+        // is only registered once and the nested viewChild may not be resolved yet, so under zoneless change detection the
+        // auto-generated short name was never updated in simple mode.
 
         this.shortNameField()?.valueChanges?.subscribe(() => {
             this.updateIsShortNameValid();
         });
     }
 
+    /**
+     * Reacts to a title change emitted by the title/channel-name component. Updating {@link exerciseTitle} re-triggers the
+     * short-name generation effect, which (in simple mode) derives a unique short name from the new title.
+     * @param newTitle the new exercise title
+     */
     updateShortName(newTitle: string) {
         this.exerciseTitle.set(newTitle);
     }
@@ -252,15 +254,15 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             this.programmingExercise().buildConfig?.testCheckoutPath,
             this.programmingExercise().buildConfig?.solutionCheckoutPath,
         ];
-        return Boolean(editCheckoutDirectories.formValid && editCheckoutDirectories.areValuesUnique(checkoutPaths));
+        return Boolean(editCheckoutDirectories.formValid() && editCheckoutDirectories.areValuesUnique(checkoutPaths));
     }
 
     toggleEditRepositoryCheckoutPath() {
-        this.editRepositoryCheckoutPath = !this.editRepositoryCheckoutPath;
+        this.editRepositoryCheckoutPath.update((editRepositoryCheckoutPath) => !editRepositoryCheckoutPath);
     }
 
     updateSubmissionBuildPlanCheckoutDirectories(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
-        this.submissionBuildPlanCheckoutRepositories = buildPlanCheckoutDirectoriesDTO;
+        this.submissionBuildPlanCheckoutRepositories.set(buildPlanCheckoutDirectoriesDTO);
     }
 
     onAssigmentRepositoryCheckoutPathChange(event: string) {

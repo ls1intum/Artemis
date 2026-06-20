@@ -10,9 +10,9 @@ import { ActivatedRoute, RouterLink, RouterModule } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PieChartModule } from '@swimlane/ngx-charts';
+import { UIChart } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseDetailDoughnutChartComponent', () => {
@@ -36,7 +36,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockModule(PieChartModule), MockPipe(ArtemisTranslatePipe)],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockComponent(UIChart), MockPipe(ArtemisTranslatePipe)],
             },
         });
         await TestBed.compileComponents();
@@ -62,17 +62,17 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
         const expected = [absolute, max - absolute, 0];
         expect(component.stats()).toEqual(expected);
-        expect(component.ngxData()[0].value).toBe(expected[0]);
-        expect(component.ngxData()[1].value).toBe(expected[1]);
-        expect(component.ngxData()[2].value).toBe(expected[2]);
+        expect(component.chartEntries()[0].value).toBe(expected[0]);
+        expect(component.chartEntries()[1].value).toBe(expected[1]);
+        expect(component.chartEntries()[2].value).toBe(expected[2]);
 
         componentRef.setInput('currentMax', 0);
         fixture.detectChanges();
 
         // display grey color when currentMax = 0
-        expect(component.ngxData()[0].value).toBe(0);
-        expect(component.ngxData()[1].value).toBe(0);
-        expect(component.ngxData()[2].value).toBe(1);
+        expect(component.chartEntries()[0].value).toBe(0);
+        expect(component.chartEntries()[1].value).toBe(0);
+        expect(component.chartEntries()[2].value).toBe(1);
     });
 
     it('should set the right title and link', () => {
@@ -104,5 +104,12 @@ describe('CourseDetailDoughnutChartComponent', () => {
         fixture.detectChanges();
         expect(component.doughnutChartTitle()).toBe('');
         expect(component.titleLink()).toBeUndefined();
+    });
+
+    it('should show only the value in the tooltip body', () => {
+        fixture.detectChanges();
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.label({ parsed: 20 })).toBe('20');
     });
 });

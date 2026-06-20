@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
@@ -50,9 +50,9 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     readonly onUpdateSidebar = output<void>();
 
-    conversationAsChannel?: ChannelDTO;
-    channelSubTypeReferenceTranslationKey?: string;
-    channelSubTypeReferenceRouterLink?: string;
+    readonly conversationAsChannel = signal<ChannelDTO | undefined>(undefined);
+    readonly channelSubTypeReferenceTranslationKey = signal<string | undefined>(undefined);
+    readonly channelSubTypeReferenceRouterLink = signal<string | undefined>(undefined);
 
     faEllipsisVertical = faEllipsisVertical;
     faHeartSolid = faHearthSolid;
@@ -72,9 +72,10 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
-        this.conversationAsChannel = getAsChannelDTO(this.conversation());
-        this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
-        this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
+        const conversationAsChannel = getAsChannelDTO(this.conversation());
+        this.conversationAsChannel.set(conversationAsChannel);
+        this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(conversationAsChannel?.subType));
+        this.channelSubTypeReferenceRouterLink.set(this.metisService.getLinkForChannelSubType(conversationAsChannel));
     }
 
     onArchiveClicked(event: MouseEvent) {
