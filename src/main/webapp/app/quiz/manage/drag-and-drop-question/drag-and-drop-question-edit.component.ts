@@ -635,13 +635,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
 
         // Check if this mapping already exists
         if (
-            !question.correctDndMappings.some(
+            !question.correctMappings.some(
                 (existingMapping) =>
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dropLocation, dropLocation) &&
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, questionDragItem),
@@ -649,7 +649,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         ) {
             // Mapping doesn't exit yet => add this mapping
             const dndMapping = new DragAndDropMapping(questionDragItem, dropLocation);
-            question.correctDndMappings.push(dndMapping);
+            question.correctMappings.push(dndMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();
@@ -666,7 +666,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
         if (
-            question.correctDndMappings!.some((correctMapping) => {
+            question.correctMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
                         return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
@@ -690,10 +690,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     getMappingsForDropLocation(dropLocation: DropLocation): DragAndDropMapping[] {
         const question = this.question();
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
-        return question.correctDndMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        return question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -703,11 +703,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     getMappingsForDragItem(dragItem: DragItem): DragAndDropMapping[] {
         const question = this.question();
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
         return (
-            question.correctDndMappings
+            question.correctMappings
                 .filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
@@ -720,10 +720,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     deleteMappingsForDropLocation(dropLocation: DropLocation): void {
         const question = this.question();
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
-        question.correctDndMappings = question.correctDndMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        question.correctMappings = question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -734,10 +734,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     deleteMappingsForDragItem(dragItem: DragItem): void {
         const question = this.question();
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
-        question.correctDndMappings = question.correctDndMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
+        question.correctMappings = question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -748,10 +748,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     deleteMapping(mappingToDelete: DragAndDropMapping): void {
         const question = this.question();
-        if (!question.correctDndMappings) {
-            question.correctDndMappings = [];
+        if (!question.correctMappings) {
+            question.correctMappings = [];
         }
-        question.correctDndMappings = question.correctDndMappings.filter((mapping) => mapping !== mappingToDelete);
+        question.correctMappings = question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -853,7 +853,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.resetBackground();
         question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
         question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        question.correctDndMappings = cloneDeep(this.backupQuestion.correctDndMappings);
+        question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         question.isHighlighted = this.backupQuestion.isHighlighted;
         this.resetQuestionText();
     }
@@ -1003,7 +1003,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         dataUrl = canvas.toDataURL('image/png');
                         const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
                         const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
-                        question.correctDndMappings!.push(dndMapping);
+                        question.correctMappings!.push(dndMapping);
                     }
                 };
                 image.src = this.backgroundImage().src();

@@ -85,7 +85,7 @@ describe('QuizReEvaluateService', () => {
             invalid: true,
             dropLocations: [dndDropLocation],
             dragItems: [dndDragItem],
-            correctDndMappings: [dndMapping],
+            correctMappings: [dndMapping],
         };
 
         const saSpot = { id: 31, invalid: false };
@@ -166,8 +166,8 @@ describe('QuizReEvaluateService', () => {
         expect(dtoDnd.dropLocations[0]).toEqual(expect.objectContaining({ id: 11, invalid: false }));
         expect(dtoDnd.dragItems).toHaveLength(1);
         expect(dtoDnd.dragItems[0]).toEqual(expect.objectContaining({ id: 21, invalid: true, text: 'Item 1', pictureFilePath: 'img.png' }));
-        expect(dtoDnd.correctDndMappings).toHaveLength(1);
-        expect(dtoDnd.correctDndMappings[0]).toEqual(expect.objectContaining({ dragItemId: 21, dropLocationId: 11 }));
+        expect(dtoDnd.correctMappings).toHaveLength(1);
+        expect(dtoDnd.correctMappings[0]).toEqual(expect.objectContaining({ dragItemId: 21, dropLocationId: 11 }));
 
         // Short-answer DTO
         const dtoSa = dto.quizQuestions.find((q: any) => q.type === 'short-answer');

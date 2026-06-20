@@ -54,7 +54,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY;
         dndQuestion.dragItems = [{ id: 1, invalid: false }];
         dndQuestion.dropLocations = [{ id: 1, invalid: false }];
-        dndQuestion.correctDndMappings = [{ dragItem: { id: 1, invalid: false }, dropLocation: { id: 1, invalid: false }, invalid: false }];
+        dndQuestion.correctMappings = [{ dragItem: { id: 1, invalid: false }, dropLocation: { id: 1, invalid: false }, invalid: false }];
 
         const saQuestion = new ShortAnswerQuestion();
         saQuestion.id = 3;
@@ -206,7 +206,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         // Change correct mappings
         const dndQuestion = comp.quizExercise.quizQuestions![1] as DragAndDropQuestion;
-        dndQuestion.correctDndMappings = [{ dragItem: { id: 2, invalid: false }, dropLocation: { id: 2, invalid: false }, invalid: false }];
+        dndQuestion.correctMappings = [{ dragItem: { id: 2, invalid: false }, dropLocation: { id: 2, invalid: false }, invalid: false }];
         comp.loadQuizSuccess();
 
         expect(comp.questionCorrectness()).toBe(true);

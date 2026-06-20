@@ -45,7 +45,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @OrderColumn(name = "solutions_order")
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // Stored as a Set: see DragAndDropQuestion.correctDndMappings rationale. Position carries no semantic meaning — each
+    // Stored as a Set: see DragAndDropQuestion.correctMappings rationale. Position carries no semantic meaning — each
     // mapping is identified by its (spot, solution) pair. HashSet membership is contract-safe across transient →
     // persisted transitions because ShortAnswerMapping overrides hashCode() to a class constant (see
     // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
@@ -325,7 +325,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
-            // correctDndMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
             // spuriously triggering recalculation when the only difference is row order.
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
                     || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());

@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -69,8 +68,8 @@ public class DragAndDropQuestion extends QuizQuestion {
 
     // Stored as a Set: position carries no semantic meaning — each mapping is identified by its (dragItem, dropLocation)
     // pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the sibling dragItems /
-    // dropLocations Lists, never in correctDndMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
-    // products that would otherwise appear when callers JOIN FETCH correctDndMappings alongside another collection,
+    // dropLocations Lists, never in correctMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
+    // products that would otherwise appear when callers JOIN FETCH correctMappings alongside another collection,
     // avoids MultipleBagFetchException risk if a sibling ever drops @OrderColumn, and matches the conceptual model
     // (a set of mapping pairs). HashSet membership is contract-safe across transient → persisted transitions because
     // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
@@ -78,7 +77,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JsonProperty("correctDndMappings")
     private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
     public String getBackgroundFilePath() {
@@ -423,7 +421,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            // correctDndMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
             // spuriously triggering recalculation when the only difference is row order.
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
                     || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());

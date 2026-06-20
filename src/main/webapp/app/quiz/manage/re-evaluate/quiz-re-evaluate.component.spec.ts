@@ -74,7 +74,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         dropLocation.height = 80;
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
-        question.correctDndMappings = [correctDragAndDropMapping];
+        question.correctMappings = [correctDragAndDropMapping];
         question.points = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };

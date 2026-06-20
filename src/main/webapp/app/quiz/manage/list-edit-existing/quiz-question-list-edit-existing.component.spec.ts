@@ -74,7 +74,7 @@ const createValidDnDQuestion = () => {
     dropLocation.height = 80;
     question.dropLocations = [dropLocation];
     const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
-    question.correctDndMappings = [correctDragAndDropMapping];
+    question.correctMappings = [correctDragAndDropMapping];
     question.points = 10;
     return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
 };
@@ -479,7 +479,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const dragItem1 = { id: 14, pictureFilePath: dragItemFileName1, invalid: false } as DragItem;
             const dragItem2 = { id: 15, pictureFilePath: dragItemFileName2, invalid: false } as DragItem;
             question2.dragItems = [dragItem1, dragItem2];
-            question2.correctDndMappings = [
+            question2.correctMappings = [
                 { dragItem: { id: 14, pictureFilePath: dragItemFileName1 } as DragItem, dropLocation: dropLocation1, invalid: false },
                 { dragItem: { id: 15, pictureFilePath: dragItemFileName2 } as DragItem, dropLocation: dropLocation2, invalid: false },
             ];

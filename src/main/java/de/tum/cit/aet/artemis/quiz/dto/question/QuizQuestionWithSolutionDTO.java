@@ -9,9 +9,15 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-// Note: Only one of the three questions will be non-null depending on the question type
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuizQuestionWithSolutionDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuizQuestionWithSolutionDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuizQuestionWithSolutionDTO.class) }, oneOf = { MultipleChoiceQuizQuestionWithSolutionDTO.class,
+                DragAndDropQuizQuestionWithSolutionDTO.class, ShortAnswerQuizQuestionWithSolutionDTO.class })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// Note: Only one of the three questions will be non-null depending on the question type
 public record QuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
         @Nullable @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO,
         @Nullable @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO,
@@ -38,5 +44,17 @@ public record QuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO qui
         }
         return new QuizQuestionWithSolutionDTO(quizQuestionBaseDTO, quizQuestion.getExplanation(), multipleChoiceQuestionDTO, dragAndDropQuestionDTO, shortAnswerQuestionDTO);
     }
+}
 
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+record MultipleChoiceQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO) {
+}
+
+record DragAndDropQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO) {
+}
+
+record ShortAnswerQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+        @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) {
 }

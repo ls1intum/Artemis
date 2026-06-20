@@ -172,7 +172,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             this.questionElementDeleted.set(true);
         }
         // check if the correct Mappings has changed
-        if (JSON.stringify(question.correctDndMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctDndMappings).toLowerCase()) {
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
             this.questionCorrectness.set(true);
         }
         // only check if there are no changes on the question-elements yet

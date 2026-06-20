@@ -8,7 +8,7 @@ export class DragAndDropQuestion extends QuizQuestion {
     public backgroundFilePath?: string;
     public dropLocations?: DropLocation[];
     public dragItems?: DragItem[];
-    public correctDndMappings?: DragAndDropMapping[];
+    public correctMappings?: DragAndDropMapping[];
 
     constructor() {
         super(QuizQuestionType.DRAG_AND_DROP);

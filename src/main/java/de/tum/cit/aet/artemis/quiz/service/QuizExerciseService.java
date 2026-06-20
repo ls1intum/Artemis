@@ -254,7 +254,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         boolean recalculationNecessary = false;
         List<DragAndDropMapping> mappingsToRemove = new ArrayList<>();
         for (DragAndDropMapping originalMapping : originalQuestion.getCorrectMappings()) {
-            boolean mappingExistsInDTO = dndDTO.correctDndMappings().stream()
+            boolean mappingExistsInDTO = dndDTO.correctMappings().stream()
                     .anyMatch(dto -> dto.dragItemId().equals(originalMapping.getDragItem().getId()) && dto.dropLocationId().equals(originalMapping.getDropLocation().getId()));
             if (!mappingExistsInDTO) {
                 mappingsToRemove.add(originalMapping);
@@ -263,7 +263,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
         Set<DragAndDropMapping> existingMappings = originalQuestion.getCorrectMappings();
-        for (var mappingDTO : dndDTO.correctDndMappings()) {
+        for (var mappingDTO : dndDTO.correctMappings()) {
             boolean mappingExists = existingMappings.stream()
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
             if (!mappingExists) {

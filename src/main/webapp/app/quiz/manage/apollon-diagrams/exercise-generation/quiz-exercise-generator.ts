@@ -169,7 +169,7 @@ function createDragAndDropQuestion(
     dragAndDropQuestion.backgroundFilePath = backgroundFilePath;
     dragAndDropQuestion.dropLocations = dropLocations;
     dragAndDropQuestion.dragItems = dragItems;
-    dragAndDropQuestion.correctDndMappings = correctMappings;
+    dragAndDropQuestion.correctMappings = correctMappings;
     return dragAndDropQuestion;
 }
 

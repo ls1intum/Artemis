@@ -38,7 +38,7 @@ export interface DragAndDropQuestionCreateDTO {
     backgroundFilePath?: string;
     dropLocations: DropLocationCreateDTO[];
     dragItems: DragItemCreateDTO[];
-    correctDndMappings: DragAndDropMappingCreateDTO[];
+    correctMappings: DragAndDropMappingCreateDTO[];
 }
 
 export interface DropLocationCreateDTO {
@@ -139,7 +139,7 @@ function convertDragAndDropQuestionToDTO(question: DragAndDropQuestion): DragAnd
             text: di.text,
             pictureFilePath: di.pictureFilePath,
         })),
-        correctDndMappings: (question.correctDndMappings ?? []).map((mapping) => ({
+        correctMappings: (question.correctMappings ?? []).map((mapping) => ({
             dragItemTempId: mapping.dragItem?.tempID ?? 0,
             dropLocationTempId: mapping.dropLocation?.tempID ?? 0,
         })),

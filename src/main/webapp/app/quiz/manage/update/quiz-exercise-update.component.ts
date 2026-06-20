@@ -617,7 +617,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return dragAndDropQuestions?.some((dragAndDropQuestion) => {
             const numberOfDropLocations = dragAndDropQuestion.dropLocations?.length ?? 1;
             const numberOfDragItems = dragAndDropQuestion.dragItems?.length ?? 1;
-            const numberOfCorrectMappings = dragAndDropQuestion.correctDndMappings?.length ?? 1;
+            const numberOfCorrectMappings = dragAndDropQuestion.correctMappings?.length ?? 1;
             // Magic number is 13 * 13 * 13
             return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
@@ -803,7 +803,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 const dnd = question as DragAndDropQuestion;
                 const dragItemById = new Map((dnd.dragItems ?? []).filter((di) => di.id).map((di) => [di.id!, di]));
                 const dropLocationById = new Map((dnd.dropLocations ?? []).filter((dl) => dl.id).map((dl) => [dl.id!, dl]));
-                for (const mapping of dnd.correctDndMappings ?? []) {
+                for (const mapping of dnd.correctMappings ?? []) {
                     if (mapping.dragItem?.id) mapping.dragItem = dragItemById.get(mapping.dragItem.id) ?? mapping.dragItem;
                     if (mapping.dropLocation?.id) mapping.dropLocation = dropLocationById.get(mapping.dropLocation.id) ?? mapping.dropLocation;
                 }

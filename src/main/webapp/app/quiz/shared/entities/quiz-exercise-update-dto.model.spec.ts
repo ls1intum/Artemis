@@ -32,7 +32,7 @@ describe('QuizExerciseUpdateDTO', () => {
         question.points = 1;
         question.dragItems = [dragItem];
         question.dropLocations = [dropLocation];
-        question.correctDndMappings = [mapping];
+        question.correctMappings = [mapping];
 
         const exercise = new QuizExercise(undefined, undefined);
         exercise.quizQuestions = [question];
@@ -48,7 +48,7 @@ describe('QuizExerciseUpdateDTO', () => {
         );
         expect((dndQuestion as any).dragItems[0]).toEqual(expect.objectContaining({ id: 21, tempID: 21, pictureFilePath: 'element-21.png' }));
         expect((dndQuestion as any).dropLocations[0]).toEqual(expect.objectContaining({ id: 31, tempID: 31, posX: 10, posY: 20, width: 30, height: 40 }));
-        expect((dndQuestion as any).correctDndMappings[0]).toEqual(expect.objectContaining({ id: 41, dragItemTempId: 21, dropLocationTempId: 31 }));
+        expect((dndQuestion as any).correctMappings[0]).toEqual(expect.objectContaining({ id: 41, dragItemTempId: 21, dropLocationTempId: 31 }));
     });
 
     it('should preserve temp ids for new drag-and-drop elements', () => {
@@ -69,7 +69,7 @@ describe('QuizExerciseUpdateDTO', () => {
         question.points = 1;
         question.dragItems = [dragItem];
         question.dropLocations = [dropLocation];
-        question.correctDndMappings = [mapping];
+        question.correctMappings = [mapping];
 
         const exercise = new QuizExercise(undefined, undefined);
         exercise.quizQuestions = [question];
@@ -79,7 +79,7 @@ describe('QuizExerciseUpdateDTO', () => {
 
         expect(dndQuestion.dragItems[0]).toEqual(expect.objectContaining({ id: undefined, tempID: 2200 }));
         expect(dndQuestion.dropLocations[0]).toEqual(expect.objectContaining({ id: undefined, tempID: 3200 }));
-        expect(dndQuestion.correctDndMappings[0]).toEqual(expect.objectContaining({ dragItemTempId: 2200, dropLocationTempId: 3200 }));
+        expect(dndQuestion.correctMappings[0]).toEqual(expect.objectContaining({ dragItemTempId: 2200, dropLocationTempId: 3200 }));
     });
 
     it('should preserve multiple-choice option ids on update', () => {

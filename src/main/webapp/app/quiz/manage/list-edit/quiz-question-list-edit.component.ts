@@ -252,7 +252,7 @@ export class QuizQuestionListEditComponent {
         dndQuestion.points = 1;
         dndQuestion.dropLocations = [];
         dndQuestion.dragItems = [];
-        dndQuestion.correctDndMappings = [];
+        dndQuestion.correctMappings = [];
         this.addQuestion(dndQuestion);
     }
 
