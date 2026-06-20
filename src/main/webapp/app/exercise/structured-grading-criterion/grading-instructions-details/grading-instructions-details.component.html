@@ -3,16 +3,16 @@
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
         <div class="col-12 col-sm-auto d-flex me-1 mb-1">
-            <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode, 'btn-default': !showEditMode }">
+            <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }">
                 <span jhiTranslate="entity.action.edit"></span>
             </button>
-            <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode, 'btn-default': showEditMode }">
+            <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }">
                 <span jhiTranslate="artemisApp.exercise.editText"></span>
             </button>
         </div>
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
-            @if (showEditMode) {
+            @if (showEditMode()) {
                 <div>
                     @for (criterion of currentExercise.gradingCriteria; track criterion) {
                         <div>
@@ -150,12 +150,12 @@
             }
             <!--- End of Edit Mode --->
             <!--- Edit Text Mode --->
-            @if (!showEditMode) {
+            @if (!showEditMode()) {
                 <div>
                     <jhi-markdown-editor-monaco
                         #markdownEditor
                         class="markdown-editor"
-                        [markdown]="markdownEditorText"
+                        [markdown]="markdownEditorText()"
                         [showPreviewButton]="false"
                         [showEditButton]="false"
                         [domainActions]="domainActionsForMainEditor"
@@ -178,7 +178,7 @@
                 <jhi-markdown-editor-monaco
                     #markdownEditor
                     class="editor col-md-8"
-                    [markdown]="markdownEditorText"
+                    [markdown]="markdownEditorText()"
                     [domainActions]="domainActionsForGradingInstructionParsing"
                     (markdownChange)="prepareForSave()"
                     (textWithDomainActionsFound)="setExerciseGradingInstructionText($event)"

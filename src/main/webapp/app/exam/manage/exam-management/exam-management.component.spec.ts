@@ -99,7 +99,7 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(courseManagementService.find).toHaveBeenCalledOnce();
-        expect(comp.course).toEqual(course);
+        expect(comp.course()).toEqual(course);
     });
 
     it('should call loadAllExamsForCourse on init', () => {
@@ -114,7 +114,7 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
-        expect(comp.exams).toEqual([exam]);
+        expect(comp.exams()).toEqual([exam]);
     });
 
     it('should call getLatestIndividualDate on init', () => {
@@ -134,12 +134,12 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledOnce();
-        expect(comp.exams[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
+        expect(comp.exams()[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
     });
 
     it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
         // GIVEN
-        comp.course = course;
+        comp.course.set(course);
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
         vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
@@ -149,7 +149,7 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
-        expect(comp.exams).toEqual([exam]);
+        expect(comp.exams()).toEqual([exam]);
     });
 
     it('should return false for examHasFinished when component has no exam information', () => {
@@ -210,7 +210,7 @@ describe('Exam Management Component', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         vi.spyOn(router, 'navigate');
 
-        comp.course = { id: 1 } as Course;
+        comp.course.set({ id: 1 } as Course);
         comp.openImportModal();
 
         // Simulate dialog closing with result

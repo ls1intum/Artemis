@@ -20,12 +20,12 @@
     }
 
     <!-- Loading state -->
-    @if (isLoading) {
+    @if (isLoading()) {
         <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
-        @if (!loadingFailed && feedbackItemNodes?.length) {
+        @if (!loadingFailed() && feedbackItemNodes()?.length) {
             <div class="result-detail-container">
                 @if (!isExamReviewPage()) {
                     <div>
@@ -37,15 +37,15 @@
                                     @if (!exercise?.maxPoints) {
                                         <span
                                             jhiTranslate="artemisApp.result.score"
-                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course) }"
+                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course()) }"
                                         ></span>
                                     } @else {
                                         @if (exercise && exercise.maxPoints) {
                                             <span
                                                 jhiTranslate="artemisApp.result.scoreWithPoints"
                                                 [translateValues]="{
-                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course),
+                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course()),
+                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course()),
                                                 }"
                                             ></span>
                                         }
@@ -53,7 +53,7 @@
                                 }
                             </h4>
 
-                            @if (badge) {
+                            @if (badge(); as badge) {
                                 <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                                     {{ badge.text | artemisTranslate | uppercase }}
                                 </span>
@@ -69,7 +69,7 @@
                                 </span>
                                 - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
                                 <!-- TODO Link to repository view -->
-                                {{ commitHash }}
+                                {{ commitHash() }}
                             </p>
                         }
                     </div>
@@ -88,13 +88,13 @@
                 }
 
                 <!-- Always show failed build logs first -->
-                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null" />
+                <ng-container *ngTemplateOutlet="buildLogs()?.length ? buildLogsContainer : null" />
 
-                @if (buildLogs?.length) {
+                @if (buildLogs()?.length) {
                     <hr />
                 }
 
-                @if (!loadingFailed && resultIsPreliminary(result, participation)) {
+                @if (!loadingFailed() && resultIsPreliminary(result, participation)) {
                     <div>
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
@@ -113,25 +113,25 @@
                 }
 
                 <div class="feedback-list">
-                    @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
-                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course" />
+                    @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
+                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" />
                     }
                 </div>
             </div>
         } @else {
-            @if (buildLogs?.length) {
+            @if (buildLogs()?.length) {
                 <h4 jhiTranslate="artemisApp.result.buildError"></h4>
                 <dl class="buildoutput dl-horizontal">
-                    @for (logEntry of buildLogs; track logEntry; let i = $index) {
+                    @for (logEntry of buildLogs(); track logEntry; let i = $index) {
                         <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                        @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                        @if (i === 0 || logEntry.time !== buildLogs()![i - 1].time) {
                             <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                         }
                         <dd
                             [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                             [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
                             [class.text-warning]="logEntry.type === BuildLogType.WARNING"
-                            [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                            [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                         >
                             {{ logEntry.log }}
                         </dd>
@@ -143,7 +143,7 @@
                 } @else {
                     <span jhiTranslate="artemisApp.result.noResultDetails"></span>
                 }
-                @if (isOnlyCompilationTested) {
+                @if (isOnlyCompilationTested()) {
                     <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
                 }
             }
@@ -154,19 +154,19 @@
 
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
-        @if (buildLogs?.length) {
+        @if (buildLogs()?.length) {
             <h4 jhiTranslate="artemisApp.result.buildError"></h4>
             <dl class="buildoutput dl-horizontal">
-                @for (logEntry of buildLogs; track logEntry; let i = $index) {
+                @for (logEntry of buildLogs(); track logEntry; let i = $index) {
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                    @if (i === 0 || logEntry.time !== buildLogs()![i - 1].time) {
                         <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                     }
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
                         [class.text-warning]="logEntry.type === BuildLogType.WARNING"
-                        [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                        [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                     >
                         {{ logEntry.log }}
                     </dd>
@@ -179,7 +179,7 @@
             } @else {
                 <span jhiTranslate="artemisApp.result.noResultDetails"></span>
             }
-            @if (isOnlyCompilationTested) {
+            @if (isOnlyCompilationTested()) {
                 <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested"></p>
             }
         }

@@ -102,6 +102,6 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
-        expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
     });
 });

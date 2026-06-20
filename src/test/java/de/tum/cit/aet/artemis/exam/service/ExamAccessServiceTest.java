@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -112,8 +111,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        instructor1.setGroups(Collections.singleton("course1InstructorGroup"));
-        instructor2.setGroups(Collections.singleton("course2InstructorGroup"));
+        instructor1.setGroups(Set.of("course1InstructorGroup"));
+        instructor2.setGroups(Set.of("course2InstructorGroup"));
         userRepository.save(instructor1);
         userRepository.save(instructor2);
         course1 = courseUtilService.addEmptyCourse();

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
@@ -29,11 +29,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     private ltiService = inject(LtiService);
     private themeService = inject(ThemeService);
 
-    isLaunching: boolean;
-
-    constructor() {
-        this.isLaunching = true;
-    }
+    readonly isLaunching = signal(true);
 
     /**
      * perform an LTI launch with state and id_token query parameters
@@ -48,7 +44,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
         if (!state || !idToken) {
             captureException('Required parameter for LTI launch missing');
-            this.isLaunching = false;
+            this.isLaunching.set(false);
             return;
         }
 
@@ -120,14 +116,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         if (targetLinkUri) {
             this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
-            this.isLaunching = false;
+            this.isLaunching.set(false);
             captureException('No LTI targetLinkUri received for a successful launch');
         }
     }
 
     handleLtiLaunchError(): void {
         this.sessionStorageService.remove('state');
-        this.isLaunching = false;
+        this.isLaunching.set(false);
     }
 
     storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {

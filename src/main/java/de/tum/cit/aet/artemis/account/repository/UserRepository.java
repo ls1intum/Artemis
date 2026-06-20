@@ -13,7 +13,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -712,7 +711,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findDistinctUsersWithGroupsByIdIn(userIds);
@@ -731,7 +730,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return new PageImpl<>(List.of(), pageable, 0);
         }
 
         List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);

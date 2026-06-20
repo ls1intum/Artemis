@@ -78,16 +78,16 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     it('should update fields correctly', () => {
         component.onAssigmentRepositoryCheckoutPathChange('assignment');
         expect(component.assignmentCheckoutPath()).toBe('assignment');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         component.onTestRepositoryCheckoutPathChange('tests');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         expect(component.testCheckoutPath()).toBe('tests');
         component.onSolutionRepositoryCheckoutPathChange('solution');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         expect(component.solutionCheckoutPath()).toBe('solution');
 
         component.onAssigmentRepositoryCheckoutPathChange('solution');
-        expect(component.formValid).toBe(false);
+        expect(component.formValid()).toBe(false);
 
         component.calculateFormValid();
     });

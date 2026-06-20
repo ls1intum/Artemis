@@ -2,13 +2,13 @@
     <div class="row justify-content-between">
         <div class="col-6">
             <h2>
-                @if (isNewSubmission) {
+                @if (isNewSubmission()) {
                     <span jhiTranslate="artemisApp.exampleSubmission.createNew"></span>
                 }
                 {{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
-            @if (state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0) {
+            @if (state.ui === UIStates.ASSESSMENT && toComplete() && referencedBlocksInExampleSubmission().length > 0) {
                 <div class="col">
                     <div class="my-2 text-center hint">
                         <span jhiTranslate="artemisApp.exampleSubmission.textHint"></span>
@@ -16,7 +16,7 @@
                 </div>
             }
         </div>
-        @if ((exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise) {
+        @if ((exercise?.isAtLeastEditor || false) && !readOnly() && !toComplete() && exercise) {
             <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end">
                 <div>
                     <div class="text-start">
@@ -32,7 +32,7 @@
                             id="read-and-confirm-button"
                             autocomplete="off"
                             [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
-                            [ngModel]="selectedMode"
+                            [ngModel]="selectedMode()"
                             (ngModelChange)="onModeChange($event)"
                         />
                         <label class="btn btn-outline-secondary" for="read-and-confirm-button" jhiTranslate="artemisApp.exampleSubmission.readAndConfirm"></label>
@@ -44,7 +44,7 @@
                             id="only-not-imported"
                             autocomplete="off"
                             [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
-                            [ngModel]="selectedMode"
+                            [ngModel]="selectedMode()"
                             (ngModelChange)="onModeChange($event)"
                         />
                         <label class="btn btn-outline-secondary" for="only-not-imported" jhiTranslate="artemisApp.exampleSubmission.assessCorrectly"></label>
@@ -58,7 +58,7 @@
                         </button>
                     }
                     @case (SubmissionButtonStates.UPDATE) {
-                        <button (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto" [disabled]="!unsavedSubmissionChanges">
+                        <button (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto" [disabled]="!unsavedSubmissionChanges()">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                         </button>
@@ -79,19 +79,19 @@
                 @switch (state.assessButton) {
                     <!--TODO: Disable Button if unsaved changes in submission -->
                     @case (AssessButtonStates.ASSESS) {
-                        <button (click)="startAssessment()" class="btn btn-primary col-auto ms-auto me-3" id="createNewAssessment" [disabled]="unsavedSubmissionChanges">
+                        <button (click)="startAssessment()" class="btn btn-primary col-auto ms-auto me-3" id="createNewAssessment" [disabled]="unsavedSubmissionChanges()">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.CREATE) {
-                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3" id="saveNewAssessment">
+                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3" id="saveNewAssessment">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.UPDATE) {
-                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
+                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                         </button>
@@ -101,7 +101,7 @@
         }
     </div>
 </div>
-@if (toComplete) {
+@if (toComplete()) {
     <h5 class="fw-light mt-3" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
 }
 <jhi-resizeable-container class="col-12 mt-3">
@@ -111,7 +111,7 @@
             <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmission"></span>
         }
         @if (state.ui === UIStates.ASSESSMENT) {
-            <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0" />
+            <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore()" [maxBonusPoints]="exercise?.bonusPoints || 0" />
         }
     </ng-container>
     <ng-container left-body>
@@ -119,16 +119,16 @@
             <textarea
                 id="example-text-submission-input"
                 [(ngModel)]="submission!.text"
-                (ngModelChange)="unsavedSubmissionChanges = true"
+                (ngModelChange)="unsavedSubmissionChanges.set(true)"
                 style="width: 100%; height: 50vh"
             ></textarea>
         }
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-text-assessment-area
-                [allowManualBlockSelection]="!this.toComplete"
+                [allowManualBlockSelection]="!this.toComplete()"
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
-                [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
+                [readOnly]="readOnly() || (!!exercise && !exercise.isAtLeastEditor && !toComplete())"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
             />
@@ -149,7 +149,7 @@
             <jhi-assessment-instructions
                 id="instructions"
                 [exercise]="exercise"
-                [isAssessmentTraining]="toComplete"
+                [isAssessmentTraining]="toComplete()"
                 [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
                 class="markdown-preview"
             />
@@ -158,28 +158,28 @@
     <!--endregion-->
 </jhi-resizeable-container>
 @if (state.ui === UIStates.ASSESSMENT) {
-    @if (result && result.id) {
+    @if (result() && result()!.id) {
         <jhi-unreferenced-feedback
             [(feedbacks)]="unreferencedFeedback"
-            [readOnly]="readOnly"
+            [readOnly]="readOnly()"
             [addReferenceIdForExampleSubmission]="true"
             (feedbacksChange)="validateFeedback()"
-            [resultId]="result.id"
+            [resultId]="result()!.id!"
         />
     }
 }
-@if (toComplete) {
+@if (toComplete()) {
     <div class="col-12 text-end pt-2">
         <button
             class="btn btn-primary col-3"
             (click)="checkAssessment()"
-            [disabled]="!assessmentsAreValid"
+            [disabled]="!assessmentsAreValid()"
             id="checkAssessment"
             jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
         ></button>
     </div>
 }
-@if (readOnly) {
+@if (readOnly()) {
     <div class="col-12 text-end pt-2">
         <button (click)="readAndUnderstood()" class="btn btn-success col-3">
             <fa-icon [icon]="faSave" />

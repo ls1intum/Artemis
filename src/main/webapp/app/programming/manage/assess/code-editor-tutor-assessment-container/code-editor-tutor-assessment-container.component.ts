@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -93,48 +93,53 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub: Subscription;
-    participation: ProgrammingExerciseStudentParticipation;
-    exercise: ProgrammingExercise;
-    submission?: ProgrammingSubmission;
-    manualResult?: Result;
+    // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
+    // signal-backed under zoneless change detection, otherwise the loaded assessment editor never renders.
+    readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly exercise = signal<ProgrammingExercise>(undefined!);
+    readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
+    readonly manualResult = signal<Result | undefined>(undefined);
     userId: number;
     // for assessment-layout
-    isTestRun = false;
-    saveBusy = false;
-    submitBusy = false;
-    cancelBusy = false;
-    nextSubmissionBusy = false;
-    isAssessor = false;
-    assessmentsAreValid = false;
-    complaint: Complaint;
+    readonly isTestRun = signal(false);
+    readonly saveBusy = signal(false);
+    readonly submitBusy = signal(false);
+    readonly cancelBusy = signal(false);
+    readonly nextSubmissionBusy = signal(false);
+    readonly isAssessor = signal(false);
+    readonly assessmentsAreValid = signal(false);
+    readonly complaint = signal<Complaint>(undefined!);
     private cancelConfirmationText: string;
     private acceptComplaintWithoutMoreScoreText: string;
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
-    loadingParticipation = false;
-    participationCouldNotBeFetched = false;
+    readonly loadingParticipation = signal(false);
+    readonly participationCouldNotBeFetched = signal(false);
+    // Written only synchronously / never reassigned — may stay plain.
     showEditorInstructions = true;
-    hasAssessmentDueDatePassed: boolean;
-    correctionRound: number;
+    readonly hasAssessmentDueDatePassed = signal(false);
+    readonly correctionRound = signal(0);
     courseId: number;
     examId = 0;
     exerciseId: number;
     exerciseGroupId: number;
-    exerciseDashboardLink: string[];
-    localRepositoryLink: string[];
-    loadingInitialSubmission = true;
+    readonly exerciseDashboardLink = signal<string[]>([]);
+    readonly localRepositoryLink = signal<string[]>([]);
+    readonly loadingInitialSubmission = signal(true);
     highlightDifferences = false;
-    loadingFeedbackSuggestions = false;
+    readonly loadingFeedbackSuggestions = signal(false);
 
-    isAtLeastEditor = false;
+    readonly isAtLeastEditor = signal(false);
 
-    unreferencedFeedback: Feedback[] = [];
+    readonly unreferencedFeedback = signal<Feedback[]>([]);
+    // Not template-read — only used in component code, may stay plain.
     referencedFeedback: Feedback[] = [];
-    automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
+    readonly automaticFeedback = signal<Feedback[]>([]);
+    // all pending Athena feedback suggestions (neither accepted nor rejected yet)
+    readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment: number;
 
     isFirstAssessment = false;
-    lockLimitReached = false;
+    readonly lockLimitReached = signal(false);
 
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
@@ -153,17 +158,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
      */
-    get unreferencedFeedbackSuggestions() {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
-    }
+    readonly unreferencedFeedbackSuggestions = computed(() => this.feedbackSuggestions().filter((feedback) => !feedback.reference));
 
-    get hasAutomaticFeedback(): boolean {
-        return this.automaticFeedback.length > 0 || this.feedbackSuggestions.length > 0;
-    }
+    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
 
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.exercise?.feedbackSuggestionModule);
-    }
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -180,12 +179,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.userId = user!.id!;
         });
         this.route.queryParamMap.subscribe((queryParams) => {
-            this.isTestRun = queryParams.get('testRun') === 'true';
-            this.correctionRound = Number(queryParams.get('correction-round'));
+            this.isTestRun.set(queryParams.get('testRun') === 'true');
+            this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
         this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
+            this.loadingParticipation.set(true);
+            this.participationCouldNotBeFetched.set(false);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -195,7 +194,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.exerciseGroupId = Number(params['exerciseGroupId']);
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+            this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
 
             const submissionId = params['submissionId'];
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
@@ -208,29 +207,24 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         error: (error: HttpErrorResponse) => {
                             this.handleErrorResponse(error);
                         },
-                        complete: () => (this.loadingParticipation = false),
+                        complete: () => this.loadingParticipation.set(false),
                     }),
                     // The following is needed for highlighting changed code lines
-                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
+                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
                     tap((response) => {
                         const programmingExercise = response.body!;
                         this.templateParticipation = programmingExercise.templateParticipation!;
-                        this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
-                        this.isAtLeastEditor = !!this.exercise.isAtLeastEditor;
+                        this.exercise().gradingCriteria = programmingExercise.gradingCriteria;
+                        this.isAtLeastEditor.set(!!this.exercise().isAtLeastEditor);
                     }),
                     switchMap(() => {
                         // Get all files with content from template repository
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
-                        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
-                        this.localRepositoryLink = getLocalRepositoryLink(
-                            this.courseId,
-                            this.exerciseId,
-                            RepositoryType.USER,
-                            this.participation.id!,
-                            this.exerciseGroupId,
-                            this.examId,
+                        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation()]);
+                        this.localRepositoryLink.set(
+                            getLocalRepositoryLink(this.courseId, this.exerciseId, RepositoryType.USER, this.participation().id!, this.exerciseGroupId, this.examId),
                         );
                         return observable;
                     }),
@@ -256,7 +250,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
         if (!submission) {
             // there are no unassessed submissions
-            this.submission = submission;
+            this.submission.set(submission);
             return;
         }
 
@@ -265,40 +259,43 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
         if (submissionId === 'new') {
             // Update the url with the new id, without reloading the page, to make the history consistent
-            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
             this.location.go(newUrl);
         }
     }
 
     @HostListener('window:beforeunload', ['$event'])
     handleBeforeUnload(event: BeforeUnloadEvent) {
-        if (this.hasPendingChanges && this.submission !== undefined) {
+        if (this.hasPendingChanges && this.submission() !== undefined) {
             // Required to trigger the native prompt in modern browsers
             event.preventDefault();
         }
     }
 
     private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission | undefined> {
-        return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
+        return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound());
     }
 
     private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
-        return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
+        return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound());
     }
 
     private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
-        this.loadingInitialSubmission = false;
+        this.loadingInitialSubmission.set(false);
 
         // Set domain to correctly fetch data
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
-        this.submission = submission;
-        this.manualResult = getLatestSubmissionResult(this.submission);
-        if (!this.manualResult?.submission) {
-            this.manualResult!.submission = this.submission;
+        this.submission.set(submission);
+        const manualResult = getLatestSubmissionResult(submission);
+        if (!manualResult?.submission) {
+            manualResult!.submission = submission;
         }
-        this.participation = submission.participation!;
-        this.participation.submissions = [this.submission];
-        this.exercise = this.participation.exercise as ProgrammingExercise;
+        this.manualResult.set(manualResult);
+        const participation = submission.participation!;
+        participation.submissions = [submission];
+        this.participation.set(participation);
+        const exercise = participation.exercise as ProgrammingExercise;
+        this.exercise.set(exercise);
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
          *       The access rights should always be set when loading the exercise/course in the service!
@@ -307,8 +304,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
          *       access rights.
          *       This problem reoccurs in {@link FileUploadAssessmentComponent#initializePropertiesFromSubmission}
          */
-        this.accountService.setAccessRightsForExercise(this.exercise);
-        this.hasAssessmentDueDatePassed = !!this.exercise?.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
+        this.accountService.setAccessRightsForExercise(exercise);
+        this.hasAssessmentDueDatePassed.set(!!exercise?.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
 
         this.checkPermissions();
         this.handleFeedback();
@@ -316,16 +313,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.manualResult?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+        if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
             await this.loadFeedbackSuggestions();
         }
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
-        this.loadingInitialSubmission = false;
-        this.participationCouldNotBeFetched = true;
+        this.loadingInitialSubmission.set(false);
+        this.participationCouldNotBeFetched.set(true);
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
-            this.lockLimitReached = true;
+            this.lockLimitReached.set(true);
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
@@ -335,15 +332,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.loadingFeedbackSuggestions = true;
+        this.loadingFeedbackSuggestions.set(true);
         try {
-            this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
-            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback];
-            this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
-                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
+            this.feedbackSuggestions.set(
+                feedbackSuggestions.filter((suggestion) =>
+                    allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+                ),
             );
         } finally {
-            this.loadingFeedbackSuggestions = false;
+            this.loadingFeedbackSuggestions.set(false);
         }
     }
 
@@ -397,7 +396,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Save the assessment
      */
     save(): void {
-        this.saveBusy = true;
+        this.saveBusy.set(true);
         this.handleSaveOrSubmit(undefined, 'artemisApp.textAssessment.saveSuccessful');
     }
 
@@ -406,7 +405,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @return true if the user confirmed the discard (=> continue to submit), false otherwise
      */
     async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
-        if (this.feedbackSuggestions.length > 0) {
+        if (this.feedbackSuggestions().length > 0) {
             const dialogRef = this.dialogService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, {
                 showHeader: false,
                 width: '50rem',
@@ -419,7 +418,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             if (!suggestionsDiscardConfirmed) {
                 return false;
             }
-            this.feedbackSuggestions = []; // Discard all pending suggestions
+            this.feedbackSuggestions.set([]); // Discard all pending suggestions
         }
         return true;
     }
@@ -431,7 +430,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!(await this.discardPendingSubmissionsWithConfirmation())) {
             return;
         }
-        this.submitBusy = true;
+        this.submitBusy.set(true);
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
     }
 
@@ -443,7 +442,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, submit).subscribe({
+        this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         });
@@ -453,12 +452,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Cancel the assessment
      */
     cancel(): void {
-        this.cancelBusy = true;
+        this.cancelBusy.set(true);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
-        if (confirmCancel && this.exercise && this.submission) {
-            this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
+        if (confirmCancel && this.exercise() && this.submission()) {
+            this.manualResultService.cancelAssessment(this.submission()!.id!).subscribe(() => this.navigateBack());
         }
-        this.cancelBusy = false;
+        this.cancelBusy.set(false);
         this.hasPendingChanges = false;
     }
 
@@ -466,15 +465,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        this.loadingParticipation = true;
-        this.submission = undefined;
-        this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
+        this.loadingParticipation.set(true);
+        this.submission.set(undefined);
+        this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise().id!, true, this.correctionRound()).subscribe({
             next: (response?: ProgrammingSubmission) => {
-                this.loadingParticipation = false;
+                this.loadingParticipation.set(false);
 
                 // there are no unassessed submissions
                 if (!response) {
-                    this.submission = undefined;
+                    this.submission.set(undefined);
                     return;
                 }
 
@@ -495,10 +494,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.exerciseGroupId,
                     undefined,
                 );
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
-                this.loadingParticipation = false;
+                this.loadingParticipation.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
@@ -517,7 +516,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateFeedback();
-        if (!this.assessmentsAreValid) {
+        if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.programmingAssessment.invalidAssessments');
             assessmentAfterComplaint.onError();
             return;
@@ -530,13 +529,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Reassemble the manual result's feedbacks from the editor state first, then snapshot them: getFeedbacksForUpdateAfterComplaint must
         // capture the freshly assembled feedback list, not the pre-edit one.
         this.setFeedbacksForManualResult();
-        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.manualResult!.feedbacks!);
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.manualResult()!.feedbacks!);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
 
-        this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note).subscribe({
+        this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission()!.id!, this.manualResult()!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
                 assessmentAfterComplaint.onSuccess();
-                this!.submission!.results![0] = this.manualResult = result;
+                this.submission()!.results![0] = result;
+                this.manualResult.set(result);
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
@@ -557,7 +557,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Navigates back to previous view
      */
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun());
     }
 
     /**
@@ -566,24 +566,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Instructors can always override a result.
      * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
      * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
+     * Kept as a getter (not computed) because the result also depends on the current time, which is not signal-tracked.
      */
     get canOverride(): boolean {
-        if (this.exercise) {
-            if (this.exercise.isAtLeastInstructor) {
+        const exercise = this.exercise();
+        if (exercise) {
+            if (exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
-            if (this.complaint && this.isAssessor) {
+            if (this.complaint() && this.isAssessor()) {
                 // If there is a complaint, the original assessor cannot override the result anymore.
                 return false;
             }
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
-            if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
+            if (exercise.assessmentDueDate) {
+                isBeforeAssessmentDueDate = dayjs().isBefore(exercise.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
     }
@@ -605,7 +607,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param feedback Feedback suggestion that is removed
      */
     removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => !Feedback.areIdentical(feedbackSuggestion, feedback));
+        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((feedbackSuggestion) => !Feedback.areIdentical(feedbackSuggestion, feedback)));
         this.hasPendingChanges = true;
     }
 
@@ -616,7 +618,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onError(error: string) {
         this.alertService.error(error);
-        this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
+        this.saveBusy.set(false);
+        this.cancelBusy.set(false);
+        this.submitBusy.set(false);
+        this.nextSubmissionBusy.set(false);
     }
 
     /**
@@ -624,7 +629,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateUpdatedFeedback(updatedFeedbacks?: Feedback[]): void {
         if (updatedFeedbacks) {
-            this.unreferencedFeedback = updatedFeedbacks;
+            this.unreferencedFeedback.set(updatedFeedbacks);
         }
         this.validateFeedback();
         this.hasPendingChanges = true;
@@ -635,29 +640,32 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
-        if (this.exercise.allowComplaintsForAutomaticAssessments) {
+        if (this.exercise().allowComplaintsForAutomaticAssessments) {
             // We don't need manual feedback here
-            this.assessmentsAreValid = true;
+            this.assessmentsAreValid.set(true);
             return;
         }
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
-        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
     }
 
     /**
      * Defines whether the inline feedback should be read only or not
      */
     readOnly() {
-        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.manualResult, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.manualResult(), this.complaint(), this.exercise());
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.submission!.results![0] = this.manualResult = response.body!;
+        const result = response.body!;
+        this.submission()!.results![0] = result;
+        this.manualResult.set(result);
         this.alertService.closeAll();
         this.alertService.success(translationKey);
-        this.saveBusy = this.submitBusy = false;
+        this.saveBusy.set(false);
+        this.submitBusy.set(false);
         this.checkPermissions();
         this.hasPendingChanges = false;
     }
@@ -667,23 +675,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Checks if the user is at least instructor in course.
      */
     private checkPermissions() {
-        if (this.manualResult?.assessor) {
-            this.isAssessor = this.manualResult.assessor.id === this.userId;
+        const assessor = this.manualResult()?.assessor;
+        if (assessor) {
+            this.isAssessor.set(assessor.id === this.userId);
         } else {
-            this.isAssessor = true;
+            this.isAssessor.set(true);
         }
     }
 
     private getComplaint(): void {
-        if (!this.submission) {
+        const submission = this.submission();
+        if (!submission) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+        this.complaintService.findBySubmissionId(submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.manualResult);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.manualResult()));
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);
@@ -692,15 +702,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        const feedbacks = this.manualResult?.feedbacks ?? [];
+        const feedbacks = this.manualResult()?.feedbacks ?? [];
         this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
-        this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
+        const automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
+        this.automaticFeedback.set(automaticFeedback);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
-        if (feedbacks.length === this.automaticFeedback.length) {
+        if (feedbacks.length === automaticFeedback.length) {
             this.isFirstAssessment = true;
         }
 
-        this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
     }
@@ -709,7 +720,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!assessmentAfterComplaint.complaintResponse.complaint?.accepted) {
             return true;
         }
-        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const newTotalScore = this.calculateTotalScoreOfFeedbacks(allNewFeedbacks);
         if (this.totalScoreBeforeAssessment >= newTotalScore) {
             return window.confirm(this.acceptComplaintWithoutMoreScoreText);
@@ -718,35 +729,37 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private setFeedbacksForManualResult() {
-        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        this.manualResult()!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
 
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
+        const manualResult = this.manualResult()!;
         // Manual result is always rated and has feedback
-        this.manualResult!.rated = true;
+        manualResult.rated = true;
         this.isFirstAssessment = false;
 
-        this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
-        // This is done to update the result string in result.component.ts
-        this.manualResult = cloneDeep(this.manualResult);
+        manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
+        // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
+        this.manualResult.set(cloneDeep(manualResult));
     }
 
     private avoidCircularStructure() {
-        if (this.manualResult) {
-            breakCircularResultBackReferences(this.manualResult);
+        const manualResult = this.manualResult();
+        if (manualResult) {
+            breakCircularResultBackReferences(manualResult);
         }
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
+        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = getTotalMaxPoints(this.exercise);
+        const maxPoints = getTotalMaxPoints(this.exercise());
         let totalScore = 0.0;
         let scoreAutomaticTests = 0.0;
         const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
@@ -776,7 +789,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 }
 
 export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
-    if (component.hasPendingChanges && component.submission !== undefined) {
+    if (component.hasPendingChanges && component.submission() !== undefined) {
         const translate = inject(TranslateService);
         return window.confirm(translate.instant('artemisApp.programmingAssessment.confirmLeave'));
     }

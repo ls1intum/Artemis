@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import org.jsoup.Jsoup;
@@ -40,7 +39,7 @@ class OgMetaElementHtmlParser {
         }
         catch (IOException e) {
             log.info("IOException occurred while parsing html meta elements.");
-            return Collections.emptyList();
+            return List.of();
         }
     }
 }

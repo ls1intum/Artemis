@@ -12,7 +12,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1170,8 +1169,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(blocksFrom1stRequest).containsExactlyInAnyOrderElementsOf(expectedBlockDTOs);
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(
-                Collections.singletonList(
-                        FeedbackDTO.of(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().id()).type(FeedbackType.MANUAL))),
+                List.of(FeedbackDTO.of(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().id()).type(FeedbackType.MANUAL))),
                 new HashSet<>(blocksFrom1stRequest), null);
         request.postWithResponseBody(
                 "/api/text/participations/" + participationId(submission1stRequest) + "/results/" + latestResultId(submission1stRequest) + "/submit-text-assessment",
@@ -1205,7 +1203,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         final Feedback feedback = new Feedback().detailText("Foo Bar.").credits(2d).reference(textBlockSubmission2.getId());
         textSubmission2 = textExerciseUtilService.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2",
-                TEST_PREFIX + "tutor1", Collections.singletonList(feedback));
+                TEST_PREFIX + "tutor1", List.of(feedback));
 
         // refetch the database objects to avoid lazy exceptions
         textSubmission1 = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission1.getId()).orElseThrow();
