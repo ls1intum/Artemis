@@ -42,13 +42,17 @@ class MockIntersectionObserver {
             (scrolledUp)="ups = ups + 1"
             (scrolled)="downs = downs + 1"
         >
-            <div class="item">item</div>
+            @for (item of items(); track item) {
+                <div class="item">{{ item }}</div>
+            }
         </div>
     `,
 })
 class TestHostComponent {
     readonly scrollWindow = signal(false);
     readonly disabled = signal(false);
+    // The directive must keep its sentinels bracketing this list even as items are prepended/appended.
+    readonly items = signal(['item']);
     ups = 0;
     downs = 0;
 }
@@ -101,6 +105,21 @@ describe('InfiniteScrollDirective', () => {
         expect(container().firstElementChild?.getAttribute('data-infinite-scroll-sentinel')).toBe('top');
         expect(container().lastElementChild?.getAttribute('data-infinite-scroll-sentinel')).toBe('bottom');
         expect(observer().observe).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps the sentinels at the content edges after items are prepended and appended', () => {
+        flush();
+
+        // Prepend older items (as loading a previous page does) and append a newer item.
+        host.items.set(['older-2', 'older-1', 'item', 'newer-1']);
+        fixture.detectChanges();
+
+        // The directive inserts sentinels imperatively and never re-positions them, so this asserts the
+        // @for block keeps inserting its items between (not around) the sentinels.
+        expect(container().firstElementChild?.getAttribute('data-infinite-scroll-sentinel')).toBe('top');
+        expect(container().lastElementChild?.getAttribute('data-infinite-scroll-sentinel')).toBe('bottom');
+        // Sanity check that the list actually mutated between the sentinels.
+        expect(container().querySelectorAll('.item')).toHaveLength(4);
     });
 
     it('observes the host element with a rootMargin derived from the distance inputs', () => {

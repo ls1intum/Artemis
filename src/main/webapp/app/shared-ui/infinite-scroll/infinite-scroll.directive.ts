@@ -79,9 +79,13 @@ export class InfiniteScrollDirective {
     private onIntersect(entries: IntersectionObserverEntry[]): void {
         for (const entry of entries) {
             // Ignore callbacks fired because the scroll container is detached or hidden (e.g. a
-            // `display: none` toggle while loading more): the sentinel then has no layout box, so this
-            // is not a real scroll movement and must not (re-)arm or fire the trigger.
-            if (entry.boundingClientRect.width === 0 && entry.boundingClientRect.height === 0) {
+            // `display: none` toggle while loading more, but also `visibility: hidden`, a collapsed
+            // height, or a zero-width parent): the sentinel then has no usable layout box, so this is
+            // not a real scroll movement and must not (re-)arm or fire the trigger. A shown sentinel is
+            // always `width: 100%` / `height: 1px`, so neither dimension is ever legitimately zero —
+            // hence `||` (any zero dimension means hidden) has no false positives and catches more
+            // hidden states than a strict `&&` would.
+            if (entry.boundingClientRect.width === 0 || entry.boundingClientRect.height === 0) {
                 continue;
             }
             const isTop = entry.target === this.topSentinel;

@@ -3,6 +3,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { SEED_COURSES } from '../../support/seedData';
 
 // Use pre-seeded courses — no course creation needed
@@ -237,6 +238,48 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();
+        });
+    });
+
+    test.describe('Infinite scroll in channel messages', () => {
+        let channel: Channel;
+        let oldestPost: Post;
+        let newestPost: Post;
+        // The message list loads 50 posts per page, so seeding more than one page forces a second page
+        // to be fetched only by scrolling up (which exercises the in-house infinite-scroll directive).
+        const messagesToSeed = 60;
+
+        test.beforeEach('Create channel with more than one page of messages', async ({ login, communicationAPIRequests }) => {
+            await login(admin);
+            const channelName = 'inf-scroll-' + generateUUID().slice(0, 8);
+            channel = await communicationAPIRequests.createCourseMessageChannel({ id: writeCourse.id } as any, channelName, 'Infinite scroll channel', false, true);
+            await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
+
+            // Posted (and awaited) first, so it is guaranteed to be the oldest post and land on the second page.
+            oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Oldest infinite scroll message');
+            // Filler messages in between; their relative order is irrelevant as long as they are newer than the oldest.
+            await Promise.all(
+                Array.from({ length: messagesToSeed - 2 }, (_, index) =>
+                    communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', `Infinite scroll filler message ${index + 1}`),
+                ),
+            );
+            // Posted (and awaited) last, so it is guaranteed to be the newest post and land on the first page.
+            newestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Newest infinite scroll message');
+        });
+
+        test('Scrolling up loads the previous page of older messages', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
+
+            // The first page (the newest 50 posts) is loaded and the view scrolls to the bottom, so the newest post is shown...
+            await courseMessages.checkMessage(newestPost.id!, 'Newest infinite scroll message');
+            // ...while the oldest post lives on the not-yet-loaded second page and is therefore absent from the DOM.
+            await expect(courseMessages.getSinglePost(oldestPost.id!)).toHaveCount(0);
+
+            // Scrolling to the top brings the directive's top sentinel into view, which triggers loading the next (older) page.
+            await courseMessages.scrollMessagesToTop();
+
+            // The oldest post is now fetched and rendered, confirming the infinite-scroll directive paged correctly.
+            await courseMessages.checkMessage(oldestPost.id!, 'Oldest infinite scroll message');
         });
     });
 });
