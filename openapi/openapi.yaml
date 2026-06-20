@@ -1281,6 +1281,15 @@ components:
       required: [endLine, instruction, problemStatementText, startLine]
     QuizQuestionWithSolution:
       type: object
+      discriminator:
+        propertyName: type
+        mapping: {multiple-choice: '#/components/schemas/MultipleChoiceQuizQuestionWithSolution',
+          drag-and-drop: '#/components/schemas/DragAndDropQuizQuestionWithSolution',
+          short-answer: '#/components/schemas/ShortAnswerQuizQuestionWithSolution'}
+      oneOf:
+      - {$ref: '#/components/schemas/MultipleChoiceQuizQuestionWithSolution'}
+      - {$ref: '#/components/schemas/DragAndDropQuizQuestionWithSolution'}
+      - {$ref: '#/components/schemas/ShortAnswerQuizQuestionWithSolution'}
       properties:
         id: {type: integer, format: int64}
         title: {type: string}
@@ -1426,6 +1435,31 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
+    DragAndDropQuizQuestionWithSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        backgroundFilePath: {type: string}
+        dropLocations:
+          type: array
+          items: {$ref: '#/components/schemas/DropLocation'}
+        dragItems:
+          type: array
+          items: {$ref: '#/components/schemas/DragItem'}
+        correctDndMappings:
+          type: array
+          items: {$ref: '#/components/schemas/DragAndDropMapping'}
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -1470,6 +1504,32 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
+    ShortAnswerQuizQuestionWithSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        spots:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSpot'}
+        solutions:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSolution'}
+        similarityValue: {type: integer, format: int32}
+        matchLetterCase: {type: boolean}
+        correctMappings:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerMapping'}
     Student:
       type: object
       properties:
@@ -1941,6 +2001,25 @@ components:
         location: {type: string, maxLength: 255, minLength: 1}
       required: [firstSessionEnd, firstSessionStart, location, repetitionFrequency,
         tutorialPeriodEnd]
+    MultipleChoiceQuizQuestionWithSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        answerOptions:
+          type: array
+          items: {$ref: '#/components/schemas/AnswerOptionWithSolution'}
+        singleChoice: {type: boolean}
     CreateOrUpdateTutorialGroupSessionRequest:
       type: object
       properties:
