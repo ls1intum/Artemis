@@ -279,8 +279,8 @@ public class FileUtil {
         boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
         // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
         if (!normalisedPathStartsWithNormalisedSubPath) {
-            throw new IllegalArgumentException(String.format("Invalid path: '%s'. Normalized to: '%s'. Expected to start with: '%s' (normalized from '%s').", path, normalisedPath,
-                    normalisedSubPath, subPath));
+            throw new IllegalArgumentException(
+                    "Invalid path: '%s'. Normalized to: '%s'. Expected to start with: '%s' (normalized from '%s').".formatted(path, normalisedPath, normalisedSubPath, subPath));
         }
     }
 
@@ -596,7 +596,7 @@ public class FileUtil {
      * @param replacements the replacements that should be applied
      */
     public static void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) {
-        replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
+        replaceVariablesInFileRecursive(startPath, replacements, List.of());
     }
 
     /**

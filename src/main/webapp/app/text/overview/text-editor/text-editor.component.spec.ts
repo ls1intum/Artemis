@@ -34,7 +34,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -52,18 +51,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
 // Mock components to avoid complex dependencies
-@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
-class MockHeaderParticipationPageComponent {
-    exercise = input<any>();
-    participation = input<any>();
-}
-
 @Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
 class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
@@ -71,14 +63,6 @@ class MockRequestFeedbackButtonComponent {
     hasAthenaResultForLatestSubmission = input<any>();
     isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
-}
-
-@Component({ selector: 'jhi-result-history', template: '', standalone: true })
-class MockResultHistoryComponent {
-    results = input<any>();
-    exercise = input<any>();
-    participationInput = input<any>();
-    selectedResultId = input<any>();
 }
 
 @Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
@@ -141,16 +125,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
                 },
                 add: {
-                    imports: [
-                        MockHeaderParticipationPageComponent,
-                        MockRequestFeedbackButtonComponent,
-                        MockResultHistoryComponent,
-                        MockIrisExerciseChatbotButtonComponent,
-                        FormsModule,
-                    ],
+                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
                 },
             })
             .compileComponents();
@@ -276,7 +254,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeFalsy();
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
@@ -309,37 +286,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeTruthy();
-
-        fixture.destroy();
-    });
-
-    it('should not be always active if there is a result and no due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.result.set(result);
-        comp.textExercise.set(textExercise);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeFalsy();
-
-        fixture.destroy();
-    });
-
-    it('should be always active if there is no result and the initialization date is after the due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise.set(textExercise);
-        comp.textExercise().dueDate = dayjs();
-        participation.initializationDate = dayjs().add(1, 'days');
-        // @ts-ignore updateParticipation is private
-        comp.updateParticipation(participation);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
@@ -594,29 +540,6 @@ describe('TextEditorComponent', () => {
         expect(textarea).toBeTruthy();
     });
 
-    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
-        comp.isReadOnlyWithShowResult.set(true);
-        comp.textExercise.set(textExercise);
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeFalsy();
-    });
-
-    it('should render the submit button when isReadOnlyWithShowResult is false and in exam mode', () => {
-        comp.isOwnerOfParticipation.set(true);
-        comp.isReadOnlyWithShowResult.set(false);
-        comp.isAlwaysActive = true;
-        comp.examMode.set(true);
-        comp.textExercise.set(textExercise);
-        comp.submission.set({ id: 5, submitted: true });
-
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeTruthy();
-    });
-
     it('should destroy', () => {
         comp.submission.set({ text: 'abc' } as TextSubmission);
         comp.answer.set('def');
@@ -640,29 +563,6 @@ describe('TextEditorComponent', () => {
         expect(comp.isAutomaticResult).toBe(true);
         comp.result.set({ assessmentType: AssessmentType.MANUAL } as Result);
         expect(comp.isAutomaticResult).toBe(false);
-    });
-
-    it('submitButtonTooltip covers all branches', () => {
-        comp.textExercise.set({} as TextExercise);
-        // Due date missed allowed
-        comp.isAllowedToSubmitAfterDueDate.set(true);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
-
-        // Active without due date
-        comp.isAllowedToSubmitAfterDueDate.set(false);
-        comp.isAlwaysActive = true;
-        comp.result.set(undefined as any);
-        comp.textExercise.set({ dueDate: undefined } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
-
-        // Active with due date
-        comp.textExercise.set({ dueDate: dayjs().add(1, 'hour') } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
-
-        // Not active
-        comp.isAlwaysActive = false;
-        comp.result.set({ assessmentType: AssessmentType.MANUAL } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
     });
 
     it('canDeactivate true when no submission or unchanged; false when changed', () => {
