@@ -126,7 +126,7 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
-            handleLegacyProgrammingExercise(originalProgrammingExercise);
+            handleLegacyLocalCIProgrammingExercise(originalProgrammingExercise);
 
             originalProgrammingExercise.setCourse(course);
             originalProgrammingExercise.setTestCasesChanged(false);
@@ -302,17 +302,26 @@ public class ProgrammingExerciseImportFromFileService {
      * @param programmingExercise the exercise to handle
      * @throws JsonProcessingException when serialization failed
      */
-    private void handleLegacyProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig() == null || programmingExercise.getBuildConfig().getBuildScript() == null) {
+    private void handleLegacyLocalCIProgrammingExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
+        if (!profileService.isLocalCIActive() || programmingExercise.getBuildConfig() == null) {
             return;
         }
 
         final Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = legacyBuildPlanConverterService.orElseThrow().convertLegacyBuildPlanConfiguration(programmingExercise);
+        programmingExercise.getBuildConfig().setBuildScript(null);
+
         if (buildPlanPhasesDTO.isEmpty()) {
-            throw new BadRequestAlertException("The build plan is in an invalid format!", "programmingExercise", "buildPlanConfigurationInvalid");
+            try {
+                // check that it is in the valid format
+                BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration());
+            }
+            catch (JsonProcessingException e) {
+                // if not reset it
+                programmingExercise.getBuildConfig().setBuildPlanConfiguration(null);
+            }
+            return;
         }
 
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanPhasesDTO.orElseThrow().toBuildPlanConfiguration());
-        programmingExercise.getBuildConfig().setBuildScript(null);
     }
 }
