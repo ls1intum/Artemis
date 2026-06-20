@@ -21,8 +21,10 @@ import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingReposito
  * Service for managing the lifecycle of {@link GocastCourseBinding} entities.
  * <p>
  * Handles creating, retrieving, updating and deleting gocast course bindings, as well as the
- * server-to-server binding-status refresh (EP7) that drives the {@code PENDING → ACTIVE/REVOKED}
- * state machine. The full REST interface is exposed by {@code GocastIntegrationResource} (Task A4).
+ * server-to-server binding-status refresh (EP7) that confirms the {@code PENDING → ACTIVE} transition.
+ * EP7 only ever confirms {@code PENDING → ACTIVE}; {@code REVOKED} is never reached from the EP7 refresh
+ * path but only from an {@code ACTIVE} binding via the management-call {@code 403} paths (EP8/EP2). The
+ * full REST interface is exposed by {@code GocastIntegrationResource} (Task A4).
  */
 @Service
 @Profile(PROFILE_CORE)
