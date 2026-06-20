@@ -3,39 +3,28 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonDirective } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize()"
-            [icon]="faPlus"
-            [title]="'artemisApp.team.importTeams.buttonLabel'"
-            (onClick)="openTeamsImportDialog($event)"
-        />
+        <button pButton severity="primary" size="small" (click)="openTeamsImportDialog($event)">
+            <i class="pi pi-upload"></i>
+            <span>{{ 'artemisApp.team.importTeams.buttonLabel' | artemisTranslate }}</span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [ButtonDirective, ArtemisTranslatePipe],
 })
 export class TeamsImportButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
-
     readonly exercise = input.required<Exercise>();
     readonly teams = input.required<Team[]>();
-    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     readonly save = output<Team[]>();
-
-    // Icons
-    faPlus = faPlus;
 
     /**
      * Open up import dialog for teams
