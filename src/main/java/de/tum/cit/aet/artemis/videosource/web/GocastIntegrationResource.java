@@ -179,6 +179,11 @@ public class GocastIntegrationResource {
             URI location = URI.create("/api/videosource/courses/" + courseId + "/binding");
             return ResponseEntity.created(location).body(response);
         }
+        catch (GocastIntegrationException ex) {
+            // EP1 threw (e.g. gocast returned 403/404/503) — propagate the upstream status instead of a generic 500.
+            log.warn("EP1 listAdministeredCourses failed during createBinding for course {}: {}", courseId, ex.getMessage());
+            return ResponseEntity.status(ex.getUpstreamStatus()).build();
+        }
         catch (IllegalStateException ex) {
             log.warn("Cannot create binding for course {}: {}", courseId, ex.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -263,23 +268,32 @@ public class GocastIntegrationResource {
             if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
                 // Disambiguate the 403: it may mean either (a) the service account is no longer bound
                 // (binding should be REVOKED) or (b) the student is not eligible (leave as ACTIVE).
+                // The binding is only ever mutated when EP7 *definitively* reports not-bound. A transient
+                // EP7 outage (503/timeout/5xx/401/etc.) must leave the binding ACTIVE and call no updateStatus.
                 try {
                     boolean stillBound = connectorService.getBindingStatus(binding.getGocastCourseId());
                     if (!stillBound) {
-                        // EP7 reports unbound — revoke the binding and return 409 CONFLICT.
+                        // EP7 definitively reports unbound — revoke the binding and return 409 CONFLICT.
                         log.warn("EP2 returned 403 and EP7 reports unbound — marking binding REVOKED for gocast course {}", binding.getGocastCourseId());
                         bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
                         return ResponseEntity.status(HttpStatus.CONFLICT).build();
                     }
+                    // EP7 confirms still bound — student is ineligible. Fall through to return the original EP2 403.
+                    log.debug("EP2 returned 403 but EP7 confirms still bound — student {} is ineligible for stream {}", lrzId, streamId);
                 }
                 catch (GocastIntegrationException ep7Ex) {
-                    // EP7 also threw (e.g. 403 means definitively not bound) — mark REVOKED.
-                    log.warn("EP2 returned 403 and EP7 failed — marking binding REVOKED for gocast course {}: {}", binding.getGocastCourseId(), ep7Ex.getMessage());
-                    bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
-                    return ResponseEntity.status(HttpStatus.CONFLICT).build();
+                    if (HttpStatus.FORBIDDEN.isSameCodeAs(ep7Ex.getUpstreamStatus())) {
+                        // EP7 itself returned 403 — the service account is definitively not a course admin
+                        // anymore. Mark REVOKED and return 409 CONFLICT.
+                        log.warn("EP2 returned 403 and EP7 returned 403 (definitively unbound) — marking binding REVOKED for gocast course {}", binding.getGocastCourseId());
+                        bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
+                        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+                    }
+                    // EP7 failed transiently/ambiguously (503/timeout/5xx/401/etc.). Do NOT mutate the binding —
+                    // leave it ACTIVE and fall through to surface the original EP2 403 to the caller.
+                    log.warn("EP2 returned 403 but EP7 failed transiently (status={}) — leaving binding ACTIVE for gocast course {}: {}", ep7Ex.getUpstreamStatus(),
+                            binding.getGocastCourseId(), ep7Ex.getMessage());
                 }
-                // EP7 confirms still bound — student is ineligible. Return 403 without revoking.
-                log.debug("EP2 returned 403 but EP7 confirms still bound — student {} is ineligible for stream {}", lrzId, streamId);
             }
             log.warn("EP2 getPlaybackToken failed for course {}, stream {}: status={}", courseId, streamId, ex.getUpstreamStatus());
             return ResponseEntity.status(ex.getUpstreamStatus()).build();
