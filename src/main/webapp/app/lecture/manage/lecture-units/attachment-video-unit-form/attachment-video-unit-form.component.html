@@ -162,9 +162,10 @@
                     </div>
                 </div>
             </div>
-            <!-- TUM Live stream picker (Stage 2): self-resolves binding status when courseId is present -->
+            <!-- TUM Live stream picker (Stage 2): self-resolves binding status when courseId is present.
+                 Hidden when the Gocast feature toggle is disabled (e.g. deployment without TUM Live config). -->
             @if (courseId()) {
-                <div class="form-group mt-2">
+                <div class="form-group mt-2" [jhiFeatureToggleHide]="FeatureToggle.Gocast">
                     <jhi-gocast-stream-picker [courseId]="courseId()!" (streamSelected)="onGocastStreamSelected($event)" />
                 </div>
             }

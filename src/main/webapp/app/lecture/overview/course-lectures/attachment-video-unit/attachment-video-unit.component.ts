@@ -14,7 +14,7 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -58,6 +58,39 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { GocastStreamIdentity } from 'app/lecture/shared/video-player/video-player.component';
+
+/** Parses a TUM Live watch-page URL and returns the stream identity, or undefined if not a TUM Live URL.
+ * Supported formats: https://tum.live/w/{slug}/{streamId} and https://live.rbg.tum.de/w/{slug}/{streamId}
+ */
+function parseTumLiveUrl(url: string | null | undefined): { slug: string; streamId: number } | undefined {
+    if (!url) {
+        return undefined;
+    }
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return undefined;
+    }
+    const tumLiveHosts = ['tum.live', 'live.rbg.tum.de'];
+    if (!tumLiveHosts.includes(parsed.hostname)) {
+        return undefined;
+    }
+    // Path format: /w/{slug}/{streamId}. Match the segment anywhere in the path to mirror the
+    // server's Pattern.compile("/w/([^/]+)/([0-9]+)") + matcher.find() semantics (TumLiveService).
+    const match = parsed.pathname.match(/\/w\/([^/]+)\/([0-9]+)/);
+    if (!match) {
+        return undefined;
+    }
+    const slug = match[1];
+    const streamId = parseInt(match[2], 10);
+    if (!Number.isFinite(streamId)) {
+        return undefined;
+    }
+    return { slug, streamId };
+}
 
 type SplitSizes = [number, number];
 
@@ -93,6 +126,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -109,6 +143,27 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
+
+    /** Whether the Gocast (TUM Live) feature is enabled on this Artemis instance. */
+    private readonly gocastEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Gocast), { initialValue: false });
+
+    /**
+     * When the Gocast feature is enabled and the unit's videoSource is a TUM Live watch-page URL
+     * (https://tum.live/w/{slug}/{streamId} or live.rbg.tum.de equivalent), this computed signal
+     * carries the identity needed by the video player to call EP2 for a signed playback token.
+     * The player falls back to the public videoUrl path when EP2 fails (404/409/feature-disabled).
+     */
+    readonly gocastIdentity = computed<GocastStreamIdentity | undefined>(() => {
+        if (!this.gocastEnabled()) {
+            return undefined;
+        }
+        const src = this.rawVideoSource();
+        const parsed = parseTumLiveUrl(src);
+        if (!parsed) {
+            return undefined;
+        }
+        return { courseId: this.courseId(), streamId: parsed.streamId, slug: parsed.slug };
+    });
     readonly youtubePlayerFailed = signal(false);
 
     // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
@@ -291,6 +346,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
+            // A bound (non-public) TUM Live stream plays via the EP2 token path in the video player and
+            // may have no resolvable public playlist. We still want its transcript, so remember whether
+            // this is a gocast stream and fetch the transcript regardless of the public-playlist outcome.
+            const isGocastStream = this.gocastIdentity() !== undefined;
+
             // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
@@ -300,12 +360,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         if (resolvedUrl) {
                             this.playlistUrl.set(resolvedUrl);
                             this.fetchTranscript();
+                        } else if (isGocastStream) {
+                            // No public playlist, but a bound TUM Live stream still has a transcript.
+                            this.fetchTranscript();
                         }
                         this.isLoading.set(false);
                     },
                     error: () => {
-                        // Failed to resolve playlist URL, will fall back to iframe
+                        // Failed to resolve playlist URL, will fall back to iframe (or, for a gocast stream,
+                        // to the EP2 token path). Still fetch the transcript for gocast streams.
                         this.playlistUrl.set(undefined);
+                        if (isGocastStream) {
+                            this.fetchTranscript();
+                        }
                         this.isLoading.set(false);
                     },
                 });

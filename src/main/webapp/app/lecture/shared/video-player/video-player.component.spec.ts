@@ -713,6 +713,23 @@ describe('VideoPlayerComponent', () => {
             expect(component.tokenError()).toBe(true);
         });
 
+        it('falls back to the public videoUrl via HLS when the token fetch fails and a videoUrl is set', async () => {
+            const publicUrl = 'https://cdn.example.com/public.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('EP2 503')));
+
+            // gocastIdentity present (EP2 path attempted) AND a public videoUrl fallback available.
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', publicUrl);
+            await render();
+
+            // The public URL is loaded into HLS as a fallback...
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(publicUrl);
+            expect(getMockHls().attachMedia).toHaveBeenCalled();
+            // ...and the player does NOT get stuck in the tokenError state because the fallback succeeded.
+            expect(component.tokenError()).toBe(false);
+        });
+
         it('sets tokenError when token response has no usable URL', async () => {
             mockGocastService.getPlaybackToken.mockReturnValue(of({ expiresIn: 3600 }));
 
@@ -865,6 +882,33 @@ describe('VideoPlayerComponent', () => {
             await render();
 
             expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        });
+
+        it('falls back to videoUrl via HLS when EP2 fails and videoUrl is set', async () => {
+            // Fix 2: EP2 error + fallback videoUrl → player loads public HLS URL instead of setting tokenError.
+            const fallbackUrl = 'https://cdn.example.com/public.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('409 no binding')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', fallbackUrl);
+            await render();
+
+            expect(component.tokenError()).toBe(false);
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+        });
+
+        it('sets tokenError when EP2 fails and no videoUrl fallback is available', async () => {
+            // Fix 2: EP2 error + no videoUrl → tokenError is shown (existing behaviour preserved).
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('404')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            // videoUrl not set
+            await render();
+
+            expect(component.tokenError()).toBe(true);
+            expect(getMockHls().loadSource).not.toHaveBeenCalled();
         });
 
         it('cancels pending token fetch subscription on component destroy via takeUntilDestroyed', async () => {

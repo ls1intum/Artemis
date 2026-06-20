@@ -227,7 +227,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     }, refreshAfterMs);
                 },
                 error: () => {
-                    this.tokenError.set(true);
+                    // EP2 failed (e.g. 409 no ACTIVE binding, 404, 503). Fall back to the public videoUrl path
+                    // so students still see the stream via the unauthenticated HLS URL when available.
+                    const fallbackUrl = this.videoUrl();
+                    if (fallbackUrl) {
+                        this.tokenError.set(false);
+                        if (!this.hls) {
+                            this.initHls(fallbackUrl, videoElement);
+                        }
+                    } else {
+                        this.tokenError.set(true);
+                    }
                 },
             });
     }
