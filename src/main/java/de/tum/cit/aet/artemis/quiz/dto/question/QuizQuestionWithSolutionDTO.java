@@ -47,14 +47,17 @@ public record QuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO qui
 }
 
 // These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 record MultipleChoiceQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
         @JsonUnwrapped MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO) {
 }
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 record DragAndDropQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
         @JsonUnwrapped DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO) {
 }
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ShortAnswerQuizQuestionWithSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
         @JsonUnwrapped ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO) {
 }
