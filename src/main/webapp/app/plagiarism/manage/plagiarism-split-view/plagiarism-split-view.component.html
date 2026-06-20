@@ -1,5 +1,13 @@
 <div class="plagiarism-split-view">
-    <p-splitter class="plagiarism-splitter" layout="horizontal" [gutterSize]="8" [panelSizes]="panelSizes()" [minSizes]="[10, 10]">
+    <p-splitter
+        class="plagiarism-splitter"
+        [class.collapsed-left]="collapsedSide() === 'left'"
+        [class.collapsed-right]="collapsedSide() === 'right'"
+        layout="horizontal"
+        [gutterSize]="8"
+        [panelSizes]="panelSizes()"
+        [minSizes]="[10, 10]"
+    >
         <ng-template #panel>
             <div class="plagiarism-split-pane">
                 @if (plagiarismComparison()) {

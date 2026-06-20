@@ -101,22 +101,32 @@ describe('Plagiarism Split View Component', () => {
 
     it('should collapse the right pane so the left pane takes all space', () => {
         comp.handleSplitControl('left');
+        fixture.detectChanges();
 
-        expect(comp.panelSizes()).toEqual([100, 0]);
+        // collapse is applied via a CSS class (panelSizes can't hide a pane because p-splitter coerces 0 -> 50%)
+        expect(comp.collapsedSide()).toBe('right');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-right')).toBe(true);
     });
 
     it('should collapse the left pane so the right pane takes all space', () => {
         comp.handleSplitControl('right');
+        fixture.detectChanges();
 
-        expect(comp.panelSizes()).toEqual([0, 100]);
+        expect(comp.collapsedSide()).toBe('left');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-left')).toBe(true);
     });
 
-    it('should reset the split panes', () => {
-        comp.panelSizes.set([100, 0]);
+    it('should reset the split panes and clear any collapse', () => {
+        comp.collapsedSide.set('right');
 
         comp.handleSplitControl('even');
+        fixture.detectChanges();
 
+        expect(comp.collapsedSide()).toBeUndefined();
         expect(comp.panelSizes()).toEqual([50, 50]);
+        const splitter = fixture.nativeElement.querySelector('.plagiarism-splitter');
+        expect(splitter?.classList.contains('collapsed-left')).toBe(false);
+        expect(splitter?.classList.contains('collapsed-right')).toBe(false);
     });
 
     it('should get the first text submission', () => {

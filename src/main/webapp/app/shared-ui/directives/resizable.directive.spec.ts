@@ -13,6 +13,7 @@ import { ResizableConstraints, ResizableDirective, ResizableEdges, ResizableSize
             [resizableEdges]="edges()"
             [resizableConstraints]="constraints()"
             [resizableEnabled]="enabled()"
+            [resizableApplyInlineSize]="applyInline()"
             (resizeStart)="onStart()"
             (resizeMove)="onResize($event)"
             (resizeEnd)="onEnd($event)"
@@ -26,6 +27,7 @@ class ResizableTestHostComponent {
     readonly edges = signal<ResizableEdges>({ left: '.draggable-left' });
     readonly constraints = signal<ResizableConstraints>({ minWidth: 100, maxWidth: 400 });
     readonly enabled = signal(true);
+    readonly applyInline = signal(true);
     starts = 0;
     lastResize?: ResizableSizeEvent;
     lastEnd?: ResizableSizeEvent;
@@ -113,5 +115,67 @@ describe('ResizableDirective', () => {
         pointer(panel, 'pointermove', 50, 180); // +80 height
         expect(fixture.componentInstance.lastResize).toEqual({ width: 200, height: 180 });
         expect(panel.style.height).toBe('180px');
+    });
+
+    it('grows the width when dragging the right handle rightwards', () => {
+        fixture.componentInstance.edges.set({ right: '.draggable-right' });
+        fixture.detectChanges();
+        const handle = panel.querySelector('.draggable-right')!;
+        pointer(handle, 'pointerdown', 300, 50);
+        pointer(panel, 'pointermove', 360, 50); // moved 60px right -> +60 width
+
+        expect(fixture.componentInstance.lastResize).toEqual({ width: 260, height: 100 });
+        expect(panel.style.width).toBe('260px');
+    });
+
+    it('emits the size but writes no inline width when resizableApplyInlineSize is false', () => {
+        // This is the contract the video/youtube players rely on: the directive reports the size, the consumer
+        // applies its own flex-based styling.
+        fixture.componentInstance.applyInline.set(false);
+        fixture.detectChanges();
+        const handle = panel.querySelector('.draggable-left')!;
+        pointer(handle, 'pointerdown', 100, 50);
+        pointer(panel, 'pointermove', 60, 50); // +40 width
+
+        expect(fixture.componentInstance.lastResize).toEqual({ width: 240, height: 100 });
+        expect(panel.style.width).toBe('');
+    });
+
+    it('cleans up without throwing when the drag ends with pointercancel', () => {
+        // Simulate a browser that already released the capture on pointercancel, so releasePointerCapture throws
+        // InvalidPointerId. The directive must swallow that and still finish teardown (no stuck state/listeners).
+        panel.hasPointerCapture = () => true;
+        panel.releasePointerCapture = () => {
+            throw new DOMException('InvalidPointerId', 'NotFoundError');
+        };
+        const handle = panel.querySelector('.draggable-left')!;
+        pointer(handle, 'pointerdown', 100, 50);
+        pointer(panel, 'pointermove', 60, 50);
+        expect(panel.classList.contains('card-resizable')).toBe(true);
+
+        expect(() => pointer(panel, 'pointercancel', 60, 50)).not.toThrow();
+        expect(panel.classList.contains('card-resizable')).toBe(false);
+
+        // The move/up/cancel listeners must be gone: a further pointermove must not emit.
+        fixture.componentInstance.lastResize = undefined;
+        pointer(panel, 'pointermove', 0, 50);
+        expect(fixture.componentInstance.lastResize).toBeUndefined();
+    });
+
+    it('releases the pointer capture and stops resizing when destroyed mid-drag', () => {
+        let released = false;
+        panel.hasPointerCapture = () => true;
+        panel.releasePointerCapture = () => {
+            released = true;
+        };
+        const handle = panel.querySelector('.draggable-left')!;
+        pointer(handle, 'pointerdown', 100, 50);
+
+        expect(() => fixture.destroy()).not.toThrow();
+        expect(released).toBe(true);
+
+        fixture.componentInstance.lastResize = undefined;
+        pointer(panel, 'pointermove', 0, 50);
+        expect(fixture.componentInstance.lastResize).toBeUndefined();
     });
 });

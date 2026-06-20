@@ -1,5 +1,13 @@
 <div class="video-wrapper" #videoWrapper>
-    <div class="video-column" #videoColumn jhiResizable [resizableEdges]="{ right: '.resizer-handle' }" [resizableConstraints]="resizableConstraints">
+    <div
+        class="video-column"
+        #videoColumn
+        jhiResizable
+        [resizableEdges]="{ right: '.resizer-handle' }"
+        [resizableConstraints]="resizableConstraints"
+        [resizableApplyInlineSize]="false"
+        (resizeMove)="onVideoColumnResize($event)"
+    >
         <!-- Native HTML5 video element for hls.js -->
         <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
 

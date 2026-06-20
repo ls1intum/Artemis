@@ -109,6 +109,8 @@ describe('VideoPlayerComponent', () => {
                             jhiResizable
                             [resizableEdges]="{ right: '.resizer-handle' }"
                             [resizableConstraints]="resizableConstraints"
+                            [resizableApplyInlineSize]="false"
+                            (resizeMove)="onVideoColumnResize($event)"
                         >
                             <video #videoRef></video>
                             <button #resizerHandle type="button" class="resizer-handle"></button>
@@ -298,30 +300,33 @@ describe('VideoPlayerComponent', () => {
             setInputs('https://cdn.example.com/m.m3u8', []);
             await render();
 
-            // Start at 500px, drag the right edge to 600px → 600px (within [300, 750])
+            // Start at 500px, drag the right edge to 600px (within [300, 750]). The column is flex-based
+            // (flex: 3), so the resize must be applied as a percentage flex-basis, not an inline width that a
+            // flex item ignores: 600 / 1000 = 60%.
             const videoColumnEl = dragHandleTo(500, 600, 1000);
 
-            expect(videoColumnEl.style.width).toBe('600px');
+            expect(videoColumnEl.style.flex).toBe('0 0 60%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps the video column width to the minimum', async () => {
             setInputs('https://cdn.example.com/m.m3u8', []);
             await render();
 
-            // Drag well below the minimum → clamped to 300px
+            // Drag well below the minimum → clamped to 300px → 300 / 1000 = 30%
             const videoColumnEl = dragHandleTo(500, 100, 1000);
 
-            expect(videoColumnEl.style.width).toBe('300px');
+            expect(videoColumnEl.style.flex).toBe('0 0 30%');
         });
 
         it('clamps the video column width to the maximum', async () => {
             setInputs('https://cdn.example.com/m.m3u8', []);
             await render();
 
-            // Drag beyond the maximum (1000 - 250 = 750px) → clamped to 750px
+            // Drag beyond the maximum (1000 - 250 = 750px) → clamped to 750px → 750 / 1000 = 75%
             const videoColumnEl = dragHandleTo(500, 900, 1000);
 
-            expect(videoColumnEl.style.width).toBe('750px');
+            expect(videoColumnEl.style.flex).toBe('0 0 75%');
         });
 
         it('resetSplitRatio clears custom sizing on the video column', async () => {

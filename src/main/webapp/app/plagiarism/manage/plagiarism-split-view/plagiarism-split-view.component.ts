@@ -40,6 +40,14 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      */
     readonly panelSizes = signal<number[]>([50, 50]);
 
+    /**
+     * Which pane the "show only left/right" controls have fully collapsed, or undefined when both are shown.
+     * Collapsing is applied via a CSS class (see the component SCSS), NOT via `panelSizes`: p-splitter coerces a
+     * falsy size to an even split (`panelInitialSize || 100 / panels.length`), so setting a pane to `0` would
+     * render it at 50% and never actually hide it.
+     */
+    readonly collapsedSide = signal<'left' | 'right' | undefined>(undefined);
+
     readonly isProgrammingOrTextExercise = signal(false);
 
     readonly matchesA = signal<Map<string, FromToElement[]> | undefined>(undefined);
@@ -157,16 +165,17 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     handleSplitControl(pane: string) {
         switch (pane) {
             case 'left': {
-                // collapse the right pane: the left pane takes all the space
-                this.panelSizes.set([100, 0]);
+                // show only the left pane: fully collapse the right one
+                this.collapsedSide.set('right');
                 return;
             }
             case 'right': {
-                // collapse the left pane: the right pane takes all the space
-                this.panelSizes.set([0, 100]);
+                // show only the right pane: fully collapse the left one
+                this.collapsedSide.set('left');
                 return;
             }
             case 'even': {
+                this.collapsedSide.set(undefined);
                 this.panelSizes.set([50, 50]);
             }
         }

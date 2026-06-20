@@ -5,7 +5,9 @@
         jhiResizable
         [resizableEdges]="{ right: '.resizer-handle' }"
         [resizableConstraints]="resizableConstraints"
+        [resizableApplyInlineSize]="false"
         (resizeStart)="onResizeStart()"
+        (resizeMove)="onVideoColumnResize($event)"
         (resizeEnd)="onResizeEnd()"
     >
         <youtube-player

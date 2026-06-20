@@ -3,7 +3,7 @@ import { YouTubePlayer } from '@angular/youtube-player';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { ResizableConstraints, ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
@@ -153,6 +153,27 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     /** Re-enables pointer events on the iframe once the drag finishes. */
     protected onResizeEnd(): void {
         this.isResizing.set(false);
+    }
+
+    /**
+     * Applies a resize from the {@link ResizableDirective} to the video column as a percentage-based flex-basis.
+     * The directive runs with `resizableApplyInlineSize=false`: it would otherwise write an inline `width`, which a
+     * `flex: 3` column ignores (flex-basis 0% wins over width), so the divider would not actually move. We translate
+     * the clamped px width into `flex: 0 0 <percent>%` so the split changes and still scales when the wrapper resizes.
+     */
+    protected onVideoColumnResize(event: ResizableSizeEvent): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        const wrapperEl = this.videoWrapper()?.nativeElement;
+        if (!videoColumnEl || !wrapperEl) {
+            return;
+        }
+        const wrapperWidth = wrapperEl.getBoundingClientRect().width;
+        if (wrapperWidth <= 0) {
+            return;
+        }
+        const percent = Math.min(100, Math.max(0, (event.width / wrapperWidth) * 100));
+        videoColumnEl.style.flex = `0 0 ${percent}%`;
+        videoColumnEl.style.width = '';
     }
 
     /**

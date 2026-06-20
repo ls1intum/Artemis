@@ -82,7 +82,13 @@ export class ResizableDirective {
         // Keep `touch-action: none` on the handles so the browser does not hijack touch gestures.
         // Applied after the first render, when projected handles are present in the DOM.
         afterNextRender(() => this.applyHandleTouchAction(this.resizableEdges()));
-        this.destroyRef.onDestroy(() => this.teardownActiveDrag());
+        this.destroyRef.onDestroy(() => {
+            // Release a still-held pointer capture and reset state if the host is destroyed mid-drag.
+            this.releaseCaptureSafely();
+            this.activeEdge = undefined;
+            this.activePointerId = undefined;
+            this.teardownActiveDrag();
+        });
     }
 
     private applyHandleTouchAction(edges: ResizableEdges): void {
@@ -142,11 +148,14 @@ export class ResizableDirective {
         this.renderer.addClass(hostEl, 'card-resizable');
 
         const move = (e: PointerEvent) => this.onPointerMove(e);
+        // Same handler for pointerup and pointercancel. Releasing the capture is done inside onPointerUp via
+        // releaseCaptureSafely(); we must NOT call releasePointerCapture() here unconditionally, because on
+        // pointercancel the browser has already released the capture and the call would throw InvalidPointerId,
+        // aborting the teardown and leaving the directive wedged (stuck card-resizable + leaked listeners).
         const up = (e: PointerEvent) => {
             if (e.pointerId !== this.activePointerId) {
                 return;
             }
-            hostEl.releasePointerCapture?.(e.pointerId);
             this.onPointerUp();
         };
         const unMove = this.renderer.listen(hostEl, 'pointermove', move);
@@ -202,12 +211,33 @@ export class ResizableDirective {
         if (!this.activeEdge) {
             return;
         }
+        this.releaseCaptureSafely();
         this.activeEdge = undefined;
         this.activePointerId = undefined;
         this.teardownActiveDrag();
         this.renderer.removeClass(this.host.nativeElement, 'card-resizable');
         const rect = this.host.nativeElement.getBoundingClientRect();
         this.resizeEnd.emit({ width: rect.width, height: rect.height });
+    }
+
+    /**
+     * Releases the active pointer capture if (and only if) the host still holds it. On `pointercancel` the
+     * browser has already released it, so calling releasePointerCapture() would throw `InvalidPointerId`; the
+     * hasPointerCapture guard and the try/catch make this safe to call from pointerup, pointercancel and destroy.
+     */
+    private releaseCaptureSafely(): void {
+        const pointerId = this.activePointerId;
+        if (pointerId === undefined) {
+            return;
+        }
+        const hostEl = this.host.nativeElement;
+        try {
+            if (hostEl.hasPointerCapture?.(pointerId)) {
+                hostEl.releasePointerCapture(pointerId);
+            }
+        } catch {
+            // The capture was already released (e.g. on pointercancel); nothing to do.
+        }
     }
 
     private teardownActiveDrag(): void {
