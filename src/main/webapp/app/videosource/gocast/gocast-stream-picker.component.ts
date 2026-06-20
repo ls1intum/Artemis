@@ -5,7 +5,7 @@ import { SelectModule } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { GocastBindingStatus, GocastStream } from './gocast.model';
+import { GocastBindingStatus, GocastBindingWithApproval, GocastStream } from './gocast.model';
 import { GocastService } from './gocast.service';
 
 /** A single option in the TUM Live stream p-select dropdown. */
@@ -91,10 +91,10 @@ export class GocastStreamPickerComponent implements OnInit {
         }
         // Resolve binding from the server.
         this.gocastService.getBinding(this.courseId()).subscribe({
-            next: (binding) => {
-                this.bindingStatus.set(binding.status);
-                if (binding.status === 'ACTIVE') {
-                    this.boundCourseSlug = binding.gocastCourseSlug;
+            next: (response: GocastBindingWithApproval) => {
+                this.bindingStatus.set(response.binding.status);
+                if (response.binding.status === 'ACTIVE') {
+                    this.boundCourseSlug = response.binding.gocastCourseSlug;
                     this.loadStreams();
                 }
             },

@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
@@ -112,6 +113,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     private readonly gocastService = inject(GocastService);
 
+    private readonly destroyRef = inject(DestroyRef);
+
     constructor() {
         effect(() => {
             if (!this.viewReady()) {
@@ -177,51 +180,56 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * and play/pause state across the reload.
      */
     private fetchAndLoadToken(identity: GocastStreamIdentity, videoElement: HTMLVideoElement): void {
-        this.gocastService.getPlaybackToken(identity.courseId, identity.streamId).subscribe({
-            next: (token) => {
-                const url = token.playlistUrl ?? token.playlistUrlPres ?? token.playlistUrlCam;
-                if (!url) {
+        this.gocastService
+            .getPlaybackToken(identity.courseId, identity.streamId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (token) => {
+                    const url = token.playlistUrl ?? token.playlistUrlPres ?? token.playlistUrlCam;
+                    if (!url) {
+                        this.tokenError.set(true);
+                        return;
+                    }
+
+                    this.tokenError.set(false);
+
+                    if (this.hls) {
+                        // Refresh: swap the source while preserving position and play state.
+                        const currentTime = videoElement.currentTime;
+                        const wasPlaying = !videoElement.paused;
+
+                        this.hls.loadSource(url);
+
+                        // Restore position after the new manifest loads
+                        const restoreAfterManifest = () => {
+                            videoElement.currentTime = currentTime;
+                            if (wasPlaying) {
+                                videoElement.play().catch(() => {
+                                    // Autoplay may be blocked; ignore and let user resume manually
+                                });
+                            }
+                            this.hls?.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                        };
+                        this.hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                    } else {
+                        // First load
+                        this.initHls(url, videoElement);
+                    }
+
+                    // Schedule a refresh slightly before the token expires.
+                    // Use a minimum floor of 5 000 ms to avoid tight polling loops when
+                    // expiresIn is very small (e.g. ≤ TOKEN_REFRESH_BUFFER_SECONDS).
+                    const expiresIn = token.expiresIn; // seconds
+                    const refreshAfterMs = Math.max(5000, (expiresIn - TOKEN_REFRESH_BUFFER_SECONDS) * 1000);
+                    this.clearTokenRefreshTimer();
+                    this.tokenRefreshTimer = setTimeout(() => {
+                        this.fetchAndLoadToken(identity, videoElement);
+                    }, refreshAfterMs);
+                },
+                error: () => {
                     this.tokenError.set(true);
-                    return;
-                }
-
-                this.tokenError.set(false);
-
-                if (this.hls) {
-                    // Refresh: swap the source while preserving position and play state.
-                    const currentTime = videoElement.currentTime;
-                    const wasPlaying = !videoElement.paused;
-
-                    this.hls.loadSource(url);
-
-                    // Restore position after the new manifest loads
-                    const restoreAfterManifest = () => {
-                        videoElement.currentTime = currentTime;
-                        if (wasPlaying) {
-                            videoElement.play().catch(() => {
-                                // Autoplay may be blocked; ignore and let user resume manually
-                            });
-                        }
-                        this.hls?.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
-                    };
-                    this.hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
-                } else {
-                    // First load
-                    this.initHls(url, videoElement);
-                }
-
-                // Schedule a refresh slightly before the token expires
-                const expiresIn = token.expiresIn; // seconds
-                const refreshAfterMs = Math.max(0, (expiresIn - TOKEN_REFRESH_BUFFER_SECONDS) * 1000);
-                this.clearTokenRefreshTimer();
-                this.tokenRefreshTimer = setTimeout(() => {
-                    this.fetchAndLoadToken(identity, videoElement);
-                }, refreshAfterMs);
-            },
-            error: () => {
-                this.tokenError.set(true);
-            },
-        });
+                },
+            });
     }
 
     /**

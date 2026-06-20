@@ -843,5 +843,67 @@ describe('VideoPlayerComponent', () => {
 
             expect(clearTimeoutSpy).toHaveBeenCalled();
         });
+
+        it('uses minimum 5000ms delay when expiresIn is very small (≤ TOKEN_REFRESH_BUFFER_SECONDS)', async () => {
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            // expiresIn = 10 → (10 - 30) * 1000 = -20000, floor → 5000
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 10 }));
+
+            setGocastIdentity();
+            await render();
+
+            // Timer must be set to at least 5000ms, not 0 or negative
+            expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        });
+
+        it('uses minimum 5000ms delay when expiresIn equals TOKEN_REFRESH_BUFFER_SECONDS', async () => {
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            // expiresIn = 30 → (30 - 30) * 1000 = 0, floor → 5000
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 30 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        });
+
+        it('cancels pending token fetch subscription on component destroy via takeUntilDestroyed', async () => {
+            // The getPlaybackToken observable should be cancellable.
+            // We verify by checking that destroying the component does not cause tokenError
+            // even if the observable would have emitted an error after destroy.
+            let reject: (reason?: unknown) => void;
+            const neverSettles = new Promise<never>((_resolve, rej) => {
+                reject = rej;
+            });
+
+            // Return an observable that never emits
+            const { Observable } = await import('rxjs');
+            let subscriberCompleted = false;
+            mockGocastService.getPlaybackToken.mockReturnValue(
+                new Observable((observer) => {
+                    // Simulate a long-running HTTP request by not completing immediately
+                    neverSettles.catch(() => {
+                        observer.error(new Error('cancelled'));
+                    });
+                    return () => {
+                        subscriberCompleted = true;
+                    };
+                }),
+            );
+
+            setGocastIdentity();
+            await render();
+
+            // Destroy the component — takeUntilDestroyed should cancel the subscription
+            fixture.destroy();
+
+            // Signal the never-settling promise to reject (simulating cleanup)
+            reject!(new Error('test cleanup'));
+
+            // The teardown should have been called (subscription was unsubscribed)
+            expect(subscriberCompleted).toBe(true);
+            // tokenError must not be set because the subscription was cancelled before any error
+            expect(component.tokenError()).toBe(false);
+        });
     });
 });

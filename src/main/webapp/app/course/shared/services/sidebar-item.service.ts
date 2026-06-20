@@ -308,6 +308,7 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.gocast.binding.sidebarTitle',
             testId: 'gocast-binding',
             hidden: false,
+            featureToggle: FeatureToggle.Gocast,
         };
     }
 

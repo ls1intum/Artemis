@@ -11,7 +11,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GocastStreamPickerComponent } from './gocast-stream-picker.component';
 import { GocastService } from './gocast.service';
-import { GocastBinding, GocastStream } from './gocast.model';
+import { GocastBindingWithApproval, GocastStream } from './gocast.model';
 
 describe('GocastStreamPickerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -26,8 +26,11 @@ describe('GocastStreamPickerComponent', () => {
         { streamId: 101, name: 'Lecture 2 (private)', private: true },
     ];
 
-    const activeBinding: GocastBinding = { courseId: 10, gocastCourseId: 1, gocastCourseSlug: 'eidi', status: 'ACTIVE' };
-    const pendingBinding: GocastBinding = { courseId: 10, gocastCourseId: 1, gocastCourseSlug: 'eidi', status: 'PENDING' };
+    const activeBindingWithApproval: GocastBindingWithApproval = { binding: { courseId: 10, gocastCourseId: 1, gocastCourseSlug: 'eidi', status: 'ACTIVE' } };
+    const pendingBindingWithApproval: GocastBindingWithApproval = {
+        binding: { courseId: 10, gocastCourseId: 1, gocastCourseSlug: 'eidi', status: 'PENDING' },
+        approvalUrl: 'https://gocast.test/approve',
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -76,7 +79,7 @@ describe('GocastStreamPickerComponent', () => {
 
     describe('with server-resolved binding status', () => {
         it('should NOT load streams when server returns PENDING binding', () => {
-            vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(pendingBinding));
+            vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(pendingBindingWithApproval));
             vi.spyOn(gocastService, 'listTumLiveStreams');
 
             createComponent(10);
@@ -85,7 +88,7 @@ describe('GocastStreamPickerComponent', () => {
         });
 
         it('should load streams when server returns ACTIVE binding', () => {
-            vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBinding));
+            vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBindingWithApproval));
             vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
 
             createComponent(10);
@@ -139,7 +142,7 @@ describe('GocastStreamPickerComponent', () => {
     });
 
     it('should emit the bound course slug (server-resolved) so the correct watch URL can be built', () => {
-        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBinding));
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBindingWithApproval));
         vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
         // Server-resolved path (no hasActiveBinding input) → slug comes from the binding
         createComponent(10);

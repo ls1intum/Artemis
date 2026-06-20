@@ -7,7 +7,7 @@ import { SelectModule } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { GocastBinding, GocastCourse } from './gocast.model';
+import { GocastBinding, GocastBindingWithApproval, GocastCourse } from './gocast.model';
 import { GocastService } from './gocast.service';
 
 /** A single option in the TUM Live course p-select dropdown. */
@@ -80,8 +80,11 @@ export class GocastCourseBindingComponent implements OnInit {
 
     private loadExistingBinding(): void {
         this.gocastService.getBinding(this.courseId()).subscribe({
-            next: (binding) => {
-                this.binding.set(binding);
+            next: (response: GocastBindingWithApproval) => {
+                this.binding.set(response.binding);
+                // Restore the approvalUrl for PENDING bindings so the instructor can re-open
+                // the approval page after a reload without recreating the binding.
+                this.approvalUrl.set(response.approvalUrl ?? undefined);
             },
             error: () => {
                 // 404 = no binding yet, that is fine — leave binding undefined
@@ -152,12 +155,13 @@ export class GocastCourseBindingComponent implements OnInit {
     checkBindingStatus(): void {
         this.isCheckingStatus.set(true);
         this.gocastService.getBinding(this.courseId()).subscribe({
-            next: (binding) => {
-                this.binding.set(binding);
+            next: (response: GocastBindingWithApproval) => {
+                this.binding.set(response.binding);
+                this.approvalUrl.set(response.approvalUrl ?? undefined);
                 this.isCheckingStatus.set(false);
-                if (binding.status === 'ACTIVE') {
+                if (response.binding.status === 'ACTIVE') {
                     this.alertService.success('artemisApp.gocast.binding.active');
-                } else if (binding.status === 'PENDING') {
+                } else if (response.binding.status === 'PENDING') {
                     this.alertService.info('artemisApp.gocast.binding.stillPending');
                 }
             },
