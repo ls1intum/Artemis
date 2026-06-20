@@ -13,6 +13,16 @@
     >
         <!-- Native HTML5 video element for hls.js -->
         <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
+
+        @if (tumLiveWatchUrl()) {
+            <jhi-tum-live-attribution [watchUrl]="tumLiveWatchUrl()!" />
+        }
+
+        @if (tokenError()) {
+            <p-message severity="error" styleClass="d-block mt-2" [closable]="false">
+                <span>{{ 'artemisApp.gocast.player.tokenError' | artemisTranslate }}</span>
+            </p-message>
+        }
     </div>
 
     <!-- Resizer divider sits between the video and transcript columns (not over the video), matching the previous

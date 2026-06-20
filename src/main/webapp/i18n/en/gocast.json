@@ -26,6 +26,10 @@
                     "revoke": "Failed to revoke the TUM Live course link. Please try again."
                 }
             },
+            "player": {
+                "poweredByTumLive": "Powered by TUM Live",
+                "tokenError": "Failed to load video. The playback token could not be obtained."
+            },
             "streamPicker": {
                 "label": "Select TUM Live stream",
                 "selectPlaceholder": "-- Select a stream --",
