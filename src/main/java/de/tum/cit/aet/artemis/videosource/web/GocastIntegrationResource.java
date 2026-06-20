@@ -194,9 +194,12 @@ public class GocastIntegrationResource {
      * GET /courses/:courseId/binding : Get the gocast binding and (if PENDING) verify it server-to-server.
      * <p>
      * Delegates the EP7 state-machine to {@link GocastBindingService#refreshStatusFromUpstream}: a
-     * {@code PENDING} binding is flipped to {@code ACTIVE} only when EP7 confirms it, to {@code REVOKED}
-     * on a {@code 403}, and is left unchanged on any transient gocast error. A binding is never set to
-     * {@code ACTIVE} without EP7 confirming it.
+     * {@code PENDING} binding is flipped to {@code ACTIVE} only when EP7 returns {@code true}. It stays
+     * {@code PENDING} on an explicit {@code false} (still awaiting approval) and on any thrown EP7
+     * exception (403/5xx/transport — not a definitive "unbound" signal, so no mutation). A binding is
+     * never set to {@code ACTIVE} without EP7 confirming it, and is never set to {@code REVOKED} from
+     * this PENDING-refresh path: {@code REVOKED} is only reached from an {@code ACTIVE} binding via the
+     * EP8/EP2 management-call {@code 403} paths.
      * <p>
      * For {@code PENDING} bindings, the response includes the {@code approvalUrl} so that the instructor
      * can re-open the TUM Live approval page after a page reload without having to recreate the binding.
