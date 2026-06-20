@@ -162,6 +162,12 @@
                     </div>
                 </div>
             </div>
+            <!-- TUM Live stream picker (Stage 2): self-resolves binding status when courseId is present -->
+            @if (courseId()) {
+                <div class="form-group mt-2">
+                    <jhi-gocast-stream-picker [courseId]="courseId()!" (streamSelected)="onGocastStreamSelected($event)" />
+                </div>
+            }
             <div class="alert alert-info mt-2 py-2 small" [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing">
                 <fa-icon [icon]="faCircleInfo" class="me-1" />
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint"></span>

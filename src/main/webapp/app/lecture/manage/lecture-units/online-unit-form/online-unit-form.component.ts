@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { GocastStreamPickerComponent } from 'app/videosource/gocast/gocast-stream-picker.component';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -20,6 +21,8 @@ export interface OnlineUnitFormData {
     releaseDate?: dayjs.Dayjs;
     source?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    /** Set when a TUM Live stream is selected via the stream picker (Stage 2). */
+    gocastStreamId?: number;
 }
 
 function urlValidator(control: AbstractControl) {
@@ -37,7 +40,16 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        GocastStreamPickerComponent,
+    ],
 })
 export class OnlineUnitFormComponent {
     protected readonly faArrowLeft = faArrowLeft;
@@ -51,9 +63,19 @@ export class OnlineUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    /**
+     * The Artemis course id. When provided, the TUM Live stream picker (Stage 2) is rendered
+     * below the URL field. The picker self-resolves the binding status and only shows the
+     * stream dropdown when the binding is ACTIVE.
+     */
+    courseId = input<number | undefined>(undefined);
+
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     urlValidator = urlValidator;
+
+    /** streamId selected via the TUM Live stream picker; included in the emitted form data. */
+    private selectedGocastStreamId: number | undefined;
 
     private readonly formBuilder = inject(FormBuilder);
     private readonly onlineUnitService = inject(OnlineUnitService);
@@ -136,8 +158,24 @@ export class OnlineUnitFormComponent {
         }
     }
 
+    /**
+     * Called when the instructor selects a TUM Live stream from the stream picker (Stage 2).
+     * Records the chosen streamId for inclusion in the submitted form data.
+     */
+    onGocastStreamSelected(event: { streamId: number; streamName: string }): void {
+        this.selectedGocastStreamId = event.streamId;
+        // Auto-fill the source field with the TUM Live stream URL if not already set.
+        // The canonical format is used by the existing TumLiveService regex.
+        if (!this.sourceControl?.value) {
+            this.sourceControl?.setValue(`https://tum.live/w/stream/${event.streamId}`);
+        }
+    }
+
     submitForm() {
-        const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
+        const onlineUnitFormData: OnlineUnitFormData = {
+            ...this.form.value,
+            gocastStreamId: this.selectedGocastStreamId,
+        };
         this.formSubmitted.emit(onlineUnitFormData);
     }
 
