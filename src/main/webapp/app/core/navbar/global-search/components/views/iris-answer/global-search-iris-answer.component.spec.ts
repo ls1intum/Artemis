@@ -317,6 +317,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
             fixture.detectChanges();
 
@@ -343,6 +345,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
             fixture.detectChanges();
 
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'First answer', sources: [] });
             fixture.detectChanges();
             expect(component['irisResult']()?.answer).toBe('First answer');
