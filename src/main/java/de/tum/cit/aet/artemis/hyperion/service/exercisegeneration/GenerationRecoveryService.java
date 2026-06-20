@@ -41,21 +41,17 @@ public class GenerationRecoveryService {
     private static final Logger log = LoggerFactory.getLogger(GenerationRecoveryService.class);
 
     /**
-     * Category chip carried by every recovery finding. The verification gates do not map onto the structural mismatch categories, so the most
-     * generic semantic category is used; the human-readable gate text in the description carries the real, actionable detail.
+     * Category chip on every recovery finding. The verification gates don't map onto the structural categories, so the most generic one is used; the description carries the
+     * detail.
      */
     private static final ConsistencyIssueCategory RECOVERY_CATEGORY = ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY;
 
-    /**
-     * Recovery findings anchor to the problem statement at its first line. The problem statement always exists (unlike a repository file path
-     * that may not be present), so the review thread reliably lands in the editor regardless of which gate failed; the finding text names the
-     * concrete artifact (solution, template, a specific test) it concerns.
-     */
+    /** Recovery findings anchor to the problem statement's first line: it always exists (unlike a repository file path), so the thread reliably lands in the editor. */
     private static final int ANCHOR_LINE = 1;
 
     /**
-     * Sentinel returned by {@link #recover} when the draft was durably persisted but its review-comment threads could not be attached. The caller still emits {@code NEEDS_REVIEW}
-     * (the draft exists), never {@code PARTIAL}, but with a degraded message — so a failed annotation never mislabels a saved draft as "nothing was saved".
+     * Sentinel returned by {@link #recover} when the draft was persisted but its review-comment threads could not be attached. The caller still emits {@code NEEDS_REVIEW} (never
+     * {@code PARTIAL}) with a degraded message, so a failed annotation never mislabels a saved draft as "nothing was saved".
      */
     static final int REVIEW_COMMENTS_FAILED = -1;
 
@@ -98,19 +94,17 @@ public class GenerationRecoveryService {
      * @throws RuntimeException only when the persist itself fails (nothing durable was saved); the caller maps that to {@code PARTIAL}
      */
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        // 1. Persist the best-effort files (see persistRecoveryDraft). A failure here means nothing durable was saved, so it propagates and the caller reports PARTIAL.
+        // A persist failure means nothing durable was saved, so it propagates and the caller reports PARTIAL.
         GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId);
 
-        // 2. The draft is now durably committed, so the best-effort annotation below must NOT be reported as "nothing saved" if it fails: we swallow it (logged) and return
-        // REVIEW_COMMENTS_FAILED so the caller still emits NEEDS_REVIEW (never PARTIAL) with a degraded message.
+        // The draft is now committed, so a failed annotation must not be reported as "nothing saved": swallow it and return REVIEW_COMMENTS_FAILED for a degraded NEEDS_REVIEW.
         try {
-            // Translate the verification findings (and the agent's final note) into review threads on the now-persisted draft.
             List<ConsistencyIssueDTO> findings = toFindings(outcome);
             if (findings.isEmpty()) {
                 return new RecoveryResult(0, persistResult.liveExerciseUntouched(), persistResult.draftBranch());
             }
             List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings);
-            // Notify open editors so the review panel updates live, exactly as the manual consistency check does.
+            // Notify open editors so the review panel updates live, as the manual consistency check does.
             for (CommentThread thread : createdThreads) {
                 CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
                 exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadCreated(createdThread));
@@ -119,15 +113,15 @@ public class GenerationRecoveryService {
             return new RecoveryResult(createdThreads.size(), persistResult.liveExerciseUntouched(), persistResult.draftBranch());
         }
         catch (RuntimeException e) {
-            // The draft IS saved; only the review-comment annotation failed. Do not let that masquerade as "nothing saved".
+            // The draft IS saved; only the annotation failed. Do not let that masquerade as "nothing saved".
             log.error("Generation draft for exercise {} was persisted but its review comments could not be attached; surfacing as a degraded NEEDS_REVIEW", exercise.getId(), e);
             return new RecoveryResult(REVIEW_COMMENTS_FAILED, persistResult.liveExerciseUntouched(), persistResult.draftBranch());
         }
     }
 
     /**
-     * Builds the review findings for a non-accepted outcome: one {@code CONSISTENCY_CHECK} issue per verification reason, plus one for the
-     * agent's final note when it is non-empty. Each issue anchors to the problem statement so it reliably surfaces in the editor.
+     * Builds the review findings for a non-accepted outcome: one issue per verification reason, one for the agent's final note when non-empty, plus the advisory spec-fidelity
+     * gaps.
      *
      * @param outcome the non-accepted outcome
      * @return the findings to persist as review threads (possibly empty)
@@ -148,8 +142,7 @@ public class GenerationRecoveryService {
             findings.add(finding(Severity.MEDIUM, "Note from the generation agent: " + agentNote.trim(),
                     "Use the agent's note for context on what was attempted and what remains to be done."));
         }
-        // Advisory spec-fidelity / coverage gaps (the brief-coverage axis the differential oracle is blind to). These are NON-BLOCKING context for the instructor, not verification
-        // gates, so they are MEDIUM (a recovered draft already failed the hard gates above); they never changed the accept/reject verdict.
+        // Advisory spec-fidelity / coverage gaps (the brief-coverage axis the oracle is blind to): non-blocking context only, never part of the accept/reject verdict.
         findings.addAll(specFidelityFindings(outcome.specFidelityReport()));
         return findings;
     }
@@ -177,10 +170,9 @@ public class GenerationRecoveryService {
     }
 
     /**
-     * Surfaces the advisory spec-fidelity findings of an ACCEPTED exercise as review-comment threads, WITHOUT changing its accepted status. The differential oracle accepted the
-     * exercise (it is internally sound and is persisted as a normal, verified exercise); these threads are purely advisory context the instructor may act on or dismiss.
-     * Best-effort
-     * and never throws: a failure to attach advisory comments must not turn a successful generation into a failure, so it is logged and swallowed.
+     * Surfaces an ACCEPTED exercise's advisory spec-fidelity findings as review-comment threads WITHOUT changing its accepted status — purely advisory context the instructor may
+     * act
+     * on or dismiss. Best-effort and never throws: a failed attach must not turn a successful generation into a failure.
      *
      * @param exercise the accepted, persisted exercise
      * @param report   the advisory spec-fidelity report (no threads are created when it is empty)
@@ -201,7 +193,6 @@ public class GenerationRecoveryService {
             return createdThreads.size();
         }
         catch (RuntimeException e) {
-            // Advisory only: never let a failed attach turn a successful generation into a failure.
             log.warn("Could not attach advisory spec-fidelity review threads to accepted exercise {}; continuing", exercise.getId(), e);
             return 0;
         }

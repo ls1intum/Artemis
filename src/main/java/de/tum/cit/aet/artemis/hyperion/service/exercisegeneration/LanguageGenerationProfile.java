@@ -7,12 +7,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
 /**
- * Per-language (and where it matters per-project-type) generation guidance injected into the agent system prompt. The single non-obvious thing it encodes — the rest the LLM infers
- * from the cleared scaffold — is <em>how each test framework names a test in its result report</em>, which is exactly what an Artemis {@code [task]} binding must match verbatim
- * and
- * which differs sharply between frameworks. Each profile is grounded in the language's shipped sample under {@code src/main/resources/templates/<language>/}, and only the
- * exercise's
- * own language is added to a prompt, so covering every language never bloats a single run.
+ * Per-language (and where it matters per-project-type) generation guidance injected into the agent system prompt. The non-obvious thing each profile encodes is <em>how that test
+ * framework names a test in its result report</em> — exactly what an Artemis {@code [task]} binding must match verbatim, and which differs sharply between frameworks. Only the
+ * exercise's own language is added to a prompt, so covering every language never bloats a single run.
  */
 final class LanguageGenerationProfile {
 
@@ -20,14 +17,11 @@ final class LanguageGenerationProfile {
     }
 
     /**
-     * The canonical, single source of truth for the programming languages Artemis Intelligence (Hyperion) offers for one-click <em>whole-exercise</em> generation and adaptation.
-     * <p>
-     * The acceptance criterion is narrower than "has a {@link #guidanceFor(ProgrammingExercise) profile}": a language is included here only when its test runner produces parseable
-     * test reports (JUnit-XML / SCA) so the differential oracle can self-verify the generated exercise (solution passes, template compiles-but-fails). The best-effort guidance
-     * arms
-     * for niche, simulator/license-bound targets — {@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER}, {@code MATLAB}, {@code VHDL} — are intentionally excluded from the
-     * one-click offer because the verifier cannot reliably self-check them; likewise the languages with no template at all ({@code EMPTY}, {@code SQL}, {@code POWERSHELL},
-     * {@code ADA}, {@code PHP}). The client consumes this set verbatim via the generation resource, so it must never be mirrored by hand on the client.
+     * The single source of truth for the languages Hyperion offers for one-click whole-exercise generation and adaptation; the client consumes this set verbatim via the generation
+     * resource, so it must never be mirrored by hand. Narrower than "has a {@link #guidanceFor(ProgrammingExercise) profile}": included only when the test runner produces
+     * parseable
+     * reports (JUnit-XML / SCA) so the differential oracle can self-verify. The niche simulator/license-bound targets ({@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER},
+     * {@code MATLAB}, {@code VHDL}) and the template-less languages ({@code EMPTY}, {@code SQL}, {@code POWERSHELL}, {@code ADA}, {@code PHP}) are excluded.
      *
      * @return the immutable set of oracle-verifiable, generation-supported languages
      */

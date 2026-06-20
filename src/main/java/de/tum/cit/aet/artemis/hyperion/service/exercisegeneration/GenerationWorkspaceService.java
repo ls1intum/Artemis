@@ -51,16 +51,15 @@ public class GenerationWorkspaceService {
 
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    /** The repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)} for the seeded repositories. */
+    /** Repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)}. */
     private static final String[] REPOSITORY_DIRECTORIES = { "solution", "template", "tests" };
 
-    /** How long the one-shot layout probe may run; it is only {@code ls} + {@code head} over the seeded tree, so this is generous. */
     private static final Duration LAYOUT_PROBE_TIMEOUT = Duration.ofSeconds(30);
 
-    /** Upper bound on the size of the seeded-layout observation handed to the agent on turn 0, so a deeply nested tree cannot blow up the prompt. */
+    /** Upper bound on the turn-0 layout observation so a deeply nested tree cannot blow up the prompt. */
     private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
 
-    /** The sandbox directory holding the read-only worked-sample reference (a complete example exercise for this language's test conventions); never extracted or persisted. */
+    /** Sandbox directory holding the read-only worked-sample reference; never extracted or persisted. */
     static final String REFERENCE_DIR = "reference";
 
     /** Per-file and total caps on the seeded reference payload, so a large template cannot bloat the workspace tar. */
@@ -88,7 +87,7 @@ public class GenerationWorkspaceService {
      * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and uses the regular build network so dependencies resolve.
      *
      * @param exercise the exercise whose language/project type selects the image
-     * @return the sandbox session specification
+     * @return the sandbox session spec
      */
     public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
@@ -115,14 +114,12 @@ public class GenerationWorkspaceService {
             Path workingTree = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
             if (workingTree != null) {
                 repositoryTrees.put(directoryFor(repositoryType), workingTree);
-                // Snapshot the SEEDED tests-repo files so the verifier can later reject any harness tampering against this exact baseline (the harness is graded verbatim in
-                // production). Read from the same on-disk working tree that is packed into the sandbox, so the snapshot is byte-identical to what the agent starts from.
+                // Snapshot the SEEDED tests harness so the verifier can later reject tampering against this exact baseline; read from the same tree packed into the sandbox.
                 if (repositoryType == RepositoryType.TESTS) {
                     testsSeedSnapshot = readWorkingTreeTextFiles(workingTree);
                 }
             }
         }
-        // Reference lives under reference/ (not a repository directory) so the layout probe ignores it and it is never extracted or persisted (see readReferenceSample for WHY).
         Map<String, String> referenceSample = readReferenceSample(exercise);
         textFiles.putAll(referenceSample);
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
@@ -131,11 +128,9 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the language's worked-sample TEXT files (its test harness + example tests, and the example solution) from the classpath templates, keyed {@code reference/<path>}, so
-     * the
-     * agent always has a complete working example of this language's test-framework conventions to study — even when the working repositories were stripped clean. Best-effort:
-     * binary
-     * files, oversized files, and any read error are skipped, and the total payload is bounded.
+     * Reads the language's worked-sample TEXT files (example tests + example solution) from the classpath templates, keyed {@code reference/<path>}, so the agent always has a
+     * complete working example of this language's test-framework conventions even when the working repositories were stripped clean. Best-effort: binary/oversized/unreadable files
+     * are skipped and the total payload is bounded.
      *
      * @param exercise the exercise whose language (and, as a fallback, project type) selects the template tree
      * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if none could be read
@@ -147,9 +142,6 @@ public class GenerationWorkspaceService {
         String languageDir = exercise.getProgrammingLanguage().name().toLowerCase(Locale.ROOT);
         Map<String, String> reference = new LinkedHashMap<>();
         int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES };
-        // The example tests (the test-framework wiring the agent must reproduce) and the example solution (so the tests read coherently). The build manifests within test/ are part
-        // of
-        // the harness reference too.
         for (String area : List.of("test", "solution")) {
             addReferenceArea(reference, languageDir, area, remainingBytes);
         }
@@ -200,24 +192,18 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Probes the freshly-seeded workspace ONCE and renders a compact, human-readable snapshot of its layout — a recursive listing of the {@code solution}, {@code template}, and
-     * {@code tests} directories plus the first lines of whatever build manifests actually exist at their roots (pom.xml, build.gradle, Cargo.toml, package.json, go.mod, *.cabal,
-     * dune-project, Makefile, …). This is handed to the agent on turn 0 as a free observation so it does not spend turns discovering the layout itself.
-     * <p>
-     * It is fully language- and project-type-agnostic: it never assumes a particular toolchain, it only lists the seeded tree and heads any manifest it finds. The whole thing is a
-     * single {@code ls}/{@code find}/{@code head} shell invocation, bounded in size both in-shell and again in Java, and it degrades to an empty string on any error or timeout
-     * (the
-     * agent then simply falls back to listing the workspace itself, exactly as before). An empty repository contributes nothing, which is fine.
+     * Probes the freshly-seeded workspace ONCE and renders a compact snapshot — a recursive listing of the {@code solution}/{@code template}/{@code tests} dirs plus the head of
+     * any
+     * build manifest found at their roots — handed to the agent on turn 0 so it does not spend turns discovering the layout. Language/toolchain-agnostic, bounded in shell and
+     * again
+     * in Java, and degrades to an empty string on any error or timeout (the agent then lists the workspace itself).
      *
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
      * @return the rendered layout snapshot, or an empty string if it could not be produced
      */
     public String probeWorkspaceLayout(InteractiveSandbox sandbox, String sessionId) {
-        // One shell pass: (1) `ls -R` the seeded repository dirs (silencing "No such file" for an absent repo), then (2) discover and `head` the build manifests that actually
-        // exist
-        // at or near each repo root. The manifest set is a broad, language-agnostic union; `find` only emits the ones present, so this never assumes a toolchain. Output is capped
-        // in-shell with `head -c` as a first guard; Java truncates again defensively.
+        // One shell pass: ls -R the repo dirs, then find+head the build manifests present at their roots (broad language-agnostic union; find emits only the ones that exist).
         String script = "cd " + WORKSPACE + " 2>/dev/null || exit 0\n" + "echo '--- ls -R " + String.join(" ", REPOSITORY_DIRECTORIES) + " ---'\n" + "ls -R "
                 + String.join(" ", REPOSITORY_DIRECTORIES) + " 2>/dev/null\n" + "for f in $(find " + String.join(" ", REPOSITORY_DIRECTORIES)
                 + " -maxdepth 2 -type f \\( -name pom.xml -o -name 'build.gradle' -o -name 'build.gradle.kts' "
@@ -225,7 +211,7 @@ public class GenerationWorkspaceService {
                 + "-o -name dune-project -o -name dune -o -name '*.cabal' -o -name stack.yaml -o -name pyproject.toml -o -name setup.py -o -name requirements.txt -o -name Gemfile "
                 + "-o -name '*.csproj' -o -name build.sbt -o -name Package.swift -o -name pubspec.yaml -o -name DESCRIPTION -o -name composer.json -o -name '*.bats' \\) "
                 + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
-                // Surface the read-only worked-sample reference so the agent discovers it (it is NOT a repository dir, so it is otherwise invisible to this listing). Bounded.
+                // Surface the reference dir so the agent discovers it (it is not a repository dir, so the listing above misses it).
                 + "if [ -d " + REFERENCE_DIR + " ]; then echo; echo '--- ls -R " + REFERENCE_DIR
                 + " (read-only worked example: study it for this language test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
                 + " 2>/dev/null | head -c 1500; fi\n";
@@ -238,13 +224,12 @@ public class GenerationWorkspaceService {
             return layout == null ? "" : truncateLayout(layout.strip());
         }
         catch (RuntimeException e) {
-            // Best-effort only: if the probe fails the agent still has its own tools to list the workspace, so swallow and return nothing.
             log.warn("Could not probe the seeded workspace layout: {}", e.getMessage());
             return "";
         }
     }
 
-    /** Caps the layout snapshot at {@link #LAYOUT_PROBE_MAX_CHARS}, appending a short notice when it was truncated so the agent knows to list deeper itself if needed. */
+    /** Caps the layout snapshot at {@link #LAYOUT_PROBE_MAX_CHARS}, appending a truncation notice so the agent knows to list deeper itself. */
     private static String truncateLayout(String layout) {
         if (layout.length() <= LAYOUT_PROBE_MAX_CHARS) {
             return layout;
@@ -253,8 +238,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the text files of a checked-out working tree into a repository-relative map (UTF-8), skipping {@code .git} metadata, so the seeded tests harness can be snapshotted for
-     * the later immutability gate. Binary files and unreadable files are skipped silently; this is best-effort and a partial snapshot only weakens the gate, never breaks the run.
+     * Reads a working tree's text files into a repository-relative UTF-8 map, skipping {@code .git} metadata, to snapshot the seeded tests harness for the immutability gate.
+     * Best-effort: binary/unreadable files are skipped; a partial snapshot only weakens the gate, never breaks the run.
      *
      * @param workingTree the checked-out repository working tree
      * @return the text files keyed by repository-relative path
@@ -271,7 +256,7 @@ public class GenerationWorkspaceService {
                     files.put(relative, Files.readString(path));
                 }
                 catch (IOException | RuntimeException e) {
-                    // A binary or unreadable file is not part of the text harness; skip it.
+                    // Binary or unreadable file: not part of the text harness, skip.
                 }
             }
         }
@@ -294,7 +279,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Convenience: the {@link RepositoryExtraction#files()} of {@link #extractRepository}, dropping the extraction-failed flag.
+     * The {@link RepositoryExtraction#files()} of {@link #extractRepository}, dropping the extraction-failed flag.
      *
      * @param sandbox        the sandbox to read from
      * @param sessionId      the sandbox session
@@ -319,9 +304,9 @@ public class GenerationWorkspaceService {
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + dir)) {
             // Docker prefixes copied-out entries with the source directory's own name.
             Map<String, String> files = stripRedundantGitkeeps(WorkspaceArchive.readTar(tar, dir));
-            // For the student-facing TEMPLATE and the reference SOLUTION, additionally drop orphan residue: source files left behind OUTSIDE the canonical roots (a nested
-            // assignment/ solution/ template/ tree, e.g. a scaffold's reference copy under template/assignment/solution/src or an orphan solution/solution/src). Shipping these
-            // would leak the solution to students or inflate the solution-vs-template diff. The tests repo keeps all its files (its harness genuinely lives at the root).
+            // For TEMPLATE and SOLUTION, drop source residue OUTSIDE the canonical roots (e.g. a nested template/assignment/solution/src) that would leak the solution to students
+            // or
+            // inflate the solution-vs-template diff. The tests repo keeps everything (its harness lives at the root).
             if (repositoryType == RepositoryType.TEMPLATE || repositoryType == RepositoryType.SOLUTION) {
                 files = ExerciseIntegrityGate.stripResidueOutsideCanonicalRoots(files);
             }
@@ -334,11 +319,9 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Drops every {@code .gitkeep} that sits in a directory which now also contains a real produced file. The scaffold seeds a {@code .gitkeep} into each emptied source directory
-     * (e.g. {@code src/.gitkeep}) only so the empty directory survives version control; once the agent writes a real source into that directory the marker is vestigial clutter
-     * that
-     * would otherwise ship in the student-facing repository (and inflate the solution-vs-template diff). A {@code .gitkeep} whose directory is still otherwise empty is kept, so an
-     * intentionally-empty directory still survives. Deterministic post-processing is more reliable than asking the LLM to clean these up.
+     * Drops every {@code .gitkeep} sitting in a directory that now also contains a real produced file (the scaffold seeds them only to keep emptied dirs under version control;
+     * once
+     * a real source lands the marker is clutter that would ship to students). A {@code .gitkeep} in a still-empty directory is kept.
      *
      * @param files the produced files keyed by repository-relative path
      * @return the same map without redundant {@code .gitkeep} markers

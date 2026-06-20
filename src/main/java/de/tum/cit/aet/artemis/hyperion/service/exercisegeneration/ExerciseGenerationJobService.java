@@ -54,7 +54,7 @@ public class ExerciseGenerationJobService {
 
     private static final int JOB_TTL_SECONDS = 7200;
 
-    /** How long a finished run's transcript stays retrievable so a reloading client can replay it (including the terminal event) after the slot itself is gone. */
+    /** How long a finished run's transcript stays retrievable so a reloading client can replay it after the slot is gone. */
     private static final int TRANSCRIPT_TTL_SECONDS = 900;
 
     /** Cap on retained events per run so a chatty agent cannot grow the distributed map without bound; the oldest events are dropped first. */
@@ -62,8 +62,7 @@ public class ExerciseGenerationJobService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    // The run is launched by publishing an event (rather than calling the task service directly), so the job service does not depend on the task service — which would otherwise
-    // close a construction cycle (task service needs the job service for cancellation/transcript).
+    // Run launched via an event so this service does not depend on the task service, which would close a construction cycle.
     private final ApplicationEventPublisher eventPublisher;
 
     private IMap<String, JobInfo> jobMap;
@@ -72,8 +71,8 @@ public class ExerciseGenerationJobService {
 
     private IMap<String, JobTranscript> transcriptMap;
 
-    // Node-local interrupts for in-flight jobs (e.g. destroy the sandbox session). Held in-process because the hook closes over a live sandbox reference that only exists on the
-    // node running the job; on other nodes cancellation falls back to the cross-node Hazelcast flag the loop polls between turns.
+    // Node-local interrupts held in-process because the hook closes over a live sandbox reference that exists only on the node running the job; other nodes rely on the Hazelcast
+    // flag.
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
     public ExerciseGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher) {
@@ -82,7 +81,7 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Initialises the Hazelcast-backed job and cancellation maps with the configured TTL safety net.
+     * Initialises the Hazelcast-backed job, cancellation and transcript maps with their TTL safety nets.
      */
     @PostConstruct
     public void init() {
@@ -92,8 +91,7 @@ public class ExerciseGenerationJobService {
         MapConfig cancelMapConfig = hazelcastInstance.getConfig().getMapConfig(CANCEL_MAP_NAME);
         cancelMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        // The transcript outlives the slot (it is NOT removed on clearJob) so a client that reloads right as the run finishes can still fetch the terminal outcome; a TTL bounds
-        // it.
+        // The transcript outlives the slot (not removed on clearJob) so a client reloading as the run finishes can still fetch the terminal outcome; a TTL bounds it.
         MapConfig transcriptMapConfig = hazelcastInstance.getConfig().getMapConfig(TRANSCRIPT_MAP_NAME);
         transcriptMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
         transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
@@ -114,9 +112,8 @@ public class ExerciseGenerationJobService {
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
-        // Start a fresh transcript for this run so progress can be replayed on reconnect (overwrites any previous run's retained transcript for this exercise).
+        // Fresh transcript for this run (overwrites any previous run's retained transcript for this exercise).
         transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), new ArrayList<>(), false));
-        // Hand off to the async task via an event so this service stays free of a dependency on the task service (see eventPublisher above).
         eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt));
         return jobId;
     }
@@ -136,7 +133,7 @@ public class ExerciseGenerationJobService {
             }
             List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
             events.add(event);
-            // Always keep events[0] (the STARTED head, needed for a faithful replay) and drop from the front of the remainder when over the cap.
+            // Keep events[0] (the STARTED head, needed for a faithful replay) and drop from the front of the remainder when over the cap.
             while (events.size() > MAX_RETAINED_EVENTS) {
                 events.remove(1);
             }
@@ -162,11 +159,9 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Requests cooperative cancellation of the running job for an exercise — but ONLY by the instructor who started it.
-     * <p>
-     * The owner check is symmetric to {@link #getStatus(User, ProgrammingExercise)}: the jobId is not a secret (it is returned to the client in the start response and embedded in
-     * the websocket topic path {@code …/jobs/{jobId}}), so without this check any same-course editor who observes the id could abort a colleague's expensive multi-minute run.
-     * Returning {@code false} for a non-owner maps to a 404, which does not even confirm the job exists.
+     * Requests cooperative cancellation of the running job — but ONLY by the instructor who started it. The owner check matters because the jobId is not a secret (returned to the
+     * client and embedded in the websocket topic path), so without it any same-course editor who observes the id could abort a colleague's run. A non-owner gets {@code false}
+     * (404).
      *
      * @param exerciseId the exercise id
      * @param jobId      the job id to cancel
@@ -180,11 +175,10 @@ public class ExerciseGenerationJobService {
         }
         JobTranscript transcript = transcriptMap.get(key(exerciseId));
         if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
-            // Not the owner (or no transcript for this job): refuse, indistinguishably from "no such job".
             return false;
         }
         cancellationMap.put(jobId, Boolean.TRUE);
-        // Run the node-local interrupt once (remove-and-run) so a long in-flight build is aborted promptly instead of only at the next between-turn poll.
+        // Run the node-local interrupt once (remove-and-run) so a long in-flight build is aborted promptly.
         Runnable hook = cancelHooks.remove(jobId);
         if (hook != null) {
             try {
@@ -237,8 +231,7 @@ public class ExerciseGenerationJobService {
             jobMap.remove(key, job);
         }
         cancellationMap.remove(jobId);
-        // Free the single-flight slot but keep the transcript (TTL-bounded) for replay; mark it done so a reconnecting client knows the run finished even if the terminal event
-        // was never recorded (e.g. an unexpected error path).
+        // Keep the transcript (TTL-bounded) for replay but mark it done, so a reconnecting client knows the run finished even if the terminal event was never recorded.
         transcriptMap.computeIfPresent(key,
                 (k, transcript) -> transcript.jobId().equals(jobId) && !transcript.done()
                         ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.events(), true)

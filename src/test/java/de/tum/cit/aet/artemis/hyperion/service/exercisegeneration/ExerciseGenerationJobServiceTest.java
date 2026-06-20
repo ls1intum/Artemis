@@ -20,9 +20,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Unit test for {@link ExerciseGenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants, against a real (isolated) embedded Hazelcast
- * instance. The transcript and its event DTOs are {@code Serializable}, so this exercises the same default serialization the distributed map uses in production — and would fail if
- * that contract regressed.
+ * Unit test for {@link ExerciseGenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants against a real isolated embedded Hazelcast
+ * instance, so it also exercises the same {@code Serializable} default serialization the distributed map uses in production.
  */
 class ExerciseGenerationJobServiceTest {
 
@@ -34,12 +33,12 @@ class ExerciseGenerationJobServiceTest {
     void setUp() {
         Config config = new Config();
         config.setClusterName("hyperion-job-service-test-" + System.nanoTime());
-        // Fully isolate: no member or client shall ever join this instance.
+        // Fully isolate: nothing shall ever join this instance.
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
-        // No-op event publisher: startJob hands off to the async task via an event; the test only needs the slot/transcript side effects, not the run.
+        // No-op publisher: the test needs only the slot/transcript side effects, not the run.
         jobService = new ExerciseGenerationJobService(hazelcastInstance, event -> {
         });
         jobService.init();

@@ -33,16 +33,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
- * Build-agent-side implementation of the {@link InteractiveSandbox} primitive: a warm, resource-limited Docker container that an agentic exercise-generation session drives
- * through many cheap operations.
+ * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container an exercise-generation session drives through many cheap operations.
  * <p>
- * It deliberately reuses the existing build-agent Docker client and host configuration ({@link BuildAgentConfiguration#hostConfig()}), so the container has the same CPU,
- * memory, and PID limits as a CI build container, and — unlike the regular build path — it captures and returns each command's standard output and error so the agent can use
- * them as observations. The isolation posture therefore matches CI builds (resource-limited; the container runs untrusted code but holds no credentials and no database access);
- * it is not additionally locked down (no extra capability dropping or network confinement beyond what the build host config provides).
- * <p>
- * Containers are named with the {@value #SANDBOX_CONTAINER_PREFIX} prefix so that {@link InteractiveSandboxReaperService} can distinguish them from CI build containers and never
- * reap a live session.
+ * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()}, so isolation matches a CI build container (same CPU/memory/PID limits; runs untrusted
+ * code but holds no credentials or database access); unlike the regular build path it captures and returns each command's stdout/stderr as agent observations. Containers carry
+ * the {@value #SANDBOX_CONTAINER_PREFIX} prefix so {@link InteractiveSandboxReaperService} never reaps a live session as if it were a CI build container.
  */
 @Lazy
 @Service
@@ -51,20 +46,14 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxService.class);
 
-    /**
-     * Name prefix for interactive sandbox containers. Distinct from the {@code local-ci-} prefix used by CI build containers so that the CI container reapers never match a live
-     * sandbox session and {@link InteractiveSandboxReaperService} only matches these.
-     */
+    /** Name prefix for sandbox containers, distinct from the CI {@code local-ci-} prefix so each reaper matches only its own containers. */
     public static final String SANDBOX_CONTAINER_PREFIX = "hyperion-gen-";
 
     private static final String WORKING_DIRECTORY = "/workspace";
 
     private static final String STOP_SENTINEL = WORKING_DIRECTORY + "/.stop_sandbox";
 
-    /**
-     * Maximum number of characters of captured stdout/stderr returned to the caller. Large build logs are truncated (keeping the tail, where compiler and test failures appear)
-     * so they cannot overflow the agent's context window.
-     */
+    /** Cap on captured stdout/stderr returned to the caller; longer output is truncated to the tail (where compiler/test failures appear) to bound the agent's context. */
     private static final int MAX_CAPTURED_OUTPUT_CHARS = 50_000;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -80,17 +69,14 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
         String containerName = SANDBOX_CONTAINER_PREFIX + UUID.randomUUID();
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        // hostConfig() returns a fresh HostConfig per call, so adjusting it here does not affect any other container.
-        HostConfig hostConfig = buildAgentConfiguration.hostConfig();
-        // A sandbox container is long-lived and explicitly torn down by destroySession (and the reaper as a backstop), so it must NOT auto-remove on stop: auto-remove would
-        // race with the explicit removal and can delete the container out from under an in-flight exec.
+        HostConfig hostConfig = buildAgentConfiguration.hostConfig(); // fresh per call, safe to mutate
+        // No auto-remove: the container is torn down explicitly by destroySession; auto-remove would race that and could delete it under an in-flight exec.
         hostConfig.withAutoRemove(false);
         if (spec.runConfig() != null && spec.runConfig().network() != null && !spec.runConfig().network().isBlank()) {
             hostConfig.withNetworkMode(spec.runConfig().network());
         }
         try (final var createCommand = dockerClient.createContainerCmd(spec.image())) {
-            // The container's main process is an idle wait-loop that keeps the container warm until the stop sentinel appears, mirroring the regular build container pattern.
-            // The session is driven entirely by separate `docker exec` calls, so the container stays available across many fast agent iterations.
+            // Main process is an idle wait-loop keeping the container warm until the stop sentinel appears; the session is driven entirely by separate `docker exec` calls.
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
                     .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while [ ! -f " + STOP_SENTINEL + " ]; do sleep 0.5; done").exec();
             String containerId = response.getId();
@@ -114,7 +100,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-            // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command has actually completed.
+            // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command completed.
             dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                 @Override
@@ -151,7 +137,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             }
 
             if (!completed) {
-                // The command exceeded its budget. Report partial output and a timeout flag so the agent can react rather than block.
+                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block.
                 return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
             }
 
@@ -187,8 +173,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 return new TarArchiveInputStream(archiveStream);
             }
             catch (RuntimeException e) {
-                // Ensure the underlying stream is closed if the TarArchiveInputStream wrapper cannot be constructed, so we never leak the Docker response stream.
-                closeQuietly(archiveStream);
+                closeQuietly(archiveStream); // do not leak the Docker response stream if the wrapper cannot be constructed
                 throw e;
             }
         }
@@ -211,7 +196,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             removeCommand.exec();
         }
         catch (NotFoundException e) {
-            // Already gone — nothing to do.
+            // Already gone.
         }
         catch (RuntimeException e) {
             log.warn("Failed to remove interactive sandbox session {}: {}", sessionId, e.getMessage());
@@ -228,7 +213,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     private static void appendBounded(StringBuilder builder, String payload) {
-        // Keep appending but cap memory: once we are well past the limit there is no point holding more; the tail is taken at the end.
+        // Cap memory at 2x the limit; only the tail is kept at the end anyway.
         if (builder.length() < MAX_CAPTURED_OUTPUT_CHARS * 2) {
             builder.append(payload);
         }

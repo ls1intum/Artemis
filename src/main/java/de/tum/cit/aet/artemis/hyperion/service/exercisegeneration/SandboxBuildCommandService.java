@@ -23,18 +23,15 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 
 /**
- * Produces the single build recipe — {@code verify.sh} — that both the agent (to check its work) and the {@link AuthoritativeVerificationService} (to decide the verdict) run.
- * Having one
- * script rather than two divergent command strings guarantees the agent's view of "does it build?" is byte-for-byte the same as the grader's.
+ * Produces the single build recipe — {@code verify.sh} — that both the agent (to self-check) and the {@link AuthoritativeVerificationService} (to decide the verdict) run, so the
+ * agent's view of "does it build?" is byte-for-byte the grader's.
  * <p>
- * The script faithfully reproduces the real Artemis CI layout ({@code templates/localci/<lang>/build_and_run_tests.sh}): it assembles a fresh, hermetic build tree, copies the
- * tests into it, copies the chosen assignment ({@code solution/} or {@code template/}) into an {@code assignment/} directory next to the tests (so the test project's
- * {@code sourceDirectory} resolves against the assignment exactly as in CI), and runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
+ * The script reproduces the real Artemis CI layout: a fresh hermetic build tree with the tests checked out and the chosen assignment ({@code solution/} or {@code template/})
+ * copied into {@code assignment/} next to them, then runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
  * <p>
- * The verdict is NOT parsed in the shell: the script only COLLECTS the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the trusted Java
- * verifier copies that directory out and parses it with the SAME production code the LocalCI pipeline uses ({@code TestResultXmlParser}, {@code ReportParser}) —
- * parity-by-construction
- * with real SARIF/GCC categorisation. The script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line.
+ * The verdict is NOT parsed in the shell: the script only COLLECTS the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the Java verifier
+ * copies that directory out and parses it with the SAME production code as the LocalCI pipeline ({@code TestResultXmlParser}, {@code ReportParser}) — parity by construction. The
+ * script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line.
  */
 @Lazy
 @Service
@@ -46,43 +43,39 @@ public class SandboxBuildCommandService {
     static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
     /**
-     * Verifier-owned directory OUTSIDE {@code /workspace} where the authoritative verifier re-seeds a pristine {@code verify.sh} before each run AND where that script collects the
-     * report files. The agent tools only resolve paths under {@code /workspace}, so a path here is unreachable through them — the grader runs a script the agent never touched and
-     * reads reports from a directory the agent cannot write, which is what makes the verdict non-forgeable.
+     * Verifier-owned directory OUTSIDE {@code /workspace} where the verifier re-seeds a pristine {@code verify.sh} per run and that script collects the reports. The agent tools
+     * only resolve paths under {@code /workspace}, so this is unreachable to them — the grader runs a script the agent never touched and reads reports it cannot write, which is
+     * what makes the verdict non-forgeable.
      */
     static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
-    /** Absolute path of the pristine, verifier-controlled {@code verify.sh} the authoritative verifier runs (never the agent's {@code /workspace} copy). */
+    /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
     static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
-    /**
-     * Verifier-owned (see {@link #PRISTINE_VERIFY_DIR}), agent-unreachable directory the pristine script collects build-fresh report files INTO and the verifier {@code copyOut}s
-     * FROM.
-     */
+    /** Verifier-owned, agent-unreachable directory the script collects reports INTO and the verifier {@code copyOut}s FROM. */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
-    /** The prefix of the single non-authoritative liveness line {@code verify.sh} prints (collected report counts); the verdict is read from the collected files, not this line. */
+    /** Prefix of the non-authoritative liveness line {@code verify.sh} prints; the verdict is read from the collected files, not this line. */
     static final String COLLECTED_MARKER = "HYPERION_COLLECTED";
 
     /**
-     * Filename component the collect step appends to every collected JUnit report ({@code <seq>__junit.xml}); the verifier routes a collected file whose canonical token equals
-     * this
-     * through {@code TestResultXmlParser}. SCA reports keep their canonical per-tool name ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) as the token instead.
+     * Canonical token the collect step appends to every collected JUnit report ({@code <seq>__junit.xml}); the verifier routes a file with this token through
+     * {@code TestResultXmlParser}. SCA reports keep their per-tool name ({@code spotbugsXml.xml}, …) as the token instead.
      */
     static final String COLLECTED_JUNIT_TOKEN = "junit.xml";
 
-    /** The separator between the uniquifying sequence and the canonical token in a collected file name ({@code 0001__junit.xml}, {@code 0007__spotbugsXml.xml}). */
+    /** Separator between the uniquifying sequence and the canonical token in a collected file name ({@code 0001__junit.xml}). */
     static final String COLLECTED_NAME_SEPARATOR = "__";
 
     /**
-     * JUnit-XML report locations that cover the languages Artemis ships, independent of any phase-declared paths (surefire/failsafe for Maven, Gradle's test-results, and the
-     * test-reports/ directory pytest, the C harness and OCaml write to). The phase's own resultPaths are added on top so any language-specific location is also covered.
+     * JUnit-XML report locations covering all shipped languages, independent of phase-declared paths (Maven surefire/failsafe, Gradle test-results, and the test-reports/ dir
+     * pytest/C/OCaml write to). The phase's own resultPaths are added on top.
      */
     private static final List<String> DEFAULT_REPORT_GLOBS = List.of("surefire-reports/*.xml", "failsafe-reports/*.xml", "test-results/*.xml", "test-results/*/*.xml",
             "test-reports/*.xml", "test-results.xml");
 
-    // Both services are present only on nodes that run the LocalCI orchestration (profile localci). On a core-only node they are absent; generation requires a co-located build
-    // agent anyway, so the dependencies are optional and their absence is reported clearly at call time rather than preventing the core node from starting.
+    // Optional: present only on LocalCI-orchestration nodes (profile localci). Generation requires a co-located build agent anyway, so absence is reported at call time rather than
+    // blocking a core-only node from starting.
     private final Optional<BuildPhasesTemplateService> buildPhasesTemplateService;
 
     private final Optional<BuildScriptProviderService> buildScriptProviderService;
@@ -124,24 +117,22 @@ public class SandboxBuildCommandService {
         BuildRecipe recipe = resolveBuildRecipe(exercise);
         String findExpression = buildFindExpression(recipe.reportGlobs());
         String scaFindExpression = buildScaFindExpression(recipe.scaReportFiles());
-        // Materialize the tests at the language's real test checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
+        // Tests go at the language's real checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        // CI directory placeholder values for the seeded harness, mapped to the SAME real checkout layout production uses. When the language has no solution checkout the
-        // solution placeholder never appears, so its "assignment" fallback is a harmless no-op.
+        // CI placeholder values for the seeded harness, mapped to the real checkout layout. With no solution checkout the solution placeholder never appears, so its fallback is
+        // moot.
         String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
-        // Materialize a sibling solution/ checkout EXACTLY when real CI would (the language defines a solution checkout path — Haskell/OCaml — AND the exercise checks the solution
-        // out), so the harness reference (e.g. the Haskell cabal's `library solution`) is satisfied. The graded target stays assignment/src; other languages get no solution/.
+        // Materialize a sibling solution/ EXACTLY when real CI would (language defines a solution checkout path — Haskell/OCaml — AND the exercise checks it out), so the harness
+        // reference (e.g. the Haskell cabal's `library solution`) resolves. Other languages get no solution/, keeping their differential unchanged.
         boolean materializeSolution = recipe.materializesSolution();
         String solutionCopySection = materializeSolution
                 ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
                         + "\"/ 2>/dev/null || true"
-                : ": # this language's harness references no sibling solution/ (CI does not check the solution out for the template/submission build)";
-        // The script is intentionally plain POSIX sh so it runs in any of the ~20 language images (some have no bash). It must not abort before collecting the reports, so each
-        // phase runs in its own subshell (re-rooted at the build dir, like real CI) and a non-zero exit is recorded rather than aborting the script.
-        // The script is rendered by NAME, not by positional %s: each @@TOKEN@@ is replaced by its value below. The markers cannot occur in shell content, so substitution is
-        // order-independent, and a repeated value (the report find-expression, the JUnit token) is written once instead of being threaded through duplicate positional arguments.
+                : ": # this language's harness references no sibling solution/";
+        // Plain POSIX sh (some of the ~20 language images have no bash). Rendered by @@TOKEN@@ name, not positional %s, so substitution is order-independent and a repeated value
+        // (the find-expression, the JUnit token) is written once.
         String script = """
                 #!/bin/sh
                 # Generated by Artemis Hyperion. Assembles the CI build layout and runs the exercise's real build phases for one assignment (solution or template),
@@ -214,25 +205,24 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Renders each build phase as a {@code run_phase '<script>'} call. Single quotes inside a phase are escaped for the POSIX single-quoted string so the phase body is passed to
-     * {@code eval} verbatim. Running one phase per {@code run_phase} (each re-rooted at the build dir) mirrors how real CI resets the working directory before every phase.
+     * Renders each build phase as a {@code run_phase '<script>'} call, escaping single quotes so the body reaches {@code eval} verbatim. One phase per call (each re-rooted at the
+     * build dir) mirrors how real CI resets the working directory before every phase.
      */
     private static String buildPhaseSection(List<String> phases) {
         return phases.stream().map(phase -> "run_phase '" + phase.replace("'", "'\\''") + "'").collect(Collectors.joining("\n"));
     }
 
     /**
-     * The collect block for static-code-analysis reports, or the empty string when SCA is disabled ({@code scaFindExpression} empty) — in which case the generated
-     * {@code verify.sh}
-     * collects only JUnit reports and a non-SCA exercise's behaviour is unchanged. When SCA is enabled, the block collects each build-fresh SCA report file (restricted to the
-     * canonical per-tool names and to reports written THIS run via {@code -newer "$BUILD_START_MARKER"}, so a planted stale report cannot be collected) into the same reports dir,
-     * keeping its canonical name as the routing token so the verifier's {@code ReportParser} (production code, including the SARIF/GCC categorizers) picks the right parser.
+     * The collect block for static-code-analysis reports, or empty when SCA is disabled (then only JUnit reports are collected and a non-SCA exercise is unchanged). When enabled
+     * it
+     * collects each build-fresh SCA report (canonical per-tool names, {@code -newer "$BUILD_START_MARKER"} to exclude planted stale ones), keeping its canonical name as the
+     * routing
+     * token so the verifier's production {@code ReportParser} picks the right parser.
      */
     private static String buildScaCollectSection(String scaFindExpression) {
         if (scaFindExpression.isEmpty()) {
             return "";
         }
-        // basename gives the canonical per-tool report name (spotbugsXml.xml, ruff.sarif, …) which the verifier routes through ParserPolicy.
         return """
                 for report in $(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null); do
                     seq=$((seq + 1)); collect_one "$seq" "$report" "$(basename "$report")"; collected_sca=$((collected_sca + 1))
@@ -240,8 +230,8 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Builds the {@code find} predicate that locates the test-report XML files: each report glob becomes a {@code -path} clause anchored to match anywhere under the hermetic
-     * build tree, OR-ed together. The globs are normalized (globstars dropped, any leading {@code ./} or {@code /} stripped).
+     * Builds the {@code find} predicate locating test-report XMLs: each normalized glob (globstars dropped, leading {@code ./} or {@code /} stripped) becomes an OR-ed
+     * {@code -path} clause.
      */
     private static String buildFindExpression(List<String> reportGlobs) {
         Set<String> tokens = new LinkedHashSet<>();
@@ -271,35 +261,32 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Non-obvious field semantics: {@code testDir == ""} means the tests sit at the build root (not a {@code tests/} subdir); {@code solutionDir == ""} means the language checks
-     * out no sibling solution; an empty {@code scaReportFiles} means SCA is disabled (no SCA reports collected, non-SCA behaviour unchanged).
+     * Sentinel field semantics: empty {@code testDir} = tests at the build root (no {@code tests/} subdir); empty {@code solutionDir} = no sibling solution checkout; empty
+     * {@code scaReportFiles} = SCA disabled.
      */
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String testDir, String solutionDir, boolean checkoutSolution, List<String> scaReportFiles) {
 
-        /**
-         * Whether a sibling {@code solution/} checkout is materialized — exactly when the language defines a solution checkout path (Haskell/OCaml) AND the exercise checks it out.
-         */
+        /** True exactly when the language defines a solution checkout path (Haskell/OCaml) AND the exercise checks it out. */
         boolean materializesSolution() {
             return !solutionDir.isEmpty() && checkoutSolution;
         }
     }
 
     /**
-     * A tight, human-readable summary of the resolved build recipe, for the agent's system prompt. It is derived from the SAME {@link #resolveBuildRecipe} that renders
-     * {@code verify.sh}, so the facts shown to the agent ("the grader runs exactly this") can never drift from the script the grader actually runs.
+     * Summary of the resolved build recipe for the agent's system prompt, derived from the SAME {@link #resolveBuildRecipe} that renders {@code verify.sh} so prompt and grader
+     * cannot drift.
      *
-     * @param phaseScripts         the per-phase build commands (placeholder-substituted), run in order from the build root — exactly what the grader executes
-     * @param reportGlobs          the locations (relative to the build root) the grader collects test-report XML from
-     * @param testCheckoutDir      where the tests are checked out ({@code ""} = the build root itself, not a {@code tests/} subdirectory)
-     * @param materializesSolution whether a sibling {@code solution/} checkout is materialized (only the Haskell/OCaml harnesses reference one)
-     * @param scaReportFiles       the canonical SCA report file names the grader parses ({@code empty} = static code analysis disabled)
+     * @param phaseScripts         the placeholder-substituted per-phase commands, run in order from the build root
+     * @param reportGlobs          the build-root-relative locations the grader collects test-report XML from
+     * @param testCheckoutDir      where the tests are checked out ({@code ""} = the build root, not a {@code tests/} subdir)
+     * @param materializesSolution whether a sibling {@code solution/} checkout is materialized (Haskell/OCaml only)
+     * @param scaReportFiles       the canonical SCA report file names the grader parses ({@code empty} = SCA disabled)
      */
     public record BuildContextSummary(List<String> phaseScripts, List<String> reportGlobs, String testCheckoutDir, boolean materializesSolution, List<String> scaReportFiles) {
     }
 
     /**
-     * Resolves the build context — the exact phase commands the grader runs, where it reads reports, and the checkout layout — for injection into the agent's system prompt. Reuses
-     * the build recipe behind {@code verify.sh} so the prompt and the grader stay in lock-step.
+     * Resolves the build context (phase commands, report locations, checkout layout) for the agent's system prompt, reusing the recipe behind {@code verify.sh}.
      *
      * @param exercise the exercise being generated or adapted
      * @return the resolved build-context summary
@@ -311,18 +298,15 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Resolves the per-language build recipe. Uses the exact LocalCI build phases when available so the verification toolchain matches real CI for every supported language, and
-     * applies the same placeholder substitution real CI does ({@code ${testWorkingDirectory}}, {@code ${studentParentWorkingDirectoryName}}, …) mapped to the language's real
-     * checkout layout: the assignment is checked out into {@code assignment/} and the tests into the language's test checkout path (the build root for Java/Python, a
-     * {@code tests/} subdirectory for C/Go/OCaml/…). Falls back to the conventional Gradle/Maven commands when the phase template cannot be resolved.
+     * Resolves the per-language build recipe from the exact LocalCI build phases (matching real CI), applying the same placeholder substitution mapped to the language's checkout
+     * layout. Falls back to conventional Gradle/Maven commands when the phase template cannot be resolved.
      */
     private BuildRecipe resolveBuildRecipe(ProgrammingExercise exercise) {
         String assignmentDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getAssignmentCheckoutPath() : null, "assignment");
         String testDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.TEST, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getTestCheckoutPath() : null, "");
-        // The solution checkout path is defined only for languages whose harness references a sibling solution/ (Haskell/OCaml); for every other language the enum throws and
-        // checkoutPath returns "" — so solutionDir is empty and no solution/ is materialized. checkoutSolution mirrors the exercise's real-CI flag (default false).
+        // Defined only for harnesses referencing a sibling solution/ (Haskell/OCaml); other languages make the enum throw -> "" -> no solution/ materialized.
         String solutionDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getSolutionCheckoutPath() : null, "");
         boolean checkoutSolution = exercise.getBuildConfig() != null && exercise.getBuildConfig().getCheckoutSolutionRepository();
@@ -330,7 +314,7 @@ public class SandboxBuildCommandService {
         List<BuildPhaseDTO> phases = List.of();
         if (buildPhasesTemplateService.isPresent()) {
             try {
-                // getDefaultBuildPlanPhasesFor may return null (not just throw) when the phase template cannot be resolved, so guard against both.
+                // May return null (not only throw) when the phase template cannot be resolved.
                 List<BuildPhaseDTO> resolved = buildPhasesTemplateService.get().getDefaultBuildPlanPhasesFor(exercise);
                 if (resolved != null) {
                     phases = resolved;
@@ -345,17 +329,15 @@ public class SandboxBuildCommandService {
         phases.stream().filter(p -> p.resultPaths() != null).flatMap(p -> p.resultPaths().stream()).map(path -> substitute(path, assignmentDir, testDir))
                 .filter(s -> s != null && !s.isBlank()).forEach(reportGlobs::add);
 
-        // SCA report files collected by the SCA collection, ONLY when SCA is enabled (else empty -> no SCA collection -> non-SCA behaviour unchanged). These are the canonical
-        // per-tool report file names production reads (StaticCodeAnalysisTool.getFileName); the static build phase writes them (e.g. java/plain_maven_static.yaml emits
-        // target/spotbugsXml.xml), so they already appear in the build tree this run. We scan them independently of resultPaths so the SCA signal does not depend on the SCA report
-        // being declared a JUnit glob.
+        // Canonical per-tool SCA report names (StaticCodeAnalysisTool.getFileName), scanned independently of resultPaths so the SCA signal does not depend on the report being
+        // declared a JUnit glob. Empty when SCA is off.
         List<String> scaReportFiles = scaReportFileNames(exercise);
 
         List<String> phaseScripts = phases.stream().map(BuildPhaseDTO::script).filter(s -> s != null && !s.isBlank()).map(s -> substitute(s, assignmentDir, testDir)).toList();
         if (!phaseScripts.isEmpty()) {
             return new BuildRecipe(phaseScripts, reportGlobs, testDir, solutionDir, checkoutSolution, scaReportFiles);
         }
-        // Generic fallback mirroring build_and_run_tests.sh: prefer a Gradle wrapper, then Maven, then a system Gradle.
+        // Generic fallback: prefer a Gradle wrapper, then Maven, then a system Gradle.
         String fallback = """
                 if [ -x ./gradlew ]; then ./gradlew clean test --no-daemon;
                 elif [ -f pom.xml ]; then mvn clean test;
@@ -364,11 +346,7 @@ public class SandboxBuildCommandService {
         return new BuildRecipe(List.of(fallback), reportGlobs, testDir, solutionDir, checkoutSolution, scaReportFiles);
     }
 
-    /**
-     * The canonical SCA report file names for the exercise's language ({@code spotbugsXml.xml}, {@code checkstyle-result.xml}, {@code ruff.sarif}, …) — but ONLY when static code
-     * analysis is enabled. Returns an empty list when SCA is disabled (or the language has no SCA tools), so {@link #buildScaCollectSection} emits nothing and the script for a
-     * non-SCA exercise collects only JUnit reports.
-     */
+    /** Canonical SCA report file names for the exercise's language, or empty when SCA is disabled or the language has no SCA tools. */
     private static List<String> scaReportFileNames(ProgrammingExercise exercise) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) || exercise.getProgrammingLanguage() == null) {
             return List.of();
@@ -378,8 +356,9 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Resolves a repository checkout subdirectory for the exercise's language: the instructor-configured path if set, otherwise the language default from
-     * {@link RepositoryCheckoutService.RepositoryCheckoutPath}. Falls back to {@code defaultPath} if the language is unsupported by the enum.
+     * Resolves a repository checkout subdirectory: the instructor-configured path if set, otherwise the language default, otherwise {@code defaultPath} if the enum does not
+     * support
+     * the language.
      */
     private String checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath kind, ProgrammingExercise exercise, String configured, String defaultPath) {
         if (configured != null && !configured.isBlank()) {
@@ -397,9 +376,8 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Substitutes the CI directory placeholders ({@code ${studentParentWorkingDirectoryName}}, {@code ${testWorkingDirectory}}, …) to the resolved checkout layout, reusing the
-     * exact substitution real CI applies. An empty test directory (tests at the build root) is substituted as {@code .} so a phase's {@code cd ${testWorkingDirectory}} stays put
-     * rather than {@code cd} with no argument. Returns the input unchanged when the LocalCI service is absent (a core-only node, where generation does not run anyway).
+     * Substitutes the CI directory placeholders to the resolved checkout layout via the exact real-CI substitution. An empty test dir maps to {@code .} so {@code cd
+     * ${testWorkingDirectory}} stays put rather than {@code cd} with no argument. Returns the input unchanged when the LocalCI service is absent.
      */
     private String substitute(String script, String assignmentDir, String testDir) {
         String testRepo = testDir.isEmpty() ? "." : testDir;

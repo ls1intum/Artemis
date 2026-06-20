@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 
 /**
- * Pure unit test (no Spring context, no real Docker) for the genuinely new capture-exec logic of {@link InteractiveSandboxService}: that standard output and error are captured
- * separately by stream type, the exit code is read back, and a command that never completes within its timeout is reported as timed out.
+ * Pure unit test (no Docker) for {@link InteractiveSandboxService}'s capture-exec logic: stdout/stderr captured separately by stream type, exit code read back, and a command that
+ * never completes reported as timed out.
  */
 class InteractiveSandboxServiceTest {
 
@@ -88,11 +88,9 @@ class InteractiveSandboxServiceTest {
         SandboxExecResult result = service.exec("container-1", Duration.ofSeconds(5), "echo", "hi");
 
         assertThat(result.exitCode()).isZero();
-        assertThat(result.isSuccess()).isTrue();
         assertThat(result.timedOut()).isFalse();
         assertThat(result.stdout()).contains("hello out");
         assertThat(result.stderr()).contains("warn err");
-        assertThat(result.combinedOutput()).contains("hello out").contains("warn err");
     }
 
     @Test

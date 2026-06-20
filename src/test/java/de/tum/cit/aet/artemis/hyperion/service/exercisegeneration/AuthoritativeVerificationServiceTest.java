@@ -41,19 +41,12 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 /**
- * Deterministic unit test for the differential oracle in the NEW copyOut+production-parser flow: a fake sandbox serves the {@code copyOut} of the verifier-owned reports directory
- * as a tar of REAL JUnit (and, where exercised, real SCA) report files for the solution and the template builds. The verifier parses those with the production parsers
- * ({@code TestResultXmlParser}, {@code ReportParser}) — exactly as it does against a live container — so the accept/reject branch matrix is exercised end to end without Docker or
- * a
- * real build. This is the regression guard for the verdict rules; the live build behaviour is covered by the gated end-to-end test.
+ * Deterministic unit test for the differential oracle: a fake sandbox serves the {@code copyOut} of the verifier-owned reports dir as a tar of real JUnit (and, where exercised,
+ * SCA) reports for the solution and template builds, parsed by the production parsers ({@code TestResultXmlParser}, {@code ReportParser}) exactly as against a live container. Live
+ * build behaviour is covered by the gated end-to-end test.
  */
 class AuthoritativeVerificationServiceTest {
 
-    /**
-     * A {@link SandboxBuildCommandService} backed by a stub phase service, so the verifier-under-test can render and place a pristine {@code verify.sh} exactly as in production.
-     * The rendered script's content is irrelevant to these deterministic tests (the {@link ScriptedSandbox} serves canned report tars regardless of which script runs), but
-     * rendering it exercises the real re-seed path.
-     */
     private static SandboxBuildCommandService sandboxBuildCommandService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
         when(phases.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of());
@@ -65,13 +58,12 @@ class AuthoritativeVerificationServiceTest {
     }
 
     /**
-     * One build's report fixture: the reports tar the verifier {@code copyOut}s (real JUnit/SCA XML keyed by the collected {@code <seq>__<canonical>} names) plus the build's exit
-     * code and timeout flag (read by the solution/template gates). A {@code null} reports tar models a build whose collection produced no files at all.
+     * One build's report fixture: the JUnit/SCA reports the verifier {@code copyOut}s plus the build's exit code and timeout flag.
      *
      * @param allNames    every test name the JUnit report carries (one {@code <testcase>} each)
      * @param failedNames the subset that carry a {@code <failure>}
      * @param scaReports  SCA reports keyed by their canonical per-tool file name (e.g. {@code spotbugsXml.xml}); empty for the common non-SCA case
-     * @param exitCode    the build's exit code (the script's {@code exit $rc}); the solution gate requires 0
+     * @param exitCode    the build's exit code; the solution gate requires 0
      * @param timedOut    whether the build was killed for exceeding its timeout
      */
     private record BuildReportSpec(List<String> allNames, List<String> failedNames, Map<String, String> scaReports, int exitCode, boolean timedOut, String explicitJunitXml) {
@@ -105,10 +97,7 @@ class AuthoritativeVerificationServiceTest {
     /** The two graded test names the default {@link #PROBLEM_STATEMENT_WITH_TASK} binds; a build's reports must include them so the [task] bindings resolve. */
     private static final String[] DEFAULT_BOUND_NAMES = { "sortsUnsortedArray", "sortsArrayWithDuplicates" };
 
-    /**
-     * A build spec with {@code tests} testcases (the two default-bound names first, then fillers), where — when the run has failures/errors — EVERY test is marked failed (the
-     * canonical failing template, so every bound test fails on it). Mirrors what a real failing template's JUnit report shows.
-     */
+    /** A spec with {@code tests} testcases (default-bound names first, then fillers); when failures/errors > 0 EVERY test is marked failed (canonical failing template). */
     private static BuildReportSpec result(int tests, int failures, int errors, int exit) {
         List<String> names = new ArrayList<>();
         for (int i = 0; i < tests; i++) {
@@ -125,11 +114,7 @@ class AuthoritativeVerificationServiceTest {
 
     private static final String PROBLEM_STATEMENT_WITH_TASK = "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\n";
 
-    /**
-     * A sandbox that serves the solution/template report tars on {@code copyOut} (routed by the reports-dir path the verifier asks for) and the build exit code/timeout on
-     * {@code exec}. The verifier re-seeds and runs {@code sh /opt/hyperion/verify.sh <assignment>}; the build exec returns the spec's exit code, and the subsequent
-     * {@code copyOut} of {@code /opt/hyperion/reports/<assignment>} returns that assignment's report tar.
-     */
+    /** Serves the solution/template report tars on {@code copyOut} (routed by the reports-dir path) and the build exit code/timeout on {@code exec}. */
     private static final class ScriptedSandbox implements InteractiveSandbox {
 
         private final BuildReportSpec solution;
@@ -151,7 +136,6 @@ class AuthoritativeVerificationServiceTest {
                 return new SandboxExecResult(0, problemStatement, "", false);
             }
             if (!joined.contains("verify.sh")) {
-                // The pristine-script mkdir or any other non-build command.
                 return new SandboxExecResult(0, "", "", false);
             }
             BuildReportSpec spec = joined.contains("solution") ? solution : template;
@@ -202,11 +186,7 @@ class AuthoritativeVerificationServiceTest {
                 seededStructural);
     }
 
-    /**
-     * A sandbox that serves DIFFERENT report tars for the agent's {@code /workspace/verify.sh} versus the verifier-owned reports dir, and records every exec so a test can assert
-     * the verifier ran the PRISTINE path and never the agent's copy. The forged specs would be served if the verifier ever ran the agent's script; the pristine specs are what the
-     * verifier-owned reports dir actually holds.
-     */
+    /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
     private static final class PathDispatchingSandbox implements InteractiveSandbox {
 
         private final BuildReportSpec pristineSolution;
@@ -248,7 +228,6 @@ class AuthoritativeVerificationServiceTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
-            // The verifier only ever copies the verifier-owned reports dir; serve the pristine reports for whichever assignment it asks for.
             if (path.endsWith("/solution")) {
                 return pristineSolution.reportsTar("solution");
             }
@@ -265,9 +244,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRunThePristineScriptAndReadTheVerifierOwnedReportsDir() {
-        // The verifier must invoke the PRISTINE /opt/hyperion/verify.sh and read its verdict from the verifier-owned reports dir, never the agent's /workspace copy. A
-        // genuinely-good
-        // pristine build is accepted, proving the re-seed + copyOut path works end to end.
+        // The verifier must run the PRISTINE verify.sh and read its verdict from the verifier-owned reports dir, never the agent's /workspace copy.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise());
@@ -278,8 +255,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenPristineReportsShowNoTests() {
-        // The pristine reports dir holds no JUnit report (a compile failure produced none), so tests=0 both runs -> rejection. The verdict is read from the reports dir, not
-        // stdout.
+        // No JUnit report in the reports dir (compile failure produced none) -> tests=0 both runs -> rejection.
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(result(0, 0, 0, 0), result(0, 0, 0, 0), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise());
         assertThat(result.accepted()).isFalse();
@@ -299,8 +275,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenStudentProseLeaksGraderMechanics() {
-        // An otherwise-valid exercise (solution passes, template fails, tasks bind) must still be REJECTED when the student-facing statement explains how the exercise is rigged —
-        // accepted exercises were shipping "raise NotImplementedError in the template file to make the tests fail" into student prose, which the oracle was previously blind to.
+        // Otherwise-valid exercise must still be rejected when student prose explains how the exercise is rigged.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(result.accepted()).isFalse();
@@ -317,7 +292,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenProseLeaksABareTaskMarker() {
-        // A bare "[tasks]" marker (not a [task][Title](names) binding) leaks into the prose; the lookahead leaves the real binding alone but flags the stray marker.
+        // A bare "[tasks]" marker (not a real binding) is flagged while the real binding is left alone.
         String leaky = "## [tasks]\n" + PROBLEM_STATEMENT_WITH_TASK;
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(result.accepted()).isFalse();
@@ -326,7 +301,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldNotFlagBenignTestWordingAsAProseLeak() {
-        // The gate is high-precision: ordinary student-facing wording that mentions testing must NOT trip it.
+        // High-precision: ordinary wording that mentions testing must not trip the gate.
         String clean = PROBLEM_STATEMENT_WITH_TASK + "\nYour implementation is tested against several edge cases, including empty and single-element inputs.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
         assertThat(result.accepted()).isTrue();
@@ -334,18 +309,14 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldSurfaceProseLeakToTheInLoopSelfCheck() {
-        // The same gate runs in the agent's in-loop self-check, so the agent is told to clean the prose before it ever submits.
+        // The same gate runs in the agent's in-loop self-check.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nRaise NotImplementedError to make the tests fail.";
         AgentVerifyReport report = selfCheck(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(report.wouldBeAccepted()).isFalse();
         assertThat(report.toObservation()).contains("leaks grader internals");
     }
 
-    /**
-     * Regression for the task-binding parser: a JVM/Ares (or Rust/Kotlin) test identifier is reported WITH parentheses — {@code testBubbleSort()} — and the agent is instructed to
-     * copy the verbatim test name into the {@code [task]} binding. The paren-aware capture plus the {@code ()}-stripping normalisation must resolve the paren form against the
-     * {@code testBubbleSort()} the runner reported, so the exercise is accepted.
-     */
+    /** A {@code [task]} binding written WITH parentheses must resolve against the {@code testBubbleSort()} form the runner reports. */
     @Test
     void shouldAcceptWhenTaskBindingTestNamesCarryParentheses() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort(),testMergeSort())\n";
@@ -366,7 +337,7 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.accepted()).isTrue();
     }
 
-    /** Runs the full 8-arg verify with the integrity-gate inputs, so the harness-immutability and solution-leak gates are exercised alongside the differential oracle. */
+    /** Runs the 8-arg verify with integrity-gate inputs, so the harness-immutability and solution-leak gates run alongside the differential. */
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
@@ -415,9 +386,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void integrityGates_rejectSelfComparisonHarnessThroughVerify_evenWhenTheDifferentialPasses() {
-        // The differential PASSES (solution passes, template fails) yet the tests compare the submission to ITSELF (Test.hs imports the bare Exercise/submission as the reference)
-        // — so a
-        // wrong submission would score 100%. The gate must compose into the verify() conjunction and reject; it must not be shadowed by the (passing) differential.
+        // The differential passes, yet the tests compare the submission to ITSELF (Test.hs imports the bare submission as the reference); the gate must still reject.
         var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Exercise as Sol\n");
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
         assertThat(result.accepted()).isFalse();
@@ -426,7 +395,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void integrityGates_acceptCorrectRenamedReferenceHarnessThroughVerify() {
-        // The correct harness (Sol = the renamed reference module, Sub = the student code via Interface) must still be accepted — the gate does not regress the good path.
+        // The correct harness (Sol = renamed reference module, Sub = student code via Interface) must still be accepted.
         var producedTests = Map.of("test.cabal", SELF_COMPARISON_CABAL, "test/Test.hs", "module Test where\nimport qualified Interface as Sub\nimport qualified Solution as Sol\n");
         VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), producedTests, Map.of(), Map.of());
         assertThat(result.accepted()).isTrue();
@@ -434,7 +403,6 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsViaRealJUnitReports() {
-        // A plain JUnit report with three testcases, all passing on the solution and all failing on the template; parsed by the production TestResultXmlParser via copyOut.
         List<String> names = List.of("stack_initially_empty", "push_then_pop", "size_tracks_elements");
         VerificationResult result = verify(resultWithFails(3, 0, names, List.of()), resultWithFails(3, 1, names, names),
                 "# Stack\n[task][Empty](stack_initially_empty)\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n");
@@ -445,8 +413,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenTemplateFailsButBuildExitCodeIsZero() {
-        // Languages that pipe the test run through a report converter (Go's go-junit-report, Dart's tojunit, …) exit 0 even when tests failed. The oracle must trust the JUnit
-        // failure counts (from the report), not the exit code: a template that ran the same tests and failed enough of them is valid even with exit=0.
+        // Report-converter languages (Go's go-junit-report, Dart's tojunit) exit 0 even on test failure; the oracle must trust the JUnit failure counts, not the exit code.
         VerificationResult result = verify(result(14, 0, 0, 0), result(14, 14, 0, 0));
         assertThat(result.accepted()).isTrue();
         assertThat(result.templateFailed()).isTrue();
@@ -454,7 +421,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenTemplateDoesNotCompile() {
-        // No JUnit report collected for the template -> tests=0 against the template -> it did not compile.
+        // No JUnit report for the template -> tests=0 -> did not compile.
         VerificationResult result = verify(result(5, 0, 0, 0), result(0, 0, 0, 1));
         assertThat(result.accepted()).isFalse();
         assertThat(result.templateFailed()).isFalse();
@@ -486,7 +453,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenTemplateRunsFewerTestsThanSolution() {
-        // A class present in the solution but missing from the template would drop tests; the suites must be identical.
+        // The solution and template suites must run an identical number of tests.
         VerificationResult result = verify(result(5, 0, 0, 0), result(3, 3, 0, 1));
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
@@ -501,7 +468,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldRejectWhenTemplateFailsTooFewTests() {
-        // A template that fails only 1 of 6 tests is nearly complete; it must fail at least half to be a meaningful starting point.
+        // A template failing only 1 of 6 tests is nearly complete; it must fail at least half.
         List<String> names = List.of("t0", "t1", "t2", "t3", "t4", "t5");
         VerificationResult result = verify(resultWithFails(6, 0, names, List.of()), resultWithFails(6, 1, names, List.of("t0")), "# X\n[task][One](t0)\n[task][Two](t1)\n");
         assertThat(result.accepted()).isFalse();
@@ -523,10 +490,8 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.accepted()).isTrue();
     }
 
-    // The live C++ defect: the agent wrote [tasks] (plural) on some lines. The parser only honours the literal lowercase singular [task], so a near-miss silently binds nothing and
-    // leaks the raw test name — even though one well-formed [task] line satisfies the "has at least one binding" gate. Cover the wrong-case variants too ([Task]/[TASK]), so the
-    // gate's
-    // case-sensitive match is pinned (an equals -> equalsIgnoreCase mutant would accept them).
+    // A near-miss keyword ([tasks]/[Task]/[TASK]) binds nothing and leaks the raw test name, even though one well-formed [task] line satisfies the "has a binding" gate. The
+    // case-sensitive match must reject all three (an equals -> equalsIgnoreCase mutant would accept them).
     @ParameterizedTest
     @ValueSource(strings = { "tasks", "Task", "TASK" })
     void shouldRejectWhenATaskLineUsesTheWrongKeyword(String wrongKeyword) {
@@ -539,19 +504,18 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldNotFlagAWellFormedTaskListAsMalformedKeyword() {
-        // Guard against a false positive: a statement whose task lines all use the exact [task] keyword (and ordinary Markdown links elsewhere) must not trip the near-miss gate.
+        // False-positive guard: exact [task] keywords plus ordinary Markdown links must not trip the near-miss gate.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         String problemStatement = "# Sort\nSee [the docs](https://example.com) and the [reference][ref].\n[task][Sort an array](sortsUnsortedArray)\n"
                 + "[task][Sort with duplicates](sortsArrayWithDuplicates)\n";
         VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
-        assertThat(result.reasons()).as("a well-formed task list with ordinary Markdown links must not trip the near-miss keyword gate")
-                .noneMatch(r -> r.contains("wrong keyword"));
+        assertThat(result.reasons()).noneMatch(r -> r.contains("wrong keyword"));
         assertThat(result.accepted()).isTrue();
     }
 
     @Test
     void shouldRejectWhenTaskBindingReferencesDisplayNameInsteadOfMethodName() {
-        // The classic defect: the [task] names are @DisplayName / prose text, while the real test method names differ — the task would bind to nothing in Artemis.
+        // [task] names are @DisplayName/prose text while the real method names differ, so the binding resolves to nothing.
         String problemStatement = "# Sort\n[task][Sort an unsorted array](Sort an unsorted array)\n[task][Sort with duplicates](Sort with duplicates)\n";
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
@@ -561,12 +525,9 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void buildSummary_fromReports_recordsACompleteSoundPerTestView_thatTheFailOpenGatesRelyOn() {
-        // The per-test differential gates fail OPEN when the solution recorded fewer names than tests, or a failing template recorded no failing-test names — so the
-        // emitter-soundness
-        // gate and the whole "fail-open is safe" argument rest on fromReports producing a COMPLETE, SOUND per-test view from the real reports. Pin that invariant directly: every
-        // counted test is named, and every failed test is named AND a member of the full set. A regression (counting tests from a <testsuite tests=N> attribute, or de-duplicating
-        // the
-        // name list) would silently re-open the hole the emitter-soundness gate is meant to close.
+        // The fail-open per-test gates rely on fromReports producing a complete, sound per-test view: every counted test is named and every failed test is a member of the full
+        // set.
+        // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the hole the emitter-soundness gate closes.
         var summary = AuthoritativeVerificationService.BuildSummary
                 .fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
                         ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
@@ -576,14 +537,12 @@ class AuthoritativeVerificationServiceTest {
         assertThat(summary.testNames()).as("every failing-test name is also in the full set").containsAll(summary.testFailedNames());
     }
 
-    // Strict per-test soundness gate (Defect 2): every [task]-bound test the SOLUTION passes must FAIL on the template.
-    // A graded test the template accidentally satisfies (e.g. fibonacci(0)==0 for a `return 0` stub, or pop()->undefined
-    // for an empty-stack assertion) hands the student a free point and must be rejected even if the count gate passes.
+    // Strict per-test soundness gate: every [task]-bound test the solution passes must fail on the template, even when the count gate passes — a test the template accidentally
+    // satisfies hands the student a free point.
 
     @Test
     void shouldRejectWhenTaskBoundTestPassesOnTemplateRustFibonacciZero() {
-        // Rust: template `fibonacci(_n)->0` makes test_fibonacci_of_0 (asserts fib(0)==0) PASS on the template, the other six fail. The count gate is satisfied, but the strict
-        // per-test gate rejects: a graded test must not earn the student a free point.
+        // A `fibonacci(_n)->0` stub makes test_fibonacci_of_0 pass on the template while the count gate is still satisfied.
         List<String> all = List.of("test_factorial_of_0", "test_factorial_of_5", "test_factorial_of_20", "test_fibonacci_of_0", "test_fibonacci_of_1", "test_fibonacci_of_10",
                 "test_fibonacci_of_50");
         List<String> failed2 = new ArrayList<>(
@@ -606,8 +565,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenUnboundHarnessTestPassesOnTemplateButAllTaskBoundTestsFail() {
-        // C++-style: a non-gradable harness testcase (CompileStack) legitimately passes on BOTH solution and template (the template compiles); it is NOT [task]-bound. Every
-        // [task]-bound behavioural test fails on the template. The gate must look ONLY at [task]-bound names plus exempt the build gate, so this is accepted.
+        // A build-gate testcase (CompileStack) legitimately passes on both builds and is exempted; every behavioural [task]-bound test still fails on the template.
         List<String> all = List.of("CompileStack", "stack_initially_empty", "stack_push_top", "stack_pop");
         List<String> failedOnTemplate = List.of("stack_initially_empty", "stack_push_top", "stack_pop");
         String ps = "# Stack\n[task][Initially empty](stack_initially_empty)\n[task][Push/top](stack_push_top)\n[task][Pop](stack_pop)\n";
@@ -615,15 +573,13 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.accepted()).isTrue();
     }
 
-    // Gap 1 — production-parity gate: production grades EVERY discovered test at default weight, not only the
-    // [task]-bound subset. So an UNBOUND behaviour test (or a too-lucky placeholder) that passes on the template makes a
-    // bare-template student score above 0%. The sandbox oracle must reject it; a build/compile/configure gate that passes
-    // on both (the template compiles by design) is the only legitimate exception.
+    // Production-parity gate: production grades EVERY discovered test, not only the [task]-bound subset, so an unbound test passing on the template gives a bare-template student
+    // >0%.
+    // The only legitimate exception is a build/compile/configure gate that passes on both.
 
     @Test
     void shouldRejectWhenUnboundBehaviourTestPassesOnTemplate() {
-        // The Python-at-22.2% scenario: the agent wrote four behaviour tests but bound only two as [task]s. The template's placeholder accidentally passes the UNBOUND
-        // reverse_empty_string test. The [task]-only gate is satisfied, but production grades the unbound test too, so the bare template would score >0%. Must REJECT.
+        // Four behaviour tests but only two bound; the template accidentally passes the unbound reverse_empty_string, which production still grades.
         List<String> all = List.of("reverse_non_empty", "reverse_empty_string", "is_palindrome_true", "is_palindrome_false");
         List<String> failedOnTemplate = List.of("reverse_non_empty", "is_palindrome_true", "is_palindrome_false");
         String ps = "# Strings\n[task][Reverse](reverse_non_empty)\n[task][Palindrome](is_palindrome_true)\n";
@@ -643,9 +599,8 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenFrameworkPrefixedBuildGatePassesOnTemplate() {
-        // The REAL C++ harness reports the build gates WITH the framework suite prefix; the gate word is the final dot-segment. Behaviour tests carry the same suite prefix and
-        // must
-        // STILL be required to fail on the template. With a multi-suite report (GBS-Tester / sort-test top-level suites), production composes "<suite>.<testcase>" names.
+        // Build gates carry the framework suite prefix (production composes "<suite>.<testcase>" from multiple top-level suites); exemption keys on the final dot-segment, and
+        // prefixed behaviour tests must still fail on the template.
         List<String> all = List.of("GBS-Tester-1.36.TestConfigure", "GBS-Tester-1.36.CompileSort", "sort-test.empty_initial", "sort-test.push_top");
         List<String> failedOnTemplate = List.of("sort-test.empty_initial", "sort-test.push_top");
         String ps = "# Stack\n[task][Empty](sort-test.empty_initial)\n[task][Push/top](sort-test.push_top)\n";
@@ -665,7 +620,7 @@ class AuthoritativeVerificationServiceTest {
 
     @Test
     void rejects_whenABoundStructuralTestPassesOnTemplate_rubyStackStructure() {
-        // A structural test that only checks method existence/arity passes on the template; because it IS [task]-bound, the strict per-test gate flags it as a free graded point.
+        // A structural test (checks method existence/arity) passes on the template; because it is [task]-bound it is a free graded point and must be rejected.
         List<String> all = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing", "test_pop_returns_last_and_removes",
                 "test_pop_on_empty_raises", "test_peek_on_empty_raises", "test_stack_structure");
         List<String> behaviouralFailOnTemplate = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing",
@@ -676,15 +631,12 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_stack_structure"));
     }
 
-    // Skipped-test parity (formerly Defect D1): production's TestResultXmlParser drops a <testcase><skipped/></testcase>
-    // from BOTH the successful and failed lists. The verifier now uses that SAME parser, so skipped-test parity is
-    // guaranteed by construction. The dangerous case — a test SKIPPED on the solution but FAILING on the template —
-    // makes the solution run fewer tests than the template, tripping the "different number of tests" gate.
+    // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser. The dangerous case — a
+    // test skipped on the solution but failing on the template — makes the solution run fewer tests, tripping the "different number of tests" gate.
 
     @Test
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
-        // The solution skips peek_does_not_remove (2 executed tests); the template runs it as a real failing test (3 tests). The production parser drops the skipped case on the
-        // solution, so solution.tests()=2 != template.tests()=3 -> rejection, exactly as the divergence demands.
+        // Solution skips peek_does_not_remove (2 executed) while the template runs it (3); the dropped skipped case yields 2 != 3 -> rejection.
         BuildReportSpec solution = skippedSolution();
         BuildReportSpec template = resultWithFails(3, 1, List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"),
                 List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"));
@@ -747,14 +699,12 @@ class AuthoritativeVerificationServiceTest {
         return BuildReportSpec.withJunitXml(sb.toString(), failedDotPrefixed.isEmpty() ? 0 : 1);
     }
 
-    // Hardened copyOut consumer (integration level): when the reports tar is rejected by the hardened reader (a
-    // symlinked/escaping/oversize entry), the build is treated as having no tests (fail-closed) so the differential
-    // rejects rather than trusting partial input. The precise per-shape rejections are covered by CollectedReportsTest.
+    // Hardened copyOut: a reports tar rejected by the hardened reader (symlinked/escaping/oversize entry) is treated as no tests (fail-closed) so the differential rejects rather
+    // than trusting partial input. Per-shape rejections are covered by CollectedReportsTest.
 
     @Test
     void shouldRejectWhenTheReportsArchiveContainsASymlinkedEntry() {
-        // The solution copyOut returns a tar with a symlinked report entry; the hardened reader rejects the whole archive, so the solution is seen to run no tests and the verdict
-        // is a rejection. (Without the hardening a planted symlink could redirect the verifier to read an out-of-tree file.)
+        // A planted symlink could redirect the verifier to an out-of-tree file; the hardened reader rejects the whole archive.
         TarArchiveInputStream tamperedSolution = symlinkedReportsTar("solution");
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         BuildReportSpec template = resultWithFails(2, 1, names, names);
@@ -809,9 +759,8 @@ class AuthoritativeVerificationServiceTest {
     }
 
     /**
-     * The static-code-analysis parity gate (Defect D2), now driven through the NEW flow: the verifier collects the SCA report files, parses them with the production
-     * {@link de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser} (so each finding carries the REAL derived category, including SARIF/GCC), and {@link ScaPenaltyParity}
-     * flags those production would penalise. When SCA cannot dock the solution, the gate stays silent and the verdict is unchanged.
+     * The SCA parity gate: the verifier parses collected SCA reports with the production {@link de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser} (real derived
+     * categories, including SARIF/GCC) and rejects only findings production would actually penalise; otherwise it stays silent and the verdict is unchanged.
      */
     @Nested
     class StaticCodeAnalysisParityGate {
@@ -859,8 +808,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void shouldRejectWhenScaEnabledAndSolutionHasGradedViolation() {
-            // "Code Style" is GRADED with a positive penalty; the SpotBugs STYLE finding maps to it (StaticCodeAnalysisConfigurer Java default), so production would dock the
-            // score.
+            // The SpotBugs STYLE finding maps to the GRADED "Code Style" category, so production would dock the score.
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
             assertThat(result.accepted()).as("a solution with a graded SCA violation must be rejected").isFalse();
@@ -870,7 +818,6 @@ class AuthoritativeVerificationServiceTest {
         @Test
         void shouldAcceptWhenScaEnabledButSolutionIsScaClean() {
             var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
-            // No SCA reports collected: the solution build produced no findings.
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of()), failingTemplate());
             assertThat(result.accepted()).as("a clean solution is still accepted when SCA is graded").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
@@ -878,15 +825,14 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenScaEnabledButCategoryRepositoryIsAbsent_failingOpenOnABuildAgentOnlyNode() {
-            // On a build-agent-only node the SCA category repository is not injected (Optional.empty()). The SCA parity gate must FAIL OPEN — accept — rather than crash or
-            // spuriously reject, even when the solution ships a graded-looking finding: without the categories the verifier cannot know what production grades, so it defers (the
-            // integrated node, which HAS the repository, is where SCA parity is enforced). This is the real configuration the present-repo tests above never exercise.
+            // On a build-agent-only node the SCA category repository is absent (Optional.empty()); without categories the verifier cannot know what production grades, so it must
+            // fail open rather than crash or spuriously reject (parity is enforced on the integrated node, which has the repository).
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setId(909L);
             exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             exercise.setStaticCodeAnalysisEnabled(true);
             exercise.setMaxStaticCodeAnalysisPenalty(50);
-            // newVerifier() builds with Optional.empty() SCA repository — the build-agent-only configuration.
+            // newVerifier() has no SCA repository (the build-agent-only configuration).
             VerificationResult result = newVerifier()
                     .verify(new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
             assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
@@ -910,7 +856,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenFindingIsInANonGradedCategory() {
-            // The finding maps to "Code Style"; but only "Security" is GRADED here. Production would not penalise a Code Style finding, so the oracle must not reject.
+            // The finding maps to "Code Style" (FEEDBACK); only "Security" is GRADED, so production would not penalise it.
             var categories = Set.of(category("Code Style", CategoryState.FEEDBACK, 0.2), category("Security", CategoryState.GRADED, 2.5));
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
             assertThat(result.accepted()).as("a finding in a non-graded category must not be rejected").isTrue();
@@ -926,14 +872,13 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void shouldNotPenaliseWhenSarifFindingIsInANonGradedCategory() {
-            // SARIF (ruff) category derivation is now done by the PRODUCTION categorizer (the old <tool>|* sentinel would have conservatively over-rejected). A ruff finding whose
-            // derived category is NOT the graded one must NOT penalise, proving the real category is used. We grade a category that ruff's finding does not map to.
+            // SARIF category derivation uses the production categorizer (not the old over-rejecting <tool>|* sentinel); grading a category the ruff finding does not map to proves
+            // the real derived category is consulted.
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setId(7L);
             exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
             exercise.setStaticCodeAnalysisEnabled(true);
             exercise.setMaxStaticCodeAnalysisPenalty(50);
-            // Grade a category that the ruff finding's derived category will not match (so a correctly-derived category means no penalty).
             var graded = category("Security", CategoryState.GRADED, 2.0);
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(7L)).thenReturn(Set.of(graded));
@@ -961,9 +906,8 @@ class AuthoritativeVerificationServiceTest {
                 """;
     }
 
-    // W1 — auto-seeded structural-test binding exemption. A structural-SHAPED binding must NOT be required to resolve,
-    // while the differential (solution passes / template fails) stays fully enforced for every REAL test regardless of
-    // its name shape — so the exemption cannot be abused to evade grading on a real behaviour test named structurally.
+    // Auto-seeded structural-test binding exemption: a structural-shaped binding need not resolve, but the differential stays fully enforced for every real test regardless of name
+    // shape, so the exemption cannot be abused to evade grading on a real behaviour test named structurally.
 
     @Nested
     class StructuralBindingExemption {
@@ -999,8 +943,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void forgeryResistance_aRealBehaviourTestNamedStructurallyThatPassesOnTemplate_isStillRejected() {
-            // The agent names a REAL behaviour test testClass[Evil] hoping the W1 exemption lets it dodge the differential. It does NOT: the exemption only relaxes binding
-            // resolution. testClass[Evil] PASSES on the template, so the production-parity gate (keyed on REAL test names) rejects it.
+            // The exemption only relaxes binding resolution; a real behaviour test named structurally that passes on the template is still rejected by the production-parity gate.
             List<String> all = List.of("realBehaviour", "testClass[Evil]");
             List<String> failedOnTemplate = List.of("realBehaviour");
             String ps = "# X\n[task][Real](realBehaviour)\n[task][Disguised](testClass[Evil])\n";
@@ -1020,11 +963,9 @@ class AuthoritativeVerificationServiceTest {
         }
     }
 
-    // In-loop self-check (the agent's `verify` tool). It shares the SAME differential + actionable gates as the
-    // post-loop verify(...) — proven by running both against the same scripted sandbox — and renders structured,
-    // agent-readable feedback: which tests pass/fail on the solution and template, the EXACT parser-form names to bind
-    // [task]s to (fixes the C++/Catch2 bare-name trap), the tests that wrongly pass on the template (fixes the Go
-    // zero-value-stub trap), the unresolved [task] bindings, and the would-be verdict.
+    // In-loop self-check (the agent's `verify` tool): shares the same differential + gates as the post-loop verify(...) and renders agent-readable feedback (pass/fail per build,
+    // the
+    // exact parser-form names to bind, tests that wrongly pass on the template, unresolved bindings, would-be verdict).
 
     @Nested
     class InLoopSelfCheck {
@@ -1043,9 +984,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void returnsTheExactParserFormTestNamesToBind() {
-            // The C++/Catch2 fix: with multiple top-level suites production composes the suite-prefixed <suite>.<case> names, and the agent must bind those VERBATIM rather than
-            // the
-            // bare case names it would otherwise grep. The self-check surfaces exactly the parser-form names, so the agent never has to derive the prefix itself.
+            // With multiple top-level suites production composes suite-prefixed <suite>.<case> names; the self-check surfaces those verbatim so the agent never derives the prefix.
             List<String> all = List.of("sort-test.stack_empty_initially", "size-test.size_tracks_elements");
             AgentVerifyReport report = selfCheck(multiSuiteSolution(all), multiSuiteTemplate(all, all),
                     "# Stack\n[task][Empty](sort-test.stack_empty_initially)\n[task][Size](size-test.size_tracks_elements)\n");
@@ -1056,8 +995,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void reportsTemplateTestsThatWronglyPass() {
-            // The Go/no-exception fix: a `return ""`/`false`/`0` stub passes a test that expects exactly that. The self-check must NAME the wrongly-passing test so the agent fixes
-            // the stub in-loop, rather than only learning post-loop that "template-bound tests pass".
+            // A zero-value stub passes a test expecting exactly that; the self-check must name the wrongly-passing test so the agent fixes the stub in-loop.
             List<String> all = List.of("returns_empty_for_empty_input", "reverses_non_empty");
             List<String> failedOnTemplate = List.of("reverses_non_empty");
             AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, failedOnTemplate),
@@ -1079,7 +1017,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void flagsTaskBindingsThatReferenceNoRealTest() {
-            // The agent bound a display name; the self-check must list it as a binding problem so the agent copies a real name from `exactTestNames` instead.
+            // A bound display name must be listed as a binding problem so the agent copies a real name from `exactTestNames`.
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
             AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, all), ps);
@@ -1098,8 +1036,9 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void doesNotClaimTheTemplateCorrectlyFailsWhenItPassesEveryTest() {
-            // A template that compiles but passes EVERY test leaves no failed names, so the wrongly-passing list is empty (it fails open). The observation must NOT then read
-            // "correctly fails all N" — it must flag that the template does not fail enough tests, so the agent fixes the stubs instead of misreading an empty list as success.
+            // A template that passes EVERY test leaves no failed names (the wrongly-passing list fails open and is empty); the observation must flag "does not fail enough", not
+            // read
+            // "correctly fails all N".
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             AgentVerifyReport report = selfCheck(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.templateCompiled()).isTrue();
@@ -1110,9 +1049,7 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void selfCheckAndPostLoopVerifyAgreeOnTheVerdict() {
-            // The contract: the in-loop self-check's wouldBeAccepted matches the post-loop verify's accepted on the same workspace (the integrity gates, which the self-check
-            // skips,
-            // fail OPEN with no files), so the agent sees exactly what the acceptance gate will conclude.
+            // The self-check's wouldBeAccepted must match the post-loop verify's accepted on the same workspace (the integrity gates the self-check skips fail open with no files).
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             BuildReportSpec solution = resultWithFails(2, 0, names, List.of());
             BuildReportSpec template = resultWithFails(2, 1, names, names);

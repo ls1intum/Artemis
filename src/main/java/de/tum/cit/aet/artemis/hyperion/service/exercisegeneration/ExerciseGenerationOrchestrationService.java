@@ -31,12 +31,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Top-level driver of agentic exercise generation and adaptation. It owns the lifecycle of a single generation session and ties together the interactive sandbox, the
- * pi-faithful tools, the user-controlled agent loop, and the out-of-band verifier.
- * <p>
- * The flow, identical for both modes (create-from-scratch and adapt-with-feedback), is: create a warm sandbox session, seed it with the exercise's components, run the agent
- * loop until it stops or the budget is reached, then run the differential verifier. The verdict and the produced files are returned to the caller, which decides whether to
- * persist. The session container is always destroyed, even on failure, so nothing is leaked.
+ * Top-level driver of agentic exercise generation and adaptation. Owns one generation session: create a sandbox, seed it with the exercise's components, run the agent loop, then
+ * run the differential verifier. The verdict and produced files are returned to the caller, which decides whether to persist. The session container is always destroyed, even on
+ * failure.
  */
 @Lazy
 @Service
@@ -46,21 +43,16 @@ public class ExerciseGenerationOrchestrationService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationOrchestrationService.class);
 
     /**
-     * Hard cap on agent turns per attempt, configurable via {@code artemis.hyperion.agent.max-turns}. Generous by default so the slower, multi-file languages (C#, Kotlin, Swift,
-     * Haskell, R) can finish a real edit/build/test loop within a single attempt rather than being cut off; still bounded to prevent a runaway session. The agent is nudged to
-     * converge shortly before the cap, and the verifier-feedback retry loop adds {@link #MAX_GENERATION_ATTEMPTS} attempts on top.
+     * Hard cap on agent turns per attempt ({@code artemis.hyperion.agent.max-turns}); generous so slow multi-file languages finish in one attempt, still bounded against runaways.
      */
     private final int maxTurns;
 
-    /** How many times to run the agent and verify: the first attempt plus a couple of verifier-feedback-driven fix iterations before giving up. */
+    /** First attempt plus a couple of verifier-feedback-driven fix iterations before giving up. */
     private static final int MAX_GENERATION_ATTEMPTS = 3;
 
-    /** Pipeline id recorded with the LLM token-usage trace for an agentic generation run. */
     private static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
 
-    // The interactive sandbox lives on a build agent. On the single-node integrated deployment it is present in the same JVM and injected; on a core-only node it is absent (the
-    // multi-node command channel that bridges to a remote build agent is a follow-up). It is injected as an Optional so its absence is reported clearly when a run is attempted,
-    // rather than preventing the core node from starting.
+    // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
 
     private final GenerationWorkspaceService workspace;
@@ -73,13 +65,12 @@ public class ExerciseGenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // The advisory spec-fidelity / coverage critic — the brief-coverage axis the differential verifier is structurally blind to. Its findings are NON-BLOCKING: they never affect
-    // the accept/reject verdict (the verifier remains the sole source of truth), only feed the retry prompt while attempts remain and surface as advisory review comments
-    // otherwise.
+    // Advisory critic for the brief-coverage axis the differential verifier is blind to. NON-BLOCKING: never affects the verdict (verifier is the sole truth); only feeds the retry
+    // prompt while attempts remain and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
-    // Used only to register a node-local cancel hook that destroys the sandbox session so a cancellation arriving during a long build interrupts it promptly instead of waiting for
-    // the next between-turn poll. Injected directly: there is no longer a construction cycle (the job service hands off the run via an event, so it does not depend on this).
+    // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
+    // poll.
     private final ExerciseGenerationJobService jobService;
 
     private final LLMTokenUsageService llmTokenUsageService;
@@ -101,8 +92,6 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     private InteractiveSandbox requireSandbox() {
-        // The sandbox is either co-located (local InteractiveSandboxService on an integrated node) or a multi-node relay (RemoteInteractiveSandboxClient on a core-only node that
-        // drives a container on a remote build agent). Exactly one is wired per topology; only a node with neither core+buildagent nor a reachable build agent has none.
         return interactiveSandbox.orElseThrow(
                 () -> new IllegalStateException("No interactive sandbox is available on this node. Agentic exercise generation requires either a co-located build agent or a "
                         + "reachable build agent in the cluster to host the sandbox container."));
@@ -114,7 +103,7 @@ public class ExerciseGenerationOrchestrationService {
      * @param exercise   the exercise to generate or adapt (its repositories must already be scaffolded)
      * @param user       the instructor performing the generation, recorded with the LLM token-usage trace
      * @param userPrompt the instruction for this run (a generation brief, or the feedback to address)
-     * @param jobId      the job id, used to register a node-local cancel hook that destroys the sandbox session to interrupt a long in-flight build on cancellation
+     * @param jobId      the job id, used to register a node-local cancel hook
      * @param cancelled  polled cooperatively; if it returns {@code true} the session is aborted
      * @param progress   receives short human-readable progress lines for the live transcript; may be {@code null}
      * @return the outcome including the verification verdict and the produced files
@@ -128,36 +117,33 @@ public class ExerciseGenerationOrchestrationService {
         try {
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
-            // Register a node-local interrupt: a cancellation arriving during a long build destroys this session so the in-flight exec fails fast instead of waiting for the next
-            // between-turn poll. destroySession is idempotent, so this is safe alongside the orchestrator's own teardown.
+            // Node-local interrupt so a cancellation during a long build aborts the in-flight exec; destroySession is idempotent, safe alongside the orchestrator's own teardown.
             String activeSessionId = sessionId;
             jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
 
             emit(progress, "Loading the example exercise");
-            // Capture the seeded tests-repo harness snapshot up front so the verifier can reject any later tampering against this exact baseline.
+            // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
             String systemPrompt = systemPromptFactory.build(exercise);
-            // Thread the verifier + exercise into the tools so the agent's `verify` tool can run the SAME differential the post-loop acceptance gate runs and see exactly what the
-            // verdict will conclude in-loop (which tests pass/fail, the exact names to bind [task]s to) — the post-loop verify(...) below stays the sole acceptance truth.
+            // The agent's `verify` tool runs the SAME differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); post-loop
+            // verify(...)
+            // below stays the sole acceptance truth.
             SandboxAgentTools tools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
 
-            // Hand the agent the seeded workspace layout on turn 0 as a free observation (a recursive listing plus the head of each build manifest), so it does not spend turns
-            // discovering it with `ls -R`. This is purely contextual — it is framed as an observation, not an instruction — and best-effort: an empty probe leaves the prompt
-            // exactly as before. It is prepended ONLY to the first attempt's prompt; the verifier-feedback retries already operate on a populated workspace the agent has explored.
+            // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
+            // already operate on a workspace the agent has explored.
             String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), userPrompt);
 
-            // Run the agent, verify, and — if the authoritative verifier rejects — feed its reasons back so the agent can fix the workspace and try again, up to a small bound.
-            // The verifier enforces acceptance rules the agent's own verify.sh build cannot show it (e.g. the template must fail a meaningful fraction of tests, and the problem
-            // statement must bind tasks), so this loop is what turns a "builds but not quite right" first attempt into an accepted exercise without instructor intervention.
+            // On rejection, feed the verifier's reasons back and retry up to a small bound. The verifier enforces rules the agent's own verify.sh cannot show (template must fail a
+            // meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into an accepted exercise.
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
-            // Recomputed each attempt; the final attempt's report is attached to the outcome. Advisory only (see specFidelityCritic field).
+            // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
-                // Log per-attempt turn usage so verifier-feedback thrash (later attempts pinned at the cap) is observable in the logs without re-running.
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
@@ -168,22 +154,20 @@ public class ExerciseGenerationOrchestrationService {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.error(loopResult);
                 }
-                // The agent loop only polls cancellation between turns; honour a cancel that arrived while the last turn ran before spending minutes on the verification build.
+                // The loop only polls cancellation between turns; honour a cancel that arrived during the last turn before spending minutes on the verification build.
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                // Additive, best-effort: seed Java structural tests when the produced solution/template structures differ. The returned set is the AUTHORITATIVE list of structural
-                // test names just injected; the verifier exempts a [task] bound to one of them from the binding-resolution gate (the agent could not bind tests seeded after it
-                // ran),
-                // while still requiring each to pass on the solution and fail on the template (W1: kills the structural-binding retry thrash).
+                // Seed Java structural tests when the produced solution/template structures differ. The returned set is the AUTHORITATIVE list of names just injected; the verifier
+                // exempts a [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring
+                // solution-pass/template-fail.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
 
                 emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
-                // Read the produced repositories back out so the verifier can run the sandbox-free integrity gates (harness immutability against the seed snapshot, and the
-                // solution-leak check across the produced template/solution). extractRepository already strips orphan residue, so the gates see the same files that ship. The
-                // extraction-failed flag is threaded so the verifier can fail CLOSED on a genuine read-back error (distinct from a genuinely empty repo).
+                // Read the produced repos back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across template/solution). The
+                // extraction-failed flag lets the verifier fail CLOSED on a read-back error, distinct from a genuinely empty repo.
                 GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS);
                 GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE);
                 GenerationWorkspaceService.RepositoryExtraction producedSolution = workspace.extractRepository(sandbox, sessionId, RepositoryType.SOLUTION);
@@ -201,8 +185,7 @@ public class ExerciseGenerationOrchestrationService {
                         extractionFailed, seededStructuralTestNames);
                 emit(progress, verification.report());
 
-                // Advisory critic against THIS attempt's artifacts: findings feed the next retry prompt while attempts remain and become the advisory report on the final outcome.
-                // Advisory only (see specFidelityCritic field) — never touches `verification`.
+                // Advisory critic against this attempt's artifacts; never touches `verification`.
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
@@ -210,7 +193,7 @@ public class ExerciseGenerationOrchestrationService {
                     break;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
-                // Fold the authoritative rejection (which the agent MUST fix) and the advisory spec-fidelity findings (framed as advisory, so the hard rejection is prioritised).
+                // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
                 currentPrompt = "Your previous attempt was rejected by the authoritative verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
@@ -219,9 +202,9 @@ public class ExerciseGenerationOrchestrationService {
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);
         }
         catch (RuntimeException e) {
-            // Destroy the session here since the caller will not get a usable outcome to close.
+            // The caller gets no usable outcome to close, so tear down here.
             destroyQuietly(sandbox, sessionId);
-            // A build interrupted by the cancel hook surfaces as a thrown exception; report it as a clean cancellation rather than an error.
+            // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
             if (cancelled.getAsBoolean()) {
                 return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
             }
@@ -229,22 +212,19 @@ public class ExerciseGenerationOrchestrationService {
             throw e;
         }
         finally {
-            // The hook holds the session reference; once the run has left the loop the session is either already destroyed or owned by the returned outcome, so drop the hook.
             jobService.deregisterCancelHook(jobId);
         }
     }
 
-    /**
-     * Matches an Artemis {@code [task][Title](testA,testB)} binding, capturing the comma-separated test-name list, so the produced test identifiers can be handed to the critic.
-     */
+    /** Matches an Artemis {@code [task][Title](testA,testB)} binding, capturing the comma-separated test-name list. */
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task]\\[[^]]*]\\(([^)]*)\\)");
 
     /**
-     * Runs the advisory spec-fidelity critic against one attempt's produced artifacts, never throwing. The critic itself degrades gracefully (a model failure yields no findings),
-     * but this wrapper additionally guards against any unexpected failure of the inputs (e.g. a problem-statement read-back error) so the critic can never perturb the run.
+     * Runs the advisory spec-fidelity critic against one attempt's produced artifacts, never throwing, so the critic can never perturb the run.
      *
      * @param brief            the instructor brief for this run
      * @param problemStatement the produced student-facing problem statement
+     * @param language         the exercise language (may be {@code null})
      * @param producedTests    the produced tests-repo files (path to content), used to derive the test identifiers
      * @param progress         the progress sink for a short transcript line
      * @return the advisory report (possibly empty); never {@code null}
@@ -254,9 +234,7 @@ public class ExerciseGenerationOrchestrationService {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = specFidelityCritic.critique(brief, problemStatement, testNames);
-            // Merge the deterministic, model-free test-feedback check (a graded test file with no failure messages) into the same advisory report — it folds into the retry prompt
-            // and
-            // the advisory review comments exactly like the brief-coverage findings, and likewise never affects acceptance.
+            // Merge the model-free messageless-assertion check into the same advisory report (folds into the retry prompt / review comments, never affects acceptance).
             List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedTests);
             if (!messageless.isEmpty()) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
@@ -270,16 +248,13 @@ public class ExerciseGenerationOrchestrationService {
             return report;
         }
         catch (RuntimeException e) {
-            // Defence in depth: the critic is non-blocking, so any failure here is swallowed and contributes no findings. The verifier's verdict is untouched.
             log.warn("Spec-fidelity critic could not run for exercise; continuing without advisory findings: {}", e.getMessage());
             return SpecFidelityReport.empty();
         }
     }
 
     /**
-     * Extracts the test identifiers bound by {@code [task]} lines in the problem statement, deduplicated and trimmed. These are the exact names the runner reports (the agent
-     * copies
-     * them verbatim from the verifier), so they are the cheapest faithful source of "which tests exist" without re-reading the verifier's internal build summary.
+     * Extracts the test identifiers bound by {@code [task]} lines in the problem statement, deduplicated and trimmed.
      *
      * @param problemStatement the produced problem statement (may be empty)
      * @return the distinct task-bound test names, in encounter order
@@ -302,9 +277,7 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     /**
-     * Prepends the seeded-workspace layout snapshot to the user prompt as a clearly-delimited observation block, so the agent starts knowing the layout instead of paying turns to
-     * gather it. When the probe produced nothing (empty workspace, probe error/timeout) the prompt is returned unchanged. The block is purely contextual — it states what is there,
-     * not what to do.
+     * Prepends the seeded-workspace layout snapshot to the user prompt as a delimited observation block. An empty/blank layout returns the prompt unchanged.
      *
      * @param layout     the rendered layout snapshot (may be empty)
      * @param userPrompt the instruction for this run

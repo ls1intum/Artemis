@@ -35,15 +35,15 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
 
 /**
- * Adds Ares structural tests to a generated Java exercise, the same way a manually authored exercise gets them: it runs the deterministic {@link OracleGenerator} over the agent's
- * produced solution and template, and — only when their structures actually differ — seeds the resulting {@code test.json} structure oracle plus the four boilerplate structural
- * test classes ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/{@code ConstructorTest}) into the test repository, so the verifier compiles and runs them alongside the
- * behavioural tests.
+ * Adds Ares structural tests to a generated Java exercise, like a manually authored one: runs the deterministic {@link OracleGenerator} over the produced solution and template
+ * and,
+ * only when their structures differ, seeds the {@code test.json} oracle plus the four boilerplate test classes ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/
+ * {@code ConstructorTest}) into the test repository.
  * <p>
- * This is intentionally conservative and non-regressive: structural tests are seeded ONLY for a {@code public} class the student must create — one present in the solution but
- * entirely absent from the template — and even then only its public/protected surface is enforced. Incidental differences (a private helper the template stub did not replicate, a
- * stubbed body, a package-private utility, or a missing method within a class that exists in both) are filtered out, so a correct behaviour-only exercise — the common case — is
- * never burdened with spurious structural requirements. Any failure here is logged and skipped: a structural-oracle problem must never abort an otherwise valid generation.
+ * Conservative and non-regressive: seeds ONLY for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its
+ * public/protected surface, so a correct behaviour-only exercise is never burdened with spurious structural requirements. Any failure is logged and skipped — it must never abort
+ * an
+ * otherwise valid generation.
  */
 @Lazy
 @Service
@@ -80,16 +80,12 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * Generates the structure oracle from the agent's solution and template and seeds the structural tests when the structures differ. Java only; a no-op for other languages and
-     * on any error.
+     * Generates the structure oracle and seeds the structural tests when the structures differ. Java only; a no-op for other languages and on any error.
      * <p>
-     * <strong>Returns the AUTHORITATIVE set of structural test-case names this call actually seeded</strong> ({@code testClass[X]}, {@code testMethods[X]},
-     * {@code testAttributes[X]},
-     * {@code testConstructors[X]} for each class {@code X} kept in the filtered oracle), computed deterministically from the oracle THIS service generated — not from anything the
-     * agent wrote. The verifier consumes this set so it can treat these auto-injected machinery tests as not requiring a problem-statement {@code [task]} binding to resolve, while
-     * still subjecting them to the pass-on-solution / fail-on-template differential. Because the set is derived from the seeder's own oracle (never from agent-supplied names or a
-     * name pattern the agent could mimic), the agent cannot grow it to smuggle a real behaviour test into the binding exemption. Empty when nothing was seeded (behaviour-only
-     * exercise, non-Java, or any error).
+     * Returns the AUTHORITATIVE set of structural test-case names seeded this call ({@code testClass[X]}, {@code testMethods[X]}, {@code testAttributes[X]},
+     * {@code testConstructors[X]} per kept class), derived from the oracle THIS service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a
+     * behaviour test into the binding exemption. The verifier consumes it to exempt these auto-injected tests from the {@code [task]}-binding gate while still requiring
+     * pass-on-solution / fail-on-template. Empty when nothing was seeded.
      *
      * @param sandbox   the live sandbox session holding the produced files
      * @param sessionId the session id
@@ -116,13 +112,10 @@ public class StructuralOracleSeedingService {
 
             solutionDir = materialize(solutionFiles, "hyperion-oracle-solution-");
             templateDir = materialize(templateFiles, "hyperion-oracle-template-");
-            // Restrict the structure oracle to the genuine structural contract: only classes the student must CREATE (a public class present in the solution but entirely absent
-            // from the template), and within them only the public/protected surface. This keeps incidental differences — a private helper the template stub did not replicate, a
-            // stubbed body, a package-private utility — from becoming spurious structural requirements that would reject an otherwise-correct behaviour-only exercise.
             String oracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles);
 
             if (isStructurallyEmpty(oracle)) {
-                // No public class is missing from the template: this is a behaviour-only exercise. Remove any oracle/classes a previous attempt seeded so nothing stale lingers.
+                // Behaviour-only exercise: remove any oracle/classes a previous attempt seeded so nothing stale lingers.
                 cleanupStructuralFiles(sandbox, sessionId, testDirectory);
                 return Set.of();
             }
@@ -151,10 +144,9 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * The exact Ares dynamic-test names the four structural test classes will report at runtime for the classes in the (already-filtered) oracle. Ares' {@code ClassTestProvider}
-     * etc. name each generated {@link org.junit.jupiter.api.DynamicTest} {@code testClass[<ClassName>]} / {@code testMethods[<ClassName>]} / {@code testAttributes[<ClassName>]} /
-     * {@code testConstructors[<ClassName>]} (one per class entry in {@code test.json}). We reconstruct that exact name set here, from the class names in the oracle THIS service
-     * produced, so the verifier's exemption is keyed to a forgery-resistant authority (the seeder's own oracle) rather than a name pattern the agent could imitate.
+     * The exact Ares dynamic-test names the four structural test classes report at runtime for the classes in the filtered oracle: {@code testClass[<ClassName>]} /
+     * {@code testMethods[<ClassName>]} / {@code testAttributes[<ClassName>]} / {@code testConstructors[<ClassName>]} per class entry. Reconstructed from the oracle THIS service
+     * produced so the verifier's exemption is keyed to a forgery-resistant authority, not a name pattern the agent could imitate.
      */
     private static Set<String> structuralTestNames(String oracle) throws IOException {
         Set<String> names = new HashSet<>();
@@ -172,8 +164,7 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * Locates the directory (relative to the test repository root) that contains the agent's behaviour test sources, so the structural tests are placed in the same source set and
-     * package. Returns the directory of the first {@code .java} test file, or {@code null} if the agent wrote no Java test file.
+     * The directory of the first {@code .java} test file (so structural tests land in the same source set and package), or {@code null} if the agent wrote no Java test file.
      */
     private static String locateTestSourceDirectory(Map<String, String> testFiles) {
         return testFiles.keySet().stream().filter(path -> path.endsWith(".java") && path.contains("/")).map(path -> path.substring(0, path.lastIndexOf('/'))).findFirst()
@@ -183,7 +174,7 @@ public class StructuralOracleSeedingService {
     private Path materialize(Map<String, String> files, String prefix) throws IOException {
         Path dir = tempFileUtilService.createTempDirectory(prefix);
         for (Map.Entry<String, String> entry : files.entrySet()) {
-            // qdox only needs the .java sources; writing the rest is harmless but skipped to keep the temp tree small.
+            // qdox only needs the .java sources.
             if (!entry.getKey().endsWith(".java")) {
                 continue;
             }
@@ -220,8 +211,8 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * Filters the raw structure oracle to the genuine structural contract: entries whose class is a {@code public} type in the solution but is entirely absent from the template
-     * (a class the student must create), keeping only their public/protected members. Returns {@code []} when nothing qualifies.
+     * Filters the raw oracle to entries whose class is a {@code public} solution type absent from the template (a class the student must create), keeping only public/protected
+     * members. Returns {@code []} when nothing qualifies.
      */
     static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles) throws IOException {
         if (isStructurallyEmpty(oracle)) {
@@ -232,7 +223,6 @@ public class StructuralOracleSeedingService {
         ArrayNode result = MAPPER.createArrayNode();
         for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
             String className = entry.path("class").path("name").asText("");
-            // Keep only public classes the student must create (in the solution as a public type, missing from the template entirely).
             if (className.isEmpty() || templateTypes.contains(className) || !publicSolutionTypes.contains(className)) {
                 continue;
             }

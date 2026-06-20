@@ -28,9 +28,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * Deterministic test for the structural-oracle seeder (no Docker, no LLM): it runs the real
- * {@link de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator} over fixture solution/template sources and asserts that structural tests are seeded
- * ONLY for a public class the student must create (entirely absent from the template), and never for incidental member differences within shared classes — the failure mode a
- * generated Roman-numerals exercise exposed, where the template stub merely lacked the solution's private helper.
+ * {@link de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator} over fixture sources and asserts that structural tests are seeded ONLY for a public
+ * class the student must create (absent from the template), and never for incidental member differences within shared classes.
  */
 class StructuralOracleSeedingServiceTest {
 
@@ -82,16 +81,15 @@ class StructuralOracleSeedingServiceTest {
         assertThat(seeded.get("tests/test/sorting/ClassTest.java")).contains("package sorting;").doesNotContain("${packageName}");
         // The oracle enforces the created class, not the already-present interface.
         assertThat(seeded.get("tests/test/sorting/test.json")).contains("MergeSort");
-        // The AUTHORITATIVE structural test names returned for the verifier: exactly the four Ares dynamic-test names for the ONE created class (MergeSort), and nothing for the
-        // already-present Sorter interface. These are the names the verifier exempts from the [task] binding-resolution gate.
+        // The four Ares dynamic-test names for the ONE created class (MergeSort) and nothing for the already-present Sorter interface — the names the verifier exempts from
+        // binding.
         assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testAttributes[MergeSort]", "testConstructors[MergeSort]");
     }
 
     @Test
     void seedsNothing_whenOnlyAPrivateHelperDiffers() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        // The Roman-numerals failure mode: the public class exists in both; only the solution's PRIVATE helper is absent from the template stub. This must NOT seed structural
-        // tests.
+        // The class exists in both; only the solution's PRIVATE helper is absent from the template stub. This must NOT seed structural tests.
         Map<String, String> solution = Map.of("src/roman/RomanNumerals.java",
                 "package roman;\npublic class RomanNumerals {\n    public int toInteger(String r){ return 0; }\n    private int valueOf(char c){ return 0; }\n}");
         Map<String, String> template = Map.of("src/roman/RomanNumerals.java", "package roman;\npublic class RomanNumerals {\n    public int toInteger(String r){ return 0; }\n}");
@@ -112,9 +110,7 @@ class StructuralOracleSeedingServiceTest {
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         assertThat(seededNames).isEmpty();
-        // A previous attempt may have seeded a structure oracle + classes that this (now behaviour-only) attempt no longer requires; they MUST be removed so a stale
-        // ClassTest/test.json
-        // cannot compile against classes the new solution dropped — a silent acceptance regression. Assert the single rm -f over the oracle + structural classes is issued.
+        // A previous attempt's stale oracle/classes MUST be removed so they cannot compile against classes the new solution dropped (a silent acceptance regression).
         ArgumentCaptor<String> cleanupCommand = ArgumentCaptor.forClass(String.class);
         verify(sandbox).exec(eq("s"), any(), eq("sh"), eq("-c"), cleanupCommand.capture());
         assertThat(cleanupCommand.getValue()).startsWith("rm -f").contains("/workspace/tests/test/sorting/").contains("test.json").contains("ClassTest.java");

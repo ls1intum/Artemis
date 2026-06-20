@@ -15,14 +15,11 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session.
+ * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
- * The agent has a full shell because correctness is never judged from what these tools report — that is the out-of-band verifier's job — so the shell's power cannot be used to
- * fake a passing exercise. Created per session (it holds the session id), so it is intentionally not a Spring bean.
- * <p>
- * The {@code verify} tool is the PRIMARY self-check: it runs the SAME differential the post-loop acceptance verifier runs (two pristine builds parsed with the production parsers)
- * and returns structured, actionable feedback — which tests pass/fail on the solution and template, the EXACT names to bind {@code [task]}s to, and the current verdict — so the
- * agent is never blind to what the acceptance gate will conclude. It is feedback only; the post-loop verifier remains the sole acceptance truth.
+ * The agent has a full shell safely because correctness is never judged from what these tools report — that is the out-of-band verifier's job. The {@code verify} tool runs the
+ * SAME differential as the post-loop acceptance verifier (two pristine builds parsed with the production parsers) and returns structured feedback (per-build test outcomes, the
+ * exact names to bind {@code [task]}s to, the current verdict), but it is advisory only; the post-loop verifier remains the sole acceptance truth.
  */
 public class SandboxAgentTools {
 
@@ -32,33 +29,24 @@ public class SandboxAgentTools {
 
     private static final Duration BASH_TIMEOUT = Duration.ofMinutes(5);
 
-    /** Directory inside the sandbox (outside /workspace, so it is never picked up by repository extraction) where each command's full output is spilled. */
+    /** Spill directory inside the sandbox, outside /workspace so it is never picked up by repository extraction. */
     private static final String SPILL_DIR = "/tmp/hyperion";
 
     /**
-     * Bytes of a command's output tail returned to the agent inline. Kept under the agent's downstream per-tool-result context cap (AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS =
-     * 12000)
-     * so the result is never re-truncated there — the marker the agent sees is therefore always truthful — while the complete output stays in the spill file for deeper inspection.
+     * Bytes of the output tail returned inline. Kept under the downstream per-tool-result cap (AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS = 12000) so the result is never re-truncated
+     * there and the truncation marker the agent sees stays truthful; the full output lives in the spill file.
      */
     private static final int BASH_TAIL_BYTES = 10_000;
 
-    /**
-     * Per-command spill-file size ceiling enforced via {@code ulimit -f} (units are 512-byte blocks): 65536 * 512 = 32 MB, so a runaway command (e.g. {@code yes}) cannot fill the
-     * container disk before the timeout fires.
-     */
+    /** Per-command spill-file ceiling via {@code ulimit -f} (512-byte blocks): 65536 * 512 = 32 MB, so a runaway command cannot fill the container disk before the timeout. */
     private static final int SPILL_ULIMIT_BLOCKS = 65_536;
 
-    /**
-     * First line the bash wrapper prints, carrying the real exit code and total size; parsed and stripped by {@link #bash(String)} (the container exec's own exit code
-     * reflects the wrapper, not the command).
-     */
+    /** First line the bash wrapper prints, carrying the real exit code and size (the container exec's own exit code reflects the wrapper, not the command). */
     private static final Pattern BASH_META = Pattern.compile("^__HYP_META__ rc=(-?\\d+) bytes=(\\d+) lines=(\\d+)$");
 
     /**
-     * Matches the {@code List.toString()} rendering of a JSON argv array that Spring AI produces when the model sends {@code {"command":["bash","-lc","ls -R"]}} — an opening
-     * {@code [} immediately followed by a non-space token and containing a comma, closing with {@code ]}. A real POSIX {@code [ -f x ]} test has a SPACE right after the bracket,
-     * so
-     * it does not match; a single-element list {@code [foo]} has no comma, so it does not match either (and would run harmlessly as a shell glob anyway).
+     * Matches the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}) Spring AI produces from {@code {"command":[...]}}. A POSIX {@code [ -f x ]}
+     * test has a space after the bracket so it does not match; a single-element {@code [foo]} has no comma so it does not either.
      */
     private static final Pattern MANGLED_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
 
@@ -74,10 +62,7 @@ public class SandboxAgentTools {
     @Nullable
     private final ProgrammingExercise exercise;
 
-    /**
-     * Monotonic per-command counter for spill-file names. A plain field (no synchronization) is safe: each session has its own {@code SandboxAgentTools} and the agent loop calls
-     * the tools serially within a session; different sessions run in different containers, so identical sequence numbers never collide.
-     */
+    /** Per-command spill-file counter; unsynchronized is safe — the agent loop calls the tools serially within a session and each session has its own instance and container. */
     private int bashSequence = 0;
 
     /**
@@ -94,8 +79,7 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Convenience constructor for the bash/file-tool tests that never exercise the {@code verify} tool: the verifier and exercise are absent, so {@code verify} returns its
-     * "unavailable" fallback. Production always uses the four-argument constructor so the agent's {@code verify} self-check is wired.
+     * Test-only constructor for the bash/file tools; the verifier and exercise are absent, so {@code verify} returns its "unavailable" fallback. Production uses the four-arg form.
      *
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle
@@ -134,7 +118,7 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
-        // The content is transferred base64-encoded so arbitrary source code (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
+        // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
         String script = "mkdir -p \"$(dirname '" + target + "')\" && echo '" + encoded + "' | base64 -d > '" + target + "'";
@@ -189,35 +173,30 @@ public class SandboxAgentTools {
         if (command == null || command.isBlank()) {
             return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
-        // The model often sends an argv array, e.g. {"command":["bash","-lc","ls -R"]}. Spring AI's MethodToolCallback coerces a JSON array to a String via List.toString(),
-        // yielding the literal "[bash, -lc, ls -R]". Running that through the shell does NOT do what the model intended (the first word "[bash," is not a command), yet the failure
-        // is easy for the model to misread, so it blindly retries the array form. Detect that exact shape up front and reject it LOUDLY with a non-zero exit and a single
-        // corrective
-        // instruction, so the agent re-sends a plain string instead of thrashing. A genuine POSIX test starts with "[ " (a space after the bracket), so it never matches.
+        // Reject the mangled argv-array form (Spring AI's List.toString() of {"command":[...]}) up front: it is not runnable, and the model misreads the resulting failure and
+        // retries the array. A genuine POSIX test starts with "[ " so it never matches.
         if (isMangledArrayCommand(command)) {
             return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
         }
-        // The model repeatedly reaches for a Codex-style `apply_patch` — both as a non-existent tool and as a bash command (`apply_patch <<'PATCH' … PATCH`). A bash `apply_patch`
-        // is not installed, so the shell would exit 127 with "not found" but leave the workspace UNCHANGED while the model believes the edit landed, and it thrashes for many
-        // turns.
-        // Short-circuit it here with a LOUD, non-zero result and never touch the sandbox, so the agent observes a clear failure and switches to write_file / edit_file.
+        // Short-circuit a Codex-style `apply_patch` invocation: it is not installed, so the shell would exit 127 but leave the workspace UNCHANGED while the model believes the
+        // edit
+        // landed and thrashes. Reject loudly without touching the sandbox so the agent switches to write_file / edit_file.
         if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
-        // The command runs in a SUBSHELL so that an `exit` inside it (e.g. from verify.sh) cannot abort this wrapper before it reports the exit code and tail. Its combined
-        // stdout+stderr is redirected to the spill file (preserving real interleaving), so the real exit code is captured directly from `$?` — we do not pipe (POSIX `sh` has no
-        // PIPESTATUS, so a pipe would report the wrong command's status). `ulimit -f` caps the spill file size and `</dev/null` stops a command that reads stdin from hanging until
-        // the timeout. Only a small meta line plus the output tail are streamed back; the full output stays in the spill file for the agent to inspect.
-        // `wc` output is piped through `tr -d` because some implementations right-pad the count with spaces; stripping them keeps the meta line in the exact shape the parser
-        // expects, so the authoritative exit code is never lost to a formatting quirk (which would otherwise make every command look like it exited 0).
+        // Run in a SUBSHELL so an `exit` inside (e.g. from verify.sh) cannot abort this wrapper before it reports the code and tail. Combined output is redirected (not piped:
+        // POSIX
+        // sh has no PIPESTATUS) so the real exit code comes from `$?`; `ulimit -f` caps the spill size and `</dev/null` stops a stdin-reading command from hanging until the
+        // timeout.
+        // `wc` is run through `tr -d` because some implementations pad the count with spaces, which would otherwise corrupt the meta line and lose the authoritative exit code.
         String script = "LOG=" + logPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && " + command
                 + " ) </dev/null > \"$LOG\" 2>&1\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
                 + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
         SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
-            // On timeout the wrapper never reached the meta/tail step, so no output is on the wire — but the partial output is in the spill file the agent can read next.
+            // The wrapper never reached the meta/tail step, so nothing is on the wire; the partial output is in the spill file.
             return "exit=timeout (the command exceeded its time budget)\n[Partial output was written in the sandbox to " + logPath + " — read it with: tail -n 200 " + logPath
                     + "]";
         }
@@ -225,16 +204,15 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Composes the model-facing result from the wrapper's output: parses the leading {@code __HYP_META__} line for the real exit code and total size, then returns the exit code,
-     * the output tail, and — when the output was larger than the tail — a self-describing marker pointing at the spill file (matching the pi reference's "full output saved to …"
-     * markers, but readable with the agent's own tools).
+     * Composes the model-facing result: parses the leading {@code __HYP_META__} line for the real exit code and size, then returns the exit code, the output tail, and — when the
+     * output exceeded the tail — a marker pointing at the spill file.
      */
     private String composeBashOutput(SandboxExecResult result, String logPath) {
         String output = result.combinedOutput() == null ? "" : result.combinedOutput();
         int newline = output.indexOf('\n');
         Matcher meta = BASH_META.matcher(newline < 0 ? output.strip() : output.substring(0, newline).strip());
         if (!meta.matches()) {
-            // The meta line is missing only if the wrapper itself failed unexpectedly; still hand the model something actionable rather than nothing.
+            // Meta line missing only if the wrapper itself failed; still return something actionable.
             return "exit=" + result.exitCode() + "\n" + charTail(output);
         }
         String rc = meta.group(1);
@@ -282,17 +260,15 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Detects whether a bash command is an {@code apply_patch} invocation — the first shell word is {@code apply_patch} (optionally with a leading heredoc/redirect form such as
-     * {@code apply_patch <<'PATCH'}), in any of the wrappers the model emits (a bare call, a heredoc, or after a redirect). A leading {@code ./} or path prefix is tolerated.
-     * Matching
-     * the first token rather than a substring avoids flagging an innocent command that merely mentions the word (e.g. {@code grep apply_patch}).
+     * Detects whether the command's first shell word is {@code apply_patch} (a path prefix like {@code ./} or a trailing heredoc {@code <<'PATCH'} is tolerated). Matching the
+     * first
+     * token, not a substring, avoids flagging a command that merely mentions it (e.g. {@code grep apply_patch}).
      *
      * @param command the effective shell command
      * @return {@code true} if the command would run {@code apply_patch}
      */
     static boolean isApplyPatchInvocation(String command) {
         String trimmed = command.strip();
-        // Strip a leading "./" or directory prefix on the program name so "./apply_patch" / "/usr/bin/apply_patch" are still caught.
         int firstWordEnd = trimmed.length();
         for (int i = 0; i < trimmed.length(); i++) {
             char c = trimmed.charAt(i);
@@ -308,9 +284,8 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Detects whether a bash command is the mangled {@code List.toString()} form of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}) that Spring AI coerces when the model sends
-     * {@code {"command":["bash","-lc","ls -R"]}}. This is NOT a runnable shell command, so the tool rejects it loudly instead of running garbage. A genuine POSIX {@code [ -f x ]}
-     * test does not match because it has a space immediately after the {@code [}.
+     * Detects the mangled {@code List.toString()} form of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}) Spring AI coerces from {@code {"command":[...]}}, which is not a
+     * runnable shell command. A genuine POSIX {@code [ -f x ]} test has a space after the {@code [} so it does not match. See {@link #MANGLED_ARRAY}.
      *
      * @param command the effective shell command
      * @return {@code true} if the command is the rendered form of a JSON array rather than a real shell string
