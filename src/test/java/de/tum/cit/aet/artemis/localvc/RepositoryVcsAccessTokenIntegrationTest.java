@@ -29,12 +29,14 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     private ProgrammingExercise exercise;
 
+    private Course course;
+
     private String templateUri;
 
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         long exerciseId = programmingExerciseRepository.findAllWithCategoriesByCourseId(course.getId()).getFirst().getId();
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId).orElseThrow();
         // Keep the in-memory course (with its group names) attached so the service can resolve staff without a lazy load in the test.
@@ -88,6 +90,31 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void staffMembershipLifecycle_createsAndRemovesTokens() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        // Joining the course as staff pre-provisions the tokens for the course's base repositories.
+        repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourse(tutor, course);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
+
+        // While the user is still at least a tutor in the course, their tokens must be kept.
+        repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(tutor, course);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
+
+        // Once the user is no longer staff in the course, their tokens for that course's exercises are removed.
+        tutor.getGroups().remove(course.getTeachingAssistantGroupName());
+        userRepository.save(tutor);
+        repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(tutor, course);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
+
+        // Deleting the user's account removes any remaining repository tokens.
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.SOLUTION, null);
+        repositoryVcsAccessTokenService.deleteAllByUserId(tutor.getId());
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAndCreateRepositoryVcsAccessToken_asTutor() throws Exception {
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
@@ -99,6 +126,14 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         // GET now returns the same token.
         String fetched = request.get(url, HttpStatus.OK, String.class);
         assertThat(fetched).isEqualTo(token);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void repositoryVcsAccessTokenEndpoints_auxiliaryWithoutIdIsBadRequest() throws Exception {
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=AUXILIARY";
+        request.get(url, HttpStatus.BAD_REQUEST, String.class);
+        request.put(url, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class RepositoryVcsAccessTokenResource {
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryVcsAccessTokenResource.class);
+
+    private static final String ENTITY_NAME = "repositoryVcsAccessToken";
 
     private final UserRepository userRepository;
 
@@ -60,6 +63,7 @@ public class RepositoryVcsAccessTokenResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<String> getRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId) {
+        validateAuxiliaryRepositoryInput(repositoryType, auxiliaryRepositoryId);
         User user = userRepository.getUser();
         log.debug("REST request to get repository VCS access token of user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -78,9 +82,22 @@ public class RepositoryVcsAccessTokenResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<String> createRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId) {
+        validateAuxiliaryRepositoryInput(repositoryType, auxiliaryRepositoryId);
         User user = userRepository.getUser();
         log.debug("REST request to create a repository VCS access token for user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         return ResponseEntity.ok(repositoryVcsAccessTokenService.getOrCreateToken(user, exercise, repositoryType, auxiliaryRepositoryId).getVcsAccessToken());
+    }
+
+    /**
+     * Fails fast with 400 (instead of an ambiguous 404 from the service lookup) when an auxiliary repository is requested without its id.
+     *
+     * @param repositoryType        the requested repository type
+     * @param auxiliaryRepositoryId the auxiliary repository id (must be present for {@link RepositoryType#AUXILIARY})
+     */
+    private void validateAuxiliaryRepositoryInput(RepositoryType repositoryType, Long auxiliaryRepositoryId) {
+        if (repositoryType == RepositoryType.AUXILIARY && auxiliaryRepositoryId == null) {
+            throw new BadRequestAlertException("auxiliaryRepositoryId is required for the AUXILIARY repository type", ENTITY_NAME, "auxiliaryRepositoryIdMissing");
+        }
     }
 }

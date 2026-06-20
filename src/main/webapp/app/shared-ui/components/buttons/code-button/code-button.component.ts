@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -89,7 +90,7 @@ export class CodeButtonComponent implements OnInit {
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     isPractice = input<boolean>(false);
     // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
-    repositoryType = input<string>();
+    repositoryType = input<RepositoryType>();
     auxiliaryRepositoryId = input<number>();
 
     // Fields (immutable after construction)
@@ -153,7 +154,7 @@ export class CodeButtonComponent implements OnInit {
     usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
     isBaseRepository = computed(() => {
         const type = this.repositoryType();
-        return type === 'TEMPLATE' || type === 'SOLUTION' || type === 'TESTS' || type === 'AUXILIARY';
+        return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
     });
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
@@ -360,7 +361,7 @@ export class CodeButtonComponent implements OnInit {
      * Loads the repository-scoped VCS access token for a base repository (template, tests, solution or auxiliary) of a programming exercise. If none exists yet, a new one is
      * created (fallback when course staff open the clone dialog for the first time).
      */
-    loadRepositoryVcsAccessToken(exerciseId: number, repositoryType: string, auxiliaryRepositoryId?: number) {
+    loadRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number) {
         this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
@@ -372,7 +373,9 @@ export class CodeButtonComponent implements OnInit {
                 if (error.status === 404) {
                     this.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId);
                 } else if (error.status === 403) {
-                    this.alertService.warning('403 Forbidden');
+                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+                } else {
+                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
                 }
             },
         });
@@ -381,7 +384,7 @@ export class CodeButtonComponent implements OnInit {
     /**
      * Sends the request to create a new repository-scoped VCS access token for a base repository.
      */
-    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: string, auxiliaryRepositoryId?: number) {
+    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number) {
         this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
@@ -391,7 +394,9 @@ export class CodeButtonComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 403) {
-                    this.alertService.warning('403 Forbidden');
+                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+                } else {
+                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
                 }
             },
         });

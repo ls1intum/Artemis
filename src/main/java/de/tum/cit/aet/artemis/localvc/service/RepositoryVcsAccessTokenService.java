@@ -111,7 +111,10 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
-     * Eagerly creates the missing repository tokens for a single staff user across all (course) programming exercises of the given course.
+     * Eagerly creates the missing repository tokens for a single staff user across all (non-exam) programming exercises of the given course.
+     * <p>
+     * Exam programming exercises and staff added through paths other than the course-management add endpoint (e.g. admin user management, CSV import) are intentionally not covered
+     * here; the lazy clone-dialog fallback creates their tokens on first use.
      *
      * @param user   the staff user that just joined the course
      * @param course the course the user joined
@@ -166,8 +169,12 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
-     * Removes the repository tokens a user owns for the (course) programming exercises of the given course, but only if the user is no longer at least a tutor in that course.
+     * Removes the repository tokens a user owns for the (non-exam) programming exercises of the given course, but only if the user is no longer at least a tutor in that course.
      * This protects users that hold more than one staff role (e.g. an instructor that was only removed from the editor group keeps their tokens).
+     * <p>
+     * Tokens for exam programming exercises are not removed here. This is safe because a token never grants access on its own: authorization (at least tutor / editor in the
+     * course)
+     * is re-checked on every git operation, so a leftover token for a user that is no longer staff is rejected anyway.
      *
      * @param user   the user that was removed from a course group
      * @param course the course the user was removed from

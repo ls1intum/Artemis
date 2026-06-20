@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -22,10 +23,11 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "repository_vcs_access_token", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "repository_uri" }) })
 public class RepositoryVCSAccessToken extends DomainObject {
 
-    @ManyToOne
+    // All associations are lazy: the hot authentication path (lookup by user + repository URI on every git operation) only needs the token value, never the related entities.
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)
@@ -35,7 +37,7 @@ public class RepositoryVCSAccessToken extends DomainObject {
     /**
      * Only set when {@link #repositoryType} is {@link RepositoryType#AUXILIARY}; otherwise {@code null}.
      */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private AuxiliaryRepository auxiliaryRepository;
 
     @Column(name = "repository_uri", length = 500)
