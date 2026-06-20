@@ -117,12 +117,12 @@
                 <div id="test-course-title" class="navbar-course-title fs-small fw-medium">{{ course.title }}</div>
             </a>
         }
-        <div *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" class="navbar-perspective-switch">
+        <div *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" class="perspective-switch">
             @if (currentCourse()) {
-                <span class="navbar-course-view-separator" aria-hidden="true">&bull;</span>
+                <span class="perspective-switch-separator" aria-hidden="true">&bull;</span>
             }
             <a [routerLink]="studentViewLink()" [class.subtle]="routeIsAtStudentCourseView()" (click)="collapseNavbar()" jhiTranslate="global.menu.student">Student</a>
-            <span class="navbar-course-view-divider" aria-hidden="true">|</span>
+            <span class="perspective-switch-divider" aria-hidden="true">|</span>
             <a [routerLink]="managementViewLink()" [class.subtle]="routeIsAtCourseManagementView()" (click)="collapseNavbar()" jhiTranslate="global.menu.course">Management</a>
         </div>
         @if (!iconsMovedToMenu() && isCollapsed()) {
