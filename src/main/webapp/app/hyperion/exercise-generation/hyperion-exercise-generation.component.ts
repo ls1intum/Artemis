@@ -239,7 +239,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private terminalOpenHandled = false;
 
     constructor() {
-        // On a terminal outcome, move focus once to the next action (the now-removed Cancel button would otherwise drop focus to <body>, stranding keyboard/SR users).
+        // On a terminal outcome, move focus once to the next action: the control focused during the run is gone at terminal, so without this focus falls to <body>, stranding keyboard/SR users.
         afterRenderEffect(() => {
             if (!this.finalEvent() || this.terminalFocusHandled) {
                 return;

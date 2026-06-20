@@ -287,14 +287,14 @@ class SandboxAgentToolsTest {
 
     @Test
     void verify_whenVerifierUnavailable_returnsAnActionableFallback() {
-        // The test-only two-arg constructor leaves the verifier absent; the tool must say so and point at the bash fallback rather than NPE.
+        // No verifier (two-arg ctor): the tool must point at the bash fallback rather than NPE.
         String out = new SandboxAgentTools(new RecordingSandbox(), "s").verify();
         assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
     }
 
     @Test
     void agentVerifyReport_observation_truncatesLongNameLists() {
-        // A huge suite must not flood the agent's context: the observation truncates a long name list with a remaining-count.
+        // A long name list is truncated with a remaining-count so it cannot flood the agent's context.
         List<String> names = java.util.stream.IntStream.range(0, 60).mapToObj(i -> "t" + i).toList();
         AgentVerifyReport report = new AgentVerifyReport(60, true, List.of(), 60, true, true, List.of(), names, List.of(), List.of(), true, List.of());
         assertThat(report.toObservation()).contains("(+20 more)");

@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * <p>
  * The shared test {@code application.yml} points every build image at the {@code ~~invalid~~} placeholder so the normal (mocked-build) buckets never pull a real ~1&nbsp;GB image.
  * The real-build tests here need the production execution image for whatever language they exercise, and the GPU agent needs the gpt-oss-120b deployment's real 65536-token context
- * window. Both used to be supplied via {@code @TestPropertySource}, but a per-class property set forks a fresh Spring context (and is forbidden by
+ * window. Supplying these via {@code @TestPropertySource} is not an option: a per-class property set forks a fresh Spring context (and is forbidden by
  * {@code SpringContextConfigurationArchitectureTest}). Because these tests run single-threaded and only when their {@code HYPERION_E2E_GPU=true} / Docker gate is satisfied,
  * overriding the values directly on the shared beans (the same in-place bean mutation pattern these tests already use via {@link ReflectionTestUtils} for the Docker connection
  * URI) is equivalent at runtime and keeps the context shared.
@@ -31,8 +31,6 @@ final class HyperionGpuTestEnvironment {
 
     /**
      * The production execution image per language, keyed by the {@link ProgrammingLanguage} whose {@code default} (i.e. {@link ProjectType#PLAIN}) image must be overridden.
-     * Mirrors
-     * exactly the set the GPU E2E previously set via {@code artemis.continuous-integration.build.images.<lang>.default} properties.
      */
     private static final Map<ProgrammingLanguage, String> PRODUCTION_IMAGES = productionImages();
 

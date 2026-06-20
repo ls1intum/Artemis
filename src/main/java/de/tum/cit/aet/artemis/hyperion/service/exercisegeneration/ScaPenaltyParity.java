@@ -17,8 +17,10 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCatego
  * <p>
  * <strong>Why this exists.</strong> When an exercise has static code analysis enabled, both the sandbox {@code verify.sh} and production run the same {@code *_static.yaml} phases,
  * so the SCA tools (SpotBugs/Checkstyle/PMD, ruff/clippy/eslint/…) execute in BOTH. But their reports carry no JUnit {@code <testcase>}, so the differential oracle (which decides
- * only from JUnit results) is blind to them while production folds an SCA penalty into the score ({@code ProgrammingExerciseGradingService.calculateTotalPenalty}). A reference
- * solution with graded SCA violations was therefore ACCEPTED by the oracle yet grades below 100% for a student. The verifier now collects the SCA report files and parses them with
+ * only from JUnit results) is blind to them while production folds an SCA penalty into the score ({@code ProgrammingExerciseGradingService.calculateTotalPenalty}). Without this
+ * gate a
+ * reference solution with graded SCA violations would be accepted by the oracle yet grade below 100% for a student, so the verifier collects the SCA report files and parses them
+ * with
  * the production {@code ReportParser} (so each finding carries the REAL derived category, including SARIF/GCC via the production categorizers), then asks this class which of those
  * findings production would actually penalise.
  * <p>

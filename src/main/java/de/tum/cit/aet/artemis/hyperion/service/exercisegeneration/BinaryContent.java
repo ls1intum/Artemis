@@ -12,8 +12,8 @@ import java.nio.file.Path;
  * The generation workspace moves repository files as UTF-8 {@code String}s ({@link WorkspaceArchive#readTar} on read-back, {@link GenerationPersistenceService} on commit). That
  * round-trip is LOSSLESS for text but CORRUPTS binaries: decoding arbitrary bytes as UTF-8 substitutes the replacement character {@code U+FFFD} for every invalid sequence, and
  * re-encoding the decoded {@code String} back to UTF-8 then writes those replacement bytes — so a {@code gradle/wrapper/gradle-wrapper.jar} (shipped by Java PLAIN_GRADLE /
- * GRADLE_GRADLE) would be written back mangled and the Gradle build would fail in production. The agent never edits these binaries, so the fix is to keep them out of the String
- * pipeline entirely (excluded on read-back, preserved-from-scaffold on persist) rather than to carry bytes through the whole {@code Map<String, String>} contract.
+ * GRADLE_GRADLE) would be written back mangled and the Gradle build would fail in production. The agent never edits these binaries, so they are kept out of the String
+ * pipeline entirely (excluded on read-back, preserved-from-scaffold on persist) rather than carried as bytes through the whole {@code Map<String, String>} contract.
  * <p>
  * Detection is by CONTENT, not by file extension: an extension allowlist would both miss an extensionless binary and — more dangerously — misclassify a genuinely-textual
  * {@code run.sh}/{@code build.sh} test-harness script (a {@code .sh} is "binary" in Artemis's coarse extension list) as binary and wrongly drop it from the produced tree. The

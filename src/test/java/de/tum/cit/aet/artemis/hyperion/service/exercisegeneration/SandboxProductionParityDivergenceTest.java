@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 /**
  * Parity probe: does the sandbox verdict track PRODUCTION grading semantics on byte-identical reports?
  * <p>
- * After the refactor this is parity <em>by construction</em>: the verifier collects the report files the live {@code verify.sh} writes and parses them with the SAME production
+ * Parity here is <em>by construction</em>: the verifier collects the report files the live {@code verify.sh} writes and parses them with the SAME production
  * code
  * the real LocalCI pipeline uses ({@link TestResultXmlParser} for JUnit, {@link ReportParser} for SCA). There is no separate shell parser to drift. This test pins that by driving
- * the LIVE collect step under a real POSIX {@code sh} and feeding the collected reports into the production parsers, for the two historically-divergent shapes:
+ * the LIVE collect step under a real POSIX {@code sh} and feeding the collected reports into the production parsers, for the two shapes most prone to divergence:
  * <ul>
- * <li><b>SKIPPED tests</b> — production drops a {@code <testcase><skipped/></testcase>} (graded as not-executed). Because the verifier now uses {@code TestResultXmlParser} on the
+ * <li><b>SKIPPED tests</b> — production drops a {@code <testcase><skipped/></testcase>} (graded as not-executed). Because the verifier uses {@code TestResultXmlParser} on the
  * collected report, the skip is dropped identically; a test skipped on the solution but failing on the template makes the solution run fewer tests than the template, which the
  * oracle's count gate rejects.</li>
  * <li><b>SCA findings</b> — the SCA reports carry no {@code <testcase>}, so they are invisible to the JUnit differential, but the verifier collects them and
@@ -159,16 +159,17 @@ class SandboxProductionParityDivergenceTest {
             """;
 
     /**
-     * Proves the production category derivation is now used for GCC (and, by the same {@code ReportParser} path, SARIF): the {@code -Wunused-variable} warning derives the concrete
-     * category {@code BadPractice} (mapping to the "Bad Practice" default category), NOT the old {@code *} sentinel. So {@link ScaPenaltyParity} penalises it iff "Bad Practice" is
-     * graded — and a finding in a DIFFERENT graded category ("Security") is NOT penalised, where the old conservative {@code <tool>|*} would have over-rejected it.
+     * Production category derivation governs GCC (and, by the same {@code ReportParser} path, SARIF): the {@code -Wunused-variable} warning derives the concrete category
+     * {@code BadPractice} (mapping to the "Bad Practice" default category), not a wildcard. So {@link ScaPenaltyParity} penalises it iff "Bad Practice" is graded — and a finding
+     * in a
+     * DIFFERENT graded category ("Security") is NOT penalised, where a wildcard match would over-reject it.
      */
     @Test
     void gccCategoryIsDerivedByProduction_soANonMatchingGradedCategoryDoesNotPenalise() {
         StaticCodeAnalysisReportDTO report = ReportParser.getReport(GCC_REPORT, "gcc.xml");
         assertThat(report.issues()).as("a concrete GCC finding is parsed").hasSize(1);
         String derivedCategory = report.issues().getFirst().category();
-        assertThat(derivedCategory).as("the real derived category is used, not the old * sentinel").isEqualTo("BadPractice").isNotEqualTo("*");
+        assertThat(derivedCategory).as("the real derived category is used, not a wildcard sentinel").isEqualTo("BadPractice").isNotEqualTo("*");
         List<ScaPenaltyParity.ScaFinding> findings = List.of(new ScaPenaltyParity.ScaFinding(report.tool().name(), derivedCategory));
 
         // "Bad Practice" graded (the default category the BadPractice GCC finding maps to) => penalised.
@@ -176,7 +177,7 @@ class SandboxProductionParityDivergenceTest {
         assertThat(ScaPenaltyParity.penalisingFindings(badPracticeGraded, badPracticeGraded.getStaticCodeAnalysisCategories(), findings))
                 .as("a GCC finding in a graded matching category is penalised").hasSize(1);
 
-        // "Security" graded but the finding's derived category is "BadPractice" => NOT penalised (the old <tool>|* sentinel would have flagged it conservatively).
+        // "Security" graded but the finding's derived category is "BadPractice" => NOT penalised (a wildcard match would over-flag it; the concrete category does not).
         ProgrammingExercise securityGraded = scaCExercise("Security", CategoryState.GRADED, 1.0);
         assertThat(ScaPenaltyParity.penalisingFindings(securityGraded, securityGraded.getStaticCodeAnalysisCategories(), findings))
                 .as("a GCC finding whose derived category is not the graded one must NOT penalise (real derivation, not <tool>|*)").isEmpty();

@@ -180,7 +180,7 @@ class AuthoritativeVerificationServiceTest {
         return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
     }
 
-    /** Runs the 9-arg verify with the authoritative auto-seeded structural test names, so the W1 structural-binding exemption is exercised with (and without) that set. */
+    /** Runs the 9-arg verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
                 seededStructural);
@@ -872,8 +872,8 @@ class AuthoritativeVerificationServiceTest {
 
         @Test
         void shouldNotPenaliseWhenSarifFindingIsInANonGradedCategory() {
-            // SARIF category derivation uses the production categorizer (not the old over-rejecting <tool>|* sentinel); grading a category the ruff finding does not map to proves
-            // the real derived category is consulted.
+            // SARIF category derivation uses the production categorizer; grading a category the ruff finding does not map to proves the real derived category is consulted
+            // (a wildcard match would over-reject).
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setId(7L);
             exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
@@ -885,11 +885,11 @@ class AuthoritativeVerificationServiceTest {
             var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
             VerificationResult result = verifier.verify(new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
-            assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not <tool>|*)").isTrue();
+            assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
-        /** A minimal ruff SARIF report with a single style ({@code E501}) finding; the production SARIF categorizer derives a concrete category, not the old {@code *} sentinel. */
+        /** A minimal ruff SARIF report with a single style ({@code E501}) finding; the production SARIF categorizer derives a concrete category, not a wildcard sentinel. */
         private static final String RUFF_STYLE_SARIF = """
                 {
                   "version": "2.1.0",
