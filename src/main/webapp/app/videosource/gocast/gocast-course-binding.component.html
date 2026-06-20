@@ -1,80 +1,79 @@
-<div class="card mt-3">
-    <div class="card-header">
-        <h5 class="mb-0" jhiTranslate="artemisApp.gocast.binding.title"></h5>
-    </div>
-    <div class="card-body">
-        <!-- No binding yet: show course dropdown + link button -->
-        @if (!binding()) {
-            <div class="form-group">
-                <label for="gocastCourseSelect" jhiTranslate="artemisApp.gocast.binding.selectCourse"></label>
-                @if (isLoadingCourses()) {
-                    <div class="spinner-border spinner-border-sm ms-2" role="status">
-                        <span class="visually-hidden" jhiTranslate="artemisApp.gocast.binding.loading"></span>
-                    </div>
-                }
-                <select id="gocastCourseSelect" class="form-select mt-1" [disabled]="isLoadingCourses() || tumLiveCourses().length === 0" (change)="onCourseSelected($event)">
-                    <option value="" jhiTranslate="artemisApp.gocast.binding.selectCoursePlaceholder"></option>
-                    @for (course of tumLiveCourses(); track course.id) {
-                        <option [value]="course.id">{{ course.name }} ({{ course.teachingTerm }}{{ course.year }})</option>
-                    }
-                </select>
-                @if (!isLoadingCourses() && tumLiveCourses().length === 0) {
-                    <small class="form-text text-muted mt-1" jhiTranslate="artemisApp.gocast.binding.noCourses"></small>
-                }
-            </div>
+<p-card styleClass="mt-3">
+    <ng-template #title>
+        <span jhiTranslate="artemisApp.gocast.binding.title"></span>
+    </ng-template>
 
-            <button id="createBindingButton" class="btn btn-primary mt-2" type="button" [disabled]="!selectedGocastCourseId() || isCreatingBinding()" (click)="createBinding()">
-                @if (isCreatingBinding()) {
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                }
-                <span jhiTranslate="artemisApp.gocast.binding.linkCourse"></span>
-            </button>
-        }
+    <!-- No binding yet: show course dropdown + link button -->
+    @if (!binding()) {
+        <div class="form-group">
+            <label for="gocastCourseSelect" jhiTranslate="artemisApp.gocast.binding.selectCourse"></label>
+            <p-select
+                inputId="gocastCourseSelect"
+                styleClass="d-block mt-1"
+                [options]="courseOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                [loading]="isLoadingCourses()"
+                [disabled]="isLoadingCourses() || courseOptions().length === 0"
+                [placeholder]="'artemisApp.gocast.binding.selectCoursePlaceholder' | artemisTranslate"
+                (onChange)="onCourseSelected($event.value)"
+            />
+            @if (!isLoadingCourses() && courseOptions().length === 0) {
+                <small class="form-text text-muted mt-1" jhiTranslate="artemisApp.gocast.binding.noCourses"></small>
+            }
+        </div>
 
-        <!-- PENDING binding: show approve button + check status button -->
-        @if (binding() && binding()!.status === 'PENDING') {
-            <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
-                <span jhiTranslate="artemisApp.gocast.binding.pendingInfo"></span>
-            </div>
+        <p-button
+            id="createBindingButton"
+            styleClass="mt-2"
+            [disabled]="!selectedGocastCourseId() || isCreatingBinding()"
+            [loading]="isCreatingBinding()"
+            (onClick)="createBinding()"
+        >
+            <span jhiTranslate="artemisApp.gocast.binding.linkCourse"></span>
+        </p-button>
+    }
 
-            <div class="d-flex gap-2 flex-wrap mt-2">
-                <button id="openApprovalButton" class="btn btn-warning" type="button" (click)="openApprovalPage()">
-                    <span jhiTranslate="artemisApp.gocast.binding.authorizeOnTumLive"></span>
-                </button>
+    <!-- PENDING binding: show approve button + check status button -->
+    @if (binding() && binding()!.status === 'PENDING') {
+        <p-message severity="warn" styleClass="d-block" [closable]="false">
+            <span jhiTranslate="artemisApp.gocast.binding.pendingInfo"></span>
+        </p-message>
 
-                <button id="checkStatusButton" class="btn btn-outline-secondary" type="button" [disabled]="isCheckingStatus()" (click)="checkBindingStatus()">
-                    @if (isCheckingStatus()) {
-                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    }
-                    <span jhiTranslate="artemisApp.gocast.binding.checkStatus"></span>
-                </button>
-            </div>
-        }
+        <div class="d-flex gap-2 flex-wrap mt-2">
+            <p-button id="openApprovalButton" severity="warn" (onClick)="openApprovalPage()">
+                <span jhiTranslate="artemisApp.gocast.binding.authorizeOnTumLive"></span>
+            </p-button>
 
-        <!-- ACTIVE binding: show success badge + revoke button -->
-        @if (binding() && binding()!.status === 'ACTIVE') {
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <span class="badge bg-success fs-6" jhiTranslate="artemisApp.gocast.binding.active"></span>
-                <span class="text-muted small">
-                    {{ 'artemisApp.gocast.binding.linkedCourse' | artemisTranslate }}: <strong>{{ binding()!.gocastCourseSlug }}</strong>
-                </span>
-            </div>
+            <p-button id="checkStatusButton" severity="secondary" [outlined]="true" [disabled]="isCheckingStatus()" [loading]="isCheckingStatus()" (onClick)="checkBindingStatus()">
+                <span jhiTranslate="artemisApp.gocast.binding.checkStatus"></span>
+            </p-button>
+        </div>
+    }
 
-            <button id="revokeBindingButton" class="btn btn-outline-danger mt-3" type="button" [disabled]="isRevoking()" (click)="revokeBinding()">
-                @if (isRevoking()) {
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                }
-                <span jhiTranslate="artemisApp.gocast.binding.revoke"></span>
-            </button>
-        }
+    <!-- ACTIVE binding: show success message + revoke button -->
+    @if (binding() && binding()!.status === 'ACTIVE') {
+        <p-message severity="success" styleClass="d-block" [closable]="false">
+            <span jhiTranslate="artemisApp.gocast.binding.active"></span>
+            <span class="ms-2">
+                {{ 'artemisApp.gocast.binding.linkedCourse' | artemisTranslate }}: <strong>{{ binding()!.gocastCourseSlug }}</strong>
+            </span>
+        </p-message>
 
-        <!-- REVOKED binding: show info + option to re-link -->
-        @if (binding() && binding()!.status === 'REVOKED') {
-            <div class="alert alert-secondary d-flex align-items-start gap-2" role="alert">
-                <span jhiTranslate="artemisApp.gocast.binding.revokedInfo"></span>
-            </div>
+        <p-button id="revokeBindingButton" severity="danger" [outlined]="true" styleClass="mt-3" [disabled]="isRevoking()" [loading]="isRevoking()" (onClick)="revokeBinding()">
+            <span jhiTranslate="artemisApp.gocast.binding.revoke"></span>
+        </p-button>
+    }
 
-            <button class="btn btn-outline-primary mt-2" type="button" (click)="binding.set(undefined)" jhiTranslate="artemisApp.gocast.binding.relinkCourse"></button>
-        }
-    </div>
-</div>
+    <!-- REVOKED binding: show info + option to re-link -->
+    @if (binding() && binding()!.status === 'REVOKED') {
+        <p-message severity="secondary" styleClass="d-block" [closable]="false">
+            <span jhiTranslate="artemisApp.gocast.binding.revokedInfo"></span>
+        </p-message>
+
+        <p-button severity="primary" [outlined]="true" styleClass="mt-2" (onClick)="binding.set(undefined)">
+            <span jhiTranslate="artemisApp.gocast.binding.relinkCourse"></span>
+        </p-button>
+    }
+</p-card>

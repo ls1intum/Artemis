@@ -1,10 +1,21 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { GocastBinding, GocastCourse } from './gocast.model';
 import { GocastService } from './gocast.service';
+
+/** A single option in the TUM Live course p-select dropdown. */
+interface GocastCourseOption {
+    label: string;
+    value: number;
+    slug: string;
+}
 
 /**
  * Stage 1 — Course management (binding UI).
@@ -18,7 +29,7 @@ import { GocastService } from './gocast.service';
 @Component({
     selector: 'jhi-gocast-course-binding',
     templateUrl: './gocast-course-binding.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, ButtonModule, CardModule, MessageModule, SelectModule],
 })
 export class GocastCourseBindingComponent implements OnInit {
     private readonly gocastService = inject(GocastService);
@@ -38,6 +49,15 @@ export class GocastCourseBindingComponent implements OnInit {
     isCreatingBinding = signal(false);
     isCheckingStatus = signal(false);
     isRevoking = signal(false);
+
+    /** Course list mapped to PrimeNG p-select options (label/value/slug). */
+    courseOptions = computed<GocastCourseOption[]>(() =>
+        this.tumLiveCourses().map((course) => ({
+            label: `${course.name} (${course.teachingTerm}${course.year})`,
+            value: course.id,
+            slug: course.slug,
+        })),
+    );
 
     ngOnInit(): void {
         this.loadExistingBinding();
@@ -73,16 +93,14 @@ export class GocastCourseBindingComponent implements OnInit {
      * Invoked when the instructor selects a TUM Live course from the dropdown.
      * Records the selected id and slug from the courses list.
      */
-    onCourseSelected(event: Event): void {
-        const rawValue = (event.target as HTMLSelectElement).value;
-        if (!rawValue) {
-            // Placeholder selected — clear the selection.
+    onCourseSelected(gocastCourseId: number | undefined): void {
+        if (gocastCourseId === undefined || gocastCourseId === null) {
+            // Cleared selection — reset.
             this.selectedGocastCourseId.set(undefined);
             this.selectedGocastCourseSlug.set(undefined);
             return;
         }
-        const courseId = Number(rawValue);
-        const course = this.tumLiveCourses().find((c) => c.id === courseId);
+        const course = this.tumLiveCourses().find((c) => c.id === gocastCourseId);
         if (course) {
             this.selectedGocastCourseId.set(course.id);
             this.selectedGocastCourseSlug.set(course.slug);

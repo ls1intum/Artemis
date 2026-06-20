@@ -86,13 +86,25 @@ describe('GocastCourseBindingComponent', () => {
     it('should set selectedGocastCourseId and slug when a course is selected', () => {
         createComponent();
 
-        // Simulate selecting the first course (id=1)
+        // Simulate selecting the first course (id=1) via the p-select onChange value
         component.tumLiveCourses.set(mockCourses);
-        const event = { target: { value: '1' } } as unknown as Event;
-        component.onCourseSelected(event);
+        component.onCourseSelected(1);
 
         expect(component.selectedGocastCourseId()).toBe(1);
         expect(component.selectedGocastCourseSlug()).toBe('eidi');
+    });
+
+    it('should clear the selection when the dropdown is cleared', () => {
+        createComponent();
+        component.tumLiveCourses.set(mockCourses);
+        component.onCourseSelected(1);
+        expect(component.selectedGocastCourseId()).toBe(1);
+
+        // p-select [showClear] emits undefined on clear
+        component.onCourseSelected(undefined);
+
+        expect(component.selectedGocastCourseId()).toBeUndefined();
+        expect(component.selectedGocastCourseSlug()).toBeUndefined();
     });
 
     it('should create a PENDING binding and store it along with the approvalUrl', () => {

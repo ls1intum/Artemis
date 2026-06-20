@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -32,7 +31,7 @@ describe('GocastStreamPickerComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [GocastStreamPickerComponent, FormsModule, TranslateDirective, MockPipe(ArtemisTranslatePipe), RouterTestingModule],
+            imports: [GocastStreamPickerComponent, FormsModule, TranslateDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(GocastService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -118,15 +117,30 @@ describe('GocastStreamPickerComponent', () => {
         vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
         createComponent(10, true);
 
-        const emittedValues: { streamId: number; streamName: string }[] = [];
+        const emittedValues: { streamId: number; streamName: string; slug?: string }[] = [];
         component.streamSelected.subscribe((v) => emittedValues.push(v));
 
-        const event = { target: { value: '100' } } as unknown as Event;
-        component.onStreamSelected(event);
+        // p-select onChange emits the selected option value (the streamId)
+        component.onStreamSelected(100);
 
         expect(component.selectedStreamId()).toBe(100);
         expect(emittedValues).toHaveLength(1);
         expect(emittedValues[0]).toMatchObject({ streamId: 100, streamName: 'Lecture 1' });
+    });
+
+    it('should emit the bound course slug (server-resolved) so the correct watch URL can be built', () => {
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(of(activeBinding));
+        vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
+        // Server-resolved path (no hasActiveBinding input) → slug comes from the binding
+        createComponent(10);
+
+        const emittedValues: { streamId: number; streamName: string; slug?: string }[] = [];
+        component.streamSelected.subscribe((v) => emittedValues.push(v));
+
+        component.onStreamSelected(100);
+
+        expect(emittedValues).toHaveLength(1);
+        expect(emittedValues[0].slug).toBe('eidi');
     });
 
     it('should show an error alert when loading streams fails', () => {
@@ -139,16 +153,19 @@ describe('GocastStreamPickerComponent', () => {
         expect(component.streams()).toHaveLength(0);
     });
 
-    it('should not emit when no stream is selected (value is 0 / empty)', () => {
+    it('should emit undefined when the selection is cleared so the parent can reset its cached stream id', () => {
         vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
         createComponent(10, true);
 
         const emittedValues: unknown[] = [];
         component.streamSelected.subscribe((v) => emittedValues.push(v));
 
-        const event = { target: { value: '0' } } as unknown as Event;
-        component.onStreamSelected(event);
+        // First select a stream, then clear it via p-select [showClear] (emits undefined).
+        component.onStreamSelected(100);
+        component.onStreamSelected(undefined);
 
-        expect(emittedValues).toHaveLength(0);
+        expect(emittedValues).toHaveLength(2);
+        expect(emittedValues[1]).toBeUndefined();
+        expect(component.selectedStreamId()).toBeUndefined();
     });
 });
