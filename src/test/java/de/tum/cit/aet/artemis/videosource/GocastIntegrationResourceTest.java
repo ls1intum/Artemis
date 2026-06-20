@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
  * Spring integration tests for {@link de.tum.cit.aet.artemis.videosource.web.GocastIntegrationResource}.
  * <p>
  * Exercises the authorization matrix (instructor vs. student vs. non-member) and the binding
- * state-machine (PENDING → ACTIVE when EP7 returns true; PENDING → REVOKED when EP7 returns 403;
- * no status change on transport errors).
+ * state-machine (PENDING → ACTIVE when EP7 returns true; PENDING stays PENDING when EP7 returns
+ * false or throws any exception; REVOKED is only reached from ACTIVE bindings via EP8/EP2 paths).
  * <p>
  * {@link de.tum.cit.aet.artemis.videosource.service.GocastConnectorService} and
  * {@link de.tum.cit.aet.artemis.videosource.service.GocastApprovalLinkService} are provided as
@@ -356,15 +356,20 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingAndEp7Returns403_flipsToRevoked() throws Exception {
+    void getBinding_pendingAndEp7Returns403_staysPendingWithoutMutation() throws Exception {
+        // A thrown 403 from EP7 during PENDING refresh is NOT a definitive "unbound" signal —
+        // it can indicate a service-account auth/config/upstream-authorization failure. The binding
+        // must stay PENDING (not REVOKED) so the instructor can retry. Only an explicit false return
+        // from EP7 or an ACTIVE-binding management-call (EP8/EP2) 403 can trigger REVOKED.
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
         when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
+        when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
 
         GocastBindingWithApprovalDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingWithApprovalDTO.class);
 
-        assertThat(result.binding().status()).isEqualTo(GocastBindingStatus.REVOKED);
+        assertThat(result.binding().status()).isEqualTo(GocastBindingStatus.PENDING);
         GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
-        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
     }
 
     @Test

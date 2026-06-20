@@ -9,6 +9,7 @@ import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -176,7 +177,7 @@ export const courseManagementRoutes: Routes = [
                     authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.gocast.binding.pageTitle',
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, GocastGuard],
             },
             {
                 path: ':courseId/lti-configuration/edit',

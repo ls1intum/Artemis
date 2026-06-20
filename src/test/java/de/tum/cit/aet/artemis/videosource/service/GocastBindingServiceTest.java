@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingReposito
  * <ul>
  * <li>EP7 returns {@code true} → {@code PENDING → ACTIVE} (persisted).</li>
  * <li>EP7 returns {@code false} → stays {@code PENDING} (not persisted).</li>
- * <li>EP7 throws {@code 403} → {@code PENDING → REVOKED} (persisted).</li>
+ * <li>EP7 throws {@code 403} → stays {@code PENDING} (not persisted; thrown 403 is not definitive).</li>
  * <li>EP7 throws {@code 5xx} / transport → stays {@code PENDING} (not persisted).</li>
  * <li>Already {@code ACTIVE} → EP7 not called, unchanged.</li>
  * <li>Already {@code REVOKED} → EP7 not called, unchanged.</li>
@@ -111,16 +111,17 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_pendingAndEp7Returns403_flipsToRevokedAndPersists() {
+    void refreshStatusFromUpstream_pendingAndEp7Returns403_staysPendingAndDoesNotPersist() {
+        // A thrown 403 from EP7 during PENDING refresh is NOT a definitive "unbound" signal —
+        // it can indicate a service-account auth/config failure. The binding must stay PENDING
+        // so the instructor can retry. REVOKED is only reached from ACTIVE bindings.
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
         when(connectorService.getBindingStatus(GOCAST_COURSE_ID)).thenThrow(new GocastIntegrationException("forbidden", HttpStatus.FORBIDDEN));
 
         GocastCourseBinding result = bindingService.refreshStatusFromUpstream(pending);
 
-        assertThat(result.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
-        ArgumentCaptor<GocastCourseBinding> saved = ArgumentCaptor.forClass(GocastCourseBinding.class);
-        verify(bindingRepository).save(saved.capture());
-        assertThat(saved.getValue().getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+        assertThat(result.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
+        verify(bindingRepository, never()).save(any());
     }
 
     @Test
