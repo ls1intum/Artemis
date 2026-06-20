@@ -53,8 +53,8 @@ describe('MathExerciseDetailComponent', () => {
     });
 
     it('loads the exercise from the resolver data', () => {
-        expect(component.mathExercise).toBeTruthy();
-        expect(component.mathExercise.id).toBe(1);
+        expect(component.mathExercise()).toBeTruthy();
+        expect(component.mathExercise().id).toBe(1);
     });
 
     it('produces exercise detail sections', () => {

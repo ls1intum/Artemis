@@ -1,4 +1,4 @@
-@if (mathExercise && course) {
+@if (mathExercise() && course()) {
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex align-items-center mb-2">
@@ -6,27 +6,27 @@
                 <jhi-documentation-button [type]="'Text'" />
                 <!-- TODO: Update to Math when documentation exists -->
             </div>
-            <jhi-non-programming-exercise-detail-common-actions [exercise]="mathExercise" [course]="course" (onExerciseRefresh)="load(mathExercise.id!)" />
+            <jhi-non-programming-exercise-detail-common-actions [exercise]="mathExercise()" [course]="course()!" (onExerciseRefresh)="load(mathExercise().id!)" />
             <div class="row mt-3">
                 <div class="col-12 col-md-4">
-                    <jhi-exercise-detail-statistics [exercise]="mathExercise" [doughnutStats]="doughnutStats" />
+                    <jhi-exercise-detail-statistics [exercise]="mathExercise()" [doughnutStats]="doughnutStats()" />
                 </div>
                 <div class="col-12 col-md-8">
-                    <jhi-detail-overview-list [sections]="detailOverviewSections" />
+                    <jhi-detail-overview-list [sections]="detailOverviewSections()" />
                 </div>
             </div>
 
-            @if (submissions.length > 0) {
+            @if (submissions().length > 0) {
                 <div class="row mt-3">
                     <div class="col-12">
                         <p-card>
                             <ng-template #header>
                                 <div class="d-flex align-items-center justify-content-between px-3 pt-3">
                                     <h4 class="mb-0" jhiTranslate="artemisApp.mathExercise.detail.submittedMaths">Submitted Maths</h4>
-                                    <p-tag severity="secondary" [value]="submissions.length.toString()" />
+                                    <p-tag severity="secondary" [value]="submissions().length.toString()" />
                                 </div>
                             </ng-template>
-                            <p-table [value]="submissions" styleClass="p-datatable-sm p-datatable-hover">
+                            <p-table [value]="submissions()" styleClass="p-datatable-sm p-datatable-hover">
                                 <ng-template #header>
                                     <tr>
                                         <th jhiTranslate="artemisApp.mathExercise.detail.tableStudent">Student</th>
