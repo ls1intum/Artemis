@@ -119,7 +119,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @PostMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmissionResponseDTO> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
-        log.debug("REST request to save text submission : {}", textSubmissionDTO);
+        log.debug("REST request to save text submission for exercise {} (language {}, submitted {})", exerciseId, textSubmissionDTO.language(), textSubmissionDTO.submitted());
         if (textSubmissionDTO.id() != null) {
             throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -139,7 +139,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @PutMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmissionResponseDTO> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
-        log.debug("REST request to update text submission: {}", textSubmissionDTO);
+        log.debug("REST request to update text submission {} for exercise {} (language {}, submitted {})", textSubmissionDTO.id(), exerciseId, textSubmissionDTO.language(),
+                textSubmissionDTO.submitted());
         if (textSubmissionDTO.id() == null) {
             return createTextSubmission(exerciseId, textSubmissionDTO);
         }
