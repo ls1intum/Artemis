@@ -28,7 +28,15 @@ export interface GocastBinding {
     gocastCourseId: number;
     gocastCourseSlug: string;
     status: GocastBindingStatus;
-    approvalUrl?: string;
+}
+
+/**
+ * Mirrors GocastBindingWithApprovalDTO: the response from POST /binding.
+ * Contains the newly-created binding (always PENDING) and the TUM Live approval URL.
+ */
+export interface GocastBindingWithApproval {
+    binding: GocastBinding;
+    approvalUrl: string;
 }
 
 export interface GocastPlaybackToken {

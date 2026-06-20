@@ -32,6 +32,8 @@ export class GocastCourseBindingComponent implements OnInit {
     selectedGocastCourseId = signal<number | undefined>(undefined);
     selectedGocastCourseSlug = signal<string | undefined>(undefined);
     binding = signal<GocastBinding | undefined>(undefined);
+    /** The TUM Live approval URL returned by POST /binding (separate from the binding DTO). */
+    approvalUrl = signal<string | undefined>(undefined);
     isLoadingCourses = signal(false);
     isCreatingBinding = signal(false);
     isCheckingStatus = signal(false);
@@ -72,7 +74,14 @@ export class GocastCourseBindingComponent implements OnInit {
      * Records the selected id and slug from the courses list.
      */
     onCourseSelected(event: Event): void {
-        const courseId = Number((event.target as HTMLSelectElement).value);
+        const rawValue = (event.target as HTMLSelectElement).value;
+        if (!rawValue) {
+            // Placeholder selected — clear the selection.
+            this.selectedGocastCourseId.set(undefined);
+            this.selectedGocastCourseSlug.set(undefined);
+            return;
+        }
+        const courseId = Number(rawValue);
         const course = this.tumLiveCourses().find((c) => c.id === courseId);
         if (course) {
             this.selectedGocastCourseId.set(course.id);
@@ -92,8 +101,10 @@ export class GocastCourseBindingComponent implements OnInit {
         }
         this.isCreatingBinding.set(true);
         this.gocastService.createBinding(this.courseId(), gocastCourseId, gocastCourseSlug).subscribe({
-            next: (binding) => {
-                this.binding.set(binding);
+            next: (response) => {
+                // Server returns GocastBindingWithApprovalDTO: { binding, approvalUrl }
+                this.binding.set(response.binding);
+                this.approvalUrl.set(response.approvalUrl);
                 this.isCreatingBinding.set(false);
                 this.alertService.success('artemisApp.gocast.binding.pendingCreated');
             },
@@ -109,7 +120,7 @@ export class GocastCourseBindingComponent implements OnInit {
      * Called after a PENDING binding has been created.
      */
     openApprovalPage(): void {
-        const url = this.binding()?.approvalUrl;
+        const url = this.approvalUrl();
         if (url) {
             window.open(url, '_blank', 'noopener,noreferrer');
         }
@@ -147,6 +158,7 @@ export class GocastCourseBindingComponent implements OnInit {
         this.gocastService.deleteBinding(this.courseId()).subscribe({
             next: () => {
                 this.binding.set(undefined);
+                this.approvalUrl.set(undefined);
                 this.isRevoking.set(false);
                 this.alertService.success('artemisApp.gocast.binding.revoked');
             },

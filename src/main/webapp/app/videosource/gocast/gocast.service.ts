@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GocastBinding, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
+import { GocastBinding, GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
 
 /**
  * Angular service for the gocast (TUM Live) integration.
@@ -41,10 +41,11 @@ export class GocastService {
 
     /**
      * Create a PENDING binding for the given Artemis course with the specified TUM Live course.
-     * Returns the binding (with approvalUrl) so the instructor can open the TUM Live confirmation page.
+     * Returns GocastBindingWithApproval (mirrors GocastBindingWithApprovalDTO) containing the nested
+     * binding object and the TUM Live approval URL the instructor must visit.
      */
-    createBinding(courseId: number, gocastCourseId: number, gocastCourseSlug: string): Observable<GocastBinding> {
-        return this.http.post<GocastBinding>(`${this.baseUrl}/${courseId}/binding`, { gocastCourseId, gocastCourseSlug });
+    createBinding(courseId: number, gocastCourseId: number, gocastCourseSlug: string): Observable<GocastBindingWithApproval> {
+        return this.http.post<GocastBindingWithApproval>(`${this.baseUrl}/${courseId}/binding`, { gocastCourseId, gocastCourseSlug });
     }
 
     /**

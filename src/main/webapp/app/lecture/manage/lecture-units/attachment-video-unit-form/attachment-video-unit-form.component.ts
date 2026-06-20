@@ -230,10 +230,12 @@ export class AttachmentVideoUnitFormComponent {
      * Records the chosen streamId for inclusion in the submitted form data.
      * If videoSource is not yet set, auto-fills it with the TUM Live stream URL.
      */
-    onGocastStreamSelected(event: { streamId: number; streamName: string }): void {
+    onGocastStreamSelected(event: { streamId: number; streamName: string; slug?: string }): void {
         this.selectedGocastStreamId = event.streamId;
-        if (!this.videoSourceControl?.value) {
-            this.videoSourceControl?.setValue(`https://tum.live/w/stream/${event.streamId}`);
+        // Auto-fill the video source URL if not already set.
+        // Format: https://tum.live/w/{courseSlug}/{streamId} — required by TumLiveService regex.
+        if (!this.videoSourceControl?.value && event.slug) {
+            this.videoSourceControl?.setValue(`https://tum.live/w/${event.slug}/${event.streamId}`);
         }
     }
 

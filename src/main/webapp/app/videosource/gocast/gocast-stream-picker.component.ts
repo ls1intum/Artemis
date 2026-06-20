@@ -47,11 +47,18 @@ export class GocastStreamPickerComponent implements OnInit {
     selectedStreamId = signal<number | undefined>(undefined);
     /** Resolved binding status — either from the input or fetched on init. */
     bindingStatus = signal<GocastBindingStatus | undefined>(undefined);
+    /**
+     * The TUM Live course slug for the active binding.
+     * Needed to build the correct watch-page URL: https://tum.live/w/{slug}/{streamId}.
+     * Populated from the server binding response; undefined when binding resolves via hasActiveBinding input.
+     */
+    private boundCourseSlug: string | undefined;
 
     ngOnInit(): void {
         const inputBinding = this.hasActiveBinding();
         if (inputBinding !== undefined) {
-            // Caller provided the binding state — skip the check.
+            // Caller provided the binding state — skip the server check.
+            // Note: slug is not available in this path; the form must handle URL building fallback.
             if (inputBinding) {
                 this.bindingStatus.set('ACTIVE');
                 this.loadStreams();
@@ -65,12 +72,13 @@ export class GocastStreamPickerComponent implements OnInit {
             next: (binding) => {
                 this.bindingStatus.set(binding.status);
                 if (binding.status === 'ACTIVE') {
+                    this.boundCourseSlug = binding.gocastCourseSlug;
                     this.loadStreams();
                 }
             },
             error: () => {
-                // 404 or other error → treat as no binding
-                this.bindingStatus.set(undefined);
+                // 404 or other error → treat as no binding; show the hint
+                this.bindingStatus.set('REVOKED');
             },
         });
     }
@@ -101,7 +109,7 @@ export class GocastStreamPickerComponent implements OnInit {
         const stream = this.streams().find((s) => s.streamId === streamId);
         if (stream) {
             this.selectedStreamId.set(stream.streamId);
-            this.streamSelected.emit({ streamId: stream.streamId, streamName: stream.name });
+            this.streamSelected.emit({ streamId: stream.streamId, streamName: stream.name, slug: this.boundCourseSlug });
         }
     }
 }
