@@ -279,6 +279,20 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createBinding_ep1ThrowsGocastIntegrationException_propagatesUpstreamStatus() throws Exception {
+        // Fix 4: EP1 fails with GocastIntegrationException (e.g. 503) during IDOR guard → must return 503, not 500.
+        when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("gocast unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+        GocastCreateBindingRequestDTO body = new GocastCreateBindingRequestDTO(42L, "eidi");
+        request.post("/api/videosource/courses/" + course.getId() + "/binding", body, HttpStatus.SERVICE_UNAVAILABLE);
+
+        // No binding must be created
+        assertThat(bindingRepository.findByCourseId(course.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createBinding_existingActiveBinding_returnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
 
@@ -453,7 +467,25 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("service account unbound", org.springframework.http.HttpStatus.FORBIDDEN));
-        // EP7 throws 403 — definitively not bound
+        // EP7 returns false — definitively unbound (the service account is no longer a course admin)
+        when(gocastConnectorService.getBindingStatus(42L)).thenReturn(false);
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
+
+        // Binding must be marked REVOKED
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_gocastReturns403AndEp7Returns403_marksRevokedAndReturnsConflict() throws Exception {
+        // EP2 returns 403 and EP7 itself returns 403 → the service account is definitively not a course admin.
+        // This must be treated as a definitive revocation: mark REVOKED and return 409.
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("service account forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
+        // EP7 throws a 403 — definitively not bound
         when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
 
         request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
@@ -461,6 +493,27 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
         // Binding must be marked REVOKED
         GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.REVOKED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackToken_gocastReturns403AndEp7Throws503_staysActiveAndReturns403() throws Exception {
+        // Fix 1: EP2 returns 403 + EP7 throws a transient 503 → binding must NOT be mutated and the
+        // original EP2 403 status is surfaced (a transient EP7 outage must not change the response code,
+        // nor revoke the binding).
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("service account forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
+        // EP7 itself fails with a transient 503 (not a definitive revocation signal)
+        when(gocastConnectorService.getBindingStatus(42L))
+                .thenThrow(new GocastIntegrationException("upstream unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+        // The original EP2 403 is propagated unchanged.
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.FORBIDDEN);
+
+        // Binding must remain ACTIVE — transient EP7 failure must never cause a false REVOKED transition.
+        GocastCourseBinding persisted = bindingRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getStatus()).isEqualTo(GocastBindingStatus.ACTIVE);
     }
 
     @Test

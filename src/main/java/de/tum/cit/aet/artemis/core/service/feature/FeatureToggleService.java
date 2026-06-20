@@ -40,6 +40,9 @@ public class FeatureToggleService {
     @Value("${artemis.tum-live.api-base-url:}")
     private String gocastApiBaseUrl;
 
+    @Value("${artemis.tum-live.service-account-token:}")
+    private String gocastServiceAccountToken;
+
     private final boolean globalSearchEnabledOnStart;
 
     private final RateLimitConfigurationService rateLimitConfigurationService;
@@ -133,9 +136,10 @@ public class FeatureToggleService {
             features.put(Feature.AutonomousTutor, false);
         }
 
-        // Gocast (TUM Live) integration: enabled only when the api-base-url config property is set.
+        // Gocast (TUM Live) integration: enabled only when BOTH api-base-url AND service-account-token are configured.
+        // This matches the GocastEnabled condition, which requires both properties to be non-blank.
         if (!features.containsKey(Feature.Gocast)) {
-            features.put(Feature.Gocast, StringUtils.hasText(gocastApiBaseUrl));
+            features.put(Feature.Gocast, StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken));
         }
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
         if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
