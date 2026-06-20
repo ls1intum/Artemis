@@ -144,6 +144,13 @@ public class GocastIntegrationResource {
             return ResponseEntity.ok(streams);
         }
         catch (GocastIntegrationException ex) {
+            if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
+                // EP8 returned 403 — the service account lost admin access. Mark the binding REVOKED
+                // and return 409 CONFLICT so the UI can show the correct state.
+                log.warn("EP8 listCourseStreams returned 403 for gocast course {} — marking binding REVOKED", binding.getGocastCourseId());
+                bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
+                return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
             log.warn("EP8 listCourseStreams failed for gocast course {}: {}", binding.getGocastCourseId(), ex.getMessage());
             return ResponseEntity.status(ex.getUpstreamStatus()).build();
         }
@@ -163,12 +170,19 @@ public class GocastIntegrationResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<GocastBindingWithApprovalDTO> createBinding(@PathVariable long courseId, @Valid @RequestBody @NotNull GocastCreateBindingRequestDTO requestDTO) {
         log.debug("REST request to create gocast binding for Artemis course {}: gocastCourseId={}", courseId, requestDTO.gocastCourseId());
-        GocastCourseBinding binding = bindingService.createBinding(courseId, requestDTO.gocastCourseId(), requestDTO.gocastCourseSlug());
-        String callbackUrl = serverUrl + "/courses/" + courseId + "/tumlive-integration";
-        String approvalUrl = approvalLinkService.buildApprovalLink(binding.getGocastCourseId(), callbackUrl);
-        GocastBindingWithApprovalDTO response = new GocastBindingWithApprovalDTO(GocastBindingDTO.fromBinding(binding), approvalUrl);
-        URI location = URI.create("/api/videosource/courses/" + courseId + "/binding");
-        return ResponseEntity.created(location).body(response);
+        String instructorLrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
+        try {
+            GocastCourseBinding binding = bindingService.createBinding(courseId, requestDTO.gocastCourseId(), requestDTO.gocastCourseSlug(), instructorLrzId);
+            String callbackUrl = serverUrl + "/course-management/" + courseId + "/gocast-binding";
+            String approvalUrl = approvalLinkService.buildApprovalLink(binding.getGocastCourseId(), callbackUrl);
+            GocastBindingWithApprovalDTO response = new GocastBindingWithApprovalDTO(GocastBindingDTO.fromBinding(binding), approvalUrl);
+            URI location = URI.create("/api/videosource/courses/" + courseId + "/binding");
+            return ResponseEntity.created(location).body(response);
+        }
+        catch (IllegalStateException ex) {
+            log.warn("Cannot create binding for course {}: {}", courseId, ex.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     /**
@@ -178,17 +192,25 @@ public class GocastIntegrationResource {
      * {@code PENDING} binding is flipped to {@code ACTIVE} only when EP7 confirms it, to {@code REVOKED}
      * on a {@code 403}, and is left unchanged on any transient gocast error. A binding is never set to
      * {@code ACTIVE} without EP7 confirming it.
+     * <p>
+     * For {@code PENDING} bindings, the response includes the {@code approvalUrl} so that the instructor
+     * can re-open the TUM Live approval page after a page reload without having to recreate the binding.
      *
      * @param courseId the Artemis course id
-     * @return 200 with the (possibly updated) binding DTO; 404 if no binding exists
+     * @return 200 with the (possibly updated) binding DTO (including approvalUrl for PENDING); 404 if no binding exists
      */
     @GetMapping("courses/{courseId}/binding")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<GocastBindingDTO> getBinding(@PathVariable long courseId) {
+    public ResponseEntity<GocastBindingWithApprovalDTO> getBinding(@PathVariable long courseId) {
         log.debug("REST request to get gocast binding for Artemis course {}", courseId);
         GocastCourseBinding binding = bindingService.getBindingByCourseIdElseThrow(courseId);
         GocastCourseBinding refreshed = bindingService.refreshStatusFromUpstream(binding);
-        return ResponseEntity.ok(GocastBindingDTO.fromBinding(refreshed));
+        String approvalUrl = null;
+        if (refreshed.getStatus() == GocastBindingStatus.PENDING) {
+            String callbackUrl = serverUrl + "/course-management/" + courseId + "/gocast-binding";
+            approvalUrl = approvalLinkService.buildApprovalLink(refreshed.getGocastCourseId(), callbackUrl);
+        }
+        return ResponseEntity.ok(new GocastBindingWithApprovalDTO(GocastBindingDTO.fromBinding(refreshed), approvalUrl));
     }
 
     /**
@@ -238,6 +260,27 @@ public class GocastIntegrationResource {
             return ResponseEntity.ok(token);
         }
         catch (GocastIntegrationException ex) {
+            if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
+                // Disambiguate the 403: it may mean either (a) the service account is no longer bound
+                // (binding should be REVOKED) or (b) the student is not eligible (leave as ACTIVE).
+                try {
+                    boolean stillBound = connectorService.getBindingStatus(binding.getGocastCourseId());
+                    if (!stillBound) {
+                        // EP7 reports unbound — revoke the binding and return 409 CONFLICT.
+                        log.warn("EP2 returned 403 and EP7 reports unbound — marking binding REVOKED for gocast course {}", binding.getGocastCourseId());
+                        bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
+                        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+                    }
+                }
+                catch (GocastIntegrationException ep7Ex) {
+                    // EP7 also threw (e.g. 403 means definitively not bound) — mark REVOKED.
+                    log.warn("EP2 returned 403 and EP7 failed — marking binding REVOKED for gocast course {}: {}", binding.getGocastCourseId(), ep7Ex.getMessage());
+                    bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
+                    return ResponseEntity.status(HttpStatus.CONFLICT).build();
+                }
+                // EP7 confirms still bound — student is ineligible. Return 403 without revoking.
+                log.debug("EP2 returned 403 but EP7 confirms still bound — student {} is ineligible for stream {}", lrzId, streamId);
+            }
             log.warn("EP2 getPlaybackToken failed for course {}, stream {}: status={}", courseId, streamId, ex.getUpstreamStatus());
             return ResponseEntity.status(ex.getUpstreamStatus()).build();
         }
