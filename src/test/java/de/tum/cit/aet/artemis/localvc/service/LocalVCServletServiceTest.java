@@ -123,6 +123,7 @@ class LocalVCServletServiceTest {
         testRepositoryUri = mock(LocalVCRepositoryUri.class);
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
+        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/EXERCISE-template.git");
 
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
@@ -249,7 +250,8 @@ class LocalVCServletServiceTest {
 
         RepositoryVCSAccessToken repositoryToken = new RepositoryVCSAccessToken();
         repositoryToken.setVcsAccessToken(token);
-        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(eq(testUser.getId()), anyString())).thenReturn(Optional.of(repositoryToken));
+        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(testUser.getId(), "http://localhost/git/TEST/EXERCISE-template.git"))
+                .thenReturn(Optional.of(repositoryToken));
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 
