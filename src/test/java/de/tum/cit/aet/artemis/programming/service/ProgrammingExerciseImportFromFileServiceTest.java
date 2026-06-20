@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
@@ -102,8 +101,8 @@ class ProgrammingExerciseImportFromFileServiceTest {
 
         programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, zipFile, new Course(), user);
 
-        verify(programmingExerciseCreationUpdateService).createProgrammingExercise(originalExercise, false, true);
         InOrder importOrder = inOrder(programmingExerciseImportRepositoryService, programmingExerciseCreationUpdateService);
+        importOrder.verify(programmingExerciseCreationUpdateService).createProgrammingExercise(originalExercise, false, true);
         importOrder.verify(programmingExerciseImportRepositoryService).importRepositoriesFromFile(eq(importedExercise), any(Path.class), eq(user));
         importOrder.verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
     }
