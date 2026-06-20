@@ -64,7 +64,7 @@
                                     <td>{{ submission.participation?.participantName }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
                                     <td>
-                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" />
+                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" [result]="getLatestResult(submission)" />
                                     </td>
                                     <td>
                                         {{ submission.submissionSize }}
