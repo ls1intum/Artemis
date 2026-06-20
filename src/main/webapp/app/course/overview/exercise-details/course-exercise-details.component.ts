@@ -426,7 +426,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                             return merged;
                         });
                     } else {
-                        updatedParticipations = [...currentParticipations, changedParticipation];
+                        updatedParticipations = currentParticipations.concat(changedParticipation);
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
@@ -449,7 +449,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    this.exercise = { ...this.exercise!, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+                    const updatedExercise = deepClone(this.exercise!);
+                    updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
+                    updatedExercise.studentParticipations = teamAssignment.studentParticipations;
+                    this.exercise = updatedExercise;
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
@@ -488,10 +491,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 }),
             );
         } else {
-            this._studentParticipations.set([...current, participation]);
+            this._studentParticipations.set(current.concat(participation));
 
             if (this.exercise) {
-                this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                this.exercise.studentParticipations = (this.exercise.studentParticipations ?? []).concat(participation);
             }
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
@@ -564,11 +567,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (participation.id !== graded.id) {
                 return participation;
             }
-            const existingSubmissions = participation.submissions ?? [];
-            const submissions = existingSubmissions.some((existing) => existing.id === submission.id)
-                ? existingSubmissions.map((existing) => (existing.id === submission.id ? submission : existing))
-                : [...existingSubmissions, submission];
-            return { ...participation, submissions };
+            const merged = deepClone(participation);
+            merged.submissions = this.mergeSubmissions(participation.submissions, [submission]);
+            return merged;
         });
         this._studentParticipations.set(updatedParticipations);
     }
@@ -633,10 +634,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     createInstructorActions() {
         const items: InstructorActionItem[] = [];
         if (this.exercise?.isAtLeastTutor) {
-            items.push(...this.createTutorActions());
+            this.createTutorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastEditor) {
-            items.push(...this.createEditorActions());
+            this.createEditorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
             items.push(this.getReEvaluateItem());
@@ -645,9 +646,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     createTutorActions(): InstructorActionItem[] {
-        const tutorActionItems = [...this.getDefaultItems()];
+        const tutorActionItems = this.getDefaultItems().slice();
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            tutorActionItems.push(...this.getQuizItems());
+            this.getQuizItems().forEach((item) => tutorActionItems.push(item));
         } else {
             tutorActionItems.push(this.getParticipationItem());
         }
