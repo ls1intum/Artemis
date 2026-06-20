@@ -214,7 +214,7 @@ public class IrisChatPipelineExecutionService {
                 safeContext = context.stream().filter(ctx -> switch (ctx) {
                     case IrisVideoContextDTO v -> validUnitIds.contains(v.lectureUnitId());
                     case IrisSlidesContextDTO s -> validUnitIds.contains(s.lectureUnitId());
-                    case IrisCombinedViewContextDTO f -> validUnitIds.contains(f.lectureUnitId());
+                    case IrisCombinedViewContextDTO f -> isValidCombinedViewContext(f, validUnitIds);
                 }).toList();
                 lectureUnitId = safeContext.stream().filter(IrisCombinedViewContextDTO.class::isInstance).map(IrisCombinedViewContextDTO.class::cast)
                         .map(IrisCombinedViewContextDTO::lectureUnitId).findFirst().orElse(null);
@@ -239,5 +239,23 @@ public class IrisChatPipelineExecutionService {
         }
         return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
+    }
+
+    private boolean isValidCombinedViewContext(IrisCombinedViewContextDTO combinedViewContext, Set<Long> validUnitIds) {
+        var slides = combinedViewContext.slides();
+        var video = combinedViewContext.video();
+
+        if (slides == null && video == null) {
+            return false;
+        }
+
+        if (slides != null && !validUnitIds.contains(slides.lectureUnitId())) {
+            return false;
+        }
+        if (video != null && !validUnitIds.contains(video.lectureUnitId())) {
+            return false;
+        }
+
+        return slides == null || video == null || slides.lectureUnitId().equals(video.lectureUnitId());
     }
 }

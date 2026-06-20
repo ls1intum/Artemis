@@ -1189,6 +1189,48 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithMixedValidAndForeignCombinedViewContext_contextDropped() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            long foreignUnitId = Long.MAX_VALUE;
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 1), new IrisVideoContextDTO(foreignUnitId, 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithMismatchedCombinedViewContextWithinLecture_contextDropped() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            LectureUnit secondUnit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+            var combinedViewContext = new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(unitId, 1), new IrisVideoContextDTO(secondUnit.getId(), 10.0));
+            var requestDto = buildRequestWithContext(messageToSend, List.of(combinedViewContext));
+
+            mockChatResponse(dto -> {
+                assertThat(dto.context()).isNull();
+                assertThat(dto.lectureUnitId()).isNull();
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                pipelineDone.set(true);
+            });
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void sendMessageWithUncommittedFiles_lectureForeignContextIgnored() throws Exception {
             // Lecture context sent from a programming session must be stripped before forwarding to Pyris.
             ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, false, ProgrammingLanguage.JAVA, "ProgContext", "PROGCTX", null);
