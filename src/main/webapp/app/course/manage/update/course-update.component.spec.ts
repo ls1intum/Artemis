@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -366,6 +366,48 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(addStub).not.toHaveBeenCalled();
             expect(removeStub).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should only re-issue the failed organization change after a partial failure on retry', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            // the removal fails on the first attempt and succeeds on the retry
+            const removeStub = vi
+                .spyOn(organizationService, 'removeCourseFromOrganization')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN: first save - the add succeeds, the remove fails
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: both were attempted once and saving is reset
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+
+            // WHEN: the admin saves again
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: the already-succeeded add is not re-issued, only the failed removal is retried
+            expect(addStub).toHaveBeenCalledOnce();
+            expect(removeStub).toHaveBeenCalledTimes(2);
             expect(comp.isSaving()).toBe(false);
         });
     });

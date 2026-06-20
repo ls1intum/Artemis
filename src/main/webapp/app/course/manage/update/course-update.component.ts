@@ -5,7 +5,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -170,7 +170,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.croppedImage.set(course.courseIconPath);
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations.set(organizations);
-                    this.initialOrganizationIds = new Set(organizations.map((organization) => organization.id!));
+                    this.initialOrganizationIds = this.toOrganizationIdSet(organizations);
                 });
                 this.originalTimeZone = this.course.timeZone;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
@@ -410,25 +410,34 @@ export class CourseUpdateComponent implements OnInit {
     /**
      * Persists the difference between the initially loaded organizations and the current selection by
      * calling the dedicated admin endpoints. Completes once all add/remove requests have finished.
+     * Each request updates the initial snapshot on success, so a retry after a partial failure only
+     * re-issues the operations that did not yet succeed.
      * @param courseId the id of the saved course
      */
-    private syncCourseOrganizations(courseId: number): Observable<unknown> {
-        const currentOrganizations = this.courseOrganizations() ?? [];
-        const currentOrganizationIds = new Set(currentOrganizations.map((organization) => organization.id!));
+    private syncCourseOrganizations(courseId: number): Observable<HttpResponse<void>[]> {
+        const currentOrganizationIds = this.toOrganizationIdSet(this.courseOrganizations() ?? []);
 
         const requests: Observable<HttpResponse<void>>[] = [];
-        for (const organization of currentOrganizations) {
-            if (!this.initialOrganizationIds.has(organization.id!)) {
-                requests.push(this.organizationService.addCourseToOrganization(organization.id!, courseId));
+        currentOrganizationIds.forEach((organizationId) => {
+            if (!this.initialOrganizationIds.has(organizationId)) {
+                requests.push(this.organizationService.addCourseToOrganization(organizationId, courseId).pipe(tap(() => this.initialOrganizationIds.add(organizationId))));
             }
-        }
-        for (const organizationId of this.initialOrganizationIds) {
+        });
+        this.initialOrganizationIds.forEach((organizationId) => {
             if (!currentOrganizationIds.has(organizationId)) {
-                requests.push(this.organizationService.removeCourseFromOrganization(organizationId, courseId));
+                requests.push(this.organizationService.removeCourseFromOrganization(organizationId, courseId).pipe(tap(() => this.initialOrganizationIds.delete(organizationId))));
             }
-        }
+        });
 
-        return requests.length > 0 ? forkJoin(requests) : of(undefined);
+        return requests.length > 0 ? forkJoin(requests) : of([]);
+    }
+
+    /**
+     * Collects the ids of the given organizations into a set, skipping any without an id.
+     * @param organizations the organizations to collect the ids from
+     */
+    private toOrganizationIdSet(organizations: Organization[]): Set<number> {
+        return new Set(organizations.map((organization) => organization.id).filter((id): id is number => id !== undefined));
     }
 
     /**
