@@ -4,6 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
@@ -160,6 +161,54 @@ describe('CodeButtonComponent', () => {
         component.onClick();
         fixture.detectChanges();
         expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
+    });
+
+    describe('repository-scoped staff token', () => {
+        const repoToken = 'vcpat-StaffStaffStaffStaffStaffStaffStaffStaff123';
+        let getRepoTokenSpy: MockInstance;
+        let createRepoTokenSpy: MockInstance;
+
+        beforeEach(() => {
+            getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
+            createRepoTokenSpy = vi.spyOn(programmingExerciseService, 'createRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
+        });
+
+        it('should load the repository-scoped token when opening the dialog for a base repository', async () => {
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.isBaseRepository()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create the repository-scoped token on demand when none exists yet (404)', async () => {
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+        });
+
+        it('should not load participation tokens while in base repository mode', async () => {
+            fixture.componentRef.setInput('repositoryType', 'TESTS');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [participation]);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {

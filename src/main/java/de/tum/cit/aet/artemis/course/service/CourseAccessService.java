@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 
 /**
  * Service for managing course access, including enrollment and unenrollment of users.
@@ -61,8 +62,11 @@ public class CourseAccessService {
 
     private final UserRepository userRepository;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
-            Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, UserRepository userRepository) {
+            Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, UserRepository userRepository,
+            RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.authCheckService = authCheckService;
         this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
@@ -71,6 +75,7 @@ public class CourseAccessService {
         this.auditEventRepository = auditEventRepository;
         this.learningPathApi = learningPathApi;
         this.userRepository = userRepository;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
     /**
@@ -184,16 +189,29 @@ public class CourseAccessService {
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
             learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
         }
+        // Pre-provision repository-scoped VCS access tokens for the staff member across all base repositories of the course's programming exercises.
+        if (isStaffGroup(course, group)) {
+            repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourse(user, course);
+        }
     }
 
     /**
-     * removes a given user to a user group
+     * removes a given user from a user group
      *
-     * @param user  user to be removed from a group
-     * @param group user-group where the user should be removed
+     * @param user   user to be removed from a group
+     * @param group  user-group where the user should be removed
+     * @param course the course the group belongs to (used to clean up repository-scoped VCS access tokens for staff)
      */
-    public void removeUserFromGroup(User user, String group) {
+    public void removeUserFromGroup(User user, String group, Course course) {
         userService.removeUserFromGroup(user, group);
+        // Remove the staff member's repository-scoped VCS access tokens for this course, unless they still hold another staff role in it.
+        if (isStaffGroup(course, group)) {
+            repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(user, course);
+        }
+    }
+
+    private boolean isStaffGroup(Course course, String group) {
+        return group.equals(course.getTeachingAssistantGroupName()) || group.equals(course.getEditorGroupName()) || group.equals(course.getInstructorGroupName());
     }
 
     /**

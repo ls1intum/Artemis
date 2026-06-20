@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260620120000-1-create-repository-vcs-access-token" author="krusche">
+        <createTable tableName="repository_vcs_access_token">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Only set when repository_type = AUXILIARY. Cascades on delete so that removing an auxiliary repository (on exercise edit or deletion) automatically removes its tokens. -->
+            <column name="auxiliary_repository_id" type="bigint"/>
+            <column name="repository_uri" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vcs_access_token" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- A user can have at most one token per concrete repository (identified by its canonical URI). -->
+        <addUniqueConstraint tableName="repository_vcs_access_token" columnNames="user_id, repository_uri" constraintName="uc_repository_vcs_access_token_user_repository_uri"/>
+
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="repository_vcs_access_token" constraintName="fk_repository_vcs_access_token_user"
+                                 referencedColumnNames="id" referencedTableName="jhi_user" onDelete="RESTRICT" onUpdate="RESTRICT"
+                                 deferrable="false" initiallyDeferred="false" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="repository_vcs_access_token" constraintName="fk_repository_vcs_access_token_exercise"
+                                 referencedColumnNames="id" referencedTableName="exercise" onDelete="RESTRICT" onUpdate="RESTRICT"
+                                 deferrable="false" initiallyDeferred="false" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="auxiliary_repository_id" baseTableName="repository_vcs_access_token"
+                                 constraintName="fk_repository_vcs_access_token_auxiliary_repository" referencedColumnNames="id"
+                                 referencedTableName="programming_exercise_auxiliary_repositories" onDelete="CASCADE" onUpdate="RESTRICT"
+                                 deferrable="false" initiallyDeferred="false" validate="true"/>
+
+        <createIndex indexName="fk_repository_vcs_access_token_exercise" tableName="repository_vcs_access_token">
+            <column name="exercise_id"/>
+        </createIndex>
+        <createIndex indexName="fk_repository_vcs_access_token_auxiliary_repository" tableName="repository_vcs_access_token">
+            <column name="auxiliary_repository_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

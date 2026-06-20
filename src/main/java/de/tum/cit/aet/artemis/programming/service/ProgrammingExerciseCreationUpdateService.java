@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -106,6 +107,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
@@ -116,7 +119,7 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -136,6 +139,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.gitService = gitService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
     /**
@@ -238,6 +242,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // Restore competency links with proper exercise reference before final save
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
+
+        // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories.
+        repositoryVcsAccessTokenService.ensureTokensForExercise(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -347,6 +354,9 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        // Provision repository-scoped VCS access tokens for newly added base repositories (e.g. auxiliary repositories) for the course's staff.
+        repositoryVcsAccessTokenService.ensureTokensForExercise(savedProgrammingExercise);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);

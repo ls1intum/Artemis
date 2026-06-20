@@ -71,6 +71,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly vcsAccessLogRoute = signal<string>(undefined!);
     readonly repositoryUri = signal<string>(undefined!);
     readonly repositoryType = signal<RepositoryType>(undefined!);
+    readonly auxiliaryRepositoryId = signal<number | undefined>(undefined);
     readonly enableVcsAccessLog = signal(false);
     readonly allowVcsAccessLog = signal(false);
     readonly result = signal<Result>(undefined!);
@@ -113,6 +114,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             if (repositoryType === RepositoryType.USER) {
                 this.loadStudentParticipation(repositoryId);
             } else if (repositoryType === RepositoryType.AUXILIARY) {
+                this.auxiliaryRepositoryId.set(repositoryId);
                 this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(repositoryType, exerciseId);

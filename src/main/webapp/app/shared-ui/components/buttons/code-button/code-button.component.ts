@@ -88,6 +88,9 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     isPractice = input<boolean>(false);
+    // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
+    repositoryType = input<string>();
+    auxiliaryRepositoryId = input<number>();
 
     // Fields (immutable after construction)
     sshEnabled = false;
@@ -109,6 +112,8 @@ export class CodeButtonComponent implements OnInit {
     // either use the participation token (true) OR the user token (false)
     userTokenStillValid = signal(false);
     userTokenPresent = signal(false);
+    // The repository-scoped VCS access token for course staff (used when repositoryType denotes a base repository).
+    repositoryAccessToken = signal<string | undefined>(undefined);
     sshKeyMissingTip = signal('');
     sshKeysExpiredTip = signal('');
     tokenMissingTip = signal('');
@@ -146,6 +151,10 @@ export class CodeButtonComponent implements OnInit {
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
     usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
+    isBaseRepository = computed(() => {
+        const type = this.repositoryType();
+        return type === 'TEMPLATE' || type === 'SOLUTION' || type === 'TESTS' || type === 'AUXILIARY';
+    });
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
@@ -162,7 +171,7 @@ export class CodeButtonComponent implements OnInit {
 
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
-            if (this.isInCourseManagement()) {
+            if (this.isInCourseManagement() || this.isBaseRepository()) {
                 return;
             }
             const participations = this.participations();
@@ -217,7 +226,9 @@ export class CodeButtonComponent implements OnInit {
 
     public useHttpsToken() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        if (this.isInCourseManagement()) {
+        if (this.isBaseRepository()) {
+            this.copyEnabled.set(!!this.repositoryAccessToken());
+        } else if (this.isInCourseManagement()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
             this.userTokenStillValid.set(stillValid);
@@ -251,6 +262,14 @@ export class CodeButtonComponent implements OnInit {
         const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
+
+        // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none exists yet.
+        if (this.isBaseRepository() && !this.repositoryAccessToken()) {
+            const exercise = this.exercise();
+            if (exercise?.id) {
+                this.loadRepositoryVcsAccessToken(exercise.id, this.repositoryType()!, this.auxiliaryRepositoryId());
+            }
+        }
 
         if (this.useSsh()) {
             this.useSshUrl();
@@ -337,8 +356,52 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads the repository-scoped VCS access token for a base repository (template, tests, solution or auxiliary) of a programming exercise. If none exists yet, a new one is
+     * created (fallback when course staff open the clone dialog for the first time).
+     */
+    loadRepositoryVcsAccessToken(exerciseId: number, repositoryType: string, auxiliaryRepositoryId?: number) {
+        this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    this.repositoryAccessToken.set(res.body);
+                    this.copyEnabled.set(this.useToken());
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    this.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId);
+                } else if (error.status === 403) {
+                    this.alertService.warning('403 Forbidden');
+                }
+            },
+        });
+    }
+
+    /**
+     * Sends the request to create a new repository-scoped VCS access token for a base repository.
+     */
+    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: string, auxiliaryRepositoryId?: number) {
+        this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body) {
+                    this.repositoryAccessToken.set(res.body);
+                    this.copyEnabled.set(this.useToken());
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status === 403) {
+                    this.alertService.warning('403 Forbidden');
+                }
+            },
+        });
+    }
+
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
+            if (this.isBaseRepository()) {
+                return this.repositoryAccessToken();
+            }
             if (this.isInCourseManagement()) {
                 return this.user.vcsAccessToken;
             } else {
