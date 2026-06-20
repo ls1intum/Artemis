@@ -182,6 +182,24 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.sidebarData()).toEqual(expectedSidebarData);
     });
 
+    it('should preserve the fully-loaded marker when enriching the cached course with fetched groups and lectures', async () => {
+        const cachedCourse = { id: 1, lectures: undefined, tutorialGroups: undefined };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        // The parent course overview has fully loaded the course; enriching it here must keep the marker the
+        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
+    });
+
     it('should navigate to previously selected route', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
         vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');

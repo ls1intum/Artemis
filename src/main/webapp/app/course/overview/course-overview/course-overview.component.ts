@@ -534,14 +534,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
     }
 
-    /** Navigate to a new Course */
-    switchCourse(course: Course) {
-        const url = ['courses', course.id, 'dashboard'];
-        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            void this.router.navigate(url);
-        });
-    }
-
     ngOnDestroy() {
         super.ngOnDestroy();
         if (this.teamAssignmentUpdateListener) {
