@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -150,11 +149,14 @@ public class GocastBindingService {
      * <em>not</em> called and the binding is returned unchanged.</li>
      * <li>If EP7 ({@code getBindingStatus}) returns {@code true}, the binding is flipped to
      * {@code ACTIVE} and persisted.</li>
-     * <li>If EP7 returns {@code false}, the binding stays {@code PENDING} (approval not yet completed).</li>
-     * <li>If EP7 fails with a {@code 403}, the service account is (no longer) a course admin, so the
-     * binding is flipped to {@code REVOKED} and persisted.</li>
-     * <li>For any other gocast failure (transport error, {@code 5xx}, …) the binding is left unchanged
-     * so a transient outage does not corrupt the binding state.</li>
+     * <li>If EP7 returns {@code false}, the binding stays {@code PENDING} (approval not yet completed;
+     * the instructor must still grant service-account access on the gocast side).</li>
+     * <li>If EP7 <em>throws</em> any exception (including {@code 403} / {@code 5xx} / transport errors),
+     * the binding is left unchanged and stays {@code PENDING}. A thrown exception is not a definitive
+     * "unbound" signal — it can indicate a transient auth/config failure. Only an explicit
+     * {@code false} return from EP7 means approval has not completed.
+     * {@code REVOKED} is only reached from an {@code ACTIVE} binding via the management-call paths
+     * (EP8/EP2), never from this PENDING-refresh path.</li>
      * </ul>
      *
      * @param binding the binding to refresh
@@ -177,17 +179,14 @@ public class GocastBindingService {
                 log.info("Binding for Artemis course {} flipped to ACTIVE (EP7 confirmed)", binding.getCourseId());
                 return updateStatus(binding, GocastBindingStatus.ACTIVE);
             }
-            // EP7 returned false: approval not yet completed — leave PENDING.
+            // EP7 returned explicit false: approval not yet completed — leave PENDING.
             return binding;
         }
         catch (GocastIntegrationException ex) {
-            if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
-                // gocast reports the service account is not (or no longer) an admin — revoke the binding.
-                log.warn("Binding for Artemis course {} flipped to REVOKED (EP7 returned 403)", binding.getCourseId());
-                return updateStatus(binding, GocastBindingStatus.REVOKED);
-            }
-            // Transport error / 5xx / etc.: leave the binding unchanged so a transient outage is non-destructive.
-            log.warn("EP7 getBindingStatus failed for gocast course {}: status={} — leaving binding unchanged", binding.getGocastCourseId(), ex.getUpstreamStatus());
+            // Any thrown exception (403, 5xx, transport) is not a definitive revocation signal for a
+            // PENDING binding. Leave the binding unchanged so a transient auth/config/outage failure
+            // does not corrupt the binding state. The instructor can retry.
+            log.warn("EP7 getBindingStatus failed for gocast course {}: status={} — leaving PENDING binding unchanged", binding.getGocastCourseId(), ex.getUpstreamStatus());
             return binding;
         }
     }
