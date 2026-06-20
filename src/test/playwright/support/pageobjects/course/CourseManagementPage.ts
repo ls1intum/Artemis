@@ -160,22 +160,16 @@ export class CourseManagementPage {
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
         const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
-        const typeahead = this.page.locator('#typeahead-basic');
-        const dropdownToggle = this.page.locator('#user-management-dropdown');
-        // The add-user action is a router link inside an ngb dropdown. Under heavy (multi-node) load the
-        // dropdown can close before the click registers, so the navigation to the user-search page never
-        // happens and the typeahead never appears. Re-open the dropdown and re-click the action until the
-        // typeahead shows up — but only while the toggle is still on screen (i.e. we have not navigated away),
-        // so that a genuinely slow page load is simply waited out instead of pointlessly re-clicked.
-        await expect(async () => {
-            if (!(await typeahead.isVisible()) && (await dropdownToggle.isVisible())) {
-                await dropdownToggle.click();
-                await this.page.locator(selector).click();
-            }
-            await expect(typeahead).toBeVisible({ timeout: 10_000 });
-        }).toPass({ timeout: 60_000 });
-        await typeahead.fill(credentials.username);
-        await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
+        // Open the user-management dropdown and the add-<group> action, which navigates to the group page.
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator(selector).click();
+        // The group page hosts a PrimeNG autocomplete to search for and add users.
+        const searchInput = this.page.locator('p-autocomplete input');
+        await searchInput.waitFor({ state: 'visible', timeout: 30_000 });
+        await searchInput.fill(credentials.username);
+        // Pick the matching suggestion (rendered as "Name (login)"). The closing parenthesis keeps the match
+        // unambiguous, e.g. it selects artemis_test_user_1 rather than artemis_test_user_10.
+        await this.page.locator('.p-autocomplete-option', { hasText: `(${credentials.username})` }).click();
         await responsePromise;
     }
 
@@ -212,7 +206,7 @@ export class CourseManagementPage {
      * and visible before clicking.
      */
     async removeFirstUser() {
-        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        const deleteButton = this.page.locator('jhi-table-view button[jhideletebutton]').first();
         await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
         await deleteButton.click();
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -267,7 +261,7 @@ export class CourseManagementPage {
      * @returns The locator for the registered students section.
      */
     getRegisteredStudents() {
-        return this.page.locator('#registered-students');
+        return this.page.locator('jhi-table-view tbody tr');
     }
 
     /**
