@@ -160,9 +160,22 @@ export class CourseManagementPage {
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
         const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
-        await this.page.locator('#user-management-dropdown').click();
-        await this.page.locator(selector).click();
-        await this.confirmUserIntoGroup(credentials);
+        const typeahead = this.page.locator('#typeahead-basic');
+        const dropdownToggle = this.page.locator('#user-management-dropdown');
+        // The add-user action is a router link inside an ngb dropdown. Under heavy (multi-node) load the
+        // dropdown can close before the click registers, so the navigation to the user-search page never
+        // happens and the typeahead never appears. Re-open the dropdown and re-click the action until the
+        // typeahead shows up — but only while the toggle is still on screen (i.e. we have not navigated away),
+        // so that a genuinely slow page load is simply waited out instead of pointlessly re-clicked.
+        await expect(async () => {
+            if (!(await typeahead.isVisible()) && (await dropdownToggle.isVisible())) {
+                await dropdownToggle.click();
+                await this.page.locator(selector).click();
+            }
+            await expect(typeahead).toBeVisible({ timeout: 10_000 });
+        }).toPass({ timeout: 60_000 });
+        await typeahead.fill(credentials.username);
+        await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
         await responsePromise;
     }
 
@@ -219,17 +232,6 @@ export class CourseManagementPage {
     async removeIconFromCourse() {
         await this.page.locator('#delete-course-icon').click();
         await this.checkCourseHasNoIcon();
-    }
-
-    /**
-     * Confirms the user into the group.
-     * @param credentials - The user credentials to be confirmed into the group.
-     */
-    private async confirmUserIntoGroup(credentials: UserCredentials) {
-        const typeahead = this.page.locator('#typeahead-basic');
-        await typeahead.waitFor({ state: 'visible', timeout: 30_000 });
-        await typeahead.fill(credentials.username);
-        await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 
     /**

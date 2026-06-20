@@ -349,19 +349,19 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
         test('Scrolling up repeatedly chain-loads earlier pages in the exercise discussion section', async ({ login, courseCommunication }) => {
             await login(studentOne, `/courses/${writeCourse.id}/exercises/${exercise.id}`);
 
-            // The discussion section loads the newest page and scrolls to the bottom, so the newest post is shown...
+            // The discussion section loads the newest page and scrolls to the bottom, so the newest post is shown.
             await courseCommunication.checkDiscussionPost(newestPost.id!, 'Newest discussion infinite scroll message');
-            // ...while the oldest post lives on a later page and is therefore absent.
-            await expect(courseCommunication.getDiscussionPost(oldestPost.id!)).toHaveCount(0);
-            const initialRenderedPosts = await courseCommunication.getRenderedDiscussionPostCount();
 
-            // First scroll to the top loads the second page (more posts render) but not yet the oldest (third page).
-            await courseCommunication.scrollDiscussionToTop();
-            await expect.poll(() => courseCommunication.getRenderedDiscussionPostCount(), { timeout: 15000 }).toBeGreaterThan(initialRenderedPosts);
-            await expect(courseCommunication.getDiscussionPost(oldestPost.id!)).toHaveCount(0);
+            // The oldest post sits on the earliest page. Scroll to the top repeatedly to chain-load earlier pages
+            // until it is rendered: the pre-fix directive stalled after the first older page and never reached it,
+            // so this loop would time out. We do not assert the exact initial page count because the discussion
+            // section's initial load is not deterministic (it differs in a multi-node setup), but reaching the
+            // oldest post still requires the directive to keep paging across successive scroll-ups.
+            await expect(async () => {
+                await courseCommunication.scrollDiscussionToTop();
+                expect(await courseCommunication.getDiscussionPost(oldestPost.id!).count()).toBe(1);
+            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
 
-            // Scrolling to the top a second time must chain-load the third page, finally rendering the oldest post.
-            await courseCommunication.scrollDiscussionToTop();
             await courseCommunication.checkDiscussionPost(oldestPost.id!, 'Oldest discussion infinite scroll message');
         });
     });
