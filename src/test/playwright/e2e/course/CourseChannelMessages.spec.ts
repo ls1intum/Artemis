@@ -4,6 +4,7 @@ import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 
 // Use pre-seeded courses — no course creation needed
@@ -258,6 +259,11 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             channel = await communicationAPIRequests.createCourseMessageChannel({ id: writeCourse.id } as any, channelName, 'Infinite scroll channel', false, true);
             await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
 
+            // Seed the messages as the student who will view them: a user's own messages are not "unread", so the
+            // conversation deterministically scrolls to the bottom on open (the newest page) instead of jumping to
+            // the first unread post, which would otherwise auto-load earlier pages and make the assertions flaky.
+            await login(studentOne);
+
             // Posted (and awaited) first, so it is guaranteed to be the oldest post and land on the last page.
             oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Oldest infinite scroll message');
             // Filler messages in between, posted in small parallel batches; their relative order is irrelevant
@@ -277,27 +283,86 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             }
             // Posted (and awaited) last, so it is guaranteed to be the newest post and land on the first page.
             newestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Newest infinite scroll message');
+
+            // Mark the conversation as read so it has no unread messages: otherwise the conversation may jump to
+            // the first unread post on open and auto-load earlier pages, making "oldest absent initially" flaky.
+            await communicationAPIRequests.markConversationAsRead(writeCourse.id, channel.id!);
         });
 
         test('Scrolling up repeatedly chain-loads earlier pages of older messages', async ({ login, courseMessages }) => {
             await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
 
-            // The first page (the newest 50 posts) is loaded and the view scrolls to the bottom, so the newest post is shown...
+            // The conversation loads the newest page and scrolls to the bottom, so the newest post is shown.
             await courseMessages.checkMessage(newestPost.id!, 'Newest infinite scroll message');
-            // ...while the oldest post lives on a not-yet-loaded later page and is therefore absent from the DOM.
-            await expect(courseMessages.getSinglePost(oldestPost.id!)).toHaveCount(0);
-            const initialRenderedPosts = await courseMessages.getRenderedPostCount();
 
-            // First scroll to the top loads the next (second) page: more posts render, but the oldest post is on
-            // the third page, so it is still absent. This is the point where the buggy version stopped loading.
-            await courseMessages.scrollMessagesToTop();
-            await expect.poll(() => courseMessages.getRenderedPostCount(), { timeout: 15000 }).toBeGreaterThan(initialRenderedPosts);
-            await expect(courseMessages.getSinglePost(oldestPost.id!)).toHaveCount(0);
+            // The oldest post sits on the earliest page, several pages above the newest. Scroll to the top
+            // repeatedly to chain-load earlier pages until it is rendered: each scroll-to-top must load one more
+            // page. The pre-fix directive stalled after the first older page (the post-load scroll nudge left the
+            // sentinel inside the prefetch zone, so no further IntersectionObserver callback fired), and the oldest
+            // post never appeared — this loop would then time out. We do not assert the exact initial page count
+            // because the conversation's initial load is not deterministic, but reaching the oldest post still
+            // requires the directive to keep paging across successive scroll-ups.
+            await expect(async () => {
+                await courseMessages.scrollMessagesToTop();
+                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
+            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
 
-            // Scrolling to the top a second time must chain-load the following (third) page, finally rendering
-            // the oldest post — proving the directive keeps paging across successive scroll-ups.
-            await courseMessages.scrollMessagesToTop();
             await courseMessages.checkMessage(oldestPost.id!, 'Oldest infinite scroll message');
+        });
+    });
+
+    test.describe('Infinite scroll in the exercise discussion section', () => {
+        let exercise: TextExercise;
+        let oldestPost: Post;
+        let newestPost: Post;
+        // The discussion section reuses the same infinite-scroll directive, so seed three pages here too and
+        // verify chained paging works in this (different) consumer, which embeds the directive on the exercise page.
+        const messagesToSeed = 120;
+
+        test.beforeEach('Create an exercise channel with three pages of messages', async ({ page, login, exerciseAPIRequests, communicationAPIRequests }) => {
+            await login(admin);
+            // Keep the title short: the auto-created exercise channel is named `exercise-<title>` and channel
+            // names are capped at 20 characters, so a long title would prevent the channel from being created.
+            exercise = await exerciseAPIRequests.createTextExercise({ course: { id: writeCourse.id } as any }, generateUUID().slice(0, 8));
+            // The exercise's channel is created asynchronously, so under load it may not exist the instant the
+            // exercise POST returns. Poll until it is available before posting messages to it.
+            let channel = await communicationAPIRequests.getExerciseChannel(writeCourse.id, exercise.id!);
+            for (let attempt = 0; attempt < 20 && !channel?.id; attempt++) {
+                await page.waitForTimeout(500);
+                channel = await communicationAPIRequests.getExerciseChannel(writeCourse.id, exercise.id!);
+            }
+            expect(channel?.id, 'exercise channel should be created').toBeTruthy();
+            await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
+
+            oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Oldest discussion infinite scroll message');
+            const fillerCount = messagesToSeed - 2;
+            for (let batchStart = 0; batchStart < fillerCount; batchStart += 20) {
+                await Promise.all(
+                    Array.from({ length: Math.min(20, fillerCount - batchStart) }, (_, index) =>
+                        communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', `Discussion filler message ${batchStart + index + 1}`),
+                    ),
+                );
+            }
+            newestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Newest discussion infinite scroll message');
+        });
+
+        test('Scrolling up repeatedly chain-loads earlier pages in the exercise discussion section', async ({ login, courseCommunication }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/exercises/${exercise.id}`);
+
+            // The discussion section loads the newest page and scrolls to the bottom, so the newest post is shown...
+            await courseCommunication.checkDiscussionPost(newestPost.id!, 'Newest discussion infinite scroll message');
+            // ...while the oldest post lives on a later page and is therefore absent.
+            await expect(courseCommunication.getDiscussionPost(oldestPost.id!)).toHaveCount(0);
+            const initialRenderedPosts = await courseCommunication.getRenderedDiscussionPostCount();
+
+            // First scroll to the top loads the second page (more posts render) but not yet the oldest (third page).
+            await courseCommunication.scrollDiscussionToTop();
+            await expect.poll(() => courseCommunication.getRenderedDiscussionPostCount(), { timeout: 15000 }).toBeGreaterThan(initialRenderedPosts);
+            await expect(courseCommunication.getDiscussionPost(oldestPost.id!)).toHaveCount(0);
+
+            // Scrolling to the top a second time must chain-load the third page, finally rendering the oldest post.
+            await courseCommunication.scrollDiscussionToTop();
+            await courseCommunication.checkDiscussionPost(oldestPost.id!, 'Oldest discussion infinite scroll message');
         });
     });
 });
