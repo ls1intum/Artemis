@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DOCUMENT } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +14,12 @@ vi.mock('split.js', () => ({
 }));
 
 class ResizeObserverMock {
+    static instances: ResizeObserverMock[] = [];
+
+    constructor() {
+        ResizeObserverMock.instances.push(this);
+    }
+
     observe = vi.fn();
     unobserve = vi.fn();
     disconnect = vi.fn();
@@ -20,7 +27,7 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels>
+        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse">
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft">Left Content</ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content</ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
@@ -32,6 +39,7 @@ class ResizablePanelsTestComponent {
     protected readonly faAlignLeft = faAlignLeft;
     protected readonly faComment = faComment;
     irisStartsCollapsed = false;
+    useViewportWidthForCollapse = false;
 }
 
 describe('ResizablePanelsComponent', () => {
@@ -48,12 +56,14 @@ describe('ResizablePanelsComponent', () => {
     });
 
     afterEach(() => {
+        ResizeObserverMock.instances = [];
         vi.unstubAllGlobals();
     });
 
-    const createFixture = (irisStartsCollapsed = false) => {
+    const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false) => {
         fixture = TestBed.createComponent(ResizablePanelsTestComponent);
         fixture.componentInstance.irisStartsCollapsed = irisStartsCollapsed;
+        fixture.componentInstance.useViewportWidthForCollapse = useViewportWidthForCollapse;
         fixture.detectChanges();
         return fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
     };
@@ -97,5 +107,20 @@ describe('ResizablePanelsComponent', () => {
 
         expect(component.isRightPanelCollapsed()).toBe(false);
         expect(fixture.nativeElement.textContent).toContain('Iris Content');
+    });
+
+    it('should observe the host element for the responsive breakpoint by default', () => {
+        createFixture();
+        const observedElement = fixture.debugElement.query(By.css('jhi-resizable-panels')).nativeElement;
+
+        expect(ResizeObserverMock.instances.some((instance) => instance.observe.mock.calls.some(([target]) => target === observedElement))).toBe(true);
+    });
+
+    it('should observe the viewport for the responsive breakpoint when configured', () => {
+        const document = TestBed.inject(DOCUMENT);
+
+        createFixture(false, true);
+
+        expect(ResizeObserverMock.instances.some((instance) => instance.observe.mock.calls.some(([target]) => target === document.documentElement))).toBe(true);
     });
 });

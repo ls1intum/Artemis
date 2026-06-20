@@ -107,6 +107,72 @@ describe('ExerciseHeaderComponent', () => {
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
     });
 
+    it('should show the sidebar collapse button before the exercise heading when enabled and collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        exercise.title = 'Modeling Exercise';
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        const titleRow = fixture.debugElement.query(By.css('#exercise-header > div')).nativeElement as HTMLElement;
+        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const heading = titleRow.querySelector('h5');
+
+        expect(sidebarToggle).not.toBeNull();
+        expect(heading).not.toBeNull();
+        expect(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(sidebarToggle!)).toBeLessThan(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(heading!));
+    });
+
+    it('should hide the sidebar collapse button next to the exercise heading when the sidebar is expanded', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
+
+    it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        const emitSpy = vi.spyOn(fixture.componentInstance.toggleSidebar, 'emit');
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should mark the sidebar collapse button as collapsed when the sidebar is collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+    });
+
     describe('hasGradedSubmission', () => {
         it('should be false when there is no student participation', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);

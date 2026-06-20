@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -111,6 +111,23 @@ export class ExerciseSplitPanelComponent {
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
+    /**
+     * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
+     * *identity* (exercise type/id, participation id, mode, online-editor flag) — never the exercise/participation
+     * object references. An incoming result replaces the participation object while keeping its id; without this key
+     * the navigation effect would re-run on every such change and re-issue router.navigate mid-transition, re-creating
+     * the whole code-editor subtree in a loop (flooding the server, see PR #12976). Returns undefined while no
+     * navigable target exists yet.
+     */
+    private readonly navigationTargetKey = computed(() => {
+        const exercise = this.exercise();
+        if (!exercise?.id) {
+            return undefined;
+        }
+        const participationId = this.studentParticipation()?.id;
+        return [exercise.type, exercise.id, participationId ?? '', this.participationMode(), (exercise as ProgrammingExercise).allowOnlineEditor ?? ''].join('|');
+    });
+
     readonly showDiscussion = computed(() => {
         const course = this.exercise().course;
         return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
@@ -212,32 +229,39 @@ export class ExerciseSplitPanelComponent {
             }
         });
         effect(() => {
-            const participation = this.studentParticipation();
-            const exercise = this.exercise();
-            const mode = this.participationMode();
-            if (!exercise.id) return;
+            // Depend ONLY on the stable target identity, so object-reference churn (e.g. an incoming result that
+            // replaces the participation object but keeps its id) does not re-run this navigation. The imperative
+            // navigation runs untracked so it cannot add the exercise/participation objects as dependencies — that
+            // combination prevents the navigate-thrash loop that re-created the code-editor subtree (see PR #12976).
+            if (!this.navigationTargetKey()) return;
+            untracked(() => {
+                const participation = this.studentParticipation();
+                const exercise = this.exercise();
+                const mode = this.participationMode();
+                if (!exercise.id) return;
 
-            const type = exercise.type;
-            if (type === ExerciseType.QUIZ) {
-                const targetSegment = mode === 'practice' ? 'practice' : 'live';
-                const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                if (currentSegment !== targetSegment) {
-                    this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                const type = exercise.type;
+                if (type === ExerciseType.QUIZ) {
+                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
+                    const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    if (currentSegment !== targetSegment) {
+                        this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    }
+                    return;
                 }
-                return;
-            }
-            if (!participation?.id) return;
-            const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
-            if (currentParticipationId === String(participation.id)) return;
-            if (type === ExerciseType.TEXT) {
-                this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.MODELING) {
-                this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.FILE_UPLOAD) {
-                this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            }
+                if (!participation?.id) return;
+                const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+                if (currentParticipationId === String(participation.id)) return;
+                if (type === ExerciseType.TEXT) {
+                    this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                    this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.MODELING) {
+                    this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.FILE_UPLOAD) {
+                    this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                }
+            });
         });
     }
 
