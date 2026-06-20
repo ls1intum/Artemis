@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GocastService } from './gocast.service';
-import { GocastBinding, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
+import { GocastBinding, GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
 
 describe('GocastService', () => {
     setupTestBed({ zoneless: true });
@@ -58,25 +58,27 @@ describe('GocastService', () => {
         req.flush(mockStreams);
     });
 
-    it('should create a binding via POST and return binding with approvalUrl', () => {
-        const mockBinding: GocastBinding = {
-            courseId,
-            gocastCourseId: 7,
-            gocastCourseSlug: 'eidi',
-            status: 'PENDING',
+    it('should create a binding via POST and return GocastBindingWithApproval', () => {
+        const mockResponse: GocastBindingWithApproval = {
+            binding: {
+                courseId,
+                gocastCourseId: 7,
+                gocastCourseSlug: 'eidi',
+                status: 'PENDING',
+            },
             approvalUrl: 'https://tum.live/admin/course/7/integration/confirm?service=99&redirect=https://artemis.tum.de/...',
         };
 
-        service.createBinding(courseId, 7, 'eidi').subscribe((binding) => {
-            expect(binding.status).toBe('PENDING');
-            expect(binding.approvalUrl).toBeDefined();
-            expect(binding.gocastCourseId).toBe(7);
+        service.createBinding(courseId, 7, 'eidi').subscribe((response) => {
+            expect(response.binding.status).toBe('PENDING');
+            expect(response.approvalUrl).toBeDefined();
+            expect(response.binding.gocastCourseId).toBe(7);
         });
 
         const req = httpMock.expectOne(`api/videosource/courses/${courseId}/binding`);
         expect(req.request.method).toBe('POST');
         expect(req.request.body).toEqual({ gocastCourseId: 7, gocastCourseSlug: 'eidi' });
-        req.flush(mockBinding);
+        req.flush(mockResponse);
     });
 
     it('should get binding status via GET (triggers EP7 verification)', () => {

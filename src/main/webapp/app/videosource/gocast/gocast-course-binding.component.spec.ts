@@ -11,7 +11,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GocastCourseBindingComponent } from './gocast-course-binding.component';
 import { GocastService } from './gocast.service';
-import { GocastBinding, GocastCourse } from './gocast.model';
+import { GocastBinding, GocastBindingWithApproval, GocastCourse } from './gocast.model';
 
 describe('GocastCourseBindingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -31,6 +31,10 @@ describe('GocastCourseBindingComponent', () => {
         gocastCourseId: 1,
         gocastCourseSlug: 'eidi',
         status: 'PENDING',
+    };
+
+    const pendingBindingWithApproval: GocastBindingWithApproval = {
+        binding: pendingBinding,
         approvalUrl: 'https://tum.live/admin/course/1/integration/confirm?service=99&redirect=https://artemis.tum.de/callback',
     };
 
@@ -91,8 +95,8 @@ describe('GocastCourseBindingComponent', () => {
         expect(component.selectedGocastCourseSlug()).toBe('eidi');
     });
 
-    it('should create a PENDING binding and show the approval button', () => {
-        vi.spyOn(gocastService, 'createBinding').mockReturnValue(of(pendingBinding));
+    it('should create a PENDING binding and store it along with the approvalUrl', () => {
+        vi.spyOn(gocastService, 'createBinding').mockReturnValue(of(pendingBindingWithApproval));
         vi.spyOn(alertService, 'success');
 
         createComponent();
@@ -102,12 +106,14 @@ describe('GocastCourseBindingComponent', () => {
 
         expect(gocastService.createBinding).toHaveBeenCalledWith(10, 1, 'eidi');
         expect(component.binding()?.status).toBe('PENDING');
+        expect(component.approvalUrl()).toBe('https://tum.live/admin/course/1/integration/confirm?service=99&redirect=https://artemis.tum.de/callback');
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.gocast.binding.pendingCreated');
     });
 
     it('should open the approval URL in a new tab', () => {
         createComponent();
         component.binding.set(pendingBinding);
+        component.approvalUrl.set('https://tum.live/admin/course/1/integration/confirm?service=99&redirect=https://artemis.tum.de/callback');
 
         const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
         component.openApprovalPage();

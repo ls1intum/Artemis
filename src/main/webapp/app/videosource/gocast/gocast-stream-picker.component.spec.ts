@@ -95,12 +95,13 @@ describe('GocastStreamPickerComponent', () => {
             expect(component.streams()).toHaveLength(2);
         });
 
-        it('should set bindingStatus to undefined when no binding exists (404)', () => {
+        it('should set bindingStatus to REVOKED (show hint) when no binding exists (404)', () => {
             vi.spyOn(gocastService, 'getBinding').mockReturnValue(throwError(() => ({ status: 404 })));
 
             createComponent(10);
 
-            expect(component.bindingStatus()).toBeUndefined();
+            // 404/error is treated as "no binding" — shown via the REVOKED hint rather than invisible
+            expect(component.bindingStatus()).toBe('REVOKED');
             expect(component.streams()).toHaveLength(0);
         });
     });
@@ -125,7 +126,7 @@ describe('GocastStreamPickerComponent', () => {
 
         expect(component.selectedStreamId()).toBe(100);
         expect(emittedValues).toHaveLength(1);
-        expect(emittedValues[0]).toEqual({ streamId: 100, streamName: 'Lecture 1' });
+        expect(emittedValues[0]).toMatchObject({ streamId: 100, streamName: 'Lecture 1' });
     });
 
     it('should show an error alert when loading streams fails', () => {

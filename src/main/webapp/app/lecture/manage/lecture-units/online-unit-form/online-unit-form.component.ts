@@ -162,12 +162,12 @@ export class OnlineUnitFormComponent {
      * Called when the instructor selects a TUM Live stream from the stream picker (Stage 2).
      * Records the chosen streamId for inclusion in the submitted form data.
      */
-    onGocastStreamSelected(event: { streamId: number; streamName: string }): void {
+    onGocastStreamSelected(event: { streamId: number; streamName: string; slug?: string }): void {
         this.selectedGocastStreamId = event.streamId;
-        // Auto-fill the source field with the TUM Live stream URL if not already set.
-        // The canonical format is used by the existing TumLiveService regex.
-        if (!this.sourceControl?.value) {
-            this.sourceControl?.setValue(`https://tum.live/w/stream/${event.streamId}`);
+        // Auto-fill the source field with the TUM Live watch-page URL if not already set.
+        // Format: https://tum.live/w/{courseSlug}/{streamId} — required by TumLiveService regex.
+        if (!this.sourceControl?.value && event.slug) {
+            this.sourceControl?.setValue(`https://tum.live/w/${event.slug}/${event.streamId}`);
         }
     }
 
