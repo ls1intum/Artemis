@@ -1,0 +1,33 @@
+<div class="gocast-stream-picker mt-3">
+    @if (bindingStatus() === 'ACTIVE') {
+        <!-- Active binding: show the stream dropdown -->
+        <div class="form-group">
+            <label for="gocastStreamSelect" jhiTranslate="artemisApp.gocast.streamPicker.label"></label>
+            @if (isLoading()) {
+                <div class="spinner-border spinner-border-sm ms-2" role="status">
+                    <span class="visually-hidden" jhiTranslate="artemisApp.gocast.streamPicker.loading"></span>
+                </div>
+            }
+            <select id="gocastStreamSelect" class="form-select mt-1" [disabled]="isLoading() || streams().length === 0" (change)="onStreamSelected($event)">
+                <option value="" jhiTranslate="artemisApp.gocast.streamPicker.selectPlaceholder"></option>
+                @for (stream of streams(); track stream.streamId) {
+                    <option [value]="stream.streamId">
+                        {{ stream.name }}
+                        @if (stream.private) {
+                            <span jhiTranslate="artemisApp.gocast.streamPicker.private"></span>
+                        }
+                    </option>
+                }
+            </select>
+            @if (!isLoading() && streams().length === 0) {
+                <small class="form-text text-muted mt-1" jhiTranslate="artemisApp.gocast.streamPicker.noStreams"></small>
+            }
+        </div>
+    } @else if (bindingStatus() !== undefined) {
+        <!-- Binding is PENDING or REVOKED: show a hint -->
+        <div class="alert alert-info mt-2 py-2 small d-flex align-items-start gap-2" role="alert">
+            <span jhiTranslate="artemisApp.gocast.streamPicker.noBindingHint"></span>
+        </div>
+    }
+    <!-- If bindingStatus() is undefined, the binding check is still in flight — show nothing. -->
+</div>

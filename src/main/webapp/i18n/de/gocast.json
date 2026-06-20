@@ -1,0 +1,43 @@
+{
+    "artemisApp": {
+        "gocast": {
+            "binding": {
+                "pageTitle": "TUM Live Kurs verknüpfen",
+                "title": "TUM Live Kurs verknüpfen",
+                "selectCourse": "Wähle einen TUM Live Kurs zum Verknüpfen",
+                "selectCoursePlaceholder": "-- Kurs auswählen --",
+                "noCourses": "Keine TUM Live Kurse für deinen Account gefunden.",
+                "loading": "Lädt...",
+                "linkCourse": "Kurs verknüpfen",
+                "pendingCreated": "Verknüpfung erstellt. Bitte autorisiere Artemis auf TUM Live.",
+                "pendingInfo": "Verknüpfung wartet auf Bestätigung. Klicke auf \"Auf TUM Live autorisieren\", um die TUM Live Bestätigungsseite zu öffnen, und dann auf \"Verknüpfungsstatus prüfen\", wenn du fertig bist.",
+                "authorizeOnTumLive": "Auf TUM Live autorisieren",
+                "checkStatus": "Verknüpfungsstatus prüfen",
+                "active": "TUM Live Kurs verknüpft",
+                "linkedCourse": "Verknüpfter Kurs",
+                "stillPending": "Verknüpfung wartet noch auf Bestätigung auf TUM Live.",
+                "revoke": "Verknüpfung aufheben",
+                "revoked": "TUM Live Kursverknüpfung aufgehoben.",
+                "revokedInfo": "Die TUM Live Kursverknüpfung wurde aufgehoben. Du kannst unten einen anderen Kurs verknüpfen.",
+                "relinkCourse": "Kurs verknüpfen",
+                "error": {
+                    "loadCourses": "TUM Live Kurse konnten nicht geladen werden. Bitte versuche es erneut.",
+                    "createBinding": "TUM Live Kursverknüpfung konnte nicht erstellt werden. Bitte versuche es erneut.",
+                    "checkStatus": "Verknüpfungsstatus konnte nicht überprüft werden. Bitte versuche es erneut.",
+                    "revoke": "TUM Live Kursverknüpfung konnte nicht aufgehoben werden. Bitte versuche es erneut."
+                }
+            },
+            "streamPicker": {
+                "label": "TUM Live Stream auswählen",
+                "selectPlaceholder": "-- Stream auswählen --",
+                "noStreams": "Keine Streams für den verknüpften TUM Live Kurs gefunden.",
+                "loading": "Lädt...",
+                "private": "(privat)",
+                "noBindingHint": "Dieser Kurs ist noch nicht mit einem TUM Live Kurs verknüpft. Bitte einen Kursverantwortlichen, die Verknüpfung in den Kurseinstellungen einzurichten.",
+                "error": {
+                    "loadStreams": "TUM Live Streams konnten nicht geladen werden. Bitte versuche es erneut."
+                }
+            }
+        }
+    }
+}

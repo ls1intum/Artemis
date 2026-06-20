@@ -15,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { GocastStreamPickerComponent } from 'app/videosource/gocast/gocast-stream-picker.component';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -31,6 +32,8 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    /** Set when a TUM Live stream is selected via the stream picker (Stage 2). */
+    gocastStreamId?: number;
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -95,6 +98,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
         FeatureToggleHideDirective,
+        GocastStreamPickerComponent,
     ],
 })
 export class AttachmentVideoUnitFormComponent {
@@ -114,6 +118,16 @@ export class AttachmentVideoUnitFormComponent {
 
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
+
+    /**
+     * The Artemis course id. When provided, the TUM Live stream picker (Stage 2) is rendered
+     * below the video URL field. The picker self-resolves the binding status and only shows
+     * the stream dropdown when the binding is ACTIVE.
+     */
+    courseId = input<number | undefined>(undefined);
+
+    /** streamId selected via the TUM Live stream picker; included in the emitted form data. */
+    private selectedGocastStreamId: number | undefined;
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
@@ -211,9 +225,24 @@ export class AttachmentVideoUnitFormComponent {
         return this.form.get('urlHelper');
     }
 
+    /**
+     * Called when the instructor selects a TUM Live stream from the stream picker (Stage 2).
+     * Records the chosen streamId for inclusion in the submitted form data.
+     * If videoSource is not yet set, auto-fills it with the TUM Live stream URL.
+     */
+    onGocastStreamSelected(event: { streamId: number; streamName: string }): void {
+        this.selectedGocastStreamId = event.streamId;
+        if (!this.videoSourceControl?.value) {
+            this.videoSourceControl?.setValue(`https://tum.live/w/stream/${event.streamId}`);
+        }
+    }
+
     submitForm() {
         const formValue = this.form.value;
-        const formProperties: FormProperties = { ...formValue };
+        const formProperties: FormProperties = {
+            ...formValue,
+            gocastStreamId: this.selectedGocastStreamId,
+        };
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),

@@ -1,0 +1,43 @@
+{
+    "artemisApp": {
+        "gocast": {
+            "binding": {
+                "pageTitle": "TUM Live Course Link",
+                "title": "Link TUM Live Course",
+                "selectCourse": "Select a TUM Live course to link",
+                "selectCoursePlaceholder": "-- Select a course --",
+                "noCourses": "No TUM Live courses found for your account.",
+                "loading": "Loading...",
+                "linkCourse": "Link Course",
+                "pendingCreated": "Binding created. Please authorize Artemis on TUM Live.",
+                "pendingInfo": "Binding pending approval. Click \"Authorize on TUM Live\" to open the TUM Live confirmation page, then click \"Check Binding Status\" when done.",
+                "authorizeOnTumLive": "Authorize on TUM Live",
+                "checkStatus": "Check Binding Status",
+                "active": "TUM Live course linked",
+                "linkedCourse": "Linked course",
+                "stillPending": "Binding is still pending approval on TUM Live.",
+                "revoke": "Revoke Link",
+                "revoked": "TUM Live course link revoked.",
+                "revokedInfo": "The TUM Live course link has been revoked. You can link another course below.",
+                "relinkCourse": "Link a Course",
+                "error": {
+                    "loadCourses": "Failed to load TUM Live courses. Please try again.",
+                    "createBinding": "Failed to create the TUM Live course link. Please try again.",
+                    "checkStatus": "Failed to verify the binding status. Please try again.",
+                    "revoke": "Failed to revoke the TUM Live course link. Please try again."
+                }
+            },
+            "streamPicker": {
+                "label": "Select TUM Live stream",
+                "selectPlaceholder": "-- Select a stream --",
+                "noStreams": "No streams found for the linked TUM Live course.",
+                "loading": "Loading...",
+                "private": "(private)",
+                "noBindingHint": "This course is not yet linked to a TUM Live course. Ask an instructor to link one in the course settings.",
+                "error": {
+                    "loadStreams": "Failed to load TUM Live streams. Please try again."
+                }
+            }
+        }
+    }
+}
