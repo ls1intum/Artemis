@@ -14,7 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -1111,20 +1111,13 @@ export class GradingComponent implements OnInit {
     }
 
     exportAsCSV(rows: any[], headers: string[]): void {
-        const options = {
+        downloadCsv(rows, {
+            columnHeaders: headers,
+            fileName: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),
             fieldSeparator: ',',
             quoteStrings: false,
             decimalSeparator: 'locale',
-            showLabels: true,
-            filename: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),
-            useTextFile: false,
-            useBom: true,
-            columnHeaders: headers,
-        };
-
-        const csvExportConfig = mkConfig(options);
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
+        });
     }
 
     // =========================================================================
