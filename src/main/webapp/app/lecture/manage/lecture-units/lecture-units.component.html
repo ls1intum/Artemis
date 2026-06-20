@@ -29,6 +29,7 @@
             />
         }
         @if (isOnlineUnitFormOpen()) {
+            <!-- TODO(gocast): pass [courseId] here so the TUM Live stream picker (Stage 2) also appears in this inline form; paste-URL still works without it. -->
             <jhi-online-unit-form
                 [isEditMode]="isEditingLectureUnit()"
                 [hasCancelButton]="true"
@@ -38,6 +39,7 @@
             />
         }
         @if (isAttachmentVideoUnitFormOpen()) {
+            <!-- TODO(gocast): pass [courseId] here so the TUM Live stream picker (Stage 2) also appears in this inline form; paste-URL still works without it. -->
             <jhi-attachment-video-unit-form
                 [isEditMode]="isEditingLectureUnit()"
                 [hasCancelButton]="true"

@@ -497,4 +497,30 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         expect(attachmentVideoUnitFormComponent.isTransformable).toBe(true);
     });
+
+    describe('gocast stream picker integration', () => {
+        beforeEach(() => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+        });
+
+        it('should auto-fill, replace on re-selection, and clear the video source URL', () => {
+            // Select -> auto-fills using the bound course slug.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/42');
+
+            // Re-select a different stream -> URL follows the new selection.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 43, streamName: 'Lecture 2', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/43');
+
+            // Clear -> URL is removed.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected(undefined);
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('');
+        });
+
+        it('should preserve a user-edited video source URL when a stream is selected', () => {
+            attachmentVideoUnitFormComponent.videoSourceControl?.setValue('https://my.custom/video');
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://my.custom/video');
+        });
+    });
 });

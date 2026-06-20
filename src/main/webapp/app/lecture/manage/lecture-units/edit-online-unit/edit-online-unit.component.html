@@ -1,3 +1,5 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading()">
+    <!-- TODO(gocast): thread [courseId] into the form so the TUM Live stream picker (Stage 2) also appears in edit mode. -->
+    <!-- The course id is not currently resolved in this edit container; paste-URL still works without it. -->
     <jhi-online-unit-form [formData]="formData()" (formSubmitted)="updateOnlineUnit($event)" [isEditMode]="true" />
 </jhi-lecture-unit-layout>

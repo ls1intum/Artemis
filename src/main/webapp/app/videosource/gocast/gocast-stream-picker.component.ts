@@ -1,11 +1,19 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { GocastBindingStatus, GocastStream } from './gocast.model';
 import { GocastService } from './gocast.service';
+
+/** A single option in the TUM Live stream p-select dropdown. */
+interface GocastStreamOption {
+    label: string;
+    value: number;
+    private: boolean;
+}
 
 /**
  * Stage 2 — Stream picker for the lecture-unit form.
@@ -23,7 +31,7 @@ import { GocastService } from './gocast.service';
 @Component({
     selector: 'jhi-gocast-stream-picker',
     templateUrl: './gocast-stream-picker.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, MessageModule, SelectModule],
 })
 export class GocastStreamPickerComponent implements OnInit {
     private readonly gocastService = inject(GocastService);
@@ -38,8 +46,13 @@ export class GocastStreamPickerComponent implements OnInit {
      */
     hasActiveBinding = input<boolean | undefined>(undefined);
 
-    /** Emitted when a stream is selected (streamId, stream name). */
-    streamSelected = output<{ streamId: number; streamName: string; slug?: string }>();
+    /**
+     * Emitted when the stream selection changes.
+     * Carries the chosen stream (streamId, name, slug) on selection, or `undefined` when the
+     * selection is cleared — so the parent form can reset its cached stream id and avoid
+     * submitting a stale value.
+     */
+    streamSelected = output<{ streamId: number; streamName: string; slug?: string } | undefined>();
 
     // ── state ───────────────────────────────────────────────────────────────
     streams = signal<GocastStream[]>([]);
@@ -53,6 +66,15 @@ export class GocastStreamPickerComponent implements OnInit {
      * Populated from the server binding response; undefined when binding resolves via hasActiveBinding input.
      */
     private boundCourseSlug: string | undefined;
+
+    /** Streams mapped to PrimeNG p-select options (label/value/private). */
+    streamOptions = computed<GocastStreamOption[]>(() =>
+        this.streams().map((stream) => ({
+            label: stream.name,
+            value: stream.streamId,
+            private: stream.private,
+        })),
+    );
 
     ngOnInit(): void {
         const inputBinding = this.hasActiveBinding();
@@ -98,12 +120,14 @@ export class GocastStreamPickerComponent implements OnInit {
     }
 
     /**
-     * Called when the instructor selects a stream from the dropdown.
-     * Emits `streamSelected` with the chosen stream's id and name.
+     * Called when the instructor changes the stream dropdown (p-select onChange value).
+     * Emits `streamSelected` with the chosen stream, or `undefined` when the selection is cleared
+     * (so the parent form drops any stale cached stream id).
      */
-    onStreamSelected(event: Event): void {
-        const streamId = Number((event.target as HTMLSelectElement).value);
+    onStreamSelected(streamId: number | undefined): void {
         if (!streamId) {
+            this.selectedStreamId.set(undefined);
+            this.streamSelected.emit(undefined);
             return;
         }
         const stream = this.streams().find((s) => s.streamId === streamId);

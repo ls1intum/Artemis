@@ -7,7 +7,6 @@
                 "selectCourse": "Select a TUM Live course to link",
                 "selectCoursePlaceholder": "-- Select a course --",
                 "noCourses": "No TUM Live courses found for your account.",
-                "loading": "Loading...",
                 "linkCourse": "Link Course",
                 "pendingCreated": "Binding created. Please authorize Artemis on TUM Live.",
                 "pendingInfo": "Binding pending approval. Click \"Authorize on TUM Live\" to open the TUM Live confirmation page, then click \"Check Binding Status\" when done.",
@@ -31,7 +30,6 @@
                 "label": "Select TUM Live stream",
                 "selectPlaceholder": "-- Select a stream --",
                 "noStreams": "No streams found for the linked TUM Live course.",
-                "loading": "Loading...",
                 "private": "(private)",
                 "noBindingHint": "This course is not yet linked to a TUM Live course. Ask an instructor to link one in the course settings.",
                 "error": {

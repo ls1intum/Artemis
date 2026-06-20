@@ -76,6 +76,8 @@ export class OnlineUnitFormComponent {
 
     /** streamId selected via the TUM Live stream picker; included in the emitted form data. */
     private selectedGocastStreamId: number | undefined;
+    /** The URL the picker auto-filled into the source field; cleared together with the stream on de-selection. */
+    private lastAutoFilledGocastUrl: string | undefined;
 
     private readonly formBuilder = inject(FormBuilder);
     private readonly onlineUnitService = inject(OnlineUnitService);
@@ -159,15 +161,32 @@ export class OnlineUnitFormComponent {
     }
 
     /**
-     * Called when the instructor selects a TUM Live stream from the stream picker (Stage 2).
-     * Records the chosen streamId for inclusion in the submitted form data.
+     * Called when the TUM Live stream picker (Stage 2) selection changes.
+     * Records the chosen streamId for inclusion in the submitted form data, or clears it
+     * (and the auto-filled URL) when the picker selection is cleared.
      */
-    onGocastStreamSelected(event: { streamId: number; streamName: string; slug?: string }): void {
+    onGocastStreamSelected(event: { streamId: number; streamName: string; slug?: string } | undefined): void {
+        if (!event) {
+            // Selection cleared — drop the cached id and remove the URL we auto-filled.
+            if (this.selectedGocastStreamId !== undefined && this.sourceControl?.value === this.lastAutoFilledGocastUrl) {
+                this.sourceControl?.setValue('');
+            }
+            this.selectedGocastStreamId = undefined;
+            this.lastAutoFilledGocastUrl = undefined;
+            return;
+        }
         this.selectedGocastStreamId = event.streamId;
-        // Auto-fill the source field with the TUM Live watch-page URL if not already set.
+        // Auto-fill the source field with the TUM Live watch-page URL.
         // Format: https://tum.live/w/{courseSlug}/{streamId} — required by TumLiveService regex.
-        if (!this.sourceControl?.value && event.slug) {
-            this.sourceControl?.setValue(`https://tum.live/w/${event.slug}/${event.streamId}`);
+        // Only write when the field is empty or still holds a value we previously auto-filled,
+        // so a URL the user typed/edited by hand is preserved. This also keeps the URL in sync
+        // when the picker selection changes from one stream to another.
+        const currentValue = this.sourceControl?.value;
+        const canAutoFill = !currentValue || currentValue === this.lastAutoFilledGocastUrl;
+        if (canAutoFill && event.slug) {
+            const url = `https://tum.live/w/${event.slug}/${event.streamId}`;
+            this.sourceControl?.setValue(url);
+            this.lastAutoFilledGocastUrl = url;
         }
     }
 
