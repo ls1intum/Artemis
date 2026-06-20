@@ -23,7 +23,8 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -414,22 +415,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        // Keep the existing participation's fields (the websocket payload may only carry a result delta)
+                        // and merge in the changed submissions so prior attempts are not lost (see mergeSubmissions).
                         updatedParticipations = currentParticipations.map((participation) => {
                             if (participation.id !== changedParticipation.id) {
                                 return participation;
                             }
-
-                            const existingSubmissions = participation.submissions ?? [];
-                            const incomingSubmissions = changedParticipation.submissions ?? [];
-                            const existingIds = new Set(existingSubmissions.map((s) => s.id));
-
-                            const updatedExisting = existingSubmissions.map((existing) => {
-                                const incoming = incomingSubmissions.find((s) => s.id === existing.id);
-                                return incoming ?? existing;
-                            });
-                            const newSubmissions = incomingSubmissions.filter((s) => !existingIds.has(s.id));
-
-                            return { ...participation, submissions: [...updatedExisting, ...newSubmissions] };
+                            const merged = deepClone(participation);
+                            merged.submissions = this.mergeSubmissions(participation.submissions, changedParticipation.submissions);
+                            return merged;
                         });
                     } else {
                         updatedParticipations = [...currentParticipations, changedParticipation];
@@ -461,25 +455,36 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Merges incoming submissions into the existing ones, deduplicating by id so the full attempt history is preserved.
+     *
+     * Practice quiz submits (and websocket result deltas) deliver a participation payload that only carries the latest
+     * submission. Replacing the stored submissions with that payload would drop every prior attempt from the
+     * result-history dropdown until a page refresh reloads the full participation. Existing submissions are therefore
+     * kept in place (an incoming submission with the same id replaces its older version), and genuinely new
+     * submissions are appended. Submissions without an id are never deduplicated away.
+     */
+    private mergeSubmissions(existingSubmissions: Submission[] = [], incomingSubmissions: Submission[] = []): Submission[] {
+        const incomingById = new Map(incomingSubmissions.filter((submission) => submission.id !== undefined).map((submission) => [submission.id, submission]));
+        const updatedExisting = existingSubmissions.map((submission) => (submission.id !== undefined ? (incomingById.get(submission.id) ?? submission) : submission));
+        const existingIds = new Set(existingSubmissions.map((submission) => submission.id));
+        const newSubmissions = incomingSubmissions.filter((submission) => submission.id === undefined || !existingIds.has(submission.id));
+        return updatedExisting.concat(newSubmissions);
+    }
+
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();
         if (current.some((p) => p.id === participation.id)) {
+            // Keep the incoming participation's fields (it is the freshly started/changed one) but preserve the full
+            // attempt history by merging submissions rather than replacing them (see mergeSubmissions for the why).
             this._studentParticipations.set(
                 current.map((p) => {
                     if (p.id !== participation.id) {
                         return p;
                     }
-                    // Merge incoming submissions with existing ones so that the full
-                    // attempt history is preserved after a practice submit.
-                    // The payload from quiz-participation.component only carries the
-                    // latest submission; without this merge every prior attempt
-                    // disappears from the result-history dropdown until the page is
-                    // refreshed and the full participation is reloaded from the server.
-                    const existingSubmissions = p.submissions ?? [];
-                    const incomingSubmissions = participation.submissions ?? [];
-                    const incomingIds = new Set(incomingSubmissions.map((s) => s.id));
-                    const mergedSubmissions = [...existingSubmissions.filter((s) => !incomingIds.has(s.id)), ...incomingSubmissions];
-                    return Object.assign({}, participation, { submissions: mergedSubmissions });
+                    const merged = deepClone(participation);
+                    merged.submissions = this.mergeSubmissions(p.submissions, participation.submissions);
+                    return merged;
                 }),
             );
         } else {
