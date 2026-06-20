@@ -41,6 +41,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private pointerDownCleanup?: () => void;
     private gestureCleanup?: () => void;
     private gesture?: 'drag' | 'resize';
+    private activePointerId?: number;
     private resizeEdges = { left: false, right: false, top: false, bottom: false };
     private startPointerX = 0;
     private startPointerY = 0;
@@ -77,7 +78,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     private onPointerDown(event: PointerEvent): void {
         const widget = this.widgetEl;
-        if (!widget || (event.pointerType === 'mouse' && event.button !== 0)) {
+        // Ignore overlapping gesture starts (a second pointer down while one is active).
+        if (!widget || this.gesture || (event.pointerType === 'mouse' && event.button !== 0)) {
             return;
         }
         const target = event.target as Element | null;
@@ -97,6 +99,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         event.preventDefault();
 
         this.gesture = resizing ? 'resize' : 'drag';
+        this.activePointerId = event.pointerId;
         this.resizeEdges = edges;
         this.startPointerX = event.clientX;
         this.startPointerY = event.clientY;
@@ -108,6 +111,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         widget.setPointerCapture?.(event.pointerId);
         const move = (e: PointerEvent) => this.onPointerMove(e);
         const up = (e: PointerEvent) => {
+            if (e.pointerId !== this.activePointerId) {
+                return;
+            }
             widget.releasePointerCapture?.(e.pointerId);
             this.endGesture();
         };
@@ -123,7 +129,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     private onPointerMove(event: PointerEvent): void {
         const widget = this.widgetEl;
-        if (!this.gesture || !widget) {
+        if (!this.gesture || !widget || event.pointerId !== this.activePointerId) {
             return;
         }
         const containerRect = this.document.querySelector<HTMLElement>('.cdk-overlay-container')?.getBoundingClientRect();
@@ -199,6 +205,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     private endGesture(): void {
         this.gesture = undefined;
+        this.activePointerId = undefined;
         this.gestureCleanup?.();
         this.gestureCleanup = undefined;
     }

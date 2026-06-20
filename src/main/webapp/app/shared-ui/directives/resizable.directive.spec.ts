@@ -40,9 +40,11 @@ class ResizableTestHostComponent {
     }
 }
 
-/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button, which is all the directive reads. */
-function pointer(target: Element, type: string, clientX: number, clientY: number): void {
-    target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 }));
+/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button plus the pointer fields the directive reads. */
+function pointer(target: Element, type: string, clientX: number, clientY: number, pointerId = 1): void {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 });
+    Object.defineProperties(event, { pointerId: { value: pointerId }, pointerType: { value: 'mouse' } });
+    target.dispatchEvent(event);
 }
 
 describe('ResizableDirective', () => {

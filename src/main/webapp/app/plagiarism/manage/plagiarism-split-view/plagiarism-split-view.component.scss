@@ -46,7 +46,7 @@
 
 // ::ng-deep is required to style PrimeNG Splitter internals (no public API for these overrides).
 :host ::ng-deep .plagiarism-splitter {
-    .p-splitter-panel {
+    .p-splitterpanel {
         display: flex;
         min-width: 0;
         min-height: 0;

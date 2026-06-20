@@ -12,9 +12,11 @@ import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
-/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button, which is all the component reads. */
-function pointer(target: EventTarget, type: string, clientX: number, clientY: number): void {
-    target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 }));
+/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button plus the pointer fields the component reads. */
+function pointer(target: EventTarget, type: string, clientX: number, clientY: number, pointerId = 1): void {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 });
+    Object.defineProperties(event, { pointerId: { value: pointerId }, pointerType: { value: 'mouse' } });
+    target.dispatchEvent(event);
 }
 
 describe('IrisChatbotWidgetComponent', () => {

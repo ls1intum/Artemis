@@ -106,6 +106,7 @@
         flex: 1;
         min-width: 0;
         min-height: 0;
+
         // Strip PrimeNG's default chrome so the splitter blends into the fullscreen surface (matches the old split.js layout).
         border: 0 none;
         background: transparent;

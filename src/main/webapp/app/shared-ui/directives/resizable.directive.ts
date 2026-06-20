@@ -71,6 +71,7 @@ export class ResizableDirective {
     readonly resizeEnd = output<ResizableSizeEvent>();
 
     private activeEdge?: ActiveEdge;
+    private activePointerId?: number;
     private startX = 0;
     private startY = 0;
     private startWidth = 0;
@@ -109,6 +110,11 @@ export class ResizableDirective {
     }
 
     protected onPointerDown(event: PointerEvent): void {
+        // Ignore a second pointerdown while a resize is already in progress (prevents leaking
+        // listeners and mixing pointer streams).
+        if (this.activeEdge) {
+            return;
+        }
         if (!this.resizableEnabled()) {
             return;
         }
@@ -120,9 +126,12 @@ export class ResizableDirective {
             return;
         }
         event.preventDefault();
+        // Re-apply touch-action in case the handle was rendered after the initial afterNextRender pass.
+        this.applyHandleTouchAction(this.resizableEdges());
 
         const rect = this.host.nativeElement.getBoundingClientRect();
         this.activeEdge = edge;
+        this.activePointerId = event.pointerId;
         this.startX = event.clientX;
         this.startY = event.clientY;
         this.startWidth = rect.width;
@@ -134,6 +143,9 @@ export class ResizableDirective {
 
         const move = (e: PointerEvent) => this.onPointerMove(e);
         const up = (e: PointerEvent) => {
+            if (e.pointerId !== this.activePointerId) {
+                return;
+            }
             hostEl.releasePointerCapture?.(e.pointerId);
             this.onPointerUp();
         };
@@ -151,7 +163,7 @@ export class ResizableDirective {
     }
 
     private onPointerMove(event: PointerEvent): void {
-        if (!this.activeEdge) {
+        if (!this.activeEdge || event.pointerId !== this.activePointerId) {
             return;
         }
         const { minWidth, maxWidth, minHeight, maxHeight } = this.resizableConstraints();
@@ -191,6 +203,7 @@ export class ResizableDirective {
             return;
         }
         this.activeEdge = undefined;
+        this.activePointerId = undefined;
         this.teardownActiveDrag();
         this.renderer.removeClass(this.host.nativeElement, 'card-resizable');
         const rect = this.host.nativeElement.getBoundingClientRect();
