@@ -182,6 +182,9 @@ public class BonusResource {
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
         api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        if (bonusDTO.sourceGradingScaleId() == null) {
+            throw new BadRequestAlertException("A bonus requires a source grading scale", ENTITY_NAME, "sourceGradingScaleMissing");
+        }
         GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonusDTO.sourceGradingScaleId()).orElseThrow();
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScaleFromDb);
 
@@ -249,6 +252,12 @@ public class BonusResource {
 
         bonusToGradingScale.addBonusFrom(existingBonus);
         bonusToGradingScale.setBonusStrategy(updatedBonus.bonusStrategy());
+
+        // Validate grade types up front so a rejected update commits nothing (neither the bonusTo strategy below nor the
+        // bonus itself). The grading-scale save must stay before saveBonus: saveBonus(existingBonus) is the authoritative
+        // last write for the bonus's own fields (weight/source); otherwise the eagerly-loaded bonusFrom cascade from the
+        // grading-scale save overwrites the update with stale state.
+        bonusService.validateBonusGradeTypes(existingBonus, isSourceGradeScaleUpdated);
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);
 
