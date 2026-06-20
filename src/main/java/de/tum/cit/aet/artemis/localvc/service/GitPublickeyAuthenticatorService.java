@@ -180,12 +180,12 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      */
     private void disconnectBecauseKeyHasExpired(ServerSession session) {
         try {
-            var keyExpiredErrorMessage = String.format("""
+            var keyExpiredErrorMessage = """
                     Keys expired.
 
                     One of your SSH keys has expired. Renew it in the Artemis settings:
                     %s/user-settings/ssh
-                    """, artemisServerUrl);
+                    """.formatted(artemisServerUrl);
 
             session.disconnect(AUTHENTICATION_FAILED_CODE, keyExpiredErrorMessage);
         }

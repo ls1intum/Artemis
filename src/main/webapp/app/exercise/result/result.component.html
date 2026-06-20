@@ -1,7 +1,3 @@
-<!--
--- When using the result component make sure that the reference to the participation input is changed if the result changes
--- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
--->
 <ng-container id="result">
     @switch (templateStatus()) {
         @case (ResultTemplateStatus.IS_QUEUED) {
@@ -80,7 +76,7 @@
                 <span
                     [class]="textColorClass()"
                     class="result"
-                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && exercise()?.type !== ExerciseType.QUIZ }"
+                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && resolvedExercise()?.type !== ExerciseType.QUIZ }"
                     id="result-score"
                     (click)="!isInSidebarCard() ? showDetails(currentResult) : ''"
                 >
@@ -94,9 +90,9 @@
                         <span [ngbTooltip]="currentResult.completionDate | artemisDate">({{ currentResult.completionDate | artemisTimeAgo }})</span>
                     }
                 </span>
-                @if (showBadge()) {
-                    <span class="badge" [ngClass]="badge().class" id="result-score-badge" ngbTooltip="{{ badge().tooltip | artemisTranslate }}">
-                        {{ badge().text | artemisTranslate | uppercase }}
+                @if (badge(); as resultBadge) {
+                    <span class="badge" [ngClass]="resultBadge.class" id="result-score-badge" ngbTooltip="{{ resultBadge.tooltip | artemisTranslate }}">
+                        {{ resultBadge.text | artemisTranslate | uppercase }}
                     </span>
                 }
             }
@@ -135,7 +131,7 @@
                     }
                 }
                 @if (result(); as missingResult) {
-                    @if (exercise()?.type !== ExerciseType.QUIZ) {
+                    @if (resolvedExercise()?.type !== ExerciseType.QUIZ) {
                         <span
                             [ngClass]="{ 'clickable-result': !isInSidebarCard() }"
                             class="result"

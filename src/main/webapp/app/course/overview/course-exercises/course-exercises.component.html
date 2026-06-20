@@ -1,7 +1,7 @@
 <div class="d-flex horizontal-scroll">
     @if (course()) {
         @if (!isShownViaLti()) {
-            <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
                 @if (sidebarData(); as data) {
                     <jhi-sidebar
                         [itemSelected]="exerciseSelected()"
@@ -10,6 +10,10 @@
                         [collapseState]="DEFAULT_COLLAPSE_STATE"
                         [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                         [showFilter]="true"
+                        [pageTitle]="pageTitle()"
+                        [showSidebarToggle]="true"
+                        [isSidebarCollapsed]="isCollapsed()"
+                        (toggleSidebar)="toggleSidebar()"
                     />
                 }
             </div>
@@ -28,11 +32,11 @@
 
         @if (exerciseSelected()) {
             <div
-                [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
-                class="content-width scrollable-content"
+                [class]="{ 'content-sidebar-width': !isCollapsed() }"
+                class="content-width scrollable-content no-header-bar-height"
                 [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
             >
-                <router-outlet (deactivate)="onSubRouteDeactivate()" />
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
