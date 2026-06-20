@@ -131,10 +131,8 @@ public class ExerciseGenerationTaskService {
     }
 
     /**
-     * Handles a non-accepted (but clean, non-cancelled, non-error) terminal state. Instead of discarding the run, it attempts graceful recovery: persist the best-effort draft and
-     * turn every verification finding into review comments, then emit a {@code NEEDS_REVIEW} terminal event so the UI shows "draft generated, N issues to review". If recovery
-     * itself fails (e.g. the draft could not be committed), it falls back to the previous behaviour — a {@code PARTIAL} event reporting that nothing was changed — so a recovery
-     * error never leaves the run looking accepted and never half-saves silently.
+     * Handles a non-accepted (but clean, non-cancelled, non-error) terminal state via {@link GenerationRecoveryService#recover}, emitting {@code NEEDS_REVIEW} when the draft was
+     * persisted (with {@code issueCount < 0} signalling its review comments could not be attached) and falling back to {@code PARTIAL} only when the persist itself failed.
      *
      * @param exercise   the target exercise
      * @param user       the requesting instructor (commit and review-comment author)
@@ -157,8 +155,8 @@ public class ExerciseGenerationTaskService {
                     ? " Your existing working exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch()
                             + "' for you to review and merge if you want it."
                     : "";
-            // The draft was persisted (recover only throws when persist itself failed), so this is always NEEDS_REVIEW, never PARTIAL. When the review-comment annotation could not
-            // be attached (issueCount < 0) the message says so explicitly, so a degraded save is never silently presented as a fully-annotated draft.
+            // recover only throws when persist itself failed, so reaching here means the draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save (review comments
+            // could not be attached), which the message states explicitly.
             String message = issueCount < 0
                     ? "A draft exercise was generated but did not pass verification, so it needs your review before use. The review notes could not be attached automatically — "
                             + "open the exercise and review it manually before grading." + placement + " " + reason
@@ -167,9 +165,7 @@ public class ExerciseGenerationTaskService {
             emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict));
         }
         catch (RuntimeException e) {
-            // Recovery failed at the PERSIST step (the draft could not be committed at all). Nothing durable was saved, so report PARTIAL: the instructor knows nothing reliable
-            // was
-            // saved and can retry. Once persist succeeds, recover never throws — so a saved-but-unannotated draft is reported as NEEDS_REVIEW above, never mislabelled here.
+            // Recovery failed at the PERSIST step: nothing durable was saved, so report PARTIAL (the instructor can retry).
             log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft could not be persisted)", exerciseId, e);
             emitter.milestone(ExerciseGenerationEventDTO.done(reason + " Saving the draft for review failed (" + e.getMessage() + ").",
                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));

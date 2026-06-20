@@ -474,10 +474,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const post$ = of({ jobId: 'job-adapt' });
             const subscribeSpy = vi.spyOn(post$, 'subscribe');
             adaptationService.adaptExercise.mockReturnValue(post$);
+            const reattach = vi.fn();
+            vi.spyOn(comp, 'generationCard').mockReturnValue({ reattach } as unknown as HyperionExerciseGenerationComponent);
 
             comp.onAdaptExercise({ feedback: 'fix it' });
 
+            // Single-flight: one subscribe and exactly one started run (a double-subscribe would reattach twice).
             expect(subscribeSpy).toHaveBeenCalledTimes(1);
+            expect(reattach).toHaveBeenCalledTimes(1);
         });
 
         it('does not reattach when the adapt start has nothing to start (empty feedback yields undefined stream) (S1)', () => {

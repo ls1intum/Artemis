@@ -57,7 +57,13 @@ import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } f
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { ADAPT_DIALOG_BREAKPOINTS, combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindings, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
+import {
+    ADAPT_DIALOG_BREAKPOINTS,
+    combineAdaptFeedback,
+    firstConsistencyIssueContent,
+    selectedThreadsFindings,
+    selectedThreadsFindingsText,
+} from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -582,7 +588,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 closeOnEscape: true,
                 width: '40vw',
                 breakpoints: ADAPT_DIALOG_BREAKPOINTS,
-                // No findingText: the dialog renders its finding-free variant with required instructions.
+                // No findings: the dialog renders its finding-free variant with required instructions.
                 data: {},
             }) ?? undefined;
         this.adaptDialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {

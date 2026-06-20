@@ -153,8 +153,7 @@ public class ExerciseGenerationOrchestrationService {
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
-            // Recomputed each attempt; the final attempt's report is attached to the outcome and surfaced as advisory review comments. NEVER consulted by the accept/reject
-            // verdict.
+            // Recomputed each attempt; the final attempt's report is attached to the outcome. Advisory only (see specFidelityCritic field).
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
@@ -202,12 +201,8 @@ public class ExerciseGenerationOrchestrationService {
                         extractionFailed, seededStructuralTestNames);
                 emit(progress, verification.report());
 
-                // Advisory spec-fidelity / coverage critic: the verifier proves the exercise is internally consistent but never that it covers the instructor's brief. Run the
-                // critic
-                // against THIS attempt's produced artifacts so its findings can (a) feed the next retry prompt while attempts remain and (b) become the advisory report on the
-                // final
-                // outcome. It is best-effort and NON-BLOCKING — it never touches `verification`, so it can never flip the accept/reject verdict; a critic failure yields no
-                // findings.
+                // Advisory critic against THIS attempt's artifacts: findings feed the next retry prompt while attempts remain and become the advisory report on the final outcome.
+                // Advisory only (see specFidelityCritic field) — never touches `verification`.
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
@@ -215,8 +210,7 @@ public class ExerciseGenerationOrchestrationService {
                     break;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
-                // Fold both the authoritative rejection (which the agent MUST fix) and the advisory spec-fidelity findings (which it SHOULD fix) into the next prompt. The
-                // spec-fidelity block is clearly framed as advisory so the agent prioritises the hard rejection but still adds the missing tests / cleans leaked phrasing.
+                // Fold the authoritative rejection (which the agent MUST fix) and the advisory spec-fidelity findings (framed as advisory, so the hard rejection is prioritised).
                 currentPrompt = "Your previous attempt was rejected by the authoritative verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);

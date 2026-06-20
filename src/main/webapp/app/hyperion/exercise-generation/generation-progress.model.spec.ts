@@ -68,7 +68,7 @@ describe('parseGenerationProgress', () => {
         expect(result.files).toEqual([]);
     });
 
-    it('keeps a long, untruncated path intact (the server renders the full path first so it is never cut)', () => {
+    it('never truncates a path (the server renders the full path verbatim, so the parser must not cut it)', () => {
         const longPath = 'solution/src/de/tum/cit/aet/example/very/deeply/nested/package/structure/VeryLongClassNameThatExceedsAnyReasonableLimit.java';
         const result = parseGenerationProgress([progress(`Turn 1: write_file ${longPath}`)], false);
         expect(result.files[0].path).toBe(longPath);

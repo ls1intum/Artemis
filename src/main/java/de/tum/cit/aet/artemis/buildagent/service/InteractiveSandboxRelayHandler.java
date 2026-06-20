@@ -79,21 +79,12 @@ public class InteractiveSandboxRelayHandler {
 
     private Semaphore sessionPermits;
 
-    /**
-     * Bound on {@link #handledCorrelationIds}: an upper limit on the number of recently-seen correlation ids retained for de-duplication. Each relayed operation mints one fresh,
-     * single-use correlation id, so this covers far more in-flight + recently-completed ops than any realistic redelivery window, while keeping the set from growing without bound
-     * on
-     * a long-lived agent.
-     */
+    /** Bound on {@link #handledCorrelationIds}: far more than any realistic in-flight + recently-completed redelivery window, yet bounded on a long-lived agent. */
     private static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
 
     /**
-     * Correlation ids currently being handled or already handled, so a redelivered broadcast is not performed twice. Bounded to {@link #MAX_REMEMBERED_CORRELATION_IDS} entries
-     * with
-     * insertion-order (FIFO) eviction (see {@link #markHandled}) so it cannot grow without bound on a long-lived agent. Correlation ids are single-use (the client mints a fresh
-     * UUID
-     * per call and never retries one), so evicting the oldest entries can never resurrect a live de-duplication key. Guarded by its own monitor; the listener hands off to a worker
-     * pool, so {@link #handle} can run concurrently.
+     * Bounded FIFO set of handled correlation ids for at-most-once handling; single-use ids (the client mints a fresh UUID per call and never retries one) make oldest-entry
+     * eviction safe. Guarded by its own monitor.
      */
     private final LinkedHashMap<String, Boolean> handledCorrelationIds = new LinkedHashMap<>();
 
@@ -175,9 +166,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     /**
-     * Records a correlation id as handled, returning {@code true} only on its first appearance. The backing map is bounded to {@link #MAX_REMEMBERED_CORRELATION_IDS} entries with
-     * insertion-order (FIFO) eviction so it cannot grow without bound; because correlation ids are single-use, evicting the oldest entries never resurrects a live de-duplication
-     * key.
+     * Records a correlation id as handled, returning {@code true} only on its first appearance.
      *
      * @param correlationId the correlation id of the request being handled
      * @return {@code true} if this is the first delivery for the id (caller should proceed), {@code false} if it was already handled (caller should drop it)
@@ -187,7 +176,6 @@ public class InteractiveSandboxRelayHandler {
             if (handledCorrelationIds.putIfAbsent(correlationId, Boolean.TRUE) != null) {
                 return false;
             }
-            // Evict the oldest entries once the cap is exceeded; a LinkedHashMap iterates in insertion order, so this is FIFO.
             Iterator<String> iterator = handledCorrelationIds.keySet().iterator();
             while (handledCorrelationIds.size() > MAX_REMEMBERED_CORRELATION_IDS && iterator.hasNext()) {
                 iterator.next();

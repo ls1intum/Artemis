@@ -491,10 +491,11 @@ describe('HyperionExerciseGenerationComponent', () => {
             const chip = (fixture.nativeElement as HTMLElement).querySelector('.generation-chip');
             expect(popover).toBeTruthy();
             expect(chip).toBeTruthy();
-            // PrimeNG Popover.show(event, target) calls event.stopPropagation() when BOTH are truthy: a synthetic event object (no such method) throws — this is the shipped-then-fixed bug.
-            expect(() => popover!.show({ currentTarget: chip, target: chip }, chip)).toThrow();
-            // The fix passes no event, so the guard short-circuits and the overlay still anchors to the chip.
-            expect(() => popover!.show(undefined, chip)).not.toThrow();
+            // SUT contract: the card opens the overlay by anchoring to the chip with NO event, so PrimeNG's event.stopPropagation() path is never reached (the shipped-then-fixed
+            // synthetic-event bug). Spy on the real auto-open path and assert it passes undefined for the event argument.
+            const showSpy = vi.spyOn(popover!, 'show');
+            (component as unknown as { openCompactPopover: () => void }).openCompactPopover();
+            expect(showSpy).toHaveBeenCalledWith(undefined, chip);
         });
 
         it('drives the chip label/icon from the verdict', () => {

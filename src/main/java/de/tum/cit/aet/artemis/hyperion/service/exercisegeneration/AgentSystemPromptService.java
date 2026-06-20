@@ -34,7 +34,7 @@ public class AgentSystemPromptService {
 
     /**
      * @param exercise the exercise being generated or adapted
-     * @return the system prompt
+     * @return the full system prompt, framed for spec mode or from-scratch depending on whether the exercise already carries a real instructor problem statement
      */
     public String build(ProgrammingExercise exercise) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
@@ -229,8 +229,7 @@ public class AgentSystemPromptService {
      * A tight, exercise-specific BUILD CONTEXT block: the resolved project type, package/module name, checkout layout, the EXACT build phase commands the grader runs, and the
      * report locations it parses. These are facts the agent would otherwise have to infer from the manifests; surfacing them up front (derived from the same recipe behind
      * {@code verify.sh}, so they cannot drift from what the grader actually runs) closes the "verify.sh passed but real CI scored zero" class. Kept deliberately short — it lists
-     * the
-     * commands and paths, not full manifests. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
+     * the commands and paths, not full manifests. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
      *
      * @param exercise the exercise being generated or adapted
      * @return the build-context section (prefixed with a blank line), or {@code ""} when it cannot be resolved
@@ -282,10 +281,8 @@ public class AgentSystemPromptService {
 
     /**
      * Extra contract clause when static code analysis is ENABLED for the exercise: the reference solution must be clean of static-analysis findings in the GRADED categories,
-     * because
-     * production folds an SCA penalty into the score and the out-of-band verifier REJECTS a solution whose build trips a graded SCA category (it would otherwise grade below 100%
-     * for
-     * a student). Empty when SCA is disabled, so a non-SCA prompt is unchanged.
+     * because production folds an SCA penalty into the score and the out-of-band verifier REJECTS a solution whose build trips a graded SCA category (it would otherwise grade
+     * below 100% for a student). Empty when SCA is disabled, so a non-SCA prompt is unchanged.
      */
     private static String staticCodeAnalysisGuidance(ProgrammingExercise exercise) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {

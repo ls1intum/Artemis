@@ -251,8 +251,7 @@ public class ProgrammingExerciseCreationUpdateService {
      * Enables the solution-repository checkout for languages whose test harness needs it (Haskell, OCaml: the cabal/dune {@code library solution} reads a sibling
      * {@code solution/}).
      * Without it even the solution build cannot resolve its sources. The authoritative predicate is the same {@link ProgrammingLanguageFeature#checkoutSolutionRepositoryAllowed()}
-     * flag the CI trigger and validation gate on, so creation, validation and build stay in agreement. Only forces it when not already set, logging if it overrides an explicit
-     * opt-out.
+     * flag the CI trigger and validation gate on, so creation, validation and build stay in agreement. Only forces it when not already set, logging when it flips the flag on.
      */
     private void forceSolutionCheckoutWhereTheHarnessRequiresIt(ProgrammingExercise programmingExercise) {
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();

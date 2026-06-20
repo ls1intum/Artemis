@@ -68,8 +68,7 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return the advisory spec-fidelity report; never {@code null}. It is purely advisory and is NEVER consulted by {@link #isAccepted()} — an oracle-accepted exercise stays
-     *         accepted regardless of what it contains.
+     * @return the advisory spec-fidelity report (see field Javadoc); never {@code null}
      */
     public SpecFidelityReport specFidelityReport() {
         return specFidelityReport;

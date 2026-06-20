@@ -12,14 +12,8 @@ import org.springframework.context.annotation.Primary;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.GpuEndpointChatModel;
 
 /**
- * Registers an OpenAI-compatible OpenWebUI endpoint (e.g. the TUM gpt-oss-120b GPU deployment) as the Hyperion {@link ChatModel}, so a running Artemis instance can drive real
- * agentic exercise generation against that endpoint without the Azure OpenAI starter. Activated ONLY when an {@code artemis.hyperion.gpu.api-key} is configured, so a normal
- * deployment (no key) is unaffected and keeps using whichever Spring AI starter {@code spring.ai.model.chat} selects.
- * <p>
- * When this bean is active, set {@code spring.ai.model.chat=none} so the Azure/OpenAI starter does not also contribute a competing {@code ChatModel} — the {@code AgentLoopRunner}
- * injects the full {@code Collection<ChatModel>} and uses the first, so a single deterministic bean is required. The bean is marked {@link Primary} so any shared
- * {@code ChatClient}
- * also resolves to it.
+ * Registers an OpenAI-compatible OpenWebUI endpoint (e.g. the TUM gpt-oss-120b GPU deployment) as the {@link Primary} Hyperion {@link ChatModel}; active only when
+ * {@code artemis.hyperion.gpu.api-key} is set, so a normal deployment (no key) is unaffected.
  */
 @Lazy
 @Configuration

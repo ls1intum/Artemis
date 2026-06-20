@@ -698,11 +698,7 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
      * <p>
-     * This is run once at exercise creation; it is also re-run by the Hyperion generation persist path after the agent-produced files are mirrored into the working copy, so a
-     * harness file the agent overwrote with a still-templated copy (e.g. the Haskell {@code run.sh}, whose
-     * {@code ${studentParentWorkingDirectoryName}}/{@code ${solutionWorkingDirectory}}
-     * would otherwise expand to empty strings in real CI) is normalized to the same real-CI checkout values an instructor-created exercise carries. The operation is idempotent:
-     * an already-substituted file contains no placeholders and is left byte-identical.
+     * Idempotent: an already-substituted file contains no placeholders and is left byte-identical, so callers (e.g. the Hyperion persist path) may safely re-run it.
      *
      * @param programmingExercise The related programming exercise
      * @param repository          The repository in which the placeholders should get replaced

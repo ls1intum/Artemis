@@ -127,7 +127,6 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         if (responseListenerId != null && responsesTopic != null) {
             responsesTopic.removeMessageListener(responseListenerId);
         }
-        // Fail any still-pending operations so blocked callers unwind instead of hanging until their own timeout.
         pendingOperations.forEach((correlationId, future) -> future.completeExceptionally(new LocalCIException("Remote interactive sandbox client is shutting down.")));
         pendingOperations.clear();
     }
@@ -238,11 +237,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      * @return the agent short name
      */
     private static String agentOf(String sessionHandle) {
-        int separator = sessionHandle.indexOf(SESSION_HANDLE_SEPARATOR);
-        if (separator < 0) {
-            throw new LocalCIException("Malformed remote sandbox session handle (missing agent prefix): " + sessionHandle);
-        }
-        return sessionHandle.substring(0, separator);
+        return splitSessionHandle(sessionHandle)[0];
     }
 
     /**
@@ -252,11 +247,21 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      * @return the container id the owning agent understands
      */
     private static String containerOf(String sessionHandle) {
+        return splitSessionHandle(sessionHandle)[1];
+    }
+
+    /**
+     * Splits a composite session handle into its agent short name and container id at the {@link #SESSION_HANDLE_SEPARATOR}.
+     *
+     * @param sessionHandle the composite handle {@code "<agentShortName>::<containerId>"}
+     * @return a two-element array of {@code [agentShortName, containerId]}
+     */
+    private static String[] splitSessionHandle(String sessionHandle) {
         int separator = sessionHandle.indexOf(SESSION_HANDLE_SEPARATOR);
         if (separator < 0) {
             throw new LocalCIException("Malformed remote sandbox session handle (missing agent prefix): " + sessionHandle);
         }
-        return sessionHandle.substring(separator + SESSION_HANDLE_SEPARATOR.length());
+        return new String[] { sessionHandle.substring(0, separator), sessionHandle.substring(separator + SESSION_HANDLE_SEPARATOR.length()) };
     }
 
     /**

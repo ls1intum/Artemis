@@ -13,10 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * DTO for problem statement generation (the "draft a plan to review" step).
  * <p>
  * On success, {@code draftProblemStatement} contains the generated text (never null or empty). The three {@code suggested*} fields are the metadata the same draft call proposes
- * for the
- * instructor to review and edit (a title, the difficulty, and topic categories); they are best-effort and any of them may be {@code null}/empty when the model omitted them or the
- * trailer could not be parsed. {@link JsonInclude.Include#NON_EMPTY} keeps the wire shape backward-compatible: absent suggestions are simply omitted. Suggestions NEVER drive
- * generation — they are editable pre-fills the instructor confirms or overrides. Errors are communicated via standard Spring error responses (e.g. {@code 400}, {@code 500}).
+ * for the instructor to review and edit (a title, the difficulty, and topic categories); they are best-effort and any of them may be {@code null}/empty. Suggestions NEVER drive
+ * generation — they are editable pre-fills the instructor confirms or overrides.
  *
  * @param draftProblemStatement the generated problem statement text (non-empty on success, never null)
  * @param suggestedTitle        a concise title the model proposes for the exercise, or {@code null}

@@ -25,21 +25,13 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Recovers a near-miss exercise-generation run instead of discarding it.
+ * Recovers a near-miss exercise-generation run instead of discarding it: persists the best-effort artifact as a <em>draft</em> through the same
+ * {@link GenerationPersistenceService} path an accepted run uses, then translates every verification finding (plus the agent's final note) into
+ * {@code CONSISTENCY_CHECK} review-comment threads via the manual consistency-check path ({@link ExerciseReviewService#createConsistencyCheckThreads}).
  * <p>
- * When the agent produced a complete-but-not-verified exercise (rejected after the attempt budget, or otherwise not accepted), the binary
- * "nothing was saved" outcome throws away real instructor-usable work and tells them only that it failed. This service closes that gap: it
- * persists the best-effort artifact as a <em>draft</em> through the same {@link GenerationPersistenceService} path an accepted run uses, and
- * then translates every authoritative-verification finding (plus the agent's final note) into {@code CONSISTENCY_CHECK} review-comment threads
- * on the exercise, reusing the exact path the manual consistency check uses ({@link ExerciseReviewService#createConsistencyCheckThreads}). The
- * instructor opens the exercise and sees the partially-correct draft together with a precise, actionable checklist of what still needs fixing.
- * <p>
- * <strong>Safety boundary.</strong> A recovered draft is never presented as a verified, accepted exercise. The terminal event carries the
- * distinct {@code NEEDS_REVIEW} verdict (never {@code SUCCESS}), and the draft always carries at least one review comment enumerating the gaps;
- * an accepted run produces zero generation-recovery review comments. Persisting the files makes the work durable and editable (it is a normal
- * git commit + exercise version the instructor can revert), but the review comments are the unambiguous signal that the exercise is unfinished
- * and must be completed by a human before it is used for grading. Recovery never runs on a cancelled or hard-error run (the workspace there is
- * unusable), only on a clean non-accepted terminal state with extractable files.
+ * Load-bearing invariant: a recovered draft is never presented as accepted — the terminal verdict is always {@code NEEDS_REVIEW} (never {@code SUCCESS})
+ * and the draft always carries at least one review comment. Recovery runs only on a clean non-accepted terminal state with extractable files (never on a
+ * cancelled or hard-error run, whose workspace is unusable).
  */
 @Lazy
 @Service

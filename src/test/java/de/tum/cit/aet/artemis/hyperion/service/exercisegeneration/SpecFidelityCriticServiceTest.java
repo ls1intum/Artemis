@@ -16,6 +16,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +41,8 @@ class SpecFidelityCriticServiceTest {
     private SpecFidelityCriticService criticReturning(ChatResponse response) {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(response);
+        // Spring AI 2.0 merges the per-request .options(...) with the model's default options, so the ChatClient calls getOptions() during the request.
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         return new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
     }
 

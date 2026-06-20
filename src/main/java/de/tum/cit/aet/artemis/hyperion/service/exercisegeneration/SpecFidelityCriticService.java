@@ -178,7 +178,7 @@ public class SpecFidelityCriticService {
         try {
             // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop. A plain ChatOptions means the critic cannot call tools.
             ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames))
-                    .options(ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS).build()).call().chatResponse();
+                    .options(ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS)).call().chatResponse();
             String text = LLMTokenUsageService.extractResponseText(response);
             if (text == null || text.isBlank()) {
                 return List.of();
@@ -287,13 +287,6 @@ public class SpecFidelityCriticService {
         return value.length() <= MAX_REQUIREMENT_CHARS ? value : value.substring(0, MAX_REQUIREMENT_CHARS) + "…";
     }
 
-    /**
-     * Renders the critic's findings as a compact block for the verifier-feedback retry prompt, instructing the agent to add the missing tests / clean the leaked phrasing. Returns
-     * an empty string when there is nothing to report, so the caller can append unconditionally.
-     *
-     * @param report the critic report
-     * @return a retry-prompt fragment, or an empty string when there are no findings
-     */
     /**
      * Languages whose default assertion failure does NOT name the behaviour — a bare {@code assertEquals(600L, actual)} reports only "expected 600 but was 500", so a human failure
      * message is the failing student's only diagnostic. Other frameworks self-describe (Go {@code t.Errorf} format strings, Jest's auto-diff plus descriptive {@code it()} names,

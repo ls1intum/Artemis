@@ -240,10 +240,7 @@ public class GenerationPersistenceService {
                     + "partially saved — review it before using it. Cause: " + e.getMessage(), e);
         }
 
-        // 2. Update the problem statement if the agent changed it. Normalise typographic punctuation first: gpt-oss reliably emits a non-breaking hyphen (U+2011) in compound
-        // modifiers
-        // like "non-negative" and the occasional en/em dash, which it keeps producing even when the prompt forbids them — a deterministic post-pass guarantees the student-facing,
-        // accessibility-sensitive document is plain ASCII regardless of model compliance.
+        // 2. Update the problem statement if the agent changed it; normalise model typography first (see normalizeTypography).
         String producedProblemStatement = normalizeTypography(outcome.producedProblemStatement());
         if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
             // From-scratch generation only (the statement was blank before this run): the lean AI create page persists a verbose brief-derived placeholder title; reconcile it to
@@ -340,14 +337,7 @@ public class GenerationPersistenceService {
             if (gitService.getFileByName(repository, path).isPresent()) {
                 repositoryService.deleteFile(repository, path);
             }
-            // Deterministically scrub typographic dashes / non-breaking spaces from the agent's SOURCE files too — gpt-oss reliably leaks a U+2011 into comments and even live
-            // exception
-            // messages ("size must be non-negative"), which look fine on screen but break the moment a student greps or copy-pastes. The prompt forbids it, but a soft guard on an
-            // invisible
-            // character is unreliable, so we enforce it here on the committed bytes (same normalization the problem statement gets). producedFiles only ever holds text — binaries
-            // are
-            // excluded from the String pipeline — so this never touches a binary; the rare exercise whose data literal needs one of these characters is not in the
-            // generation-capable set.
+            // Scrub model typography from the agent's SOURCE files too (see normalizeTypography); producedFiles only ever holds text, so this never touches a binary.
             String content = normalizeTypography(entry.getValue());
             repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
         }
@@ -431,14 +421,11 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * The tests-build (just triggered) synchronises the test cases ASYNCHRONOUSLY at the default weight {@code 1.0}. For C/C++ FACT exercises the report includes build-gate cases
-     * (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them ({@link BuildGateTestNames}) but production grades EVERY discovered
-     * case,
-     * so without this a student submitting the untouched template would score above 0%. Wait (bounded) for the cases to appear, then zero-weight exactly the build gates so
-     * production grading matches the oracle. Best-effort: a timeout or any error never fails the already-accepted exercise — it only leaves the rare C/C++ template scoring >0%
-     * until
-     * reconfigured. Runs on the generation executor (the persist is {@code @Async}), so the bounded wait blocks no request thread. A no-op for every language without build-gate
-     * cases (Java/Python/…) and idempotent (re-running leaves the weights at 0).
+     * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them
+     * ({@link BuildGateTestNames}) but production grades EVERY discovered case, so without this a student submitting the untouched template would score above 0%. Wait (bounded)
+     * for
+     * the cases to appear, then zero-weight exactly the build gates so production grading matches the oracle. Best-effort, idempotent, and a no-op for languages without build-gate
+     * cases.
      *
      * @param exerciseId               the generated exercise whose build-gate test cases should be excluded from grading
      * @param testCaseCountBeforeBuild the test-case count observed before the tests-build was triggered (the stale/partial baseline to wait past)

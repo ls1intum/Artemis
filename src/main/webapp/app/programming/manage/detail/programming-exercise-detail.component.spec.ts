@@ -607,16 +607,16 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     describe('onExerciseGenerated (live Creation Assistance progress)', () => {
         it('reloads the exercise when a run saved changes', () => {
-            comp.programmingExercise = { ...mockProgrammingExercise, id: 42 } as ProgrammingExercise;
+            comp.programmingExercise.set({ ...mockProgrammingExercise, id: 42 } as ProgrammingExercise);
             const reloaded = { ...mockProgrammingExercise, id: 42, title: 'Regenerated' } as ProgrammingExercise;
             const findSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: reloaded })));
             comp.onExerciseGenerated(true);
             expect(findSpy).toHaveBeenCalledWith(42);
-            expect(comp.programmingExercise.title).toBe('Regenerated');
+            expect(comp.programmingExercise().title).toBe('Regenerated');
         });
 
         it('does nothing when the run did not save anything', () => {
-            comp.programmingExercise = { ...mockProgrammingExercise, id: 42 } as ProgrammingExercise;
+            comp.programmingExercise.set({ ...mockProgrammingExercise, id: 42 } as ProgrammingExercise);
             const findSpy = vi.spyOn(exerciseService, 'find');
             comp.onExerciseGenerated(false);
             expect(findSpy).not.toHaveBeenCalled();

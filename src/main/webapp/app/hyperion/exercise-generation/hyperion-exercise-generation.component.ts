@@ -75,7 +75,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     protected readonly faCircle = faCircle;
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faSpinner = faSpinner;
-    /** The working phases, exposed so the compact phase list can render one row per phase. */
     protected readonly phaseOrder = GENERATION_PHASE_ORDER;
 
     readonly exerciseId = input.required<number>();
@@ -168,7 +167,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         }
         return facArtemisIntelligence;
     });
-    /** The chip's PrimeNG severity, mirroring the verdict. */
     readonly chipSeverity = computed<'success' | 'warn' | 'danger' | 'secondary'>(() => {
         if (this.running()) {
             return 'secondary';
@@ -181,7 +179,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         }
         return this.finalEvent()?.type === 'ERROR' ? 'danger' : 'secondary';
     });
-    /** The i18n key suffix for the chip's terminal label. */
     readonly chipResultKey = computed<string>(() => {
         if (this.succeeded()) {
             return 'chipDone';
@@ -368,7 +365,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Clears a finished run from view; the docked panel self-hides once there is no active or recent run. Only reachable on a terminal run (the header button is hidden while running). */
+    /** Only reachable on a terminal run (the header button is hidden while running). */
     dismiss(): void {
         this.reset();
     }

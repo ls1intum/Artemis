@@ -6,6 +6,7 @@ import {
     isReviewCommentsSupportedRepository,
     mapRepositoryToThreadLocationType,
     matchesSelectedRepository,
+    selectedThreadsFindings,
     selectedThreadsFindingsText,
     sortCommentsByCreatedDateThenId,
     threadLocationLabel,
@@ -225,5 +226,29 @@ describe('adapt feedback assembly', () => {
         );
 
         expect(selectedThreadsFindingsText([userThread], translate)).toBe('');
+    });
+
+    it('selectedThreadsFindings returns one structured AdaptFinding per consistency thread, dropping non-consistency threads', () => {
+        // Guards the "dialog cards and prompt text are built from the same source so they never drift" invariant: this structured variant must select the same threads as the text variant.
+        const userThread = {
+            comments: [{ id: 9, type: CommentType.USER, createdDate: '2024-01-01T00:00:00Z', content: { contentType: CommentContentType.USER, text: 'hi' } }],
+        } as any;
+        const threads = [
+            consistencyThread({ id: 1, category: 'METHOD_RETURN_TYPE_MISMATCH', severity: 'LOW', text: 'first', filePath: 'A.java', lineNumber: 3 }),
+            consistencyThread({ id: 2, text: 'second' }),
+            userThread,
+        ];
+
+        const findings = selectedThreadsFindings(threads, translate);
+        expect(findings).toHaveLength(2);
+        expect(findings[0]).toEqual({
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            severity: 'LOW',
+            locationLabel: 'artemisApp.review.relatedLocationRepository.solution: A.java:3',
+            description: 'first',
+            suggestedFix: undefined,
+        });
+        expect(findings[1].description).toBe('second');
+        expect(findings[1].locationLabel).toBeUndefined();
     });
 });

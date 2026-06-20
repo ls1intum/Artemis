@@ -576,11 +576,9 @@ class AuthoritativeVerificationServiceTest {
         assertThat(summary.testNames()).as("every failing-test name is also in the full set").containsAll(summary.testFailedNames());
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // Strict per-test soundness gate (Defect 2): every [task]-bound test the SOLUTION passes must FAIL on the template.
     // A graded test the template accidentally satisfies (e.g. fibonacci(0)==0 for a `return 0` stub, or pop()->undefined
     // for an empty-stack assertion) hands the student a free point and must be rejected even if the count gate passes.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Test
     void shouldRejectWhenTaskBoundTestPassesOnTemplateRustFibonacciZero() {
@@ -617,12 +615,10 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.accepted()).isTrue();
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // Gap 1 — production-parity gate: production grades EVERY discovered test at default weight, not only the
     // [task]-bound subset. So an UNBOUND behaviour test (or a too-lucky placeholder) that passes on the template makes a
     // bare-template student score above 0%. The sandbox oracle must reject it; a build/compile/configure gate that passes
     // on both (the template compiles by design) is the only legitimate exception.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Test
     void shouldRejectWhenUnboundBehaviourTestPassesOnTemplate() {
@@ -680,12 +676,10 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_stack_structure"));
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // Skipped-test parity (formerly Defect D1): production's TestResultXmlParser drops a <testcase><skipped/></testcase>
     // from BOTH the successful and failed lists. The verifier now uses that SAME parser, so skipped-test parity is
     // guaranteed by construction. The dangerous case — a test SKIPPED on the solution but FAILING on the template —
     // makes the solution run fewer tests than the template, tripping the "different number of tests" gate.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Test
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
@@ -753,11 +747,9 @@ class AuthoritativeVerificationServiceTest {
         return BuildReportSpec.withJunitXml(sb.toString(), failedDotPrefixed.isEmpty() ? 0 : 1);
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // Hardened copyOut consumer (integration level): when the reports tar is rejected by the hardened reader (a
     // symlinked/escaping/oversize entry), the build is treated as having no tests (fail-closed) so the differential
     // rejects rather than trusting partial input. The precise per-shape rejections are covered by CollectedReportsTest.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Test
     void shouldRejectWhenTheReportsArchiveContainsASymlinkedEntry() {
@@ -969,11 +961,9 @@ class AuthoritativeVerificationServiceTest {
                 """;
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // W1 — auto-seeded structural-test binding exemption. A structural-SHAPED binding must NOT be required to resolve,
     // while the differential (solution passes / template fails) stays fully enforced for every REAL test regardless of
     // its name shape — so the exemption cannot be abused to evade grading on a real behaviour test named structurally.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Nested
     class StructuralBindingExemption {
@@ -1030,13 +1020,11 @@ class AuthoritativeVerificationServiceTest {
         }
     }
 
-    // ----------------------------------------------------------------------------------------------------------------
     // In-loop self-check (the agent's `verify` tool). It shares the SAME differential + actionable gates as the
     // post-loop verify(...) — proven by running both against the same scripted sandbox — and renders structured,
     // agent-readable feedback: which tests pass/fail on the solution and template, the EXACT parser-form names to bind
     // [task]s to (fixes the C++/Catch2 bare-name trap), the tests that wrongly pass on the template (fixes the Go
     // zero-value-stub trap), the unresolved [task] bindings, and the would-be verdict.
-    // ----------------------------------------------------------------------------------------------------------------
 
     @Nested
     class InLoopSelfCheck {

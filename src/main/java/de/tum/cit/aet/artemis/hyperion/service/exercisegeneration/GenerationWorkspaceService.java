@@ -122,10 +122,7 @@ public class GenerationWorkspaceService {
                 }
             }
         }
-        // Seed a read-only worked-sample reference so the agent always has a complete, working example of THIS language's test-framework conventions to author against — even
-        // though
-        // the working repositories are stripped clean. It lives under reference/ (not a repository directory), so the layout probe ignores it and it is never extracted or
-        // persisted.
+        // Reference lives under reference/ (not a repository directory) so the layout probe ignores it and it is never extracted or persisted (see readReferenceSample for WHY).
         Map<String, String> referenceSample = readReferenceSample(exercise);
         textFiles.putAll(referenceSample);
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
@@ -297,12 +294,12 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the produced files of a repository back out of the sandbox. Uses the tar API rather than per-file reads so large files are never truncated.
+     * Convenience: the {@link RepositoryExtraction#files()} of {@link #extractRepository}, dropping the extraction-failed flag.
      *
-     * @param sandbox        the sandbox session
-     * @param sessionId      the session handle
-     * @param repositoryType the repository whose files to read back
-     * @return the produced files keyed by repository-relative path, or empty if extraction failed
+     * @param sandbox        the sandbox to read from
+     * @param sessionId      the sandbox session
+     * @param repositoryType the repository to extract
+     * @return the produced files keyed by repository-relative path
      */
     public Map<String, String> extractRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
         return extractRepository(sandbox, sessionId, repositoryType).files();

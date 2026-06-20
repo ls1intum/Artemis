@@ -6,8 +6,8 @@ import java.util.List;
  * Advisory result of the spec-fidelity / coverage critic — the one quality axis the differential oracle is structurally blind to.
  * <p>
  * The differential oracle ({@link AuthoritativeVerificationService}) proves an exercise is internally consistent (the solution passes its own tests, the template fails them, the
- * bindings resolve) but NEVER whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests: concrete requirements or
- * edge-cases the brief names that no test references, and grader-mechanics phrases that leaked into the student-facing problem statement.
+ * bindings resolve) but NEVER whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
+ * categories).
  * <p>
  * <strong>It is purely advisory.</strong> It is NEVER consulted by the acceptance decision: an exercise the oracle accepts stays accepted regardless of what the critic finds. Its
  * findings are used in two non-blocking ways — folded into the verifier-feedback retry prompt while attempts remain (so the agent can add the missing test), and surfaced as
@@ -39,7 +39,7 @@ public record SpecFidelityReport(List<Finding> findings) {
     /**
      * One spec-fidelity gap.
      *
-     * @param kind        whether this is an uncovered brief requirement or a grader-mechanics leak
+     * @param kind        the category of this gap (see {@link Kind})
      * @param requirement the concrete requirement or the leaked phrase, in the instructor's own terms
      * @param detail      a short human-readable explanation of why this is a gap and what to do about it
      */

@@ -68,9 +68,6 @@ public class AuthoritativeVerificationService {
 
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
 
-    /** Production grading truncates feedback messages to this length; the verifier sets the same bound so its parse matches production exactly (it never reads the messages). */
-    private static final int MAX_FEEDBACK_LENGTH = 20_000;
-
     /**
      * Matches a problem-statement task binding and captures its parenthesised, comma-separated test names: {@code [task][Some title](testA,testB)}. The capture is greedy (up to
      * the
@@ -133,8 +130,6 @@ public class AuthoritativeVerificationService {
             Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
-        // The production grading parser is configured statically; set the feedback bound once so the verifier's parse matches production.
-        TestResultXmlParser.setMaxFeedbackLength(MAX_FEEDBACK_LENGTH);
     }
 
     AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {

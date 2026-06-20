@@ -28,8 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.AgentLoopRunne
 public class HyperionAsyncConfiguration {
 
     /**
-     * Wires the task-agnostic {@link AgentLoopRunner} as a Hyperion-conditional bean: the runner depends only on Spring AI and carries no module coupling of its own, so this
-     * factory — rather than a {@code @Service} annotation on the class — binds it to the Hyperion context and supplies the deployment's context-window size.
+     * Wires the task-agnostic {@link AgentLoopRunner} as a Hyperion-conditional bean, supplying the deployment's context-window size.
      *
      * @param chatModels          the available chat models (the first is used; empty if no AI provider is configured)
      * @param contextWindowTokens the model's usable context window in tokens, below which the loop keeps the conversation via compaction

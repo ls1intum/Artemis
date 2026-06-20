@@ -238,9 +238,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param completed whether the run saved an exercise (true for a verified success and for a recovered needs-review draft)
      */
     onExerciseGenerated(completed: boolean): void {
-        if (completed && this.programmingExercise?.id) {
+        if (completed && this.programmingExercise()?.id) {
             this.programmingExerciseService
-                .find(this.programmingExercise.id)
+                .find(this.programmingExercise().id!)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe((response) => {
                     if (response.body) {

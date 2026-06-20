@@ -147,11 +147,12 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void destroySession_isIdempotent() {
+    void destroySession_forwardsEachCallToOwningAgent() {
         client.destroySession(handle());
         client.destroySession(handle());
 
-        // Two distinct relay requests (different correlation ids) both reach the local sandbox; destroySession itself is documented safe-to-call-twice.
+        // The client always forwards: two distinct relay requests (different correlation ids) both reach the owning agent. (Idempotency of destroy itself lives in
+        // InteractiveSandboxService, which is mocked here.)
         verify(localSandbox, times(2)).destroySession(CONTAINER_ID);
     }
 

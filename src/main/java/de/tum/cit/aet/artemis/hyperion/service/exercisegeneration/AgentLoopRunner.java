@@ -58,10 +58,8 @@ public class AgentLoopRunner {
     /** Chars-per-token divisor for the fallback estimate; dense code/JSON tokenizes to ~3 chars/token, so 3 (not 4) avoids under-counting. */
     private static final int CHARS_PER_TOKEN = 3;
 
-    /** Flat per-message overhead (role markers, delimiters) the fallback estimate adds. */
     private static final int MESSAGE_OVERHEAD_TOKENS = 4;
 
-    /** Flat per-tool-call / per-tool-result overhead (function name, call id, JSON scaffolding) the fallback estimate adds. */
     private static final int TOOLCALL_OVERHEAD_TOKENS = 8;
 
     /** Hard cap on the characters of a single tool result kept in the live context; the head and tail (where the signal lives) are kept and the middle is elided. */
@@ -95,16 +93,13 @@ public class AgentLoopRunner {
     /**
      * How many times to issue a single model call before giving up. LLM endpoints have transient errors (rate limits, 5xx/401 session blips, occasional malformed tool-format
      * responses); since the model is sampled fresh each call, a retry usually succeeds, so one transient failure should not abort a whole generation. A flaky endpoint can fail
-     * several
-     * consecutive calls, so we retry generously AND back off (below) so the retries spread across time instead of hammering the same failure spike.
+     * several consecutive calls, so we retry generously AND back off (below) so the retries spread across time instead of hammering the same failure spike.
      */
     private static final int MODEL_CALL_ATTEMPTS = 6;
 
     /**
-     * Exponential-backoff base and cap (milliseconds) between model-call retries. Without a wait, all {@link #MODEL_CALL_ATTEMPTS} retries hit the same transient failure window
-     * (observed against the gpt-oss endpoint returning bursts of 401 "session expired" / "can't start new thread"); spacing them out — 1.5s, 3s, 6s, 12s, capped at 20s, plus
-     * jitter —
-     * lets a call land in one of the endpoint's healthy windows. Instance fields (not constants) so a test can shrink them to assert retry behaviour without real waits.
+     * Exponential-backoff base and cap (milliseconds) between model-call retries, plus jitter, so the retries spread across time instead of hammering the same failure spike.
+     * Instance fields (not constants) so a test can shrink them to assert retry behaviour without real waits.
      */
     private long modelCallRetryBaseMillis = 1_500L;
 
@@ -156,7 +151,9 @@ public class AgentLoopRunner {
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
-        ToolCallingChatOptions options = ToolCallingChatOptions.builder().toolCallbacks(toolCallbacks).internalToolExecutionEnabled(false).build();
+        // Spring AI 2.0 removed the in-model tool-execution loop (and the internalToolExecutionEnabled flag): ChatModel never auto-executes tools, so the response carries the raw
+        // tool calls and our loop executes them explicitly via toolCallingManager.executeToolCalls(...) below — the user-controlled DefaultToolCallingManager pattern.
+        ToolCallingChatOptions options = ToolCallingChatOptions.builder().toolCallbacks(toolCallbacks).build();
 
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
@@ -181,10 +178,7 @@ public class AgentLoopRunner {
             if (response == null) {
                 return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
             }
-            // Some model servers leak harmony control tokens into the tool name (observed: a tool call named "bash<|channel|>commentary" instead of "bash"). The leaked name
-            // matches
-            // no registered tool, so dispatch would throw and the agent would thrash. Normalize the tool names — strip any <|...|> control tokens and trailing channel noise — so a
-            // leaked "bash<|channel|>commentary" resolves to "bash" before dispatch.
+            // Strip leaked harmony control tokens from tool names before dispatch (see normalizeToolNames).
             response = normalizeToolNames(response);
             emitUsage(usageSink, response);
             lastPromptTokens = promptTokensOf(response);
@@ -202,8 +196,7 @@ public class AgentLoopRunner {
 
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
-            // Emit one line per tool call (name + a short argument preview) so the transcript shows exactly what the agent is doing — which files it writes and which commands it
-            // runs — rather than an opaque "running N tool calls".
+            // Transcript: one line per tool call (parsed by the client, see describeToolCall).
             for (AssistantMessage.ToolCall toolCall : toolCalls) {
                 emit(stepListener, "Turn " + turn + ": " + describeToolCall(toolCall));
             }

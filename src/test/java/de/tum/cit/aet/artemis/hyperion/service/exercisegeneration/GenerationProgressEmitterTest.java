@@ -36,7 +36,7 @@ class GenerationProgressEmitterTest {
         emitter.progress("line 0");
         emitter.progress("line 1");
 
-        // Each line is pushed to the live client immediately and verbatim (no coalescing), so the user sees per-turn progress without lag.
+        // No coalescing: one push per line, verbatim.
         assertThat(sent).hasSize(2);
         assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
         assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
@@ -49,7 +49,7 @@ class GenerationProgressEmitterTest {
         emitter.progress("progress a");
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "milestone"));
 
-        // The progress line is streamed first, then the milestone — order matters for a faithful live stream.
+        // Order matters: progress is streamed before the following milestone.
         assertThat(sent).hasSize(2);
         ExerciseGenerationEventDTO progress = sent.get(0);
         ExerciseGenerationEventDTO milestone = sent.get(1);
@@ -67,7 +67,7 @@ class GenerationProgressEmitterTest {
         emitter.progress("two");
         emitter.progress("three");
 
-        // The transcript records each line individually and non-terminally (the source of truth on reconnect).
+        // Each line is recorded individually and non-terminally (the source of truth on reconnect).
         assertThat(recorded).hasSize(3);
         assertThat(recorded).allSatisfy(r -> {
             assertThat(r.event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);

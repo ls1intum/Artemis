@@ -9,6 +9,8 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * A single progress event streamed to the instructor over the websocket while an agentic whole-exercise generation/adaptation runs.
  * <p>
@@ -22,8 +24,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param timestamp        the moment the event was produced
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationEventDTO(Type type, @Nullable String message, @Nullable CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
-        Instant timestamp) implements Serializable {
+@Schema(description = "A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs")
+public record ExerciseGenerationEventDTO(@Schema(description = "The event kind") Type type,
+        @Schema(description = "Human-readable progress or result message") @Nullable String message,
+        @Schema(description = "On a terminal DONE event, whether the run succeeded, needs review, or partially completed") @Nullable CompletionStatus completionStatus,
+        @Schema(description = "On a terminal event, the structured verification verdict") @Nullable ExerciseGenerationVerdictDTO verdict,
+        @Schema(description = "The moment the event was produced") Instant timestamp) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -46,11 +52,7 @@ public record ExerciseGenerationEventDTO(Type type, @Nullable String message, @N
     public enum CompletionStatus {
         /** The exercise was verified and saved. */
         SUCCESS,
-        /**
-         * The run did not fully converge but produced usable work: the best-effort draft was saved (clearly distinguished from a verified
-         * exercise) and the verification findings were turned into review comments the instructor must resolve before the exercise is used. The
-         * UI should present "draft generated, N issues to review" rather than a plain failure.
-         */
+        /** Not fully converged but a usable best-effort draft was saved with verification findings attached as review comments to resolve. */
         NEEDS_REVIEW,
         /** The run finished without saving (e.g. nothing usable was produced, or recovery itself failed); the exercise was left untouched. */
         PARTIAL

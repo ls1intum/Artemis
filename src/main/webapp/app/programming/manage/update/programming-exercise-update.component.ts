@@ -175,9 +175,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * A readable placeholder title from the brief, used only during the ~3-minute run before the server reconciles the real title from the generated H1. Takes the first non-empty line;
-     * if it has a colon (e.g. "Stack data structure: support push/pop") keeps the part before it; strips a leading imperative lead-in ("Implement a …", "Build the …"); caps at a
-     * sentence length on a word boundary; upper-cases the first letter. Best-effort — it never has to be perfect, only sensible.
+     * A readable placeholder title from the brief, used only during the ~3-minute run before the server reconciles the real title from the generated H1.
+     * Best-effort — it never has to be perfect, only sensible.
      */
     private deriveTitleFromBrief(brief: string): string {
         const firstLine =
@@ -192,10 +191,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Coerces an arbitrary candidate string into a valid exercise title. The exercise title column only allows letters, digits, space, hyphen and underscore
-     * (EXERCISE_TITLE_NAME_PATTERN). A free-prose candidate (commas, colons, slashes, …) would otherwise fail the server's title validation and silently block the persist on the lean
-     * page — where the title field is hidden and cannot be corrected. Replaces every disallowed character with a space, collapses the runs, caps at a sentence length on a word
-     * boundary, upper-cases the first letter, and falls back to a safe default when nothing usable remains.
+     * Coerces an arbitrary candidate string into a valid exercise title. The exercise title column only allows {@code [a-zA-Z0-9 _-]} (EXERCISE_TITLE_NAME_PATTERN); a free-prose
+     * candidate would otherwise 400 the persist on the lean page where the title field is hidden and cannot be corrected. Falls back to a safe default when nothing usable remains.
      */
     private sanitizeExerciseTitle(candidate: string): string {
         const sanitized = (candidate ?? '')
@@ -405,7 +402,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
+    // Kept as plain fields (not signals): they alias programmingExercise.categories (a plain model object a signal cannot back) and are only ever reassigned from synchronous template
+    // event handlers — updateCategories() via (selectedCategories) and the plan-application flow via (planSuggestions) — so change detection always runs. Read directly only by the AI
+    // "Suggested settings" panel; develop keeps them plain and passes them to child components via the creation-config object.
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- see comment above
     exerciseCategories: ExerciseCategory[];
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- plain field; see exerciseCategories comment above
     existingCategories: ExerciseCategory[];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -1436,9 +1438,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Seeds the hidden-but-required fields so the lean AI create form is valid without the instructor touching them: a points default, a language-valid package name (only for the
-     * languages whose harness requires one), and a derived short name. Only fills a field that is still empty/unset, so a value the instructor set in Advanced before switching, or a
-     * re-seed on a language change, is never clobbered. The title, when set, drives the short name; the server reconciles the final title from the generated problem statement's H1.
+     * Seeds the hidden-but-required fields so the lean AI create form is valid without the instructor touching them. Only fills a field that is still empty/unset, so a value the
+     * instructor set in Advanced before switching, or a re-seed on a language change, is never clobbered.
      */
     private seedAiModeDefaults(): void {
         if (this.programmingExercise.maxPoints === undefined) {

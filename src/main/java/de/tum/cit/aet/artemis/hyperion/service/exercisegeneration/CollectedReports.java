@@ -58,9 +58,7 @@ final class CollectedReports {
         long total = 0;
         TarArchiveEntry entry;
         while ((entry = tar.getNextEntry()) != null) {
-            // Reject any non-regular entry outright: a symlink or hardlink could redirect a read outside the reports dir, and a device/fifo has no place in a reports tar.
-            // (commons-compress's isFile() returns true for FIFO/character/block devices — their link flags are not the recognised non-file ones — so they are rejected
-            // explicitly.)
+            // commons-compress's isFile() returns true for FIFO/character/block devices — their link flags are not the recognised non-file ones — so they are rejected explicitly.
             if (entry.isSymbolicLink() || entry.isLink()) {
                 throw new RejectedReportException("Refusing to read a linked report entry from the verifier reports archive: " + entry.getName());
             }
