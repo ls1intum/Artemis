@@ -44,6 +44,7 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { hasTestExamType } from 'app/exam/shared/entities/exam.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -83,6 +84,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+
+    protected readonly hasTestExamType = hasTestExamType;
+
     timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);

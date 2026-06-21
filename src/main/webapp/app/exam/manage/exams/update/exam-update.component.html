@@ -32,7 +32,7 @@
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
-            @if (!exam.testExam) {
+            @if (exam.examType === 'REAL') {
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
                     <label class="form-check-label" for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck"
@@ -101,10 +101,9 @@
                 </p-dialog>
             }
             <jhi-exam-conduction
-                [isTestExam]="exam.testExam!"
                 [(visibleFrom)]="exam.visibleDate"
                 [(startOfWorkingTime)]="exam.startDate"
-                [(hasSimulation)]="exam.hasSimulation"
+                [(examType)]="exam.examType"
                 [(endOfWorkingTime)]="exam.endDate"
                 [(workingTime)]="exam.workingTime"
                 [(gracePeriod)]="exam.gracePeriod"
@@ -165,12 +164,12 @@
             }
             <!-- Section exam assessment and student review
         Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
-            @if (!exam.testExam) {
+            @if (exam.examType === 'REAL') {
                 <div>
                     <hr />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    @if (!exam.testExam) {
+                    @if (exam.examType === 'REAL') {
                         <div class="row mb-3">
                             <div class="col-sm-6">
                                 <label

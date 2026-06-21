@@ -7,6 +7,7 @@ import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-condu
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamType } from 'app/exam/shared/entities/exam.model';
 
 describe('ExamConductionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -26,8 +27,7 @@ describe('ExamConductionComponent', () => {
         latestValidity = undefined;
         component.examTimelineStatusChange.subscribe((valid) => (latestValidity = valid));
         setInputs({
-            isTestExam: false,
-            hasSimulation: undefined,
+            examType: ExamType.REAL,
             visibleFrom: undefined,
             startOfWorkingTime: undefined,
             endOfWorkingTime: undefined,
@@ -38,8 +38,7 @@ describe('ExamConductionComponent', () => {
     });
 
     const setInputs = (inputs: {
-        isTestExam?: boolean;
-        hasSimulation?: boolean;
+        examType?: ExamType;
         visibleFrom?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         endOfWorkingTime?: dayjs.Dayjs;
@@ -76,7 +75,7 @@ describe('ExamConductionComponent', () => {
 
     it('should not calculate the working time for practice test exams', () => {
         setInputs({
-            isTestExam: true,
+            examType: ExamType.TEST,
             workingTime: 3600,
             startOfWorkingTime: dayjs(),
             endOfWorkingTime: dayjs().add(12, 'hours'),
@@ -89,11 +88,11 @@ describe('ExamConductionComponent', () => {
     it('should not include simulation or practice dates when the simulation phase is checked', () => {
         const start = dayjs().startOf('minute');
         setInputs({
-            isTestExam: true,
+            examType: ExamType.TEST,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
-        component.hasSimulation.set(true);
+        component.setTestExamWithSimulation(true);
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -102,7 +101,7 @@ describe('ExamConductionComponent', () => {
             'artemisApp.examManagement.testExam.endDate',
         ]);
 
-        component.hasSimulation.set(false);
+        component.setTestExamWithSimulation(false);
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -113,16 +112,17 @@ describe('ExamConductionComponent', () => {
     });
 
     it('should clear the simulation mode when the exam is no longer a test exam', () => {
-        setInputs({ isTestExam: true });
-        component.hasSimulation.set(true);
+        setInputs({ examType: ExamType.TEST });
+        component.setTestExamWithSimulation(true);
         fixture.detectChanges();
 
-        expect(component.hasSimulation()).toBe(true);
+        expect(component.testExamWithSimulation()).toBe(true);
 
-        setInputs({ isTestExam: false });
+        setInputs({ examType: ExamType.REAL });
         fixture.detectChanges();
 
-        expect(component.hasSimulation()).toBe(false);
+        expect(component.testExamWithSimulation()).toBe(false);
+        expect(component.examType()).toBe(ExamType.REAL);
     });
 
     it('should use the correct timeline labels for real and test exams', () => {
@@ -132,7 +132,7 @@ describe('ExamConductionComponent', () => {
             'artemisApp.examManagement.endDate',
         ]);
 
-        setInputs({ isTestExam: true });
+        setInputs({ examType: ExamType.TEST });
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -143,7 +143,7 @@ describe('ExamConductionComponent', () => {
     });
 
     it('validates the working time for practice test exams correctly', () => {
-        setInputs({ isTestExam: true, workingTime: undefined });
+        setInputs({ examType: ExamType.TEST, workingTime: undefined });
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(false);
 
@@ -171,7 +171,7 @@ describe('ExamConductionComponent', () => {
 
     it('should always show the working time validation message when working time is invalid', () => {
         const start = dayjs();
-        setInputs({ isTestExam: true, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
+        setInputs({ examType: ExamType.TEST, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
         fixture.detectChanges();
 
         expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(true);
@@ -270,7 +270,7 @@ describe('ExamConductionComponent', () => {
     });
 
     it('should clamp the maximum working time for practice exams', () => {
-        setInputs({ isTestExam: true, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
+        setInputs({ examType: ExamType.TEST, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
         fixture.detectChanges();
         expect(component.maxWorkingTimeInMinutes()).toBe(43200);
 
@@ -291,7 +291,7 @@ describe('ExamConductionComponent', () => {
     it('should correctly validate working time with upper limit of 30 days', () => {
         const start = dayjs();
         setInputs({
-            isTestExam: true,
+            examType: ExamType.TEST,
             visibleFrom: start.subtract(1, 'hour'),
             startOfWorkingTime: start,
             endOfWorkingTime: start.add(35, 'days'),

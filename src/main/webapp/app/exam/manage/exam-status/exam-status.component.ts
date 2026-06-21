@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
@@ -96,7 +96,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist.set(examStats);
             this.numberOfGeneratedStudentExams.set(this.examChecklist().numberOfGeneratedStudentExams ?? 0);
-            this.isTestExam.set(this.exam().testExam!);
+            this.isTestExam.set(hasTestExamType(this.exam()));
 
             if (this.course()?.isAtLeastInstructor) {
                 // Step 1:

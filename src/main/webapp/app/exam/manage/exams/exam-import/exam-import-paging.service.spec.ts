@@ -6,7 +6,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { take } from 'rxjs/operators';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,7 +22,7 @@ describe('Exam Import Paging Service', () => {
         id: 1,
         title: 'RealExam For Testing',
         course: undefined,
-        testExam: false,
+        examType: ExamType.REAL,
     } as Exam;
 
     beforeEach(() => {

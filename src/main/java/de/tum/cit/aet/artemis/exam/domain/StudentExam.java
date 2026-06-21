@@ -87,9 +87,8 @@ public class StudentExam extends AbstractAuditingEntity {
         return Boolean.TRUE.equals(testRun);
     }
 
-    @JsonIgnore
-    public boolean isTestExam() {
-        return exam.isTestExam();
+    public ExamType getExamType() {
+        return exam.getExamType();
     }
 
     public void setTestRun(boolean testRun) {
@@ -210,7 +209,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (this.getExam().isTestExam() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
+        if (this.getExam().getExamType().isTestExamType() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
@@ -234,7 +233,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             if (this.startedDate == null) {
                 return null;
             }
@@ -251,7 +250,7 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             if (this.startedDate == null) {
                 return null;
             }
@@ -269,7 +268,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        if (this.exam.isTestExam()) {
+        if (this.exam.getExamType().isTestExamType()) {
             return (this.submitted != null && this.submitted);
         }
         else {

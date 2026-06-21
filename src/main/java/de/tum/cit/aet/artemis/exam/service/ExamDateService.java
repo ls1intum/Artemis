@@ -81,7 +81,7 @@ public class ExamDateService {
             throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
         Exam exam = exercise.getExam();
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);

@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, model, output, signal } from '@angular/core';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 import { InputNumber } from 'primeng/inputnumber';
@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { Checkbox } from 'primeng/checkbox';
+import { ExamType } from 'app/exam/shared/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-conduction',
@@ -18,8 +19,6 @@ export class ExamConductionComponent {
     readonly max_working_time_in_minutes = 43200 as const;
     readonly max_grace_period_in_seconds = 3600 as const;
 
-    readonly isTestExam = input.required<boolean>();
-
     readonly visibleFrom = model.required<Dayjs | undefined>();
     readonly startOfWorkingTime = model.required<Dayjs | undefined>();
     readonly endOfWorkingTime = model.required<Dayjs | undefined>();
@@ -27,7 +26,8 @@ export class ExamConductionComponent {
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly hasSimulation = model.required<boolean | undefined>();
+    readonly examType = model.required<ExamType | undefined>();
+    readonly isTestExam = computed(() => this.examType() !== ExamType.REAL);
 
     readonly examTimelineStatusChange = output<boolean>();
 
@@ -38,13 +38,6 @@ export class ExamConductionComponent {
 
         effect(() => {
             this.workingTime.update((workingTime) => (!this.isTestExam() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
-        });
-
-        effect(() => {
-            const isTestExam = this.isTestExam();
-            if (!isTestExam) {
-                this.hasSimulation.set(false);
-            }
         });
     }
 
@@ -106,6 +99,12 @@ export class ExamConductionComponent {
     readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: false, empty: false });
 
     private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid() && this.isGracePeriodValid());
+
+    readonly testExamWithSimulation = computed(() => this.examType() === ExamType.TEST_WITH_SIMULATION);
+
+    setTestExamWithSimulation(testExamWithSimulation: boolean) {
+        this.examType.update((examType) => (examType === ExamType.REAL ? ExamType.REAL : testExamWithSimulation ? ExamType.TEST_WITH_SIMULATION : ExamType.TEST));
+    }
 
     readonly showVisibleFromWarning = computed(() => {
         const visibleFrom = this.visibleFrom();

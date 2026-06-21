@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -96,7 +97,7 @@ public class ExamAccessService {
             // students can always see their results during the exam.
             return;
         }
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             // results for test exams are always visible
             return;
         }
@@ -131,7 +132,7 @@ public class ExamAccessService {
         }
 
         StudentExam studentExam;
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             studentExam = getOrCreateTestExam(exam, course, currentUser);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
@@ -229,7 +230,7 @@ public class ExamAccessService {
     }
 
     private void checkCanCreateNewTestExamAttemptElseThrow(Exam exam, boolean userHasAttempt, ZonedDateTime now) {
-        if (!exam.isTestExam() || !exam.hasSimulation()) {
+        if (exam.getExamType() != ExamType.TEST_WITH_SIMULATION) {
             return;
         }
 

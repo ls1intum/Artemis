@@ -666,7 +666,7 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
@@ -709,7 +709,7 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.isTestExam()) {
+        if (studentExam.getExamType().isTestExamType()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
 

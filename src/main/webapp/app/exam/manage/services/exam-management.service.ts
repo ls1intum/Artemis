@@ -5,7 +5,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -507,7 +507,7 @@ export class ExamManagementService {
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
-            testExam: exam.testExam ?? false,
+            examType: exam.examType ?? ExamType.REAL,
             examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
             visibleDate: convertDateFromClient(exam.visibleDate),
             startDate: convertDateFromClient(exam.startDate),
@@ -516,7 +516,6 @@ export class ExamManagementService {
             examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
             examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
             gracePeriod: exam.gracePeriod,
-            hasSimulation: exam.hasSimulation,
             workingTime: exam.workingTime ?? 0,
             startText: exam.startText,
             endText: exam.endText,
@@ -657,7 +656,7 @@ interface ExerciseGroupImportDTO {
 
 interface ExamImportDTO {
     title?: string;
-    testExam: boolean;
+    examType: ExamType;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;
@@ -666,7 +665,6 @@ interface ExamImportDTO {
     examStudentReviewStart?: string;
     examStudentReviewEnd?: string;
     gracePeriod?: number;
-    hasSimulation?: boolean;
     workingTime: number;
     startText?: string;
     endText?: string;

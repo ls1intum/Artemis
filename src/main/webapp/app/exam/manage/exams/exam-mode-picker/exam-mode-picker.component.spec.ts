@@ -6,6 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamType } from 'app/exam/shared/entities/exam.model';
 
 const exam = {
     id: 2,
@@ -44,7 +45,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
-        expect(component.exam().testExam).toBe(true);
+        expect(component.exam().examType).toBe(ExamType.TEST);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -53,7 +54,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
-        expect(component.exam().testExam).toBe(false);
+        expect(component.exam().examType).toBe(ExamType.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 });

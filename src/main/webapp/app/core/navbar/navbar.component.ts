@@ -23,6 +23,7 @@ import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, fa
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamType } from 'app/exam/shared/entities/exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -858,7 +859,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            !this.studentExam.exam.testExam &&
+            this.studentExam.exam.examType === ExamType.REAL &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&

@@ -7,7 +7,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, firstValueFrom, of, throwError } from 'rxjs';
@@ -231,7 +231,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         studentExam.exam!.course = new Course();
                         studentExam.exam!.course.id = this.courseId();
                         this.exam.set(studentExam.exam!);
-                        this.testExam.set(this.exam().testExam!);
+                        this.testExam.set(hasTestExamType(this.exam()));
                         this.loadingExam.set(false);
                     },
                     error: () => {
@@ -531,7 +531,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
-        if (this.exam().testExam || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
+        if (hasTestExamType(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
@@ -570,7 +570,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
         let individualStudentEndDate;
-        if (this.exam().testExam) {
+        if (hasTestExamType(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
                 individualStudentEndDate = dayjs(this.studentExam().startedDate).add(this.studentExam().workingTime!, 'seconds');
             } else {
@@ -583,7 +583,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     readonly studentFailedToSubmitTranslationKey = computed(() => {
-        if (this.exam()?.testExam === true) {
+        if (hasTestExamType(this.exam())) {
             return 'artemisApp.examParticipation.testExamAttemptUsed';
         }
         return 'artemisApp.studentExam.submissionNotInTime';
@@ -677,8 +677,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.studentExam.set(studentExam);
         this.exam.set(studentExam.exam!);
-        this.testExam.set(this.exam().testExam!);
-        if (!this.exam().testExam) {
+        this.testExam.set(hasTestExamType(this.exam()));
+        if (!hasTestExamType(this.exam())) {
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
@@ -724,7 +724,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId());
             if (exam) {
                 this.exam.set(exam);
-                this.testExam.set(this.testExam() || this.exam()?.testExam === true);
+                this.testExam.set(this.testExam() || hasTestExamType(this.exam()));
             }
         }
     }

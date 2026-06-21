@@ -1,6 +1,6 @@
 import { Component, effect, input, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/overview/exam.utils';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
@@ -51,7 +51,7 @@ export class ExamGeneralInformationComponent {
             this.normalWorkingTime = examWorkingTime(exam);
             this.additionalWorkingTime = getAdditionalWorkingTime(exam, studentExam);
             this.isExamOverMultipleDays.set(isExamOverMultipleDays(exam, studentExam));
-            this.isTestExam.set(exam?.testExam);
+            this.isTestExam.set(hasTestExamType(exam));
             if (this.isTestExam()) {
                 this.currentDate.set(dayjs());
             }

@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type ExamModeBadgeSize = 'default' | 'large';
@@ -16,15 +16,15 @@ export class ExamModeBadgeComponent {
 
     protected readonly translationKey = computed(() => {
         const exam = this.exam();
-        if (exam.testExam === false) {
+        if (!hasTestExamType(exam)) {
             return 'artemisApp.examManagement.testExam.realExam';
         }
-        if (exam.hasSimulation !== true) {
+        if (exam.examType !== ExamType.TEST_WITH_SIMULATION) {
             return 'artemisApp.examManagement.testExam.testExam';
         }
         return 'artemisApp.examManagement.testExam.testExamWithSimulation';
     });
 
-    protected readonly isRealExam = computed(() => !this.exam().testExam);
+    protected readonly isRealExam = computed(() => !hasTestExamType(this.exam()));
     protected readonly isLarge = computed(() => this.size() === 'large');
 }

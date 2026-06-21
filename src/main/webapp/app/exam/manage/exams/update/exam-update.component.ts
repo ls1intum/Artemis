@@ -10,7 +10,7 @@ import { Dialog } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -124,7 +124,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 // test exam only feature automatic assessment
-                if (exam.testExam) {
+                if (hasTestExamType(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -187,7 +187,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onExamModeChange() {
-        if (this.exam.testExam) {
+        if (hasTestExamType(this.exam)) {
             this.exam.examWithAttendanceCheck = false;
         }
     }
@@ -342,7 +342,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam.testExam) {
+        if (hasTestExamType(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain

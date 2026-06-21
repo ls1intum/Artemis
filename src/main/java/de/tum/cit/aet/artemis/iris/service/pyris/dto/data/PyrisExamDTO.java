@@ -13,7 +13,7 @@ public record PyrisExamDTO(long id, String title, boolean isTextExam, Instant st
         Instant examStudentReviewEnd) {
 
     public static PyrisExamDTO of(Exam exam) {
-        return new PyrisExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), toInstant(exam.getStartDate()), toInstant(exam.getEndDate()),
+        return new PyrisExamDTO(exam.getId(), exam.getTitle(), exam.getExamType().isTestExamType(), toInstant(exam.getStartDate()), toInstant(exam.getEndDate()),
                 toInstant(exam.getPublishResultsDate()), toInstant(exam.getExamStudentReviewStart()), toInstant(exam.getExamStudentReviewEnd()));
     }
 }

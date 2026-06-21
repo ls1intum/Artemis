@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Exam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamType, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export interface TestExamParticipationMessage {
@@ -23,7 +23,7 @@ export class TestExamParticipationMessageService {
     }
 
     private getMessageKey(exam: Exam | undefined, errorKey?: string): string {
-        if (!exam?.testExam) {
+        if (!hasTestExamType(exam)) {
             return this.fullTranslationKey('noStudentExam');
         }
         switch (errorKey) {

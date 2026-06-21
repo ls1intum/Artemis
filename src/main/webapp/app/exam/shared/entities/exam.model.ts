@@ -18,6 +18,10 @@ export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined 
     return exam.startDate.add(exam.workingTime, 'seconds');
 }
 
+export function hasTestExamType(exam?: Pick<Exam, 'examType'>): boolean {
+    return exam?.examType !== undefined && exam.examType !== ExamType.REAL;
+}
+
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -73,17 +77,5 @@ export class Exam implements BaseEntity {
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;
         this.started = false;
-    }
-
-    get testExam() {
-        return this.examType !== ExamType.REAL;
-    }
-
-    set testExam(testExam: boolean) {
-        if (testExam && this.examType == ExamType.REAL) {
-            this.examType = ExamType.TEST;
-        } else if (!testExam) {
-            this.examType = ExamType.REAL;
-        }
     }
 }

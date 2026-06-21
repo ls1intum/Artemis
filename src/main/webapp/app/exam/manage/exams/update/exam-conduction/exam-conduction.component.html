@@ -3,7 +3,13 @@
     <div class="d-flex flex-column gap-2 align-items-start">
         @if (isTestExam()) {
             <div class="flex items-center">
-                <p-checkbox inputId="simulation-phase-checkbox" name="simulation-phase-checkbox" [(ngModel)]="hasSimulation" [binary]="true" />
+                <p-checkbox
+                    inputId="simulation-phase-checkbox"
+                    name="simulation-phase-checkbox"
+                    [ngModel]="testExamWithSimulation()"
+                    (ngModelChange)="setTestExamWithSimulation($event)"
+                    [binary]="true"
+                />
                 <label for="simulation-phase-checkbox" class="ml-2" jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"></label>
                 <jhi-help-icon class="ml-1" text="artemisApp.examManagement.testExam.testExamWithSimulationCheckboxTooltip" />
             </div>

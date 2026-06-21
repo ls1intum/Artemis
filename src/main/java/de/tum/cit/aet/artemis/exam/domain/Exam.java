@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -45,8 +47,9 @@ public class Exam extends DomainObject {
     /**
      * This enum indicates the type of the exam
      */
-    @Column(name = "exam_type")
-    private ExamType examType;
+    @Column(name = "exam_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ExamType examType = ExamType.REAL;
 
     /**
      * This boolean indicates whether attendance is checked during exam
@@ -181,26 +184,12 @@ public class Exam extends DomainObject {
         this.title = title.strip();
     }
 
-    @JsonIgnore
-    public boolean isTestExam() {
-        return examType != ExamType.REAL;
-    }
-
-    public void setTestExam(boolean testExam) {
-        if (testExam && examType == ExamType.REAL) {
-            examType = ExamType.TEST;
-        }
-        else if (!testExam) {
-            examType = ExamType.REAL;
-        }
-    }
-
     public ExamType getExamType() {
         return examType;
     }
 
     public void setExamType(ExamType examType) {
-        this.examType = examType;
+        this.examType = examType == null ? ExamType.REAL : examType;
     }
 
     public boolean isExamWithAttendanceCheck() {

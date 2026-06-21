@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { MockProvider } from 'ng-mocks';
@@ -32,7 +32,7 @@ describe('CourseOverviewGuard', () => {
         id: 1,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: false,
+        examType: ExamType.REAL,
     } as Exam;
 
     const lecture = new Lecture();

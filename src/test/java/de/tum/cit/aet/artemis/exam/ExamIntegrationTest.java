@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -581,7 +582,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
         // Test with a test exam where workingTime is directly validated
         Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
-        exam.setTestExam(true);
+        exam.setExamType(ExamType.TEST);
         exam.setNumberOfCorrectionRoundsInExam(0);
         exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
@@ -1454,7 +1455,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private Exam validExamWithCustomFieldValues() {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Exam Title");
-        exam.setTestExam(false);
+        exam.setExamType(ExamType.REAL);
         /// Artemis truncates to 6 sub-second digits
         final var baseTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         exam.setVisibleDate(baseTime.minusHours(1));
@@ -1493,7 +1494,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
         assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
 
-        assertThat(actualExam.isTestExam()).isFalse();
+        assertThat(actualExam.getExamType().isTestExamType()).isFalse();
         assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
 
         /// For the times we need to give a slight tolerance because Artemis truncates the times to 6 sub-second digits
@@ -1975,7 +1976,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
-        assertThat(received.isTestExam()).isFalse();
+        assertThat(received.getExamType().isTestExamType()).isFalse();
         assertThat(received.getWorkingTime()).isEqualTo(3000);
         assertThat(received.getStartText()).isEqualTo("Start Text");
         assertThat(received.getEndText()).isEqualTo("End Text");

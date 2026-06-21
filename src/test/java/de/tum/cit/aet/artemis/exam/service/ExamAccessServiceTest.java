@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -503,14 +504,13 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
     }
 
-    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean hasSimulation, ZonedDateTime endDate) {
+    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean testExamWithSimulation, ZonedDateTime endDate) {
         exam.setVisibleDate(startDate.minusMinutes(10));
         exam.setStartDate(startDate);
         exam.setWorkingTime(workingTime);
         exam.setGracePeriod(gracePeriod);
-        exam.setHasSimulation(hasSimulation);
+        exam.setExamType(testExamWithSimulation ? ExamType.TEST_WITH_SIMULATION : ExamType.TEST);
         exam.setEndDate(endDate);
-        exam.setTestExam(true);
         examRepository.save(exam);
     }
 

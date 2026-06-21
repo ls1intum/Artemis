@@ -109,7 +109,7 @@ public class ExamRegistrationService {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -206,7 +206,7 @@ public class ExamRegistrationService {
      * @param student the student to be registered to the exam
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
-        if (exam.isTestExam()) {
+        if (exam.getExamType().isTestExamType()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -252,7 +252,7 @@ public class ExamRegistrationService {
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (!exam.isTestExam()) {
+        if (!exam.getExamType().isTestExamType()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
