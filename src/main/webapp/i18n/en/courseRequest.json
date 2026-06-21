@@ -44,6 +44,8 @@
                 "actions": "Actions",
                 "testCourse": "Test course",
                 "previousInstructor": "Previous Instructor",
+                "instructorCourseCountNo": "No",
+                "instructorCourseCountYes": "Yes ({{ count }})",
                 "accept": "Accept",
                 "reject": "Reject",
                 "rejectReasonLabel": "Rejection reason",

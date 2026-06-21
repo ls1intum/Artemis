@@ -406,6 +406,7 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
+            "unsavedChanges": "Ungespeicherte Änderungen",
             "goBack": "Zurück",
             "search": "Suchen",
             "select": "Auswählen",

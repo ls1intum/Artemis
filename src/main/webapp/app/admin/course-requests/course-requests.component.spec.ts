@@ -279,20 +279,6 @@ describe('CourseRequestsComponent', () => {
         });
     });
 
-    describe('formatInstructorCount', () => {
-        it('should return "No" for undefined count', () => {
-            expect(component.formatInstructorCount(undefined)).toBe('No');
-        });
-
-        it('should return "No" for zero count', () => {
-            expect(component.formatInstructorCount(0)).toBe('No');
-        });
-
-        it('should return "Yes (count)" for positive count', () => {
-            expect(component.formatInstructorCount(3)).toBe('Yes (3)');
-        });
-    });
-
     describe('openEditModal', () => {
         it('should open modal and populate form with request data', () => {
             const requestWithDates: CourseRequest = {

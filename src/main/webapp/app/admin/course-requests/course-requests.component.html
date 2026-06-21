@@ -28,7 +28,7 @@
                     <div class="font-semibold">{{ request.title }}</div>
                     <div class="text-muted-color">{{ request.shortName }}</div>
                     @if (request.testCourse) {
-                        <p-tag severity="info" [rounded]="true" jhiTranslate="artemisApp.courseRequest.admin.testCourse" />
+                        <p-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
                     }
                 </td>
                 <td>{{ request.semester }}</td>
@@ -62,7 +62,11 @@
                         [class.text-success]="request.instructorCourseCount && request.instructorCourseCount > 0"
                         [class.font-semibold]="request.instructorCourseCount && request.instructorCourseCount > 0"
                     >
-                        {{ formatInstructorCount(request.instructorCourseCount) }}
+                        @if (request.instructorCourseCount) {
+                            {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: request.instructorCourseCount } }}
+                        } @else {
+                            {{ 'artemisApp.courseRequest.admin.instructorCourseCountNo' | artemisTranslate }}
+                        }
                     </span>
                 </td>
                 <td class="break-words">{{ request.reason }}</td>
@@ -131,7 +135,7 @@
                     <div class="font-semibold">{{ request.title }}</div>
                     <div class="text-muted-color">{{ request.shortName }}</div>
                     @if (request.testCourse) {
-                        <p-tag severity="info" [rounded]="true" jhiTranslate="artemisApp.courseRequest.admin.testCourse" />
+                        <p-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
                     }
                     <div class="mt-1">
                         <p-tag [severity]="badgeSeverity(request.status)" [value]="'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate" />

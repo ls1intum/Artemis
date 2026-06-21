@@ -42,7 +42,7 @@
                             @if (shortNameInput.errors?.['maxlength']) {
                                 <small class="text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }"></small>
                             }
-                            @if (nameInput.errors?.['pattern']) {
+                            @if (shortNameInput.errors?.['pattern']) {
                                 <small class="text-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                         </div>
@@ -63,7 +63,7 @@
                 <div class="flex flex-col gap-2">
                     <p-message severity="warn">
                         <span jhiTranslate="artemisApp.organizationManagement.patternChangeWarning"
-                            >Changing the email pattern will trigger a re-assignment of all users to this organization()</span
+                            >Changing the email pattern will trigger a re-assignment of all users to this organization</span
                         >
                     </p-message>
                     <label for="emailPattern" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.emailPattern"></label>

@@ -43,14 +43,14 @@
         <p-table [value]="sortedNodes()" dataKey="memberId" data-testid="nodes-table">
             <ng-template #header>
                 <tr>
-                    <th jhiTranslate="artemisApp.websocketAdmin.name"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.memberId"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.host"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.port"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.type"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.brokerStatus"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.localNode"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.actions"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.name"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.memberId"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.host"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.port"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.type"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.brokerStatus"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.localNode"></th>
+                    <th scope="col" jhiTranslate="artemisApp.websocketAdmin.actions"></th>
                 </tr>
             </ng-template>
             <ng-template #body let-node>

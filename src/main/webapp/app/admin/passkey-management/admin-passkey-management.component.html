@@ -11,27 +11,27 @@
         <p-table [value]="passkeys()" [paginator]="true" [rows]="20" size="small" data-testid="passkey-table">
             <ng-template #header>
                 <tr class="whitespace-nowrap">
-                    <th pSortableColumn="userLogin">
+                    <th scope="col" pSortableColumn="userLogin">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.userLogin"></span>
                         <p-sortIcon field="userLogin" />
                     </th>
-                    <th pSortableColumn="userName">
+                    <th scope="col" pSortableColumn="userName">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.userName"></span>
                         <p-sortIcon field="userName" />
                     </th>
-                    <th pSortableColumn="label">
+                    <th scope="col" pSortableColumn="label">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.label"></span>
                         <p-sortIcon field="label" />
                     </th>
-                    <th pSortableColumn="created">
+                    <th scope="col" pSortableColumn="created">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.created"></span>
                         <p-sortIcon field="created" />
                     </th>
-                    <th pSortableColumn="lastUsed">
+                    <th scope="col" pSortableColumn="lastUsed">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.lastUsed"></span>
                         <p-sortIcon field="lastUsed" />
                     </th>
-                    <th pSortableColumn="isSuperAdminApproved">
+                    <th scope="col" pSortableColumn="isSuperAdminApproved">
                         <span jhiTranslate="artemisApp.adminPasskeyManagement.approved"></span>
                         <p-sortIcon field="isSuperAdminApproved" />
                     </th>

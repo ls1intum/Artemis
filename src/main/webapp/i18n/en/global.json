@@ -406,6 +406,7 @@
             "ldap": "Sync from LDAP",
             "notUndoable": "This action cannot be undone!",
             "discardChanges": "Discard changes",
+            "unsavedChanges": "Unsaved changes",
             "goBack": "Go back",
             "search": "Search",
             "select": "Select",
