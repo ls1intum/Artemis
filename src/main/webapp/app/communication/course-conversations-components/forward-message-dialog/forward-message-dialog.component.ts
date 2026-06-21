@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -51,18 +51,18 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     filteredChannels: (ChannelDTO | GroupChatDTO)[] = [];
-    filteredUsers: UserPublicInfoDTO[] = [];
+    readonly filteredUsers = signal<UserPublicInfoDTO[]>([]);
     selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
-    combinedOptions: CombinedOption[] = [];
-    filteredOptions: CombinedOption[] = [];
-    defaultActions: TextEditorAction[];
+    readonly combinedOptions = signal<CombinedOption[]>([]);
+    readonly filteredOptions = signal<CombinedOption[]>([]);
+    readonly defaultActions = signal<TextEditorAction[]>([]);
     searchTerm: string = '';
     newPost = new Post();
     isInputFocused = false;
-    showDropdown = false;
-    showFullForwardedMessage = false;
-    isContentLong = false;
+    readonly showDropdown = signal(false);
+    readonly showFullForwardedMessage = signal(false);
+    readonly isContentLong = signal(false);
 
     protected dialogRef = inject(DynamicDialogRef);
     private dialogConfig = inject(DynamicDialogConfig);
@@ -71,7 +71,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     private courseManagementService = inject(CourseManagementService);
-    private cdr = inject(ChangeDetectorRef);
     private renderer = inject(Renderer2);
 
     protected readonly faPeopleGroup = faPeopleGroup;
@@ -94,11 +93,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             }
         }
         this.filteredChannels = this.channels() || [];
-        this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
-        this.filteredUsers = this.users();
+        this.defaultActions.set([new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()]);
+        this.filteredUsers.set(this.users());
 
         // Combine users and channels into a single options list
-        this.combinedOptions = [
+        this.combinedOptions.set([
             ...this.channels()
                 .filter((channel: ChannelDTO | GroupChatDTO) => channel.name !== undefined)
                 .map((channel) => ({
@@ -113,7 +112,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                 type: 'user',
                 img: user.imageUrl!,
             })),
-        ];
+        ]);
 
         this.filterOptions();
         this.focusInput();
@@ -131,14 +130,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     checkIfContentOverflows(): void {
         if (this.messageContent()) {
             const nativeElement = this.messageContent()!.nativeElement;
-            this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
-            this.cdr.detectChanges();
+            this.isContentLong.set(nativeElement.scrollHeight > nativeElement.clientHeight);
         }
     }
 
     /** Toggles whether full forwarded message content should be shown */
     toggleShowFullForwardedMessage(): void {
-        this.showFullForwardedMessage = !this.showFullForwardedMessage;
+        this.showFullForwardedMessage.update((value) => !value);
     }
 
     /** Updates content of the new post with editor input */
@@ -173,18 +171,17 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                         }),
                     )
                     .subscribe((users) => {
-                        this.filteredUsers = users;
+                        this.filteredUsers.set(users);
                         this.updateCombinedOptions();
-                        this.cdr.detectChanges();
                     });
             } else {
-                this.filteredUsers = [];
+                this.filteredUsers.set([]);
             }
 
             this.filteredChannels = this.channels().filter((channel: ChannelDTO | GroupChatDTO) => channel.name?.toLowerCase().includes(lowerCaseSearchTerm));
             this.updateCombinedOptions();
         } else {
-            this.filteredUsers = [...this.users()];
+            this.filteredUsers.set([...this.users()]);
             this.filteredChannels = [...this.channels()];
             this.updateCombinedOptions();
         }
@@ -194,20 +191,20 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Combines filtered channels and users into a unified options list.
      */
     private updateCombinedOptions(): void {
-        this.filteredOptions = [
+        this.filteredOptions.set([
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
                 name: channel.name!,
                 type: channel.type!,
                 img: '',
             })),
-            ...this.filteredUsers.map((user) => ({
+            ...this.filteredUsers().map((user) => ({
                 id: user.id!,
                 name: user.name!,
                 type: 'user',
                 img: user.imageUrl!,
             })),
-        ];
+        ]);
     }
 
     /**
@@ -226,7 +223,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         } else if (option.type === 'user') {
             const existing = this.selectedUsers.find((user) => user.id === option.id);
             if (!existing) {
-                const user = this.filteredUsers.find((user) => user.id === option.id);
+                const user = this.filteredUsers().find((user) => user.id === option.id);
                 if (user) {
                     this.selectedUsers.push(user);
                 }
@@ -234,7 +231,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
         this.searchTerm = '';
         this.filterOptions();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.focusInput();
     }
 
@@ -283,13 +280,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     /** Sets input focus and opens dropdown */
     onInputFocus(): void {
         this.isInputFocused = true;
-        this.showDropdown = true;
+        this.showDropdown.set(true);
     }
 
     /** Hides dropdown when input loses focus */
     onInputBlur(): void {
         this.isInputFocused = false;
-        this.showDropdown = false;
+        this.showDropdown.set(false);
     }
 
     /** Programmatically focuses on the search input field */
@@ -305,7 +302,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
-            this.showDropdown = false;
+            this.showDropdown.set(false);
         }
     }
 

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,7 +49,7 @@ public class LtiService {
 
     public static final String LTI_GROUP_NAME = "lti";
 
-    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);
 

@@ -24,7 +24,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseStatisticsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -343,8 +344,10 @@ describe('CourseStatisticsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideNoopAnimationsForTests(),
             ],
+        }).overrideComponent(CourseStatisticsComponent, {
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseStatisticsComponent);
@@ -362,6 +365,13 @@ describe('CourseStatisticsComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
+        const callbacks = (comp.doughnutOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.title([{ label: 'artemisApp.courseOverview.statistics.missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(callbacks.label({ parsed: 400 })).toBe('400');
+    });
+
     it('should group all exercises', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
@@ -373,7 +383,7 @@ describe('CourseStatisticsComponent', () => {
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups.size).toBe(4);
+        expect(comp.ngxExerciseGroups().size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
@@ -381,7 +391,7 @@ describe('CourseStatisticsComponent', () => {
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.presentationScore');
 
-        const programming: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.PROGRAMMING)![0];
+        const programming: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
         expect(programming.series[2].isProgrammingExercise).toBe(true);
     });
@@ -395,7 +405,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
 
-        let exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        let exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -403,7 +413,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -412,7 +422,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+        exercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -435,8 +445,8 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.ngxExerciseGroups.size).toBe(1);
-        const exercise: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.MODELING)![0];
+        expect(comp.ngxExerciseGroups().size).toBe(1);
+        const exercise: NgxExercise = comp.ngxExerciseGroups().get(ExerciseType.MODELING)![0];
         expect(exercise.absoluteScore).toBe(20);
         expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
@@ -457,7 +467,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
-        expect(comp.course).toBeUndefined();
+        expect(comp.course()).toBeUndefined();
 
         const courseToSubscribeTo = { ...course };
         courseToSubscribeTo.exercises = [...modelingExercises];
@@ -467,20 +477,29 @@ describe('CourseStatisticsComponent', () => {
 
         courseStorageService.updateCourse(courseToSubscribeTo);
 
-        expect(comp.course).toEqual(courseToSubscribeTo);
+        expect(comp.course()).toEqual(courseToSubscribeTo);
         expect(updateCourseSpy).toHaveBeenCalledWith(courseToSubscribeTo);
     });
 
     it('should delegate the user correctly', () => {
-        const clickEvent = { exerciseId: 42 };
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        const courseToAdd = { ...course };
+        courseToAdd.exercises = [...modelingExercises];
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
+        vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
         comp.ngOnInit();
 
-        comp.onSelect(clickEvent);
+        // dataset 4 contains the 'Not graded' segments, index 0 is the first bar ('Until 18:20', exercise 191)
+        comp.onSelect({ element: { datasetIndex: 4, index: 0 } }, ExerciseType.MODELING);
 
-        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 191]);
+
+        // clicks that do not hit a data element must not navigate
+        routingStub.mockClear();
+        comp.onSelect({ element: undefined }, ExerciseType.MODELING);
+        expect(routingStub).not.toHaveBeenCalled();
     });
 
     describe('test chart filters', () => {
@@ -495,9 +514,9 @@ describe('CourseStatisticsComponent', () => {
             vi.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
-            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
-            expect(comp.ngxExerciseGroups.size).toBe(3);
-            const modelingExercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+            expect(comp.currentlyHidingNotIncludedInScoreExercises()).toBe(false);
+            expect(comp.ngxExerciseGroups().size).toBe(3);
+            const modelingExercises = comp.ngxExerciseGroups().get(ExerciseType.MODELING)!;
             expect(modelingExercises).toHaveLength(5);
             expect(modelingExercises[0].name).toBe('Until 18:20');
             expect(modelingExercises[1].name).toBe('Until 18:20 too');

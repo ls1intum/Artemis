@@ -35,13 +35,13 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.competencyToCreate.masteryThreshold = masteryThreshold;
         this.competencyToCreate.optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.competencyService
             .create(this.competencyToCreate!, this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({

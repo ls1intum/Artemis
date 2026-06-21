@@ -99,14 +99,14 @@ describe('EditPrerequisiteComponent', () => {
         expect(findByIdSpy).toHaveBeenCalledWith(1, 1);
         expect(getCourseProgressSpy).toHaveBeenCalledWith(1, 1);
 
-        expect(editPrerequisiteComponent.prerequisite.courseProgress).toEqual(competencyCourseProgressResponse.body);
-        expect(editPrerequisiteComponent.formData).toMatchObject({
+        expect(editPrerequisiteComponent.prerequisite().courseProgress).toEqual(competencyCourseProgressResponse.body);
+        expect(editPrerequisiteComponent.formData()).toMatchObject({
             id: competencyOfResponse.id,
             title: competencyOfResponse.title,
             description: competencyOfResponse.description,
             optional: competencyOfResponse.optional,
         });
-        expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData);
+        expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -138,7 +138,7 @@ describe('EditPrerequisiteComponent', () => {
         );
         editPrerequisiteComponentFixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(editPrerequisiteComponent.prerequisite).toEqual(competencyDatabase);
+        expect(editPrerequisiteComponent.prerequisite()).toEqual(competencyDatabase);
 
         const changedUnit: Prerequisite = {
             ...competencyDatabase,

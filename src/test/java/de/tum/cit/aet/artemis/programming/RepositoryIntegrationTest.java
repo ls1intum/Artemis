@@ -3,11 +3,11 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -368,12 +368,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
-        MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
-        mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class, CALLS_REAL_METHODS);
+        mockedFiles.when(() -> Files.readString(any(Path.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
 
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isEmpty();
-        mockedFileUtils.close();
+        mockedFiles.close();
     }
 
     @Test

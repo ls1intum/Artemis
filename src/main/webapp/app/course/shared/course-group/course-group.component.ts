@@ -1,17 +1,15 @@
-import { Component, ViewEncapsulation, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, ViewEncapsulation, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
-import { iconsAsHTML } from 'app/foundation/util/icons.utils';
-import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { catchError, map } from 'rxjs/operators';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { faDownload, faUserPlus, faUserSlash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
@@ -19,21 +17,47 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared-ui/user-import/util/write-users-to-csv';
+import { AutoComplete, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const cssClasses = {
     alreadyMember: 'already-member',
     newlyAddedMember: 'newly-added-member',
 };
 
+/**
+ * Duration (ms) the `newly-added-member` flash class stays applied so the CSS flash animation can play
+ * through before being cleared (animation-delay 150ms + animation-duration 1.5s, see course-group.component.scss).
+ */
+const FLASH_ANIMATION_DURATION_MS = 1650;
+
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
     styleUrls: ['./course-group.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [UsersImportButtonComponent, FaIconComponent, TranslateDirective, DataTableComponent, NgxDatatableModule, RouterLink, ProfilePictureComponent, DeleteButtonDirective],
+    imports: [
+        UsersImportButtonComponent,
+        FaIconComponent,
+        TranslateDirective,
+        TableViewComponent,
+        RouterLink,
+        ProfilePictureComponent,
+        DeleteButtonDirective,
+        AutoComplete,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseGroupComponent {
-    private readonly dataTable = viewChild(DataTableComponent);
+    constructor() {
+        // Keep the parent's filteredUsersSize in sync with the *filtered* member count so the header
+        // "X out of Y" counter tracks the autocomplete search. Reads filteredGroupUsers() so it re-emits
+        // whenever either allGroupUsers or the search query changes; with no active query the filtered
+        // list equals the full list, so the parent hides the counter instead of showing a stale "0".
+        effect(() => {
+            this.handleUsersSizeChange()(this.filteredGroupUsers().length);
+        });
+    }
 
     readonly allGroupUsers = model<User[]>([]);
     readonly isLoadingAllGroupUsers = input(false);
@@ -50,6 +74,25 @@ export class CourseGroupComponent {
 
     readonly importFinish = output<void>();
 
+    // Cell templates for custom column rendering
+    readonly idCellTemplate = viewChild<CellTemplateRef<User>>('idCellTemplate');
+    readonly profilePictureCellTemplate = viewChild<CellTemplateRef<User>>('profilePictureCellTemplate');
+
+    readonly tableOptions: TableViewOptions = {
+        lazy: false,
+        showSearch: false,
+        striped: true,
+    };
+
+    readonly columns = computed<ColumnDef<User>[]>(() => [
+        { field: 'id', headerKey: 'global.field.id', sort: true, width: '5rem', templateRef: this.idCellTemplate() },
+        { field: 'imageUrl', headerKey: 'artemisApp.course.courseGroup.profilePicture', width: '7rem', templateRef: this.profilePictureCellTemplate() },
+        { field: 'login', headerKey: 'artemisApp.course.courseGroup.login', sort: true, width: '12rem' },
+        { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.course.courseGroup.registrationNumber', sort: true, width: '12rem' },
+        { field: 'name', headerKey: 'artemisApp.course.courseGroup.name', sort: true, width: '15rem' },
+        { field: 'email', headerKey: 'artemisApp.course.courseGroup.email', sort: true },
+    ]);
+
     protected readonly ActionType = ActionType;
 
     private readonly dialogErrorSource = new Subject<string>();
@@ -57,111 +100,137 @@ export class CourseGroupComponent {
 
     readonly isSearching = signal(false);
     readonly searchFailed = signal(false);
-    readonly searchNoResults = signal(false);
     readonly isTransitioning = signal(false);
-    readonly rowClass = signal('');
+    private readonly rowClass = signal('');
+
+    /** Current text in the combined search/add autocomplete; drives client-side table filtering. */
+    private readonly filterQuery = signal('');
+
+    /** True when the user has typed 1–2 characters — not enough to trigger a server search. */
+    protected readonly searchQueryTooShort = computed(() => {
+        const q = this.filterQuery();
+        return q.length > 0 && q.length < 3;
+    });
+
+    /** Suggestions shown in the autocomplete dropdown (fetched from the server). */
+    readonly userSuggestions = signal<User[]>([]);
+
+    /**
+     * The subset of allGroupUsers that match the current filterQuery.
+     * Passed as [vals] to jhi-table-view so filtering and adding users share one input.
+     */
+    readonly filteredGroupUsers = computed<User[]>(() => {
+        const query = this.filterQuery().toLowerCase().trim();
+        if (!query) {
+            return this.allGroupUsers();
+        }
+        return this.allGroupUsers().filter(
+            (u) =>
+                u.login?.toLowerCase().includes(query) ||
+                u.name?.toLowerCase().includes(query) ||
+                u.email?.toLowerCase().includes(query) ||
+                u.visibleRegistrationNumber?.toLowerCase().includes(query),
+        );
+    });
 
     protected readonly faDownload = faDownload;
     protected readonly faUserSlash = faUserSlash;
+    protected readonly faUsers = faUsers;
+    protected readonly faUserPlus = faUserPlus;
+
+    private latestSearchRequestId = 0;
 
     /**
-     * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
-     *
-     * 1. Perform server-side search using the search text
-     * 2. Return results from server query that contain all users (instead of only the client-side users who are group members already)
-     *
-     * @param stream$ stream of searches of the format {text, entities} where entities are the results
-     * @return stream of users for the autocomplete
+     * Triggered by p-autocomplete on each keystroke (after minLength chars are typed).
+     * Updates the table filter query and fetches matching users from the server for the dropdown.
      */
-    searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
-        return stream$.pipe(
-            switchMap(({ text: loginOrName }) => {
-                this.searchFailed.set(false);
-                this.searchNoResults.set(false);
-                if (loginOrName.length < 3) {
+    onUserSearchComplete(event: AutoCompleteCompleteEvent): void {
+        const query = event.query.trim();
+        this.filterQuery.set(query);
+        this.searchFailed.set(false);
+
+        if (query.length < 3) {
+            this.isSearching.set(false);
+            this.userSuggestions.set([]);
+            return;
+        }
+
+        this.isSearching.set(true);
+        const requestId = ++this.latestSearchRequestId;
+        this.userSearch()(query)
+            .pipe(
+                map((response) => response.body ?? []),
+                catchError(() => {
+                    this.searchFailed.set(true);
                     return of([]);
-                }
-                this.isSearching.set(true);
-                return this.userSearch()(loginOrName)
-                    .pipe(map((usersResponse) => usersResponse.body!))
-                    .pipe(
-                        tap((users) => {
-                            if (users.length === 0) {
-                                this.searchNoResults.set(true);
-                            }
-                        }),
-                        catchError(() => {
-                            this.searchFailed.set(true);
-                            return of([]);
-                        }),
-                    );
-            }),
-            tap(() => {
+                }),
+            )
+            .subscribe((users) => {
+                if (requestId !== this.latestSearchRequestId) return;
                 this.isSearching.set(false);
-            }),
-            tap((users) => {
-                setTimeout(() => {
-                    const dataTable = this.dataTable();
-                    if (!dataTable) return;
-                    for (let i = 0; i < dataTable.typeaheadButtons.length; i++) {
-                        const button = dataTable.typeaheadButtons[i];
-                        const isAlreadyInGroup = this.allGroupUsers()
-                            .map((user) => user.id)
-                            .includes(users[i].id);
-                        const hasIcon = button.querySelector('fa-icon');
-                        if (!hasIcon) {
-                            button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
-                        }
-                        if (isAlreadyInGroup) {
-                            button.classList.add(cssClasses.alreadyMember);
-                        }
-                    }
-                });
-            }),
-        );
-    };
+                this.userSuggestions.set(users);
+            });
+    }
 
     /**
-     * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
-     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
-     *
-     * @param user The selected user from the autocomplete suggestions
-     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
+     * Triggered on every key-up in the autocomplete input.
+     * Updates filterQuery for short queries (< minLength) where completeMethod does not fire,
+     * so the table is filtered in real time even before the server-search threshold is reached.
      */
-    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
-        // If the user is not part of this course group yet, perform the server call to add them
-        if (
-            !this.allGroupUsers()
-                .map((u) => u.id)
-                .includes(user.id) &&
-            user.login
-        ) {
+    onSearchKeyUp(event: KeyboardEvent): void {
+        this.filterQuery.set((event.target as HTMLInputElement).value);
+    }
+
+    /**
+     * Triggered when the autocomplete input is cleared (by the X button or programmatically).
+     * Resets the table filter and clears the dropdown suggestions.
+     */
+    onSearchClear(): void {
+        this.filterQuery.set('');
+        this.userSuggestions.set([]);
+    }
+
+    /**
+     * Triggered when the user picks a suggestion from the p-autocomplete dropdown.
+     * Keeps the current search text (PrimeNG shows the selected user's login in the input)
+     * by syncing filterQuery to their login so the table stays filtered and the newly added
+     * member is immediately visible. Then adds the user to the group if not already a member.
+     */
+    onUserSelect(user: User): void {
+        // Sync filterQuery to the login that PrimeNG will show in the input after selection.
+        // This keeps the search bar non-empty and the table filtered, so the new member is visible.
+        this.filterQuery.set(user.login ?? '');
+        // Close the dropdown by clearing suggestions; PrimeNG already closes it on select,
+        // but resetting avoids stale suggestions appearing on the next open.
+        this.userSuggestions.set([]);
+
+        if (!this.isAlreadyMember(user) && user.login) {
             this.isTransitioning.set(true);
             this.addUserToGroup()(user.login).subscribe({
                 next: () => {
                     this.isTransitioning.set(false);
-
-                    // Add newly added user to the list of all users in the course group
                     this.allGroupUsers.update((users) => [...users, user]);
-
-                    // Hand back over to the data table for updating
-                    callback(user);
-
-                    // Flash green background color to signal to the user that this record was added
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
                 error: () => {
                     this.isTransitioning.set(false);
                 },
             });
-        } else {
-            // Hand back over to the data table
-            callback(user);
         }
-    };
+    }
 
     /**
-     * Remove user from course group
+     * Returns true when the given user is already a member of this course group.
+     * Used in the p-autocomplete item template to show the appropriate icon.
+     */
+    isAlreadyMember(user: User): boolean {
+        return this.allGroupUsers()
+            .map((u) => u.id)
+            .includes(user.id);
+    }
+
+    /**
+     * Remove user from course group.
      *
      * @param user User that should be removed from the currently viewed course group
      */
@@ -178,44 +247,24 @@ export class CourseGroupComponent {
     }
 
     /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param user
-     */
-    searchResultFormatter = (user: User) => {
-        const { name, login } = user;
-        return `${name} (${login})`;
-    };
-
-    /**
-     * Converts a user object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param user User
-     */
-    searchTextFromUser = (user: User): string => {
-        return user.login || '';
-    };
-
-    /**
-     * Computes the row class that is being added to all rows of the datatable
+     * Returns the CSS class applied to all table rows.
+     * Used to flash all rows with `newly-added-member` briefly after a user is added.
      */
     dataTableRowClass = (): string => {
         return this.rowClass();
     };
 
     /**
-     * Can be used to highlight rows temporarily by flashing a certain css class
-     *
-     * @param className Name of the class to be applied to all rows
+     * Temporarily applies a CSS class to all rows (e.g. green flash on add), then clears it.
      */
     flashRowClass = (className: string): void => {
         this.rowClass.set(className);
-        setTimeout(() => this.rowClass.set(''));
+        // Keep the class applied long enough for the CSS flash animation to play before clearing it.
+        setTimeout(() => this.rowClass.set(''), FLASH_ANIMATION_DURATION_MS);
     };
 
     /**
-     * Method for exporting the csv with the needed data
+     * Exports the current group member list as a CSV file.
      */
     exportUserInformation = (): void => {
         const users = this.allGroupUsers();

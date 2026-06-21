@@ -9,7 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('Test case distribution chart', () => {
     setupTestBed({ zoneless: true });
@@ -73,7 +72,7 @@ describe('Test case distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
@@ -96,9 +95,9 @@ describe('Test case distribution chart', () => {
 
         expect(component.processedTestCases()).toEqual([]);
 
-        expect(component.ngxWeightData[0].series).toHaveLength(0);
-        expect(component.ngxWeightData[1].series).toHaveLength(0);
-        expect(component.ngxPointsData[0].series).toHaveLength(0);
+        expect(component.weightData()[0].series).toHaveLength(0);
+        expect(component.weightData()[1].series).toHaveLength(0);
+        expect(component.pointsData()[0].series).toHaveLength(0);
     });
 
     it('should process the test cases correctly', () => {
@@ -107,29 +106,29 @@ describe('Test case distribution chart', () => {
 
         fixture.detectChanges();
 
-        expect(component.ngxWeightData[0].series[0].name).toBe('test case');
-        expect(component.ngxWeightData[0].series[0].value).toBe(100);
-        expect(component.ngxWeightData[1].series[0].name).toBe('test case');
-        expect(component.ngxWeightData[1].series[0].value).toBe(100);
+        expect(component.weightData()[0].series[0].name).toBe('test case');
+        expect(component.weightData()[0].series[0].value).toBe(100);
+        expect(component.weightData()[1].series[0].name).toBe('test case');
+        expect(component.weightData()[1].series[0].value).toBe(100);
 
         fixture.componentRef.setInput('testCases', [testCase, testCase2]);
         fixture.detectChanges();
 
-        expect(component.ngxWeightData).toHaveLength(2);
-        expect(component.ngxWeightData[0].series).toHaveLength(2);
-        expect(component.ngxWeightData[1].series).toHaveLength(2);
+        expect(component.weightData()).toHaveLength(2);
+        expect(component.weightData()[0].series).toHaveLength(2);
+        expect(component.weightData()[1].series).toHaveLength(2);
 
-        expect(component.ngxPointsData).toHaveLength(1);
-        expect(component.ngxPointsData[0].series).toHaveLength(2);
-        expect(component.ngxWeightData[1].series[1].name).toBe('test case 2');
-        expect(component.ngxWeightData[1].series[1].value).toBe(60);
+        expect(component.pointsData()).toHaveLength(1);
+        expect(component.pointsData()[0].series).toHaveLength(2);
+        expect(component.weightData()[1].series[1].name).toBe('test case 2');
+        expect(component.weightData()[1].series[1].value).toBe(60);
 
         testCase.weight = 1.5;
         fixture.componentRef.setInput('testCases', [testCase, testCase2]);
         fixture.detectChanges();
 
-        expect(component.ngxWeightData[0].series[0].value).toBe(50);
-        expect(component.ngxWeightData[0].series[1].value).toBe(50);
+        expect(component.weightData()[0].series[0].value).toBe(50);
+        expect(component.weightData()[0].series[1].value).toBe(50);
     });
 
     it('should compute the relative score correctly', () => {
@@ -146,10 +145,10 @@ describe('Test case distribution chart', () => {
         fixture.detectChanges();
 
         expect(testMap['test case 4'].numPassed).toBe(3);
-        expect(component.ngxPointsData[0].series[0].name).toBe('test case');
-        expect(component.ngxPointsData[0].series[0].value).toBe(0);
-        expect(component.ngxPointsData[0].series[1].name).toBe('test case 4');
-        expect(component.ngxPointsData[0].series[1].value).toBe(260);
+        expect(component.pointsData()[0].series[0].name).toBe('test case');
+        expect(component.pointsData()[0].series[0].value).toBe(0);
+        expect(component.pointsData()[0].series[1].name).toBe('test case 4');
+        expect(component.pointsData()[0].series[1].value).toBe(260);
     });
 
     it('should exclude test cases that are never visible', () => {
@@ -158,9 +157,9 @@ describe('Test case distribution chart', () => {
 
         fixture.detectChanges();
 
-        expect(component.ngxWeightData[0].series).toHaveLength(0);
-        expect(component.ngxWeightData[1].series).toHaveLength(0);
-        expect(component.ngxPointsData[0].series).toHaveLength(0);
+        expect(component.weightData()[0].series).toHaveLength(0);
+        expect(component.weightData()[1].series).toHaveLength(0);
+        expect(component.pointsData()[0].series).toHaveLength(0);
     });
 
     it('should handle negative weights', () => {
@@ -177,9 +176,9 @@ describe('Test case distribution chart', () => {
 
         fixture.detectChanges();
 
-        expect(component.ngxWeightData[0].series[0].value).toBe(0);
-        expect(component.ngxWeightData[1].series[0].value).toBe(0);
-        expect(component.ngxPointsData[0].series[0].value).toBe(0);
+        expect(component.weightData()[0].series[0].value).toBe(0);
+        expect(component.weightData()[1].series[0].value).toBe(0);
+        expect(component.pointsData()[0].series[0].value).toBe(0);
     });
 
     it('should delegate the user correctly if clicked on points chart', () => {
@@ -194,12 +193,14 @@ describe('Test case distribution chart', () => {
     });
 
     it('should emit the correct test case id if clicked on weight and bonus chart', () => {
-        const event = { id: 5 };
+        configureComponent([testCase]);
+        fixture.detectChanges();
         const emitStub = vi.spyOn(component.testCaseRowFilter, 'emit').mockImplementation(() => {});
 
-        component.onSelectWeight(event);
+        // click on the first segment (test case) of the first bar
+        component.onSelectWeight({ element: { datasetIndex: 0, index: 0 } });
 
-        expect(emitStub).toHaveBeenCalledWith(5);
+        expect(emitStub).toHaveBeenCalledWith(testCase.id);
         expect(component.tableFiltered).toBe(true);
     });
 
@@ -217,11 +218,6 @@ describe('Test case distribution chart', () => {
         const prefix = 'artemisApp.programmingExercise.configureGrading.charts.';
         const labels = ['testCaseWeights.weight', 'testCaseWeights.weightAndBonus', 'testCasePoints.points'];
         instantSpy.mockClear();
-        component.ngxWeightData = [
-            { name: '', series: [] },
-            { name: '', series: [] },
-        ];
-        component.ngxPointsData = [{ name: '', series: [] }];
 
         component.updateTranslation();
 
@@ -229,8 +225,8 @@ describe('Test case distribution chart', () => {
         instantSpy.mock.calls.forEach((calls: unknown[], index: number) => {
             expect(calls[0]).toBe(prefix.concat(labels[index]));
         });
-        expect(component.ngxWeightData[0].name).toBe(prefix.concat(labels[0]));
-        expect(component.ngxWeightData[1].name).toBe(prefix.concat(labels[1]));
-        expect(component.ngxPointsData[0].name).toBe(prefix.concat(labels[2]));
+        expect(component.weightData()[0].name).toBe(prefix.concat(labels[0]));
+        expect(component.weightData()[1].name).toBe(prefix.concat(labels[1]));
+        expect(component.pointsData()[0].name).toBe(prefix.concat(labels[2]));
     });
 });

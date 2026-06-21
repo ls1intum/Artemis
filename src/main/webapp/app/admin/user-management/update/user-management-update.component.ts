@@ -71,11 +71,11 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
 
-    /** The user being edited */
-    user: User;
+    /** The user being edited. Signal so async mutations (route resolver data, organizations fetched via HTTP) render under zoneless. */
+    readonly user = signal<User>(undefined!);
 
     /** Available languages for selection */
-    languages: string[];
+    readonly languages = signal<string[]>(undefined!);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -124,13 +124,14 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
-        this.user = new User();
+        this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
-                this.user = user.body ? user.body : user;
-                this.oldLogin = this.user.login;
-                this.organizationService.getOrganizationsByUser(this.user.id!).subscribe((organizations) => {
-                    this.user.organizations = organizations;
+                this.user.set(user.body ? user.body : user);
+                this.oldLogin = this.user().login;
+                this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
+                    // Rebuild the user reference so the async organization update renders under zoneless.
+                    this.user.update((currentUser) => ({ ...currentUser, organizations }) as User);
                 });
             }
         });
@@ -140,9 +141,9 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
             );
         });
-        this.languages = this.languageHelper.getAll();
+        this.languages.set(this.languageHelper.getAll());
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
-        this.user.password = undefined;
+        this.user().password = undefined;
         this.initializeForm();
     }
 
@@ -152,8 +153,8 @@ export class UserManagementUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new user
      */
     previousState() {
-        if (this.user.id) {
-            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user.login!.toString()]);
+        if (this.user().id) {
+            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user().login!.toString()]);
         } else {
             this.navigationUtilService.navigateBack(['admin', 'user-management']);
         }
@@ -166,18 +167,19 @@ export class UserManagementUpdateComponent implements OnInit {
     save(): void {
         this.isSaving.set(true);
         // temporarily store the user organizations because they are not part of the edit form
-        const userOrganizations = this.user.organizations;
-        this.user = this.editForm.getRawValue();
-        this.user.organizations = userOrganizations;
-        if (this.user.id) {
-            this.userService.update(this.user).subscribe({
+        const userOrganizations = this.user().organizations;
+        const updatedUser: User = this.editForm.getRawValue();
+        updatedUser.organizations = userOrganizations;
+        this.user.set(updatedUser);
+        if (updatedUser.id) {
+            this.userService.update(updatedUser).subscribe({
                 next: () => {
-                    if (this.isJenkins && this.user.login !== this.oldLogin && !this.user.password) {
+                    if (this.isJenkins && updatedUser.login !== this.oldLogin && !updatedUser.password) {
                         this.alertService.addAlert({
                             type: AlertType.WARNING,
                             message: 'artemisApp.userManagement.jenkinsChange',
                             timeout: 0,
-                            translationParams: { oldLogin: this.oldLogin, newLogin: this.user.login },
+                            translationParams: { oldLogin: this.oldLogin, newLogin: updatedUser.login },
                         });
                     }
                     this.onSaveSuccess();
@@ -185,7 +187,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 error: () => this.onSaveError(),
             });
         } else {
-            this.userService.create(this.user).subscribe({
+            this.userService.create(updatedUser).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),
             });
@@ -193,11 +195,7 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     shouldRandomizePassword(useRandomPassword: any) {
-        if (useRandomPassword) {
-            this.user.password = undefined;
-        } else {
-            this.user.password = '';
-        }
+        this.user().password = useRandomPassword ? undefined : '';
     }
 
     /**
@@ -211,13 +209,13 @@ export class UserManagementUpdateComponent implements OnInit {
             closable: true,
             dismissableMask: true,
             data: {
-                organizations: this.user.organizations,
+                organizations: this.user().organizations,
             } as OrganizationSelectorDialogData,
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                // Create a new array reference to trigger change detection with OnPush
-                this.user.organizations = [...(this.user.organizations ?? []), organization];
+                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
+                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }) as User);
             }
         });
     }
@@ -227,7 +225,10 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromUser(organization: Organization) {
-        this.user.organizations = this.user.organizations!.filter((userOrganization) => userOrganization.id !== organization.id);
+        // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
+        this.user.update(
+            (currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }) as User,
+        );
     }
 
     private initializeForm() {
@@ -248,12 +249,12 @@ export class UserManagementUpdateComponent implements OnInit {
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
         // Conditionally enable or disable 'internal' input based on user.id
-        if (this.user.id !== undefined) {
+        if (this.user().id !== undefined) {
             this.editForm.get('internal')?.disable(); // Artemis does not support to edit the internal flag for existing users
         } else {
             this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
-        this.editForm.patchValue(this.user);
+        this.editForm.patchValue(this.user());
     }
 
     /**
@@ -272,6 +273,7 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
+     /**
      * Get the translation key for an authority
      * @param authority the authority string (e.g., ROLE_ADMIN)
      */

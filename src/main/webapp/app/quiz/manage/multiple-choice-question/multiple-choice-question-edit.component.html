@@ -4,10 +4,10 @@
             <button
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
-                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
-                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
             </button>
             <div class="question-title">
                 <input
@@ -60,10 +60,10 @@
             <button
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
-                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed()"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
-                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+                <fa-icon size="3x" [icon]="isQuestionCollapsed() ? faAngleRight : faAngleDown" />
             </button>
             <div class="question-reevaluation-title">
                 <input
@@ -116,7 +116,7 @@
         </div>
     }
 
-    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
         <div [ngClass]="reEvaluationInProgress() ? 'question-options row align-items-center' : 'question-options'" [hidden]="showPreview()">
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-md-4' : ''">
                 <div class="form-group">
@@ -193,7 +193,7 @@
                 @if (!reEvaluationInProgress()) {
                     <jhi-markdown-editor-monaco
                         #markdownEditor
-                        [markdown]="questionEditorText"
+                        [markdown]="questionEditorText()"
                         [showPreviewButton]="true"
                         [showVisualButton]="true"
                         [domainActions]="multipleChoiceActions"
@@ -205,7 +205,7 @@
                     >
                         <!-- Preview -->
                         <ng-container id="previewMonaco">
-                            @if (showMultipleChoiceQuestionPreview) {
+                            @if (showMultipleChoiceQuestionPreview()) {
                                 <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
                             }
                             <hr />
@@ -213,7 +213,7 @@
                         <!-- End of Preview-->
                         <!-- Visual -->
                         <ng-container id="visual">
-                            @if (showMultipleChoiceQuestionVisual) {
+                            @if (showMultipleChoiceQuestionVisual()) {
                                 <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
                             }
                         </ng-container>

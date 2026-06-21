@@ -99,20 +99,20 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should initialize with the correct default values', () => {
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.GENERAL);
         expect(componentAsAny.notifications).toBeUndefined();
-        expect(componentAsAny.notificationsForSelectedCategory).toEqual([]);
-        expect(componentAsAny.courseNotificationCount).toBe(0);
+        expect(componentAsAny.notificationsForSelectedCategory()).toEqual([]);
+        expect(componentAsAny.courseNotificationCount()).toBe(0);
         expect(componentAsAny.pagesFinished).toBe(false);
-        expect(componentAsAny.isLoading).toBe(false);
+        expect(componentAsAny.isLoading()).toBe(false);
     });
 
     it('should set up notification count subscription on init', () => {
         expect(courseNotificationService.getNotificationCountForCourse$).toHaveBeenCalledWith(101);
 
         notificationCountSubject.next(5);
-        expect(componentAsAny.courseNotificationCount).toBe(5);
+        expect(componentAsAny.courseNotificationCount()).toBe(5);
     });
 
     it('should set up notifications subscription on init', () => {
@@ -126,29 +126,31 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.filterNotificationsIntoCurrentCategory();
 
-        expect(componentAsAny.notificationsForSelectedCategory).toHaveLength(1);
-        expect(componentAsAny.notificationsForSelectedCategory[0]).toBe(generalNotification);
+        expect(componentAsAny.notificationsForSelectedCategory()).toHaveLength(1);
+        expect(componentAsAny.notificationsForSelectedCategory()[0]).toBe(generalNotification);
     });
 
     it('should toggle overlay visibility when toggleOverlay is called', () => {
-        componentAsAny.isShown = false;
+        componentAsAny.isShown.set(false);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBe(true);
+        expect(componentAsAny.isShown()).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
     });
 
     it('should query for more notifications if less than pageSize are available', () => {
-        componentAsAny.notificationsForSelectedCategory = Array(5)
-            .fill(null)
-            .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION));
+        componentAsAny.notificationsForSelectedCategory.set(
+            Array(5)
+                .fill(null)
+                .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION)),
+        );
         componentAsAny.pagesFinished = false;
         const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
@@ -179,9 +181,11 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should query for more notifications when changing to a category with fewer than pageSize notifications', () => {
-        componentAsAny.notificationsForSelectedCategory = Array(5)
-            .fill(null)
-            .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION));
+        componentAsAny.notificationsForSelectedCategory.set(
+            Array(5)
+                .fill(null)
+                .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION)),
+        );
         componentAsAny.pagesFinished = false;
         const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
@@ -191,43 +195,43 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should hide overlay when clicking outside the component', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
         const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(false);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBe(false);
+        expect(componentAsAny.isShown()).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
     it('should not hide overlay when clicking inside the component', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
         const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
         const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(true);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBe(true);
+        expect(componentAsAny.isShown()).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
     it('should load more notifications when scrolling to bottom', () => {
         componentAsAny.pagesFinished = false;
-        componentAsAny.isLoading = false;
+        componentAsAny.isLoading.set(false);
         const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.onScrollReachBottom();
 
-        expect(componentAsAny.isLoading).toBe(true);
+        expect(componentAsAny.isLoading()).toBe(true);
         expect(querySpy).toHaveBeenCalledOnce();
     });
 
     it('should not load more notifications when already loading or finished', () => {
         componentAsAny.pagesFinished = false;
-        componentAsAny.isLoading = true;
+        componentAsAny.isLoading.set(true);
         const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.onScrollReachBottom();
@@ -235,7 +239,7 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(querySpy).not.toHaveBeenCalled();
 
         componentAsAny.pagesFinished = true;
-        componentAsAny.isLoading = false;
+        componentAsAny.isLoading.set(false);
 
         componentAsAny.onScrollReachBottom();
 
@@ -263,7 +267,7 @@ describe('CourseNotificationOverviewComponent', () => {
         const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);
         const seenNotification = createMockNotification(3, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN);
 
-        componentAsAny.notificationsForSelectedCategory = [unseenNotification1, unseenNotification2, seenNotification];
+        componentAsAny.notificationsForSelectedCategory.set([unseenNotification1, unseenNotification2, seenNotification]);
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnClient();
 
@@ -276,7 +280,7 @@ describe('CourseNotificationOverviewComponent', () => {
         const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);
         const seenNotification = createMockNotification(3, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN);
 
-        componentAsAny.notificationsForSelectedCategory = [unseenNotification1, unseenNotification2, seenNotification];
+        componentAsAny.notificationsForSelectedCategory.set([unseenNotification1, unseenNotification2, seenNotification]);
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnServer();
 
@@ -288,7 +292,7 @@ describe('CourseNotificationOverviewComponent', () => {
         const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);
         const seenNotification = createMockNotification(3, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN);
 
-        componentAsAny.notificationsForSelectedCategory = [unseenNotification1, unseenNotification2, seenNotification];
+        componentAsAny.notificationsForSelectedCategory.set([unseenNotification1, unseenNotification2, seenNotification]);
 
         const result = componentAsAny.getVisibleUnseenNotificationIds();
 
@@ -297,7 +301,7 @@ describe('CourseNotificationOverviewComponent', () => {
 
     it('should not update notifications if no unseen notifications exist', () => {
         const seenNotification = createMockNotification(3, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN);
-        componentAsAny.notificationsForSelectedCategory = [seenNotification];
+        componentAsAny.notificationsForSelectedCategory.set([seenNotification]);
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnClient();
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnServer();
@@ -312,7 +316,7 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.queryCurrentCategory();
 
-        expect(componentAsAny.isLoading).toBe(true);
+        expect(componentAsAny.isLoading()).toBe(true);
         expect(courseNotificationService.getNextNotificationPage).toHaveBeenCalledWith(101);
     });
 
@@ -323,7 +327,7 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.queryCurrentCategory();
 
         expect(componentAsAny.pagesFinished).toBe(true);
-        expect(componentAsAny.isLoading).toBe(false);
+        expect(componentAsAny.isLoading()).toBe(false);
     });
 
     it('should properly clean up subscriptions on destroy', () => {
@@ -355,7 +359,7 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should apply is-shown class when overlay is shown', () => {
-        componentAsAny.isShown = true;
+        componentAsAny.isShown.set(true);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -364,7 +368,7 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should display loading indicator when isLoading is true', () => {
-        componentAsAny.isLoading = true;
+        componentAsAny.isLoading.set(true);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -373,8 +377,8 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should display empty state when no notifications are available', () => {
-        componentAsAny.isLoading = false;
-        componentAsAny.notificationsForSelectedCategory = [];
+        componentAsAny.isLoading.set(false);
+        componentAsAny.notificationsForSelectedCategory.set([]);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -383,8 +387,8 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should display notifications when available', () => {
-        componentAsAny.isLoading = false;
-        componentAsAny.notificationsForSelectedCategory = [createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION)];
+        componentAsAny.isLoading.set(false);
+        componentAsAny.notificationsForSelectedCategory.set([createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION)]);
 
         fixture.changeDetectorRef.detectChanges();
 

@@ -466,6 +466,18 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withUnicodeLettersInTitle_succeeds() throws Exception {
+        // Regression test for "Lärche": editing an exercise to a title containing umlauts / other Unicode letters must
+        // succeed. The shared title validation (Exercise#validateTitle, also used by the programming edit path that the
+        // bug was reported on) previously rejected such titles with an ASCII-only pattern.
+        textExercise.setTitle("Lärche Übung");
+        TextExercise updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class,
+                HttpStatus.OK);
+        assertThat(updated.getTitle()).isEqualTo("Lärche Übung");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);

@@ -13,7 +13,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -617,7 +616,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
         if (userIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return new PageImpl<>(List.of(), pageable, 0);
         }
         List<User> users = findUsersByIdsWithCourseRolesOrdered(userIds);
         long total = countUserIdsByLoginOrNameInCourse(loginOrName, courseId);

@@ -9,7 +9,7 @@ import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 import { ExportUserInformationRow } from 'app/shared-ui/user-import/util/write-users-to-csv';
 import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('CourseGroupComponent', () => {
     setupTestBed({ zoneless: true });
@@ -40,6 +43,7 @@ describe('CourseGroupComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -64,96 +68,255 @@ describe('CourseGroupComponent', () => {
         expect(comp).not.toBeNull();
     });
 
-    describe('searchAllUsers', () => {
-        let loginOrName: string;
-        let loginStream: Observable<{ text: string; entities: User[] }>;
+    describe('onUserSearchComplete', () => {
         let searchStub: ReturnType<typeof vi.spyOn>;
 
+        const makeEvent = (query: string): AutoCompleteCompleteEvent => ({ query, originalEvent: new Event('input') });
+
         beforeEach(() => {
-            loginOrName = 'testLoginOrName';
-            loginStream = of({ text: loginOrName, entities: [] });
             searchStub = vi.spyOn(userService, 'search');
         });
 
-        it('should search users for given login or name', () => {
+        it('should search users for given query and populate suggestions', () => {
             searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-            comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).toEqual([courseGroupUser]);
-            });
-            expect(searchStub).toHaveBeenCalledWith(loginOrName);
+
+            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
+
+            expect(searchStub).toHaveBeenCalledWith('testLoginOrName');
             expect(searchStub).toHaveBeenCalledOnce();
+            expect(comp.userSuggestions()).toEqual([courseGroupUser]);
+            expect(comp.isSearching()).toBe(false);
         });
 
-        it('should set search no results if search returns no result', () => {
+        it('should return empty suggestions when the server returns no users', () => {
             searchStub.mockReturnValue(of(new HttpResponse({ body: [] })));
-            comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).toEqual([]);
-            });
-            expect(comp.searchNoResults()).toBe(true);
-            expect(searchStub).toHaveBeenCalledWith(loginOrName);
-            expect(searchStub).toHaveBeenCalledOnce();
+
+            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
+
+            expect(comp.userSuggestions()).toEqual([]);
         });
 
-        it('should return empty if search text is shorter than three characters', () => {
-            loginStream = of({ text: 'ab', entities: [] });
+        it('should return empty suggestions when query is shorter than three characters', () => {
             searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-            comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).toEqual([]);
-            });
+
+            comp.onUserSearchComplete(makeEvent('ab'));
+
             expect(searchStub).not.toHaveBeenCalled();
+            expect(comp.userSuggestions()).toEqual([]);
         });
 
-        it('should return empty if search fails', () => {
+        it('should update filterQuery with the search query', () => {
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+
+            comp.onUserSearchComplete(makeEvent('testUser'));
+
+            expect(comp['filterQuery']()).toBe('testUser');
+        });
+
+        it('should update filterQuery even for short queries below minLength', () => {
+            comp.onUserSearchComplete(makeEvent('ab'));
+
+            expect(comp['filterQuery']()).toBe('ab');
+        });
+
+        it('should set searchFailed and return empty suggestions when the search throws', () => {
             searchStub.mockReturnValue(throwError(() => new Error('')));
-            comp.searchAllUsers(loginStream).subscribe((users: any) => {
-                expect(users).toEqual([]);
-            });
+
+            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
+
+            expect(comp.userSuggestions()).toEqual([]);
             expect(comp.searchFailed()).toBe(true);
-            expect(searchStub).toHaveBeenCalledWith(loginOrName);
-            expect(searchStub).toHaveBeenCalledOnce();
+            expect(searchStub).toHaveBeenCalledWith('testLoginOrName');
+        });
+
+        it('should reset searchFailed before each new search', () => {
+            comp.searchFailed.set(true);
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+
+            comp.onUserSearchComplete(makeEvent('testUser'));
+
+            expect(comp.searchFailed()).toBe(false);
+        });
+
+        it('should set isSearching to false after the search completes', () => {
+            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+
+            comp.onUserSearchComplete(makeEvent('testUser'));
+
+            expect(comp.isSearching()).toBe(false);
         });
     });
 
-    describe('onAutocompleteSelect', () => {
-        let user: User;
-
+    describe('onUserSelect', () => {
         beforeEach(() => {
-            user = courseGroupUser;
             comp.allGroupUsers.set([]);
             fixture.componentRef.setInput('addUserToGroup', () => of(new HttpResponse<void>()));
         });
 
-        it('should add the selected user to course group', () => {
-            const fake = vi.fn();
-            comp.onAutocompleteSelect(user, fake);
+        it('should add the selected user to the course group', () => {
+            comp.onUserSelect(courseGroupUser);
+
             expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
-            expect(fake).toHaveBeenCalledWith(user);
-            expect(fake).toHaveBeenCalledOnce();
         });
 
-        it('should call callback if user is already in the group', () => {
-            const fake = vi.fn();
-            comp.allGroupUsers.set([user]);
-            comp.onAutocompleteSelect(user, fake);
+        it('should not add a user who is already in the group', () => {
+            comp.allGroupUsers.set([courseGroupUser]);
+
+            comp.onUserSelect(courseGroupUser);
+
             expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
-            expect(fake).toHaveBeenCalledWith(user);
-            expect(fake).toHaveBeenCalledOnce();
         });
 
-        it('should handle error when adding user to group', () => {
-            fixture.componentRef.setInput('addUserToGroup', () => throwError(() => new Error('Add failed')));
-            const fake = vi.fn();
-            comp.onAutocompleteSelect(user, fake);
-            expect(comp.isTransitioning()).toBe(false);
-            expect(fake).not.toHaveBeenCalled();
-        });
-
-        it('should not add user without login', () => {
+        it('should not add a user who has no login', () => {
             const userWithoutLogin = { ...courseGroupUser };
             delete userWithoutLogin.login;
-            const fake = vi.fn();
-            comp.onAutocompleteSelect(userWithoutLogin, fake);
-            expect(fake).toHaveBeenCalledWith(userWithoutLogin);
+
+            comp.onUserSelect(userWithoutLogin);
+
+            expect(comp.allGroupUsers()).toEqual([]);
+        });
+
+        it('should reset isTransitioning to false on error', () => {
+            fixture.componentRef.setInput('addUserToGroup', () => throwError(() => new Error('Add failed')));
+
+            comp.onUserSelect(courseGroupUser);
+
+            expect(comp.isTransitioning()).toBe(false);
+            expect(comp.allGroupUsers()).toEqual([]);
+        });
+
+        it('should set filterQuery to the selected user login so the new member stays visible', () => {
+            comp.onUserSelect(courseGroupUser);
+
+            expect(comp['filterQuery']()).toBe(courseGroupUser.login);
+        });
+
+        it('should clear userSuggestions after selection', () => {
+            comp.userSuggestions.set([courseGroupUser, courseGroupUser2]);
+
+            comp.onUserSelect(courseGroupUser);
+
+            expect(comp.userSuggestions()).toEqual([]);
+        });
+
+        it('should set filterQuery to empty string when selected user has no login', () => {
+            const userWithoutLogin = { ...courseGroupUser };
+            delete userWithoutLogin.login;
+
+            comp.onUserSelect(userWithoutLogin);
+
+            expect(comp['filterQuery']()).toBe('');
+        });
+    });
+
+    describe('isAlreadyMember', () => {
+        it('should return true when the user is in the group', () => {
+            comp.allGroupUsers.set([courseGroupUser]);
+
+            expect(comp.isAlreadyMember(courseGroupUser)).toBe(true);
+        });
+
+        it('should return false when the user is not in the group', () => {
+            comp.allGroupUsers.set([courseGroupUser]);
+
+            expect(comp.isAlreadyMember(courseGroupUser2)).toBe(false);
+        });
+    });
+
+    describe('filteredGroupUsers', () => {
+        const alice = { ...courseGroupUser, id: 1, login: 'alice', name: 'Alice Smith', email: 'alice@example.com', visibleRegistrationNumber: '12345' };
+        const bob = { ...courseGroupUser2, id: 2, login: 'bob', name: 'Bob Jones', email: 'bob@example.com', visibleRegistrationNumber: '67890' };
+
+        beforeEach(() => {
+            comp.allGroupUsers.set([alice, bob]);
+        });
+
+        it('should return all users when filterQuery is empty', () => {
+            expect(comp.filteredGroupUsers()).toHaveLength(2);
+        });
+
+        it('should filter by login', () => {
+            comp['filterQuery'].set('alice');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(1);
+            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
+        });
+
+        it('should filter by name', () => {
+            comp['filterQuery'].set('jones');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(1);
+            expect(comp.filteredGroupUsers()[0].login).toBe('bob');
+        });
+
+        it('should filter by email', () => {
+            comp['filterQuery'].set('alice@example');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(1);
+            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
+        });
+
+        it('should filter by visibleRegistrationNumber', () => {
+            comp['filterQuery'].set('67890');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(1);
+            expect(comp.filteredGroupUsers()[0].login).toBe('bob');
+        });
+
+        it('should be case insensitive', () => {
+            comp['filterQuery'].set('ALICE');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(1);
+            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
+        });
+
+        it('should return empty array when no user matches', () => {
+            comp['filterQuery'].set('zzz');
+
+            expect(comp.filteredGroupUsers()).toHaveLength(0);
+        });
+    });
+
+    describe('onSearchKeyUp', () => {
+        it('should update filterQuery from the event target value', () => {
+            const input = document.createElement('input');
+            input.value = 'ali';
+            const event = new KeyboardEvent('keyup');
+            Object.defineProperty(event, 'target', { value: input });
+
+            comp.onSearchKeyUp(event);
+
+            expect(comp['filterQuery']()).toBe('ali');
+        });
+
+        it('should set filterQuery to empty string when input is cleared via backspace', () => {
+            comp['filterQuery'].set('alice');
+            const input = document.createElement('input');
+            input.value = '';
+            const event = new KeyboardEvent('keyup');
+            Object.defineProperty(event, 'target', { value: input });
+
+            comp.onSearchKeyUp(event);
+
+            expect(comp['filterQuery']()).toBe('');
+        });
+    });
+
+    describe('onSearchClear', () => {
+        it('should reset filterQuery to empty string', () => {
+            comp['filterQuery'].set('some-query');
+
+            comp.onSearchClear();
+
+            expect(comp['filterQuery']()).toBe('');
+        });
+
+        it('should clear userSuggestions', () => {
+            comp.userSuggestions.set([courseGroupUser]);
+
+            comp.onSearchClear();
+
+            expect(comp.userSuggestions()).toEqual([]);
         });
     });
 
@@ -182,27 +345,6 @@ describe('CourseGroupComponent', () => {
             comp.removeFromGroup(courseGroupUser);
             // Users should not be removed on error
             expect(comp.allGroupUsers()).toEqual(originalUsers);
-        });
-    });
-
-    describe('searchResultFormatter', () => {
-        it('should format user info into appropriate format', () => {
-            const name = 'testName';
-            const user = { ...courseGroupUser, name };
-            expect(comp.searchResultFormatter(user)).toBe(`${name} (${user.login})`);
-        });
-    });
-
-    describe('searchTextFromUser', () => {
-        it('converts a user to a string that can be searched for', () => {
-            const user = courseGroupUser;
-            expect(comp.searchTextFromUser(user)).toBe(user.login);
-        });
-
-        it('should return empty string if user does not have login', () => {
-            const user = { ...courseGroupUser };
-            delete user.login;
-            expect(comp.searchTextFromUser(user)).toBe('');
         });
     });
 
@@ -239,6 +381,24 @@ describe('CourseGroupComponent', () => {
         comp.exportUserInformation();
 
         expect(exportUserInformationAsCsvMock).not.toHaveBeenCalled();
+    });
+
+    describe('header member count callback', () => {
+        it('should report the filtered member count so the "X out of Y" header tracks the search', () => {
+            const sizeSpy = vi.fn();
+            fixture.componentRef.setInput('handleUsersSizeChange', sizeSpy);
+            comp.allGroupUsers.set([
+                { ...courseGroupUser, id: 1, login: 'alice', name: 'Alice Smith', email: 'alice@example.com' },
+                { ...courseGroupUser2, id: 2, login: 'bob', name: 'Bob Jones', email: 'bob@example.com' },
+            ]);
+            fixture.detectChanges();
+            // No active search → full count, so the parent hides the counter rather than showing a stale value.
+            expect(sizeSpy).toHaveBeenLastCalledWith(2);
+
+            comp['filterQuery'].set('alice');
+            fixture.detectChanges();
+            expect(sizeSpy).toHaveBeenLastCalledWith(1);
+        });
     });
 
     describe('dataTableRowClass', () => {
@@ -281,111 +441,6 @@ describe('CourseGroupComponent', () => {
 
             expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
             expect(exportUserInformationAsCsvMock).toHaveBeenCalledWith(rows, keys, 'test-export');
-        });
-    });
-
-    describe('isSearching state', () => {
-        it('should set isSearching during search', () => {
-            const loginOrName = 'testUser';
-            const loginStream = of({ text: loginOrName, entities: [] });
-            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            // Subscribe to trigger the search
-            comp.searchAllUsers(loginStream).subscribe();
-
-            // After search completes, isSearching should be false
-            expect(comp.isSearching()).toBe(false);
-        });
-    });
-
-    describe('searchAllUsers setTimeout callback', () => {
-        beforeEach(() => {
-            vi.useFakeTimers();
-        });
-
-        afterEach(() => {
-            vi.useRealTimers();
-        });
-
-        it('should handle when dataTable is undefined', () => {
-            const loginOrName = 'testUser';
-            const loginStream = of({ text: loginOrName, entities: [] });
-            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            // dataTable() returns undefined by default since we haven't set up the view
-            comp.searchAllUsers(loginStream).subscribe();
-
-            // Run the setTimeout callback - should not throw when dataTable is undefined
-            expect(() => vi.runAllTimers()).not.toThrow();
-        });
-
-        it('should process typeahead buttons when dataTable exists', () => {
-            const loginOrName = 'testUser';
-            const loginStream = of({ text: loginOrName, entities: [] });
-            const returnedUser = { ...courseGroupUser, id: 1 };
-            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
-
-            // Mock the dataTable with typeahead buttons
-            const mockButton = document.createElement('button');
-            const mockDataTable = {
-                typeaheadButtons: [mockButton],
-            };
-            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
-
-            // User is not in group - should add 'users-plus' icon
-            comp.allGroupUsers.set([]);
-            comp.searchAllUsers(loginStream).subscribe();
-            vi.runAllTimers();
-
-            // Button should have had HTML inserted (users-plus icon)
-            expect(mockButton.innerHTML).toContain('fa-icon');
-        });
-
-        it('should add alreadyMember class when user is already in group', () => {
-            const loginOrName = 'testUser';
-            const loginStream = of({ text: loginOrName, entities: [] });
-            const returnedUser = { ...courseGroupUser, id: 1 };
-            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
-
-            // Mock the dataTable with typeahead buttons
-            const mockButton = document.createElement('button');
-            const mockDataTable = {
-                typeaheadButtons: [mockButton],
-            };
-            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
-
-            // User is already in group
-            comp.allGroupUsers.set([returnedUser]);
-            comp.searchAllUsers(loginStream).subscribe();
-            vi.runAllTimers();
-
-            // Button should have the already-member class
-            expect(mockButton.classList.contains('already-member')).toBe(true);
-        });
-
-        it('should not insert icon HTML when button already has icon', () => {
-            const loginOrName = 'testUser';
-            const loginStream = of({ text: loginOrName, entities: [] });
-            const returnedUser = { ...courseGroupUser, id: 1 };
-            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
-
-            // Mock the dataTable with a button that already has an fa-icon
-            const mockButton = document.createElement('button');
-            const existingIcon = document.createElement('fa-icon');
-            mockButton.appendChild(existingIcon);
-            const originalHTML = mockButton.innerHTML;
-
-            const mockDataTable = {
-                typeaheadButtons: [mockButton],
-            };
-            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
-
-            comp.allGroupUsers.set([]);
-            comp.searchAllUsers(loginStream).subscribe();
-            vi.runAllTimers();
-
-            // Button should not have additional HTML inserted since it already has an icon
-            expect(mockButton.innerHTML).toBe(originalHTML);
         });
     });
 

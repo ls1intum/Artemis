@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -414,7 +413,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(Collections.singletonList(result));
+            textSubmission.setResults(List.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);

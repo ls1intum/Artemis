@@ -375,7 +375,12 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         result = resultRepository.save(result);
         Long resultId = result.getId();
 
-        complaintUtilService.addComplaintToSubmission(result.getSubmission(), TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        // Re-fetch the submission with its results eagerly: result.getSubmission() is detached here (open-in-view is
+        // off and this test is not @Transactional), so addComplaintToSubmission -> getLatestResult() would lazily
+        // initialize Submission.results without an open session and throw a LazyInitializationException. Whether the
+        // merged submission's results bag is still initialized at this point varies, which made the test flaky.
+        Submission submission = submissionTestRepository.findByIdWithResultsElseThrow(result.getSubmission().getId());
+        complaintUtilService.addComplaintToSubmission(submission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
 
         assertThat(complaintRepository.findByResultId(resultId)).isPresent();
 

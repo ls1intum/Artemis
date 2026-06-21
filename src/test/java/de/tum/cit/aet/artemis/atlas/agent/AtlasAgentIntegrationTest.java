@@ -245,7 +245,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnHistoryAfterAddingMessages() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+            String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
             // Manually populate chat memory to test history retrieval
             chatMemory.add(sessionId, new UserMessage("First user message"));
@@ -260,7 +260,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnMultipleMessagesInHistory() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+            String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
             // Manually populate chat memory with multiple conversation turns
             chatMemory.add(sessionId, new UserMessage("Tell me about competencies"));
@@ -277,7 +277,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldExtractPreviewDataFromEmbeddedMessages() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+            String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
             // Add clean messages to chat memory (no markers)
             chatMemory.add(sessionId, new UserMessage("Create a competency"));
@@ -298,7 +298,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldHandleMessagesWithoutPreviewData() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+            String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
             // Test message without preview data (no cache entry)
             chatMemory.add(sessionId, new UserMessage("Simple question"));

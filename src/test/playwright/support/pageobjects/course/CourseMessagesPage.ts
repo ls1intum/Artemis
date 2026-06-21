@@ -546,6 +546,40 @@ export class CourseMessagesPage {
         await membersButton.waitFor({ state: 'visible', timeout: 10000 });
     }
 
+    /**
+     * Opens a conversation and waits until a specific post has rendered in the message list.
+     *
+     * {@link openConversation} only guarantees the conversation has *activated* (its members button
+     * is shown). Under heavy parallel multi-node load the initial message-list fetch/render occasionally
+     * races a freshly created post (or the activation itself), so the post is briefly absent from an
+     * otherwise-active conversation and the subsequent {@link checkMessage} times out. A full reload
+     * re-issues the message-list request — which, against the shared database, returns the persisted
+     * post — and re-renders the list. Retrying the reload before failing keeps callers testing their
+     * actual behavior rather than this load-induced rendering race (the same mitigation
+     * {@link openConversation} already uses for activation and the bookmark-persistence test uses after
+     * its reload).
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     * @param postID - The ID of the post that must be visible before returning.
+     */
+    async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await this.getSinglePost(postID).waitFor({ state: 'visible', timeout: 12000 });
+                return;
+            } catch {
+                // Post not rendered yet — fall through to a reload, which re-fetches the message list.
+            }
+        }
+        throw new Error(`Post #item-${postID} did not render in conversation ${conversationID} after activating and reloading`);
+    }
+
     async listMembersButton(courseID: number, conversationID: number) {
         const membersButton = this.page.locator('.members');
         try {
@@ -825,10 +859,9 @@ export class CourseMessagesPage {
                 if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
             }
         }
-        // The reply's context-menu dropdown is a sibling of `#item-${replyId}` (it lives on the
-        // <jhi-answer-post> host, outside the `#item-` root div), unlike top-level posts where `item-` wraps
-        // both. Scope the click to the open thread, not to the reply item, or it matches zero elements.
-        await this.page.locator('.expanded-thread .dropdown-menu.show .forward').click();
+        // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
+        // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
         await this.completeForwardDialog(destinationName, extraContent);
     }
 
@@ -949,5 +982,45 @@ export class CourseMessagesPage {
             // Wait for the acceptance to be processed
             await this.page.waitForLoadState('domcontentloaded');
         }
+    }
+
+    /**
+     * Returns the scrollable message-list container that hosts the infinite-scroll directive.
+     */
+    getScrollableMessagesContainer() {
+        return this.page.locator('#scrollableDiv');
+    }
+
+    /**
+     * Scrolls the message list to the very top. In a conversation this brings the top sentinel of the
+     * infinite-scroll directive into view, which triggers loading of the next (older) page of messages.
+     */
+    async scrollMessagesToTop() {
+        const container = this.getScrollableMessagesContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of currently rendered posts in the message list.
+     */
+    async getRenderedPostCount(): Promise<number> {
+        return this.page.locator('.post-item').count();
+    }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
     }
 }

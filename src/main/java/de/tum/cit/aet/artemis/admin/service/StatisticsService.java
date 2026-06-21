@@ -165,7 +165,7 @@ public class StatisticsService {
 
         if (exercises.isEmpty()) {
             // Handle newly created courses that have no exercises
-            return new CourseManagementStatisticsDTO(0.0, Collections.emptyList());
+            return new CourseManagementStatisticsDTO(0.0, List.of());
         }
 
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();

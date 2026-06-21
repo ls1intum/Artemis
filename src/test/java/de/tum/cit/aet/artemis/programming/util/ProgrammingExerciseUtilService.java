@@ -11,9 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -1050,8 +1050,8 @@ public class ProgrammingExerciseUtilService {
             var task = new ProgrammingExerciseTask();
             task.setTaskName("Task for " + testCase.getTestName());
             task.setExercise(programmingExercise);
-            task.setTestCases(Collections.singleton(testCase));
-            testCase.setTasks(Collections.singleton(task));
+            task.setTestCases(Set.of(testCase));
+            testCase.setTasks(Set.of(task));
             problemStatement.append("[task][").append(task.getTaskName()).append("](")
                     .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
             return task;

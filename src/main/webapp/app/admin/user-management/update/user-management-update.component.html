@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if (user.id === undefined) {
+        @if (user().id === undefined) {
             <h5 *adminTitleBarTitle id="createUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.createLabel"></h5>
         } @else {
             <h5 *adminTitleBarTitle id="editUser" class="mb-0" jhiTranslate="artemisApp.userManagement.home.editLabel"></h5>
@@ -87,7 +87,7 @@
                         <label
                             class="form-check-label"
                             for="randomPassword"
-                            [jhiTranslate]="user.id ? 'artemisApp.userManagement.keepPassword' : 'artemisApp.userManagement.randomPassword'"
+                            [jhiTranslate]="user().id ? 'artemisApp.userManagement.keepPassword' : 'artemisApp.userManagement.randomPassword'"
                             >Random password / Keep old password</label
                         >
                     </div>
@@ -127,7 +127,7 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="btn-group d-flex flex-wrap">
-                        @for (organization of user.organizations; track organization) {
+                        @for (organization of user().organizations; track organization) {
                             <div>
                                 <h5>
                                     <span class="badge bg-primary font-weight-normal m-1 ps-3"
@@ -202,11 +202,11 @@
                         <span jhiTranslate="artemisApp.userManagement.activated"></span>
                     </label>
                 </div>
-                @if (languages && languages.length > 0) {
+                @if (languages() && languages().length > 0) {
                     <div class="form-group">
                         <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey"></label>
                         <select class="form-select" id="langKey" name="langKey" formControlName="langKey">
-                            @for (language of languages; track language) {
+                            @for (language of languages(); track language) {
                                 <option [value]="language">{{ language | findLanguageFromKey }}</option>
                             }
                         </select>

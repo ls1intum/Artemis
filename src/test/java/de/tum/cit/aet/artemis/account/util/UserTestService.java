@@ -367,7 +367,7 @@ public class UserTestService {
 
     // Test
     public void createInternalUserWithoutRoles_asAdmin_isSuccessful() throws Exception {
-        createInternalUserIsSuccessful(Collections.emptySet());
+        createInternalUserIsSuccessful(Set.of());
     }
 
     private void createInternalUserIsSuccessful(final Set<Role> roles) throws Exception {
@@ -976,7 +976,7 @@ public class UserTestService {
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
-            assertThat(result).isEqualTo(Collections.emptyList());
+            assertThat(result).isEqualTo(List.of());
         }
     }
 
@@ -1003,7 +1003,7 @@ public class UserTestService {
             user2.setRegistrationNumber(null);
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
-            assertThat(result).isEqualTo(Collections.emptyList());
+            assertThat(result).isEqualTo(List.of());
         }
     }
 

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -264,7 +263,7 @@ public class ExerciseResource {
         if (exampleSubmissions.isEmpty() && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
-        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+        exercise.setTutorParticipations(Set.of(tutorParticipation));
         return ResponseEntity.ok(exercise);
     }
 

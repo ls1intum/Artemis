@@ -100,14 +100,14 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should reset dialog when selecting csv file', async () => {
-        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }];
+        component.usersToImport.set([{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }]);
         component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
-        component.hasImported = true;
+        component.hasImported.set(true);
 
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).toHaveLength(0);
+        expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
     });
 
@@ -115,9 +115,9 @@ describe('UsersImportDialogComponent', () => {
         const event = { target: { files: [studentCsvColumns] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).toHaveLength(0);
+        expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-        expect(component.noUsersFoundError).toBe(true);
+        expect(component.noUsersFoundError()).toBe(true);
     });
 
     it('should read students from csv file', async () => {
@@ -125,9 +125,9 @@ describe('UsersImportDialogComponent', () => {
         const event = { target: { files: [csv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).toHaveLength(2);
+        expect(component.usersToImport()).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
-        expect(component.noUsersFoundError).toBeUndefined();
+        expect(component.noUsersFoundError()).toBeUndefined();
     });
 
     it('should have validation error for invalid csv', async () => {
@@ -137,7 +137,7 @@ describe('UsersImportDialogComponent', () => {
         const event = { target: { files: [invalidCsv] } };
         await component.onCSVFileSelect(event);
 
-        expect(component.validationError).toHaveLength(1);
+        expect(component.validationError()).toHaveLength(1);
     });
 
     it('should stop parsing and show a generic error when csv parsing fails unexpectedly', async () => {
@@ -149,7 +149,7 @@ describe('UsersImportDialogComponent', () => {
         await component.onCSVFileSelect(event);
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isParsing).toBe(false);
+        expect(component.isParsing()).toBe(false);
         expect(event.target.value).toBe('');
     });
 
@@ -164,12 +164,12 @@ describe('UsersImportDialogComponent', () => {
         const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
-        component.usersToImport = studentsToImport;
+        component.usersToImport.set(studentsToImport);
         component.importUsers();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(component.isImporting()).toBe(false);
+        expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
 
@@ -182,7 +182,7 @@ describe('UsersImportDialogComponent', () => {
             const event = { target: { files: [csv] } };
             await component.onCSVFileSelect(event);
 
-            expect(component.usersToImport).toHaveLength(5);
+            expect(component.usersToImport()).toHaveLength(5);
 
             let expectedStudentDTOs: ExamUserDTO[];
             if (testFileName.localeCompare('TUMonlineCourseExport.csv') === 0) {
@@ -203,7 +203,7 @@ describe('UsersImportDialogComponent', () => {
                 ];
             }
 
-            expect(component.usersToImport).toEqual(expectedStudentDTOs);
+            expect(component.usersToImport()).toEqual(expectedStudentDTOs);
         });
     });
 
@@ -214,7 +214,7 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.usersToImport).toHaveLength(5);
+        expect(component.usersToImport()).toHaveLength(5);
 
         const expectedStudentDTOs: ExamUserDTO[] = [
             { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser1@mail.com' },
@@ -224,7 +224,7 @@ describe('UsersImportDialogComponent', () => {
             { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser5@mail.com' },
         ];
 
-        expect(component.usersToImport).toEqual(expectedStudentDTOs);
+        expect(component.usersToImport()).toEqual(expectedStudentDTOs);
     });
 
     it('should read students from csv with room/seat information', async () => {
@@ -237,7 +237,7 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.examUsersToImport).toHaveLength(4);
+        expect(component.examUsersToImport()).toHaveLength(4);
 
         const expectedStudentDTOs: ExamUserDTO[] = [
             {
@@ -278,7 +278,7 @@ describe('UsersImportDialogComponent', () => {
             },
         ];
 
-        expect(component.examUsersToImport).toEqual(expectedStudentDTOs);
+        expect(component.examUsersToImport()).toEqual(expectedStudentDTOs);
     });
 
     it('should expose multiple invalid student row numbers via validationError', async () => {
@@ -287,7 +287,7 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.validationError).toBe('2, 3');
+        expect(component.validationError()).toBe('2, 3');
     });
 
     it('should import correctly', () => {
@@ -301,7 +301,7 @@ describe('UsersImportDialogComponent', () => {
         const fakeResponse = { body: notImportedStudents } as HttpResponse<ExamUserDTO[]>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
-        component.usersToImport = importedStudents.concat(notImportedStudents);
+        component.usersToImport.set(importedStudents.concat(notImportedStudents));
         component.importUsers();
 
         importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
@@ -323,11 +323,11 @@ describe('UsersImportDialogComponent', () => {
 
         component.open();
         // Set usersToImport after open() since open() calls resetDialog() which clears the array
-        component.usersToImport = studentsToImport;
+        component.usersToImport.set(studentsToImport);
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBe(false);
+        expect(component.hasImported()).toBe(false);
         expect(component.isSubmitDisabled).toBe(false);
         const importButton = fixture.debugElement.query(By.css('#import'));
 
@@ -336,13 +336,13 @@ describe('UsersImportDialogComponent', () => {
         importButton.nativeElement.click();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(component.isImporting()).toBe(false);
+        expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
-        component.hasImported = true;
+        component.hasImported.set(true);
         fixture.detectChanges();
 
         const finishButton = fixture.debugElement.query(By.css('#finish-button'));
@@ -362,10 +362,10 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.validationError).toBe('2, 4');
-        expect(component.noUsersFoundError).toBeUndefined();
-        expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBe(false);
+        expect(component.validationError()).toBe('2, 4');
+        expect(component.noUsersFoundError()).toBeUndefined();
+        expect(component.examUsersToImport()).toHaveLength(0);
+        expect(component.isParsing()).toBe(false);
         expect(event.target.value).toBe('');
     });
 
@@ -379,22 +379,22 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.noUsersFoundError).toBe(true);
-        expect(component.validationError).toBeUndefined();
-        expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBe(false);
+        expect(component.noUsersFoundError()).toBe(true);
+        expect(component.validationError()).toBeUndefined();
+        expect(component.examUsersToImport()).toHaveLength(0);
+        expect(component.isParsing()).toBe(false);
         expect(event.target.value).toBe('');
     });
 
     it('should show a generic error and stop importing on save error', () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'error');
-        component.isImporting = true;
+        component.isImporting.set(true);
 
         component.onSaveError();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBe(false);
+        expect(component.isImporting()).toBe(false);
     });
 
     it('should import tutorial group students and convert generated student dto response', () => {
@@ -414,12 +414,12 @@ describe('UsersImportDialogComponent', () => {
         const fakeResponse = { body: generatedStudents } as HttpResponse<any[]>;
         vi.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(fakeResponse));
 
-        component.usersToImport = studentsToImport;
+        component.usersToImport.set(studentsToImport);
         component.importUsers();
 
         expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport, 'response');
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(component.isImporting()).toBe(false);
+        expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toEqual([
             {
                 registrationNumber: '2',
@@ -450,15 +450,15 @@ describe('UsersImportDialogComponent', () => {
 
         vi.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: importedUsers })));
 
-        component.usersToImport = usersToImport;
+        component.usersToImport.set(usersToImport);
         component.importUsers();
 
         expect(adminUserService.importAll).toHaveBeenCalledWith([
             { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
             { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
         ]);
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(component.isImporting()).toBe(false);
+        expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toMatchObject([
             { registrationNumber: '3', firstName: 'Alan', lastName: 'Turing', login: 'alan', email: 'alan@example.com', visibleRegistrationNumber: '3' },
             { registrationNumber: '4', firstName: 'Grace', lastName: 'Hopper', login: 'grace', email: 'grace@example.com', visibleRegistrationNumber: '4' },
@@ -476,7 +476,7 @@ describe('UsersImportDialogComponent', () => {
         component.importUsers();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(false);
+        expect(component.isImporting()).toBe(false);
+        expect(component.hasImported()).toBe(false);
     });
 });

@@ -491,10 +491,10 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(downloadedFile).exists();
 
         // Make sure both repositories are present
-        String modifiedEclipseProjectFile = FileUtils.readFileToString(projectFile, StandardCharsets.UTF_8);
+        String modifiedEclipseProjectFile = Files.readString(projectFile.toPath(), StandardCharsets.UTF_8);
         assertThat(modifiedEclipseProjectFile).contains("");
 
-        String modifiedPom = FileUtils.readFileToString(pomFile, StandardCharsets.UTF_8);
+        String modifiedPom = Files.readString(pomFile.toPath(), StandardCharsets.UTF_8);
         assertThat(modifiedPom).contains("");
 
         Files.deleteIfExists(projectFilePath);

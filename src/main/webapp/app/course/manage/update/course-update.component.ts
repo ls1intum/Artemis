@@ -1,10 +1,10 @@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -111,20 +111,36 @@ export class CourseUpdateComponent implements OnInit {
     originalTimeZone?: string;
 
     courseForm: FormGroup;
-    course: Course;
-    isSaving: boolean;
+    // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
+    // It is backed by a signal through a getter/setter facade so template reads stay reactive under zoneless,
+    // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
+    // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
+    // call commitCourse() to rebuild the reference so the signal fires.
+    private readonly _course = signal<Course>(undefined!);
+    get course(): Course {
+        return this._course();
+    }
+    set course(value: Course) {
+        this._course.set(value);
+    }
+    private commitCourse(): void {
+        this._course.update((course) => Object.assign(new Course(), course));
+    }
+    readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;
-    croppedImage?: string;
-    complaintsEnabled = true;
-    requestMoreFeedbackEnabled = true;
-    courseOrganizations: Organization[];
-    isAdmin = false;
+    readonly croppedImage = signal<string | undefined>(undefined);
+    readonly complaintsEnabled = signal(true);
+    readonly requestMoreFeedbackEnabled = signal(true);
+    readonly courseOrganizations = signal<Organization[]>(undefined!);
+    /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
+    private initialOrganizationIds = new Set<number>();
+    readonly isAdmin = signal(false);
 
     communicationEnabled = true;
     messagingEnabled = true;
-    atlasEnabled = false;
-    ltiEnabled = false;
-    isAthenaEnabled = false;
+    readonly atlasEnabled = signal(false);
+    readonly ltiEnabled = signal(false);
+    readonly isAthenaEnabled = signal(false);
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -139,29 +155,32 @@ export class CourseUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');
-        this.isSaving = false;
+        this.isSaving.set(false);
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
         this.activatedRoute.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
-                this.croppedImage = course.courseIconPath;
+                this.croppedImage.set(course.courseIconPath);
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
-                    this.courseOrganizations = organizations;
+                    this.courseOrganizations.set(organizations);
+                    this.initialOrganizationIds = this.toOrganizationIdSet(organizations);
                 });
                 this.originalTimeZone = this.course.timeZone;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-                this.complaintsEnabled =
+                this.complaintsEnabled.set(
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
-                    this.course.maxComplaintTimeDays! > 0 &&
-                    this.course.maxComplaintTextLimit! > 0 &&
-                    this.course.maxComplaintResponseTextLimit! > 0;
-                this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+                        this.course.maxComplaintTimeDays! > 0 &&
+                        this.course.maxComplaintTextLimit! > 0 &&
+                        this.course.maxComplaintResponseTextLimit! > 0,
+                );
+                this.requestMoreFeedbackEnabled.set(this.course.maxRequestMoreFeedbackTimeDays! > 0);
             } else {
                 this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                            this.commitCourse();
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -169,9 +188,9 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
-        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+        this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
+        this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
+        this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
@@ -192,7 +211,6 @@ export class CourseUpdateComponent implements OnInit {
                 ),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
@@ -200,8 +218,8 @@ export class CourseUpdateComponent implements OnInit {
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
-                complaintsEnabled: new FormControl(this.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
+                complaintsEnabled: new FormControl(this.complaintsEnabled()),
+                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
                 }),
@@ -256,10 +274,11 @@ export class CourseUpdateComponent implements OnInit {
         for (const field of dateFields) {
             this.courseForm.controls[field].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
                 this.course[field] = value;
+                this.commitCourse();
             });
         }
 
-        this.isAdmin = this.accountService.isAdmin();
+        this.isAdmin.set(this.accountService.isAdmin());
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;
@@ -292,13 +311,11 @@ export class CourseUpdateComponent implements OnInit {
      * This function is called by pressing save after creating or editing a course
      */
     save() {
-        this.isSaving = true;
-        if (this.courseForm.controls['organizations'] !== undefined) {
-            this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
-        }
+        this.isSaving.set(true);
         let file = undefined;
-        if (this.courseImageUploadFile && this.croppedImage) {
-            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+        const croppedImage = this.croppedImage();
+        if (this.courseImageUploadFile && croppedImage) {
+            const base64Data = croppedImage.replace('data:image/png;base64,', '');
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
@@ -347,10 +364,59 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Action on successful course creation or edit
+     * Action on successful course creation or edit.
+     * Organization assignments are persisted via dedicated admin endpoints (the course update payload
+     * intentionally does not carry organizations), so the diff is synced here before finalizing.
      */
     private onSaveSuccess(updatedCourse: Course | null) {
-        this.isSaving = false;
+        if (updatedCourse?.id !== undefined && this.isAdmin()) {
+            this.syncCourseOrganizations(updatedCourse.id).subscribe({
+                next: () => this.finalizeSave(updatedCourse),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
+        } else {
+            this.finalizeSave(updatedCourse);
+        }
+    }
+
+    /**
+     * Persists the difference between the initially loaded organizations and the current selection by
+     * calling the dedicated admin endpoints. Completes once all add/remove requests have finished.
+     * Each request updates the initial snapshot on success, so a retry after a partial failure only
+     * re-issues the operations that did not yet succeed.
+     * @param courseId the id of the saved course
+     */
+    private syncCourseOrganizations(courseId: number): Observable<HttpResponse<void>[]> {
+        const currentOrganizationIds = this.toOrganizationIdSet(this.courseOrganizations() ?? []);
+
+        const requests: Observable<HttpResponse<void>>[] = [];
+        currentOrganizationIds.forEach((organizationId) => {
+            if (!this.initialOrganizationIds.has(organizationId)) {
+                requests.push(this.organizationService.addCourseToOrganization(organizationId, courseId).pipe(tap(() => this.initialOrganizationIds.add(organizationId))));
+            }
+        });
+        this.initialOrganizationIds.forEach((organizationId) => {
+            if (!currentOrganizationIds.has(organizationId)) {
+                requests.push(this.organizationService.removeCourseFromOrganization(organizationId, courseId).pipe(tap(() => this.initialOrganizationIds.delete(organizationId))));
+            }
+        });
+
+        return requests.length > 0 ? forkJoin(requests) : of([]);
+    }
+
+    /**
+     * Collects the ids of the given organizations into a set, skipping any without an id.
+     * @param organizations the organizations to collect the ids from
+     */
+    private toOrganizationIdSet(organizations: Organization[]): Set<number> {
+        return new Set(organizations.map((organization) => organization.id).filter((id): id is number => id !== undefined));
+    }
+
+    /**
+     * Broadcasts the modification, updates the local course store and navigates back to the course.
+     */
+    private finalizeSave(updatedCourse: Course | null) {
+        this.isSaving.set(false);
 
         if (this.course != updatedCourse) {
             this.eventManager.broadcast({
@@ -391,7 +457,7 @@ export class CourseUpdateComponent implements OnInit {
             });
         }
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         window.scrollTo(0, 0);
     }
 
@@ -470,15 +536,15 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable complaints
      */
     changeComplaintsEnabled() {
-        if (!this.complaintsEnabled) {
-            this.complaintsEnabled = true;
+        if (!this.complaintsEnabled()) {
+            this.complaintsEnabled.set(true);
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
             this.courseForm.controls['maxComplaintTextLimit'].setValue(2000);
             this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(2000);
         } else {
-            this.complaintsEnabled = false;
+            this.complaintsEnabled.set(false);
             this.courseForm.controls['maxComplaints'].setValue(0);
             this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);
@@ -491,15 +557,16 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable complaints
      */
     changeRequestMoreFeedbackEnabled() {
-        if (!this.requestMoreFeedbackEnabled) {
-            this.requestMoreFeedbackEnabled = true;
+        if (!this.requestMoreFeedbackEnabled()) {
+            this.requestMoreFeedbackEnabled.set(true);
             this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(7);
         } else {
-            this.requestMoreFeedbackEnabled = false;
+            this.requestMoreFeedbackEnabled.set(false);
             this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(0);
         }
     }
 
+    /**
     /**
      * Enable or disable test course
      */
@@ -523,15 +590,12 @@ export class CourseUpdateComponent implements OnInit {
             closable: true,
             dismissableMask: true,
             data: {
-                organizations: this.courseOrganizations,
+                organizations: this.courseOrganizations(),
             } as OrganizationSelectorDialogData,
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                if (this.courseOrganizations === undefined) {
-                    this.courseOrganizations = [];
-                }
-                this.courseOrganizations.push(organization);
+                this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
             }
         });
     }
@@ -541,7 +605,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromCourse(organization: Organization) {
-        this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
+        this.courseOrganizations.set(this.courseOrganizations().filter((o) => o.id !== organization.id));
     }
 
     /**
@@ -625,7 +689,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     deleteCourseIcon() {
         unsetCourseIcon(this.course);
-        this.croppedImage = undefined;
+        this.croppedImage.set(undefined);
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 
@@ -645,7 +709,7 @@ export class CourseUpdateComponent implements OnInit {
         });
         dialogRef?.onClose.subscribe((result: string | undefined) => {
             if (result) {
-                this.croppedImage = result;
+                this.croppedImage.set(result);
             }
         });
     }
@@ -659,6 +723,7 @@ export class CourseUpdateComponent implements OnInit {
                 const res = await firstValueFrom(this.fileService.getTemplateCodeOfConduct());
                 if (res.body) {
                     this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                    this.commitCourse();
                     this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                 }
             } catch (err) {

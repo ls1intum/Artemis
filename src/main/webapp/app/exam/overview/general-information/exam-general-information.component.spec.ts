@@ -52,13 +52,13 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.examEndDate).toEqual(exam.endDate);
+        expect(component.examEndDate()).toEqual(exam.endDate);
     });
 
     it('should return undefined if the exam is not set', () => {
         fixture.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.examEndDate).toBeUndefined();
+        expect(component.examEndDate()).toBeUndefined();
     });
 
     it('should return the start date plus the working time as the student exam end date', () => {
@@ -66,7 +66,7 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBe(true);
+        expect(component.examEndDate()?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBe(true);
     });
 
     it('should detect if the end date is on another day', () => {
@@ -74,7 +74,7 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.componentRef.setInput('exam', examWithMultiDay);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBe(true);
+        expect(component.isExamOverMultipleDays()).toBe(true);
     });
 
     it('should detect if the working time extends to another day', () => {
@@ -83,19 +83,19 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.componentRef.setInput('studentExam', longStudentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBe(true);
+        expect(component.isExamOverMultipleDays()).toBe(true);
     });
 
     it('should return false for exams that only last one day', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBe(false);
+        expect(component.isExamOverMultipleDays()).toBe(false);
 
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.isExamOverMultipleDays).toBe(false);
+        expect(component.isExamOverMultipleDays()).toBe(false);
     });
 
     it('should detect an TestExam and set the currentDate correctly', () => {
@@ -105,16 +105,16 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
         const maximumNowRange = dayjs();
-        expect(component.isTestExam).toBe(true);
-        expect(component.currentDate).toBeDefined();
+        expect(component.isTestExam()).toBe(true);
+        expect(component.currentDate()).toBeDefined();
         // test execution could slow down the check
-        expect(component.currentDate!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
+        expect(component.currentDate()!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
     });
 
     it('should detect an RealExam and not set the currentDate', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.isTestExam).toBe(false);
-        expect(component.currentDate).toBeUndefined();
+        expect(component.isTestExam()).toBe(false);
+        expect(component.currentDate()).toBeUndefined();
     });
 });
