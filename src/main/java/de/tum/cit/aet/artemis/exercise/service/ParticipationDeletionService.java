@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -215,6 +216,32 @@ public class ParticipationDeletionService {
             }
             submissionRepository.deleteById(submission.getId());
         });
+    }
+
+    /**
+     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
+     * This means the participation can be resumed in the future.
+     * Only applicable for Jenkins (stateful); LocalCI/Hades do not maintain a build plan to clean up.
+     *
+     * @param participation that will be set to inactive
+     */
+    public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+        // ignore participations without build plan id, and CI that don't manage build plans
+        if (profileService.isJenkinsActive() && participation.getBuildPlanId() != null) {
+            final var projectKey = participation.getProgrammingExercise().getProjectKey();
+            continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
+
+            // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
+            var dueDate = ExerciseDateService.getDueDate(participation);
+            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+                participation.setInitializationState(InitializationState.FINISHED);
+            }
+            else {
+                participation.setInitializationState(InitializationState.INACTIVE);
+            }
+            participation.setBuildPlanId(null);
+            programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+        }
     }
 
     /**
