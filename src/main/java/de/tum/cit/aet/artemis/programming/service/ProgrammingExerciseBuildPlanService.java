@@ -138,6 +138,12 @@ public class ProgrammingExerciseBuildPlanService {
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
+                if (profileService.isJenkinsActive()) {
+                    ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+                    continuousIntegration.deleteProject(updatedProgrammingExercise.getProjectKey());
+                    continuousIntegration.createProjectForExercise(updatedProgrammingExercise);
+                    continuousIntegration.recreateBuildPlansForExercise(updatedProgrammingExercise);
+                }
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
         }
