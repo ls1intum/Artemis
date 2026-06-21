@@ -66,7 +66,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected dateInputValue = signal<string>('');
 
     isValid = computed(() => {
-        const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
+        // Derive validity from the actual bound value (the source of truth), NOT from DOM-input events —
+        // otherwise a programmatically set [value]/writeValue (e.g. the audits filters or any edit form with an
+        // existing date) renders as invalid (red border) until the user interacts, because the input-event
+        // signals never fired.
+        const value = this.value();
+        const hasValidValue = value != undefined && (dayjs.isDayjs(value) ? value.isValid() : !isNaN(new Date(value).getTime()));
+        const isInvalid = this.error() || this.warning() || (this.requiredField() && !hasValidValue);
         return !isInvalid;
     });
 
