@@ -112,16 +112,13 @@
 }
 
 // Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
-// to a PrimeNG Popover. The popover hosts a vertical list of Bootstrap-styled `.dropdown-item` buttons.
+// to a PrimeNG Popover. The popover hosts a vertical list of menu-item buttons styled with global
+// Tailwind utilities (they apply inside the body-appended popover content without ::ng-deep).
 :host ::ng-deep .md-action-popover {
     .p-popover-content {
         max-height: 300px;
         overflow-y: auto;
         padding: 0.25rem 0;
-    }
-
-    .dropdown-item {
-        cursor: pointer;
     }
 }
 

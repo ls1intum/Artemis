@@ -10,6 +10,7 @@ import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawes
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/course/request/course-request.model';
 import { CourseRequestService } from 'app/course/request/course-request.service';
@@ -97,8 +98,8 @@ export class CourseRequestsComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: [undefined as dayjs.Dayjs | undefined],
+        endDate: [undefined as dayjs.Dayjs | undefined],
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
@@ -244,8 +245,8 @@ export class CourseRequestsComponent implements OnInit {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
             semester: this.editForm.get('semester')!.value ?? undefined,
-            startDate,
-            endDate,
+            startDate: startDate ?? undefined,
+            endDate: endDate ?? undefined,
             testCourse: this.editForm.get('testCourse')!.value ?? false,
             reason: this.editForm.get('reason')!.value!,
         };

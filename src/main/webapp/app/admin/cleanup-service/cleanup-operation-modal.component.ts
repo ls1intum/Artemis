@@ -74,7 +74,7 @@ export class CleanupOperationModalComponent {
                 this.operationExecuted.set(true);
                 this.updateCounts();
             },
-            error: (error: any) => {
+            error: (error: unknown) => {
                 this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
             },
         };

@@ -42,6 +42,7 @@
 @source './app/exercise/feedback';
 @source './app/exercise/result';
 @source './app/iris/manage/settings';
+@source './app/editor/markdown-editor';
 /*
  * Never scan test files. Tailwind detects class candidates from the FULL TEXT of scanned files, so test
  * descriptions ("should collapse the sidebar", "renders a table", ...) would emit utilities like

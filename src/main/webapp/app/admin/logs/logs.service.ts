@@ -7,8 +7,8 @@ import { Level, LoggersResponse } from './log.model';
 export class LogsService {
     private http = inject(HttpClient);
 
-    changeLevel(name: string, configuredLevel: Level): Observable<any> {
-        return this.http.post(`management/loggers/${name}`, { configuredLevel });
+    changeLevel(name: string, configuredLevel: Level): Observable<void> {
+        return this.http.post<void>(`management/loggers/${name}`, { configuredLevel });
     }
 
     /**
