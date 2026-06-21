@@ -61,30 +61,37 @@ overrides:
     cookie: '1.1.1'
     debug: '4.4.3'
     diff: '9.0.0'
-    dompurify: '3.4.10'
+    dompurify: '3.4.11'
     esbuild: '0.28.1'
     express: '5.2.1'
     fast-uri: '3.1.2'
     globals: '17.6.0'
     hono: '4.12.25'
     '@hono/node-server': '1.19.13'
+    http-proxy-middleware: '3.0.7'
     ip-address: '10.2.0'
     js-yaml: '4.2.0'
     jsdom: '29.1.1'
     katex: '0.17.0'
     minimatch: '10.2.5'
+    piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
+    # @tumaet/apollon 4.7.0 requires react/react-dom ^19 as peers. Artemis embeds
+    # Apollon but has no direct React code, so force the whole React subtree to 19
+    # (matches the version used in the documentation/ project).
+    react: '19.2.7'
+    react-dom: '19.2.7'
     semver: '7.8.0'
     serialize-javascript: '7.0.5'
     tmp: '0.2.5'
     tough-cookie: '6.0.1'
-    undici: '7.25.0'
+    undici: '7.28.0'
     uuid: '14.0.0'
     vite: '7.3.5'
     webpack: '5.106.2'
     webpack-dev-middleware: '7.4.5'
-    webpack-dev-server: '5.2.4'
+    webpack-dev-server: '5.2.5'
     word-wrap: '1.2.5'
     ws: '8.21.0'
     yargs-parser: '22.0.0'
@@ -107,3 +114,17 @@ allowBuilds:
     lmdb: true
     msgpackr-extract: true
     unrs-resolver: true
+
+# Acknowledged audit advisories that `pnpm audit` should not flag.
+# GHSA-8988-4f7v-96qf (@opentelemetry/core < 2.8.0, moderate: unbounded memory
+# allocation in W3C Baggage propagation) reaches us only through the dev-only
+# chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
+# bundled into the production WAR and processes no untrusted baggage in our usage.
+# The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
+# requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
+# so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
+# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
+# opentelemetry_version=1.62.0 in gradle.properties.)
+auditConfig:
+    ignoreGhsas:
+        - 'GHSA-8988-4f7v-96qf'

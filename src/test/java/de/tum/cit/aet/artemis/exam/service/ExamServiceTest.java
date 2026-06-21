@@ -229,6 +229,18 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void validateForStudentExamGeneration_emptyExerciseGroup_shouldThrowException() {
+        // An exercise group without any exercise (e.g. one whose only exercise failed to import and was left empty) must
+        // block student exam generation with a clear message, instead of later crashing the random exercise selection.
+        Exam exam = createExam(1, 1L, 10);
+        addExerciseGroupToExam(exam, 1L, true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).as("an empty exercise group must be rejected before student exams are generated")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam)).withMessageContaining("All exercise groups must have at least one exercise");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 9);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);

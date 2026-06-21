@@ -959,7 +959,7 @@ public class StudentExamService {
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        Set<User> userSet = Collections.singleton(student);
+        Set<User> userSet = Set.of(student);
         StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet).getFirst();
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);

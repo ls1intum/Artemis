@@ -9,7 +9,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupForStudentExamDTO;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentExamQuizParticipationDTO;
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseForStudentExamDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<?> quizQuestions, Set<String> categories,
-        Set<StudentExamQuizParticipationDTO> studentParticipations, ExerciseGroup exerciseGroup, String problemStatement, String gradingInstructions) {
+        Set<StudentExamQuizParticipationDTO> studentParticipations, ExerciseGroupForStudentExamDTO exerciseGroup, String problemStatement, String gradingInstructions) {
 
     /**
      * Creates a quiz exercise response DTO for a student exam response.
@@ -31,7 +31,7 @@ public record QuizExerciseForStudentExamDTO(@JsonUnwrapped QuizExerciseWithoutQu
         List<?> questionDTOs = includeSolutions ? quizExercise.getQuizQuestions().stream().map(QuizQuestionWithSolutionDTO::of).toList()
                 : quizExercise.getQuizQuestions().stream().map(QuizQuestionWithoutSolutionDTO::of).toList();
         return new QuizExerciseForStudentExamDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, quizExercise.getCategories(),
-                mapStudentParticipations(quizExercise, includeSolutions), quizExercise.getExerciseGroup(), quizExercise.getProblemStatement(),
+                mapStudentParticipations(quizExercise, includeSolutions), ExerciseGroupForStudentExamDTO.of(quizExercise.getExerciseGroup()), quizExercise.getProblemStatement(),
                 quizExercise.getGradingInstructions());
     }
 
