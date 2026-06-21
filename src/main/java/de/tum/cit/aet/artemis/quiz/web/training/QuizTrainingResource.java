@@ -99,6 +99,7 @@ public class QuizTrainingResource {
      * @param questionIds  optional set of question IDs to filter the questions
      * @return a list of quiz questions for the training session depending on the pagination information
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Has-Next", schema = @Schema(type = "boolean")) })
     @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, @ParameterObject Pageable pageable,
@@ -121,7 +122,6 @@ public class QuizTrainingResource {
      * @param submittedAnswerDTO the submitted answer payload by the user for the quiz question (rich entity-shaped JSON)
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Has-Next", schema = @Schema(type = "boolean")) })
     @PostMapping("courses/{courseId}/training-questions/{trainingQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable("trainingQuestionId") long quizQuestionId,
