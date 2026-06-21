@@ -1137,7 +1137,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * still query unread-message counts without re-resolving the conversation entity.
      */
     private long getUnreadMessagesCount(Long conversationId, User user) {
-        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversationId).orElseThrow().getConversationParticipants().stream()
+        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(conversationId).orElseThrow().getConversationParticipants().stream()
                 .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findFirst().orElseThrow().getUnreadMessagesCount();
     }
 
@@ -1162,7 +1162,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(chat.getId()).orElseThrow();
         Post post = new Post();
         post.setAuthor(student1);
         post.setDisplayPriority(DisplayPriority.NONE);
