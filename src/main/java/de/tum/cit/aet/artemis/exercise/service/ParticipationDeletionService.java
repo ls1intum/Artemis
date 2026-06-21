@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -65,6 +67,10 @@ public class ParticipationDeletionService {
 
     private final ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final ProfileService profileService;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<VersionControlService> versionControlService;
@@ -74,7 +80,8 @@ public class ParticipationDeletionService {
     public ParticipationDeletionService(StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository,
             SubmissionRepository submissionRepository, Optional<CompetencyProgressApi> competencyProgressApi, ParticipationRepository participationRepository,
             TeamScoreRepository teamScoreRepository, ResultService resultService, StudentScoreRepository studentScoreRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProfileService profileService, Optional<VersionControlService> versionControlService,
             GitService gitService, BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.studentParticipationRepository = studentParticipationRepository;
@@ -86,6 +93,8 @@ public class ParticipationDeletionService {
         this.resultService = resultService;
         this.studentScoreRepository = studentScoreRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.buildLogEntryService = buildLogEntryService;
@@ -144,6 +153,14 @@ public class ParticipationDeletionService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
+
+            if (profileService.isJenkinsActive()) {
+                String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+                if (buildPlanId != null) {
+                    final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                    continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
+                }
+            }
 
             if (programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {

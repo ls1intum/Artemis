@@ -12,9 +12,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -34,6 +36,8 @@ public class ProgrammingExerciseDeletionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ProfileService profileService;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -42,12 +46,13 @@ public class ProgrammingExerciseDeletionService {
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProfileService profileService, InstanceMessageSendService instanceMessageSendService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
@@ -55,10 +60,10 @@ public class ProgrammingExerciseDeletionService {
     /**
      * Delete a programming exercise, including its template and solution participations.
      *
-     * @param programmingExerciseId id of the programming exercise to delete.
-     * @param deleteBaseRepos       if true will delete projects.
+     * @param programmingExerciseId     id of the programming exercise to delete.
+     * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    public void delete(Long programmingExerciseId, boolean deleteBaseRepos) {
+    public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
@@ -68,11 +73,12 @@ public class ProgrammingExerciseDeletionService {
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
         // id is used to cancel the scheduling. No interaction with the database is required.
         cancelScheduledOperations(programmingExercise.getId());
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
 
-        if (deleteBaseRepos) {
+        if (deleteBaseReposBuildPlans) {
+            if (profileService.isJenkinsActive()) {
+                deleteBuildPlans(programmingExercise);
+            }
             programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
-            continuousIntegration.deleteProject(programmingExercise.getProjectKey());
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
 
@@ -90,6 +96,19 @@ public class ProgrammingExerciseDeletionService {
         log.debug("Delete programming exercises with student participations: {}", programmingExerciseWithStudentParticipations.getStudentParticipations());
         // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
+    }
+
+    private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
+        final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        if (templateBuildPlanId != null) {
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+        }
+        final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+        if (solutionBuildPlanId != null) {
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+        }
+        continuousIntegration.deleteProject(programmingExercise.getProjectKey());
     }
 
     private void cancelScheduledOperations(long programmingExerciseId) {

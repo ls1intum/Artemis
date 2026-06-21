@@ -141,11 +141,11 @@ public class ExerciseDeletionService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exerciseId      the exercise to be deleted
-     * @param deleteBaseRepos whether the template and solution repos should be deleted (can be true for programming exercises and should be false for
-     *                            all other exercise types)
+     * @param exerciseId                the exercise to be deleted
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
+     *                                      all other exercise types)
      */
-    public void delete(long exerciseId, boolean deleteBaseRepos) {
+    public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
@@ -199,7 +199,7 @@ public class ExerciseDeletionService {
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseRepos);
+            programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             // fetch the exercise again to allow Hibernate to delete it properly
