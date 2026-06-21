@@ -106,8 +106,6 @@ export const PROFILE_TEST = 'test';
 
 export const PROFILE_JENKINS = 'jenkins';
 
-export const PROFILE_STATELESS_JENKINS = 'stateless-jenkins';
-
 export const PROFILE_HADES = 'hades';
 
 export type ProfileFeature =
@@ -118,5 +116,4 @@ export type ProfileFeature =
     | typeof PROFILE_DEV
     | typeof PROFILE_TEST
     | typeof PROFILE_JENKINS
-    | typeof PROFILE_STATELESS_JENKINS
     | typeof PROFILE_HADES;
