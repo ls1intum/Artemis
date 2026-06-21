@@ -20,32 +20,32 @@
         >
             <ng-template #header>
                 <tr>
-                    <th pSortableColumn="id">
+                    <th scope="col" pSortableColumn="id">
                         <span jhiTranslate="global.field.id"></span>
                         <p-sortIcon field="id" />
                     </th>
-                    <th pSortableColumn="title">
+                    <th scope="col" pSortableColumn="title">
                         <span jhiTranslate="artemisApp.systemNotification.title"></span>
                         <p-sortIcon field="title" />
                     </th>
-                    <th pSortableColumn="text">
+                    <th scope="col" pSortableColumn="text">
                         <span jhiTranslate="artemisApp.systemNotification.text"></span>
                         <p-sortIcon field="text" />
                     </th>
-                    <th pSortableColumn="type">
+                    <th scope="col" pSortableColumn="type">
                         <span jhiTranslate="artemisApp.systemNotification.type"></span>
                         <p-sortIcon field="type" />
                     </th>
-                    <th></th>
-                    <th pSortableColumn="notificationDate">
+                    <th scope="col"></th>
+                    <th scope="col" pSortableColumn="notificationDate">
                         <span jhiTranslate="artemisApp.systemNotification.notificationDate"></span>
                         <p-sortIcon field="notificationDate" />
                     </th>
-                    <th pSortableColumn="expireDate">
+                    <th scope="col" pSortableColumn="expireDate">
                         <span jhiTranslate="artemisApp.systemNotification.expireDate"></span>
                         <p-sortIcon field="expireDate" />
                     </th>
-                    <th></th>
+                    <th scope="col"></th>
                 </tr>
             </ng-template>
             <ng-template #body let-notification>

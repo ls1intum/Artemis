@@ -55,8 +55,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             </div>
             <ng-template pTemplate="footer">
                 <div class="flex justify-end gap-2">
-                    <button pButton severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
-                    <button pButton [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
+                    <button pButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
+                    <button pButton size="small" [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
                         @if (isSubmitting()) {
                             <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
                         }

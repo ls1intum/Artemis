@@ -15,13 +15,13 @@
         <p-table [value]="dataExports()" data-testid="data-exports-table">
             <ng-template #header>
                 <tr>
-                    <th><span jhiTranslate="global.field.id"></span></th>
-                    <th><span jhiTranslate="artemisApp.dataExport.admin.user"></span></th>
-                    <th><span jhiTranslate="artemisApp.dataExport.admin.userLogin"></span></th>
-                    <th><span jhiTranslate="artemisApp.dataExport.admin.createdDate"></span></th>
-                    <th><span jhiTranslate="artemisApp.dataExport.admin.creationFinishedDate"></span></th>
-                    <th><span jhiTranslate="artemisApp.dataExport.admin.status"></span></th>
-                    <th><span jhiTranslate="entity.actions"></span></th>
+                    <th scope="col"><span jhiTranslate="global.field.id"></span></th>
+                    <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.user"></span></th>
+                    <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.userLogin"></span></th>
+                    <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.createdDate"></span></th>
+                    <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.creationFinishedDate"></span></th>
+                    <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.status"></span></th>
+                    <th scope="col"><span jhiTranslate="entity.actions"></span></th>
                 </tr>
             </ng-template>
             <ng-template #body let-dataExport>
