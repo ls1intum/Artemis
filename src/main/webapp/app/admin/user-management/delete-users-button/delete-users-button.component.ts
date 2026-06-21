@@ -3,6 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonModule } from 'primeng/button';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -20,7 +21,7 @@ import { Subject } from 'rxjs';
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ButtonModule, FaIconComponent],
+    imports: [ButtonModule, FaIconComponent, TranslateDirective],
 })
 export class DeleteUsersButtonComponent {
     private readonly adminUserService = inject(AdminUserService);
