@@ -503,6 +503,10 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Has-Next:
+              style: simple
+              schema: {type: boolean}
           content:
             application/json:
               schema: {$ref: '#/components/schemas/SubmittedAnswerAfterEvaluation'}
