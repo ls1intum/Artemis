@@ -302,6 +302,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseTabAccessWithVisibleExam() throws Exception {
+        courseTestService.testGetCourseTabAccessWithVisibleExam();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseTabAccessForbidden() throws Exception {
         courseTestService.testGetCourseTabAccessForbidden();
     }

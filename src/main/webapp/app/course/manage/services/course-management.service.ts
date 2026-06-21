@@ -259,7 +259,7 @@ export class CourseManagementService implements OnDestroy {
                     if (courseForDashboardDTO.course.id) {
                         this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
 
-                        // Setting the helper attribute in the course so we can use it in the course overview guard.
+                        // Expose the per-course Iris enablement on the cached course object for the overview UI (the guard uses the dedicated access endpoint instead).
                         courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                     }
                     this.saveScoresInStorage(courseForDashboardDTO);

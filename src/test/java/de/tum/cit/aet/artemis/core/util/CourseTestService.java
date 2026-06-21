@@ -1064,6 +1064,19 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseTabAccessWithVisibleExam() throws Exception {
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+        // A visible exam the student is registered for must make the exams tab accessible (the user-scoped visibility check)
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        examUtilService.registerUsersForExamAndSaveExam(exam, userPrefix, 1, 1);
+
+        CourseTabAccessDTO access = request.get("/api/course/courses/" + course.getId() + "/access", HttpStatus.OK, CourseTabAccessDTO.class);
+
+        assertThat(access.examsVisible()).as("a visible exam the student is registered for makes the exams tab accessible").isTrue();
+    }
+
+    // Test
     public void testGetCourseTabAccessForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
         removeAllGroupsFromStudent1();
