@@ -27,6 +27,7 @@ import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { Popover } from 'primeng/popover';
 import { TieredMenu } from 'primeng/tieredmenu';
 import { Tooltip } from 'primeng/tooltip';
+import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -142,6 +143,7 @@ const TAB_VISUAL_ID = 'editor_visual';
         Tooltip,
         NgTemplateOutlet,
         Popover,
+        ButtonDirective,
         TieredMenu,
         ColorSelectorComponent,
         PostingButtonComponent,

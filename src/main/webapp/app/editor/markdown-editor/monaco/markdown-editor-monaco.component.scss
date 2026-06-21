@@ -66,6 +66,30 @@
     }
 }
 
+// Dense toolbar buttons. Replicates the former Bootstrap `.btn.btn-sm.py-0` exactly (small font,
+// horizontal-only padding, transparent border/background, no hover variant) so the migrated PrimeNG/Tailwind
+// toolbar keeps pixel-identical density to the previous Bootstrap markup across all ~60 app-wide usages.
+.md-toolbar-btn {
+    display: inline-block;
+    padding: 0 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    color: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--bs-border-radius-sm);
+
+    &:disabled {
+        pointer-events: none;
+        opacity: 0.65;
+    }
+}
+
 .text-style-icon {
     display: inline-block;
     line-height: 0.75em;

@@ -1,18 +1,18 @@
-<div #fullElement class="h-100 d-flex flex-column">
+<div #fullElement class="h-full flex flex-col">
     @if (showMarkdownInfoText()) {
-        <div class="pb-1 text-muted small flex-shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+        <div class="pb-1 text-muted small shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
     }
     <div
         #wrapper
-        class="markdown-editor-wrapper flex-grow-1"
+        class="markdown-editor-wrapper grow"
         [style.overflow]="inEditMode() ? 'visible' : 'auto'"
         [style.height]="inEditMode() && targetWrapperHeight() ? targetWrapperHeight() + 'px' : 'auto'"
         [style.cursor]="isResizing() ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight()"
     >
         <!-- Tab header row: tabs, close button and (in edit mode) the action toolbar share one wrapping flex row. -->
-        <div #actionPalette class="md-action-palette d-flex align-items-center flex-wrap">
-            <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs flex-shrink-0">
+        <div #actionPalette class="md-action-palette flex items-center flex-wrap">
+            <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs shrink-0">
                 <p-tablist>
                     @if (showEditButton()) {
                         <p-tab [value]="TAB_EDIT"><span jhiTranslate="entity.action.edit"></span></p-tab>
@@ -27,13 +27,13 @@
             </p-tabs>
 
             @if (showCloseButton()) {
-                <button type="button" class="btn btn-sm close-btn p-0 ms-auto" (click)="onCloseButtonClick()">
+                <button type="button" pButton [text]="true" [rounded]="true" severity="secondary" size="small" class="close-btn ml-auto" (click)="onCloseButtonClick()">
                     <fa-icon [icon]="faTimes" />
                 </button>
             }
 
             @if (inEditMode()) {
-                <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
+                <div class="flex items-center flex-wrap">
                     <!-- Standard -->
                     @if (showTextStyleActions()) {
                         @for (action of displayedActions().style; track action.id) {
@@ -42,7 +42,7 @@
                     } @else {
                         <button
                             type="button"
-                            class="btn btn-sm py-0 text-style-icon"
+                            class="md-toolbar-btn text-style-icon"
                             [pTooltip]="'artemisApp.multipleChoiceQuestion.editor.textFormat' | artemisTranslate"
                             (click)="showTextStyleActions.set(true)"
                         >
@@ -55,8 +55,8 @@
                         }
                         <!-- Headers -->
                         @if (displayedActions().header.length) {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" (click)="headerPopover.toggle($event)">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                                <button class="md-toolbar-btn" type="button" (click)="headerPopover.toggle($event)">
                                     <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
                                 </button>
                                 <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
@@ -69,8 +69,8 @@
                             </div>
                         }
                         @if (displayedActions().color; as color) {
-                            <div class="btn-group col-xs-6">
-                                <button type="button" class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)">
+                            <div class="flex">
+                                <button type="button" class="color-preview md-toolbar-btn" (click)="openColorSelector($event)">
                                     <span [jhiTranslate]="color.translationKey"></span>
                                 </button>
                                 <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
@@ -82,8 +82,8 @@
                         }
                         <!-- Domain (with options) -->
                         @for (action of displayedActions().domain.withOptions; track action.id) {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" (click)="domainPopover.toggle($event)">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                                <button class="md-toolbar-btn" type="button" (click)="domainPopover.toggle($event)">
                                     <span [jhiTranslate]="action.translationKey"></span>
                                 </button>
                                 <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
@@ -101,9 +101,9 @@
                         }
                         <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
                         @if (displayedActions().lecture; as lectureAction) {
-                            <button type="button" class="btn btn-sm py-0 m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
+                            <button type="button" class="md-toolbar-btn m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
                                 <span [jhiTranslate]="lectureAction.translationKey"></span>
-                                <fa-icon [icon]="faAngleDown" class="ms-1" />
+                                <fa-icon [icon]="faAngleDown" class="ml-1" />
                             </button>
                             <p-tieredMenu #lectureMenu [model]="lectureMenuModel()" [popup]="true" appendTo="body" />
                         }
@@ -113,9 +113,9 @@
                         @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         } @else {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
                                 <button
-                                    class="btn btn-sm px-2 py-0"
+                                    class="md-toolbar-btn"
                                     type="button"
                                     (click)="aiPopover.toggle($event)"
                                     [pTooltip]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate"
@@ -141,7 +141,7 @@
         </div>
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
-        <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode(), 'd-none': !inEditMode() }">
+        <div class="markdown-editor markdown-editor-wrapper flex-col" [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }">
             @if (mode() === 'diff') {
                 @if (renderSideBySide()) {
                     <!-- Split-view column headers so users know which side is which -->
@@ -163,7 +163,7 @@
                 }
             }
             <jhi-monaco-editor
-                class="h-100"
+                class="h-full"
                 [mode]="mode()"
                 [shrinkToFit]="false"
                 [stickyScroll]="false"
@@ -178,7 +178,7 @@
                 (onBlurEditor)="onBlurEditor.emit()"
             />
             @if (enableFileUpload()) {
-                <div class="d-flex align-items-center border-top" #fileUploadFooter>
+                <div class="flex items-center border-t" #fileUploadFooter>
                     <input
                         #fileUploadInput
                         [id]="'file-upload ' + uniqueMarkdownEditorId()"
@@ -190,24 +190,24 @@
                     />
                     <label
                         [for]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="file-upload-footer-label d-inline"
+                        class="file-upload-footer-label inline"
                         [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
                     >
-                        <div class="row mx-0 align-items-baseline">
+                        <div class="flex mx-0 items-baseline">
                             <span
-                                class="col upload-subtitle"
+                                class="grow upload-subtitle"
                                 [jhiTranslate]="wrapper.getBoundingClientRect().width < 500 ? 'artemisApp.markdownEditor.fileUploadShort' : 'artemisApp.markdownEditor.fileUpload'"
                             ></span>
                         </div>
                     </label>
                     @if (!showMarkdownInfoText()) {
-                        <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                        <a class="shrink-0 mx-1" href="https://markdown-it.github.io/">
                             <fa-icon [icon]="faQuestionCircle" [pTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                         </a>
                     }
                     @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
-                        <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
+                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0' }" />
+                        <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0', testId: 'save' }" />
                     }
                 </div>
             }
@@ -215,28 +215,28 @@
 
         <!-- Visual content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
         @if (visualTabActivated()) {
-            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ 'd-none': !inVisualMode() }">
+            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inVisualMode() }">
                 <ng-content select="[#visual]" />
             </div>
         }
 
         <!-- Preview content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
         @if (previewTabActivated()) {
-            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ 'd-none': !inPreviewMode() }">
+            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
                 <ng-content class="overflow-auto p-1" select="#previewMonaco">
                     @if (showDefaultPreview()) {
                         <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                     }
                 </ng-content>
                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
-                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
+                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-right' }" />
+                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-right' }" />
                 }
             </div>
         }
     </div>
     @if (enableResize() && inEditMode()) {
-        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center resize-placeholder">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"
@@ -253,7 +253,7 @@
 </div>
 
 <ng-template #simpleActionButton let-action="action">
-    <button type="button" class="btn btn-sm py-0" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
+    <button type="button" class="md-toolbar-btn" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {
