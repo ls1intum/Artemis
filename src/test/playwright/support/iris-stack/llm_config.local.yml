@@ -1,0 +1,85 @@
+# LLM config for the Iris (real-Pyris) e2e stack.
+#
+# Every chat/keyword_summary id used by the course-chat pipeline (and its
+# dependency sub-pipelines) points at ONE openai_chat model whose `base_url` is
+# the mock OpenAI server in this stack. No real model is ever contacted.
+#
+# Notes:
+#   * type: openai_chat on edutelligence/iris HEAD has a native `base_url` field
+#     (DirectOpenAIChatModel) that overrides the OpenAI client base URL.
+#   * supports_temperature: false matches the GPT-5-family entries Pyris ships;
+#     the mock ignores params anyway, but this keeps the request shape faithful.
+#   * The embedding and reranker entries must EXIST (they are referenced by the
+#     retrieval pipelines that the chat pipeline declares as dependencies, so
+#     their ids must resolve at startup/health), but on an empty course with no
+#     ingested content they are never actually invoked at message-send time.
+
+- id: oai-gpt-5-mini
+  type: openai_chat
+  model: gpt-5-mini
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  supports_temperature: false
+  cost_per_million_input_token: 0.4
+  cost_per_million_output_token: 1.6
+
+- id: oai-gpt-52
+  type: openai_chat
+  model: gpt-5.2
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  supports_temperature: false
+  cost_per_million_input_token: 3.0
+  cost_per_million_output_token: 12.0
+
+- id: oai-gpt-5-nano
+  type: openai_chat
+  model: gpt-5-nano
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  supports_temperature: false
+  cost_per_million_input_token: 0.1
+  cost_per_million_output_token: 0.4
+
+- id: oai-gpt-5.4-mini
+  type: openai_chat
+  model: gpt-5.4-mini
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  supports_temperature: false
+  cost_per_million_input_token: 0.75
+  cost_per_million_output_token: 4.50
+
+- id: oai-gpt-5.4-nano
+  type: openai_chat
+  model: gpt-5.4-nano
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  supports_temperature: false
+  cost_per_million_input_token: 0.15
+  cost_per_million_output_token: 0.60
+
+# Embedding model (must exist; not invoked on an empty course). Points at the mock
+# /v1/embeddings endpoint so any incidental call still succeeds deterministically.
+- id: oai-embedding-small
+  type: openai_embedding
+  model: text-embedding-3-small
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  cost_per_million_input_token: 0.02
+
+- id: azure-embedding-large
+  type: openai_embedding
+  model: text-embedding-3-large
+  api_key: "mock-key"
+  base_url: "http://mock-llm:8081/v1"
+  cost_per_million_input_token: 0.13
+
+# Reranker (must exist; not invoked on an empty course). cohere_azure entry kept
+# structurally valid; never reached without ingested content + retrieval.
+- id: cohere
+  type: cohere_azure
+  model: "rerank-multilingual-v3.5"
+  api_key: "mock-key"
+  endpoint: "http://mock-llm:8081"
+  cost_per_1k_requests: 2
