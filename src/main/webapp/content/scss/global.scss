@@ -34,19 +34,6 @@
 Bootstrap tweaks
 ===============================================================*/
 
-/*
- * Defensive guard against a Tailwind v4 / Bootstrap class collision. Tailwind scans the full text
- * (including comments and string literals) of @source files and emits a `.collapse { visibility: collapse }`
- * utility if the bare word "collapse" appears anywhere in them. That utility collides with Bootstrap's
- * `.collapse` component class (e.g. the navbar's `.navbar-collapse`) and hides it while keeping its layout —
- * which silently broke the top navigation. Bootstrap is unlayered so it wins on `display` but NOT on
- * `visibility`, so keep Bootstrap collapse elements visible here: Bootstrap shows/hides collapse via
- * `display`, never `visibility`, and the app never uses Tailwind's table-`visibility: collapse`.
- */
-.collapse {
-    visibility: visible;
-}
-
 body,
 h1,
 h2,

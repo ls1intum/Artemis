@@ -39,6 +39,14 @@
 @source './app/admin';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
+/*
+ * Never scan test files. Tailwind detects class candidates from the FULL TEXT of scanned files, so test
+ * descriptions ("should collapse the sidebar", "renders a table", ...) would emit utilities like
+ * `.collapse { visibility: collapse }` / `.table { display: table }` that collide with Bootstrap component
+ * classes (the navbar's `.navbar-collapse` etc.) and break them. Spec files never carry runtime classes, so
+ * excluding them removes that whole class of false-positive collisions at the source.
+ */
+@source not './app/**/*.spec.ts';
 
 /* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
 @custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));
