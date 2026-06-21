@@ -240,4 +240,32 @@ describe('IrisChatbotWidgetComponent', () => {
         overlay.remove();
         widget.remove();
     });
+
+    it('does not start a drag when the pointerdown lands on a header control, so the control keeps its click', () => {
+        // Regression: the drag/resize handler used to start a drag (and preventDefault) on any pointerdown inside
+        // .chat-header, which swallowed clicks on the header controls (info / new chat / maximize / close).
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
+
+        // A header control button, away from all widget edges (so only the interactive-target rule can apply).
+        const button = document.createElement('button');
+        button.className = 'header-control';
+        header.appendChild(button);
+
+        const transformBefore = widget.style.transform;
+        const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, clientX: 300, clientY: 300, button: 0 });
+        Object.defineProperties(down, { pointerId: { value: 1 }, pointerType: { value: 'mouse' } });
+        button.dispatchEvent(down);
+        pointer(widget, 'pointermove', 330, 295); // would translate to (40,15) if a drag had started
+
+        // No gesture started: the widget did not move, and the pointerdown was not preventDefaulted, so the click proceeds.
+        expect(widget.getAttribute('data-x')).toBe('10');
+        expect(widget.getAttribute('data-y')).toBe('20');
+        expect(widget.style.transform).toBe(transformBefore);
+        expect(down.defaultPrevented).toBe(false);
+
+        overlay.remove();
+        widget.remove();
+    });
 });
