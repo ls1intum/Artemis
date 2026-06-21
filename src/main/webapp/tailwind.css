@@ -17,7 +17,7 @@
  * app.config.ts, drop `source(none)` + the `@source` allowlist, and (optionally) reintroduce a brand-state
  * `@theme inline` block once it is no longer shadowed by Bootstrap's `!important` color utilities.
  */
-@layer theme, utilities;
+@layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 /*
@@ -42,3 +42,18 @@
 
 /* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
 @custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));
+
+/*
+ * Default border color. Preflight is off (above), so a bare `border` / `border-b` utility would otherwise
+ * fall back to `currentColor` (the text color) and render as bright/white lines in dark mode. Restore
+ * Tailwind's Preflight border default, bound to the PrimeNG content border token so it harmonizes in light
+ * AND dark. This lives in the `base` layer (below `utilities`) so explicit `border-<color>` utilities still
+ * win, and below unlayered Bootstrap so it never overrides Bootstrap's own component borders.
+ */
+@layer base {
+    *,
+    ::before,
+    ::after {
+        border-color: var(--p-content-border-color);
+    }
+}

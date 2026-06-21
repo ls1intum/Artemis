@@ -32,6 +32,13 @@ export const AuraArtemis = definePreset(Aura, {
                     900: 'var(--module-bg)',
                     950: '#101214',
                 },
+                // The stock Aura dark content border (surface.700) reads as bright "white" hairlines against the
+                // extra-dark Artemis surfaces (tables, cards, panels, dividers). Step it down to surface.800 for a
+                // subtle separator that harmonizes with the chrome. Drives --p-content-border-color, which p-table /
+                // p-card / p-panel borders and the global Tailwind default border-color (see tailwind.css) all use.
+                content: {
+                    borderColor: '{surface.800}',
+                },
             },
         },
         primary: {
