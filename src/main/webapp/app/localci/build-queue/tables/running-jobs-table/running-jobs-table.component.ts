@@ -9,6 +9,9 @@ import { NgClass, SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 /**
  * Component that displays a table of running build jobs.
@@ -21,7 +24,20 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
     templateUrl: './running-jobs-table.component.html',
     styleUrls: ['../build-jobs-table.scss', './running-jobs-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, RouterLink, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTranslatePipe, SlicePipe],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        NgClass,
+        RouterLink,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        ArtemisTranslatePipe,
+        SlicePipe,
+        TableModule,
+        ButtonModule,
+        TooltipModule,
+    ],
 })
 export class RunningJobsTableComponent {
     /** List of running build jobs to display */

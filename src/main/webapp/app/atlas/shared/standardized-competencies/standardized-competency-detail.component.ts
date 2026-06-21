@@ -1,6 +1,5 @@
 import { Component, input, output } from '@angular/core';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonModule } from 'primeng/button';
@@ -18,10 +17,6 @@ export class StandardizedCompetencyDetailComponent {
     sourceString = input('');
 
     onClose = output<void>();
-
-    // other constants
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
 
     close() {
         this.onClose.emit();

@@ -375,6 +375,8 @@
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
             "retry": "Retry",
+            "next": "Next",
+            "previous": "Previous",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",

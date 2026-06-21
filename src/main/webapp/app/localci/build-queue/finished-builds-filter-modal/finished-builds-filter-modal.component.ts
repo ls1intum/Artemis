@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -115,7 +116,7 @@ export enum FinishedBuildJobFilterKey {
  */
 @Component({
     selector: 'jhi-finished-builds-filter-modal',
-    imports: [ArtemisTranslatePipe, TranslateDirective, NgbTypeahead, FormDateTimePickerComponent, FormsModule],
+    imports: [ArtemisTranslatePipe, TranslateDirective, FormDateTimePickerComponent, FormsModule, ButtonModule, AutoCompleteModule, InputTextModule, RadioButtonModule],
     templateUrl: './finished-builds-filter-modal.component.html',
     styleUrl: './finished-builds-filter-modal.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,11 +149,8 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     /** Available status values for the status filter dropdown */
     buildStatusFilterValues?: string[];
 
-    /** Subject for typeahead focus events */
-    focus$ = new Subject<string>();
-
-    /** Subject for typeahead click events */
-    click$ = new Subject<string>();
+    /** Suggestions shown in the build agent address autocomplete dropdown */
+    readonly buildAgentAddressSuggestions = signal<string[]>([]);
 
     /** List of finished build jobs used to extract unique build agent addresses */
     finishedBuildJobs: FinishedBuildJob[] = [];
@@ -182,13 +180,6 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
     }
 
-    // Workaround for the NgbTypeahead issue: https://github.com/ng-bootstrap/ng-bootstrap/issues/2400
-    clickEvents($event: Event, typeaheadInstance: NgbTypeahead) {
-        if (typeaheadInstance.isPopupOpen()) {
-            this.click$.next(($event.target as HTMLInputElement).value);
-        }
-    }
-
     /**
      * Get all build agents' addresses from the finished build jobs.
      */
@@ -197,19 +188,17 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     }
 
     /**
-     * Method to build the agent addresses for the typeahead search.
-     * @param text$
+     * Called by p-autoComplete on each keystroke / focus to populate the build agent address suggestions.
+     * Mirrors the previous NgbTypeahead behavior: case-insensitive substring match, capped at 10 results,
+     * and showing all addresses when the query is empty.
+     * @param event the autocomplete complete event carrying the current query
      */
-    typeaheadSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+    searchBuildAgentAddresses(event: AutoCompleteCompleteEvent): void {
+        const term = event.query;
         const buildAgentAddresses = this.buildAgentAddresses;
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.click$;
-        const inputFocus$ = this.focus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10)),
-        );
-    };
+        const filtered = (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10);
+        this.buildAgentAddressSuggestions.set(filtered);
+    }
 
     /**
      * Method to add or remove a status filter and store the selected status filters in the local store if required.
