@@ -83,6 +83,14 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             return;
         }
         const target = event.target as Element | null;
+        // Never hijack a pointerdown on an interactive control (header buttons: info, new chat, fullscreen, close,
+        // the session switcher; plus the message input, send button and the source dropdown). interact.js preserved
+        // these clicks via its drag threshold; the explicit handler must opt them out, otherwise preventDefault and
+        // pointer capture below would swallow the click. This also covers controls that sit within EDGE_MARGIN of a
+        // border (e.g. the close button near the top-right), which would otherwise start an edge resize.
+        if (target?.closest('button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"]')) {
+            return;
+        }
         const rect = widget.getBoundingClientRect();
         const margin = IrisChatbotWidgetComponent.EDGE_MARGIN;
         const edges = {
