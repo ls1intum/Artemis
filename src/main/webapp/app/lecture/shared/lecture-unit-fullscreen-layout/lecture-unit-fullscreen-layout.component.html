@@ -15,7 +15,7 @@
         @if (showHorizontalSplitter()) {
             <!-- Horizontal splitter (top | bottom). layout="vertical" = stacked panels (was split.js direction 'vertical'). -->
             <p-splitter
-                class="fullscreen-splitter"
+                class="fullscreen-splitter w-100 h-100"
                 layout="vertical"
                 [panelSizes]="horizontalSplit().sizes"
                 [minSizes]="horizontalMinSizes()"
@@ -39,7 +39,7 @@
     @if (showVerticalSplitter()) {
         <!-- Vertical splitter (main area | sidebar). layout="horizontal" = side-by-side panels (was split.js direction 'horizontal'). -->
         <p-splitter
-            class="fullscreen-splitter"
+            class="fullscreen-splitter w-100 h-100"
             layout="horizontal"
             [panelSizes]="verticalSplit().sizes"
             [minSizes]="verticalMinSizes()"

@@ -104,11 +104,6 @@
 :host ::ng-deep .fullscreen-splitter {
     &.p-splitter {
         flex: 1;
-
-        // Explicitly fill the fullscreen container. `flex: 1` alone left the splitter sized to its panels' content
-        // (so the PDF + Iris sidebar only used part of the width); width/height 100% forces it to span the container.
-        width: 100%;
-        height: 100%;
         min-width: 0;
         min-height: 0;
 
