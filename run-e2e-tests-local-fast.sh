@@ -295,7 +295,7 @@ if [ "$SKIP_SERVER" = false ]; then
         echo "Waiting for Pyris to report healthy (Weaviate up + chat pipeline valid)..."
         IRIS_READY=false
         for _ in $(seq 1 60); do
-            if curl -sf -H "Authorization: ${IRIS_SECRET_TOKEN}" http://localhost:8000/api/v1/health/ 2>/dev/null | grep -q '"isHealthy":true'; then
+            if curl -sf -H "Authorization: ${IRIS_SECRET_TOKEN}" http://localhost:8000/api/v1/health/ 2>/dev/null | grep -Eq '"isHealthy"[[:space:]]*:[[:space:]]*true'; then
                 IRIS_READY=true
                 break
             fi

@@ -6,7 +6,7 @@ wired into the Artemis e2e setup, with **only the LLM mocked**. It exercises the
 Artemis ↔ Pyris wire contract (pipeline run, async status callbacks, health) end to end,
 without ever contacting a real model.
 
-```
+```text
  Artemis (host :8080) ──POST /api/v1/pipelines/chat/run──▶ Pyris (container :8000)
         ▲                                                      │  uses mock LLM
         │  POST /api/iris/internal/pipelines/chat/runs/        │  (openai_chat base_url

@@ -54,7 +54,7 @@ CANNED_REPLY = os.environ.get(
     "Hello from the mock-llm. This is a deterministic canned answer served to "
     "real Pyris for end-to-end testing of the Artemis Iris integration.",
 )
-EMBED_DIM = int(os.environ.get("MOCK_LLM_EMBED_DIM", "1536"))
+EMBED_DIM = max(0, int(os.environ.get("MOCK_LLM_EMBED_DIM", "1536")))
 
 
 def log(message: str) -> None:
@@ -187,9 +187,9 @@ class MockLLMHandler(BaseHTTPRequestHandler):
             self._respond(200, embeddings_body(model, inputs))
             return
 
-        # Unknown POST: accept it with a harmless body.
+        # Unknown POST: fail fast (404) so endpoint/config drift is visible in this contract-focused stack.
         log(f"unhandled POST {self.path}")
-        self._respond(200, {"status": "ok", "mock": True})
+        self._respond(404, {"error": {"message": f"Unknown endpoint: {self.path}", "type": "invalid_request_error"}})
 
     def log_message(self, fmt: str, *args) -> None:  # noqa: A003 - silence default access log
         return
