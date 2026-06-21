@@ -430,6 +430,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.results()).isNullOrEmpty();
         assertThat(submission.submitted()).isTrue();
+        assertThat(submission.participation().isOwner()).isTrue();
+        assertThat(submission.participation().exercise().isAtLeastTutor()).isFalse();
+        assertThat(submission.participation().exercise().isAtLeastEditor()).isFalse();
+        assertThat(submission.participation().exercise().isAtLeastInstructor()).isFalse();
     }
 
     @Test
@@ -528,20 +532,32 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void submitExerciseWithSubmissionId() throws Exception {
+    void submitExercise_existingSubmissionIdFromSameExercise_allowed() throws Exception {
         FileUploadSubmissionDTO submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
-        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(submission.id(), submission.submitted(), finishedFileUploadExercise.getId());
+        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(submission.id(), submission.submitted(), releasedFileUploadExercise.getId());
+        request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
+                FileUploadSubmissionDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void submitExercise_bodyExerciseIdDoesNotMatchPath_badRequest() throws Exception {
+        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(null, submittedFileUploadSubmission.isSubmitted(), finishedFileUploadExercise.getId());
         request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
                 FileUploadSubmissionDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void submitExercise_wrongExerciseId() throws Exception {
+    void submitExercise_existingSubmissionIdFromDifferentExercise_badRequest() throws Exception {
         FileUploadSubmissionDTO submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
-        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(submission.id(), submission.submitted(), releasedFileUploadExercise.getId());
-        request.postWithMultipartFile("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
-                FileUploadSubmissionDTO.class, HttpStatus.OK);
+        FileUploadSubmissionInputDTO input = new FileUploadSubmissionInputDTO(submission.id(), submission.submitted(), finishedFileUploadExercise.getId());
+        request.postWithMultipartFile("/api/fileupload/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", input, "submission", validFile,
+                FileUploadSubmissionDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submission.id(), releasedFileUploadExercise.getId()))
+                .isPresent();
+        assertThat(fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submission.id(), finishedFileUploadExercise.getId())).isEmpty();
     }
 
     @Test
@@ -698,6 +714,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(receivedSubmission.id()).isEqualTo(submissionID);
         assertThat(receivedSubmission.results()).hasSize(1);
         assertThat(receivedSubmission.results().getFirst().assessor().login()).as("latest result has assessor").isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(receivedSubmission.participation().exercise().isAtLeastTutor()).isTrue();
+        assertThat(receivedSubmission.participation().exercise().isAtLeastEditor()).isFalse();
+        assertThat(receivedSubmission.participation().exercise().isAtLeastInstructor()).isFalse();
     }
 
     @Test
