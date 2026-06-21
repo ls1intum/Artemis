@@ -10,6 +10,10 @@ export interface FileUploadSubmissionInputDTO {
     exerciseId?: number;
 }
 
+export interface FileUploadParticipationDTO extends StudentParticipation {
+    isOwner?: boolean;
+}
+
 export interface FileUploadSubmissionDTO {
     id?: number;
     submitted?: boolean;
@@ -19,7 +23,7 @@ export interface FileUploadSubmissionDTO {
     submissionExerciseType?: SubmissionExerciseType;
     durationInMinutes?: number;
     filePath?: string;
-    participation?: StudentParticipation;
+    participation?: FileUploadParticipationDTO;
     results?: Result[];
 }
 
