@@ -3,16 +3,6 @@
     width: 1rem;
 }
 
-.form-control.is-invalid {
-    background-image: none;
-}
-
-// p-datepicker is not a Bootstrap `.is-invalid` sibling, so the validation message would otherwise
-// stay hidden (Bootstrap only reveals `.invalid-feedback` next to an `.is-invalid` control).
-.invalid-feedback {
-    display: block;
-}
-
 .visible-date-warning {
     color: var(--bs-body-color) !important;
 }

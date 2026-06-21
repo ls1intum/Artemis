@@ -40,6 +40,7 @@ interface StandardizedCompetencyForm {
 @Component({
     selector: 'jhi-standardized-competency-edit',
     templateUrl: './standardized-competency-edit.component.html',
+    styleUrls: ['./standardized-competency-edit.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

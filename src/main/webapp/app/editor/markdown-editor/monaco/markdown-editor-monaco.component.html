@@ -69,7 +69,7 @@
                             </div>
                         }
                         @if (displayedActions().color; as color) {
-                            <div class="flex">
+                            <div class="flex relative">
                                 <button type="button" class="color-preview md-toolbar-btn" (click)="openColorSelector($event)">
                                     <span [jhiTranslate]="color.translationKey"></span>
                                 </button>

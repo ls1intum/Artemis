@@ -53,11 +53,10 @@
                     <tr id="websocketConnection" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                         <td class="py-2 px-3">Websocket Connection (Client -> Server)</td>
                         <td class="py-2 px-3 text-center" data-testid="status-cell">
-                            <p-tag
-                                [severity]="websocketConnected() ? 'success' : 'danger'"
-                                [value]="(websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate"
-                                data-testid="status-tag"
-                            />
+                            <p-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
+                                <fa-icon [fixedWidth]="true" [icon]="websocketConnected() ? faTowerBroadcast : faExclamation" />
+                                <span>{{ (websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate }}</span>
+                            </p-tag>
                         </td>
                         <td class="py-2 px-3 text-center">-</td>
                     </tr>

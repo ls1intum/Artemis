@@ -42,7 +42,13 @@
     <div class="flex flex-col" [formGroup]="form">
         <div class="flex flex-col gap-1">
             <label for="title-input" jhiTranslate="artemisApp.standardizedCompetency.model.title"></label>
-            <input type="text" pInputText id="title-input" formControlName="title" />
+            <input
+                type="text"
+                pInputText
+                id="title-input"
+                formControlName="title"
+                [invalid]="form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)"
+            />
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
                 <p-message severity="error" data-testid="title-error">
                     @if (form.controls.title.errors?.required) {

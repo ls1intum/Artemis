@@ -14,6 +14,7 @@
                 </p-button>
                 <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-finished-heading')">
                     <span jhiTranslate="artemisApp.buildQueue.finished"></span>
+                    <p-tag severity="info" styleClass="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
                 </p-button>
             </p-buttongroup>
             <span
@@ -40,6 +41,7 @@
                     </p-button>
                     <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-finished-heading')">
                         <span jhiTranslate="artemisApp.buildQueue.finished"></span>
+                        <p-tag severity="info" styleClass="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
                     </p-button>
                 </p-buttongroup>
                 <span

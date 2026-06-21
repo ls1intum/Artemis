@@ -20,8 +20,7 @@
         name="datePicker"
         inputId="date-input-field"
         styleClass="w-full"
-        [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
-        [class.ng-invalid]="!isValid()"
+        [ngClass]="{ 'border-warning': warning() }"
         [ngModel]="value()"
         [disabled]="disabled()"
         [invalid]="!isValid()"
@@ -43,11 +42,11 @@
     </button>
 </div>
 @if (dateInput.invalid || (requiredField() && !dateInput.value)) {
-    <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>
+    <small class="text-danger text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></small>
 }
 @if (warning()) {
-    <div class="invalid-feedback">
+    <small class="text-sm mt-1 block">
         <fa-icon class="text-warning" [icon]="faTriangleExclamation" />
         <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" pTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
-    </div>
+    </small>
 }

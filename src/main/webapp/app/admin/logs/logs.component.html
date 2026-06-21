@@ -1,6 +1,13 @@
 @if (loggers()) {
     <h5 *adminTitleBarTitle id="logs-page-heading" class="mb-0" jhiTranslate="logs.title" data-cy="logsPageHeading"></h5>
-    <div class="flex flex-col gap-3">
+    <!--
+        Full-height flex column so the table's scroll viewport is bounded by the real available space
+        (the .admin-body scroll region), not a magic `calc(100vh - …)` that does not match it.
+        The table wrapper is flex: 1 with min-height: 0, and the p-table uses scrollHeight="flex"
+        so PrimeNG's virtual-scroll viewport fills exactly that bounded area. This keeps the last
+        logger reachable and prevents the scroll from jumping.
+    -->
+    <div class="flex h-full min-h-0 flex-col gap-3">
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
         <div class="flex flex-col gap-2">
             <label for="logs-filter" jhiTranslate="logs.filter"></label>
@@ -11,8 +18,9 @@
             [tableStyle]="{ 'min-width': '30rem' }"
             [scrollable]="true"
             [virtualScroll]="true"
-            [virtualScrollItemSize]="46"
-            scrollHeight="calc(100vh - 15rem)"
+            [virtualScrollItemSize]="logsTableRowHeight"
+            scrollHeight="flex"
+            styleClass="min-h-0 flex-1"
             aria-describedby="logs-page-heading"
             data-testid="logs-table"
         >

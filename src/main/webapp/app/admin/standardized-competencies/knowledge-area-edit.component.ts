@@ -31,6 +31,7 @@ interface KnowledgeAreaForm {
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
+    styleUrls: ['./knowledge-area-edit.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

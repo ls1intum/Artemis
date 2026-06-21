@@ -1,0 +1,11 @@
+/*
+ * The legacy global rule `.ng-invalid:not(form)` (content/scss/global.scss) adds a
+ * full-height `border-left: 5px solid red` to every invalid element. On this PrimeNG
+ * form that bar landed on the `[formGroup]` wrapper (and the inputs), rendering as a
+ * solid red bar spanning the whole left side. New-world forms rely on PrimeNG's
+ * `[invalid]` input styling plus the inline `<p-message>` errors, so we neutralize the
+ * legacy bar within this component.
+ */
+:host ::ng-deep .ng-invalid:not(form) {
+    border-left: none;
+}

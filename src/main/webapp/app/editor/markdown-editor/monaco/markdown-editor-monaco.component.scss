@@ -6,6 +6,17 @@
     color: var(--md-wrapper-color);
     background-color: var(--md-editor-background);
 
+    // The edit-content pane carries `.markdown-editor-wrapper` for styling but is toggled via the
+    // Tailwind `hidden` utility when the Preview/Visual tab is active. Because this component-scoped
+    // `.markdown-editor-wrapper` selector (with Angular's emulated-encapsulation attribute) outranks
+    // the single-class `.hidden` utility, `display: flex` would otherwise win and keep the Monaco
+    // editor in the layout. Left visible behind an auto-height preview pane, Monaco's content-height
+    // measurement feeds back into the flex layout and the wrapper grows without bound. Re-assert the
+    // hide here so the inactive pane is removed from layout (matches the former Bootstrap `d-none`).
+    &.hidden {
+        display: none;
+    }
+
     // This is a fix for using the fullscreen mode on Safari.
     &:-webkit-full-screen {
         width: 100%;

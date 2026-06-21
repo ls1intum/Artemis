@@ -3,6 +3,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
+import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
@@ -19,8 +20,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
  * Admin component for viewing system audit logs.
@@ -42,8 +43,8 @@ import { MessageModule } from 'primeng/message';
         AdminTitleBarTitleDirective,
         InputGroupModule,
         InputGroupAddonModule,
-        InputTextModule,
         MessageModule,
+        FormDateTimePickerComponent,
     ],
 })
 export class AuditsComponent implements OnInit {
@@ -79,9 +80,16 @@ export class AuditsComponent implements OnInit {
     /** Whether data can be loaded (date range is valid) */
     readonly canLoad = computed(() => this.fromDate() !== '' && this.toDate() !== '');
 
+    /** From date exposed to the shared date picker as a native Date (the wrapper's value contract). */
+    readonly fromDateValue = computed(() => this.toPickerDate(this.fromDate()));
+
+    /** To date exposed to the shared date picker as a native Date (the wrapper's value contract). */
+    readonly toDateValue = computed(() => this.toPickerDate(this.toDate()));
+
     private readonly dateFormat = 'yyyy-MM-dd';
 
     protected readonly faSort = faSort;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     ngOnInit(): void {
         this.toDate.set(this.today());
@@ -102,14 +110,39 @@ export class AuditsComponent implements OnInit {
         }
     }
 
-    /** Updates the from date filter */
-    updateFromDate(value: string): void {
-        this.fromDate.set(value);
+    /**
+     * Updates the from date filter from the shared date picker value.
+     * The picker emits a dayjs/Date (or null); the audits service consumes yyyy-MM-dd strings,
+     * so we convert at the boundary and keep the rest of the date handling untouched.
+     */
+    updateFromDate(value: dayjs.Dayjs | Date | null | undefined): void {
+        this.fromDate.set(this.toDateString(value));
     }
 
-    /** Updates the to date filter */
-    updateToDate(value: string): void {
-        this.toDate.set(value);
+    /**
+     * Updates the to date filter from the shared date picker value.
+     * See {@link updateFromDate} for the conversion rationale.
+     */
+    updateToDate(value: dayjs.Dayjs | Date | null | undefined): void {
+        this.toDate.set(this.toDateString(value));
+    }
+
+    /** Converts a picker value (dayjs/Date) to the yyyy-MM-dd string the audits service expects. */
+    private toDateString(value: dayjs.Dayjs | Date | null | undefined): string {
+        if (value == undefined) {
+            return '';
+        }
+        const parsed = dayjs(value);
+        return parsed.isValid() ? parsed.format(this.dateFormat) : '';
+    }
+
+    /** Converts a stored yyyy-MM-dd string to the native Date the shared date picker binds to. */
+    private toPickerDate(value: string): Date | null {
+        if (!value) {
+            return null;
+        }
+        const parsed = dayjs(value);
+        return parsed.isValid() ? parsed.toDate() : null;
     }
 
     /** Updates the current page */

@@ -43,6 +43,15 @@ export class LogsComponent implements OnInit, OnDestroy {
     /** Debounce delay (ms) before the filter is applied to the (potentially large) logger list */
     private static readonly FILTER_DEBOUNCE_MS = 200;
 
+    /**
+     * Fixed row height (px) used by the table's virtual scroll. This MUST match the actual rendered
+     * height of a body row (PrimeNG cell padding + the size="small" level button group + border),
+     * otherwise PrimeNG's virtual scroller miscomputes the spacer and the list jumps / the last rows
+     * become unreachable. Measured against the current theme (PrimeNG small button group + cell
+     * padding renders at 60px); keep in sync if the row markup changes.
+     */
+    protected readonly logsTableRowHeight = 60;
+
     /** All available loggers */
     readonly loggers = signal<Log[]>([]);
 
