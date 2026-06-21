@@ -69,6 +69,10 @@ public class LectureApi extends AbstractLectureApi {
         return lectureRepository.findLectureIdsByCourseId(courseId);
     }
 
+    public boolean existsByCourseId(long courseId) {
+        return lectureRepository.existsByCourse_Id(courseId);
+    }
+
     public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
         return lectureService.getCalendarEventDTOsFromLectures(courseId, language);
     }

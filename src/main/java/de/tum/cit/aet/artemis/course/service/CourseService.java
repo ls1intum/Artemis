@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseTabAccessDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
@@ -42,9 +45,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.quiz.api.QuizQuestionApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 /**
@@ -73,6 +78,12 @@ public class CourseService {
 
     private final Optional<PrerequisitesApi> prerequisitesApi;
 
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
+    private final Optional<QuizQuestionApi> quizQuestionApi;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -88,7 +99,8 @@ public class CourseService {
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService,
+            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<QuizQuestionApi> quizQuestionApi) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -103,6 +115,9 @@ public class CourseService {
         this.prerequisitesApi = prerequisitesApi;
         this.faqRepository = faqRepository;
         this.courseVisibleService = courseVisibleService;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.irisSettingsApi = irisSettingsApi;
+        this.quizQuestionApi = quizQuestionApi;
     }
 
     /**
@@ -207,6 +222,32 @@ public class CourseService {
             course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
         }
         return course;
+    }
+
+    /**
+     * Computes the lightweight per-tab access flags for the given course and user, used by the course overview guard to decide tab access
+     * without loading the full (expensive) course dashboard data. Each flag comes from a cheap indexed {@code exists}/{@code count} query or a
+     * course column; no exercises, lectures, exams, scores or participations are loaded.
+     *
+     * @param course the course (already loaded; its columns provide the dashboard, learning-path and communication flags)
+     * @param user   the user requesting access (needed for the user-scoped exam visibility check)
+     * @return the per-tab access flags
+     */
+    public CourseTabAccessDTO getCourseTabAccess(Course course, User user) {
+        long courseId = course.getId();
+        boolean lecturesEnabled = lectureApi.map(api -> api.existsByCourseId(courseId)).orElse(false);
+        boolean examsVisible = examRepositoryApi.map(api -> api.existsVisibleExamForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())).orElse(false);
+        // courseHasCompetencies covers both competencies and prerequisites (single-table inheritance) in one query
+        boolean competenciesOrPrerequisites = courseCompetencyApi.map(api -> api.courseHasCompetencies(courseId)).orElse(false);
+        boolean tutorialGroups = tutorialGroupApi.map(api -> api.countByCourseId(courseId) > 0).orElse(false);
+        boolean faqAccepted = faqRepository.countByCourseIdAndFaqState(courseId, FaqState.ACCEPTED) > 0;
+        boolean irisEnabled = irisSettingsApi.map(api -> api.isIrisEnabledForCourse(courseId)).orElse(false);
+        boolean trainingEnabled = quizQuestionApi.map(api -> api.areQuizExercisesInCourseAvailableForPractice(courseId)).orElse(false);
+        CourseInformationSharingConfiguration config = course.getCourseInformationSharingConfiguration();
+        boolean communicationEnabled = config == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+                || config == CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+        return new CourseTabAccessDTO(lecturesEnabled, examsVisible, competenciesOrPrerequisites, tutorialGroups, course.getStudentCourseAnalyticsDashboardEnabled(), irisEnabled,
+                faqAccepted, course.getLearningPathsEnabled(), communicationEnabled, trainingEnabled);
     }
 
     /**

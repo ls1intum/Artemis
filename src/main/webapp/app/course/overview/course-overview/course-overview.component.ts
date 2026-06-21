@@ -132,12 +132,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const id = Number(params.courseId);
             const previousCourseId = this.courseId();
             this.courseId.set(id);
-            // In-place navigation to a different course (without destroying this container) must reload the course
+            // In-place navigation to a different course (without destroying this container) must reload the course content
+            // and re-check tab access, because the CourseOverviewGuard is not re-evaluated when only the parent courseId changes.
             if (previousCourseId && previousCourseId !== id) {
                 this.loadCourseSubscription?.unsubscribe();
                 this.loadCourseSubscription = this.loadCourse().subscribe({
                     next: () => this.sidebarItems.set(this.getSidebarItems()),
                 });
+                this.checkChildRouteAccess(id);
             }
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
@@ -248,23 +250,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
-        const courseId = this.courseId();
-        const storedCourse = this.courseStorageService.getCourse(courseId);
-        if (!refresh && storedCourse && this.courseStorageService.isCourseFullyLoaded(courseId)) {
-            // The CourseOverviewGuard already loaded and stored the full course before activating the route, so reuse it
-            // instead of issuing a second for-dashboard call (load once). Re-check access for the target child route,
-            // because on an in-place course switch the guard is not re-evaluated.
-            this.checkChildRouteAccess(storedCourse);
-            this.course.set(storedCourse);
-            this.refreshingCourse.set(false);
-            return of(undefined);
-        }
-        const observable = this.courseManagementService.findOneForDashboard(courseId).pipe(
+        // Loads the course content; the CourseOverviewGuard independently decides tab access via the lightweight access endpoint.
+        const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
-                    // Unguarded routes and in-place switches reach loadCourse without the guard having decided; re-check
-                    // the target child route now that the course is loaded so an inaccessible tab is redirected away.
-                    this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
                 }
 
@@ -531,9 +520,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
      * This complements the {@link CourseOverviewGuard}: the guard decides on the first navigation into a course, but it is
      * not re-evaluated on an in-place course switch (different courseId without re-creating this container), so the access
-     * check for the new target route has to run here once the course has been (re)loaded.
+     * check for the new target route has to run here. It uses the same lightweight access endpoint and decision logic as the guard.
      */
-    private checkChildRouteAccess(course: Course): void {
+    private checkChildRouteAccess(courseId: number): void {
         const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
         // Only re-check routes that the CourseOverviewGuard actually protects: other child routes
         // (e.g. settings, statistics, calendar) have no access rule and must not be redirected
@@ -542,8 +531,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
         const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
-        // handleReturn navigates away synchronously when access is denied; subscribe to make the consumption explicit
-        this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
+        this.courseManagementService.getCourseTabAccess(courseId).subscribe((access) => this.courseOverviewGuard.decideAccess(courseId, access, childPath, user));
     }
 
     ngOnDestroy() {

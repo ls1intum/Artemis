@@ -19,6 +19,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
+import { CourseTabAccess } from 'app/course/shared/entities/course-tab-access.model';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -269,8 +270,17 @@ export class CourseManagementService implements OnDestroy {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined, true)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
         );
+    }
+
+    /**
+     * Fetches the lightweight per-tab access flags for a course, used by the {@link CourseOverviewGuard} to decide tab
+     * access without loading the full course. This issues a cheap request and is intentionally not cached.
+     * @param courseId the course to fetch the access flags for
+     */
+    getCourseTabAccess(courseId: number): Observable<CourseTabAccess> {
+        return this.http.get<CourseTabAccess>(`${this.resourceUrl}/${courseId}/access`);
     }
 
     saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {

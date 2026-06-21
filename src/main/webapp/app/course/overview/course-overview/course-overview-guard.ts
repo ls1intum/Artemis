@@ -1,11 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { Observable, catchError, forkJoin, from, of, switchMap } from 'rxjs';
-import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Observable, catchError, forkJoin, from, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
-import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { CourseTabAccess } from 'app/course/shared/entities/course-tab-access.model';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -15,14 +12,18 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
     providedIn: 'root',
 })
 export class CourseOverviewGuard implements CanActivate {
-    private courseStorageService = inject(CourseStorageService);
     private courseManagementService = inject(CourseManagementService);
     private accountService = inject(AccountService);
     private router = inject(Router);
-    private serverDateService = inject(ArtemisServerDateService);
 
     /**
      * Check if the client can activate a course overview route.
+     *
+     * The guard only loads the lightweight per-tab access flags (a handful of cheap existence/count queries) and decides
+     * BEFORE the route activates, so an inaccessible tab never briefly mounts. The (expensive) course content is fetched
+     * separately by the course container. On a load error (e.g. 403 for an unregistered user) activation is allowed; the
+     * container's loadCourse then handles it (course registration redirect / alert).
+     *
      * @return true if the client is allowed to access the route, false otherwise
      */
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
@@ -30,36 +31,30 @@ export class CourseOverviewGuard implements CanActivate {
         if (!courseIdString) {
             return of(false);
         }
-        const courseIdNumber = parseInt(courseIdString, 10);
+        const courseId = parseInt(courseIdString, 10);
 
         const path = route.routeConfig?.path;
         if (!path) {
             return of(false);
         }
         // Resolving the current user is only needed for the dashboard fallback; other paths don't depend on it.
-        // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to today's Iris-or-exercises behavior.
+        // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to the Iris-or-exercises behavior.
         const user$: Observable<User | undefined> =
             path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
-        const course = this.courseStorageService.getCourse(courseIdNumber);
-        if (course && this.courseStorageService.isCourseFullyLoaded(courseIdNumber)) {
-            // Fast path: the full course is already loaded (e.g. when switching between tabs), so decide without a request.
-            return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));
-        }
-        // First navigation into the course: only the slim course from the course list might be stored (it e.g. always
-        // has empty exams and would produce wrong access decisions). Load the full course once and decide BEFORE
-        // activating the route, so an inaccessible tab never briefly mounts. findOneForDashboard stores the result, so
-        // the course container reuses it instead of fetching again. On a load error (e.g. 403 for an unregistered user)
-        // allow activation; the container's loadCourse then handles it (course registration redirect / alert).
         return forkJoin({
-            courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),
+            access: this.courseManagementService.getCourseTabAccess(courseId),
             user: user$,
         }).pipe(
-            switchMap(({ courseRes, user }) => this.handleReturn(courseRes.body ?? undefined, path, user)),
+            map(({ access, user }) => this.decideAccess(courseId, access, path, user)),
             catchError(() => of(true)),
         );
     }
 
-    handleReturn = (course?: Course, type?: string, user?: User): Observable<boolean> => {
+    /**
+     * Decides whether the given tab is accessible from the per-tab access flags and redirects to a fallback tab otherwise.
+     * Kept as a single place so the access rules are not duplicated.
+     */
+    decideAccess(courseId: number, access: CourseTabAccess, type?: string, user?: User): boolean {
         let hasAccess: boolean;
         switch (type) {
             // Should always be accessible
@@ -67,58 +62,47 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = true;
                 break;
             case CourseOverviewRoutePath.LECTURES:
-                hasAccess = !!course?.lectures;
+                hasAccess = access.lecturesEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.EXAMS:
-                hasAccess = this.hasVisibleExams(course);
+                hasAccess = access.examsVisible ?? false;
                 break;
             case CourseOverviewRoutePath.COMPETENCIES:
-                hasAccess = !!(course?.numberOfCompetencies || course?.numberOfPrerequisites);
+                hasAccess = access.competenciesOrPrerequisites ?? false;
                 break;
             case CourseOverviewRoutePath.TUTORIAL_GROUPS:
-                hasAccess = !!course?.numberOfTutorialGroups;
+                hasAccess = access.tutorialGroups ?? false;
                 break;
             case CourseOverviewRoutePath.DASHBOARD:
-                hasAccess = !!course?.studentCourseAnalyticsDashboardEnabled;
+                hasAccess = access.dashboardEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.IRIS:
-                hasAccess = course?.irisEnabledInCourse ?? false;
+                hasAccess = access.irisEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.FAQ:
-                hasAccess = (course?.numberOfAcceptedFaqs ?? 0) > 0;
+                hasAccess = access.faqAccepted ?? false;
                 break;
             case CourseOverviewRoutePath.LEARNING_PATH:
-                hasAccess = course?.learningPathsEnabled ?? false;
+                hasAccess = access.learningPathsEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.COMMUNICATION:
-                hasAccess = isCommunicationEnabled(course);
+                hasAccess = access.communicationEnabled ?? false;
                 break;
             case CourseOverviewRoutePath.TRAINING:
             case CourseOverviewRoutePath.TRAINING_QUIZ:
-                hasAccess = course?.trainingEnabled ?? false;
+                hasAccess = access.trainingEnabled ?? false;
                 break;
             default:
                 hasAccess = false;
         }
         if (!hasAccess) {
             const hasOptedOutOfAI = user?.selectedLLMUsage === LLMSelectionDecision.NO_AI;
-            if (type === CourseOverviewRoutePath.DASHBOARD && course?.irisEnabledInCourse && !hasOptedOutOfAI) {
-                this.router.navigate([`/courses/${course?.id}/iris`]);
+            if (type === CourseOverviewRoutePath.DASHBOARD && access.irisEnabled && !hasOptedOutOfAI) {
+                this.router.navigate([`/courses/${courseId}/iris`]);
             } else {
-                this.router.navigate([`/courses/${course?.id}/exercises`]);
+                this.router.navigate([`/courses/${courseId}/exercises`]);
             }
         }
-        return of(hasAccess);
-    };
-
-    hasVisibleExams(course?: Course): boolean {
-        if (course?.exams) {
-            for (const exam of course.exams) {
-                if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return hasAccess;
     }
 }

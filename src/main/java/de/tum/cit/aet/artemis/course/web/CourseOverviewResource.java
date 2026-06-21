@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseTabAccessDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
@@ -162,6 +163,26 @@ public class CourseOverviewResource {
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), true);
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
+    }
+
+    /**
+     * GET /courses/{courseId}/access : returns the lightweight per-tab access flags for the course overview.
+     * <p>
+     * This is the cheap counterpart to {@link #getCourseForDashboard}: it only issues a handful of indexed existence/count
+     * queries (no exercises, lectures, exams, scores or participations are loaded) so the client {@code CourseOverviewGuard}
+     * can decide tab access quickly and before the (expensive) course content is fetched.
+     *
+     * @param courseId the id of the course
+     * @return the per-tab access flags for the requesting user
+     */
+    @GetMapping("courses/{courseId}/access")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseTabAccessDTO> getCourseTabAccess(@PathVariable long courseId) {
+        log.debug("REST request to get the course tab access flags for course {}", courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        return ResponseEntity.ok(courseService.getCourseTabAccess(course, user));
     }
 
     /**

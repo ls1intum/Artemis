@@ -125,6 +125,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseTabAccessDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -1047,6 +1048,26 @@ public class CourseTestService {
                 }
             }
         }
+    }
+
+    // Test
+    public void testGetCourseTabAccess() throws Exception {
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        CourseTabAccessDTO access = request.get("/api/course/courses/" + courses.getFirst().getId() + "/access", HttpStatus.OK, CourseTabAccessDTO.class);
+
+        // The created course has lectures and competencies, but no exams visible to the student
+        assertThat(access.lecturesEnabled()).as("lectures tab accessible").isTrue();
+        assertThat(access.competenciesOrPrerequisites()).as("competencies tab accessible").isTrue();
+        assertThat(access.examsVisible()).as("no exam is visible to the student").isFalse();
+        assertThat(access.tutorialGroups()).as("no tutorial groups").isFalse();
+        assertThat(access.faqAccepted()).as("no accepted FAQs").isFalse();
+    }
+
+    // Test
+    public void testGetCourseTabAccessForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        removeAllGroupsFromStudent1();
+        request.get("/api/course/courses/" + course.getId() + "/access", HttpStatus.FORBIDDEN, CourseTabAccessDTO.class);
     }
 
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {

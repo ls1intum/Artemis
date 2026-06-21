@@ -93,6 +93,34 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
+    /**
+     * Whether at least one exam in the given course is already visible to the user (registered, at least tutor, or the exam is a test exam).
+     * Mirrors the visibility predicate of {@link #findByCourseIdForUser} but only checks existence, so it can drive a cheap access decision
+     * without loading any exam data.
+     *
+     * @param courseId   the course for which exam visibility should be checked
+     * @param userId     the id of the user requesting access
+     * @param groupNames the groups of the user requesting access
+     * @param now        the current date, typically ZonedDateTime.now()
+     * @return true if at least one exam is visible to the user
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END
+            FROM Exam e
+                LEFT JOIN e.examUsers eu
+                LEFT JOIN e.course c
+            WHERE c.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    eu.user.id = :userId
+                    OR c.teachingAssistantGroupName IN :groupNames
+                    OR c.editorGroupName IN :groupNames
+                    OR c.instructorGroupName IN :groupNames
+                    OR e.testExam = TRUE
+                )
+            """)
+    boolean existsVisibleExamForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT exam
             FROM Exam exam

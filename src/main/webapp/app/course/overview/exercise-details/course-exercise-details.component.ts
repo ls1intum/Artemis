@@ -526,9 +526,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
         if (course && cachedExercise) {
             cachedExercise.studentParticipations = this._studentParticipations();
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 

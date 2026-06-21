@@ -34,7 +34,6 @@ import { CourseExercisesComponent } from 'app/course/overview/course-exercises/c
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -460,7 +459,6 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        // getCourse is read both in ngOnInit (initial cache lookup) and in loadCourse (reuse-vs-fetch decision)
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
@@ -532,70 +530,55 @@ describe('CourseOverviewComponent', () => {
         expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
-    it('should fetch the course exactly once when navigating into the course', async () => {
+    it('should fetch the course content exactly once when navigating into the course', async () => {
         await component.ngOnInit();
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
-    it('should reuse the cached full course without fetching when the guard already loaded it', async () => {
-        // The guard loads + stores the full course before activation; loadCourse must reuse it instead of fetching again (load once)
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
-        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
-
-        await component.ngOnInit();
-
-        expect(findOneForDashboardStub).not.toHaveBeenCalled();
-        expect(component.course()).toEqual(course1);
-    });
-
-    it('should still re-check access on the reused cached course (in-place switch) and redirect when inaccessible', async () => {
-        // On an in-place course switch the guard is not re-evaluated, so the reuse path must run the access check itself
+    it('should re-check access via the lightweight endpoint and redirect when switching in place to a course whose target tab is inaccessible', async () => {
         (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course1, lectures: undefined } as Course);
-        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        await component.ngOnInit();
-
-        expect(findOneForDashboardStub).not.toHaveBeenCalled();
-        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
-    });
-
-    it('should re-check access for the target child route after loading the course and redirect when it is not accessible', async () => {
-        // Deep link into the lectures tab of a course without lectures, reaching loadCourse without the guard having
-        // decided (e.g. unguarded entry / in-place switch): the container fetches and must redirect after the load.
-        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: undefined } as Course, headers: new HttpHeaders() })));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        await component.ngOnInit();
-
-        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
-    });
-
-    it('should not redirect after loading the course when the target child route is accessible', async () => {
-        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: [new Lecture()] } as Course, headers: new HttpHeaders() })));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        await component.ngOnInit();
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not redirect after loading the course for child routes that the guard does not protect', async () => {
-        // settings/statistics/calendar are CourseOverviewRoutePath members without an access rule; they must never be redirected
-        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        await component.ngOnInit();
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('should reload the course when navigating to a different course in place', async () => {
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
+        const accessSpy = vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({ lecturesEnabled: false }));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        await component.ngOnInit();
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(accessSpy).toHaveBeenCalledWith(999);
+        expect(navigateSpy).toHaveBeenCalledWith(['/courses/999/exercises']);
+    });
+
+    it('should not redirect after an in-place switch when the target tab is accessible', async () => {
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({ lecturesEnabled: true }));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        await component.ngOnInit();
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not re-check access for child routes that the guard does not protect on an in-place switch', async () => {
+        // settings/statistics/calendar have no access rule and must never trigger the access endpoint or a redirect
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        const accessSpy = vi.spyOn(courseService, 'getCourseTabAccess');
+        await component.ngOnInit();
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(accessSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the course content when navigating to a different course in place', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({}));
         await component.ngOnInit();
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 

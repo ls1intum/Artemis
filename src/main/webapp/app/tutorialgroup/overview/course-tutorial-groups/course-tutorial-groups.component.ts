@@ -124,9 +124,7 @@ export class CourseTutorialGroupsComponent {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
             course.tutorialGroups = tutorialGroups;
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 
@@ -149,9 +147,7 @@ export class CourseTutorialGroupsComponent {
         const existingLectures = course.lectures ?? [];
         const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
         course.lectures = [...remainingLectures, ...lecturesToUpdate];
-        // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-        // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-        this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
+        this.courseStorageService.updateCourse(course);
     }
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
