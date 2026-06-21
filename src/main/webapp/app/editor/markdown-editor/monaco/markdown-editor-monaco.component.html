@@ -69,11 +69,22 @@
                             </div>
                         }
                         @if (displayedActions().color; as color) {
-                            <div class="flex relative">
-                                <button type="button" class="color-preview md-toolbar-btn" (click)="openColorSelector($event)">
+                            <div class="flex">
+                                <button type="button" class="color-preview md-toolbar-btn" (click)="colorPopover.toggle($event)">
                                     <span [jhiTranslate]="color.translationKey"></span>
                                 </button>
-                                <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
+                                <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
+                                    <div class="md-color-grid flex flex-wrap gap-1">
+                                        @for (tagColor of colorSignal(); track tagColor) {
+                                            <button
+                                                type="button"
+                                                class="md-color-swatch"
+                                                [ngStyle]="{ backgroundColor: tagColor }"
+                                                (click)="onSelectColor(tagColor); colorPopover.hide()"
+                                            ></button>
+                                        }
+                                    </div>
+                                </p-popover>
                             </div>
                         }
                         <!-- Domain (without options) -->

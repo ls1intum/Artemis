@@ -65,16 +65,19 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected isInputValid = signal<boolean>(false);
     protected dateInputValue = signal<string>('');
 
-    isValid = computed(() => {
-        // Derive validity from the actual bound value (the source of truth), NOT from DOM-input events —
-        // otherwise a programmatically set [value]/writeValue (e.g. the audits filters or any edit form with an
-        // existing date) renders as invalid (red border) until the user interacts, because the input-event
-        // signals never fired.
+    /**
+     * True when the bound value is a present, valid date (dayjs or native Date). Source of truth for both the
+     * invalid border and the error message — NOT DOM input events, which never fire for a programmatically set
+     * [value]/writeValue (e.g. the audits filters, or any edit form opened with an existing date). Using the
+     * DOM value made a valid programmatic date read as invalid (red border) and spuriously rendered the
+     * "date is missing" message, which expanded the field.
+     */
+    protected hasValidValue = computed(() => {
         const value = this.value();
-        const hasValidValue = value != undefined && (dayjs.isDayjs(value) ? value.isValid() : !isNaN(new Date(value).getTime()));
-        const isInvalid = this.error() || this.warning() || (this.requiredField() && !hasValidValue);
-        return !isInvalid;
+        return value != undefined && (dayjs.isDayjs(value) ? value.isValid() : !isNaN(new Date(value).getTime()));
     });
+
+    isValid = computed(() => !(this.error() || this.warning() || (this.requiredField() && !this.hasValidValue())));
 
     /**
      * Whether the underlying p-datepicker should render the time picker (hours/minutes).

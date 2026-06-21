@@ -125,6 +125,25 @@
     }
 }
 
+// Color picker swatches, shown inside a PrimeNG popover anchored to the toolbar "Color" button (replaces the
+// old self-positioning jhi-color-selector that mis-anchored to the page corner in this toolbar).
+.md-color-grid {
+    width: 13.75rem;
+}
+
+.md-color-swatch {
+    width: 2.625rem;
+    height: 2.625rem;
+    padding: 0;
+    cursor: pointer;
+    border: 1px solid var(--color-selector-border);
+    border-radius: 3px;
+
+    &:hover {
+        outline: 2px solid var(--color-selector-border);
+    }
+}
+
 .default-font-size {
     font-size: var(--bs-body-font-size);
 }

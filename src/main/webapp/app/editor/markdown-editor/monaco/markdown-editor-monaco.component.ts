@@ -47,7 +47,6 @@ import { TextEditorActionGroup } from 'app/editor/monaco-editor/model/actions/te
 import { HeadingAction } from 'app/editor/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/editor/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/editor/monaco-editor/model/actions/color.action';
-import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
@@ -145,7 +144,6 @@ const TAB_VISUAL_ID = 'editor_visual';
         Popover,
         ButtonDirective,
         TieredMenu,
-        ColorSelectorComponent,
         PostingButtonComponent,
         CdkDrag,
         ArtemisTranslatePipe,
@@ -173,7 +171,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly resizePlaceholder = viewChild<ElementRef<HTMLDivElement>>('resizePlaceholder');
     readonly actionPalette = viewChild<ElementRef<HTMLElement>>('actionPalette');
     readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
-    readonly colorSelector = viewChild(ColorSelectorComponent);
 
     /**
      * The incoming markdown content. Supports one-way `[markdown]` and two-way `[(markdown)]` bindings (the latter
@@ -363,8 +360,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     static readonly TAB_EDIT = TAB_EDIT_ID;
     static readonly TAB_PREVIEW = TAB_PREVIEW_ID;
     static readonly TAB_VISUAL = TAB_VISUAL_ID;
-    readonly colorPickerMarginTop = 35;
-    readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSpinner = faSpinner;
@@ -1011,16 +1006,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (inputElement) {
             inputElement.value = '';
         }
-    }
-
-    /**
-     * Open the color selector at the current cursor position.
-     * @param event The mouse event that triggered the color selector.
-     */
-    openColorSelector(event: MouseEvent): void {
-        const marginTop = this.colorPickerMarginTop;
-        const height = this.colorPickerHeight;
-        this.colorSelector()!.openColorSelector(event, marginTop, height);
     }
 
     /**
