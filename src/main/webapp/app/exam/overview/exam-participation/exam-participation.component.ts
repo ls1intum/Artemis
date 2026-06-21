@@ -7,7 +7,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType, hasTestExamType, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, firstValueFrom, of, throwError } from 'rxjs';
@@ -348,9 +348,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (!!this.testRunId() || this.testExam()) {
                 const testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.testStartTime.set(testStartTime);
-                this.initIndividualEndDates(testStartTime);
+                const adjustedTestStartTime = this.isSimulationAttempt(testStartTime) ? this.exam().startDate! : testStartTime;
+                this.initIndividualEndDates(adjustedTestStartTime);
             } else {
-                this.individualStudentEndDate.set(dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds'));
+                this.initIndividualEndDates(this.exam().startDate!);
             }
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited.set(new Array(studentExam.exercises!.length).fill(false));
@@ -592,7 +593,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         let individualStudentEndDate;
         if (hasTestExamType(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam().startedDate).add(this.studentExam().workingTime!, 'seconds');
+                const startedDate = dayjs(this.studentExam().startedDate);
+                const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
+                individualStudentEndDate = relevantStartDate.add(this.studentExam().workingTime!, 'seconds');
             } else {
                 return false;
             }
@@ -1061,6 +1064,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // show only one error for 5s - see constructor
             this.synchronizationAlert.next();
         }
+    }
+
+    private isSimulationAttempt(startDate: dayjs.Dayjs): boolean {
+        const simulationEndDate = testExamSimulationEndDate(this.exam());
+        return this.exam().examType === ExamType.TEST_WITH_SIMULATION && !this.studentExam().testRun && !!simulationEndDate && startDate.isBefore(simulationEndDate);
     }
 
     /**

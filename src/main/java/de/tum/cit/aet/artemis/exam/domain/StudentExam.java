@@ -234,6 +234,9 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
         if (exam.getExamType().isTestExamType()) {
+            if (isStartedDuringSimulationPhase()) {
+                return exam.getStartDate().plusSeconds(workingTime);
+            }
             if (this.startedDate == null) {
                 return null;
             }
@@ -251,12 +254,21 @@ public class StudentExam extends AbstractAuditingEntity {
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
         if (exam.getExamType().isTestExamType()) {
+            if (isStartedDuringSimulationPhase()) {
+                return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+            }
             if (this.startedDate == null) {
                 return null;
             }
             return this.startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
         }
         return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+    }
+
+    @JsonIgnore
+    private boolean isStartedDuringSimulationPhase() {
+        return exam.getExamType() == ExamType.TEST_WITH_SIMULATION && startedDate != null && exam.getStartDate() != null
+                && startedDate.isBefore(exam.getStartDate().plusSeconds(exam.getWorkingTime()));
     }
 
     /**

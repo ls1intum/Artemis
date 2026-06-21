@@ -2898,6 +2898,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamType(ExamType.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+
+        StudentExam studentExamForConduction = request.get(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSimulation.getWorkingTime());
+        assertThat(studentExamForConduction.getIndividualEndDate()).isCloseTo(testExamWithSimulation.getStartDate().plusSeconds(testExamWithSimulation.getWorkingTime()),
+                within(10, ChronoUnit.SECONDS));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLongestWorkingTimeForExam() throws Exception {
         // Step 1: Create mock student exams

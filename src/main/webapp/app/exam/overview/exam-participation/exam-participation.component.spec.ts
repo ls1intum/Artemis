@@ -464,7 +464,10 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBe(true);
         expect(secondSubmission.submitted).toBe(false);
 
-        if (studentExam.testRun || (studentExam.exam?.examType !== undefined && studentExam.exam.examType !== ExamType.REAL)) {
+        const simulationEndDate = studentExam.exam?.startDate?.add(studentExam.exam.workingTime!, 'seconds');
+        if (studentExam.exam?.examType === ExamType.TEST_WITH_SIMULATION && studentExam.startedDate && studentExam.startedDate.isBefore(simulationEndDate!)) {
+            expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
+        } else if (studentExam.testRun || (studentExam.exam?.examType !== undefined && studentExam.exam.examType !== ExamType.REAL)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.testStartTime()!.add(studentExam.workingTime!, 'seconds'));
         } else {
             expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
@@ -493,6 +496,38 @@ describe('ExamParticipationComponent', () => {
         comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
         comp.exam.set(exam);
         testExamStarted(studentExam);
+    });
+
+    it('should initialize test exam with simulation using the fixed simulation end date', () => {
+        const studentExam = new StudentExam();
+        const exam = new Exam();
+        exam.examType = ExamType.TEST_WITH_SIMULATION;
+        exam.startDate = dayjs().subtract(10, 'minutes');
+        exam.workingTime = 3600;
+        studentExam.exam = exam;
+        studentExam.startedDate = dayjs();
+        studentExam.workingTime = 3600;
+        comp.exam.set(exam);
+
+        testExamStarted(studentExam);
+
+        expect(comp.individualStudentEndDate()).toEqual(exam.startDate.add(exam.workingTime, 'seconds'));
+    });
+
+    it('should initialize test exam with simulation practice attempt using the attempt start date', () => {
+        const studentExam = new StudentExam();
+        const exam = new Exam();
+        exam.examType = ExamType.TEST_WITH_SIMULATION;
+        exam.startDate = dayjs().subtract(2, 'hours');
+        exam.workingTime = 3600;
+        studentExam.exam = exam;
+        studentExam.startedDate = dayjs();
+        studentExam.workingTime = 3600;
+        comp.exam.set(exam);
+
+        testExamStarted(studentExam);
+
+        expect(comp.individualStudentEndDate()).toEqual(studentExam.startedDate.add(studentExam.workingTime, 'seconds'));
     });
 
     it('should initialize exercise without test run', () => {
@@ -1518,5 +1553,18 @@ describe('ExamParticipationComponent', () => {
         comp.initIndividualEndDates(now);
 
         expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+
+        // Case test exam with simulation during simulation phase
+        now = dayjs();
+        comp.studentExam().workingTime = 3600;
+        comp.studentExam().testRun = false;
+        comp.exam().examType = ExamType.TEST_WITH_SIMULATION;
+        comp.exam().workingTime = 3600;
+        comp.exam().gracePeriod = 1;
+        comp.exam().startDate = now.subtract(10, 'minutes');
+
+        comp.initIndividualEndDates(comp.exam().startDate!);
+
+        expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(comp.exam().startDate!.add(3600, 'seconds').add(1, 'seconds'));
     });
 });
