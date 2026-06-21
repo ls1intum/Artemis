@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
 import { Health, HealthDetails, HealthKey, HealthStatus } from 'app/admin/health/health.model';
-import { faExclamation, faEye, faSync, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
+import { faExclamation, faEye, faSync, faTowerBroadcast, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
@@ -58,6 +58,7 @@ export class HealthComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faTowerBroadcast = faTowerBroadcast;
     protected readonly faExclamation = faExclamation;
+    protected readonly faUpRightFromSquare = faUpRightFromSquare;
 
     ngOnInit() {
         this.refresh();

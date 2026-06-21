@@ -21,10 +21,17 @@
                         <tr [id]="componentHealth.key" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                             <td class="py-2 px-3">
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
-                                @if (componentHealth.value?.details?.url) {
-                                    <a [href]="componentHealth.value!.details!.url" target="_blank" rel="noopener noreferrer" class="ms-1" data-testid="url-tag">{{
-                                        componentHealth.value!.details!.url
-                                    }}</a>
+                                @if (componentHealth.value?.details?.url; as url) {
+                                    <a
+                                        [href]="url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="ms-1 inline-flex items-center gap-1 align-baseline text-primary hover:underline"
+                                        data-testid="url-tag"
+                                    >
+                                        <fa-icon [icon]="faUpRightFromSquare" class="text-xs" />
+                                        <span class="break-all">{{ url }}</span>
+                                    </a>
                                 }
                             </td>
                             <td class="py-2 px-3 text-center" data-testid="status-cell">
