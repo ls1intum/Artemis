@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCheck, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
@@ -23,6 +22,14 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TextareaModule } from 'primeng/textarea';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 /**
  * Component for editing Iris course-level settings.
@@ -31,7 +38,22 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FaIconComponent,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        ButtonModule,
+        ButtonGroupModule,
+        TagModule,
+        MessageModule,
+        SelectModule,
+        InputNumberModule,
+        TextareaModule,
+        ProgressSpinnerModule,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
@@ -52,7 +74,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
 
     // Available variants (expose constant for template)
-    protected readonly IRIS_PIPELINE_VARIANTS = IRIS_PIPELINE_VARIANTS;
+    protected readonly IRIS_PIPELINE_VARIANTS = [...IRIS_PIPELINE_VARIANTS];
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -125,11 +147,6 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             this.normalizeEmpty(this.rateLimitTimeframeHours()) !== this.normalizeEmpty(this.originalRateLimitTimeframeHours());
         return settingsChanged || rateLimitChanged;
     });
-
-    // Button types
-    PRIMARY = ButtonType.PRIMARY;
-    WARNING = ButtonType.WARNING;
-    SUCCESS = ButtonType.SUCCESS;
 
     // Icons
     faSave = faSave;

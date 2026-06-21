@@ -1,7 +1,8 @@
-import { Component, DestroyRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, model, signal } from '@angular/core';
+import { Component, DestroyRef, OnChanges, OnDestroy, OnInit, SimpleChanges, computed, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { Tag, TagModule } from 'primeng/tag';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -42,7 +43,8 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        NgbTooltip,
+        TooltipModule,
+        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -101,6 +103,22 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly templateStatus = signal<ResultTemplateStatus>(undefined!);
     submission?: Submission;
     readonly badge = signal<Badge>(undefined!);
+    // Maps the Bootstrap-style class carried on the Badge (kept for other call sites consuming Badge.class)
+    // to the equivalent PrimeNG p-tag severity. Defaults to 'secondary' for any unrecognised value.
+    readonly badgeSeverity = computed<Tag['severity']>(() => {
+        switch (this.badge()?.class) {
+            case 'bg-success':
+                return 'success';
+            case 'bg-warning':
+                return 'warn';
+            case 'bg-danger':
+                return 'danger';
+            case 'bg-info':
+                return 'info';
+            default:
+                return 'secondary';
+        }
+    });
     readonly resultTooltip = signal<string | undefined>(undefined);
     latestDueDate: dayjs.Dayjs | undefined;
 

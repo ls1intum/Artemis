@@ -1,4 +1,7 @@
 .feedback-item {
+    // Preserves the spacing the Bootstrap `.alert` provided before the PrimeNG `p-message` migration.
+    margin-bottom: 1rem;
+
     &__header {
         display: flex;
         justify-content: space-between;
@@ -20,6 +23,25 @@
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
+
+    // Replaces the former Bootstrap `bg-{color}` classes. Colors come from the Artemis brand tokens
+    // (the same CSS variables the PrimeNG AuraArtemis preset maps its severity primitives to), so the
+    // group header stays brand-bound and dark-mode aware without relying on Bootstrap utilities.
+    &--success {
+        background-color: var(--success);
+    }
+
+    &--info {
+        background-color: var(--info);
+    }
+
+    &--warning {
+        background-color: var(--warning);
+    }
+
+    &--danger {
+        background-color: var(--danger);
+    }
 
     &__left {
         display: flex;

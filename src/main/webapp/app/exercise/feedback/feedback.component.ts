@@ -1,7 +1,9 @@
 import { Component, Injector, OnChanges, OnInit, SimpleChanges, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
@@ -35,7 +37,7 @@ import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -50,9 +52,10 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
     imports: [
         TranslateDirective,
         FaIconComponent,
-        NgClass,
-        NgbTooltip,
         ChartModule,
+        TagModule,
+        ButtonModule,
+        TooltipModule,
         NgTemplateOutlet,
         FeedbackNodeComponent,
         UpperCasePipe,
@@ -414,6 +417,25 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     getCommitHash(): string {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
+    }
+
+    /**
+     * Maps the legacy Bootstrap background class produced by {@link ResultService.evaluateBadge}
+     * (e.g. `bg-success`) to the corresponding PrimeNG tag severity used by `p-tag`.
+     */
+    badgeSeverity(badgeClass: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+        switch (badgeClass) {
+            case 'bg-success':
+                return 'success';
+            case 'bg-info':
+                return 'info';
+            case 'bg-warning':
+                return 'warn';
+            case 'bg-danger':
+                return 'danger';
+            default:
+                return 'secondary';
+        }
     }
 
     private expandFeedbackItemGroups() {
