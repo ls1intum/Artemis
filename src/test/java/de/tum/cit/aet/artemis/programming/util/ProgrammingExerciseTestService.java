@@ -30,11 +30,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -875,7 +876,7 @@ public class ProgrammingExerciseTestService {
         task.setTaskName("Task 1");
         task.setExercise(sourceExercise);
         task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
-        sourceExercise.setTasks(Collections.singletonList(task));
+        sourceExercise.setTasks(List.of(task));
         programmingExerciseTaskRepository.save(task);
         programmingExerciseRepository.save(sourceExercise);
 
@@ -1290,7 +1291,8 @@ public class ProgrammingExerciseTestService {
         RepositoryExportTestUtil.safeDeleteDirectory(targetProjectFolder);
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, ExamImportResultDTO.class, HttpStatus.CREATED)
+                .exam();
 
         // Extract the programming exercise from the exam
         Exercise exerciseReceived = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -1992,11 +1994,11 @@ public class ProgrammingExerciseTestService {
     private void generateProgrammingExerciseForExport(boolean saveEmbeddedFiles, boolean shouldIncludeBuildPlan) throws IOException {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
-        exercise.setProblemStatement(String.format("""
+        exercise.setProblemStatement("""
                 Problem statement
                 ![mountain.jpg](/api/core/files/markdown/%s)
                 <img src="/api/core/files/markdown/%s" width="400">
-                """, embeddedFileName1, embeddedFileName2));
+                """.formatted(embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream(),
                     FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
@@ -2095,7 +2097,7 @@ public class ProgrammingExerciseTestService {
 
         course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
-        var optionalExportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, errors, Collections.emptyMap());
+        var optionalExportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, errors, Map.of());
         assertThat(optionalExportedCourse).isPresent();
 
         // Extract the archive

@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +23,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
     @Test
     void testThrowsExceptionWhenResultIsNotLocalCIBuildResult() {
         var wrongBuildResult = ProgrammingExerciseFactory.generateTestResultDTO("some-name", "some-repository", ZonedDateTime.now().minusSeconds(10),
-                programmingExercise.getProgrammingLanguage(), false, Collections.emptyList(), Collections.emptyList(), null, null, null);
+                programmingExercise.getProgrammingLanguage(), false, List.of(), List.of(), null, null, null);
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIResultService.convertBuildResult(wrongBuildResult))
                 .withMessage("The request body is not of type LocalCIBuildResult");
     }

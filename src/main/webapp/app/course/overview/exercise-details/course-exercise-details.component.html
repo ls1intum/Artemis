@@ -16,8 +16,11 @@
             [participationMode]="participationMode()"
             [athenaEnabled]="athenaEnabled"
             [quizLiveHeaderInfo]="splitPanel()?.quizLiveHeaderInfo()"
+            [showSidebarToggle]="showSidebarToggle()"
+            [isSidebarCollapsed]="isSidebarCollapsed()"
             (participationModeChange)="participationMode.set($event)"
             (newParticipation)="onNewParticipation($event)"
+            (toggleSidebar)="toggleSidebar()"
         />
 
         <jhi-exercise-split-panel

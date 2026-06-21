@@ -1,5 +1,6 @@
-import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { get } from 'lodash-es';
 import { Tooltip } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,7 +9,8 @@ import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
 
 export interface ColumnDef<T> {
-    field?: keyof T;
+    /** Top-level key of T (e.g. `'name'`) or dot-path to a nested field (e.g. `'owner.name'`). Dot-paths are resolved via lodash `get` for value resolution and passed as-is to PrimeNG for sorting and filtering. */
+    field?: string;
     header?: string;
     headerKey?: string;
     /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
@@ -26,12 +28,20 @@ export interface ColumnDef<T> {
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
     templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
+    /**
+     * Custom comparator for client-side sorting of this column. Return negative if rowA < rowB,
+     * positive if rowA > rowB, 0 if equal. When any column in the table defines this, the table
+     * switches to PrimeNG's customSort mode; columns without a comparator fall back to standard
+     * field-value comparison. Must not be used in lazy (server-side) mode.
+     */
+    sortComparator?: (rowA: T, rowB: T) => number;
 }
 
 export interface CellRendererParams<T> {
     data: T;
     col: ColumnDef<T>;
-    value: T[keyof T] | undefined;
+    /** Resolved value of `col.field` on this row. Supports dot-paths (e.g. `'owner.name'`). Type is `unknown` because nested paths yield arbitrary types. */
+    value: unknown;
     rowIndex: number;
 }
 
@@ -72,6 +82,17 @@ export interface TableConfig {
     scrollHeight: string | undefined;
     /** Freeze the implicit row-actions column to the right edge. Requires `scrollable: true`. Default: false. */
     rowActionsFrozen: boolean;
+    /**
+     * Fields used for the global search filter. When set, PrimeNG searches only these dot-path fields
+     * instead of all column fields. Use this to include virtual fields (e.g. pre-computed search strings)
+     * that have no corresponding visible column, or to exclude fields from search. Default: undefined
+     * (PrimeNG falls back to all column `field` values).
+     */
+    globalFilterFields: string[] | undefined;
+    /** Field to sort by on initial render. Works for both default and custom sort modes. Default: undefined (unsorted). */
+    initialSortField: string | undefined;
+    /** Initial sort direction. 1 = ascending, -1 = descending. Default: 1. */
+    initialSortOrder: 1 | -1;
 }
 
 /**
@@ -98,11 +119,14 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     scrollable: false,
     scrollHeight: undefined,
     rowActionsFrozen: false,
+    globalFilterFields: undefined,
+    initialSortField: undefined,
+    initialSortOrder: 1,
 };
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent, Tooltip],
+    imports: [NgClass, NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent, Tooltip],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
@@ -125,6 +149,8 @@ export class TableViewComponent<T> {
     options = input<TableViewOptions>({});
     /** Optional predicate controlling which rows can be selected. Rows returning true are visually disabled and cannot be selected. */
     isRowDisabled = input<((row: T) => boolean) | null>(null);
+    /** Optional function returning a CSS class string (or ngClass-compatible object) applied to each row's `<tr>`. */
+    rowClass = input<((row: T) => string) | null>(null);
     /** Tooltip text shown on the checkbox cell of disabled rows. Only applies when selectionMode is 'multiple'. */
     disabledRowTooltip = input<string | undefined>(undefined);
     /**
@@ -137,6 +163,12 @@ export class TableViewComponent<T> {
 
     onLazyLoad = output<TableLazyLoadEvent>();
     onRowSelect = output<T | T[] | undefined>();
+    /**
+     * Emits the number of rows currently visible after PrimeNG applies a client-side filter (e.g. the global
+     * search). Equals the full row count when no filter is active. Only meaningful in non-lazy mode; in lazy
+     * mode filtering is delegated to the server, so prefer {@link totalRows}.
+     */
+    filteredRowsChange = output<number>();
 
     dt = viewChild.required<Table>('dt');
     private searchFilter = viewChild(SearchFilterComponent);
@@ -179,9 +211,22 @@ export class TableViewComponent<T> {
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
+            globalFilterFields: opts.globalFilterFields ?? DEFAULT_TABLE_CONFIG.globalFilterFields,
+            initialSortField: opts.initialSortField ?? DEFAULT_TABLE_CONFIG.initialSortField,
+            initialSortOrder: opts.initialSortOrder ?? DEFAULT_TABLE_CONFIG.initialSortOrder,
         };
         return tableConfig;
     });
+
+    /**
+     * True when at least one column defines a custom sort comparator AND the table runs in client-side
+     * (non-lazy) mode. Switches the entire p-table into customSort mode so (sortFunction) fires for every
+     * column click; columns without a comparator are handled by the default field-value fallback in
+     * onCustomSort(). Always false in lazy mode — sorting is delegated to the server there — which
+     * structurally enforces the "sortComparator must not be used in lazy mode" contract documented on
+     * {@link ColumnDef.sortComparator}.
+     */
+    protected readonly hasCustomSort = computed(() => !this.resolvedOptions().lazy && this.cols().some((c) => !!c.sortComparator));
 
     /** Falls back to vals().length in non-lazy mode. */
     protected readonly effectiveTotalRows = computed(() => this.totalRows() ?? this.vals().length);
@@ -228,10 +273,34 @@ export class TableViewComponent<T> {
         const params: CellRendererParams<T> = {
             data,
             col,
-            value: col?.field && (col.field satisfies keyof T) ? data?.[col.field] : undefined,
+            value: col?.field ? get(data, col.field) : undefined,
             rowIndex,
         };
         return params;
+    }
+
+    /**
+     * Called by p-table when customSort is active (i.e. at least one column has a sortComparator).
+     * Sorts event.data in place — PrimeNG re-renders from the mutated array.
+     * Columns with a sortComparator use it; all others fall back to standard field-value comparison.
+     */
+    onCustomSort(event: { data: T[]; field?: string; order?: number }): void {
+        if (!event.data) return;
+        const col = this.cols().find((c) => c.field === event.field);
+        const comparator = col?.sortComparator;
+        const order = event.order ?? 1;
+        event.data.sort((rowA: T, rowB: T) => {
+            if (comparator) {
+                return order * comparator(rowA, rowB);
+            }
+            // Fallback: standard value sort for columns without a custom comparator
+            const val1 = col?.field ? get(rowA, col.field) : undefined;
+            const val2 = col?.field ? get(rowB, col.field) : undefined;
+            if (val1 == null && val2 == null) return 0;
+            if (val1 == null) return order;
+            if (val2 == null) return -order;
+            return typeof val1 === 'string' && typeof val2 === 'string' ? order * val1.localeCompare(val2) : order * (val1 < val2 ? -1 : val1 > val2 ? 1 : 0);
+        });
     }
 
     handleLazyLoad(event: TableLazyLoadEvent): void {
@@ -241,6 +310,14 @@ export class TableViewComponent<T> {
 
     handleRowSelectChange(): void {
         this.onRowSelect.emit(this.tableSelection);
+    }
+
+    /**
+     * Fired by p-table whenever a client-side filter is applied. Emits the resulting visible row count
+     * (PrimeNG sets filteredValue to null when the filter is cleared, in which case all rows are shown).
+     */
+    onFilter(event: { filteredValue?: T[] | null }): void {
+        this.filteredRowsChange.emit(event.filteredValue?.length ?? this.vals().length);
     }
 
     pageChange(event: TablePageEvent): void {

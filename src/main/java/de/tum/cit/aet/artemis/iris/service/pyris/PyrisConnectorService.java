@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,7 +91,7 @@ public class PyrisConnectorService {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return new MemirisMemoryDataDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                return new MemirisMemoryDataDTO(List.of(), List.of(), List.of());
             }
             return response.getBody();
         }

@@ -255,7 +255,7 @@ public class ProgrammingExerciseParticipationService {
 
         if (coAuthor != null && coAuthor.getEmail() != null) {
             String name = coAuthor.getName() != null ? coAuthor.getName() : login;
-            commitMessage += String.format("\n\nCo-authored-by: %s <%s>", name, coAuthor.getEmail());
+            commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
         }
 
         gitService.stageAllChanges(targetRepo);

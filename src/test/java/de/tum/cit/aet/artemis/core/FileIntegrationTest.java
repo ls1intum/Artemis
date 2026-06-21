@@ -121,7 +121,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
                 ExamUser.class, HttpStatus.OK);
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updateExamUserResponse.getSigningImagePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, updateExamUserResponse.getSigningImagePath());
         byte[] getUserSignatureResponse = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
@@ -160,7 +160,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lectureRepo.save(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
         request.get(requestUrl, HttpStatus.OK, String.class);
     }
 
@@ -607,7 +607,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
                 ExamUser.class, HttpStatus.OK);
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath());
 
         // Verify cache headers (30 days = 2592000 seconds)
         mockMvc.perform(get(requestUrl)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
