@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -120,7 +122,8 @@ public class QuizTrainingResource {
     @PostMapping("courses/{courseId}/training-questions/{trainingQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable("trainingQuestionId") long quizQuestionId,
-            @RequestParam boolean isRated, @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
+            @RequestParam boolean isRated,
+            @Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = SubmittedAnswerFromLiveClientDTO.class))) SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
         log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();

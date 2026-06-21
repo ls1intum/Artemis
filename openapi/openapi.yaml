@@ -498,11 +498,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
-              oneOf:
-              - {$ref: '#/components/schemas/DragAndDropSubmittedAnswerFromLiveClient'}
-              - {$ref: '#/components/schemas/MultipleChoiceSubmittedAnswerFromLiveClient'}
-              - {$ref: '#/components/schemas/ShortAnswerSubmittedAnswerFromLiveClient'}
+            schema: {$ref: '#/components/schemas/SubmittedAnswerFromLiveClient'}
         required: true
       responses:
         '200':
@@ -1234,7 +1230,15 @@ components:
             applied}
         summary: {type: string, description: Short summary of what was changed}
     SubmittedAnswerFromLiveClient:
-      discriminator: {propertyName: type}
+      discriminator:
+        propertyName: type
+        mapping: {multiple-choice: '#/components/schemas/MultipleChoiceSubmittedAnswerFromLiveClient',
+          drag-and-drop: '#/components/schemas/DragAndDropSubmittedAnswerFromLiveClient',
+          short-answer: '#/components/schemas/ShortAnswerSubmittedAnswerFromLiveClient'}
+      oneOf:
+      - {$ref: '#/components/schemas/MultipleChoiceSubmittedAnswerFromLiveClient'}
+      - {$ref: '#/components/schemas/DragAndDropSubmittedAnswerFromLiveClient'}
+      - {$ref: '#/components/schemas/ShortAnswerSubmittedAnswerFromLiveClient'}
       properties:
         type: {type: string}
       required: [type]
@@ -1314,6 +1318,9 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
+        correctMappings:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerMapping'}
         spots:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerSpot'}
@@ -1322,9 +1329,6 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
-        correctMappings:
-          type: array
-          items: {$ref: '#/components/schemas/ShortAnswerMapping'}
     TutorialGroupExportData:
       type: object
       properties:
@@ -1594,15 +1598,13 @@ components:
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
       required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
     DragAndDropSubmittedAnswerFromLiveClient:
-      allOf:
-      - {$ref: '#/components/schemas/SubmittedAnswerFromLiveClient'}
-      - type: object
-        properties:
-          quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
-          mappings:
-            type: array
-            items: {$ref: '#/components/schemas/DragAndDropMappingFromLiveClient'}
-            uniqueItems: true
+      type: object
+      properties:
+        quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
+        mappings:
+          type: array
+          items: {$ref: '#/components/schemas/DragAndDropMappingFromLiveClient'}
+          uniqueItems: true
     QualityIssueLocation:
       type: object
       description: Location of a quality issue within the problem statement
@@ -1710,15 +1712,13 @@ components:
         dragItem: {$ref: '#/components/schemas/DragItem'}
         dropLocation: {$ref: '#/components/schemas/DropLocation'}
     MultipleChoiceSubmittedAnswerFromLiveClient:
-      allOf:
-      - {$ref: '#/components/schemas/SubmittedAnswerFromLiveClient'}
-      - type: object
-        properties:
-          quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
-          selectedOptions:
-            type: array
-            items: {$ref: '#/components/schemas/EntityIdRef'}
-            uniqueItems: true
+      type: object
+      properties:
+        quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
+        selectedOptions:
+          type: array
+          items: {$ref: '#/components/schemas/EntityIdRef'}
+          uniqueItems: true
     ProblemStatementGenerationResponse:
       type: object
       description: Response containing generated problem statement
@@ -2051,15 +2051,13 @@ components:
         explanation: {type: string}
         isCorrect: {type: boolean}
     ShortAnswerSubmittedAnswerFromLiveClient:
-      allOf:
-      - {$ref: '#/components/schemas/SubmittedAnswerFromLiveClient'}
-      - type: object
-        properties:
-          quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
-          submittedTexts:
-            type: array
-            items: {$ref: '#/components/schemas/ShortAnswerSubmittedTextFromLiveClient'}
-            uniqueItems: true
+      type: object
+      properties:
+        quizQuestion: {$ref: '#/components/schemas/EntityIdRef'}
+        submittedTexts:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSubmittedTextFromLiveClient'}
+          uniqueItems: true
     QuizQuestionRefinementFailure:
       description: Failed refinement result containing an error message
       required: [error]
