@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -79,7 +78,7 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testNoPhases_emptyResult() {
-        BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(Collections.emptyList(), "ubuntu:latest");
+        BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
@@ -148,7 +147,7 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testPhaseWithEmptyResultPaths_noTestsExpected() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, Collections.emptyList());
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, List.of());
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);

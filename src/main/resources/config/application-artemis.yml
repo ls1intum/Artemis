@@ -90,7 +90,10 @@ artemis:
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    model-costs:  # Token costs for usage tracking (EUR per million tokens)
+    # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
+    # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
+    # must be bracket-quoted, e.g. "[gpt-5.4]").
+    model-costs:
       gpt-5-mini:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
@@ -130,6 +133,22 @@ artemis:
     enabled: false
     url: <your-pyris-url>
     secret-token: <your-secret>
+    dashboard:
+      max-query-window-days: 90
+      stale-threshold-minutes: 5
+      digest:
+        enabled: false
+        cron: "0 0 7 * * *"
+        recipients: []
+      alert:
+        enabled: false
+        no-response-rate-threshold: 10
+        check-interval-minutes: 30
+        cooldown-minutes: 360
+        lookback-minutes: 60
+        minimum-eligible-sessions: 10
+        minimum-user-messages: 20
+        recipients: []
 
   weaviate:
     enabled: false

@@ -112,6 +112,24 @@ export class OrganizationManagementService {
     }
 
     /**
+     * Send a POST request to add a course to an organization
+     * @param organizationId the id of the organization to add the course to
+     * @param courseId the id of the course to add
+     */
+    addCourseToOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/courses/${courseId}`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Send a DELETE request to remove a course from an organization
+     * @param organizationId the id of the organization to remove the course from
+     * @param courseId the id of the course to remove
+     */
+    removeCourseFromOrganization(organizationId: number, courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/courses/${courseId}`, { observe: 'response' });
+    }
+
+    /**
      * Send GET request to retrieve a paginated list of users belonging to an organization
      * @param organizationId the id of the organization
      * @param params         the search and pagination parameters

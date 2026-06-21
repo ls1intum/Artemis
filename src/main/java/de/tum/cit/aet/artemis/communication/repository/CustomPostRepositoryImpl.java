@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication.repository;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -65,7 +64,7 @@ public class CustomPostRepositoryImpl implements CustomPostRepository {
         countQuery.select(builder.count(countRoot));
 
         // Remove all Orders the Specifications might have applied
-        countQuery.orderBy(Collections.emptyList());
+        countQuery.orderBy(List.of());
 
         Long countResult = entityManager.createQuery(countQuery).getSingleResult();
         long count = countResult != null ? countResult : 0L;
