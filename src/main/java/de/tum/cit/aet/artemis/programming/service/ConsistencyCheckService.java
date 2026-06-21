@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
@@ -26,10 +28,17 @@ public class ConsistencyCheckService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final ProfileService profileService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ConsistencyCheckService(Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public ConsistencyCheckService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.versionControlService = versionControlService;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -59,7 +68,11 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
-        return new ArrayList<>(checkVCSConsistency(programmingExercise));
+        List<ConsistencyErrorDTO> result = new ArrayList<>(checkVCSConsistency(programmingExercise));
+        if (profileService.isJenkinsActive()) {
+            result.addAll(checkCIConsistency(programmingExercise));
+        }
+        return result;
     }
 
     /**
@@ -92,6 +105,27 @@ public class ConsistencyCheckService {
                 }
             }
         }
+        return result;
+    }
+
+    /**
+     * Checks if build plans (TEMPLATE, SOLUTION) exist in the CI for a given
+     * programming exercise. Only applicable for Jenkins; LocalCI/ Hades have no build plans to check.
+     *
+     * @param programmingExercise to check
+     * @return List containing the resulting errors, if any.
+     */
+    private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
+        List<ConsistencyErrorDTO> result = new ArrayList<>();
+
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
+            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+        }
+        if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())) {
+            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+        }
+
         return result;
     }
 }

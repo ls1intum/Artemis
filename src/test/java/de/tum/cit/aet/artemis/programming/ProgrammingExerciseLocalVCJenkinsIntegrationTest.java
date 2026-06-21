@@ -540,6 +540,12 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAutomaticCleanUpBuildPlans() throws Exception {
+        programmingExerciseTestService.automaticCleanupBuildPlans();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
     }
