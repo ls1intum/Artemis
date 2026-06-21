@@ -52,6 +52,17 @@
  */
 @source not './app/**/*.spec.ts';
 
+/*
+ * Blocklist Tailwind utilities whose names collide with still-in-use Bootstrap component classes. Scanned
+ * source legitimately contains these words (the feedback-collapse component, admin data tables, route/test
+ * ids, ...), which would otherwise make Tailwind emit `.collapse { visibility: collapse }` — hiding the
+ * Bootstrap `.navbar-collapse` and wiping the top navbar — and `.table { display: table }`. Excluding the
+ * candidates by name is robust against any file mentioning them, unlike chasing per-file `@source not` rules.
+ * Tailwind's own `table-*`/`collapse-*` modifier utilities are unaffected (only the bare names are excluded).
+ */
+@source not inline("collapse");
+@source not inline("table");
+
 /* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
 @custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));
 
