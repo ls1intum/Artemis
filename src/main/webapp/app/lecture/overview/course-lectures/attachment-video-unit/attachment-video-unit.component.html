@@ -135,12 +135,28 @@
         (horizontalSplitSizesChange)="onHorizontalSplitSizesChange($event)"
         (fullscreenChange)="onFullscreenChange($event)"
     >
-        @if (horizontalSplitConfig().enabled) {
-            <div content-top class="main-content"><ng-container [ngTemplateOutlet]="videoBlock" /></div>
-            <div content-bottom class="main-content"><ng-container [ngTemplateOutlet]="pdfBlock" /></div>
-        } @else {
-            <div content-main class="main-content"><ng-container [ngTemplateOutlet]="videoBlock" /><ng-container [ngTemplateOutlet]="pdfBlock" /></div>
-        }
+        <!--
+            The projection slots must be unconditional direct children: Angular's `ng-content select` does not
+            match projectable content nested inside @if/@else control flow, so wrapping these divs in @if left the
+            fullscreen-layout's content-main slot empty (nothing rendered inline). The split-vs-combined choice is
+            made inside each slot instead, so the video/pdf blocks are only instantiated in the active layout.
+        -->
+        <div content-top class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
+            }
+        </div>
+        <div content-bottom class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
+            }
+        </div>
+        <div content-main class="main-content">
+            @if (!horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
+            }
+        </div>
 
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
