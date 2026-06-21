@@ -154,7 +154,7 @@ public class ExamUserService {
         List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
         for (var examUserWithImageDTO : examUserWithImageDTOs) {
-            Optional<User> user = userRepository.findUserWithCourseRolesAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
+            Optional<User> user = userRepository.findUserWithAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
             if (user.isEmpty()) {
                 notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 continue;

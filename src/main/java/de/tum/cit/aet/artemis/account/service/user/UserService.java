@@ -178,7 +178,7 @@ public class UserService {
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
         log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
 
-        Optional<User> existingInternalAdmin = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(internalAdminUsername);
+        Optional<User> existingInternalAdmin = userRepository.findOneWithAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
             existingInternalAdmin.get().setActivated(true);
@@ -218,7 +218,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneWithCourseRolesByActivationKey(key).map(user -> {
+        return userRepository.findOneByActivationKey(key).map(user -> {
             activateUser(user);
             return user;
         });
@@ -314,14 +314,14 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneWithCourseRolesByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
         // Find user that has the same email
-        optionalExistingUser = userRepository.findOneWithCourseRolesByEmailIgnoreCase(userDTO.getEmail());
+        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
 
@@ -428,8 +428,8 @@ public class UserService {
 
                 // handle edge case, the user already exists in Artemis, but for some reason the values differ
                 if (StringUtils.hasText(ldapUser.getLogin())) {
-                    // load the user with groups and authorities because they might be needed later
-                    var existingUser = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(ldapUser.getLogin());
+                    // load the user with authorities because they might be needed later
+                    var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
@@ -440,8 +440,8 @@ public class UserService {
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getLogin(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                // load the user with groups and authorities because they might be needed later
-                return userRepository.findOneWithCourseRolesAndAuthoritiesById(user.getId());
+                // load the user with authorities because they might be needed later
+                return userRepository.findOneWithAuthoritiesById(user.getId());
             }
             else {
                 log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
@@ -456,7 +456,7 @@ public class UserService {
      * @param login user login string
      */
     public void softDeleteUser(String login) {
-        userRepository.findOneWithCourseRolesByLogin(login).ifPresent(user -> {
+        userRepository.findOneByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
@@ -594,7 +594,7 @@ public class UserService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, role));
         }
-        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
     }
@@ -609,7 +609,7 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
     }
@@ -679,13 +679,13 @@ public class UserService {
     private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         Optional<User> optionalUser = Optional.empty();
         if (StringUtils.hasText(login)) {
-            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByLogin(login);
+            optionalUser = userRepository.findUserWithAuthoritiesByLogin(login);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
-            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByEmail(email);
+            optionalUser = userRepository.findUserWithAuthoritiesByEmail(email);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
-            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByRegistrationNumber(registrationNumber);
+            optionalUser = userRepository.findUserWithAuthoritiesByRegistrationNumber(registrationNumber);
         }
         return optionalUser;
     }

@@ -52,7 +52,7 @@ public class AtlasAgentResource {
     @PostMapping("courses/{courseId}/chat")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
 
         AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
@@ -68,7 +68,7 @@ public class AtlasAgentResource {
     @GetMapping("courses/{courseId}/chat/history")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<AtlasAgentHistoryMessageDTO>> getConversationHistory(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
 
         List<AtlasAgentHistoryMessageDTO> history = atlasAgentService.getConversationHistoryAsDTO(sessionId);

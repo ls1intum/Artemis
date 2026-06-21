@@ -76,7 +76,7 @@ public class OneToOneChatResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @PathVariable(name = "userId", required = false) Long userId,
             @RequestBody(required = false) OneToOneChatCreationDTO chatPartner) throws URISyntaxException {
-        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         validateInputElseThrow(requestingUser, course);
 

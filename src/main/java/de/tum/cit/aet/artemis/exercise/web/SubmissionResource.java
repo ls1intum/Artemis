@@ -147,7 +147,7 @@ public class SubmissionResource {
         if (!authCheckService.isAtLeastEditorForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 List.of(exercise));
@@ -227,7 +227,7 @@ public class SubmissionResource {
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException();

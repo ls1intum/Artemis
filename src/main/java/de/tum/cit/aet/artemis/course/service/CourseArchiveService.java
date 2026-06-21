@@ -92,7 +92,7 @@ public class CourseArchiveService {
      * @return A list of courses for the course archive.
      */
     public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
         return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getId(), ZonedDateTime.now());
     }

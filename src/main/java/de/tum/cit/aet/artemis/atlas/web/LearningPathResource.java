@@ -388,7 +388,7 @@ public class LearningPathResource {
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);
         final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
-        final var user = userRepository.getUserWithCourseRolesAndAuthoritiesAndLearnerProfile(learningPath.getCourse().getId());
+        final var user = userRepository.getUserWithAuthoritiesAndLearnerProfile(learningPath.getCourse().getId());
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
@@ -407,7 +407,7 @@ public class LearningPathResource {
      * @param optionalUser   the optional user for which to check the access. If empty, the current user is used.
      */
     private void checkLearningPathAccessElseThrow(Optional<Course> optionalCourse, LearningPath learningPath, Optional<User> optionalUser) {
-        User user = optionalUser.orElseGet(userRepository::getUserWithCourseRolesAndAuthorities);
+        User user = optionalUser.orElseGet(userRepository::getUserWithAuthorities);
         if (!user.equals(learningPath.getUser()) && optionalCourse.map(course -> !authorizationCheckService.isAtLeastInstructorInCourse(course, user)).orElse(true)) {
             throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
         }

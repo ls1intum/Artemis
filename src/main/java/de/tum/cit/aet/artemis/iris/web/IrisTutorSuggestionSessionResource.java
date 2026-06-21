@@ -55,7 +55,7 @@ public class IrisTutorSuggestionSessionResource {
      */
     @PostMapping({ "posts/{postId}/sessions/current", "{postId}/sessions/current" })
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
@@ -83,7 +83,7 @@ public class IrisTutorSuggestionSessionResource {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
         var course = post.getCoursePostingBelongsTo();
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

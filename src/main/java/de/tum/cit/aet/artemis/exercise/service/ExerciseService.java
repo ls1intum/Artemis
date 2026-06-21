@@ -267,7 +267,7 @@ public class ExerciseService {
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise,
-                numberOfCorrectionRounds, userRepository.getUserWithCourseRolesAndAuthorities());
+                numberOfCorrectionRounds, userRepository.getUserWithAuthorities());
         stats.setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);

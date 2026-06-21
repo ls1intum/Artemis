@@ -72,7 +72,7 @@ public class ProgrammingExerciseGradingResource {
         log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 

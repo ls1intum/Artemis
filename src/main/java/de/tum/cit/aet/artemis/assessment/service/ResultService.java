@@ -168,7 +168,7 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean ratedResult) {
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);

@@ -87,7 +87,7 @@ public class ParticipationDeletionResource {
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
         return deleteParticipation(participation, user);
     }
@@ -123,7 +123,7 @@ public class ParticipationDeletionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationDeletionService.cleanupBuildPlan(participation);

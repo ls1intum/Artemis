@@ -124,7 +124,7 @@ public class UserResource {
     @PutMapping("users/initialize")
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
+        User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

@@ -103,7 +103,7 @@ public class QuizExerciseRetrievalResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all quiz exercises for the course with id : {}", courseId);
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
         var quizExerciseDTOs = new ArrayList<QuizExerciseForCourseDTO>();
         for (QuizExercise quizExercise : quizExercises) {
@@ -159,7 +159,7 @@ public class QuizExerciseRetrievalResource {
     public ResponseEntity<QuizExerciseWithStatisticsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
@@ -189,7 +189,7 @@ public class QuizExerciseRetrievalResource {
     public ResponseEntity<?> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
@@ -214,7 +214,7 @@ public class QuizExerciseRetrievalResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 

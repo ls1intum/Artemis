@@ -144,7 +144,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -261,7 +261,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithCourseRolesAndAuthorities());
+        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithAuthorities());
 
         return ResponseEntity.ok().body(textSubmission);
     }

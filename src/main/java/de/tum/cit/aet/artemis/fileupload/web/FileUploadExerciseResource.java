@@ -253,7 +253,7 @@ public class FileUploadExerciseResource {
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
@@ -326,7 +326,7 @@ public class FileUploadExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
@@ -364,7 +364,7 @@ public class FileUploadExerciseResource {
         }
 
         // Check that the user is authorized to update the exercise
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, notificationText, user);
@@ -396,7 +396,7 @@ public class FileUploadExerciseResource {
             String notificationText, User user) {
 
         if (user == null) {
-            user = userRepository.getUserWithCourseRolesAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
 
         // ========== 1. Capture old values BEFORE mutation ==========
@@ -563,7 +563,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // Notify AtlasML about the exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
@@ -651,7 +651,7 @@ public class FileUploadExerciseResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());

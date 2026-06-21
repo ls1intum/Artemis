@@ -92,7 +92,7 @@ public class ScienceSettingsResource {
                 throw new BadRequestAlertException("Science settings contain invalid entries", "InvalidScienceSettings", "invalidScienceSettings");
             }
         }
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
         List<ScienceSetting> persistedSettingList = scienceSettingRepository.replaceScienceSettingsForUser(user, scienceSettings);
         if (persistedSettingList.isEmpty()) {

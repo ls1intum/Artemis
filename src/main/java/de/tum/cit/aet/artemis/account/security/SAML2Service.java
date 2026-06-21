@@ -133,7 +133,7 @@ public class SAML2Service {
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        Optional<User> user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username);
+        Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User if not exists
             user = Optional.of(createUser(username, principal));

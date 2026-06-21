@@ -127,7 +127,7 @@ public class GlobalSearchResource {
         }
 
         int effectiveLimit = Math.clamp(limit, 1, 25);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
         if (!filterResult.hasAccess()) {

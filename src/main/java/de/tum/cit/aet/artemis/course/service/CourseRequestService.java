@@ -83,7 +83,7 @@ public class CourseRequestService {
      * @return the persisted request as DTO
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
-        var requester = userRepository.getUserWithCourseRolesAndAuthorities();
+        var requester = userRepository.getUserWithAuthorities();
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
@@ -341,8 +341,8 @@ public class CourseRequestService {
         channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {
-            User requesterWithGroups = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(request.getRequester().getId());
-            courseAccessService.addUserToCourse(requesterWithGroups, createdCourse, CourseRole.INSTRUCTOR);
+            User requester = userRepository.findByIdWithAuthoritiesElseThrow(request.getRequester().getId());
+            courseAccessService.addUserToCourse(requester, createdCourse, CourseRole.INSTRUCTOR);
         }
         return createdCourse;
     }

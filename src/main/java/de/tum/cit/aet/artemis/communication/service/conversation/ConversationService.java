@@ -565,7 +565,7 @@ public class ConversationService {
             if (userLogin == null || userLogin.isEmpty()) {
                 continue;
             }
-            var userToRegister = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
+            var userToRegister = userRepository.findOneWithAuthoritiesByLogin(userLogin);
             userToRegister.ifPresent(users::add);
         }
         return users;

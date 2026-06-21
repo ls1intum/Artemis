@@ -169,13 +169,13 @@ public class InstanceMessageReceiveService {
 
     public void processRemoveNonActivatedUser(Long userId) {
         log.info("Received remove non-activated user for user {}", userId);
-        User user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(userId);
+        User user = userRepository.findByIdWithAuthoritiesElseThrow(userId);
         userScheduleService.scheduleForRemoveNonActivatedUser(user);
     }
 
     public void processCancelRemoveNonActivatedUser(Long userId) {
         log.info("Received cancel removal of non-activated user for user {}", userId);
-        User user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(userId);
+        User user = userRepository.findByIdWithAuthoritiesElseThrow(userId);
         userScheduleService.cancelScheduleRemoveNonActivatedUser(user);
     }
 

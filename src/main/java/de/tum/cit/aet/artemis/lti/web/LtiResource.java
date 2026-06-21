@@ -216,7 +216,7 @@ public class LtiResource {
             throw new BadRequestAlertException("clientId must not be blank", "LTI", "clientIdBlank");
         }
         clientId = clientId.trim();
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);

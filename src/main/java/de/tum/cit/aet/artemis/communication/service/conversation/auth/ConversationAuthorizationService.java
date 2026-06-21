@@ -32,10 +32,13 @@ public class ConversationAuthorizationService {
     }
 
     /**
-     * Returns a {@link User} object with authorities and course roles loaded.
+     * Returns a {@link User} object with authorities loaded.
+     * Course roles are no longer needed here: all per-course authorization checks in
+     * {@link de.tum.cit.aet.artemis.core.service.AuthorizationCheckService} issue direct DB point-lookups
+     * against the user_course_role table instead of inspecting the in-memory collection.
      *
-     * @param user the {@link User} object to check for loaded authorities and course roles
-     * @return the {@link User} object, potentially after loading the authorities and course roles
+     * @param user the {@link User} object to ensure authorities are loaded for
+     * @return the {@link User} object, potentially after loading the authorities
      * @throws IllegalArgumentException if the user parameter is null
      */
     protected User getUserIfNecessary(User user) {
@@ -44,9 +47,8 @@ public class ConversationAuthorizationService {
         }
         var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "courseRoles") || userToCheck.getCourseRoles() == null
-                || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
+        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || userToCheck.getAuthorities() == null) {
+            userToCheck = userRepository.getUserWithAuthorities(user.getLogin());
         }
         return userToCheck;
     }

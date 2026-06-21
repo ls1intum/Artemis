@@ -216,7 +216,7 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
         programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
@@ -279,7 +279,7 @@ public class ProgrammingSubmissionResource {
         final boolean examMode = exercise.isExamExercise();
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
-            User user = userRepository.getUserWithCourseRolesAndAuthorities();
+            User user = userRepository.getUserWithAuthorities();
             programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
                     correctionRound);
         }
@@ -312,7 +312,7 @@ public class ProgrammingSubmissionResource {
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        final User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             throw new AccessForbiddenException();
         }
@@ -375,7 +375,7 @@ public class ProgrammingSubmissionResource {
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        final User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
 

@@ -61,7 +61,7 @@ public class IrisBotUserService {
     public void ensureIrisBotUserExists() {
         try {
             SecurityUtils.setAuthorizationObject();
-            Optional<User> existingBot = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(IRIS_BOT_LOGIN);
+            Optional<User> existingBot = userRepository.findOneWithAuthoritiesByLogin(IRIS_BOT_LOGIN);
             if (existingBot.isPresent()) {
                 log.info("Iris bot user already exists, ensuring it is activated and internal");
                 User bot = existingBot.get();
@@ -104,7 +104,7 @@ public class IrisBotUserService {
      */
     public User getIrisBotUser() {
         ensureIrisBotUserExists();
-        return userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(IRIS_BOT_LOGIN)
+        return userRepository.findOneWithAuthoritiesByLogin(IRIS_BOT_LOGIN)
                 .orElseThrow(() -> new IllegalStateException("Iris bot user does not exist. Ensure Iris is enabled and the application has started."));
     }
 

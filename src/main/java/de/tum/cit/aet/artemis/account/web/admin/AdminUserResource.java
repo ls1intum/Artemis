@@ -221,7 +221,7 @@ public class AdminUserResource {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
         }
 
-        var existingUserByLogin = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
+        var existingUserByLogin = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
@@ -383,7 +383,7 @@ public class AdminUserResource {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
 
-        User userToBeDeleted = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        User userToBeDeleted = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()));
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
@@ -412,7 +412,7 @@ public class AdminUserResource {
         logins.remove(currentUser.getLogin());
 
         // Check if non-super-admin is trying to delete admin users
-        Set<User> usersToDelete = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
+        Set<User> usersToDelete = userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
         boolean containsAdminUser = usersToDelete.stream().anyMatch(user -> AuthorizationCheckService.isAdmin(user.getAuthorities()));
         checkSuperAdminAuthorizationToManageAdmin(containsAdminUser);
 

@@ -99,7 +99,7 @@ public class QuizTrainingResource {
     public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable, @RequestParam boolean isNewSession,
             @RequestBody Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         Slice<QuizQuestionTrainingDTO> quizQuestionsSlice = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds, isNewSession);
         HttpHeaders headers = new HttpHeaders();
@@ -122,7 +122,7 @@ public class QuizTrainingResource {
             @RequestParam boolean isRated, @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
         log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = TimeUtil.now();
@@ -152,7 +152,7 @@ public class QuizTrainingResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<LeaderboardWithCurrentUserEntryDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         LeaderboardWithCurrentUserEntryDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
@@ -173,7 +173,7 @@ public class QuizTrainingResource {
     public ResponseEntity<Void> updateLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
 
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
             quizTrainingLeaderboardService.updateShowInLeaderboard(user.getId(), shownInLeaderboard);
@@ -198,7 +198,7 @@ public class QuizTrainingResource {
     public ResponseEntity<Void> initializeLeaderboardEntry(@PathVariable long courseId, @Valid @RequestBody LeaderboardSettingDTO leaderboardEntryDTO) {
         log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
 
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
         quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
         return ResponseEntity.ok().build();
@@ -220,7 +220,7 @@ public class QuizTrainingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
         log.debug("REST request to get leaderboard settings");
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         LeaderboardSettingDTO leaderboardSettingDTO = quizTrainingService.getLeaderboardSettings(user.getId());
         return ResponseEntity.ok().body(leaderboardSettingDTO);
     }

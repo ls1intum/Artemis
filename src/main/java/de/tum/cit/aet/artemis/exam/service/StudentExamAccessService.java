@@ -55,7 +55,7 @@ public class StudentExamAccessService {
      */
     public void checkStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId) {
         StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
-        checkStudentExamAccessElseThrow(courseId, examId, studentExam, userRepository.getUserWithCourseRolesAndAuthorities());
+        checkStudentExamAccessElseThrow(courseId, examId, studentExam, userRepository.getUserWithAuthorities());
     }
 
     /**

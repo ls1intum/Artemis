@@ -101,7 +101,7 @@ public class QuizParticipationResource {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }
 
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(exercise, user.getLogin());
         exercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));

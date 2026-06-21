@@ -101,7 +101,7 @@ public class CourseAccessResource {
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseAccessService.enrollUserForCourseOrThrow(user, course);
@@ -119,7 +119,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
         courseAccessService.unenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok().build();
@@ -135,7 +135,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for enrollment");
-        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
         enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
@@ -153,7 +153,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
-        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
                 .toList();
         return ResponseEntity.ok(courses);
@@ -347,7 +347,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.STUDENT);
+        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -362,7 +362,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
+        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -377,7 +377,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.EDITOR);
+        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -392,7 +392,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.INSTRUCTOR);
+        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -407,7 +407,7 @@ public class CourseAccessResource {
     @NonNull
     private ResponseEntity<Void> addUserToCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToAddToGroup = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
+            Optional<User> userToAddToGroup = userRepository.findOneWithAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
             }
@@ -432,7 +432,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.STUDENT);
+        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -447,7 +447,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
+        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -462,7 +462,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.EDITOR);
+        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -478,7 +478,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.INSTRUCTOR);
+        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -495,7 +495,7 @@ public class CourseAccessResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
-        Optional<User> userToRemoveFromGroup = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
+        Optional<User> userToRemoveFromGroup = userRepository.findOneWithAuthoritiesByLogin(userLogin);
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }

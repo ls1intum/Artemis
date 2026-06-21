@@ -113,7 +113,7 @@ public class LtiService {
 
             if (trustExternalLTISystems) {
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
-                User user = userRepository.findUserWithCourseRolesAndAuthoritiesByEmail(email).orElseThrow();
+                User user = userRepository.findOneWithAuthoritiesByEmail(email).orElseThrow();
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;
             }
@@ -172,7 +172,7 @@ public class LtiService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
         }
-        user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
         user.setAuthorities(authorityService.buildAuthorities(user));
         userCreationService.saveUser(user);
     }

@@ -85,7 +85,7 @@ public class HyperionCodeGenerationResource {
             validateGenerationRequest(exerciseId, request);
         }
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         if (request.checkOnly()) {
             return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
                     .orElseGet(() -> ResponseEntity.noContent().build());
