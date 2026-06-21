@@ -475,6 +475,7 @@
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
         "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
+        "dateMissingOrNotValidGeneric": "The date is missing or invalid",
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
         "endDateError": "'End of working time' should be later than 'Start of working time'",
         "visibleDateWarningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",

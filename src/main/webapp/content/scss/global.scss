@@ -20,7 +20,6 @@
 @import 'markdown-it-github-alerts/styles/github-colors-light.css';
 @import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
 @import 'markdown-it-github-alerts/styles/github-base.css';
-
 @import 'primeicons/primeicons.css';
 
 // Smooth transition between themes
@@ -207,8 +206,7 @@ Generic styles
 
 /* Error highlight on input fields */
 .ng-valid[required],
-.ng-valid.required,
-.ng-invalid:not(form) {
+.ng-valid.required {
     border-left: 5px solid $ng-valid-border;
 
     &.form-check-input {
@@ -216,7 +214,16 @@ Generic styles
     }
 }
 
-.ng-invalid:not(form) {
+/*
+ * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
+ * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
+ *   before the user has done anything), which is what made an empty "Create …" form look like one solid bar;
+ * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
+ *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
+ * Applies app-wide.
+ */
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)) {
     border-left: 5px solid $ng-invalid-border;
 
     &.form-check-input {
@@ -1222,6 +1229,7 @@ body.transparent-background {
 
 .scrollable-content {
     @include dynamic-content-height(--header-height);
+
     overflow-y: auto;
 }
 

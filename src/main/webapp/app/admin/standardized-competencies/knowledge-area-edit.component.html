@@ -52,13 +52,7 @@
     <div class="flex flex-col" [formGroup]="form">
         <div class="flex flex-col gap-1">
             <label for="title-input" jhiTranslate="artemisApp.knowledgeArea.model.title"></label>
-            <input
-                type="text"
-                pInputText
-                id="title-input"
-                formControlName="title"
-                [invalid]="form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)"
-            />
+            <input type="text" pInputText id="title-input" formControlName="title" />
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
                 <p-message severity="error" data-testid="title-error">
                     @if (form.controls.title.errors?.required) {
@@ -72,13 +66,7 @@
         </div>
         <div class="flex flex-col gap-1">
             <label for="short-title-input" jhiTranslate="artemisApp.knowledgeArea.model.shortTitle"></label>
-            <input
-                type="text"
-                pInputText
-                id="short-title-input"
-                formControlName="shortTitle"
-                [invalid]="form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)"
-            />
+            <input type="text" pInputText id="short-title-input" formControlName="shortTitle" />
             @if (form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)) {
                 <p-message severity="error" data-testid="short-title-error">
                     @if (form.controls.shortTitle.errors?.required) {
