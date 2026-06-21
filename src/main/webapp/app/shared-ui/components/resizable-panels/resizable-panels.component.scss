@@ -28,7 +28,14 @@
     }
 
     .p-splitter-gutter-handle {
+        // Center the two grip bars within the handle. Without explicit centering and sizing, PrimeNG sizes the
+        // handle to fill the gutter and the bars sit at flex-start (visually left of the divider) instead of centered.
         display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 12px;
+        height: 12px;
         gap: 1px;
         background: transparent;
         pointer-events: none;
