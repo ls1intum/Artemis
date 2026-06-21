@@ -63,7 +63,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
             this.standardizedCompetenciesEnabled.set(isActive);
         });
 
-        // Check initial collapse state based on breakpoint
+        // Check the initial collapsed state based on breakpoint
         this.updateCollapseState();
 
         // Subscribe to router events to handle navigation
