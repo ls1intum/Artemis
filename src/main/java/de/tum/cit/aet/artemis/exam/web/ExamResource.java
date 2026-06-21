@@ -95,6 +95,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
@@ -418,12 +419,14 @@ public class ExamResource {
      *
      * @param courseId      the course to which the exam belongs
      * @param examImportDTO the exam import DTO containing the exam data and exercise group references
+     * @param importId      an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO) throws URISyntaxException, IOException {
+    public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
+            @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
@@ -435,11 +438,17 @@ public class ExamResource {
         // Validate the Exam dates and configuration
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Import Exam with Exercises and create a channel for the exam
-        Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
+        // Import Exam with Exercises and create a channel for the exam. When the client supplies an importId, live progress
+        // is reported to the importing user over a websocket so the UI can show a progress dialog while this request runs.
+        ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getCurrentUserLogin());
+        Exam examCopied = importResult.exam();
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
+        // The exam is always created. Any exercises that could not be imported are reported in the response body, split
+        // into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the client can
+        // give precise feedback instead of the whole import failing.
+        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle());
+
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(importResult);
     }
 
     /**

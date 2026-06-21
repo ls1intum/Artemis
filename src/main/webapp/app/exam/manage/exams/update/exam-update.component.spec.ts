@@ -763,31 +763,29 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should perform import of an examWithoutExercises with exercises successfully', () => {
+        it('should perform import of an examWithoutExercises with exercises successfully', async () => {
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
-            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        status: 200,
-                        body: examForImport,
-                    }),
-                ),
-            );
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
 
             fixture.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            // The import runs behind the progress dialog; navigation happens once the user dismisses the success summary
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
             component.save();
+            await Promise.resolve();
+            await Promise.resolve();
 
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
-        it('should perform import of an exam with only selected exercises successfully', () => {
+        it('should perform import of an exam with only selected exercises successfully', async () => {
             fixture.detectChanges();
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
@@ -795,20 +793,17 @@ describe('ExamUpdateComponent', () => {
             component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
-            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        status: 200,
-                        body: examForImport,
-                    }),
-                ),
-            );
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
 
             fixture.changeDetectorRef.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
             component.save();
+            await Promise.resolve();
+            await Promise.resolve();
 
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
             // We expect to have imported only one exercise group and only one of two exercises
             expect(expectedExam.exerciseGroups?.at(0)?.exercises).toHaveLength(1);
             expect(navigateSpy).toHaveBeenCalledOnce();
@@ -821,7 +816,7 @@ describe('ExamUpdateComponent', () => {
                 of(
                     new HttpResponse({
                         status: 200,
-                        body: examForImport,
+                        body: { exam: examForImport },
                     }),
                 ),
             );
@@ -851,7 +846,7 @@ describe('ExamUpdateComponent', () => {
 
         it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
             'should perform import of examWithoutExercises AND correctly process conflict exception from server',
-            (errorKey) => {
+            async (errorKey) => {
                 const expectedExam = prepareExamForImport(examForImport);
                 expectedExam.course = course;
 
@@ -867,9 +862,14 @@ describe('ExamUpdateComponent', () => {
                 const alertSpy = vi.spyOn(alertService, 'error');
 
                 fixture.detectChanges();
+                vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+                // A validation error is returned before the progress dialog shows a summary; the dialog rejects with it
+                vi.spyOn(component.examImportProgressDialog(), 'runImport').mockRejectedValue(preCheckError);
                 component.save();
+                await Promise.resolve();
+                await Promise.resolve();
 
-                expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+                expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
                 if (errorKey == 'invalidKey') {
                     expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
                 } else {
@@ -878,7 +878,7 @@ describe('ExamUpdateComponent', () => {
             },
         );
 
-        it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
+        it('should perform input of exercise groups AND correctly process arbitrary exception from server', async () => {
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
 
@@ -889,9 +889,14 @@ describe('ExamUpdateComponent', () => {
             const alertSpy = vi.spyOn(alertService, 'error');
 
             fixture.detectChanges();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockRejectedValue(error);
             component.save();
+            await Promise.resolve();
+            await Promise.resolve();
+
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 

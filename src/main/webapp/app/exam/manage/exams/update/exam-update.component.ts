@@ -18,6 +18,7 @@ import { Course, isCommunicationEnabled } from 'app/course/shared/entities/cours
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
@@ -55,6 +56,7 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
         ButtonComponent,
         ConfirmEntityNameComponent,
         Dialog,
+        ExamImportProgressDialogComponent,
         MessageModule,
         SelectButtonModule,
         ExamConductionComponent,
@@ -107,6 +109,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
+    examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
 
     readonly datePickers = viewChildren(FormDateTimePickerComponent);
 
@@ -231,10 +234,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
+        // Guard against re-entry (e.g. pressing Enter in the form while a save/import is already running): the save button is
+        // disabled while saving, but ngSubmit can still fire. A second import would reset the in-flight progress dialog.
+        if (this.isSaving()) {
+            return;
+        }
         this.isSaving.set(true);
 
-        this.createOrUpdateOrImportExam()
-            ?.pipe(
+        // Importing an exam can fail per exercise and take a while (programming repository copies). It therefore runs behind
+        // a progress dialog that shows live websocket progress and a persistent, must-dismiss summary of skipped/incomplete
+        // exercises, after which we navigate to the imported exam.
+        if (this.isImport() && this.exam?.exerciseGroups) {
+            this.importExam();
+            return;
+        }
+
+        const request$ = this.exam.id ? this.examManagementService.update(this.course.id!, this.exam) : this.examManagementService.create(this.course.id!, this.exam);
+        request$
+            .pipe(
                 map((response: HttpResponse<Exam>) => response.body!),
                 takeWhile(() => this.componentActive),
             )
@@ -245,24 +262,31 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Creates, updates or imports the exam depending on the current state of the component.
+     * Imports the exam behind a progress dialog and navigates to the imported exam once the user dismisses the dialog.
      * @private
      */
-    private createOrUpdateOrImportExam() {
-        if (this.isImport() && this.exam?.exerciseGroups) {
-            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (!this.examExerciseImportComponent().validateUserInput()) {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving.set(false);
-                return;
-            }
-            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
-            return this.examManagementService.import(this.course.id!, this.exam);
-        } else if (this.exam.id) {
-            return this.examManagementService.update(this.course.id!, this.exam);
-        } else {
-            return this.examManagementService.create(this.course.id!, this.exam);
+    private importExam() {
+        // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+        if (!this.examExerciseImportComponent().validateUserInput()) {
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+            this.isSaving.set(false);
+            return;
         }
+        this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+        const totalExercises = (this.exam.exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
+        const importId = this.examManagementService.generateImportId();
+        const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
+        this.examImportProgressDialog()
+            .runImport(importId, totalExercises, request$)
+            .then((response) => {
+                const importedExam = response.body?.exam;
+                if (importedExam) {
+                    this.onSaveSuccess(importedExam);
+                } else {
+                    this.isSaving.set(false);
+                }
+            })
+            .catch((httpErrorResponse: HttpErrorResponse) => this.onSaveError(httpErrorResponse));
     }
 
     /**

@@ -5,7 +5,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { downloadFile, downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
@@ -359,19 +359,6 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     downloadPlagiarismResultsCsv() {
         const plagiarismResult = this.plagiarismResult();
         if (plagiarismResult && plagiarismResult.comparisons.length > 0) {
-            const exportOptions = {
-                fieldSeparator: ';',
-                quoteStrings: true,
-                quoteCharacter: '"',
-                decimalSeparator: 'locale',
-                showLabels: true,
-                title: `Plagiarism Check for Exercise ${this.exercise().id}: ${this.exercise().title}`,
-                filename: `plagiarism-result_${this.exercise().type}-exercise-${this.exercise().id}`,
-                useTextFile: false,
-                useBom: true,
-                columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
-            };
-
             const rowData = (plagiarismResult.comparisons as PlagiarismComparison[]).map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
@@ -387,9 +374,14 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
                 });
             });
 
-            const combinedOptions = mkConfig(exportOptions);
-            const csvData = generateCsv(combinedOptions)(rowData);
-            download(combinedOptions)(csvData);
+            downloadCsv(rowData, {
+                columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
+                fileName: `plagiarism-result_${this.exercise().type}-exercise-${this.exercise().id}`,
+                fieldSeparator: ';',
+                quoteStrings: true,
+                quoteCharacter: '"',
+                decimalSeparator: 'locale',
+            });
         }
     }
 

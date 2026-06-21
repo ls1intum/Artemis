@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.irisDashboardDigest.title}">Iris Dashboard Daily Digest</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<div id="message-body">
+    <p>
+        <span th:text="#{email.irisDashboardDigest.greeting}">Hello Administrator,</span>
+    </p>
+    <p>
+        <span th:text="#{email.irisDashboardDigest.intro}">Here is your daily Iris usage digest.</span>
+    </p>
+
+    <!-- No-activity banner -->
+    <th:block th:if="${digest.totalSessions() == 0 and digest.totalMessages() == 0 and digest.totalTokenCostEur() == 0}">
+        <p><strong th:text="#{email.irisDashboardDigest.noActivity}">No Iris activity recorded in this period.</strong></p>
+    </th:block>
+
+    <!-- KPI Summary Table -->
+    <th:block th:if="${digest.totalSessions() > 0 or digest.totalMessages() > 0 or digest.totalTokenCostEur() > 0}">
+        <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.totalSessions}">Total Sessions</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.totalSessions()}">0</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.activeSessions}">Active Sessions</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.activeSessions()}">0</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.engagementRate}">Engagement Rate</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.totalSessions() == 0 ? 'N/A' : #numbers.formatDecimal(digest.engagementRate(), 1, 1) + '%'}">0%</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.uniqueUsers}">Unique Users</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.uniqueUsers()}">0</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.noResponseRate}">No-Response Rate</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${#numbers.formatDecimal(digest.noResponseRate(), 1, 1) + '%'}">0%</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.avgResponseTime}">Avg Response Time</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${#numbers.formatDecimal(digest.avgResponseTimeSeconds(), 1, 1) + 's'}">0s</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.thumbsUp}">Thumbs Up</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.thumbsUpCount()}">0</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.thumbsDown}">Thumbs Down</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${digest.thumbsDownCount()}">0</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardDigest.tokenCost}">Token Cost (EUR)</strong></td>
+                <td style="padding:8px; border:1px solid #ddd;" th:text="${'€' + #numbers.formatDecimal(digest.totalTokenCostEur(), 1, 4)}">€0</td>
+            </tr>
+        </table>
+
+        <!-- Stale boundary note -->
+        <p th:if="${digest.staleBefore() != null}" style="font-size:0.85em; color:#666;">
+            <span th:text="#{email.irisDashboardDigest.staleNote}">Note: No-response analysis excludes messages sent in the last few minutes to allow for in-flight responses.</span>
+        </p>
+    </th:block>
+
+    <!-- Dashboard link -->
+    <p>
+        <a th:with="url=(@{|${baseUrl}${digest.dashboardPath()}|})"
+           th:href="${url}" th:text="#{email.irisDashboardDigest.viewDashboard}">View Dashboard</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>

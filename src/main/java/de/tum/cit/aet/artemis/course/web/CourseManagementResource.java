@@ -314,7 +314,10 @@ public class CourseManagementResource {
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
         Set<String> alreadyTakenShortNames = new HashSet<>();
 
-        boolean includeShortNames = exerciseType.equals(ExerciseType.PROGRAMMING.toString());
+        // The request param and Exercise#getType() both use the lowercase discriminator (e.g. "programming"), so the short
+        // name flag must be compared against the same lowercase value. Comparing against ExerciseType.PROGRAMMING.toString()
+        // ("PROGRAMMING") was always false, so short names were never returned to any caller.
+        boolean includeShortNames = exerciseType.equals(ExerciseType.PROGRAMMING.getValue());
 
         course.getExercises().forEach((exercise -> {
             if (exercise.getType().equals(exerciseType)) {

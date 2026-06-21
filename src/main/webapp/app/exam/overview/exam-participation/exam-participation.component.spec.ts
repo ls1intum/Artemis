@@ -709,6 +709,198 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
+    describe('resume from local storage after a failed save', () => {
+        const buildResumeStudentExam = () => {
+            const exam = new Exam();
+            exam.startDate = dayjs().subtract(10, 'minutes');
+            exam.gracePeriod = 180;
+
+            const quizExercise = new QuizExercise(new Course(), undefined);
+            quizExercise.id = 11;
+            const quizParticipation = new StudentParticipation();
+            const quizSubmission = new QuizSubmission();
+            quizSubmission.isSynced = false; // entered but not yet saved to the server (e.g. a save failed during an outage)
+            quizParticipation.submissions = [quizSubmission];
+            quizExercise.studentParticipations = [quizParticipation];
+
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 12;
+            const textParticipation = new StudentParticipation();
+            const textSubmission = new TextSubmission();
+            textSubmission.isSynced = false;
+            textParticipation.submissions = [textSubmission];
+            textExercise.studentParticipations = [textParticipation];
+
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            modelingExercise.id = 13;
+            const modelingParticipation = new StudentParticipation();
+            const modelingSubmission = new ModelingSubmission();
+            modelingSubmission.isSynced = false;
+            modelingParticipation.submissions = [modelingSubmission];
+            modelingExercise.studentParticipations = [modelingParticipation];
+
+            const studentExam = new StudentExam();
+            studentExam.exam = exam;
+            studentExam.workingTime = 3600;
+            studentExam.exercises = [quizExercise, textExercise, modelingExercise];
+            return { studentExam, quizSubmission, textSubmission, modelingSubmission };
+        };
+
+        it('should re-send restored but not-yet-saved quiz, text and modeling answers when resuming', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            // The mocked submission services return synchronous observables, so the re-send happens synchronously.
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+
+            // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+        });
+
+        it('should keep answers unsynced and not send them when offline at resume so the autosave retries later', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(false); // the websocket is not (re)connected yet at resume time
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+
+            // Nothing is sent while offline, but the answers stay unsynced so the autosave re-sends them once reconnected.
+            expect(quizSpy).not.toHaveBeenCalled();
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(modelingSpy).not.toHaveBeenCalled();
+            expect(quizSubmission.isSynced).toBe(false);
+            expect(textSubmission.isSynced).toBe(false);
+            expect(modelingSubmission.isSynced).toBe(false);
+        });
+
+        it('should not show the restore notification on a normal (not failed) start', () => {
+            const studentExam = new StudentExam();
+            studentExam.exam = new Exam();
+            studentExam.exam.startDate = dayjs().subtract(10, 'minutes');
+            studentExam.id = 1;
+            studentExam.workingTime = 3600;
+            studentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false); // no failed save -> no restore
+            const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+            const infoSpy = vi.spyOn(alertService, 'info');
+
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+
+            expect(loadLocalSpy).not.toHaveBeenCalled();
+            expect(infoSpy).not.toHaveBeenCalledWith('artemisApp.examParticipation.answersRestoredFromLocalStorage');
+        });
+
+        it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam); // fresh start: resumedFromFailedSave defaults to false
+
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(modelingSpy).not.toHaveBeenCalled();
+            expect(quizSpy).not.toHaveBeenCalled();
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(textSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+        });
+
+        it('should inform the student that restored answers are being saved when resuming from local storage', () => {
+            const studentExam = new StudentExam();
+            studentExam.exam = new Exam();
+            studentExam.id = 1;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+            const localStudentExam = new StudentExam();
+            localStudentExam.exam = studentExam.exam;
+            localStudentExam.exam.startDate = dayjs().subtract(10, 'minutes');
+            localStudentExam.id = 2;
+            localStudentExam.workingTime = 3600;
+            localStudentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localStudentExam));
+            const infoSpy = vi.spyOn(alertService, 'info');
+
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+
+            expect(infoSpy).toHaveBeenCalledWith('artemisApp.examParticipation.answersRestoredFromLocalStorage');
+        });
+
+        it('should keep a failed re-send unsynced and flag the failure so the autosave retries it later', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
+            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+            const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+            comp.examStarted(studentExam, true);
+
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            // the failed answer must stay unsynced so the autosave timer re-sends it later instead of it being silently lost
+            expect(textSubmission.isSynced).toBe(false);
+            expect(setLastSaveFailedSpy).toHaveBeenCalledWith(true, expect.anything(), expect.anything());
+            // the flag must NOT be reset to false by the later successful quiz/modeling saves while the text answer is
+            // still unsynced - otherwise a reload would skip restoring and re-sending it.
+            expect(setLastSaveFailedSpy).not.toHaveBeenCalledWith(false, expect.anything(), expect.anything());
+            expect(setLastSaveFailedSpy.mock.calls.at(-1)?.[0]).toBe(true);
+            // the answers that did save are now synced
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+        });
+
+        it('should clear the failed-save flag once every restored answer is successfully re-sent', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+            const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+            comp.examStarted(studentExam, true);
+
+            // once all restored answers are synced, the flag is cleared so a later reload no longer enters the restore path
+            expect(quizSubmission.isSynced).toBe(true);
+            expect(textSubmission.isSynced).toBe(true);
+            expect(modelingSubmission.isSynced).toBe(true);
+            expect(setLastSaveFailedSpy.mock.calls.at(-1)?.[0]).toBe(false);
+        });
+
+        it('should re-send only not-yet-saved answers and leave already-synced ones untouched when resuming', () => {
+            const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
+            // the text answer had already been saved before the failure; only quiz and modeling are still pending
+            textSubmission.isSynced = true;
+            comp.exam.set(studentExam.exam!);
+            comp.connected.set(true);
+            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
+            const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
+
+            comp.examStarted(studentExam, true);
+
+            // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
+            expect(textSpy).not.toHaveBeenCalled();
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+        });
+    });
+
     it('should submit exam when end confirmed', () => {
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;
@@ -717,6 +909,20 @@ describe('ExamParticipationComponent', () => {
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam()?.submitted).toBe(true);
+    });
+
+    it('should clear the failed-save flag once the exam is successfully submitted', () => {
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.exam.set(new Exam());
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
+
+        comp.onExamEndConfirmed();
+
+        // A lingering failed-save flag would otherwise re-enter the restore path on a reload before the exam ends and
+        // re-send answers for an already-submitted exam.
+        expect(setLastSaveFailedSpy).toHaveBeenCalledWith(false, expect.anything(), expect.anything());
     });
 
     it('should show error when already submitted for test run and successfully loading student exam', () => {

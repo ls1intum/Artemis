@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -307,14 +306,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         Set<ExerciseCourseScoreDTO> courseExercises = course.getExercises().stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
-        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
-                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), Collections.emptyList(), courseExercises);
+        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), List.of(),
+                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), List.of(), courseExercises);
         assertThat(studentScore.absoluteScore()).isZero();
         assertThat(studentScore.relativeScore()).isZero();
         assertThat(studentScore.currentRelativeScore()).isZero();
         assertThat(studentScore.presentationScore()).isZero();
 
-        PlagiarismVerdict mostSeverePlagiarismVerdict = courseScoreCalculationService.findMostServerePlagiarismVerdict(Collections.emptyList());
+        PlagiarismVerdict mostSeverePlagiarismVerdict = courseScoreCalculationService.findMostServerePlagiarismVerdict(List.of());
         assertThat(mostSeverePlagiarismVerdict).isNull();
         boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.presentationScore(), course.getPresentationScore());
         assertThat(presentationScorePassed).isFalse();

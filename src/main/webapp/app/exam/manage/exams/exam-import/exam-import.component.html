@@ -95,7 +95,7 @@
                         <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
                     }
                 </div>
-                <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" />
+                <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
             <div class="modal-footer">
                 <jhi-button
@@ -108,3 +108,5 @@
         }
     }
 </form>
+
+<jhi-exam-import-progress-dialog />

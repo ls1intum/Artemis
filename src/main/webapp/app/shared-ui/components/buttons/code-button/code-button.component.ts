@@ -12,7 +12,7 @@ import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 
-import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -155,6 +155,7 @@ export class CodeButtonComponent implements OnInit {
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    readonly faLaptopCode = faLaptopCode;
 
     constructor() {
         this.isInCourseManagement.set(this.router.url.includes('course-management'));

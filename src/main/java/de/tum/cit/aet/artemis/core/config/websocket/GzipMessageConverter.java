@@ -96,7 +96,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
                     String compressedBase64String = compressAndEncode(originalBytes);
                     byte[] compressed = compressedBase64String.getBytes(StandardCharsets.UTF_8);
                     double percentageSaved = 100 * (1 - (double) compressed.length / originalBytes.length);
-                    log.debug("Compressed message payload from {} to {} (saved {}% payload size)", originalBytes.length, compressed.length, String.format("%.1f", percentageSaved));
+                    log.debug("Compressed message payload from {} to {} (saved {}% payload size)", originalBytes.length, compressed.length, "%.1f".formatted(percentageSaved));
                     return compressed;
                 }
             }

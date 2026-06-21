@@ -118,6 +118,18 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(quizServiceFindStub).toHaveBeenCalled();
     });
 
+    it('should display long durations as total hours', () => {
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        comp.quizExercise().duration = 7 * 24 * 60 * 60 + 2 * 60 * 60 + 3 * 60 + 30;
+
+        comp.updateDuration();
+
+        expect(comp.duration().hours).toBe(7 * 24 + 2);
+        expect(comp.duration().minutes).toBe(3);
+        expect(comp.duration().seconds).toBe(30);
+    });
+
     it('should delete quiz question', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
