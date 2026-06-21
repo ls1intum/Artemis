@@ -55,6 +55,21 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
      * @return the mapped DTO, or null if the input was null
      */
     public static FileUploadExerciseContextDTO of(FileUploadExercise exercise, boolean includeGradingCriteria) {
+        return of(exercise, includeGradingCriteria, null, null, null);
+    }
+
+    /**
+     * Factory method to create a {@link FileUploadExerciseContextDTO} from a {@link FileUploadExercise} entity with permission flags.
+     *
+     * @param exercise               the file upload exercise entity to map, can be null
+     * @param includeGradingCriteria whether to include the grading criteria in the DTO
+     * @param isAtLeastTutor         whether the current user has at least tutor privileges for the exercise
+     * @param isAtLeastEditor        whether the current user has at least editor privileges for the exercise
+     * @param isAtLeastInstructor    whether the current user has at least instructor privileges for the exercise
+     * @return the mapped DTO, or null if the input was null
+     */
+    public static FileUploadExerciseContextDTO of(FileUploadExercise exercise, boolean includeGradingCriteria, Boolean isAtLeastTutor, Boolean isAtLeastEditor,
+            Boolean isAtLeastInstructor) {
         if (exercise == null) {
             return null;
         }
@@ -79,6 +94,6 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
         return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getAssessmentType(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getExerciseType(), exercise.getFilePattern(),
-                exercise.isTeamMode(), null, null, null, courseDTO, exerciseGroupDTO, gradingCriteriaDTOs);
+                exercise.isTeamMode(), isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, courseDTO, exerciseGroupDTO, gradingCriteriaDTOs);
     }
 }
