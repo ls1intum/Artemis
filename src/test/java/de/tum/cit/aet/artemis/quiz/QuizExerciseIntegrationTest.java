@@ -816,7 +816,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchDTOShapeForExamQuiz() throws Exception {
-        QuizExercise examQuiz = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(2));
+        QuizExercise examQuiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(2));
         long examQuizId = examQuiz.getId();
 
         var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(examQuizId));

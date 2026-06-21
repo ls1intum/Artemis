@@ -285,7 +285,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private Course createOnlineCourseWithConfiguration() {
-        Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>(), "student", "tutor", "editor", TEST_PREFIX + "instructor");
+        Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>());
         course.setOnlineCourse(true);
 
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -293,7 +293,9 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         onlineCourseConfiguration.setRequireExistingUser(false);
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        return courseRepository.saveAndFlush(course);
+        Course savedCourse = courseRepository.saveAndFlush(course);
+        userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);
+        return savedCourse;
     }
 
     private ObjectNode onlineCourseConfigurationPayload(Course savedCourse, ObjectNode platformPayload) {
