@@ -9,15 +9,24 @@
         </div>
         <div class="flex flex-col gap-1">
             <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <p-select
-                inputId="knowledge-area-filter"
-                [ngModel]="knowledgeAreaFilter()"
-                (ngModelChange)="onKnowledgeAreaChange($event)"
-                [options]="knowledgeAreasForSelect()"
-                optionLabel="title"
-                [showClear]="true"
-                appendTo="body"
-            />
+            <!--
+                Only create the p-select once options are loaded. PrimeNG's Select `label` computed reads the
+                selected value's signal only inside its options.findIndex() loop; if the select is first
+                rendered while the (async-loaded) options are empty, that loop never runs, the value signal is
+                never tracked, and the label is frozen empty — the selected area would never display.
+            -->
+            @if (knowledgeAreasForSelect().length) {
+                <p-select
+                    inputId="knowledge-area-filter"
+                    [ngModel]="knowledgeAreaFilter()?.id"
+                    (ngModelChange)="onKnowledgeAreaChange($event)"
+                    [options]="knowledgeAreasForSelect()"
+                    optionLabel="title"
+                    optionValue="id"
+                    [showClear]="true"
+                    appendTo="body"
+                />
+            }
         </div>
     </div>
 </div>

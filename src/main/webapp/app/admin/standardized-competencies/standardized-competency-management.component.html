@@ -57,7 +57,7 @@
         @if (dataSource.data?.length && (selectedCompetency() || selectedKnowledgeArea())) {
             <!-- both tree and detail visible: resizable splitter -->
             <p-splitter
-                styleClass="items-start max-h-[calc(100vh-var(--sidebar-header-footer-combined-height,105px))]"
+                styleClass="h-[calc(100vh-var(--sidebar-header-footer-combined-height,105px))]"
                 panelStyleClass="overflow-auto"
                 [dt]="{ root: { background: 'transparent', borderColor: 'transparent' } }"
                 layout="horizontal"
