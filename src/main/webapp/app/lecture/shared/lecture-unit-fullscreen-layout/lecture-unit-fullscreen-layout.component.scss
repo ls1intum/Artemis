@@ -101,7 +101,10 @@
 
 // PrimeNG p-splitter styling: reproduce the previous split.js look (transparent gutter
 // with two small grip bars) and let panels fill the fullscreen container.
-:host ::ng-deep .fullscreen-splitter {
+// NOTE: this component uses ViewEncapsulation.None, so styles are global and `:host ::ng-deep` would
+// match nothing (no _nghost/_ngcontent attributes). Target the class directly so the gutter grip,
+// panel flex layout and gutter sizing actually apply.
+.fullscreen-splitter {
     &.p-splitter {
         flex: 1;
         min-width: 0;
