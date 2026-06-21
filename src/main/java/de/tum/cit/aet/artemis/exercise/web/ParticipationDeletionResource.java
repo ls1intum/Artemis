@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
- * REST controller for deleting a participation.
+ * REST controller for deleting a participation and cleaning up a build plan for a participation.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -111,7 +111,7 @@ public class ParticipationDeletionResource {
     }
 
     /**
-     * PUT /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
@@ -129,4 +129,5 @@ public class ParticipationDeletionResource {
         participationDeletionService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
+
 }
