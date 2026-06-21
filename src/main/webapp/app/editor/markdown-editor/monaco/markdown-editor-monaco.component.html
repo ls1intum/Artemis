@@ -4,14 +4,14 @@
     }
     <div
         #wrapper
-        class="markdown-editor-wrapper grow"
+        class="markdown-editor-wrapper grow flex flex-col"
         [style.overflow]="inEditMode() ? 'visible' : 'auto'"
         [style.height]="inEditMode() && targetWrapperHeight() ? targetWrapperHeight() + 'px' : 'auto'"
         [style.cursor]="isResizing() ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight()"
     >
         <!-- Tab header row: tabs, close button and (in edit mode) the action toolbar share one wrapping flex row. -->
-        <div #actionPalette class="md-action-palette flex items-center flex-wrap">
+        <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
             <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs shrink-0">
                 <p-tablist>
                     @if (showEditButton()) {
@@ -42,7 +42,7 @@
                     } @else {
                         <button
                             type="button"
-                            class="md-toolbar-btn text-style-icon"
+                            class="md-toolbar-btn inline-block leading-[0.75em] text-[1.1em]"
                             [pTooltip]="'artemisApp.multipleChoiceQuestion.editor.textFormat' | artemisTranslate"
                             (click)="showTextStyleActions.set(true)"
                         >
@@ -78,11 +78,11 @@
                                     <span [jhiTranslate]="color.translationKey"></span>
                                 </button>
                                 <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
-                                    <div class="md-color-grid flex flex-wrap gap-1">
+                                    <div class="flex flex-wrap gap-1 w-[13.75rem]">
                                         @for (tagColor of colorSignal(); track tagColor) {
                                             <button
                                                 type="button"
-                                                class="md-color-swatch"
+                                                class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
                                                 [style.background-color]="tagColor"
                                                 (click)="onSelectColor(tagColor); colorPopover.hide()"
                                             ></button>
@@ -169,23 +169,23 @@
         </div>
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
-        <div class="markdown-editor markdown-editor-wrapper flex-col" [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }">
+        <div class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]" [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }">
             @if (mode() === 'diff') {
                 @if (renderSideBySide()) {
                     <!-- Split-view column headers so users know which side is which -->
-                    <div #diffHeader class="diff-pane-headers">
-                        <div class="diff-pane-header" [style.width.px]="diffOriginalPaneWidth()">
+                    <div #diffHeader class="flex border-b">
+                        <div class="flex items-center shrink-0 px-2 py-1 bg-[var(--p-content-background)]" [style.width.px]="diffOriginalPaneWidth()">
                             <p-tag severity="danger" [value]="diffOriginalLabel()" />
                         </div>
-                        <div class="diff-pane-header diff-pane-header--right">
+                        <div class="flex items-center shrink-0 flex-1 border-l px-2 py-1 bg-[var(--p-content-background)]">
                             <p-tag severity="success" [value]="diffSuggestionLabel()" />
                         </div>
                     </div>
                 } @else {
                     <!-- Inline/unified diff: single explanatory row -->
-                    <div #diffHeader class="diff-pane-unified-hint">
+                    <div #diffHeader class="flex items-center gap-2 px-2 py-1 border-b bg-[var(--p-content-background)]">
                         <p-tag severity="danger" [value]="diffOriginalLabel()" />
-                        <span class="diff-pane-unified-hint__text">{{ diffUnifiedHint() }}</span>
+                        <span class="text-[0.78rem] text-muted-color">{{ diffUnifiedHint() }}</span>
                         <p-tag severity="success" [value]="diffSuggestionLabel()" />
                     </div>
                 }
@@ -207,10 +207,11 @@
             />
             @if (enableFileUpload()) {
                 <div class="flex items-center border-t" #fileUploadFooter>
+                    <!-- Visually hidden: a file input cannot use display:none (some browsers then block uploads), so it is shrunk and pushed out of view instead. -->
                     <input
                         #fileUploadInput
                         [id]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="file-upload-footer-input"
+                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0 overflow-hidden"
                         type="file"
                         [accept]="allowedFileExtensions()"
                         [multiple]="true"
@@ -218,12 +219,12 @@
                     />
                     <label
                         [for]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="file-upload-footer-label inline"
+                        class="inline w-full cursor-pointer rounded-r-[0.15em]"
                         [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
                     >
                         <div class="flex mx-0 items-baseline">
                             <span
-                                class="grow upload-subtitle"
+                                class="grow text-xs text-muted-color"
                                 [jhiTranslate]="wrapper.getBoundingClientRect().width < 500 ? 'artemisApp.markdownEditor.fileUploadShort' : 'artemisApp.markdownEditor.fileUpload'"
                             ></span>
                         </div>
@@ -253,7 +254,7 @@
             <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
                 <ng-content class="overflow-auto p-1" select="#previewMonaco">
                     @if (showDefaultPreview()) {
-                        <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
+                        <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                     }
                 </ng-content>
                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
@@ -264,7 +265,7 @@
         }
     </div>
     @if (enableResize() && inEditMode()) {
-        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center resize-placeholder">
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"

@@ -22,7 +22,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
  */
 @Component({
     selector: 'jhi-privacy-statement-update-component',
-    styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [

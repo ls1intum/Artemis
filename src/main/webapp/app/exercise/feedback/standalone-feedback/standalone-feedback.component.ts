@@ -14,7 +14,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 @Component({
     selector: 'jhi-standalone-feedback',
     templateUrl: './standalone-feedback.component.html',
-    styleUrls: ['../feedback.scss', 'standalone-feedback.scss'],
+    styleUrls: ['standalone-feedback.scss'],
     imports: [FeedbackComponent],
 })
 export class StandaloneFeedbackComponent implements OnInit {

@@ -52,6 +52,7 @@ export interface AdminSidebarGroup {
     styleUrls: ['./admin-sidebar.component.scss'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;

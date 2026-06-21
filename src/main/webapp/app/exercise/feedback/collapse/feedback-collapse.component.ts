@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 
 @Component({
     selector: 'jhi-feedback-collapse',
-    styleUrls: ['./feedback-collapse.scss'],
     templateUrl: './feedback-collapse.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, FeedbackTextComponent, ArtemisTranslatePipe],

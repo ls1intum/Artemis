@@ -112,7 +112,6 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
-    styleUrls: ['./user-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

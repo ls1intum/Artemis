@@ -1,5 +1,5 @@
 @if (!isExamReviewPage() && !dialogRef) {
-    <div class="feedback-header flex justify-between">
+    <div class="flex justify-between bg-[var(--artemis-dark)] text-white">
         @if (taskName) {
             <h3 [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
         } @else {
@@ -79,8 +79,8 @@
                 }
 
                 @if (showScoreChart && result.submission?.participation?.exercise) {
-                    <div class="result-score-chart">
-                        <div id="feedback-chart" class="chart-space" style="height: 80px">
+                    <div class="mb-12">
+                        <div id="feedback-chart" class="chart-space h-20">
                             <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
                         </div>
                     </div>
@@ -188,7 +188,7 @@
         }
     </ng-template>
 </div>
-<div class="feedback-footer flex justify-end">
+<div class="flex justify-end min-w-full">
     @if (dialogRef) {
         <p-button id="feedback-close" severity="secondary" [outlined]="true" size="small" (onClick)="dialogRef.close()" [label]="'entity.action.close' | artemisTranslate" />
     }

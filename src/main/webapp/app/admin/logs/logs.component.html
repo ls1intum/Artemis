@@ -26,13 +26,13 @@
         >
             <ng-template #header>
                 <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event!)" (ascendingChange)="ascending.set($event)">
-                    <th jhiSortBy="name" scope="col" style="width: 100%; max-width: 0"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="name" scope="col" class="w-full max-w-0"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="level" scope="col" class="text-end whitespace-nowrap"><span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" /></th>
                 </tr>
             </ng-template>
             <ng-template #body let-logger>
                 <tr>
-                    <td class="truncate" style="width: 100%; max-width: 0">
+                    <td class="w-full max-w-0 truncate">
                         <small>{{ logger.name | slice: 0 : 140 }}</small>
                     </td>
                     <td class="text-end whitespace-nowrap">

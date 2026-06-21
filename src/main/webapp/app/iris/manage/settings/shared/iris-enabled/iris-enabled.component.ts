@@ -19,7 +19,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `

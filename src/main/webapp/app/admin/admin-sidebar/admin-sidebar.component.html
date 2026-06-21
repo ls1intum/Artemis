@@ -1,12 +1,12 @@
-<div class="sidebar-container flex h-full flex-col justify-between" [class.collapsed]="isNavbarCollapsed()" data-testid="admin-sidebar">
-    <div class="sidebar-content">
+<div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-[var(--module-bg)]" [class.collapsed]="isNavbarCollapsed()" data-testid="admin-sidebar">
+    <div class="flex-1 overflow-x-hidden overflow-y-auto">
         <!-- Admin Header -->
         <div id="admin-header" class="flex items-center p-3 no-underline">
-            <div class="admin-icon flex items-center justify-center">
+            <div class="admin-icon flex h-9 min-w-9 items-center justify-center rounded-full bg-[var(--course-image-bg)] text-color">
                 <fa-icon [icon]="faUserShield" />
             </div>
             @if (!isNavbarCollapsed()) {
-                <div class="admin-title auto-collapse mb-0 text-base font-bold" jhiTranslate="global.menu.admin.main"></div>
+                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.main"></div>
             }
         </div>
 
@@ -17,12 +17,12 @@
                 @for (group of sidebarGroups(); track group.translation; let groupIndex = $index) {
                     <!-- Group Header -->
                     @if (!isNavbarCollapsed()) {
-                        <li class="nav-group-header">
-                            <span class="group-label px-3 text-sm uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
+                        <li class="nav-group-header pt-2 pb-1">
+                            <span class="px-3 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
                         </li>
                     } @else if (groupIndex > 0) {
-                        <li class="nav-group-separator">
-                            <hr class="my-2 mx-2" />
+                        <li>
+                            <hr class="mx-2 my-2 border-[var(--p-content-border-color)] opacity-50" />
                         </li>
                     }
 
@@ -30,7 +30,7 @@
                     @for (item of group.items; track item.routerLink) {
                         <li class="nav-item">
                             <a
-                                class="nav-link-sidebar flex items-center px-3 py-2 no-underline"
+                                class="nav-link-sidebar flex items-center px-3 py-2 whitespace-nowrap text-color no-underline"
                                 [attr.id]="item.testId"
                                 [class.collapsed]="isNavbarCollapsed()"
                                 [routerLink]="item.routerLink"
@@ -50,11 +50,11 @@
     </div>
 
     <!-- Bottom section with the sidebar toggle -->
-    <div class="collapse-toggle-container mb-2">
+    <div class="mb-2 shrink-0 bg-[var(--module-bg)]">
         @if (!isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow px-2"
+                class="double-arrow flex w-full cursor-pointer items-center justify-end border-none bg-transparent px-2 pe-[10px] font-[inherit] text-inherit"
                 [class.menu-closed]="isNavbarCollapsed()"
                 [pTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
                 tooltipPosition="right"
@@ -63,8 +63,8 @@
                 [attr.aria-expanded]="!isNavbarCollapsed()"
                 data-testid="admin-sidebar-collapse"
             >
-                <span class="double-arrow-icon">
-                    <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                <span class="double-arrow-icon inline-flex min-w-10 items-center gap-1">
+                    <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                 </span>
             </button>
@@ -73,7 +73,7 @@
         @if (isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow mb-2"
+                class="double-arrow mb-2 flex w-full cursor-pointer items-center justify-center border-none bg-transparent pe-[10px] font-[inherit] text-inherit"
                 [class.menu-closed]="isNavbarCollapsed()"
                 tooltipPosition="right"
                 [appendTo]="'body'"
@@ -82,8 +82,8 @@
                 [attr.aria-expanded]="!isNavbarCollapsed()"
                 data-testid="admin-sidebar-expand"
             >
-                <span class="double-arrow-icon">
-                    <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                <span class="double-arrow-icon inline-flex min-w-10 items-center gap-1">
+                    <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                 </span>
             </button>

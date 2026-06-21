@@ -40,7 +40,13 @@
                     <td>
                         <div class="flex items-center justify-end gap-2">
                             @if (dataExport.downloadable) {
-                                <p-button severity="success" size="small" (onClick)="downloadExport(dataExport)" data-testid="download-btn" styleClass="download-btn">
+                                <p-button
+                                    severity="success"
+                                    size="small"
+                                    (onClick)="downloadExport(dataExport)"
+                                    data-testid="download-btn"
+                                    styleClass="w-30 min-w-30 whitespace-nowrap"
+                                >
                                     <fa-icon [icon]="faDownload" class="me-1" />
                                     <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
                                 </p-button>

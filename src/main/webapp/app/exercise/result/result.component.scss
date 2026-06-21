@@ -1,12 +1,11 @@
-span {
-    line-height: 1.25;
-}
-
+// The `.clickable-result` class is toggled at runtime via [ngClass]/[class.clickable-result], so these
+// rules are bound to dynamic state and target descendant spans that have no static class of their own.
+// They also rely on the `:not(:last-child)` structural pseudo, which has no Tailwind utility equivalent.
 .clickable-result span {
     text-decoration: underline;
     cursor: pointer;
-}
 
-.clickable-result span:not(:last-child) {
-    margin-right: 0.25em;
+    &:not(:last-child) {
+        margin-right: 0.25em;
+    }
 }

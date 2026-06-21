@@ -21,7 +21,6 @@ import { InputTextModule } from 'primeng/inputtext';
 @Component({
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
-    styleUrls: ['./logs.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

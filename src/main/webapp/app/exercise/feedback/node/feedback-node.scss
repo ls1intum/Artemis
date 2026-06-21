@@ -1,32 +1,9 @@
-.feedback-item {
-    // Preserves the spacing the Bootstrap `.alert` provided before the PrimeNG `p-message` migration.
-    margin-bottom: 1rem;
-
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        gap: 2rem;
-    }
-
-    &__category {
-        margin-bottom: 0;
-        font-size: 1rem;
-        font-weight: bold;
-    }
-}
-
+// Background color of the collapsible feedback-group header. The variant class is built dynamically in the
+// template from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so it cannot be a static
+// template utility. The colors are the Artemis brand severity tokens (`--success` / `--info` / `--warning`
+// / `--danger`), which the `tailwindcss-primeui` plugin does NOT expose as color utilities (it only binds
+// primary/surface), so there is no faithful Tailwind equivalent — these rules must stay in SCSS.
 .feedback-group {
-    display: flex;
-    border-radius: 0.15rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-
-    // Replaces the former Bootstrap `bg-{color}` classes. Colors come from the Artemis brand tokens
-    // (the same CSS variables the PrimeNG AuraArtemis preset maps its severity primitives to), so the
-    // group header stays brand-bound and dark-mode aware without relying on Bootstrap utilities.
     &--success {
         background-color: var(--success);
     }
@@ -41,10 +18,5 @@
 
     &--danger {
         background-color: var(--danger);
-    }
-
-    &__left {
-        display: flex;
-        align-items: center;
     }
 }

@@ -32,7 +32,6 @@ import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'jhi-admin-data-exports',
     templateUrl: './admin-data-exports.component.html',
-    styleUrls: ['./admin-data-exports.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

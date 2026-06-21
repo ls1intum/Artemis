@@ -225,11 +225,11 @@
     header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}"
 >
     <div class="flex flex-col">
-        <div class="user-management-border-bottom flex items-center pb-1">
+        <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pb-1">
             <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: this.filters().authorityFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
         </div>
-        <div class="user-management-background-accent user-management-line-bottom pt-2">
+        <div class="border-b bg-[var(--user-management-background-color)] pt-2">
             <div class="mb-2 flex w-4/5 items-center justify-around">
                 <div class="flex items-center gap-1">
                     <p-radiobutton
@@ -264,7 +264,7 @@
                 </div>
             </div>
         </div>
-        <div class="user-management-background-accent px-3">
+        <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 grid grid-cols-3 gap-2 py-2 text-nowrap">
                 @for (authority of this.authorityFilters; track authority) {
                     <li>
@@ -280,11 +280,11 @@
                 }
             </ul>
         </div>
-        <div class="user-management-border-bottom flex items-center pt-3 pb-1">
+        <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
             <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.origin.title" [translateValues]="{ num: this.filters().originFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
         </div>
-        <div class="user-management-background-accent px-3">
+        <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
                 @for (origin of this.originFilters; track origin) {
                     <li>
@@ -310,7 +310,7 @@
                 </li>
             </ul>
         </div>
-        <div class="user-management-border-bottom flex items-center pt-3 pb-1">
+        <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
             <h5
                 class="my-0"
                 jhiTranslate="artemisApp.userManagement.filter.registrationNumber.title"
@@ -318,7 +318,7 @@
             ></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
         </div>
-        <div class="user-management-background-accent px-3">
+        <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
                 @for (registrationNumber of this.registrationNumberFilters; track registrationNumber) {
                     <li>
@@ -345,11 +345,11 @@
                 </li>
             </ul>
         </div>
-        <div class="user-management-border-bottom flex items-center pt-3 pb-1">
+        <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
             <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.status.title" [translateValues]="{ num: this.filters().statusFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
         </div>
-        <div class="user-management-background-accent px-3">
+        <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
                 @for (status of this.statusFilters; track status) {
                     <li>

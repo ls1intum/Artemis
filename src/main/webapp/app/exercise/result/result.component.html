@@ -14,11 +14,11 @@
                     [showBorder]="showProgressBarBorder()"
                 />
             } @else {
-                <span class="text-primary">
+                <span class="text-primary leading-tight">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                    <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+                    <span id="test-queued" class="leading-tight" jhiTranslate="artemisApp.editor.queued"></span>
                     @if (estimatedRemaining()) {
-                        <span> {{ estimatedRemaining() | artemisDurationFromSeconds }} </span>
+                        <span class="leading-tight"> {{ estimatedRemaining() | artemisDurationFromSeconds }} </span>
                     }
                 </span>
             }
@@ -33,11 +33,11 @@
                     [showBorder]="showProgressBarBorder()"
                 />
             } @else {
-                <span class="text-primary">
+                <span class="text-primary leading-tight">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                    <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
+                    <span id="test-building" class="leading-tight" jhiTranslate="artemisApp.editor.building"></span>
                     @if (estimatedRemaining()) {
-                        <span> {{ estimatedRemaining() | artemisDurationFromSeconds }} </span>
+                        <span class="leading-tight"> {{ estimatedRemaining() | artemisDurationFromSeconds }} </span>
                     }
                 </span>
             }
@@ -47,17 +47,17 @@
                 @if (showIcon()) {
                     <fa-icon class="result-score-icon" [class]="textColorClass()" [icon]="resultIconClass()" size="lg" />
                 }
-                <span [ngClass]="textColorClass()" class="result" [class.clickable-result]="false" id="result-score">
-                    <span [pTooltip]="resultTooltip() | artemisTranslate">
+                <span [ngClass]="textColorClass()" class="result leading-tight" [class.clickable-result]="false" id="result-score">
+                    <span class="leading-tight" [pTooltip]="resultTooltip() | artemisTranslate">
                         {{ resultString() }}
                     </span>
                 </span>
             }
         }
         @case (ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
-            <span class="text-primary">
+            <span class="text-primary leading-tight">
                 <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                <span id="preliminary-feedback-generating" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip"></span>
+                <span id="preliminary-feedback-generating" class="leading-tight" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip"></span>
             </span>
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
@@ -65,8 +65,8 @@
                 @if (showIcon()) {
                     <fa-icon class="result-score-icon" [class]="textColorClass()" [icon]="resultIconClass()" size="lg" />
                 }
-                <span [ngClass]="textColorClass()" class="result" [class.clickable-result]="false" id="result-score">
-                    <span [pTooltip]="resultTooltip() | artemisTranslate">
+                <span [ngClass]="textColorClass()" class="result leading-tight" [class.clickable-result]="false" id="result-score">
+                    <span class="leading-tight" [pTooltip]="resultTooltip() | artemisTranslate">
                         {{ resultString() }}
                     </span>
                 </span>
@@ -79,19 +79,19 @@
                 }
                 <span
                     [class]="textColorClass()"
-                    class="result"
+                    class="result leading-tight"
                     [ngClass]="{ 'clickable-result': !isInSidebarCard() && exercise()?.type !== ExerciseType.QUIZ }"
                     id="result-score"
                     (click)="!isInSidebarCard() ? showDetails(currentResult) : ''"
                 >
-                    <span [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
+                    <span class="leading-tight" [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
                     @if (short() && currentResult.codeIssueCount) {
-                        <span [pTooltip]="'artemisApp.result.codeIssuesTooltip' | artemisTranslate">
+                        <span class="leading-tight" [pTooltip]="'artemisApp.result.codeIssuesTooltip' | artemisTranslate">
                             <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle" />
                         </span>
                     }
                     @if (!isInSidebarCard() && showCompletion()) {
-                        <span [pTooltip]="currentResult.completionDate | artemisDate">({{ currentResult.completionDate | artemisTimeAgo }})</span>
+                        <span class="leading-tight" [pTooltip]="currentResult.completionDate | artemisDate">({{ currentResult.completionDate | artemisTimeAgo }})</span>
                     }
                 </span>
                 @if (showBadge()) {
@@ -105,33 +105,39 @@
             }
         }
         @case (ResultTemplateStatus.LATE) {
-            <span [class]="textColorClass()" id="test-late">
+            <span [class]="textColorClass()" class="leading-tight" id="test-late">
                 <fa-icon [icon]="resultIconClass()" size="lg" />
-                <span class="score"> {{ resultString() }}, </span>
-                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateFeedback"></span>
+                <span class="score leading-tight"> {{ resultString() }}, </span>
+                <span class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateFeedback"></span>
             </span>
         }
         @case (ResultTemplateStatus.SUBMITTED) {
-            <span id="test-submitted" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmitted"></span>
+            <span id="test-submitted" class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmitted"></span>
         }
         @case (ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING) {
-            <span id="test-submitted-waiting-grading" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading"></span>
+            <span
+                id="test-submitted-waiting-grading"
+                class="text-body-secondary leading-tight"
+                jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading"
+            ></span>
         }
         @case (ResultTemplateStatus.LATE_NO_FEEDBACK) {
-            <span id="test-late-no-feedback" class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
+            <span id="test-late-no-feedback" class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
         }
         @case (ResultTemplateStatus.MISSING) {
-            <span class="text-danger">
+            <span class="text-danger leading-tight">
                 <fa-icon class="me-1" [icon]="faExclamationCircle" size="lg" />
                 @switch (missingResultInfo()) {
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
                         <span
+                            class="leading-tight"
                             [pTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate"
                             jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
                         ></span>
                     }
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE) {
                         <span
+                            class="leading-tight"
                             [pTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate"
                             jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
                         ></span>
@@ -141,7 +147,7 @@
                     @if (exercise()?.type !== ExerciseType.QUIZ) {
                         <span
                             [ngClass]="{ 'clickable-result': !isInSidebarCard() }"
-                            class="result"
+                            class="result leading-tight"
                             (click)="showDetails(missingResult)"
                             jhiTranslate="artemisApp.result.missing.viewPrevious"
                         ></span>
@@ -150,8 +156,8 @@
             </span>
         }
         @default {
-            <span class="text-body-secondary">
-                <span jhiTranslate="{{ showUngradedResults() ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult' }}"></span>
+            <span class="text-body-secondary leading-tight">
+                <span class="leading-tight" jhiTranslate="{{ showUngradedResults() ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult' }}"></span>
             </span>
         }
     }

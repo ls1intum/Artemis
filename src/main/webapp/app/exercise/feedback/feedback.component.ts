@@ -48,7 +48,6 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
 @Component({
     selector: 'jhi-result-detail',
     templateUrl: './feedback.component.html',
-    styleUrls: ['./feedback.scss'],
     imports: [
         TranslateDirective,
         FaIconComponent,

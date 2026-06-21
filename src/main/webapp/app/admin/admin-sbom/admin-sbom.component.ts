@@ -48,7 +48,6 @@ type PrimeNgSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'c
 @Component({
     selector: 'jhi-admin-sbom',
     templateUrl: './admin-sbom.component.html',
-    styleUrls: ['./admin-sbom.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

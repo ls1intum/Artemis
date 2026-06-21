@@ -27,7 +27,6 @@ import { TableModule } from 'primeng/table';
 @Component({
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

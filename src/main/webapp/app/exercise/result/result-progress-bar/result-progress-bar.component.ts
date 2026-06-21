@@ -12,7 +12,6 @@ import { TooltipModule } from 'primeng/tooltip';
     selector: 'jhi-result-progress-bar',
     imports: [TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule, ProgressBarModule, TooltipModule],
     templateUrl: './result-progress-bar.component.html',
-    styleUrl: './result-progress-bar.component.scss',
 })
 export class ResultProgressBarComponent implements OnDestroy {
     estimatedRemaining = input<number>(0);
