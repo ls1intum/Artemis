@@ -5,8 +5,11 @@
 .chat-widget {
     position: fixed;
 
-    // Opt out of browser touch gestures (pan/zoom) so the custom Pointer-Events drag/resize works reliably on touch devices.
-    touch-action: none;
+    // Keep native vertical scrolling of the inner chat list working on touch devices. touch-action intersects
+    // across ancestors, so `none` here would override the list's own scrolling and block swiping through chat
+    // history. `pan-y` lets the browser handle vertical scroll while still routing horizontal edge-resize gestures
+    // to the Pointer-Events handlers; the explicit drag/resize surfaces below opt out of gestures entirely.
+    touch-action: pan-y;
     top: -20px;
     left: 0;
     width: 330px;
@@ -25,6 +28,12 @@
         height: 5px;
         z-index: 10;
     }
+}
+
+// The header is the drag surface (rendered by the embedded base chatbot). Opt it out of browser gestures so a free
+// drag works on touch under the widget's `pan-y`. Scoped to this widget so other base-chatbot usages are unaffected.
+:host ::ng-deep .chat-header {
+    touch-action: none;
 }
 
 .ng-draggable {
