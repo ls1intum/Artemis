@@ -320,11 +320,22 @@
     margin-right: 0;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 0 0;
+    padding: 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;
     z-index: 3;
+}
+
+/* Center each grip on the panel divider. `justify-self: center` is a no-op in the flex parent, so the handle
+   otherwise sits just inside the panel edge and reads as left-of-the-divider; shift it by half its own width
+   onto the divider line. */
+.rg-sidebar-left {
+    transform: translateX(50%);
+}
+
+.rg-sidebar-right {
+    transform: translateX(-50%);
 }
 
 .separator {
