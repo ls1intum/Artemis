@@ -126,6 +126,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (fileUploadSubmissionInput.exerciseId() != null && fileUploadSubmissionInput.exerciseId() != exerciseId) {
             throw new BadRequestAlertException("ExerciseId in Body doesn't match ExerciseId in path!", "exerciseId", "400");
         }
+        validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
         // Apply further checks if it is an exam submission
         if (exercise.isExamExercise()) {
@@ -154,6 +155,23 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         long end = System.currentTimeMillis();
         log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(FileUploadSubmissionDTO.ofAfterSubmit(submission));
+    }
+
+    private void validateSubmissionIdBelongsToExercise(Long submissionId, long exerciseId) {
+        if (submissionId == null) {
+            return;
+        }
+        if (fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId).isEmpty()) {
+            throw new BadRequestAlertException("SubmissionId does not belong to ExerciseId in path!", ENTITY_NAME, "submissionExerciseMismatch");
+        }
+    }
+
+    private FileUploadExerciseAccessRights getAccessRights(FileUploadExercise exercise, User user) {
+        return new FileUploadExerciseAccessRights(authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user),
+                authCheckService.isAtLeastEditorForExercise(exercise, user), authCheckService.isAtLeastInstructorForExercise(exercise, user));
+    }
+
+    private record FileUploadExerciseAccessRights(boolean isAtLeastTutor, boolean isAtLeastEditor, boolean isAtLeastInstructor) {
     }
 
     private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
@@ -214,7 +232,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // prepare fileUploadSubmission for response
         fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
         fileUploadSubmission.removeNotNeededResults(correctionRound, resultId);
-        return ResponseEntity.ok(FileUploadSubmissionDTO.ofForAssessment(fileUploadSubmission));
+        var accessRights = getAccessRights(fileUploadExercise, user);
+        return ResponseEntity.ok(
+                FileUploadSubmissionDTO.ofForAssessment(fileUploadSubmission, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(), accessRights.isAtLeastInstructor()));
     }
 
     /**
@@ -287,7 +307,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             fileUploadSubmissionService.hideDetails(submission, user);
         }
 
-        return ResponseEntity.ok(FileUploadSubmissionDTO.ofForAssessment(submission));
+        var accessRights = getAccessRights((FileUploadExercise) fileUploadExercise, user);
+        return ResponseEntity
+                .ok(FileUploadSubmissionDTO.ofForAssessment(submission, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(), accessRights.isAtLeastInstructor()));
     }
 
     /**
@@ -312,8 +334,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        var accessRights = getAccessRights(fileUploadExercise, user);
+
         // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
+        if (!(isOwner || accessRights.isAtLeastTutor())) {
             throw new AccessForbiddenException("participation", participationId);
         }
 
@@ -340,11 +366,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        if (fileUploadSubmission.getLatestResult() != null && !accessRights.isAtLeastTutor()) {
             fileUploadSubmission.getLatestResult().filterSensitiveInformation();
         }
 
-        return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission));
+        return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission, isOwner, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(),
+                accessRights.isAtLeastInstructor()));
     }
 
     /**
