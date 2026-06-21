@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -30,6 +32,8 @@ public class ProgrammingExerciseDeletionService {
 
     private final ParticipationDeletionService participationDeletionService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -38,10 +42,12 @@ public class ProgrammingExerciseDeletionService {
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            InstanceMessageSendService instanceMessageSendService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
+        this.continuousIntegrationService = continuousIntegrationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
@@ -62,9 +68,11 @@ public class ProgrammingExerciseDeletionService {
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
         // id is used to cancel the scheduling. No interaction with the database is required.
         cancelScheduledOperations(programmingExercise.getId());
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
 
         if (deleteBaseRepos) {
             programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
+            continuousIntegration.deleteProject(programmingExercise.getProjectKey());
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
 
