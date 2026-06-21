@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOptionInput;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestionStatistic;
 
 class MultipleChoiceQuestionTest {
 
@@ -76,6 +77,34 @@ class MultipleChoiceQuestionTest {
         assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(7L);
         assertThat(question.getNextComponentId()).isEqualTo(8L);
         assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("boolean fields must not be null");
+    }
+
+    @Test
+    void setQuizQuestionStatisticMaintainsBackReference() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        MultipleChoiceQuestionStatistic statistic = new MultipleChoiceQuestionStatistic();
+        MultipleChoiceQuestionStatistic replacementStatistic = new MultipleChoiceQuestionStatistic();
+
+        question.setQuizQuestionStatistic(statistic);
+
+        assertThat(question.getQuizQuestionStatistic()).isSameAs(statistic);
+        assertThat(statistic.getQuizQuestion()).isSameAs(question);
+
+        statistic.setQuizQuestion(null);
+        question.setQuizQuestionStatistic(statistic);
+
+        assertThat(statistic.getQuizQuestion()).isSameAs(question);
+
+        question.setQuizQuestionStatistic(replacementStatistic);
+
+        assertThat(question.getQuizQuestionStatistic()).isSameAs(replacementStatistic);
+        assertThat(statistic.getQuizQuestion()).isNull();
+        assertThat(replacementStatistic.getQuizQuestion()).isSameAs(question);
+
+        question.setQuizQuestionStatistic(null);
+
+        assertThat(question.getQuizQuestionStatistic()).isNull();
+        assertThat(replacementStatistic.getQuizQuestion()).isNull();
     }
 
     private static MultipleChoiceQuestion questionWithTwoOptions() {

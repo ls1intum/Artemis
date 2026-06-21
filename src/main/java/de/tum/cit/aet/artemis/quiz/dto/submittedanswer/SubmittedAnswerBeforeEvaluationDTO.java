@@ -28,7 +28,7 @@ public record SubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSol
             case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer1 ->
                 multipleChoiceSubmittedAnswer = MultipleChoiceSubmittedAnswerWithoutSolutionDTO.of(multipleChoiceSubmittedAnswer1);
             case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer1 -> dragAndDropSubmittedAnswer = DragAndDropSubmittedAnswerDTO.of(dragAndDropSubmittedAnswer1);
-            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 -> shortAnswerSubmittedAnswer = ShortAnswerSubmittedAnswerDTO.of(shortAnswerSubmittedAnswer1);
+            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 -> shortAnswerSubmittedAnswer = ShortAnswerSubmittedAnswerDTO.withoutSolution(shortAnswerSubmittedAnswer1);
             default -> {
             }
         }

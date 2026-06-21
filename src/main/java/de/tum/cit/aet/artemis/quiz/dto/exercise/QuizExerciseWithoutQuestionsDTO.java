@@ -8,6 +8,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -49,10 +50,20 @@ public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shor
         }
         return new QuizExerciseWithoutQuestionsDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.getShortName(), quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getAssessmentDueDate(), quizExercise.getDifficulty(), quizExercise.isVisibleToStudents(),
-                CourseForQuizExerciseDTO.of(quizExercise.getCourseViaExerciseGroupOrCourseMember()), quizExercise.getType(), quizExercise.isRandomizeQuestionOrder(),
+                CourseForQuizExerciseDTO.of(getCourseForDTO(quizExercise)), quizExercise.getType(), quizExercise.isRandomizeQuestionOrder(),
                 quizExercise.getAllowedNumberOfAttempts(), quizExercise.getRemainingNumberOfAttempts(), quizExercise.getQuizMode(), quizExercise.getDuration(), quizBatchesDTOs,
                 quizExercise.isQuizStarted(), effectiveQuizEnded, quizExercise.getIncludedInOverallScore(), quizExercise.getMode(), quizExercise.getMaxPoints(),
                 quizExercise.getBonusPoints());
+    }
+
+    private static Course getCourseForDTO(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            if (quizExercise.getExerciseGroup() == null || quizExercise.getExerciseGroup().getExam() == null) {
+                return null;
+            }
+            return quizExercise.getExerciseGroup().getExam().getCourse();
+        }
+        return quizExercise.getCourseViaExerciseGroupOrCourseMember();
     }
 
 }

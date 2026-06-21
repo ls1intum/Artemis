@@ -27,4 +27,15 @@ public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spot
                 question.getMatchLetterCase());
     }
 
+    /**
+     * Creates a DTO without short-answer solutions for student-facing responses before solutions may be shown.
+     *
+     * @param question the short answer question
+     * @return the DTO without solution data
+     */
+    public static ShortAnswerQuestionWithoutMappingDTO withoutSolution(ShortAnswerQuestion question) {
+        var spots = question.getSpots() == null ? List.<ShortAnswerSpotDTO>of() : question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList();
+        return new ShortAnswerQuestionWithoutMappingDTO(spots.isEmpty() ? null : spots, null, question.getSimilarityValue(), question.getMatchLetterCase());
+    }
+
 }

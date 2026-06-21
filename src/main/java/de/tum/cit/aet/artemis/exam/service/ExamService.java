@@ -117,20 +117,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.DragItem;
-import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
@@ -750,8 +739,15 @@ public class ExamService {
     }
 
     /**
-     * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult}
+     * Replaces the generic {@link Exercise} instances of a {@link StudentExam} with fully initialized {@link QuizExercise} instances.
+     * <p>
+     * Student exams are loaded through generic exercise queries because they can contain multiple exercise types. Those queries only fetch the exercise itself and common exam
+     * associations; they do not fetch quiz-specific data such as {@link QuizExercise#getQuizQuestions()}. The follow-up participation load in
+     * {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult(StudentExam, boolean)} also expects the student exam to contain the same exercise
+     * instances that should later receive participations, submissions and results.
+     * <p>
+     * Student-facing solution filtering is intentionally not performed here. The REST layer maps the loaded graph to response DTOs so filtering does not mutate managed quiz
+     * entities, e.g. correct flags and explanations in multiple-choice answer options.
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -761,180 +757,9 @@ public class ExamService {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
-                    quizExercise = copyQuizExerciseForStudentResponse(quizExercise);
-                    quizExercise.filterForStudentsDuringQuiz();
-                }
                 studentExam.getExercises().set(i, quizExercise);
             }
         }
-    }
-
-    private QuizExercise copyQuizExerciseForStudentResponse(QuizExercise source) {
-        QuizExercise copy = new QuizExercise();
-        copy.setId(source.getId());
-        copy.setTitle(source.getTitle());
-        copy.setShortName(source.getShortName());
-        copy.setMaxPoints(source.getMaxPoints());
-        copy.setBonusPoints(source.getBonusPoints());
-        copy.setAssessmentType(source.getAssessmentType());
-        copy.setReleaseDate(source.getReleaseDate());
-        copy.setStartDate(source.getStartDate());
-        copy.setDueDate(source.getDueDate());
-        copy.setAssessmentDueDate(source.getAssessmentDueDate());
-        copy.setExampleSolutionPublicationDate(source.getExampleSolutionPublicationDate());
-        copy.setDifficulty(source.getDifficulty());
-        copy.setMode(source.getMode());
-        copy.setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
-        copy.setAllowFeedbackRequests(source.getAllowFeedbackRequests());
-        copy.setIncludedInOverallScore(source.getIncludedInOverallScore());
-        copy.setProblemStatement(source.getProblemStatement());
-        copy.setGradingInstructions(source.getGradingInstructions());
-        copy.setPresentationScoreEnabled(source.getPresentationScoreEnabled());
-        copy.setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
-        copy.setFeedbackSuggestionModule(source.getFeedbackSuggestionModule());
-        copy.setExerciseGroup(source.getExerciseGroup());
-        copy.setRandomizeQuestionOrder(source.isRandomizeQuestionOrder());
-        copy.setAllowedNumberOfAttempts(source.getAllowedNumberOfAttempts());
-        copy.setRemainingNumberOfAttempts(source.getRemainingNumberOfAttempts());
-        copy.setQuizMode(source.getQuizMode());
-        copy.setDuration(source.getDuration());
-        copy.setQuizQuestions(source.getQuizQuestions().stream().map(question -> copyQuizQuestionForStudentResponse(question, copy)).toList());
-        return copy;
-    }
-
-    private QuizQuestion copyQuizQuestionForStudentResponse(QuizQuestion source, QuizExercise exercise) {
-        QuizQuestion copy = switch (source) {
-            case MultipleChoiceQuestion multipleChoiceQuestion -> copyMultipleChoiceQuestionForStudentResponse(multipleChoiceQuestion);
-            case DragAndDropQuestion dragAndDropQuestion -> copyDragAndDropQuestionForStudentResponse(dragAndDropQuestion);
-            case ShortAnswerQuestion shortAnswerQuestion -> copyShortAnswerQuestionForStudentResponse(shortAnswerQuestion);
-            default -> throw new IllegalStateException("Unsupported quiz question type " + source.getClass().getName());
-        };
-        copyQuizQuestionFields(source, copy, exercise);
-        return copy;
-    }
-
-    private MultipleChoiceQuestion copyMultipleChoiceQuestionForStudentResponse(MultipleChoiceQuestion source) {
-        MultipleChoiceQuestion copy = new MultipleChoiceQuestion();
-        copy.setSingleChoice(source.isSingleChoice());
-        copy.setAnswerOptions(source.getAnswerOptions().stream()
-                .map(option -> new AnswerOption(option.getId(), option.getText(), option.getHint(), option.getExplanation(), option.isIsCorrect(), option.isInvalid())).toList());
-        return copy;
-    }
-
-    private DragAndDropQuestion copyDragAndDropQuestionForStudentResponse(DragAndDropQuestion source) {
-        DragAndDropQuestion copy = new DragAndDropQuestion();
-        copy.setBackgroundFilePath(source.getBackgroundFilePath());
-        copy.setDropLocations(
-                source.getDropLocations().stream().map(dropLocation -> copyDropLocationForStudentResponse(dropLocation, copy)).collect(Collectors.toCollection(ArrayList::new)));
-        copy.setDragItems(source.getDragItems().stream().map(dragItem -> copyDragItemForStudentResponse(dragItem, copy)).collect(Collectors.toCollection(ArrayList::new)));
-        Map<Long, DropLocation> copiedDropLocations = copy.getDropLocations().stream().filter(dropLocation -> dropLocation.getId() != null)
-                .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
-        Map<Long, DragItem> copiedDragItems = copy.getDragItems().stream().filter(dragItem -> dragItem.getId() != null)
-                .collect(Collectors.toMap(DragItem::getId, Function.identity()));
-        copy.setCorrectMappings(source.getCorrectMappings() == null ? null
-                : source.getCorrectMappings().stream().map(mapping -> copyDragAndDropMappingForStudentResponse(mapping, copy, copiedDragItems, copiedDropLocations))
-                        .collect(Collectors.toCollection(HashSet::new)));
-        return copy;
-    }
-
-    private DropLocation copyDropLocationForStudentResponse(DropLocation source, DragAndDropQuestion question) {
-        DropLocation copy = new DropLocation();
-        copy.setId(source.getId());
-        copy.setPosX(source.getPosX());
-        copy.setPosY(source.getPosY());
-        copy.setWidth(source.getWidth());
-        copy.setHeight(source.getHeight());
-        copy.setInvalid(source.isInvalid());
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private DragItem copyDragItemForStudentResponse(DragItem source, DragAndDropQuestion question) {
-        DragItem copy = new DragItem();
-        copy.setId(source.getId());
-        copy.setText(source.getText());
-        copy.setPictureFilePath(source.getPictureFilePath());
-        copy.setInvalid(source.isInvalid());
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private DragAndDropMapping copyDragAndDropMappingForStudentResponse(DragAndDropMapping source, DragAndDropQuestion question, Map<Long, DragItem> copiedDragItems,
-            Map<Long, DropLocation> copiedDropLocations) {
-        DragAndDropMapping copy = new DragAndDropMapping();
-        copy.setId(source.getId());
-        copy.setDragItemIndex(source.getDragItemIndex());
-        copy.setDropLocationIndex(source.getDropLocationIndex());
-        copy.setInvalid(source.isInvalid());
-        copy.setDragItem(source.getDragItem() == null ? null : copiedDragItems.get(source.getDragItem().getId()));
-        copy.setDropLocation(source.getDropLocation() == null ? null : copiedDropLocations.get(source.getDropLocation().getId()));
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private ShortAnswerQuestion copyShortAnswerQuestionForStudentResponse(ShortAnswerQuestion source) {
-        ShortAnswerQuestion copy = new ShortAnswerQuestion();
-        copy.setSpots(source.getSpots().stream().map(spot -> copyShortAnswerSpotForStudentResponse(spot, copy)).collect(Collectors.toCollection(ArrayList::new)));
-        copy.setSolutions(
-                source.getSolutions().stream().map(solution -> copyShortAnswerSolutionForStudentResponse(solution, copy)).collect(Collectors.toCollection(ArrayList::new)));
-        Map<Long, ShortAnswerSpot> copiedSpots = copy.getSpots().stream().filter(spot -> spot.getId() != null)
-                .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
-        Map<Long, ShortAnswerSolution> copiedSolutions = copy.getSolutions().stream().filter(solution -> solution.getId() != null)
-                .collect(Collectors.toMap(ShortAnswerSolution::getId, Function.identity()));
-        copy.setCorrectMappings(source.getCorrectMappings() == null ? null
-                : source.getCorrectMappings().stream().map(mapping -> copyShortAnswerMappingForStudentResponse(mapping, copy, copiedSpots, copiedSolutions))
-                        .collect(Collectors.toCollection(HashSet::new)));
-        copy.setSimilarityValue(source.getSimilarityValue());
-        copy.setMatchLetterCase(source.getMatchLetterCase());
-        return copy;
-    }
-
-    private ShortAnswerSpot copyShortAnswerSpotForStudentResponse(ShortAnswerSpot source, ShortAnswerQuestion question) {
-        ShortAnswerSpot copy = new ShortAnswerSpot();
-        copy.setId(source.getId());
-        copy.setSpotNr(source.getSpotNr());
-        copy.setWidth(source.getWidth());
-        copy.setInvalid(source.isInvalid());
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private ShortAnswerSolution copyShortAnswerSolutionForStudentResponse(ShortAnswerSolution source, ShortAnswerQuestion question) {
-        ShortAnswerSolution copy = new ShortAnswerSolution();
-        copy.setId(source.getId());
-        copy.setText(source.getText());
-        copy.setInvalid(source.isInvalid());
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private ShortAnswerMapping copyShortAnswerMappingForStudentResponse(ShortAnswerMapping source, ShortAnswerQuestion question, Map<Long, ShortAnswerSpot> copiedSpots,
-            Map<Long, ShortAnswerSolution> copiedSolutions) {
-        ShortAnswerMapping copy = new ShortAnswerMapping();
-        copy.setId(source.getId());
-        copy.setShortAnswerSpotIndex(source.getShortAnswerSpotIndex());
-        copy.setShortAnswerSolutionIndex(source.getShortAnswerSolutionIndex());
-        copy.setInvalid(source.isInvalid());
-        copy.setSpot(source.getSpot() == null ? null : copiedSpots.get(source.getSpot().getId()));
-        copy.setSolution(source.getSolution() == null ? null : copiedSolutions.get(source.getSolution().getId()));
-        copy.setQuestion(question);
-        return copy;
-    }
-
-    private void copyQuizQuestionFields(QuizQuestion source, QuizQuestion copy, QuizExercise exercise) {
-        copy.setId(source.getId());
-        copy.setVersion(source.getVersion());
-        copy.setTitle(source.getTitle());
-        copy.setText(source.getText());
-        copy.setHint(source.getHint());
-        copy.setExplanation(source.getExplanation());
-        copy.setPoints(source.getPoints());
-        copy.setScoringType(source.getScoringType());
-        copy.setRandomizeOrder(source.isRandomizeOrder());
-        copy.setInvalid(source.isInvalid());
-        copy.setExercise(exercise);
     }
 
     /**
@@ -966,7 +791,7 @@ public class ExamService {
      * Finds the participation in participations that belongs to the given exercise and filters all unnecessary and sensitive information.
      * This ensures all relevant associations are available.
      * Handles setting the participation results using {@link #setResultIfNecessary(StudentExam, StudentParticipation, boolean)}.
-     * Filters sensitive information using {@link Exercise#filterSensitiveInformation()} and {@link QuizSubmission#filterForExam(boolean, boolean)} for quiz exercises.
+     * Student-facing quiz solution filtering is performed by the REST DTO layer to avoid mutating managed quiz entities while shaping the response.
      *
      * @param studentExam         the given student exam
      * @param exercise            the exercise for which the user participation should be filtered
@@ -978,7 +803,6 @@ public class ExamService {
         exercise.setCourse(null);
 
         if (!(exercise instanceof QuizExercise)) {
-            // Note: quiz exercises are filtered below
             exercise.filterSensitiveInformation();
         }
 
@@ -1009,10 +833,6 @@ public class ExamService {
                 latestSubmission.setParticipation(null);
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
-                if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
-                    // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
-                    filterQuizSubmissionForExamResponse(studentExam, quizSubmission, isAtLeastInstructor);
-                }
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
@@ -1021,26 +841,6 @@ public class ExamService {
             // To prevent LazyInitializationException.
             exercise.setStudentParticipations(Set.of());
         }
-    }
-
-    private void filterQuizSubmissionForExamResponse(StudentExam studentExam, QuizSubmission quizSubmission, boolean isAtLeastInstructor) {
-        if (studentExam.areResultsPublishedYet() || isAtLeastInstructor) {
-            return;
-        }
-        quizSubmission.setScoreInPoints(null);
-        quizSubmission.getSubmittedAnswers().forEach(submittedAnswer -> {
-            QuizQuestion question = submittedAnswer.getQuizQuestion();
-            if (question != null) {
-                submittedAnswer.setQuizQuestion(copyQuizQuestionForStudentResponse(question, copyQuizExerciseReference(question)));
-            }
-            submittedAnswer.filterOutCorrectAnswers();
-        });
-    }
-
-    private QuizExercise copyQuizExerciseReference(QuizQuestion question) {
-        QuizExercise quizExercise = new QuizExercise();
-        quizExercise.setId(question.getExerciseId());
-        return quizExercise;
     }
 
     /**

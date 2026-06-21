@@ -65,7 +65,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             if (quizQuestion.getQuizQuestionStatistic() == null) {
                 quizQuestion.initializeStatistic();
             }
-            quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
 
             switch (quizQuestion) {
                 case MultipleChoiceQuestion multipleChoiceQuestion -> fixReferenceMultipleChoice(multipleChoiceQuestion);

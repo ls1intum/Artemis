@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamForResponseDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -36,6 +37,11 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.AnswerOptionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentExamDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionBeforeEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerBeforeEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -128,7 +134,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void loadQuizExercisesForStudentExam_filtersDetachedQuizSnapshotWithoutPersistingSolutions() {
+    void studentExamResponseDTOFiltersQuizSolutionsWithoutMutatingLoadedQuestion() {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
         quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
@@ -140,10 +146,15 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         examService.loadQuizExercisesForStudentExam(studentExam);
         quizExerciseRepository.flush();
 
-        QuizExercise filteredQuizExercise = (QuizExercise) studentExam.getExercises().getFirst();
-        MultipleChoiceQuestion filteredQuestion = (MultipleChoiceQuestion) filteredQuizExercise.getQuizQuestions().getFirst();
-        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsOnlyNulls();
-        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsOnlyNulls();
+        QuizExercise loadedQuizExercise = (QuizExercise) studentExam.getExercises().getFirst();
+        MultipleChoiceQuestion loadedQuestion = (MultipleChoiceQuestion) loadedQuizExercise.getQuizQuestions().getFirst();
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.of(studentExam, false);
+        QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
+        QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);
 
         QuizExercise persistedQuizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
         MultipleChoiceQuestion persistedQuestion = (MultipleChoiceQuestion) persistedQuizExercise.getQuizQuestions().getFirst();
@@ -152,7 +163,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void filterParticipationForExercise_filtersQuizSubmissionQuestionSnapshotWithoutMutatingSourceQuestion() {
+    void filterParticipationForExerciseLeavesQuizSubmissionQuestionsForResponseDTOFiltering() {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
         quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
         quizExercise.setExerciseGroup(new ExerciseGroup());
@@ -172,15 +183,26 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam1);
+        studentExam.setExercises(List.of(quizExercise));
 
         examService.filterParticipationForExercise(studentExam, quizExercise, List.of(participation), false);
 
-        MultipleChoiceQuestion filteredQuestion = (MultipleChoiceQuestion) submittedAnswer.getQuizQuestion();
-        assertThat(filteredQuestion).isNotSameAs(sourceQuestion);
-        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsOnlyNulls();
-        assertThat(filteredQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsOnlyNulls();
+        assertThat(submittedAnswer.getQuizQuestion()).isSameAs(sourceQuestion);
+        assertThat(quizSubmission.getScoreInPoints()).isEqualTo(1.0);
         assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
         assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.of(studentExam, false);
+        QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
+        QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);
+
+        QuizSubmissionBeforeEvaluationDTO submissionDTO = (QuizSubmissionBeforeEvaluationDTO) quizExerciseDTO.studentParticipations().iterator().next().submissions().iterator()
+                .next();
+        SubmittedAnswerBeforeEvaluationDTO submittedAnswerDTO = submissionDTO.submittedAnswers().iterator().next();
+        assertThat(submittedAnswerDTO.quizQuestion().multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L,
+                2L);
+        assertThat(submittedAnswerDTO.multipleChoiceSubmittedAnswer().selectedOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L);
     }
 
     @Test

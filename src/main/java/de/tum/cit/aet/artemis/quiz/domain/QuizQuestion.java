@@ -205,8 +205,28 @@ public abstract class QuizQuestion extends DomainObject {
         return quizQuestionStatistic;
     }
 
+    /**
+     * Sets the statistic and keeps the inverse quiz-question reference in sync.
+     *
+     * @param quizQuestionStatistic the statistic to attach to this question, or null to detach the current statistic
+     */
     public void setQuizQuestionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
+        if (this.quizQuestionStatistic == quizQuestionStatistic) {
+            if (quizQuestionStatistic != null && quizQuestionStatistic.getQuizQuestion() != this) {
+                quizQuestionStatistic.setQuizQuestion(this);
+            }
+            return;
+        }
+
+        if (this.quizQuestionStatistic != null && this.quizQuestionStatistic.getQuizQuestion() == this) {
+            this.quizQuestionStatistic.setQuizQuestion(null);
+        }
+
         this.quizQuestionStatistic = quizQuestionStatistic;
+
+        if (quizQuestionStatistic != null && quizQuestionStatistic.getQuizQuestion() != this) {
+            quizQuestionStatistic.setQuizQuestion(this);
+        }
     }
 
     public QuizExercise getExercise() {

@@ -12,4 +12,8 @@ public record ShortAnswerSubmittedTextDTO(Long id, String text, Boolean isCorrec
         return new ShortAnswerSubmittedTextDTO(submittedText.getId(), submittedText.getText(), submittedText.isIsCorrect(), ShortAnswerSpotDTO.of(submittedText.getSpot()));
     }
 
+    public static ShortAnswerSubmittedTextDTO withoutSolution(final ShortAnswerSubmittedText submittedText) {
+        return new ShortAnswerSubmittedTextDTO(submittedText.getId(), submittedText.getText(), null, ShortAnswerSpotDTO.of(submittedText.getSpot()));
+    }
+
 }
