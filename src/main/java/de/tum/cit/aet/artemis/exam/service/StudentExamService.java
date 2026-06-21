@@ -416,10 +416,13 @@ public class StudentExamService {
 
         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
-        Set<Long> unresolvedQuestionIds = normalizeQuizQuestionReferences(quizSubmissionFromClient, existingSubmissionInDatabase);
+
+        // The client sends lightweight question objects; reuse server-loaded questions before comparing or saving.
+        Set<Long> unresolvedQuestionIds = replaceQuestionReferencesFromLatestSubmission(quizSubmissionFromClient, existingSubmissionInDatabase);
         if (!unresolvedQuestionIds.isEmpty()) {
+            // First save or stale payload: fall back to the exercise graph as the authoritative question source.
             QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
-            normalizeQuizQuestionReferences(quizSubmissionFromClient, quizExercise);
+            replaceQuestionReferencesFromExercise(quizSubmissionFromClient, quizExercise);
         }
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
@@ -428,27 +431,30 @@ public class StudentExamService {
         }
     }
 
-    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, QuizSubmission existingSubmissionInDatabase) {
+    private Set<Long> replaceQuestionReferencesFromLatestSubmission(QuizSubmission submissionFromClient, QuizSubmission existingSubmissionInDatabase) {
         if (existingSubmissionInDatabase == null) {
+            // No previous submission means no question graph to reuse here; signal the caller to load the exercise.
             return submissionFromClient.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull).map(QuizQuestion::getId)
                     .filter(Objects::nonNull).collect(Collectors.toSet());
         }
+        // Prefer the already loaded latest submission to avoid an extra query on regular autosaves.
         Map<Long, QuizQuestion> questionsById = existingSubmissionInDatabase.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull)
                 .filter(question -> question.getId() != null).collect(Collectors.toMap(QuizQuestion::getId, question -> question, (left, right) -> left));
-        return normalizeQuizQuestionReferences(submissionFromClient, questionsById);
+        return replaceQuestionReferencesById(submissionFromClient, questionsById);
     }
 
-    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, QuizExercise quizExercise) {
+    private void replaceQuestionReferencesFromExercise(QuizSubmission submissionFromClient, QuizExercise quizExercise) {
         Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
                 .collect(Collectors.toMap(QuizQuestion::getId, question -> question));
-        return normalizeQuizQuestionReferences(submissionFromClient, questionsById);
+        replaceQuestionReferencesById(submissionFromClient, questionsById);
     }
 
-    private Set<Long> normalizeQuizQuestionReferences(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
+    private Set<Long> replaceQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
         Set<Long> unresolvedQuestionIds = new HashSet<>();
         for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
             QuizQuestion question = submittedAnswer.getQuizQuestion();
             if (question != null && question.getId() != null) {
+                // Replace detached client questions so JSON-owned MC answer options resolve against the server question.
                 QuizQuestion managedQuestion = questionsById.get(question.getId());
                 if (managedQuestion != null) {
                     submittedAnswer.setQuizQuestion(managedQuestion);
