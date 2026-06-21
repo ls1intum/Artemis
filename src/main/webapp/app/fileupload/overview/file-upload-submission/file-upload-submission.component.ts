@@ -14,7 +14,7 @@ import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipationDTO, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -174,7 +174,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
 
     private handleDataLoad(submission: FileUploadSubmission) {
         const tmpResult = getLatestSubmissionResult(submission);
-        const participation = submission.participation as StudentParticipation;
+        const participation = submission.participation as FileUploadParticipationDTO;
 
         // reconnect participation <--> submission
         participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
@@ -197,7 +197,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
                 });
             }
         }
-        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(participation));
+        this.isOwnerOfParticipation.set(participation.isOwner ?? this.accountService.isOwnerOfParticipation(participation));
     }
 
     private inputValuesArePresent(): boolean {

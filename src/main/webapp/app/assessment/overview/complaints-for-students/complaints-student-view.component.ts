@@ -40,6 +40,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly participation = input.required<StudentParticipation>();
     readonly result = input<Result>();
     readonly exam = input<Exam>();
+    readonly isCurrentUserSubmissionAuthor = input<boolean>();
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
@@ -78,16 +79,21 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 });
             }
             this.loadPotentialComplaint();
-            this.accountService.identity().then((user) => {
-                if (user?.id) {
+            const isCurrentUserSubmissionAuthor = this.isCurrentUserSubmissionAuthor();
+            if (isCurrentUserSubmissionAuthor !== undefined) {
+                this.isCorrectUserToFileAction.set(isCurrentUserSubmissionAuthor);
+            } else {
+                this.accountService.identity().then((user) => {
                     const participationValue = this.participation();
-                    if (participationValue?.student) {
-                        this.isCorrectUserToFileAction.set(participationValue.student.id === user.id);
-                    } else if (participationValue.team?.students) {
-                        this.isCorrectUserToFileAction.set(!!participationValue.team.students.find((student) => student.id === user.id));
+                    if (user?.id) {
+                        if (participationValue?.student) {
+                            this.isCorrectUserToFileAction.set(participationValue.student.id === user.id);
+                        } else if (participationValue.team?.students) {
+                            this.isCorrectUserToFileAction.set(!!participationValue.team.students.find((student) => student.id === user.id));
+                        }
                     }
-                }
-            });
+                });
+            }
 
             this.timeOfFeedbackRequestValid.set(this.isTimeOfFeedbackRequestValid());
             this.timeOfComplaintValid.set(this.isTimeOfComplaintValid());

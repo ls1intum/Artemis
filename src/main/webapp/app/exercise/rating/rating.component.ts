@@ -23,6 +23,7 @@ export class RatingComponent implements OnInit, OnChanges {
 
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
+    readonly isOwnerOfParticipation = input<boolean>();
 
     ngOnInit(): void {
         this.loadRating();
@@ -37,7 +38,11 @@ export class RatingComponent implements OnInit, OnChanges {
 
     loadRating() {
         const result = this.result();
-        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const participation = this.participation();
+        if (!result?.id || !participation) {
+            return;
+        }
+        if (!(this.isOwnerOfParticipation() ?? this.accountService.isOwnerOfParticipation(participation))) {
             return;
         }
         this.ratingService.getRating(result.id).subscribe((rating) => {
