@@ -1,10 +1,10 @@
 <div class="frame">
     @let showInvalidBeforeTouchedValue = showInvalidBeforeTouched();
-    @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
+    @for (internalItem of internalTimelineItems(); track $index; let index = $index, first = $first, last = $last) {
         <div class="timeline-item-row">
             @let isInvalid = (!!dateModel.touched || showInvalidBeforeTouchedValue) && !!internalItem.violationKey;
             <div class="timeline-graphic">
-                <div class="timeline-graphic-line"></div>
+                <div class="timeline-graphic-line" [class.hidden]="first"></div>
                 <div
                     class="timeline-graphic-circle"
                     [class.required]="internalItem.kind === 'required'"
@@ -16,7 +16,7 @@
                         <div class="timeline-graphic-circle-dot" [class.invalid]="isInvalid"></div>
                     }
                 </div>
-                <div class="timeline-graphic-line"></div>
+                <div class="timeline-graphic-line" [class.hidden]="last"></div>
             </div>
             <div class="label-and-input">
                 @if (index > 0) {

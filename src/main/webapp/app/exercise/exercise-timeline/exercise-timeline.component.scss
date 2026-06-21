@@ -18,6 +18,10 @@
                 width: 3px;
                 background-color: var(--border-color);
 
+                &.hidden {
+                    visibility: hidden;
+                }
+
                 &:last-child {
                     flex: 0 0 5px;
                     height: 5px;
@@ -86,7 +90,7 @@
             }
 
             .spacer {
-                height: 0.5rem;
+                height: 1rem;
                 width: 100%;
             }
 
