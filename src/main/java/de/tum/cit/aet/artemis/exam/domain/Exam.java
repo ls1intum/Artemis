@@ -43,10 +43,10 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates whether it is a real exam (false) or test exam (true)
+     * This enum indicates the type of the exam
      */
-    @Column(name = "test_exam")
-    private boolean testExam;
+    @Column(name = "exam_type")
+    private ExamType examType;
 
     /**
      * This boolean indicates whether attendance is checked during exam
@@ -86,12 +86,6 @@ public class Exam extends DomainObject {
      */
     @Column(name = "grace_period", columnDefinition = "integer default 180")
     private Integer gracePeriod = 180;
-
-    /**
-     * Whether a test exam starts with a single simulation attempt before repeatable practice attempts become available.
-     */
-    @Column(name = "has_simulation", nullable = false)
-    private boolean hasSimulation = false;
 
     /**
      * The default working time for an exam in seconds.
@@ -187,12 +181,26 @@ public class Exam extends DomainObject {
         this.title = title.strip();
     }
 
+    @JsonIgnore
     public boolean isTestExam() {
-        return testExam;
+        return examType != ExamType.REAL;
     }
 
     public void setTestExam(boolean testExam) {
-        this.testExam = testExam;
+        if (testExam && examType == ExamType.REAL) {
+            examType = ExamType.TEST;
+        }
+        else if (!testExam) {
+            examType = ExamType.REAL;
+        }
+    }
+
+    public ExamType getExamType() {
+        return examType;
+    }
+
+    public void setExamType(ExamType examType) {
+        this.examType = examType;
     }
 
     public boolean isExamWithAttendanceCheck() {
@@ -268,14 +276,6 @@ public class Exam extends DomainObject {
 
     public void setGracePeriod(int gracePeriod) {
         this.gracePeriod = gracePeriod;
-    }
-
-    public boolean hasSimulation() {
-        return hasSimulation;
-    }
-
-    public void setHasSimulation(boolean hasSimulation) {
-        this.hasSimulation = hasSimulation;
     }
 
     public int getWorkingTime() {

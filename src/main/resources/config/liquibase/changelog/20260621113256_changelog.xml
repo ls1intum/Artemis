@@ -3,11 +3,18 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260527120000-1" author="artemis">
+    <changeSet id="20260621113256-1" author="artemis">
         <addColumn tableName="exam">
-            <column name="has_simulation" type="boolean" defaultValueBoolean="false">
+            <column name="exam_type" type="varchar(255)" defaultValue="REAL">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="20260621113256-2" author="artemis">
+        <update tableName="exam">
+            <column name="exam_type" value="TEST"/>
+            <where>test_exam = TRUE</where>
+        </update>
     </changeSet>
 </databaseChangeLog>
