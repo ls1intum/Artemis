@@ -18,23 +18,23 @@
                         @if (submission()) {
                             <span jhiTranslate="artemisApp.exam.examSummary.submissionLinkedToCommit"></span>
                         }
-                        {{ commitHash || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
+                        {{ commitHash() || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
                     </span>
                 </div>
                 @if (isAfterResultsArePublished()) {
                     @if (submission()) {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
                     }
-                    @if (feedbackComponentParameters && feedbackComponentParameters.result) {
+                    @if (feedbackComponentParameters() && feedbackComponentParameters().result) {
                         <jhi-result-detail
-                            [exercise]="feedbackComponentParameters.exercise"
-                            [result]="feedbackComponentParameters.result"
-                            [participation]="feedbackComponentParameters.participation"
+                            [exercise]="feedbackComponentParameters().exercise"
+                            [result]="feedbackComponentParameters().result"
+                            [participation]="feedbackComponentParameters().participation"
                             [showScoreChart]="false"
-                            [exerciseType]="feedbackComponentParameters.exerciseType ?? ExerciseType.PROGRAMMING"
-                            [latestDueDate]="feedbackComponentParameters.latestDueDate"
-                            [messageKey]="feedbackComponentParameters.messageKey"
-                            [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters.showMissingAutomaticFeedbackInformation ?? false"
+                            [exerciseType]="feedbackComponentParameters().exerciseType ?? ExerciseType.PROGRAMMING"
+                            [latestDueDate]="feedbackComponentParameters().latestDueDate"
+                            [messageKey]="feedbackComponentParameters().messageKey"
+                            [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters().showMissingAutomaticFeedbackInformation ?? false"
                             [isExamReviewPage]="true"
                             [isPrinting]="isPrinting()"
                         />

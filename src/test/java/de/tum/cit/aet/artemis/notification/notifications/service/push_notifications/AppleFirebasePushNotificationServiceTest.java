@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HexFormat;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,8 +63,8 @@ class AppleFirebasePushNotificationServiceTest {
         PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
                 new Date(), payload, student, PushNotificationApiType.DEFAULT, "1.0.0");
 
-        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
-        when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(List.of(applePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIdIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(List.of(firebasePushNotificationDeviceConfiguration));
 
         applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
         firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);

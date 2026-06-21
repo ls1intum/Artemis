@@ -70,12 +70,31 @@ export function getExamEndDateWithGrace(exam: Exam) {
 }
 
 export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
-    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
-    if (afterDueDate.isAfter(dayjs())) {
-        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
-        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
-        await page.waitForTimeout(timeToWait);
+    // For exam programming exercises the score-producing build "test" phase runs only AFTER_DUE_DATE, which
+    // the server schedules at dueDate + 15 min (the intended default; see
+    // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
+    // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
+    // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
+    // the score immediately. This is a no-op when the exam has no programming exercise. We authenticate as
+    // admin first so the helper works regardless of the caller's current auth state (some callers, e.g. the
+    // ExamResults "Assess all submissions" beforeAll, invoke it on a fresh page before logging in).
+    await Commands.login(page, admin);
+    const examAPIRequests = new ExamAPIRequests(page);
+    const exerciseAPIRequests = new ExerciseAPIRequests(page);
+    const exerciseGroups = await examAPIRequests.getExerciseGroups(exam);
+    const programmingExercise = exerciseGroups.flatMap((group) => group.exercises ?? []).find((exercise) => (exercise.type as string) === ExerciseType.PROGRAMMING);
+    if (!programmingExercise?.id) {
+        return;
     }
+    await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    // The build above produces the automatic result, but for exam programming exercises the server also defaults
+    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
+    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
+    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
+    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
+    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
+    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
 }
 
 /**
@@ -338,7 +357,45 @@ export async function createFileWithContent(filePath: string, content: string) {
 
 export async function newBrowserPage(browser: Browser) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
-    return await context.newPage();
+    const page = await context.newPage();
+    await addE2EInitScript(page);
+    return page;
+}
+
+/**
+ * Adds init scripts that must run on every E2E page to prevent overlays from blocking
+ * test interactions. This is called automatically for the main `page` fixture via
+ * `baseFixtures.ts` and must also be applied to pages created by `newBrowserPage`.
+ */
+export async function addE2EInitScript(page: Page) {
+    // Register on the context so the suppression also applies to pages created later.
+    await page.context().addInitScript(() => {
+        // Hide the notification popup overlay
+        const injectStyle = () => {
+            const style = document.createElement('style');
+            style.textContent = [
+                'jhi-course-notification-popup-overlay { display: none !important; }',
+                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
+                // CSS backup for the localStorage suppression below.
+                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
+            ].join('\n');
+            document.head.appendChild(style);
+        };
+        if (document.head) {
+            injectStyle();
+        } else {
+            document.addEventListener('DOMContentLoaded', injectStyle);
+        }
+
+        // Suppress the passkey setup modal by setting a far-future reminder date.
+        try {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 10);
+            localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
+        } catch {
+            // localStorage may not be available on about:blank — safe to ignore
+        }
+    });
 }
 
 /**

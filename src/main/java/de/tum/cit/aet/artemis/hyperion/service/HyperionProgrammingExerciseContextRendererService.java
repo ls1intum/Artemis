@@ -243,7 +243,7 @@ public class HyperionProgrammingExerciseContextRendererService {
         List<String> out = new ArrayList<>(lines.size() + 1);
         out.add(header);
         IntStream.range(0, lines.size()).forEach(i -> {
-            String num = String.format("%" + w + "d", i + 1);
+            String num = ("%" + w + "d").formatted(i + 1);
             out.add(num + " | " + lines.get(i));
         });
         return String.join("\n", out);

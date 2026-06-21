@@ -1,7 +1,7 @@
-@if (!showConfirm) {
+@if (!showConfirm()) {
     <fa-icon [icon]="linkIcon()" [ngbTooltip]="setTooltip(instruction()!)" (click)="toggle()" />
 }
-@if (showConfirm) {
+@if (showConfirm()) {
     <fa-icon
         [ngClass]="'text-danger'"
         [icon]="confirmIcon"

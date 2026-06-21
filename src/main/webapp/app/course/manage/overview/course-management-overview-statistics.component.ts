@@ -1,12 +1,14 @@
-import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GraphColors, Graphs } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { CurveFactory } from 'd3-shape';
-import * as shape from 'd3-shape';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToLineData } from 'app/shared-ui/chart/chart-adapters';
+import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -17,7 +19,7 @@ import { ActiveStudentsChart } from 'app/course/shared/entities/active-students-
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, LineChartModule, ArtemisDatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, ChartModule, ArtemisDatePipe],
 })
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart {
     private readonly translateService = inject(TranslateService);
@@ -32,15 +34,22 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     // Data
     readonly lineChartLabels = signal<string[]>([]);
 
-    // ngx-data
-    readonly ngxData = signal<any[]>([]);
-    readonly chartColor: Color = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.BLACK],
-    };
-    readonly curve: CurveFactory = shape.curveMonotoneX;
+    readonly chartEntries = signal<ChartMultiSeriesEntry[]>([]);
+
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.BLACK]);
+
+    readonly chartData = computed(() => multiSeriesToLineData(this.chartEntries(), this.chartColors(), { monotone: true }));
+    readonly chartOptions = computed(() =>
+        lineChartOptions({
+            yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
+            tooltip: {
+                label: (item) => {
+                    const absoluteValue = item.dataset.meta?.[item.dataIndex]?.['absoluteValue'] ?? 0;
+                    return this.translateService.instant('artemisApp.course.activeStudents', { students: absoluteValue });
+                },
+            },
+        }),
+    );
 
     // Icons
     readonly faSpinner = faSpinner;
@@ -79,7 +88,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
      * Creates chart in order to visualize data provided by the inputs
      */
     private createChartData(): void {
-        const set: any[] = [];
+        const set: ChartMultiSeriesEntry['series'] = [];
         const initialStats = this.initialStats();
         const labels = this.lineChartLabels();
         if (this.amountOfStudentsInCourse() > 0 && !!initialStats) {
@@ -95,7 +104,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
                 set.push({ name: label, value: 0, absoluteValue: 0 });
             });
         }
-        this.ngxData.set([{ name: 'active students', series: set }]);
+        this.chartEntries.set([{ name: 'active students', series: set }]);
     }
 
     /**

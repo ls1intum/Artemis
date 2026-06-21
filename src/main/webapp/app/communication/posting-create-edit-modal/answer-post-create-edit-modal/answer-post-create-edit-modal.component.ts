@@ -1,4 +1,4 @@
-import { Component, ViewContainerRef, ViewEncapsulation, input, output } from '@angular/core';
+import { Component, ViewContainerRef, ViewEncapsulation, input, output, signal } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,7 +17,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
-    isInputOpen = false;
+    readonly isInputOpen = signal(false);
 
     /**
      * renders the ng-template to edit or create an answerPost
@@ -25,7 +25,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     open(): void {
         this.close();
         this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
-        this.isInputOpen = true;
+        this.isInputOpen.set(true);
     }
 
     /**
@@ -34,7 +34,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     close(): void {
         this.createEditAnswerPostContainerRef()?.clear();
         this.resetFormGroup();
-        this.isInputOpen = false;
+        this.isInputOpen.set(false);
     }
 
     /**
@@ -57,7 +57,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     createPosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -65,12 +65,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.onCreate.emit(answerPost);
                 this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -82,7 +82,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -90,12 +90,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
-                this.isLoading = false;
-                this.isInputOpen = false;
+                this.isLoading.set(false);
+                this.isInputOpen.set(false);
                 this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

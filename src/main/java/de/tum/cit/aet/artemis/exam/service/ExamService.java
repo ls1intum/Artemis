@@ -1240,8 +1240,9 @@ public class ExamService {
                 }
             }
 
-            // get number of successfully initialized participations
-            numberOfInitializedParticipationsByExercise.add(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(exercise.getId()));
+            // get number of successfully initialized participations for current exercise and exam
+            numberOfInitializedParticipationsByExercise
+                    .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1367,7 +1368,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(List.of(exam));
     }
 
     /**

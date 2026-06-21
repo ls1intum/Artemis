@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, forkJoin, of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -21,19 +21,19 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private diffRunId = 0;
 
     exerciseId: number;
-    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
+    readonly repositoryId = signal<number | undefined>(undefined); // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     commitHash: string;
-    isTemplate = false;
+    readonly isTemplate = signal(false);
 
     errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string> = new Map();
     rightCommitFileContentByPath: Map<string, string> = new Map();
-    repositoryDiffInformation: RepositoryDiffInformation;
+    readonly repositoryDiffInformation = signal<RepositoryDiffInformation>(undefined!);
     commits: CommitInfo[] = [];
-    currentCommit: CommitInfo;
-    previousCommit: CommitInfo;
+    readonly currentCommit = signal<CommitInfo>(undefined!);
+    readonly previousCommit = signal<CommitInfo>(undefined!);
     repositoryType: RepositoryType;
-    diffReady = false;
+    readonly diffReady = signal(false);
 
     participationRepoFilesSubscription: Subscription;
 
@@ -54,7 +54,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
-            this.repositoryId = Number(params['repositoryId']);
+            this.repositoryId.set(Number(params['repositoryId']));
             this.commitHash = params['commitHash'];
             this.repositoryType = params['repositoryType'] ?? 'USER';
             this.retrieveAndHandleCommits();
@@ -74,10 +74,10 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
         }
         if (this.repositoryType === RepositoryType.AUXILIARY) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!);
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId()!);
         }
         if (this.repositoryType === RepositoryType.USER) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId!);
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId()!);
         }
         if (!commitInfoSubscription) {
             return;
@@ -90,9 +90,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     this.commits = sortedCommits;
                     const foundIndex = this.commits.findIndex((commit) => commit.hash === this.commitHash);
                     if (foundIndex !== -1) {
-                        this.currentCommit = this.commits[foundIndex];
-                        this.previousCommit = foundIndex < this.commits.length - 1 ? this.commits[foundIndex + 1] : this.commits[this.commits.length - 1];
-                        this.isTemplate = foundIndex === this.commits.length - 1;
+                        this.currentCommit.set(this.commits[foundIndex]);
+                        this.previousCommit.set(foundIndex < this.commits.length - 1 ? this.commits[foundIndex + 1] : this.commits[this.commits.length - 1]);
+                        this.isTemplate.set(foundIndex === this.commits.length - 1);
                     }
                 }),
                 catchError(() => {
@@ -113,13 +113,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private fetchParticipationRepoFiles() {
         // Set ready state to false when starting diff processing
-        this.diffReady = false;
+        this.diffReady.set(false);
 
         // Increment diff run sequence; used to ignore stale results from previous runs
         const runId = ++this.diffRunId;
 
-        const previousCommitHash = this.previousCommit?.hash;
-        const currentCommitHash = this.currentCommit?.hash;
+        const previousCommitHash = this.previousCommit()?.hash;
+        const currentCommitHash = this.currentCommit()?.hash;
 
         if (!currentCommitHash) {
             this.errorWhileFetching = true;
@@ -127,18 +127,18 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         }
 
         const leftCommitObservable =
-            this.isTemplate || !previousCommitHash
+            this.isTemplate() || !previousCommitHash
                 ? of(new Map())
                 : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
                       this.exerciseId,
-                      this.repositoryId!,
+                      this.repositoryId()!,
                       previousCommitHash,
                       this.repositoryType,
                   );
 
         const rightCommitObservable = this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
             this.exerciseId,
-            this.repositoryId!,
+            this.repositoryId()!,
             currentCommitHash,
             this.repositoryType,
         );
@@ -157,10 +157,10 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     return;
                 }
 
-                this.repositoryDiffInformation = diffInformation;
+                this.repositoryDiffInformation.set(diffInformation);
 
                 // Set ready state to true when diff processing is complete
-                this.diffReady = true;
+                this.diffReady.set(true);
             },
             error: () => {
                 // Ignore stale results
@@ -171,7 +171,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 this.errorWhileFetching = true;
                 this.leftCommitFileContentByPath = new Map();
                 this.rightCommitFileContentByPath = new Map();
-                this.diffReady = false;
+                this.diffReady.set(false);
             },
         });
     }

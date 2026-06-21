@@ -101,7 +101,7 @@
             @if (programmingExerciseCreationConfig().isEdit) {
                 <ngb-alert [dismissible]="false" [type]="'info'">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
-                    <a [href]="editPolicyUrl">
+                    <a [href]="editPolicyUrl()">
                         <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>
                     </a>
                 </ngb-alert>

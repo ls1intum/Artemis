@@ -39,6 +39,15 @@ concurrency:
 jobs:
   e2e-tests:
     name: Android E2E Tests
+    # SECURITY: this job runs on a SELF-HOSTED runner and executes the checked-out code
+    # (`gradlew bootRun` from this repo + `gradlew test` from the android repo). GitHub warns
+    # against running fork PRs on self-hosted runners, so skip fork PRs — their code must not run
+    # on our infrastructure. Internal-branch PRs, pushes, and releases still run; fork changes are
+    # covered post-merge by the develop/main push. (The repo's "require approval for fork PRs"
+    # setting is the complementary control for the self-hosted jobs that cannot exclude forks.)
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, ase-large-android-sdk-34]
     timeout-minutes: 60
 
@@ -55,7 +64,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@v6
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6.1.0
 
         # sanity cleanup
       - name: Stop mysql server
@@ -83,7 +92,7 @@ jobs:
 
         # Use check to wait for the artemis server to come online. Periodically ping the server for sign of life.
       - name: Wait for Artemis Server to be healthy
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 10
           retry_wait_seconds: 10
@@ -106,8 +115,8 @@ jobs:
         continue-on-error: true
 
       - name: Test Report
-        uses: dorny/test-reporter@v3
-        if: success() || failure()    # run this step even if previous step failed
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        if: ${{ !cancelled() }}    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
           path: android-repo/test-outputs/**/*.xml

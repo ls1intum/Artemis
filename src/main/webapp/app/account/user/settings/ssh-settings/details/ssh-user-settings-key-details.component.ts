@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,40 +41,40 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     subscription: Subscription;
 
     // state change variables
-    isCreateMode = false; // true when creating new key, false when viewing existing key
-    isLoading = true;
+    readonly isCreateMode = signal(false); // true when creating new key, false when viewing existing key
+    readonly isLoading = signal(true);
 
-    copyInstructions = '';
+    readonly copyInstructions = signal<string>('');
     selectedOption: string = 'doNotUseExpiration';
 
     // Key details from input fields
     displayedKeyLabel = '';
     displayedSshKey = '';
     displayedKeyHash = '';
-    hasExpired? = false;
+    readonly hasExpired = signal<boolean | undefined>(false);
     displayedExpiryDate?: dayjs.Dayjs;
-    isExpiryDateValid = false;
-    displayCreationDate: dayjs.Dayjs;
-    displayedLastUsedDate?: dayjs.Dayjs;
-    currentDate: dayjs.Dayjs;
+    readonly isExpiryDateValid = signal<boolean>(false);
+    readonly displayCreationDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly currentDate = signal<dayjs.Dayjs>(undefined!);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
         this.setMessageBasedOnOS(getOS());
-        this.currentDate = dayjs();
+        this.currentDate.set(dayjs());
 
         this.subscription = this.route.params
             .pipe(
                 filter((params) => {
                     const keyId = Number(params['keyId']);
                     if (keyId) {
-                        this.isCreateMode = false;
+                        this.isCreateMode.set(false);
                         return true;
                     } else {
-                        this.isLoading = false;
-                        this.isCreateMode = true;
+                        this.isLoading.set(false);
+                        this.isCreateMode.set(true);
                         return false;
                     }
                 }),
@@ -85,11 +85,11 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     this.displayedSshKey = publicKey.publicKey;
                     this.displayedKeyLabel = publicKey.label;
                     this.displayedKeyHash = publicKey.keyHash;
-                    this.displayCreationDate = publicKey.creationDate;
+                    this.displayCreationDate.set(publicKey.creationDate);
                     this.displayedExpiryDate = publicKey.expiryDate;
-                    this.displayedLastUsedDate = publicKey.lastUsedDate;
-                    this.hasExpired = publicKey.expiryDate && dayjs().isAfter(dayjs(publicKey.expiryDate));
-                    this.isLoading = false;
+                    this.displayedLastUsedDate.set(publicKey.lastUsedDate);
+                    this.hasExpired.set(publicKey.expiryDate && dayjs().isAfter(dayjs(publicKey.expiryDate)));
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe();
@@ -126,25 +126,25 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     validateExpiryDate() {
-        this.isExpiryDateValid = !!this.displayedExpiryDate?.isValid();
+        this.isExpiryDateValid.set(!!this.displayedExpiryDate?.isValid());
     }
 
     private setMessageBasedOnOS(os: string): void {
         switch (os) {
             case 'Windows':
-                this.copyInstructions = 'cat ~/.ssh/id_ed25519.pub | clip';
+                this.copyInstructions.set('cat ~/.ssh/id_ed25519.pub | clip');
                 break;
             case 'MacOS':
-                this.copyInstructions = 'pbcopy < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('pbcopy < ~/.ssh/id_ed25519.pub');
                 break;
             case 'Linux':
-                this.copyInstructions = 'xclip -selection clipboard < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
                 break;
             case 'Android':
-                this.copyInstructions = 'termux-clipboard-set < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
                 break;
             default:
-                this.copyInstructions = 'Ctrl + C';
+                this.copyInstructions.set('Ctrl + C');
         }
     }
 

@@ -29,12 +29,6 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -44,19 +38,10 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     private static final String INCORRECT_PASSWORD = "incorrectPassword123";
 
     @Autowired
-    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
     protected UserTestRepository userRepository;
 
     @Autowired
     protected AuthorityRepository authorityRepository;
-
-    @Autowired
-    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    protected CourseUtilService courseUtilService;
 
     @Autowired
     protected LdapAuthenticationProvider ldapAuthenticationProvider;
@@ -69,17 +54,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private static final String NONEXISTENT_LOGIN = TEST_PREFIX + "student2";
 
-    protected ProgrammingExercise programmingExercise;
-
-    protected Course course;
-
     @BeforeEach
     void setUp() throws InvalidNameException {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        courseUtilService.addOnlineCourseConfigurationToCourse(course);
-        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
@@ -96,8 +72,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         doReturn(Optional.empty()).when(ldapUserService).findByLogin(NONEXISTENT_LOGIN);
         doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByAnyEmail(EMAIL);
         doReturn(Optional.empty()).when(ldapUserService).findByAnyEmail("nonexistent@test.de");
-        doReturn(true).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), USER_PASSWORD);
-        doReturn(false).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), INCORRECT_PASSWORD);
+        doReturn(true).when(ldapTemplate).authenticate("", "(uid=%s)".formatted(ldapUserDTO.getLogin()), USER_PASSWORD);
+        doReturn(false).when(ldapTemplate).authenticate("", "(uid=%s)".formatted(ldapUserDTO.getLogin()), INCORRECT_PASSWORD);
     }
 
     @Test

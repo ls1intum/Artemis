@@ -1655,7 +1655,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.showConsistencyIssuesToolbar()).toBe(true);
 
             const sorted = comp.sortedIssues();
-            expect(comp.selectedIssue).toEqual(sorted[0]);
+            expect(comp.selectedIssue()).toEqual(sorted[0]);
         });
 
         it('should exclude resolved consistency threads from the navigation list', () => {
@@ -1670,7 +1670,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(sorted.some((issue) => issue.threadId === threads[3].id)).toBe(false);
 
             comp.toggleConsistencyIssuesToolbar();
-            expect(comp.selectedIssue).toEqual(sorted[0]);
+            expect(comp.selectedIssue()).toEqual(sorted[0]);
         });
 
         it('should navigate global next', () => {
@@ -1678,18 +1678,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const sorted = comp.sortedIssues();
 
             // Start at first issue
-            comp.selectedIssue = sorted[0];
+            comp.selectedIssue.set(sorted[0]);
 
             const jumpSpy = vi.spyOn(internals(comp), 'jumpToLocation').mockImplementation(() => {});
 
             // Next step
             comp.navigateGlobal(1);
 
-            expect(comp.selectedIssue).toBe(sorted[1]);
+            expect(comp.selectedIssue()).toBe(sorted[1]);
             expect(jumpSpy).toHaveBeenCalledWith(sorted[1]);
 
             comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[2]);
+            expect(comp.selectedIssue()).toBe(sorted[2]);
         });
 
         it('should navigate global previous and wrap around', () => {
@@ -1697,7 +1697,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const sorted = comp.sortedIssues();
 
             // Start at first issue
-            comp.selectedIssue = sorted[0];
+            comp.selectedIssue.set(sorted[0]);
 
             const jumpSpy = vi.spyOn(internals(comp), 'jumpToLocation').mockImplementation(() => {});
 
@@ -1705,7 +1705,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.navigateGlobal(-1);
 
-            expect(comp.selectedIssue).toBe(lastIssue);
+            expect(comp.selectedIssue()).toBe(lastIssue);
             expect(jumpSpy).toHaveBeenCalledWith(lastIssue);
         });
 
@@ -1924,7 +1924,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
             reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             internals(comp).showConsistencyIssuesToolbar.set(true);
-            comp.selectedIssue = comp.sortedIssues()[0];
+            comp.selectedIssue.set(comp.sortedIssues()[0]);
 
             vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
             vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
@@ -1933,7 +1933,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.checkConsistencies(comp.exercise!);
 
             expect(comp.showConsistencyIssuesToolbar()).toBe(false);
-            expect(comp.selectedIssue).toBeUndefined();
+            expect(comp.selectedIssue()).toBeUndefined();
         });
     });
 });

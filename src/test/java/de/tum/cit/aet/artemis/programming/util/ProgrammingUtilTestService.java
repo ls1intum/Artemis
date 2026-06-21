@@ -6,7 +6,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
@@ -170,8 +170,8 @@ public class ProgrammingUtilTestService {
         // There's no need to stub getOrCheckoutRepository here — use the real implementation.
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.workingCopyGitRepoFile.toURI());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
-        participation = programmingExerciseStudentParticipationRepository
-                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
+        participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), List.of(participation.getId()))
+                .getFirst();
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
     }
 }

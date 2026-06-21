@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -143,11 +143,11 @@ describe('Course Management Update Component', () => {
             fixture.detectChanges();
             await Promise.resolve();
             expect(comp.course).toEqual(course);
-            expect(comp.courseOrganizations).toEqual([organization]);
+            expect(comp.courseOrganizations()).toEqual([organization]);
             expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalled();
-            expect(comp.customizeGroupNames).toBe(true);
+            expect(comp.customizeGroupNames()).toBe(true);
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
             expect(comp.course.editorGroupName).toBe('artemis-dev');
@@ -241,7 +241,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should call create service on save for new entity', async () => {
@@ -276,7 +276,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {
@@ -306,6 +306,109 @@ describe('Course Management Update Component', () => {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
+        });
+    });
+
+    describe('save organization sync', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        it('should persist added and removed organizations via the dedicated admin endpoints on save', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should not call any organization endpoint when the selection is unchanged', async () => {
+            // GIVEN
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should only re-issue the failed organization change after a partial failure on retry', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            // the removal fails on the first attempt and succeeds on the retry
+            const removeStub = vi
+                .spyOn(organizationService, 'removeCourseFromOrganization')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN: first save - the add succeeds, the remove fails
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: both were attempted once and saving is reset
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+
+            // WHEN: the admin saves again
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: the already-succeeded add is not re-issued, only the failed removal is retried
+            expect(addStub).toHaveBeenCalledOnce();
+            expect(removeStub).toHaveBeenCalledTimes(2);
+            expect(comp.isSaving()).toBe(false);
         });
     });
 
@@ -483,21 +586,21 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(2),
                 maxComplaintResponseTextLimit: new FormControl(2),
             });
-            comp.complaintsEnabled = false;
+            comp.complaintsEnabled.set(false);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBe(true);
+            expect(comp.complaintsEnabled()).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBe(false);
+            expect(comp.complaintsEnabled()).toBe(false);
         });
     });
 
@@ -506,13 +609,13 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 maxRequestMoreFeedbackTimeDays: new FormControl(2),
             });
-            comp.requestMoreFeedbackEnabled = false;
+            comp.requestMoreFeedbackEnabled.set(false);
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(7);
-            expect(comp.requestMoreFeedbackEnabled).toBe(true);
+            expect(comp.requestMoreFeedbackEnabled()).toBe(true);
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
-            expect(comp.requestMoreFeedbackEnabled).toBe(false);
+            expect(comp.requestMoreFeedbackEnabled()).toBe(false);
         });
     });
 
@@ -552,19 +655,19 @@ describe('Course Management Update Component', () => {
                 editorGroupName: new FormControl('noname'),
                 instructorGroupName: new FormControl('noname'),
             });
-            comp.customizeGroupNames = false;
+            comp.customizeGroupNames.set(false);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
             expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames).toBe(true);
+            expect(comp.customizeGroupNames()).toBe(true);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
             expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames).toBe(false);
+            expect(comp.customizeGroupNames()).toBe(false);
         });
     });
 
@@ -1015,15 +1118,15 @@ describe('Course Management Update Component', () => {
             organization.id = 123;
             const secondOrganization = new Organization();
             secondOrganization.id = 124;
-            comp.courseOrganizations = [organization, secondOrganization];
+            comp.courseOrganizations.set([organization, secondOrganization]);
             comp.removeOrganizationFromCourse(organization);
-            expect(comp.courseOrganizations).toEqual([secondOrganization]);
+            expect(comp.courseOrganizations()).toEqual([secondOrganization]);
         });
     });
 
     describe('deleteIcon', () => {
         it('should create the delete button when croppedImage is present', () => {
-            comp.croppedImage = 'some-image-url';
+            comp.croppedImage.set('some-image-url');
             fixture.changeDetectorRef.detectChanges();
             const deleteButton = getDeleteIconButton();
             expect(deleteButton).toBeTruthy();
@@ -1062,7 +1165,7 @@ describe('Course Management Update Component', () => {
 
     describe('editIcon', () => {
         it('should create the edit button when croppedImage is present', () => {
-            comp.croppedImage = 'some-image-url';
+            comp.croppedImage.set('some-image-url');
             fixture.changeDetectorRef.detectChanges();
             const editButton = getEditIconButton();
             expect(editButton).toBeTruthy();
@@ -1093,7 +1196,7 @@ describe('Course Management Update Component', () => {
         it('should trigger file input when no-image div is clicked', () => {
             const triggerFileInputSpy = vi.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
-            comp.croppedImage = undefined;
+            comp.croppedImage.set(undefined);
             fixture.changeDetectorRef.detectChanges();
             const noImageDiv = fixture.debugElement.nativeElement.querySelector('#no-image-placeholder');
             noImageDiv.dispatchEvent(new Event('click'));
@@ -1112,7 +1215,7 @@ describe('Course Management Update Component', () => {
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
             comp.openCropper();
             expect(dialogService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
-            expect(comp.croppedImage).toBe(croppedImageResult);
+            expect(comp.croppedImage()).toBe(croppedImageResult);
         });
     });
 
@@ -1153,7 +1256,7 @@ describe('Course Management Update Component', () => {
         } as unknown as DynamicDialogRef;
         vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
-        expect(comp.courseOrganizations).toHaveLength(1);
+        expect(comp.courseOrganizations()).toHaveLength(1);
     });
 
     describe('changeCommunicationEnabled', () => {
