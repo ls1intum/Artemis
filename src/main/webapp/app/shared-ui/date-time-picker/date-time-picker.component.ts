@@ -3,9 +3,9 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { DatePickerModule } from 'primeng/datepicker';
+import { TooltipModule } from 'primeng/tooltip';
+import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -26,18 +26,7 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [
-        FaStackComponent,
-        NgbTooltip,
-        FaIconComponent,
-        FaStackItemSizeDirective,
-        FormsModule,
-        OwlDateTimeModule,
-        NgClass,
-        NgTemplateOutlet,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaStackComponent, TooltipModule, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, NgClass, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCalendarAlt = faCalendarAlt;
@@ -81,6 +70,17 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return !isInvalid;
     });
 
+    /**
+     * Whether the underlying p-datepicker should render the time picker (hours/minutes).
+     * CALENDAR -> date only; TIMER and DEFAULT -> with time.
+     */
+    protected showTime = computed(() => this.pickerType() !== DateTimePickerType.CALENDAR);
+
+    /**
+     * Whether the underlying p-datepicker should render the time picker only (no calendar grid).
+     */
+    protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
+
     updateSignals(): void {
         const dateInput = this.dateInputRef() ?? this.dateInputOverride;
         this.isInputValid.set(!dateInput?.invalid);
@@ -99,15 +99,16 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * Function that writes the value safely.
-     * @param value as dayjs or date
+     *
+     * The picker (p-datepicker) edits in the browser-LOCAL timezone and binds a native `Date`.
+     * Artemis stores instants as UTC dayjs values. We therefore normalise any incoming value to a
+     * native `Date` that represents the same absolute instant — p-datepicker then renders the
+     * local wall-clock of that instant (identical behaviour to the previous owl-date-time picker).
+     *
+     * @param value as dayjs, native Date, ISO string (e.g. typed by the e2e helper), null or undefined
      */
     writeValue(value: any) {
-        // convert dayjs to date, because owl-date-time only works correctly with date objects
-        if (dayjs.isDayjs(value)) {
-            this.value.set((value as dayjs.Dayjs).toDate());
-        } else {
-            this.value.set(value);
-        }
+        this.value.set(this.toLocalDate(value));
         this.updateSignals();
     }
 
@@ -126,13 +127,39 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
+     * Called when the user picks (or clears, or types) a value in the p-datepicker.
      *
-     * @param newValue
+     * p-datepicker emits a native `Date` interpreted as the LOCAL wall-clock the user sees, or
+     * null/undefined when cleared. We convert that back to a dayjs that preserves the SAME absolute
+     * instant via `dayjs(date)` (no offset is added or subtracted), so the UTC value persisted by
+     * consumers matches exactly what the user picked — no off-by-timezone-offset drift.
+     *
+     * A `string` can also reach this handler (e.g. the Playwright `enterDate` helper types a UTC ISO
+     * string with a `Z` suffix); `dayjs(string)` parses the explicit zone correctly, so we never
+     * mis-interpret an absolute instant as local wall-clock.
+     *
+     * @param newValue the value emitted by the picker (Date | dayjs | string | null | undefined)
      */
-    updateField(newValue: dayjs.Dayjs) {
-        this.value.set(newValue);
-        this.onChange?.(dayjs(this.value()));
+    updateField(newValue: dayjs.Dayjs | Date | string | null | undefined) {
+        this.value.set(this.toLocalDate(newValue));
+        this.onChange?.(newValue != undefined ? dayjs(newValue) : undefined);
         this.valueChanged();
+    }
+
+    /**
+     * Normalises any supported value shape to a native `Date` (the type p-datepicker binds to) that
+     * represents the same absolute instant, or `undefined`/`null` when there is no value.
+     *
+     * `dayjs(value)` keeps the absolute instant for dayjs, Date and ISO-string inputs alike, and
+     * `.toDate()` hands p-datepicker a native Date whose local wall-clock is the instant's local
+     * representation — the exact round-trip the old owl picker performed.
+     */
+    private toLocalDate(value: any): Date | null | undefined {
+        if (value == undefined) {
+            return value;
+        }
+        const parsed = dayjs(value);
+        return parsed.isValid() ? parsed.toDate() : null;
     }
 
     /**
@@ -168,6 +195,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput?.reset(undefined);
+        this.value.set(undefined);
         if (this.onChange) {
             this.onChange(undefined);
         }

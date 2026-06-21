@@ -45,7 +45,10 @@ export function generateUUID() {
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
     const dateInputField = page.locator(selector).locator('#date-input-field');
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.fill(dayjsToString(date), { force: true });
+    // The migrated PrimeNG p-datepicker parses its own display format (mm/dd/yy + 24h time) in the browser's
+    // LOCAL timezone, not an ISO `Z` string (which it silently rejects). Enter the same instant as local
+    // wall-clock; jhi-date-time-picker converts it back to the correct UTC instant on emit.
+    await dateInputField.fill(date.local().format('MM/DD/YYYY HH:mm'), { force: true });
 }
 
 /**

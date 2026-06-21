@@ -4,57 +4,43 @@
     </label>
 }
 @if (labelTooltip()) {
-    <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip()">
+    <fa-stack class="text-secondary icon-full-size" [pTooltip]="labelTooltip()">
         <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
     </fa-stack>
 }
 @if (shouldDisplayTimeZoneWarning()) {
-    <fa-stack ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
+    <fa-stack pTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
         <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey" />
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
     </fa-stack>
 }
-<div class="d-flex position-relative">
-    <input
+<div class="flex items-center relative">
+    <p-datepicker
         #dateInput="ngModel"
-        class="form-control position-relative ps-5"
-        id="date-input-field"
+        name="datePicker"
+        inputId="date-input-field"
+        styleClass="w-full"
         [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
         [class.ng-invalid]="!isValid()"
         [ngModel]="value()"
         [disabled]="disabled()"
-        [min]="minDate()"
-        [max]="maxDate()"
+        [invalid]="!isValid()"
+        [showTime]="showTime()"
+        [timeOnly]="timeOnly()"
+        [showSeconds]="false"
+        [hourFormat]="'24'"
+        [firstDayOfWeek]="1"
+        [minDate]="minDate() ?? null"
+        [maxDate]="maxDate() ?? null"
+        [defaultDate]="startDate() ?? null"
+        [showIcon]="true"
+        [iconDisplay]="'input'"
+        [appendTo]="'body'"
         (ngModelChange)="updateField($event)"
-        [owlDateTime]="pickerType() === DateTimePickerType.CALENDAR ? dtCalendar : pickerType() === DateTimePickerType.TIMER ? dtTimer : dtDefault"
-        name="datePicker"
     />
-    @switch (pickerType()) {
-        @case (DateTimePickerType.TIMER) {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtTimer, icon: faClock }" />
-        }
-        @case (DateTimePickerType.CALENDAR) {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtCalendar, icon: faCalendarAlt }" />
-        }
-        @default {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtDefault, icon: faCalendarAlt }" />
-        }
-    }
-
-    <ng-template #owlTrigger let-owlTrigger let-icon="icon">
-        <button [owlDateTimeTrigger]="owlTrigger" class="btn position-absolute" type="button">
-            <fa-icon [icon]="icon" />
-        </button>
-    </ng-template>
-    <div class="position-relative">
-        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
-            <fa-icon [icon]="faCircleXmark" />
-        </button>
-    </div>
-
-    <owl-date-time [startAt]="startDate()" #dtDefault />
-    <owl-date-time [pickerType]="'calendar'" #dtCalendar />
-    <owl-date-time [pickerType]="'timer'" #dtTimer />
+    <button class="btn relative" type="button" (click)="clearDate()">
+        <fa-icon [icon]="faCircleXmark" />
+    </button>
 </div>
 @if (dateInput.invalid || (requiredField() && !dateInput.value)) {
     <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>
@@ -62,6 +48,6 @@
 @if (warning()) {
     <div class="invalid-feedback">
         <fa-icon class="text-warning" [icon]="faTriangleExclamation" />
-        <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" ngbTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
+        <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" pTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
     </div>
 }
