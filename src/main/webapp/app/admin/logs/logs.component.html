@@ -4,9 +4,18 @@
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
         <div class="flex flex-col gap-2">
             <label for="logs-filter" jhiTranslate="logs.filter"></label>
-            <input id="logs-filter" data-testid="logs-filter-input" type="text" pInputText class="w-full" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" />
+            <input id="logs-filter" data-testid="logs-filter-input" type="text" pInputText class="w-full" [ngModel]="filterInput()" (ngModelChange)="updateFilter($event)" />
         </div>
-        <p-table [value]="filteredAndOrderedLoggers()" [tableStyle]="{ 'min-width': '30rem' }" aria-describedby="logs-page-heading" data-testid="logs-table">
+        <p-table
+            [value]="filteredAndOrderedLoggers()"
+            [tableStyle]="{ 'min-width': '30rem' }"
+            [scrollable]="true"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="46"
+            scrollHeight="600px"
+            aria-describedby="logs-page-heading"
+            data-testid="logs-table"
+        >
             <ng-template #header>
                 <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event!)" (ascendingChange)="ascending.set($event)">
                     <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>

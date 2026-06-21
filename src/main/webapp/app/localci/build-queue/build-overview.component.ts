@@ -14,11 +14,13 @@ import dayjs from 'dayjs/esm';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { InputTextModule } from 'primeng/inputtext';
+import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/foundation/util/download.util';
@@ -55,7 +57,6 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        NgClass,
         FormsModule,
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
@@ -66,6 +67,9 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         FinishedJobsTableComponent,
         DialogModule,
         ButtonModule,
+        ButtonGroupModule,
+        InputTextModule,
+        Tag,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {

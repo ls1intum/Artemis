@@ -20,7 +20,7 @@
                 @if (operation.name !== 'deleteOrphans') {
                     <p-datepicker
                         [inputId]="'deleteFromDate-' + operation.name"
-                        [ngModel]="toDate(operation.deleteFrom)"
+                        [ngModel]="toDate(operation, 'from')"
                         (ngModelChange)="onDeleteFromChange(operation, $event)"
                         [firstDayOfWeek]="1"
                         [invalid]="!operation.datesValid()"
@@ -36,7 +36,7 @@
                 @if (operation.name !== 'deleteOrphans') {
                     <p-datepicker
                         [inputId]="'deleteToDate-' + operation.name"
-                        [ngModel]="toDate(operation.deleteTo)"
+                        [ngModel]="toDate(operation, 'to')"
                         (ngModelChange)="onDeleteToChange(operation, $event)"
                         [firstDayOfWeek]="1"
                         [invalid]="!operation.datesValid()"

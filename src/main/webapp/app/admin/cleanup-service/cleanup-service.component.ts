@@ -117,11 +117,47 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     /**
-     * Convert a dayjs value (UTC-backed) to a native Date for the PrimeNG datepicker,
-     * which works with local Date objects.
+     * Per-operation cache of the native {@link Date} objects handed to the PrimeNG datepickers.
+     *
+     * The picker is bound via `[ngModel]="toDate(...)"`. A template method binding is re-evaluated
+     * on every change-detection pass, and a naive `value.toDate()` allocates a brand-new `Date`
+     * each time. PrimeNG compares the incoming model by reference, so a new instance forces it to
+     * re-run `writeValue` -> `updateUI` -> `createMonths` (a full 6x7 month-grid rebuild) on each
+     * pass. With eight datepickers on the page (four rows x two pickers) this dominated the render
+     * cost. We therefore memoize the converted `Date` per dayjs value and only allocate a new one
+     * when the underlying timestamp actually changes, giving the picker a stable reference.
      */
-    toDate(value: dayjs.Dayjs | undefined): Date | undefined {
-        return value ? value.toDate() : undefined;
+    private readonly dateCache = new WeakMap<CleanupOperation, { fromMs?: number; fromDate?: Date; toMs?: number; toDate?: Date }>();
+
+    /**
+     * Convert a dayjs value (UTC-backed) to a native Date for the PrimeNG datepicker,
+     * which works with local Date objects. The result is memoized per operation/field so the
+     * `[ngModel]` binding receives a stable reference across change-detection passes (see
+     * {@link dateCache}).
+     */
+    toDate(operation: CleanupOperation, field: 'from' | 'to'): Date | undefined {
+        const value = field === 'from' ? operation.deleteFrom : operation.deleteTo;
+        if (!value) {
+            return undefined;
+        }
+        const ms = value.valueOf();
+        let entry = this.dateCache.get(operation);
+        if (!entry) {
+            entry = {};
+            this.dateCache.set(operation, entry);
+        }
+        if (field === 'from') {
+            if (entry.fromMs !== ms || !entry.fromDate) {
+                entry.fromMs = ms;
+                entry.fromDate = value.toDate();
+            }
+            return entry.fromDate;
+        }
+        if (entry.toMs !== ms || !entry.toDate) {
+            entry.toMs = ms;
+            entry.toDate = value.toDate();
+        }
+        return entry.toDate;
     }
 
     /**

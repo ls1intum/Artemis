@@ -4,75 +4,75 @@
     }
 
     @if (isLoading()) {
-        <div class="d-flex justify-content-center my-5">
+        <div class="my-5 flex justify-center">
             <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
         </div>
     }
 
     @if (notFound()) {
-        <div class="alert alert-warning" jhiTranslate="artemisApp.buildQueue.detail.notFound"></div>
+        <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildQueue.detail.notFound" />
     }
 
     @if (buildJob()) {
         <!-- Status Section -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex align-items-center gap-3">
-                    <span
-                        [ngClass]="{
-                            'text-success': jobStatus() === 'SUCCESSFUL',
-                            'text-warning': jobStatus() === 'CANCELLED',
-                            'text-danger': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
-                            'text-primary': jobStatus() === 'BUILDING',
-                            'text-muted': jobStatus() === 'QUEUED',
-                        }"
-                    >
-                        <fa-icon
-                            [icon]="
-                                jobStatus() === 'SUCCESSFUL'
-                                    ? faCircleCheck
-                                    : jobStatus() === 'CANCELLED'
-                                      ? faExclamationTriangle
-                                      : jobStatus() === 'BUILDING'
-                                        ? faSpinner
-                                        : jobStatus() === 'QUEUED'
-                                          ? faHourglass
-                                          : faExclamationCircle
-                            "
-                            [animation]="jobStatus() === 'BUILDING' ? 'spin' : undefined"
-                            size="2x"
-                        />
-                    </span>
-                    <div>
-                        <h4 class="mb-0">{{ getJobName() }}</h4>
-                        <span
-                            class="badge"
-                            [ngClass]="{
-                                'bg-success': jobStatus() === 'SUCCESSFUL',
-                                'bg-warning': jobStatus() === 'CANCELLED',
-                                'bg-danger': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
-                                'bg-primary': jobStatus() === 'BUILDING',
-                                'bg-secondary': jobStatus() === 'QUEUED',
-                            }"
-                        >
-                            {{ jobStatus() }}
+        <div class="mb-3 rounded-lg border p-4">
+            <div class="flex items-center gap-3">
+                <span
+                    [ngClass]="{
+                        'text-success': jobStatus() === 'SUCCESSFUL',
+                        'text-warning': jobStatus() === 'CANCELLED',
+                        'text-danger': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
+                        'text-primary': jobStatus() === 'BUILDING',
+                        'text-muted-color': jobStatus() === 'QUEUED',
+                    }"
+                >
+                    <fa-icon
+                        [icon]="
+                            jobStatus() === 'SUCCESSFUL'
+                                ? faCircleCheck
+                                : jobStatus() === 'CANCELLED'
+                                  ? faExclamationTriangle
+                                  : jobStatus() === 'BUILDING'
+                                    ? faSpinner
+                                    : jobStatus() === 'QUEUED'
+                                      ? faHourglass
+                                      : faExclamationCircle
+                        "
+                        [animation]="jobStatus() === 'BUILDING' ? 'spin' : undefined"
+                        size="2x"
+                    />
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h4 class="mb-0">{{ getJobName() }}</h4>
+                    <p-tag
+                        [value]="jobStatus()"
+                        [severity]="
+                            jobStatus() === 'SUCCESSFUL'
+                                ? 'success'
+                                : jobStatus() === 'CANCELLED'
+                                  ? 'warn'
+                                  : jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT'
+                                    ? 'danger'
+                                    : jobStatus() === 'BUILDING'
+                                      ? 'info'
+                                      : 'secondary'
+                        "
+                    />
+                    @if (jobStatus() === 'SUCCESSFUL' && getSubmissionResult()) {
+                        <span>
+                            <jhi-result [result]="getSubmissionResult()" [showUngradedResults]="true" [showBadge]="true" />
                         </span>
-                        @if (jobStatus() === 'SUCCESSFUL' && getSubmissionResult()) {
-                            <span class="ms-2">
-                                <jhi-result [result]="getSubmissionResult()" [showUngradedResults]="true" [showBadge]="true" />
-                            </span>
-                        }
-                    </div>
+                    }
                 </div>
             </div>
         </div>
 
         <!-- Info Grid -->
-        <div class="card mb-3">
-            <div class="card-header" jhiTranslate="artemisApp.buildQueue.detail.infoSection"></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
+        <div class="mb-3 rounded-lg border">
+            <div class="border-b px-4 py-2 font-semibold" jhiTranslate="artemisApp.buildQueue.detail.infoSection"></div>
+            <div class="p-4">
+                <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                    <div>
                         <dl>
                             @if (getJobId()) {
                                 <dt jhiTranslate="artemisApp.buildQueue.buildJob.id"></dt>
@@ -122,7 +122,7 @@
                             }
                         </dl>
                     </div>
-                    <div class="col-md-6">
+                    <div>
                         <dl>
                             @if (getRepositoryName()) {
                                 <dt jhiTranslate="artemisApp.buildQueue.buildJob.repositoryName"></dt>
@@ -197,29 +197,29 @@
         </div>
 
         <!-- Timing Section -->
-        <div class="card mb-3">
-            <div class="card-header" jhiTranslate="artemisApp.buildQueue.detail.timingSection"></div>
-            <div class="card-body">
-                <dl class="row mb-0">
+        <div class="mb-3 rounded-lg border">
+            <div class="border-b px-4 py-2 font-semibold" jhiTranslate="artemisApp.buildQueue.detail.timingSection"></div>
+            <div class="p-4">
+                <dl class="mb-0 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
                     @if (getSubmissionDate()) {
-                        <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"></dt>
-                        <dd class="col-sm-8">{{ getSubmissionDate() | artemisDate: 'long' : true }}</dd>
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.submissionDate"></dt>
+                        <dd class="mb-0">{{ getSubmissionDate() | artemisDate: 'long' : true }}</dd>
                     }
                     @if (getBuildStartDate()) {
-                        <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"></dt>
-                        <dd class="col-sm-8">{{ getBuildStartDate() | artemisDate: 'long' : true }}</dd>
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"></dt>
+                        <dd class="mb-0">{{ getBuildStartDate() | artemisDate: 'long' : true }}</dd>
                     }
                     @if (queueWaitTime()) {
-                        <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.detail.queueWaitTime"></dt>
-                        <dd class="col-sm-8">{{ queueWaitTime() }}</dd>
+                        <dt jhiTranslate="artemisApp.buildQueue.detail.queueWaitTime"></dt>
+                        <dd class="mb-0">{{ queueWaitTime() }}</dd>
                     }
                     @if (getBuildCompletionDate()) {
-                        <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></dt>
-                        <dd class="col-sm-8">{{ getBuildCompletionDate() | artemisDate: 'long' : true }}</dd>
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></dt>
+                        <dd class="mb-0">{{ getBuildCompletionDate() | artemisDate: 'long' : true }}</dd>
                     }
                     @if (buildDuration() !== undefined) {
-                        <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.duration"></dt>
-                        <dd class="col-sm-8">{{ buildDuration() }}</dd>
+                        <dt jhiTranslate="artemisApp.buildQueue.buildJob.duration"></dt>
+                        <dd class="mb-0">{{ buildDuration() }}</dd>
                     }
                 </dl>
             </div>
@@ -227,26 +227,26 @@
 
         <!-- Build Logs Section -->
         @if (isFinished()) {
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span jhiTranslate="artemisApp.buildQueue.detail.logsSection"></span>
+            <div class="mb-3 rounded-lg border">
+                <div class="flex items-center justify-between border-b px-4 py-2">
+                    <span class="font-semibold" jhiTranslate="artemisApp.buildQueue.detail.logsSection"></span>
                     @if (buildLogs()) {
-                        <button class="btn btn-sm btn-outline-primary" (click)="downloadBuildLogs()">
+                        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="downloadBuildLogs()">
                             <fa-icon [icon]="faDownload" />
                             <span class="ms-1" jhiTranslate="artemisApp.buildQueue.logs.download"></span>
-                        </button>
+                        </p-button>
                     }
                 </div>
-                <div class="card-body">
+                <div class="p-4">
                     @if (isLoadingLogs()) {
-                        <div class="d-flex justify-content-center my-3">
+                        <div class="my-3 flex items-center justify-center">
                             <fa-icon [icon]="faSpinner" animation="spin" />
                             <span class="ms-2" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
                         </div>
                     } @else if (buildLogs()) {
                         <pre class="build-logs-pre">{{ buildLogs() }}</pre>
                     } @else {
-                        <p class="text-muted" jhiTranslate="artemisApp.buildQueue.logs.noLogs"></p>
+                        <p class="text-muted-color" jhiTranslate="artemisApp.buildQueue.logs.noLogs"></p>
                     }
                 </div>
             </div>

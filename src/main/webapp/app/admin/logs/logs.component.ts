@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -37,14 +37,23 @@ import { InputTextModule } from 'primeng/inputtext';
         InputTextModule,
     ],
 })
-export class LogsComponent implements OnInit {
+export class LogsComponent implements OnInit, OnDestroy {
     private readonly logsService = inject(LogsService);
+
+    /** Debounce delay (ms) before the filter is applied to the (potentially large) logger list */
+    private static readonly FILTER_DEBOUNCE_MS = 200;
 
     /** All available loggers */
     readonly loggers = signal<Log[]>([]);
 
-    /** Filter string for logger names */
+    /** Immediate value bound to the filter input (keeps typing responsive) */
+    readonly filterInput = signal('');
+
+    /** Debounced filter string actually used for filtering/sorting the logger list */
     readonly filter = signal('');
+
+    /** Pending debounce timer handle for the filter input */
+    private filterDebounceHandle?: ReturnType<typeof setTimeout>;
 
     /** Property to sort by */
     readonly orderProp = signal<keyof Log>('name');
@@ -93,11 +102,26 @@ export class LogsComponent implements OnInit {
     }
 
     /**
+     * Cleans up any pending debounce timer.
+     */
+    ngOnDestroy(): void {
+        if (this.filterDebounceHandle !== undefined) {
+            clearTimeout(this.filterDebounceHandle);
+        }
+    }
+
+    /**
      * Updates filter value for logger filtering.
+     * The bound input updates immediately for responsiveness, while the actual filter applied to the
+     * (potentially large) logger list is debounced so the filter+sort computation does not re-run on every keystroke.
      * @param value - The filter string
      */
     updateFilter(value: string): void {
-        this.filter.set(value);
+        this.filterInput.set(value);
+        if (this.filterDebounceHandle !== undefined) {
+            clearTimeout(this.filterDebounceHandle);
+        }
+        this.filterDebounceHandle = setTimeout(() => this.filter.set(value), LogsComponent.FILTER_DEBOUNCE_MS);
     }
 
     /**
