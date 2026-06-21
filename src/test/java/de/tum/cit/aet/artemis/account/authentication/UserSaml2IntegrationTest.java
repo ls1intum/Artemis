@@ -180,7 +180,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         assertStudentExists();
 
         // Change Password
-        User student = userTestRepository.findUserWithCourseRolesAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        User student = userTestRepository.findUserWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
         userTestRepository.saveAndFlush(student);
 

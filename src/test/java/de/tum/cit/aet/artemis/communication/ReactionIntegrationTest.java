@@ -511,7 +511,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = userTestRepository.getUserWithCourseRolesAndAuthorities(ReactionIntegrationTest.TEST_PREFIX + "student2");
+        User user = userTestRepository.getUserWithAuthorities(ReactionIntegrationTest.TEST_PREFIX + "student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;

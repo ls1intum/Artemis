@@ -520,7 +520,7 @@ class Lti13ServiceTest {
 
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithCourseRolesAndAuthoritiesByLogin(any());
+        doReturn(user).when(userRepository).findOneWithAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
@@ -780,7 +780,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn(targetLinkUri);
 
         Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithCourseRolesAndAuthoritiesByLogin(any());
+        doReturn(user).when(userRepository).findOneWithAuthoritiesByLogin(any());
 
         if (isOnlineCourse) {
             doReturn(Optional.of(getMockCourse(courseId))).when(courseRepository).findById(courseId);

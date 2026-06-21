@@ -94,7 +94,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
-        when(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
         when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
 
         // Execute
@@ -129,7 +129,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
 
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
-        when(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
         when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
 
         // Execute
@@ -157,7 +157,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
         when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
-        when(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username)).thenReturn(Optional.empty());
+        when(userRepository.findOneWithAuthoritiesByLogin(username)).thenReturn(Optional.empty());
 
         // Execute & Verify
         assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(BadCredentialsException.class).hasMessageContaining("was not found in the database");
@@ -183,7 +183,7 @@ class ArtemisWebAuthnAuthenticationProviderTest {
         WebAuthnAuthenticationRequestToken requestToken = createMockRequestToken(credentialId);
         when(passkeyCredentialsRepository.findByCredentialId(credentialId)).thenReturn(Optional.of(passkeyCredential));
         when(relyingPartyOperations.authenticate(any())).thenReturn(userEntity);
-        when(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByLogin(username)).thenReturn(Optional.of(user));
 
         // Execute & Verify
         assertThatThrownBy(() -> provider.authenticate(requestToken)).isInstanceOf(UserNotActivatedException.class).hasMessageContaining("is not activated");

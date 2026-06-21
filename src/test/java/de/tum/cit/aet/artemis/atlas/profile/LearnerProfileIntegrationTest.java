@@ -102,7 +102,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldFetchLearnerProfileLazily() {
-        User user = userTestRepository.getUserWithCourseRolesAndAuthorities(STUDENT1_OF_COURSE);
+        User user = userTestRepository.getUserWithAuthorities(STUDENT1_OF_COURSE);
         assertThat(Hibernate.isInitialized(user.getLearnerProfile())).isFalse();
     }
 }

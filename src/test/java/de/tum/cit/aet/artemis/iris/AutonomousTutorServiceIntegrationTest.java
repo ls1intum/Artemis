@@ -70,7 +70,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
         botUser = irisBotUserService.getIrisBotUser();
-        student = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         featureToggleService.enableFeature(Feature.AutonomousTutor);
     }
 

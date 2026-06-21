@@ -135,7 +135,7 @@ public class UserTestService {
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userTestRepository.save(student);
-        student = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         final var event = new ScienceEvent();
         event.setIdentity(student.getLogin());
@@ -275,7 +275,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -300,7 +300,7 @@ public class UserTestService {
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
-        final var updatedUserInDB = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
         assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 

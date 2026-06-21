@@ -101,7 +101,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         var failures = request.postListWithResponseBody("/api/course/courses/" + course1.getId() + "/students", List.of(dto1), StudentDTO.class, HttpStatus.OK);
         assertThat(failures).isEmpty();
 
-        var student = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin("go42tum");
+        var student = userRepository.findOneWithAuthoritiesByLogin("go42tum");
         assertThat(student).isPresent();
         assertThat(student.get().getRegistrationNumber()).isEqualTo("1234567");
         assertThat(student.get().getFirstName()).isEqualTo("Erika");

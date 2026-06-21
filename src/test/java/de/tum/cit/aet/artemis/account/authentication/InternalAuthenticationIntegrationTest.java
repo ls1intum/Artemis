@@ -79,7 +79,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        student = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(USERNAME).orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(USERNAME).orElseThrow();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
         student.setInternal(true);
@@ -170,7 +170,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         managedUserVM.setPassword("12345678");
 
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
 

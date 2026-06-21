@@ -207,7 +207,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 .isThrownBy(() -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
         var course = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS).getFirst(); // the course with exercises
         var exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-        var student = userTestRepository.getUserWithCourseRolesAndAuthorities(TEST_PREFIX + "student1");
+        var student = userTestRepository.getUserWithAuthorities(TEST_PREFIX + "student1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
         var exercise = exercises.iterator().next();
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -215,7 +215,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
 
-        var tutor = userTestRepository.getUserWithCourseRolesAndAuthorities(TEST_PREFIX + "tutor1");
+        var tutor = userTestRepository.getUserWithAuthorities(TEST_PREFIX + "tutor1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
 
         course.setOnlineCourse(true);

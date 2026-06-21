@@ -1035,8 +1035,8 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
-        User customUser = userRepo.findOneWithCourseRolesByLogin(otherPrefix + "custom1").orElseThrow();
-        User student = userRepo.findOneWithCourseRolesByLogin(userPrefix + "student1").orElseThrow();
+        User customUser = userRepo.findOneByLogin(otherPrefix + "custom1").orElseThrow();
+        User student = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
 
         // Custom user is student in 0 and 1, tutor in 2, editor in 3 and instructor in 4
         Course[] courses = new Course[5];
@@ -1897,10 +1897,10 @@ public class CourseTestService {
 
     private void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
         // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithCourseRolesByLogin(userPrefix + "student1").orElseThrow();
-        User tutor = userRepo.findOneWithCourseRolesByLogin(userPrefix + "tutor1").orElseThrow();
-        User editor = userRepo.findOneWithCourseRolesByLogin(userPrefix + "editor1").orElseThrow();
-        User instructor = userRepo.findOneWithCourseRolesByLogin(userPrefix + "instructor1").orElseThrow();
+        User student = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
+        User tutor = userRepo.findOneByLogin(userPrefix + "tutor1").orElseThrow();
+        User editor = userRepo.findOneByLogin(userPrefix + "editor1").orElseThrow();
+        User instructor = userRepo.findOneByLogin(userPrefix + "instructor1").orElseThrow();
 
         // Remove users from course membership
         request.delete("/api/course/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);

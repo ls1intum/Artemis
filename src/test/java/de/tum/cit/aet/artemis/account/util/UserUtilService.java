@@ -413,7 +413,7 @@ public class UserUtilService {
             return;
         }
 
-        var existingUserWithRegistrationNumber = userTestRepository.findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
+        var existingUserWithRegistrationNumber = userTestRepository.findOneWithAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
         if (existingUserWithRegistrationNumber.isPresent()) {
             existingUserWithRegistrationNumber.get().setRegistrationNumber(null);
             userTestRepository.save(existingUserWithRegistrationNumber.get());
@@ -617,7 +617,7 @@ public class UserUtilService {
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
-        return userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(login.toLowerCase())
+        return userTestRepository.findOneWithAuthoritiesByLogin(login.toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 

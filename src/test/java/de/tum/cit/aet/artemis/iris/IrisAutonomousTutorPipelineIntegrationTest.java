@@ -66,7 +66,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         course = courseUtilService.createCourse();
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
-        student = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
     }
 
     private Post createPostInChannel(User author, String content) {

@@ -102,7 +102,7 @@ class CourseRequestServiceTest {
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
@@ -137,7 +137,7 @@ class CourseRequestServiceTest {
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         // Simulate merge() behavior: return a new entity where the requester association is null
@@ -200,7 +200,7 @@ class CourseRequestServiceTest {
     @Test
     void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
         User requester = createRequester();
-        when(userRepository.getUserWithCourseRolesAndAuthorities()).thenReturn(requester);
+        when(userRepository.getUserWithAuthorities()).thenReturn(requester);
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
