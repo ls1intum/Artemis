@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,7 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AnswerOptionCreateDTO(@NotBlank @Size(max = 255) String text, @Size(max = 255) String hint, @Size(max = 500) String explanation, @NotNull Boolean isCorrect) {
+public record AnswerOptionCreateDTO(@NotBlank @Size(max = MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH) String text, @Size(max = MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH) String hint,
+        @Size(max = MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH) String explanation, @NotNull Boolean isCorrect) {
 
     /**
      * Creates an {@link AnswerOptionCreateDTO} from the given {@link AnswerOption} domain object.

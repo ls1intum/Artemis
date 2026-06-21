@@ -138,6 +138,12 @@ public final class Constants {
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
+    public static final int MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH = 255;
+
+    public static final int MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH = 255;
+
+    public static final int MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH = 500;
+
     /**
      * Maximum length in the database for the feedback detail text.
      */

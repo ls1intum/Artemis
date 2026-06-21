@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -46,7 +47,7 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
             return;
         }
         for (AnswerCounter counter : answerCounters) {
-            if (java.util.Objects.equals(answer.getId(), counter.getAnswerOptionId())) {
+            if (Objects.equals(answer.getId(), counter.getAnswerOptionId())) {
                 return;
             }
         }

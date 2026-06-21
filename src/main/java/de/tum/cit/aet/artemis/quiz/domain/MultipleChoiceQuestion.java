@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -352,7 +356,8 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         if (input == null || input.text() == null || input.text().isBlank()) {
             throw new IllegalArgumentException("Answer option text must not be blank");
         }
-        if (input.text().length() > 255 || input.hint() != null && input.hint().length() > 255 || input.explanation() != null && input.explanation().length() > 500) {
+        if (input.text().length() > MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH || input.hint() != null && input.hint().length() > MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH
+                || input.explanation() != null && input.explanation().length() > MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH) {
             throw new IllegalArgumentException("Answer option text, hint, or explanation exceeds its maximum length");
         }
         if (input.isCorrect() == null || input.invalid() == null) {
