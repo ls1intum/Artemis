@@ -25,25 +25,13 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("SELECT ucr FROM UserCourseRole ucr JOIN FETCH ucr.user WHERE ucr.course.id = :courseId AND ucr.role = :role")
     List<UserCourseRole> findByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
 
-    @Query("""
-                SELECT CASE WHEN COUNT(ucr) > 0 THEN TRUE ELSE FALSE END
-                FROM UserCourseRole ucr
-                WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role
-            """)
+    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 
-    @Query("""
-                SELECT CASE WHEN COUNT(ucr) > 0 THEN TRUE ELSE FALSE END
-                FROM UserCourseRole ucr
-                WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN :roles
-            """)
+    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN :roles)")
     boolean existsByUser_IdAndCourse_IdAndRoleIn(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
 
-    @Query("""
-                SELECT CASE WHEN COUNT(ucr) > 0 THEN TRUE ELSE FALSE END
-                FROM UserCourseRole ucr
-                WHERE ucr.user.id = :userId AND ucr.role IN :roles
-            """)
+    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.role IN :roles)")
     boolean existsByUser_IdAndRoleIn(@Param("userId") Long userId, @Param("roles") Collection<CourseRole> roles);
 
     @Transactional
