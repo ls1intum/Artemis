@@ -43,6 +43,17 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Starts a practice attempt for an ended quiz via the dedicated "Start practice" action button in the exercise
+     * header. Works for both the first attempt and subsequent attempts (the button reappears after each submit).
+     * @param exerciseId The id of the quiz exercise to practice.
+     */
+    async startQuizPractice(exerciseId: number) {
+        const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
+        await button.waitFor({ state: 'visible', timeout: 30_000 });
+        await button.click();
+    }
+
+    /**
      * Retrieves the Locator for an exercise card by its ID.
      * @param exerciseName title of the exercise.
      * @returns The Locator for the exercise card.
