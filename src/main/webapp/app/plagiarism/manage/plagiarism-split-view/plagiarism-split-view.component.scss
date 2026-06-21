@@ -34,7 +34,7 @@
     overflow: auto;
 }
 
-// The lock-files control sits visually between the two panes, on top of the gutter.
+/* The lock-files control sits visually between the two panes, on top of the gutter. */
 .split-pane-header-color {
     position: absolute;
     top: 0;
@@ -44,7 +44,7 @@
     background-color: var(--bs-body-bg);
 }
 
-// ::ng-deep is required to style PrimeNG Splitter internals (no public API for these overrides).
+/* ::ng-deep is required to style PrimeNG Splitter internals (no public API for these overrides). */
 :host ::ng-deep .plagiarism-splitter {
     .p-splitterpanel {
         display: flex;
@@ -53,7 +53,7 @@
         overflow: hidden;
     }
 
-    // Thin draggable divider, consistent with the app surface colors.
+    /* Thin draggable divider, consistent with the app surface colors. */
     .p-splitter-gutter {
         background: var(--bs-border-color);
 
@@ -66,16 +66,18 @@
         background: transparent;
     }
 
-    // "Show only left/right" fully collapses the other pane and hides the gutter. Implemented as a class
-    // (not via panelSizes) because p-splitter coerces a 0 size to an even 50% split, so a pane can never be
-    // hidden through panelSizes alone. The panels already set overflow:hidden / min-width:0 above.
+    /* "Show only left/right" fully collapses the other pane and hides the gutter. Implemented as a class
+       (not via panelSizes) because p-splitter coerces a 0 size to an even 50% split, so a pane can never be
+       hidden through panelSizes alone. The panels already set overflow:hidden / min-width:0 above. */
     &.collapsed-right {
         .p-splitterpanel:first-child {
             flex: 1 1 100% !important;
         }
+
         .p-splitterpanel:last-child {
             flex: 0 0 0 !important;
         }
+
         .p-splitter-gutter {
             display: none !important;
         }
@@ -85,9 +87,11 @@
         .p-splitterpanel:first-child {
             flex: 0 0 0 !important;
         }
+
         .p-splitterpanel:last-child {
             flex: 1 1 100% !important;
         }
+
         .p-splitter-gutter {
             display: none !important;
         }
