@@ -1,7 +1,7 @@
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -27,18 +27,17 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingExerciseConfigureGradingStatusComponent } from '../configure-status/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from '../configure-actions/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from '../configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from '../tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from '../charts/test-case-distribution-chart.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from '../table-actions/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule, SortPropDir } from '@siemens/ngx-datatable';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Describes the editableField
@@ -93,15 +92,13 @@ export type Table = 'testCases' | 'codeAnalysis';
         ProgrammingExerciseGradingTasksTableComponent,
         TestCaseDistributionChartComponent,
         ProgrammingExerciseGradingTableActionsComponent,
-        NgxDatatableModule,
         FaIconComponent,
-        NgbTooltip,
         FormsModule,
         TableEditableFieldComponent,
         CategoryIssuesChartComponent,
         ScaCategoryDistributionChartComponent,
         FeedbackAnalysisComponent,
-        ArtemisTranslatePipe,
+        TableViewComponent,
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -186,8 +183,62 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly hadPolicyBefore = signal<boolean>(undefined!);
 
     // Icons
-    faQuestionCircle = faQuestionCircle;
     faSquare = faSquare;
+
+    readonly categoryTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('categoryTemplate');
+    readonly stateTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('stateTemplate');
+    readonly penaltyTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('penaltyTemplate');
+    readonly maxPenaltyTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('maxPenaltyTemplate');
+    readonly detectedIssuesTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('detectedIssuesTemplate');
+
+    readonly codeAnalysisTableOptions: TableViewOptions = {
+        lazy: false,
+        pageSize: 20,
+        showSearch: false,
+        hidePageSizeOptions: true,
+        striped: true,
+        initialSortField: 'name',
+        initialSortOrder: 1,
+    };
+
+    readonly codeAnalysisColumns = computed<ColumnDef<StaticCodeAnalysisCategory>[]>(() => [
+        { field: 'name', header: 'Category', sort: true, templateRef: this.categoryTemplate() },
+        {
+            field: 'state',
+            header: 'State',
+            sort: true,
+            width: '130px',
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.state',
+            templateRef: this.stateTemplate(),
+            sortComparator: this.compareCategoryState,
+        },
+        {
+            field: 'penalty',
+            header: 'Penalty',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.penalty',
+            templateRef: this.penaltyTemplate(),
+            sortComparator: this.comparePenalty,
+        },
+        {
+            field: 'maxPenalty',
+            header: 'Max Penalty',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.maxPenalty',
+            templateRef: this.maxPenaltyTemplate(),
+            sortComparator: this.compareMaxPenalty,
+        },
+        {
+            // Virtual field — does not exist on StaticCodeAnalysisCategory; used only as the sort-dispatch
+            // key so PrimeNG knows which comparator to call. The cell template uses cell.data, not cell.value.
+            field: 'detectedIssues',
+            header: 'Detected Issues',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.detectedIssues',
+            templateRef: this.detectedIssuesTemplate(),
+            sortComparator: this.compareDetectedIssues,
+        },
+    ]);
 
     /**
      * Returns the value of testcases
@@ -659,62 +710,46 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return categoryIssuesMap ? categoryIssuesMap[categoryName] : undefined;
     }
 
-    tableSorts: Record<string, SortPropDir[]> = {
-        testCases: [{ prop: 'testName', dir: 'asc' }],
-        codeAnalysis: [{ prop: 'name', dir: 'asc' }],
-    };
-    onSort(table: Table, config: any) {
-        this.tableSorts[table] = config.sorts;
-    }
+    // ─── SCA category sort comparators ───────────────────────────────────────────
+    // Arrow functions so `this` is captured correctly when the references are
+    // passed to ColumnDef.sortComparator.
+
+    /** Maps a category state to a numeric rank: Inactive(0) < Feedback(1) < Graded(2). */
+    private readonly valForState = (s: StaticCodeAnalysisCategoryState): number =>
+        s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2;
+
+    /** Sorts by semantic state order instead of alphabetical string value. */
+    private readonly compareCategoryState = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number =>
+        this.valForState(rowA.state) - this.valForState(rowB.state);
 
     /**
-     * Returns the correct sort-icon for the specified property
-     * @param table The table of the property
-     * @param prop The sorted property
+     * Sorts by state first; within Graded rows, sorts by penalty value.
+     * Non-Graded rows show "N/A" text so their penalty number is meaningless for ordering.
      */
-    iconForSortPropField(table: Table, prop: string) {
-        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
-        if (!propSort) {
-            return faSort;
-        }
-        return propSort.dir === 'asc' ? faSortUp : faSortDown;
-    }
-
-    valForState = (s: StaticCodeAnalysisCategoryState) => (s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
-
-    /**
-     * Comparator function for the state of a sca category.
-     */
-    compareCategoryState = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        return this.valForState(rowA.state) - this.valForState(rowB.state);
+    private readonly comparePenalty = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const val = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
+        return val(rowA) - val(rowB);
     };
 
     /**
-     * Comparator function for the penalty of a sca category.
+     * Sorts by state first; within Graded rows, sorts by maxPenalty value.
      */
-    comparePenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
-        return valForPenalty(rowA) - valForPenalty(rowB);
+    private readonly compareMaxPenalty = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const val = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
+        return val(rowA) - val(rowB);
     };
 
     /**
-     * Comparator function for the max-penalty of a sca category.
+     * Sorts by total detected issue count (sum of all issue-count buckets in the issuesMap).
+     * Uses category state as a tiebreaker.
      */
-    compareMaxPenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
-        return valForMaxPenalty(rowA) - valForMaxPenalty(rowB);
+    private readonly compareDetectedIssues = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const totalIssues = (row: StaticCodeAnalysisCategory) => Object.values(this.getIssuesMap(row.name) ?? {}).reduce((sum, n) => sum + n, 0);
+        const diff = totalIssues(rowA) - totalIssues(rowB);
+        return diff !== 0 ? diff : this.compareCategoryState(rowA, rowB);
     };
 
-    /**
-     * Comparator function for the detected issues of a sca category.
-     */
-    compareDetectedIssues = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const issuesA = this.getIssuesMap(rowA.name);
-        const issuesB = this.getIssuesMap(rowB.name);
-        const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
-        const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
-        return totalIssuesA !== totalIssuesB ? totalIssuesA - totalIssuesB : this.compareCategoryState(_, __, rowA, rowB);
-    };
+    // ─────────────────────────────────────────────────────────────────────────────
 
     /**
      * Load the static code analysis categories
