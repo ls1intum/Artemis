@@ -14,7 +14,7 @@ import { CourseDiscussionDirective } from 'app/communication/directive/course-di
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
