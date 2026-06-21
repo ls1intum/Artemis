@@ -8,7 +8,22 @@ import { provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { faCheckDouble, faFile, faFilePdf, faFileVideo, faHashtag, faKeyboard, faQuestion, faVideo } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCalendarCheck,
+    faCheckDouble,
+    faFile,
+    faFilePdf,
+    faFileUpload,
+    faFileVideo,
+    faFont,
+    faHashtag,
+    faKeyboard,
+    faProjectDiagram,
+    faQuestion,
+    faQuestionCircle,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
@@ -429,6 +444,94 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         it('should return faHashtag for channel', () => {
             expect(component['iconFor'](src('channel'))).toBe(faHashtag);
+        });
+
+        it('should return faQuestionCircle for faq', () => {
+            expect(component['iconFor'](src('faq'))).toBe(faQuestionCircle);
+        });
+
+        it('should return faCalendarCheck for exam', () => {
+            expect(component['iconFor'](src('exam'))).toBe(faCalendarCheck);
+        });
+
+        it('should return faBook for lecture', () => {
+            expect(component['iconFor'](src('lecture'))).toBe(faBook);
+        });
+
+        it('should return faProjectDiagram for modeling exercise', () => {
+            expect(component['iconFor'](src('exercise', 'modeling'))).toBe(faProjectDiagram);
+        });
+
+        it('should return faFont for text exercise', () => {
+            expect(component['iconFor'](src('exercise', 'text'))).toBe(faFont);
+        });
+
+        it('should return faFileUpload for file-upload exercise', () => {
+            expect(component['iconFor'](src('exercise', 'file-upload'))).toBe(faFileUpload);
+        });
+    });
+
+    describe('linkFor()', () => {
+        const src = (sourceType: string, overrides: Partial<GlobalSearchSource> = {}): GlobalSearchSource => ({
+            sourceType,
+            entityId: 42,
+            course: { id: 10, name: 'C' },
+            title: 'T',
+            ...overrides,
+        });
+
+        it('should return lectureUnit link when lectureUnit is present', () => {
+            const source = src('lecture_unit_slide', {
+                lectureUnit: { id: 1, name: 'U', link: '/lecture-unit/1', pageNumber: 1, sourceType: 'lecture_unit_slide', queryParams: {} },
+            });
+            expect(component['linkFor'](source)).toEqual(['/lecture-unit/1']);
+        });
+
+        it('should return exercise link', () => {
+            expect(component['linkFor'](src('exercise'))).toEqual(['/courses', '10', 'exercises', '42']);
+        });
+
+        it('should return faq link', () => {
+            expect(component['linkFor'](src('faq'))).toEqual(['/courses', '10', 'faq']);
+        });
+
+        it('should return exam link', () => {
+            expect(component['linkFor'](src('exam'))).toEqual(['/courses', '10', 'exams', '42']);
+        });
+
+        it('should return channel link', () => {
+            expect(component['linkFor'](src('channel'))).toEqual(['/courses', '10', 'communication']);
+        });
+
+        it('should return course link for unknown source type', () => {
+            expect(component['linkFor'](src('unknown'))).toEqual(['/courses', '10']);
+        });
+    });
+
+    describe('queryParamsFor()', () => {
+        const src = (sourceType: string, overrides: Partial<GlobalSearchSource> = {}): GlobalSearchSource => ({
+            sourceType,
+            entityId: 5,
+            course: { id: 10, name: 'C' },
+            title: 'T',
+            ...overrides,
+        });
+
+        it('should return lectureUnit queryParams when lectureUnit is present', () => {
+            const qp = { unit: 1, page: 2 };
+            const source = src('lecture_unit_slide', {
+                lectureUnit: { id: 1, name: 'U', link: '/u/1', pageNumber: 1, sourceType: 'lecture_unit_slide', queryParams: qp },
+            });
+            expect(component['queryParamsFor'](source)).toEqual(qp);
+        });
+
+        it('should return conversationId for channel', () => {
+            expect(component['queryParamsFor'](src('channel'))).toEqual({ conversationId: '5' });
+        });
+
+        it('should return empty object for other source types', () => {
+            expect(component['queryParamsFor'](src('exercise'))).toEqual({});
+            expect(component['queryParamsFor'](src('faq'))).toEqual({});
         });
     });
 });
