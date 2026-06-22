@@ -25,7 +25,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -712,10 +711,60 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('Fullscreen behavior', () => {
-        it('disables video-slide synchronization when slide page numbers are duplicated', () => {
+        it('navigates to the first PDF page when a display page number appears multiple times', () => {
+            // Display number 8 occurs on PDF pages 2 and 3; the first occurrence (page 2) is used as the sync target.
             component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 8];
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
-            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 }]);
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 8', slideNumber: 8 }]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(2);
+        });
+
+        it('keeps synchronization available when a single slide has no detected display page number (-1)', () => {
+            // Slide 2 (index 1) was not detected → -1. It has no sync partner and is skipped,
+            // but still occupies PDF page 2, so slide with display number 9 stays on PDF page 3.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, -1, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](9);
+
+            expect(goToPage).toHaveBeenCalledWith(3);
+        });
+
+        it('keeps synchronization available when multiple slides have no detected display page number (-1)', () => {
+            // Two undetected slides no longer disable sync; they are simply skipped as having no partner.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, -1, -1, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+        });
+
+        it('disables synchronization when no slide has a detected display page number (all -1)', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [-1, -1];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 1', slideNumber: 1 }]);
 
             expect(component.synchronizationAvailable()).toBe(false);
         });
@@ -786,28 +835,6 @@ describe('AttachmentVideoUnitComponent', () => {
             component['onPdfCurrentPageChange'](2);
 
             expect(seekTo).toHaveBeenCalledWith(9, false);
-        });
-
-        it('maps PDF pages correctly when a hidden slide is removed from the student PDF', () => {
-            // Slide 2 is hidden → student PDF has 2 pages: slide 1 (PDF p.1) and slide 3 (PDF p.2)
-            component.lectureUnit().slides = [{ id: 1, slideNumber: 1 } as Slide, { id: 2, slideNumber: 2, hidden: new Date() } as Slide, { id: 3, slideNumber: 3 } as Slide];
-            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
-            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
-            component.transcriptSegments.set([
-                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
-                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
-            ]);
-
-            expect(component.synchronizationAvailable()).toBe(true);
-
-            const goToPage = vi.fn();
-            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
-
-            component['onSynchronizationToggleChange'](true);
-            // Video shows slide with display number 9 (= original slide 3 → PDF page 2, not 3)
-            component['onVideoSlideNumberChange'](9);
-
-            expect(goToPage).toHaveBeenCalledWith(2);
         });
 
         it('openFullscreen: returns immediately when no fullscreen content is available', () => {

@@ -39,11 +39,13 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -65,6 +67,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private SlideRepository slideRepository;
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
@@ -381,6 +386,31 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentWithHiddenSlides_shouldDropHiddenSlideDisplayPageNumbers() throws Exception {
+        Lecture lecture = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
+        lecture = lectureRepository.save(lecture);
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlides(lecture, 4);
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit));
+
+        // Full-deck display page numbers, indexed by slide number (index 0 = slide 1).
+        unit.getAttachment().setDisplayPageNumbers(List.of(10, 5, 12, 7));
+        attachmentRepository.save(unit.getAttachment());
+
+        // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(unit.getId(), 2);
+        hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(hiddenSlide);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream().filter(LectureDetailsDTO.AttachmentUnitDTO.class::isInstance)
+                .map(LectureDetailsDTO.AttachmentUnitDTO.class::cast).filter(candidate -> candidate.id().equals(unit.getId())).findFirst().orElseThrow();
+        // The entry for the hidden slide (display page 5) is removed and the rest compacted to stay aligned with the student PDF.
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(10, 12, 7);
     }
 
     @Test

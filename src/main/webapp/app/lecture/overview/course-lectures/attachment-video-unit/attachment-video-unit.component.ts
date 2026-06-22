@@ -63,6 +63,9 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
 
+/** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
+const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
+
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
@@ -623,58 +626,36 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
         }
 
-        const distinctDisplayedPageNumbers = new Set<number>();
-
-        // Use visible slides to determine PDF page order when slide metadata is available.
-        // Hidden slides are removed from the student PDF, so pdfIndex+1 must be computed
-        // from the visible-slides list, not from the raw displayPageNumbers array index.
-        const visibleSlides = (this.lectureUnit().slides ?? []).filter((s) => s.slideNumber !== undefined && !s.hidden).sort((a, b) => a.slideNumber! - b.slideNumber!);
-
-        if (visibleSlides.length > 0) {
-            for (const [pdfIndex, slide] of visibleSlides.entries()) {
-                const displayedPageNumber = displayedPageNumbers[slide.slideNumber! - 1];
-                if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
-                    return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
-                }
-                distinctDisplayedPageNumbers.add(displayedPageNumber);
-                displayedPageNumberToPdfPage.set(displayedPageNumber, pdfIndex + 1);
-                pdfPageToDisplayedPageNumber.set(pdfIndex + 1, displayedPageNumber);
-            }
-        } else {
-            // Fallback: no slide metadata available, assume all slides are visible
-            for (const [index, displayedPageNumber] of displayedPageNumbers.entries()) {
-                if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
-                    return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
-                }
-                distinctDisplayedPageNumbers.add(displayedPageNumber);
-                displayedPageNumberToPdfPage.set(displayedPageNumber, index + 1);
-                pdfPageToDisplayedPageNumber.set(index + 1, displayedPageNumber);
-            }
-        }
-
-        let hasTranscriptSlideNumber = false;
-        for (const segment of transcriptSegments) {
-            const slideNumber = segment.slideNumber;
-            if (slideNumber === undefined) {
+        // displayPageNumbers is indexed in PDF page order: index 0 = PDF page 1, index 1 = PDF page 2, ...
+        for (const [pdfIndex, displayedPageNumber] of displayedPageNumbers.entries()) {
+            // A page with no detected display number (sentinel -1) has no sync partner. It still
+            // occupies a PDF page, so the index keeps counting; we just skip the mapping.
+            if (displayedPageNumber === UNDETECTED_DISPLAY_PAGE_NUMBER) {
                 continue;
             }
+            const pdfPage = pdfIndex + 1;
+            // A display page number may appear on several PDF pages; keep the first occurrence as the sync target.
+            if (!displayedPageNumberToPdfPage.has(displayedPageNumber)) {
+                displayedPageNumberToPdfPage.set(displayedPageNumber, pdfPage);
+            }
+            pdfPageToDisplayedPageNumber.set(pdfPage, displayedPageNumber);
+        }
 
-            hasTranscriptSlideNumber = true;
-
-            // Only include pages with PDF correspondence in timestamp map
-            // Pages without correspondence are simply skipped
-            if (displayedPageNumberToPdfPage.has(slideNumber)) {
-                if (!displayedPageNumberToVideoTimestamp.has(slideNumber)) {
-                    displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
-                }
+        // Map each displayed page that exists in the PDF to the first transcript timestamp that mentions it.
+        for (const segment of transcriptSegments) {
+            const slideNumber = segment.slideNumber;
+            if (slideNumber !== undefined && displayedPageNumberToPdfPage.has(slideNumber) && !displayedPageNumberToVideoTimestamp.has(slideNumber)) {
+                displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
             }
         }
 
-        if (!hasTranscriptSlideNumber || displayedPageNumberToVideoTimestamp.size === 0) {
-            return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
-        }
-
-        return { available: true, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+        // Synchronization needs at least one page that exists in both the PDF and the video transcript.
+        return {
+            available: displayedPageNumberToVideoTimestamp.size > 0,
+            displayedPageNumberToPdfPage,
+            pdfPageToDisplayedPageNumber,
+            displayedPageNumberToVideoTimestamp,
+        };
     }
 
     /**
