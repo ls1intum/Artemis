@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { combineLatest, filter, of } from 'rxjs';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -72,6 +72,14 @@ export class CourseExamsComponent {
     readonly examSelected = signal(true);
     readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
+    readonly testStudentExamsLoaded = signal(false);
+    // Simulation test exams need their attempt list before the participation component decides whether to request another attempt.
+    readonly canRenderSelectedExam = computed(() => {
+        const selectedExamId = Number(this.route.firstChild?.snapshot.params['examId']);
+        const selectedExam = this.course()?.exams?.find((exam) => exam.id === selectedExamId);
+        return selectedExam?.examType !== ExamType.TEST_WITH_SIMULATION || this.testStudentExamsLoaded();
+    });
+
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
@@ -83,11 +91,15 @@ export class CourseExamsComponent {
         this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
             .pipe(takeUntilDestroyed())
-            .subscribe((loadedStudentExams) => {
-                this.studentExamsOfTestExams.update((currentStudentExams) => [
-                    ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
-                    ...currentStudentExams,
-                ]);
+            .subscribe({
+                next: (loadedStudentExams) => {
+                    this.studentExamsOfTestExams.update((currentStudentExams) => [
+                        ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
+                        ...currentStudentExams,
+                    ]);
+                    this.testStudentExamsLoaded.set(true);
+                },
+                error: () => this.testStudentExamsLoaded.set(true),
             });
 
         // watch for new student exams
