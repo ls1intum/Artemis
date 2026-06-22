@@ -11,6 +11,8 @@ class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 5;
+        // Non-DTO-named types living in dto packages (enums such as PyrisStageState, IngestionState and
+        // the Course Memory source enum PyrisCourseMemorySource).
+        return 6;
     }
 }
