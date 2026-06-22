@@ -56,7 +56,7 @@
                             @if (badge(); as badge) {
                                 <p-tag
                                     id="result-score-badge"
-                                    [severity]="badgeSeverity(badge.class)"
+                                    [severity]="badge.severity"
                                     [value]="badge.text | artemisTranslate | uppercase"
                                     [pTooltip]="badge.tooltip | artemisTranslate"
                                 />

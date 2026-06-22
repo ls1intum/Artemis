@@ -203,23 +203,13 @@ export class ResultHistoryDropdownComponent {
     getBadge(result: Result): Badge {
         const participation = result.submission?.participation ?? this.studentParticipation();
         if (!participation) {
-            return { class: 'bg-secondary', text: '', tooltip: '' };
+            return { severity: 'secondary', text: '', tooltip: '' };
         }
         return ResultService.evaluateBadge(participation, result);
     }
 
-    getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {
-        const badge = this.getBadge(result);
-        switch (badge.class) {
-            case 'bg-success':
-                return 'success';
-            case 'bg-info':
-                return 'info';
-            case 'bg-secondary':
-                return 'secondary';
-            default:
-                return undefined;
-        }
+    getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' {
+        return this.getBadge(result).severity;
     }
 
     isRowClickable(): boolean {

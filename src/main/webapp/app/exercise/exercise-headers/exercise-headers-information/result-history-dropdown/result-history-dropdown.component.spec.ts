@@ -227,33 +227,11 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('getBadgeSeverity', () => {
-        it('should return success for bg-success class', () => {
-            const result = createResult(1, 100);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-success', text: 'graded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('success');
+        it('returns the severity of the evaluated badge', () => {
+            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ severity: 'success', text: 'graded', tooltip: '' });
+            expect(component.getBadgeSeverity(createResult(1, 100))).toBe('success');
         });
 
-        it('should return info for bg-info class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-info', text: 'practice', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('info');
-        });
-
-        it('should return secondary for bg-secondary class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-secondary', text: 'ungraded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('secondary');
-        });
-
-        it('should return undefined for unknown badge class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-warning', text: 'other', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBeUndefined();
-        });
     });
 
     describe('isRowClickable', () => {

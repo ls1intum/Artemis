@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
 import { TooltipModule } from 'primeng/tooltip';
-import { Tag, TagModule } from 'primeng/tag';
+import { TagModule } from 'primeng/tag';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -93,19 +93,6 @@ export class ResultComponent {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-    // Maps the Bootstrap-style class on the Badge (from ResultService.evaluateBadge, which emits only
-    // bg-secondary/bg-success/bg-info) to the PrimeNG p-tag severity; anything else falls back to 'secondary'.
-    readonly badgeSeverity = computed<Tag['severity']>(() => {
-        switch (this.badge()?.class) {
-            case 'bg-success':
-                return 'success';
-            case 'bg-info':
-                return 'info';
-            default:
-                return 'secondary';
-        }
-    });
-
     // True when the passed result is actually displayable as a score (rated, or ungraded allowed, or an Athena AI result).
     private readonly displayableResult = computed(() => {
         const result = this.result();

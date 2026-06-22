@@ -418,21 +418,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
     }
 
-    /**
-     * Maps the Bootstrap-style class from {@link ResultService.evaluateBadge} (which emits only
-     * bg-secondary/bg-success/bg-info) to the PrimeNG `p-tag` severity; anything else falls back to 'secondary'.
-     */
-    badgeSeverity(badgeClass: string): 'success' | 'info' | 'secondary' {
-        switch (badgeClass) {
-            case 'bg-success':
-                return 'success';
-            case 'bg-info':
-                return 'info';
-            default:
-                return 'secondary';
-        }
-    }
-
     private expandFeedbackItemGroups() {
         this.feedbackItemNodes()?.forEach((feedbackNode) => {
             if (isFeedbackGroup(feedbackNode)) {
