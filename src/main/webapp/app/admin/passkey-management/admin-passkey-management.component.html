@@ -1,67 +1,33 @@
-<div>
-    <h5 *adminTitleBarTitle id="passkey-management-page-heading" class="mb-0" jhiTranslate="artemisApp.adminPasskeyManagement.title"></h5>
+<div class="container-fluid">
+    <h2 jhiTranslate="artemisApp.adminPasskeyManagement.title"></h2>
 
-    @if (isLoading()) {
-        <div class="flex justify-center" data-testid="passkey-loading">
-            <p-progressSpinner [style]="{ width: '50px', height: '50px' }" [attr.aria-label]="'loading' | artemisTranslate" />
+    <jhi-table-view [cols]="columns()" [vals]="passkeys()" [loading]="isLoading()" [options]="tableOptions" />
+
+    <ng-template #userNameCellTemplate let-cell>{{ cell.value || '-' }}</ng-template>
+
+    <ng-template #labelCellTemplate let-cell>{{ cell.value || '-' }}</ng-template>
+
+    <ng-template #createdCellTemplate let-cell>{{ cell.value | artemisDate }}</ng-template>
+
+    <ng-template #lastUsedCellTemplate let-cell>{{ cell.value ? (cell.value | artemisDate) : '-' }}</ng-template>
+
+    <ng-template #approvedCellTemplate let-cell>
+        <div class="form-check form-switch">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'approval-' + cell.data.credentialId"
+                [checked]="cell.data.isSuperAdminApproved"
+                (change)="onApprovalToggle(cell.data)"
+                [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
+            />
+            <label class="form-check-label" [for]="'approval-' + cell.data.credentialId">
+                @if (cell.data.isSuperAdminApproved) {
+                    <span jhiTranslate="artemisApp.adminPasskeyManagement.yes"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.adminPasskeyManagement.no"></span>
+                }
+            </label>
         </div>
-    } @else if (passkeys().length === 0) {
-        <p-message severity="info" [text]="'artemisApp.adminPasskeyManagement.noPasskeys' | artemisTranslate" styleClass="w-full" data-testid="passkey-empty-state" />
-    } @else {
-        <p-table [value]="passkeys()" [paginator]="true" [rows]="20" size="small" data-testid="passkey-table">
-            <ng-template #header>
-                <tr class="whitespace-nowrap">
-                    <th scope="col" pSortableColumn="userLogin">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.userLogin"></span>
-                        <p-sortIcon field="userLogin" />
-                    </th>
-                    <th scope="col" pSortableColumn="userName">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.userName"></span>
-                        <p-sortIcon field="userName" />
-                    </th>
-                    <th scope="col" pSortableColumn="label">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.label"></span>
-                        <p-sortIcon field="label" />
-                    </th>
-                    <th scope="col" pSortableColumn="created">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.created"></span>
-                        <p-sortIcon field="created" />
-                    </th>
-                    <th scope="col" pSortableColumn="lastUsed">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.lastUsed"></span>
-                        <p-sortIcon field="lastUsed" />
-                    </th>
-                    <th scope="col" pSortableColumn="isSuperAdminApproved">
-                        <span jhiTranslate="artemisApp.adminPasskeyManagement.approved"></span>
-                        <p-sortIcon field="isSuperAdminApproved" />
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-passkey>
-                <tr data-testid="passkey-row">
-                    <td data-testid="passkey-user-login">{{ passkey.userLogin }}</td>
-                    <td data-testid="passkey-user-name">{{ passkey.userName || '-' }}</td>
-                    <td data-testid="passkey-label">{{ passkey.label || '-' }}</td>
-                    <td data-testid="passkey-created">{{ passkey.created | artemisDate }}</td>
-                    <td data-testid="passkey-last-used">{{ passkey.lastUsed ? (passkey.lastUsed | artemisDate) : '-' }}</td>
-                    <td>
-                        <div class="flex items-center gap-2">
-                            <p-toggleswitch
-                                [ngModel]="passkey.isSuperAdminApproved"
-                                [inputId]="'approval-' + passkey.credentialId"
-                                (onChange)="onApprovalToggle(passkey)"
-                                [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
-                                data-testid="passkey-approval-toggle"
-                            />
-                            @if (passkey.isSuperAdminApproved) {
-                                <span jhiTranslate="artemisApp.adminPasskeyManagement.yes"></span>
-                            } @else {
-                                <span jhiTranslate="artemisApp.adminPasskeyManagement.no"></span>
-                            }
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
-    }
+    </ng-template>
 </div>

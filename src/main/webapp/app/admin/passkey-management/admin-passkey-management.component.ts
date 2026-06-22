@@ -1,33 +1,17 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { TableModule } from 'primeng/table';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { MessageModule } from 'primeng/message';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 
 @Component({
     selector: 'jhi-admin-passkey-management',
     templateUrl: './admin-passkey-management.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        TableModule,
-        ToggleSwitchModule,
-        MessageModule,
-        ProgressSpinnerModule,
-        FormsModule,
-        ArtemisDatePipe,
-        ArtemisTranslatePipe,
-        TranslateDirective,
-        AdminTitleBarTitleDirective,
-    ],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, TableViewComponent],
 })
 export class AdminPasskeyManagementComponent implements OnInit {
     private readonly adminPasskeyService = inject(AdminPasskeyManagementService);
@@ -35,6 +19,29 @@ export class AdminPasskeyManagementComponent implements OnInit {
 
     passkeys = signal<AdminPasskeyDTO[]>([]);
     isLoading = signal<boolean>(false);
+
+    private readonly userNameCellTemplate = viewChild<CellTemplateRef<AdminPasskeyDTO>>('userNameCellTemplate');
+    private readonly labelCellTemplate = viewChild<CellTemplateRef<AdminPasskeyDTO>>('labelCellTemplate');
+    private readonly createdCellTemplate = viewChild<CellTemplateRef<AdminPasskeyDTO>>('createdCellTemplate');
+    private readonly lastUsedCellTemplate = viewChild<CellTemplateRef<AdminPasskeyDTO>>('lastUsedCellTemplate');
+    private readonly approvedCellTemplate = viewChild<CellTemplateRef<AdminPasskeyDTO>>('approvedCellTemplate');
+
+    readonly tableOptions: TableViewOptions = {
+        lazy: false,
+        showSearch: false,
+        pageSize: 20,
+        hidePageSizeOptions: true,
+        striped: true,
+    };
+
+    readonly columns = computed<ColumnDef<AdminPasskeyDTO>[]>(() => [
+        { field: 'userLogin', headerKey: 'artemisApp.adminPasskeyManagement.userLogin', sort: true },
+        { field: 'userName', headerKey: 'artemisApp.adminPasskeyManagement.userName', sort: true, templateRef: this.userNameCellTemplate() },
+        { field: 'label', headerKey: 'artemisApp.adminPasskeyManagement.label', sort: true, templateRef: this.labelCellTemplate() },
+        { field: 'created', headerKey: 'artemisApp.adminPasskeyManagement.created', sort: true, templateRef: this.createdCellTemplate() },
+        { field: 'lastUsed', headerKey: 'artemisApp.adminPasskeyManagement.lastUsed', sort: true, templateRef: this.lastUsedCellTemplate() },
+        { field: 'isSuperAdminApproved', headerKey: 'artemisApp.adminPasskeyManagement.approved', templateRef: this.approvedCellTemplate() },
+    ]);
 
     ngOnInit(): void {
         this.loadPasskeys().then();

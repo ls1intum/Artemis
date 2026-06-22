@@ -1,5 +1,14 @@
 
 buildscript {
+    // Force the patched Handlebars onto the build-script / plugin classpath. The
+    // org.openapi.generator plugin pulls com.github.jknack:handlebars transitively, and
+    // versions < 4.5.2 are vulnerable to CVE-2026-55760 (FileTemplateLoader path traversal).
+    // This is a build-time-only dependency (client code generation), not shipped in the WAR.
+    configurations.classpath {
+        resolutionStrategy {
+            force "com.github.jknack:handlebars:4.5.2"
+        }
+    }
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
@@ -40,7 +49,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.4"
+version = "9.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -83,7 +92,15 @@ modernizer {
     failOnViolations = false
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
-    exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+    exclusions = [
+        "java/util/Optional.get:()Ljava/lang/Object;",
+        // The project deliberately uses Apache Commons FileUtils for file copy/write because java.nio.file.Files.copy /
+        // Files.writeString do not create missing parent directories. This is enforced by ArchitectureTest.testFileWriteUsage,
+        // so exclude the modernizer rules that would otherwise suggest the (forbidden) java.nio.file.Files alternatives.
+        "org/apache/commons/io/FileUtils.copyFile:(Ljava/io/File;Ljava/io/File;)V",
+        "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;)V",
+        "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V",
+    ]
 }
 
 gitProperties {

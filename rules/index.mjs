@@ -5,6 +5,7 @@ import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-ov
 import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
+import noNavigationInEffect from './no-navigation-in-effect.mjs';
 
 export default {
     rules: {
@@ -15,5 +16,6 @@ export default {
         'prefer-signal-template-state': preferSignalTemplateState,
         'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
         'no-bootstrap-classes': noBootstrapClasses,
+        'no-navigation-in-effect': noNavigationInEffect,
     },
 };

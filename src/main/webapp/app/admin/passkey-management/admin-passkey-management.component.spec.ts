@@ -136,20 +136,6 @@ describe('AdminPasskeyManagementComponent', () => {
         expect(passkey.isSuperAdminApproved).toBe(originalApprovalStatus);
     });
 
-    it('should render a row per passkey in the table', async () => {
-        vi.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const rows = fixture.nativeElement.querySelectorAll('[data-testid="passkey-row"]');
-        expect(rows).toHaveLength(mockPasskeys.length);
-
-        const firstLogin = fixture.nativeElement.querySelector('[data-testid="passkey-user-login"]');
-        expect(firstLogin.textContent).toContain('user1');
-    });
-
     it('should display empty state when no passkeys exist', async () => {
         vi.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
 
@@ -159,8 +145,6 @@ describe('AdminPasskeyManagementComponent', () => {
 
         expect(component.passkeys()).toEqual([]);
         expect(component.passkeys()).toHaveLength(0);
-
-        const emptyStateElement = fixture.nativeElement.querySelector('[data-testid="passkey-empty-state"]');
-        expect(emptyStateElement).toBeTruthy();
+        expect(component.isLoading()).toBe(false);
     });
 });

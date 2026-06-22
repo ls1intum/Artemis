@@ -1,7 +1,3 @@
-<!--
--- When using the result component make sure that the reference to the participation input is changed if the result changes
--- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
--->
 <ng-container id="result">
     @switch (templateStatus()) {
         @case (ResultTemplateStatus.IS_QUEUED) {
@@ -80,7 +76,7 @@
                 <span
                     [class]="textColorClass()"
                     class="result leading-tight"
-                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && exercise()?.type !== ExerciseType.QUIZ }"
+                    [ngClass]="{ 'clickable-result': !isInSidebarCard() && resolvedExercise()?.type !== ExerciseType.QUIZ }"
                     id="result-score"
                     (click)="!isInSidebarCard() ? showDetails(currentResult) : ''"
                 >
@@ -94,12 +90,12 @@
                         <span class="leading-tight" [pTooltip]="currentResult.completionDate | artemisDate">({{ currentResult.completionDate | artemisTimeAgo }})</span>
                     }
                 </span>
-                @if (showBadge()) {
+                @if (badge(); as resultBadge) {
                     <p-tag
                         id="result-score-badge"
                         [severity]="badgeSeverity()"
-                        [value]="badge().text | artemisTranslate | uppercase"
-                        [pTooltip]="badge().tooltip | artemisTranslate"
+                        [value]="resultBadge.text | artemisTranslate | uppercase"
+                        [pTooltip]="resultBadge.tooltip | artemisTranslate"
                     />
                 }
             }
@@ -144,7 +140,7 @@
                     }
                 }
                 @if (result(); as missingResult) {
-                    @if (exercise()?.type !== ExerciseType.QUIZ) {
+                    @if (resolvedExercise()?.type !== ExerciseType.QUIZ) {
                         <span
                             [ngClass]="{ 'clickable-result': !isInSidebarCard() }"
                             class="result leading-tight"
