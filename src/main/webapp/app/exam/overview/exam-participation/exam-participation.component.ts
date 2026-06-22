@@ -61,6 +61,7 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
+import { Message } from 'primeng/message';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -86,6 +87,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
+        Message,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

@@ -195,8 +195,8 @@
             }
         </div>
     } @else {
-        <div class="alert alert-danger">
-            <h6 [jhiTranslate]="noStudentExamMessageKey()"></h6>
-        </div>
+        <p-message class="m-3" size="large" severity="warn">
+            <span [jhiTranslate]="noStudentExamMessageKey()"></span>
+        </p-message>
     }
 }
