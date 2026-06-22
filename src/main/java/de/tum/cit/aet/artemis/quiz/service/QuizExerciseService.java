@@ -326,13 +326,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.setText(mcDTO.text());
         originalQuestion.setHint(mcDTO.hint());
         originalQuestion.setExplanation(mcDTO.explanation());
+        Set<Long> requestedOptionIds = mcDTO.answerOptions().stream().map(optionDTO -> optionDTO.id()).collect(Collectors.toSet());
+        Set<Long> invalidIds = originalQuestion.getAnswerOptions().stream().map(AnswerOption::getId).filter(id -> !requestedOptionIds.contains(id)).collect(Collectors.toSet());
         List<AnswerOptionInput> inputs = mcDTO.answerOptions().stream().map(optionDTO -> {
             AnswerOption existingOption = originalQuestion.findAnswerOptionById(optionDTO.id());
             Boolean invalid = existingOption != null && existingOption.isInvalid() ? Boolean.TRUE : optionDTO.invalid();
             return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
         }).toList();
         try {
-            recalculationNecessary = originalQuestion.replaceAnswerOptions(inputs).requiresRecalculation() || recalculationNecessary;
+            recalculationNecessary = originalQuestion.replaceAnswerOptions(inputs, invalidIds).requiresRecalculation() || recalculationNecessary;
         }
         catch (IllegalArgumentException ex) {
             throw new BadRequestException(ex.getMessage());
@@ -1388,7 +1390,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return copy;
     }
 
-    private static void copyBasicFields(QuizQuestion source, QuizQuestion copy) {
+    static void copyBasicFields(QuizQuestion source, QuizQuestion copy) {
         copy.setTitle(source.getTitle());
         copy.setText(source.getText());
         copy.setHint(source.getHint());

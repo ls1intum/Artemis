@@ -94,13 +94,33 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @return semantic changes caused by the replacement
      */
     public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs) {
+        return replaceAnswerOptions(inputs, Set.of());
+    }
+
+    /**
+     * Replaces the complete ordered option list while preserving known IDs and allocating IDs for new options.
+     * Omitted IDs contained in {@code invalidIds} are kept as invalid historical components instead of being removed.
+     *
+     * @param inputs     immutable option inputs in their requested order
+     * @param invalidIds IDs that must remain resolvable for submissions or statistics
+     * @return semantic changes caused by the replacement
+     */
+    public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs, Set<Long> invalidIds) {
         Objects.requireNonNull(inputs);
+        Objects.requireNonNull(invalidIds);
 
         // Index the current JSON components by their stable question-scoped IDs for update/delete detection.
         Map<Long, AnswerOption> existingById = answerOptions.stream().collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+        Set<Long> unknownInvalidIds = new HashSet<>(invalidIds);
+        unknownInvalidIds.removeAll(existingById.keySet());
+        if (!unknownInvalidIds.isEmpty()) {
+            throw new IllegalArgumentException("Unknown answer option ID " + unknownInvalidIds.iterator().next());
+        }
+
         Set<Long> requestedIds = new HashSet<>();
         Set<Long> addedIds = new LinkedHashSet<>();
         Set<Long> updatedIds = new LinkedHashSet<>();
+        Set<Long> invalidatedIds = new LinkedHashSet<>();
         boolean requiresRecalculation = false;
         List<AnswerOption> replacements = new ArrayList<>();
 
@@ -136,11 +156,23 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // Any existing ID that was not requested disappeared from the ordered option list.
         Set<Long> deletedIds = new LinkedHashSet<>(existingById.keySet());
         deletedIds.removeAll(requestedIds);
+        for (Long deletedId : new ArrayList<>(deletedIds)) {
+            if (invalidIds.contains(deletedId)) {
+                AnswerOption tombstone = createTombstone(existingById.get(deletedId));
+                replacements.add(tombstone);
+                invalidatedIds.add(deletedId);
+                deletedIds.remove(deletedId);
+                if (!existingById.get(deletedId).isInvalid()) {
+                    updatedIds.add(deletedId);
+                    requiresRecalculation = true;
+                }
+            }
+        }
         requiresRecalculation |= !deletedIds.isEmpty();
 
         answerOptions = replacements;
         validateAnswerOptions();
-        return new AnswerOptionChangeSet(Set.copyOf(addedIds), Set.copyOf(updatedIds), Set.copyOf(deletedIds), requiresRecalculation);
+        return new AnswerOptionChangeSet(Set.copyOf(addedIds), Set.copyOf(updatedIds), Set.copyOf(deletedIds), Set.copyOf(invalidatedIds), requiresRecalculation);
     }
 
     /**
@@ -341,6 +373,10 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
     private static AnswerOption createAnswerOption(Long id, AnswerOptionInput input) {
         return new AnswerOption(id, input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+    }
+
+    private static AnswerOption createTombstone(AnswerOption existing) {
+        return new AnswerOption(existing.getId(), existing.getText(), existing.getHint(), existing.getExplanation(), existing.isIsCorrect(), true);
     }
 
     private static boolean sameContent(AnswerOption left, AnswerOption right) {

@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,10 +27,37 @@ class MultipleChoiceQuestionTest {
         var changeSet = question.replaceAnswerOptions(List.of(input(secondId, "B", false), input(null, "C", true)));
 
         assertThat(changeSet.deletedIds()).containsExactly(firstId);
+        assertThat(changeSet.invalidIds()).isEmpty();
         assertThat(changeSet.addedIds()).containsExactly(3L);
         assertThat(changeSet.requiresRecalculation()).isTrue();
         assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(secondId, 3L);
         assertThat(question.getNextComponentId()).isEqualTo(4L);
+    }
+
+    @Test
+    void replaceAnswerOptionsTombstonesReferencedDeletedOptions() {
+        MultipleChoiceQuestion question = questionWithTwoOptions();
+
+        Long firstId = question.getAnswerOptions().getFirst().getId();
+        Long secondId = question.getAnswerOptions().getLast().getId();
+        var changeSet = question.replaceAnswerOptions(List.of(input(secondId, "B", false)), Set.of(firstId));
+
+        assertThat(changeSet.deletedIds()).isEmpty();
+        assertThat(changeSet.invalidIds()).containsExactly(firstId);
+        assertThat(changeSet.updatedIds()).containsExactly(firstId);
+        assertThat(changeSet.requiresRecalculation()).isTrue();
+        assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(secondId, firstId);
+        assertThat(question.findAnswerOptionById(firstId).isInvalid()).isTrue();
+        assertThat(question.findAnswerOptionById(firstId).getText()).isEqualTo("A");
+        assertThat(question.getNextComponentId()).isEqualTo(3L);
+    }
+
+    @Test
+    void replaceAnswerOptionsRejectsUnknownTombstoneIds() {
+        MultipleChoiceQuestion question = questionWithTwoOptions();
+
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(input(1L, "A", true)), Set.of(99L))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown answer option ID 99");
     }
 
     @Test

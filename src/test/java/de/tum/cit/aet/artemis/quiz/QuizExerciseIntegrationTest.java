@@ -939,8 +939,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
-        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
-        assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
+        assertRemovedMultipleChoiceOptionIsTombstoned(quizExerciseWithReevaluatedStatistics);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
 
@@ -1037,6 +1036,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), OK);
         quizExerciseWithReevaluatedStatistics = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+
+        assertRemovedMultipleChoiceOptionIsTombstoned(quizExerciseWithReevaluatedStatistics);
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
@@ -2582,6 +2583,20 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 }
             }
         }
+    }
+
+    private static void assertRemovedMultipleChoiceOptionIsTombstoned(QuizExercise quizExercise) {
+        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).hasSize(2);
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).filteredOn(AnswerOption::isInvalid).singleElement().satisfies(tombstone -> {
+            assertThat(tombstone.getText()).isEqualTo("B");
+            assertThat(tombstone.isIsCorrect()).isFalse();
+        });
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).filteredOn(option -> !option.isInvalid()).singleElement().satisfies(activeOption -> {
+            assertThat(activeOption.getText()).isEqualTo("A");
+            assertThat(activeOption.isIsCorrect()).isTrue();
+        });
     }
 
     private void assertQuizPointStatisticsPointCounters(QuizExercise quizExercise, Map<Double, PointCounter> expectedPointCounters) {
