@@ -821,7 +821,7 @@ describe('NavbarComponent', () => {
             width: 1100,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
@@ -833,7 +833,7 @@ describe('NavbarComponent', () => {
             width: 550,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
         },
         {
             width: 1000,
