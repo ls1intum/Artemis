@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
-import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.dto.UpdateGlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
@@ -55,19 +55,20 @@ public class GlobalNotificationSettingResource {
 
     /**
      * {@code PUT /global-notification-settings/{notificationType}} : Update (or create) the
-     * {@link GlobalNotificationSetting} for the given {@code notificationType}.
+     * global notification setting for the given {@code notificationType}.
      *
      * @param notificationType the name of the {@link GlobalNotificationType};
      * @param request          the JSON request body, e.g. {@code {"enabled":true}}
-     * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;
+     * @return {@link ResponseEntity} containing the persisted setting DTO and HTTP 200 on success;
      *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
      */
     @PutMapping("global-notification-settings/{notificationType}")
     @EnforceAtLeastStudent
-    public ResponseEntity<GlobalNotificationSetting> updateSetting(@PathVariable GlobalNotificationType notificationType, @RequestBody UpdateGlobalNotificationSettingDTO request) {
+    public ResponseEntity<GlobalNotificationSettingDTO> updateSetting(@PathVariable GlobalNotificationType notificationType,
+            @RequestBody UpdateGlobalNotificationSettingDTO request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean enabled = request.enabled();
-        return ResponseEntity.ok(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled));
+        return ResponseEntity.ok(GlobalNotificationSettingDTO.from(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled)));
     }
 
     /**
