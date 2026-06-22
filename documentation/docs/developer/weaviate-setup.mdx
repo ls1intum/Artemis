@@ -7,7 +7,7 @@ This guide explains how to set up a local Weaviate instance for development with
 Weaviate is a vector database used by Artemis in two independent ways:
 
 - **Global search (Artemis-native)** — Artemis connects to Weaviate directly to offer keyword and semantic search across entities (lectures, exercises, exams, FAQs, communication channels). This is gated by the `artemis.weaviate.enabled` flag and works without Pyris.
-- **Iris / Pyris (EduTelligence)** — When running Iris, Pyris uses Weaviate to store and retrieve embeddings. Pyris connects with its own configuration; both consumers can share a single Weaviate instance as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
+- **Iris / Pyris (EduTelligence)** — When running Iris, Pyris uses Weaviate to store and retrieve embeddings. Pyris connects with its own configuration; both consumers can share a single Weaviate instance as long as their `collection-prefix` values differ (the runtime default for Artemis is empty, so set a non-empty prefix such as `Artemis_` when sharing an instance).
 
 <Callout variant={CalloutVariant.info}>
 
@@ -437,7 +437,7 @@ For a remote OpenAI-compatible GPU server, use:
 
 The `vectorizer-module` setting determines how vectors (embeddings) are generated:
 
-- **`none` (default)**: Use self-provided vectors. Embeddings are generated externally (e.g., by Pyris), or keyword-only search is used.
+- **`none` (default)**: No server-side vectorization. Artemis global search operates in **BM25 keyword-only mode** — no semantic (vector) search is performed. (Pyris, a separate Weaviate consumer, supplies its own vectors independently; that is unrelated to this Artemis setting.)
 
 - **`text2vec-transformers`**: Automatic embedding generation via the local `embeddinggemma-300m` sidecar (`weaviate-embeddings.yml`).
 

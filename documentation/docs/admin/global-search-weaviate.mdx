@@ -16,7 +16,7 @@ Artemis ships a cross-entity search feature — lectures, exercises, exams, FAQs
 1. **A running Weaviate instance** that Artemis can reach on REST port 8001 and gRPC port 50051.
 2. **An embedding strategy** — how vectors are produced for semantic matching (or an explicit decision to do keyword-only search with no vectors at all).
 
-Both are independent of Iris/Pyris. You can run global search without EduTelligence, and you can share a single Weaviate instance between Artemis and Pyris by using distinct `collection-prefix` values (Artemis defaults to `Artemis_`).
+Both are independent of Iris/Pyris. You can run global search without EduTelligence, and you can share a single Weaviate instance between Artemis and Pyris by using distinct `collection-prefix` values (the runtime default is empty, so set a non-empty prefix such as `Artemis_` when sharing an instance).
 
 ### Choose your embedding strategy
 
@@ -284,7 +284,7 @@ A single Weaviate instance can serve both Artemis and Pyris (EduTelligence) simu
 
 <Callout variant={CalloutVariant.warning}>
 
-  **You must set a non-empty `collection-prefix` on the Artemis side.** The runtime default is an empty string, which means Artemis creates collections with bare names. Pyris uses fixed, unprefixed collection names such as `Lectures`, `Faqs`, and others. Leaving the prefix empty on Artemis causes **silent collection-name collisions** that corrupt both services' data.
+  **You must set a non-empty `collection-prefix` on the Artemis side.** The runtime default is an empty string, which means Artemis creates collections with bare names (e.g. `SearchableEntities`). Pyris uses its own fixed collection names (e.g. `Lectures`, `Faqs`). While Artemis's and Pyris's current collection names do not overlap, leaving the prefix empty is strongly discouraged: it provides no namespace separation and risks collisions as either service adds new collections in the future. Always set a non-empty prefix when sharing a Weaviate instance.
 
 </Callout>
 
@@ -387,10 +387,12 @@ Artemis checks at startup whether the stored collection schema matches the expec
 
 # 2. Drop all Artemis-owned collections via the Weaviate REST API.
 #    Replace <prefix> with your collection-prefix value (e.g., "Artemis_").
-#    Repeat for each collection Artemis creates (e.g., Artemis_Lectures, Artemis_Exercises, etc.).
+#    Artemis's primary collection is <prefix>SearchableEntities; Artemis may also create
+#    schema-version helper collections — check your Weaviate instance for any <prefix>-prefixed
+#    collections and delete each one. Never delete bare Pyris collections (Lectures, Faqs, etc.).
 curl -X DELETE \
      -H "Authorization: Bearer your-weaviate-api-key" \
-     https://your-weaviate-host/v1/schema/<prefix>Lectures
+     https://your-weaviate-host/v1/schema/<prefix>SearchableEntities
 
 # 3. Update artemis.weaviate.* properties in application-prod.yml with the new settings.
 
