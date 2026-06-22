@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GocastService } from './gocast.service';
-import { GocastBinding, GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
+import { GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
 
 describe('GocastService', () => {
     setupTestBed({ zoneless: true });
@@ -82,20 +82,22 @@ describe('GocastService', () => {
     });
 
     it('should get binding status via GET (triggers EP7 verification)', () => {
-        const mockBinding: GocastBinding = {
-            courseId,
-            gocastCourseId: 7,
-            gocastCourseSlug: 'eidi',
-            status: 'ACTIVE',
+        const mockBindingWithApproval: GocastBindingWithApproval = {
+            binding: {
+                courseId,
+                gocastCourseId: 7,
+                gocastCourseSlug: 'eidi',
+                status: 'ACTIVE',
+            },
         };
 
         service.getBinding(courseId).subscribe((binding) => {
-            expect(binding.status).toBe('ACTIVE');
+            expect(binding.binding.status).toBe('ACTIVE');
         });
 
         const req = httpMock.expectOne(`api/videosource/courses/${courseId}/binding`);
         expect(req.request.method).toBe('GET');
-        req.flush(mockBinding);
+        req.flush(mockBindingWithApproval);
     });
 
     it('should delete (revoke) a binding via DELETE', () => {
