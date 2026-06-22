@@ -6,8 +6,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 
@@ -56,6 +58,22 @@ class WeaviateMigrationStartupServiceTest {
 
         assertThatCode(task::run).doesNotThrowAnyException();
         // Reconciliation is skipped when the migration itself fails, but the failure is contained.
+        verify(weaviateService, never()).ensureAllCollectionsExist();
+    }
+
+    @Test
+    void retriesOnFailureUpToTheBoundedAttemptLimit() {
+        // Run each scheduled task synchronously so the retry chain executes within the test.
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(invocation -> {
+            invocation.getArgument(0, Runnable.class).run();
+            return null;
+        });
+        doThrow(new RuntimeException("embedding backend cold")).when(migrationService).runPendingMigrations();
+
+        startupService.scheduleMigrationOnStartup();
+
+        // One initial attempt plus retries, capped at MAX_MIGRATION_ATTEMPTS (5); it then stops instead of retrying forever.
+        verify(migrationService, times(5)).runPendingMigrations();
         verify(weaviateService, never()).ensureAllCollectionsExist();
     }
 

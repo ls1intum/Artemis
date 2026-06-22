@@ -116,8 +116,9 @@ public class WeaviateService {
      * <p>
      * Runs on every Weaviate-enabled node during startup (via {@link #initializeCollections()}) so the indexing
      * and search paths always have their target collections available. It is idempotent and is invoked again by
-     * {@link WeaviateMigrationStartupService} after a schema migration completes, to recreate any collection a
-     * migration dropped in order to apply schema changes.
+     * {@link WeaviateMigrationStartupService} after a migration completes as future-proofing: should a later migration
+     * drop one of the managed {@link WeaviateSchemas#ALL_SCHEMAS} collections, it is recreated here. (The current V0→V1
+     * migration drops only the unmanaged legacy {@code Exercises} collection, so this pass is a no-op for it.)
      */
     public void ensureAllCollectionsExist() {
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {

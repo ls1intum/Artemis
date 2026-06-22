@@ -173,7 +173,14 @@ public class V0ToV1Migration implements WeaviateMigration {
             hasMore = objects.size() == PAGE_SIZE;
         }
 
-        log.info("V0→V1: Data migration complete — migrated: {}, skipped: {}, failed: {}", migrated, skipped, failed);
+        if (skipped > 0) {
+            // Surfaced at WARN so a lossy run is visible: skipped objects had a missing or non-numeric exercise_id and were not migrated.
+            log.warn("V0→V1: Data migration complete — migrated: {}, skipped: {}, failed: {} (skipped objects had a missing or non-numeric exercise_id)", migrated, skipped,
+                    failed);
+        }
+        else {
+            log.info("V0→V1: Data migration complete — migrated: {}, skipped: {}, failed: {}", migrated, skipped, failed);
+        }
 
         if (failed > 0) {
             throw new IOException("V0→V1: Migration failed for " + failed + " exercises. Aborting cleanup to prevent data loss.");

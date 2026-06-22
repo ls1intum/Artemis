@@ -39,10 +39,19 @@ public class WeaviateMigrationStartupService {
     private static final Logger log = LoggerFactory.getLogger(WeaviateMigrationStartupService.class);
 
     /**
-     * Delay before the migration starts, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
+     * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
      * background work begins, not whether it blocks anything.
      */
-    private static final long MIGRATION_STARTUP_DELAY_SECONDS = 30;
+    private static final long INITIAL_DELAY_SECONDS = 30;
+
+    /**
+     * Bounded in-process retry. An attempt can fail if the embedding backend is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
+     * scheduling-node restart) lets the migration self-heal once the backend recovers. Re-running is safe because the migration is idempotent: target UUIDs are deterministic and
+     * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete.
+     */
+    private static final int MAX_MIGRATION_ATTEMPTS = 5;
+
+    private static final long RETRY_DELAY_SECONDS = 120;
 
     private final WeaviateMigrationService migrationService;
 
@@ -68,21 +77,35 @@ public class WeaviateMigrationStartupService {
      */
     @PostConstruct
     public void scheduleMigrationOnStartup() {
-        taskScheduler.schedule(this::runPendingMigrations, Instant.now().plusSeconds(MIGRATION_STARTUP_DELAY_SECONDS));
+        scheduleMigrationAttempt(1, INITIAL_DELAY_SECONDS);
+    }
+
+    private void scheduleMigrationAttempt(int attempt, long delaySeconds) {
+        taskScheduler.schedule(() -> runPendingMigrations(attempt), Instant.now().plusSeconds(delaySeconds));
     }
 
     /**
-     * Runs all pending Weaviate migrations and reconciles collections afterwards. Any failure is logged and swallowed: the migration is best-effort and must never crash the node
-     * or block it. Search may return incomplete results until entities are re-indexed if a migration does not complete.
+     * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding backend being cold or unavailable)
+     * is logged and never propagated, so it can never crash or block the node; the attempt is retried a bounded number of times, and otherwise re-runs on the next scheduling-node
+     * restart. Search may return incomplete results until a migration completes.
      */
-    private void runPendingMigrations() {
+    private void runPendingMigrations(int attempt) {
         try {
             migrationService.runPendingMigrations();
-            // Second pass: recreate any collection a migration dropped in order to apply schema changes.
+            // Future-proofing: if a later migration drops one of the managed collections, recreate it here. The current
+            // V0→V1 migration drops only the unmanaged legacy collection, so this is a no-op for it.
             weaviateService.ensureAllCollectionsExist();
         }
         catch (Exception exception) {
-            log.error("Weaviate migration failed in the background. Search may return incomplete results until entities are re-indexed.", exception);
+            if (attempt < MAX_MIGRATION_ATTEMPTS) {
+                log.warn("Weaviate migration attempt {}/{} failed; retrying in {}s. Search may return incomplete results until it succeeds.", attempt, MAX_MIGRATION_ATTEMPTS,
+                        RETRY_DELAY_SECONDS, exception);
+                scheduleMigrationAttempt(attempt + 1, RETRY_DELAY_SECONDS);
+            }
+            else {
+                log.error("Weaviate migration failed after {} attempts; it will retry on the next scheduling-node restart. Search may return incomplete results until then.",
+                        MAX_MIGRATION_ATTEMPTS, exception);
+            }
         }
     }
 }
