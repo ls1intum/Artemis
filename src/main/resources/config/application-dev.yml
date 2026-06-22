@@ -157,9 +157,10 @@ artemis:
         # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
         # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
         # The following properties are only required when using vectorizer-module: text2vec-openai
-        # open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by the OpenAI-compatible API
-        # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://gpu.aet.cit.tum.de/ for the GPU server
-        # gpu-api-key: yourApiKey                                    # API key for GPU server (use any non-empty value for Ollama)
+        # See docs: admin/global-search-weaviate
+        # open-ai-embedding-model: your-embedding-model              # Embedding model name served by the OpenAI-compatible API
+        # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://your-openai-compatible-endpoint for a remote GPU server
+        # gpu-api-key: yourApiKey                                    # API key for the remote server (use any non-empty value for Ollama)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
