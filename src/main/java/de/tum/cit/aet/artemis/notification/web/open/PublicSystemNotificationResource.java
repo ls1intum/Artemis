@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
-import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 
 /**
@@ -46,8 +46,8 @@ public class PublicSystemNotificationResource {
      */
     @GetMapping("system-notifications/active")
     @EnforceNothing
-    public ResponseEntity<List<SystemNotification>> getActiveAndFutureSystemNotifications() {
+    public ResponseEntity<List<SystemNotificationDTO>> getActiveAndFutureSystemNotifications() {
         log.debug("REST request to get relevant system notifications");
-        return ResponseEntity.ok(systemNotificationService.findAllActiveAndFutureSystemNotifications());
+        return ResponseEntity.ok(systemNotificationService.findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList());
     }
 }
