@@ -77,21 +77,19 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly handoffLink = computed(() => {
         const handoff = this.irisResult()?.handoff;
         if (!handoff) return null;
-        const cid = String(handoff.courseId);
-        switch (handoff.type) {
-            case 'exercise':
-                return ['/courses', cid, 'exercises', String(handoff.exerciseId)];
-            case 'lecture':
-                return ['/courses', cid, 'lectures', String(handoff.lectureId)];
-            case 'course':
-                return ['/courses', cid, 'iris'];
-        }
+        return ['/courses', String(handoff.courseId), 'iris'];
     });
 
     protected readonly handoffQueryParams = computed(() => {
         const handoff = this.irisResult()?.handoff;
         if (!handoff) return {};
-        return { irisQuestion: this.searchQuery() };
+        const params: Record<string, string> = { irisQuestion: this.searchQuery() };
+        if (handoff.type === 'lecture' && handoff.lectureId != null) {
+            params['irisContext'] = `lecture:${handoff.lectureId}`;
+        } else if (handoff.type === 'exercise' && handoff.exerciseId != null) {
+            params['irisContext'] = `exercise:${handoff.exerciseId}`;
+        }
+        return params;
     });
 
     protected readonly handoffLabelKey = computed(() => (this.irisResult()?.handoff ? 'global.search.irisHandoff' : null));

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
@@ -28,10 +27,20 @@ export class CourseIrisComponent {
 
     readonly courseId = computed(() => {
         const value = this.courseIdParam();
-        if (!value) {
-            return undefined;
-        }
+        if (!value) return undefined;
         const parsed = Number(value);
+        return Number.isNaN(parsed) ? undefined : parsed;
+    });
+
+    // irisContext query param format: 'lecture:{id}' or 'exercise:{id}'
+    private readonly irisContextParam = toSignal(this.route.queryParamMap.pipe(map((params) => params.get('irisContext') ?? undefined)), { initialValue: undefined });
+
+    readonly initialContextType = computed<string | undefined>(() => this.irisContextParam()?.split(':')[0]);
+
+    readonly initialContextEntityId = computed<number | undefined>(() => {
+        const raw = this.irisContextParam()?.split(':')[1];
+        if (!raw) return undefined;
+        const parsed = Number(raw);
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 
