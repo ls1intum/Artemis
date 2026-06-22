@@ -1,0 +1,6 @@
+artemis:
+    athena:
+        modules:
+            text: module_text_test
+            programming: module_programming_test
+            modeling: module_modeling_test

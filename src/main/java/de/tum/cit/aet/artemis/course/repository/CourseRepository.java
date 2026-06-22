@@ -74,6 +74,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
+                LEFT JOIN FETCH c.athenaConfig
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
