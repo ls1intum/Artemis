@@ -47,7 +47,8 @@ class ContentExtractionServiceFlavorStripTest {
 
     private void stubLlm(FlavorStripEditsDTO edits) {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class))).thenReturn(edits);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(edits);
     }
 
     @Test
@@ -105,7 +106,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void stripFlavorText_llmThrows_returnsRaw() {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class)))
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
                 .thenThrow(new RuntimeException("LLM unreachable"));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");

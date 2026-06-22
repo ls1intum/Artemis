@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
@@ -265,7 +264,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private void mockSampleBasketLoadingForToken(String basketToken) throws URISyntaxException, IOException {
         URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken);
         try (InputStream in = Objects.requireNonNull(getClass().getResource("./basket/sampleBasket.json")).openStream()) {
-            String basketJSON = IOUtils.toString(in, StandardCharsets.UTF_8);
+            String basketJSON = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
                     .andExpect(method(HttpMethod.GET));
             responseActionsJSON.andRespond(MockRestResponseCreators.withSuccess(basketJSON, MediaType.APPLICATION_JSON));
