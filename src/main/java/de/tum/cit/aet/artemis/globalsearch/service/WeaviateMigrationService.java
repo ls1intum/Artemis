@@ -39,8 +39,9 @@ import io.weaviate.client6.v1.api.collections.VectorConfig;
  * only migrations with {@code targetVersion > storedVersion} run.</li>
  * </ol>
  * <p>
- * Called by {@link WeaviateService#initializeCollections()} after all data collections
- * have been created so migration code can safely write to the target collections.
+ * Invoked by {@link WeaviateMigrationStartupService} on a background thread on the scheduling node, after all data
+ * collections have been created by {@link WeaviateService#initializeCollections()}, so migration code can safely
+ * write to the target collections.
  */
 @Lazy
 @Service
@@ -98,8 +99,9 @@ public class WeaviateMigrationService {
     }
 
     /**
-     * Runs all pending migrations. Must be called after all data collections have been
-     * created by {@link WeaviateService#initializeCollections()}.
+     * Runs all pending migrations. Must be called after all data collections have been created by
+     * {@link WeaviateService#initializeCollections()}. Invoked from {@link WeaviateMigrationStartupService} on a
+     * background thread on the scheduling node.
      *
      * @throws WeaviateException if any migration fails (non-recoverable)
      */

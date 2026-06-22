@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -17,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
-import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 
@@ -25,13 +26,15 @@ import io.weaviate.client6.v1.api.collections.WeaviateObject;
  * Migrates from schema v0 (single {@code Exercises} collection) to v1 (unified
  * {@code SearchableEntities} collection with trigram tokenization).
  * <p>
- * Reads all exercise objects from the legacy {@code Exercises} collection, transforms
- * their properties to the v1 schema (renaming {@code exercise_id → entity_id},
- * {@code problem_statement → description}, adding {@code type = "exercise"}), upserts
- * them into the {@code SearchableEntities} collection that
- * {@link de.tum.cit.aet.artemis.globalsearch.service.WeaviateService#initializeCollections()}
- * already created with the correct trigram tokenization, and finally deletes the old
- * collection.
+ * Reads all exercise objects from the legacy {@code Exercises} collection, transforms their properties to the v1 schema
+ * (renaming {@code exercise_id → entity_id}, {@code problem_statement → description}, adding {@code type = "exercise"}),
+ * and upserts each page into the {@code SearchableEntities} collection that
+ * {@link de.tum.cit.aet.artemis.globalsearch.service.WeaviateService#initializeCollections()} already created with the
+ * correct trigram tokenization, using a single gRPC batch insert per page. Objects are inserted with properties only, so
+ * Weaviate re-embeds them through the target collection's configured vectorizer; this keeps the migrated objects'
+ * vectors consistent with the entities the live indexing path writes natively (a carried v0 vector would have been
+ * computed from a slightly different set of property values). Once every page has been migrated, the old collection is
+ * deleted.
  * <p>
  * If the legacy collection does not exist, the migration is a no-op.
  */
@@ -45,7 +48,12 @@ public class V0ToV1Migration implements WeaviateMigration {
      */
     public static final String LEGACY_EXERCISES_COLLECTION = "Exercises";
 
-    private static final int PAGE_SIZE = 100;
+    /**
+     * Page and batch size. Each page is written in one gRPC batch insert that re-embeds the objects through the target
+     * collection's configured vectorizer, so the size is kept moderate to keep a batch's total embedding time within the
+     * client's 120s gRPC insert timeout even when the embedding backend is under load.
+     */
+    private static final int PAGE_SIZE = 50;
 
     /**
      * Matches ISO date-time strings that are missing the seconds component,
@@ -102,15 +110,21 @@ public class V0ToV1Migration implements WeaviateMigration {
         int skipped = 0;
         int failed = 0;
 
-        // Cursor-based pagination: read all objects from the old collection in pages.
-        // If we encounter failures, we use 'cursor' to skip them in the next fetch.
-        // Successfully migrated objects are deleted from the old collection.
+        // Cursor-based pagination over the legacy collection. Each page is transformed and written to the target
+        // collection with a single gRPC batch insert (insertMany). Objects are inserted with properties only (no explicit
+        // vector), so Weaviate re-embeds them through the target collection's configured vectorizer, keeping their vectors
+        // consistent with the entities the live indexing path writes natively. The gRPC batch path uses the client's
+        // insert timeout (120s) rather than the 30s the original per-object REST upserts hit, and because the migration
+        // runs on a single node with back-to-back batches, only the first batch pays the embedding model's cold-start;
+        // the model then stays warm for the remaining batches. Nothing is deleted from the legacy collection until the
+        // whole migration succeeds, at which point it is dropped; a failure leaves the legacy data intact for the next
+        // attempt, and re-runs are idempotent because the target UUIDs are deterministic.
         String cursor = null;
         boolean hasMore = true;
 
         while (hasMore) {
             final String afterCursor = cursor;
-            var result = oldCollection.query.fetchObjects(builder -> {
+            var page = oldCollection.query.fetchObjects(builder -> {
                 builder.limit(PAGE_SIZE);
                 if (afterCursor != null) {
                     builder.after(afterCursor);
@@ -118,51 +132,36 @@ public class V0ToV1Migration implements WeaviateMigration {
                 return builder;
             });
 
-            var objects = result.objects();
+            var objects = page.objects();
             if (objects.isEmpty()) {
                 break;
             }
+            cursor = objects.getLast().uuid();
 
+            List<WeaviateObject<Map<String, Object>>> batch = new ArrayList<>();
             for (WeaviateObject<Map<String, Object>> obj : objects) {
                 Object rawId = obj.properties().get("exercise_id");
                 if (rawId == null) {
                     log.debug("V0→V1: Skipping object {} with missing exercise_id", obj.uuid());
-                    oldCollection.data.deleteById(obj.uuid());
                     skipped++;
                     continue;
                 }
                 long entityId = ((Number) rawId).longValue();
+                Map<String, Object> newProps = transformProperties(obj.properties());
+                String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
+                batch.add(WeaviateObject.of(objectBuilder -> objectBuilder.uuid(uuid).properties(newProps)));
+            }
 
-                try {
-                    Map<String, Object> newProps = transformProperties(obj.properties());
-                    String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
-
-                    try {
-                        if (newCollection.data.exists(uuid)) {
-                            newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
-                        }
-                        else {
-                            newCollection.data.insert(newProps, insertOptions -> insertOptions.uuid(uuid));
-                        }
-                    }
-                    catch (WeaviateApiException e) {
-                        if (e.getMessage() != null && e.getMessage().contains("already exists")) {
-                            newCollection.data.replace(uuid, replaceOptions -> replaceOptions.properties(newProps));
-                        }
-                        else {
-                            throw e;
-                        }
-                    }
-
-                    // Successful migration (or update) -> delete from old collection
-                    oldCollection.data.deleteById(obj.uuid());
-                    migrated++;
+            if (!batch.isEmpty()) {
+                var response = newCollection.data.insertMany(batch);
+                List<String> errors = response.errors();
+                if (!errors.isEmpty()) {
+                    errors.forEach(error -> log.warn("V0→V1: Batch insert error: {}", error));
+                    failed += errors.size();
+                    migrated += batch.size() - errors.size();
                 }
-                catch (Exception exception) {
-                    log.warn("V0→V1: Failed to migrate exercise {}: {}", entityId, exception.getMessage());
-                    failed++;
-                    // We must update the cursor to skip this failing object in the next page fetch
-                    cursor = obj.uuid();
+                else {
+                    migrated += batch.size();
                 }
             }
 
@@ -175,7 +174,7 @@ public class V0ToV1Migration implements WeaviateMigration {
             throw new IOException("V0→V1: Migration failed for " + failed + " exercises. Aborting cleanup to prevent data loss.");
         }
 
-        // Clean up the legacy collection
+        // Clean up the legacy collection only after a fully successful migration.
         client.collections.delete(oldName);
         log.info("V0→V1: Deleted legacy collection '{}'", oldName);
     }
