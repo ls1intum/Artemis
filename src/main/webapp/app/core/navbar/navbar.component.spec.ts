@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -62,6 +62,11 @@ import { BehaviorSubject } from 'rxjs';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { LoginService } from 'app/core/login/login.service';
 
 class MockBreadcrumb {
     label: string;
@@ -128,6 +133,8 @@ describe('NavbarComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: LoginService, useValue: { logout: vi.fn() } },
                 { provide: LoadingNotificationService, useValue: { loadingStatus: new BehaviorSubject(false) } },
             ],
         })
@@ -420,6 +427,25 @@ describe('NavbarComponent', () => {
         } as MockBreadcrumb);
     });
 
+    it('should show user management breadcrumbs for the admin root', () => {
+        const testUrl = '/admin';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs()).toHaveLength(2);
+        expect(component.breadcrumbs()[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs()[1]).toEqual({
+            label: 'global.menu.admin.sidebar.users',
+            translate: true,
+            uri: '/admin/user-management/',
+        } as MockBreadcrumb);
+    });
+
     it('should not error without translation', () => {
         const testUrl = '/admin/route-without-translation';
         router.setUrl(testUrl);
@@ -606,6 +632,24 @@ describe('NavbarComponent', () => {
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/assessment-dashboard/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should show the exercise title and correct exercise link for generic exercise routes', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            const testUrl = '/course-management/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(exerciseService.find).toHaveBeenCalledOnce();
+            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Programming Exercise',
+                translate: false,
+                uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
         });
 
@@ -875,6 +919,61 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special student route breadcrumb cases', () => {
+        it.each([
+            {
+                url: '/courses/1/code-editor/2',
+                label: 'artemisApp.editor.breadCrumbTitle',
+            },
+            {
+                url: '/courses/1/exams/test-exam/2',
+                label: 'artemisApp.courseOverview.menu.testExam',
+            },
+            {
+                url: '/courses/1/exercises/2/participate/3',
+                label: 'artemisApp.submission.detail.title',
+            },
+        ])('should use translated labels for student route id segment %s', ({ url, label }) => {
+            router.setUrl(url);
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toMatchObject({
+                label,
+                translate: true,
+                uri: url + '/',
+            });
+        });
+
+        it('should resolve a student exercise route without an exercise type segment', () => {
+            const testUrl = '/courses/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Exercise',
+                translate: false,
+                uri: '/courses/1/exercises/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should resolve a student tutorial lecture route', () => {
+            const testUrl = '/courses/1/tutorial-lectures/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.LECTURE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Lecture',
+                translate: false,
+                uri: '/courses/1/tutorial-lectures/2/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
             const testUrl = `/courses/1/exercises/${exType}/2`;
             router.setUrl(testUrl);
@@ -894,6 +993,31 @@ describe('NavbarComponent', () => {
             });
             expect(component.breadcrumbs()[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
         });
+    });
+
+    it('should collapse and toggle the navbar', () => {
+        component.isNavbarCollapsed.set(false);
+
+        component.collapseNavbar();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.toggleNavbar();
+        expect(component.isNavbarCollapsed()).toBe(false);
+    });
+
+    it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const loginService = TestBed.inject(LoginService);
+        const resetLocalCacheSpy = vi.spyOn(participationWebsocketService, 'resetLocalCache');
+        const logoutSpy = vi.spyOn(loginService, 'logout');
+
+        component.logout();
+        await Promise.resolve();
+
+        expect(router.navigate).toHaveBeenCalledWith(['/sign-in']);
+        expect(resetLocalCacheSpy).toHaveBeenCalledOnce();
+        expect(logoutSpy).toHaveBeenCalledWith(true);
+        expect(component.isNavbarCollapsed()).toBe(true);
     });
 
     it.each([
