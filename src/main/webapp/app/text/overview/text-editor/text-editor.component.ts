@@ -1,8 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
@@ -18,7 +17,6 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
@@ -29,10 +27,9 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCircleNotch, faEye } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -45,7 +42,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -53,10 +49,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
     imports: [
-        HeaderParticipationPageComponent,
-        ButtonComponent,
-        RouterLink,
-        ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
         TranslateDirective,
@@ -70,7 +62,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         UpperCasePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
-        ExerciseSubmitButtonComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -83,7 +74,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
-    readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
@@ -91,7 +81,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     participationId = input<number>();
-    displayHeader = input<boolean>(true);
     expandProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
     inputSubmission = input<TextSubmission>();
@@ -110,7 +99,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private submissionChange = new Subject<TextSubmission>();
     submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
-    isAlwaysActive: boolean;
     readonly isAllowedToSubmitAfterDueDate = signal<boolean>(false);
     // answer is the text that is stored in the user interface
     readonly answer = signal<string>('');
@@ -127,7 +115,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
-    faTimeline = faTimeline;
     faEye = faEye;
 
     // used in the html template
@@ -136,7 +123,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participationUpdateListener: Subscription;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
-    showHistory = false;
     submissionId: number | undefined;
     resultId: number | undefined;
 
@@ -197,6 +183,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                // subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject, so every
+                // text-editor instance receives every participation change (including the ones emitted by other
+                // instances when they call addParticipation()). Without this guard, multiple editors rendered
+                // together - e.g. several text exercises in the exam result summary - would all overwrite their
+                // own exercise/submission state with whichever participation was added last, making every text
+                // summary display the last exercise. Only react to changes for our own participation.
+                if (changedParticipation?.id !== this.participation()?.id) {
+                    return;
+                }
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const lastResult = results?.last();
@@ -372,10 +367,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
             this.textExercise().dueDate && this.participation().initializationDate && dayjs(this.participation().initializationDate).isAfter(this.textExercise().dueDate);
-        const isAlwaysActive = !this.result() && (!this.textExercise().dueDate || isInitializationAfterDueDate);
-
         this.isAllowedToSubmitAfterDueDate.set(!!isInitializationAfterDueDate && !this.participation().testRun && !dayjs().isAfter(this.participation().individualDueDate));
-        this.isAlwaysActive = !!isAlwaysActive;
     }
 
     get isAutomaticResult(): boolean {
@@ -390,19 +382,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             (!this.result() || this.isAutomaticResult) &&
             (!!this.participation()?.testRun || (this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
         );
-    }
-
-    get submitButtonTooltip(): string {
-        if (this.isAllowedToSubmitAfterDueDate()) {
-            return 'entity.action.submitDueDateMissedTooltip';
-        }
-        if (this.isActive && !this.textExercise().dueDate) {
-            return 'entity.action.submitNoDueDateTooltip';
-        } else if (this.isActive) {
-            return 'entity.action.submitTooltip';
-        }
-
-        return 'entity.action.dueDateMissedTooltip';
     }
 
     /**
