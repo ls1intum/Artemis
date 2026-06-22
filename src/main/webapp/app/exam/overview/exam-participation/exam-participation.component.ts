@@ -60,6 +60,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -104,6 +105,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+    private testExamParticipationMessageService = inject(TestExamParticipationMessageService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -180,6 +182,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private readonly wallClockVersion = signal(0);
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
+    readonly noStudentExamMessageKey = signal('artemisApp.examParticipation.noStudentExam');
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
     protected readonly participationGenerationStatus = toSignal(this.generateParticipationStatus, { initialValue: 'success' as GenerateParticipationStatus });
@@ -235,6 +238,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.handleNoStudentExam();
                     },
                 });
+            } else if (this.shouldSkipTestExamAttemptRequest()) {
+                this.loadingExam.set(false);
             } else {
                 this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                     next: (studentExam) => {
@@ -251,6 +256,35 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected.set(status.connected);
         });
+    }
+
+    private shouldSkipTestExamAttemptRequest(): boolean {
+        const exam = this.courseStorageService.getCourse(this.courseId())?.exams?.find((courseExam) => courseExam.id === this.examId());
+        if (!hasTestExamType(exam)) {
+            return false;
+        }
+
+        this.testExam.set(true);
+        const now = this.serverDateService.now();
+        if (exam?.endDate && dayjs(exam.endDate).isBefore(now)) {
+            this.noStudentExamMessageKey.set(this.testExamParticipationMessageService.getMessageKey(exam, 'examHasAlreadyEnded'));
+            return true;
+        }
+
+        const simulationEndDate = testExamSimulationEndDate(exam);
+        if (exam?.examType !== ExamType.TEST_WITH_SIMULATION || !simulationEndDate || dayjs(simulationEndDate).isBefore(now)) {
+            return false;
+        }
+
+        const hasSubmittedAttempt = this.examParticipationService
+            .getTestStudentExamsForOverviewPage()
+            .some((studentExam) => studentExam.exam?.id === exam.id && studentExam.submitted);
+        if (hasSubmittedAttempt) {
+            this.noStudentExamMessageKey.set(this.testExamParticipationMessageService.getMessageKey(exam, 'simulationTestExamAttemptAlreadyExistsBeforePractice'));
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -645,6 +679,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
+    readonly isTestExamType = computed(() => hasTestExamType(this.exam()));
+
     checkVerticalOverflow(): boolean {
         // Get the sidebar-content element
         const sidebarContent = document.querySelector('.content-exam-height');
@@ -709,6 +745,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     handleNoStudentExam() {
         const course = this.courseStorageService.getCourse(this.courseId());
+        const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId());
+        this.noStudentExamMessageKey.set(this.getNoStudentExamMessageKey(exam));
         if (!course) {
             this.courseService.find(this.courseId()).subscribe((courseResponse) => {
                 this.isAtLeastTutor.set(courseResponse.body?.isAtLeastTutor);
@@ -719,6 +757,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.isAtLeastInstructor.set(course.isAtLeastInstructor);
         }
         this.loadingExam.set(false);
+    }
+
+    private getNoStudentExamMessageKey(exam?: Exam): string {
+        if (exam || !this.testExam()) {
+            return this.testExamParticipationMessageService.getMessageKey(exam, this.testExam() ? 'noFurtherAttempts' : 'noStudentExam');
+        }
+        return 'artemisApp.examParticipation.noFurtherAttempts';
     }
 
     /**

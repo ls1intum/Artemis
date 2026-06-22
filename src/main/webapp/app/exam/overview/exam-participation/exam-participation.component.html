@@ -150,7 +150,7 @@
                     <div class="col-12 text-center my-auto">
                         <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
-                            <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
+                            <span [jhiTranslate]="isTestExamType() ? 'artemisApp.examParticipation.testExamAttemptUsed' : 'artemisApp.studentExam.submissionNotInTime'"></span>
                         </div>
                     </div>
                 </div>
@@ -196,7 +196,7 @@
         </div>
     } @else {
         <div class="alert alert-danger">
-            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+            <h6 [jhiTranslate]="noStudentExamMessageKey()"></h6>
         </div>
     }
 }

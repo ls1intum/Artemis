@@ -41,6 +41,8 @@ export class ExamParticipationService {
     private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
     shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
+    private testStudentExamsForOverviewPage: StudentExam[] = [];
+
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
     }
@@ -164,9 +166,20 @@ export class ExamParticipationService {
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
-        return this.httpClient
-            .get<StudentExam[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+        return this.httpClient.get<StudentExam[]>(url, { observe: 'response' }).pipe(
+            map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)),
+            tap((studentExams) => (this.testStudentExamsForOverviewPage = studentExams)),
+        );
+    }
+
+    /**
+     * Returns the test exam attempts that were loaded for the course exam overview page.
+     * This is a client-side snapshot and does not trigger a backend request.
+     *
+     * @returns the cached student exams for visible test exam attempts
+     */
+    public getTestStudentExamsForOverviewPage(): StudentExam[] {
+        return this.testStudentExamsForOverviewPage;
     }
 
     private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
