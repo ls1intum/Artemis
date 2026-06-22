@@ -39,12 +39,14 @@ public class AgentSystemPromptService {
     public String build(ProgrammingExercise exercise) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
-        // Spec mode: when the exercise already carries a real instructor problem statement, the agent must build the exercise to MATCH it rather than invent a fresh one.
+        // Spec mode: when the exercise already carries a real problem statement, it is the starting point — the BRIEF (the user message) still governs and may refine it or change
+        // the
+        // task, so this must not hard-lock the existing topic. With no brief the brief is silent, so the statement is preserved verbatim and merely lifted to the quality bar.
         String problemStatementGuidance = isNonTrivialProblemStatement(exercise.getProblemStatement())
-                ? "- problem-statement.md : ALREADY CONTAINS the instructor's authoritative specification for this exercise. Treat it as the SPEC — implement the solution, "
-                        + "template, and tests to MATCH it, preserving its intent and every stated requirement and edge case. You may refine wording, fix mistakes, and add the "
-                        + "required [task] bindings, but do NOT replace it, change the task, or drop requirements. Bring it up to the PROBLEM STATEMENT QUALITY standard below WITHOUT "
-                        + "changing the task (add a worked example and any missing edge/error contract the tests check), and DELETE any internal/meta notes a placeholder left behind."
+                ? "- problem-statement.md : the exercise's CURRENT problem statement and the starting point for this run. Follow the BRIEF: it is authoritative and may refine this "
+                        + "statement or change the task itself (topic, named types, requirements). Where the BRIEF is silent, preserve the statement's intent and every stated requirement "
+                        + "and edge case, and bring it up to the PROBLEM STATEMENT QUALITY standard below; rewrite or drop only what the BRIEF changes. Implement the solution, template, "
+                        + "and tests to MATCH the resulting statement, add the required [task] bindings, and DELETE any internal/meta notes a placeholder left behind."
                 : "- problem-statement.md : the task description shown to students (you write it; it may currently be empty or a placeholder)";
         return """
                 You are an expert author of programming exercises for the Artemis learning platform, working inside a sandbox in the /workspace directory.
@@ -313,8 +315,8 @@ public class AgentSystemPromptService {
     private static final int NON_TRIVIAL_PROBLEM_STATEMENT_MIN_CHARS = 40;
 
     /**
-     * Whether the exercise already carries a real, instructor-provided problem statement that the agent must treat as the authoritative spec, rather than authoring one from
-     * scratch. Used by both the system prompt (spec vs from-scratch framing) and the resource (mode-aware default instruction), so the two always agree.
+     * Whether the exercise already carries a real, instructor-provided problem statement to build against, rather than authoring one from scratch (a present brief may still refine
+     * or change it). Used by both the system prompt (spec vs from-scratch framing) and the resource (mode-aware default instruction), so the two always agree.
      *
      * @param problemStatement the exercise's current problem statement (may be {@code null})
      * @return {@code true} if it is non-trivial enough to be treated as the spec
@@ -324,8 +326,10 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Resolves the instruction for a generation run. An explicit prompt is always honoured (as instructions or feedback). When none is given, the default is mode-aware: if the
-     * exercise already carries a real problem statement, the agent is told to build the exercise to match it (spec mode); otherwise it authors a fresh exercise from scratch.
+     * Resolves the instruction for a generation run. A present brief is authoritative and may refine the current problem statement or change the task outright; against an existing
+     * statement it is layered so the statement is preserved where the brief is silent. With no brief the default is mode-aware: match an existing statement (spec mode), or author
+     * a
+     * fresh exercise from scratch.
      * <p>
      * This lives next to {@link #isNonTrivialProblemStatement} so the resource's mode-aware default and the system prompt's spec/from-scratch framing always agree on the same
      * threshold.
@@ -336,23 +340,21 @@ public class AgentSystemPromptService {
      */
     public String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
         String brief = request.prompt() == null ? "" : request.prompt().strip();
-        // When problem-statement.md is a real, instructor-reviewed specification (drafted via "Draft a plan to review", or the current statement of an exercise being adapted), it
-        // is
-        // AUTHORITATIVE and must bind the result — otherwise the review step is theatre. A brief, when present, is the instruction to APPLY to that statement (the requirements
-        // behind a
-        // from-scratch plan, or the change request of an adaptation), not a licence to silently replace its task, named types, or structure. Returning the brief alone (the old
-        // behaviour)
-        // let the create flow's always-supplied brief override the reviewed plan, which is exactly the divergence we fix here.
-        if (isNonTrivialProblemStatement(exercise.getProblemStatement())) {
-            String instruction = "An initial problem statement is already in problem-statement.md. Treat it as the authoritative specification and build the solution, template, and tests "
-                    + "to match it, keeping its intent and every stated requirement; refine its wording and add the [task] bindings for the tests you write.";
-            if (!brief.isBlank()) {
-                instruction += " Apply this additional instruction where it refines the statement, without discarding its task, named types, or structure: " + brief;
-            }
-            return instruction;
-        }
+        // A present brief is the authoritative instruction for this run: it may refine the current statement or change the task entirely (an adaptation), so it must be able to
+        // override a statement on a different topic. The statement is the starting point, not a lock — preserved where the brief is silent, which keeps a reviewed plan intact when
+        // no brief changes it. With no brief, the statement alone binds.
+        boolean hasSpec = isNonTrivialProblemStatement(exercise.getProblemStatement());
         if (!brief.isBlank()) {
+            if (hasSpec) {
+                return "problem-statement.md holds the exercise's current problem statement. Apply this instruction, authoritative for this run, which may refine that statement or "
+                        + "change the task (topic, named types, requirements); where it is silent, keep the statement's intent and stated requirements, then build the solution, "
+                        + "template, and tests to match the resulting statement and add the [task] bindings for the tests you write: " + brief;
+            }
             return brief;
+        }
+        if (hasSpec) {
+            return "An initial problem statement is already in problem-statement.md. Treat it as the authoritative specification and build the solution, template, and tests to match "
+                    + "it, keeping its intent and every stated requirement; refine its wording and add the [task] bindings for the tests you write.";
         }
         return "Generate a complete, correct programming exercise: a reference solution that passes all tests, a template that compiles but fails the tests, and meaningful tests.";
     }
