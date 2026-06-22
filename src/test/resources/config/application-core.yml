@@ -1,6 +1,45 @@
 artemis:
+    atlas:
+        enabled: true
+        atlasml:
+            enabled: false
+    hyperion:
+        enabled: false
+    iris:
+        enabled: false
+    exam:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
+    modeling:
+        enabled: true
+    fileupload:
+        enabled: true
+    lecture:
+        enabled: true
+    sharing:
+        enabled: false
+    tutorialgroup:
+        enabled: true
+    lti:
+        enabled: false
     athena:
+        enabled: false
         modules:
             text: module_text_test
             programming: module_programming_test
             modeling: module_modeling_test
+    apollon:
+        enabled: false
+    user-management:
+        ldap:
+            enabled: false
+        saml2:
+            enabled: false
+        passkey:
+            enabled: false
+            require-for-administrator-features: false
+            ask-users-to-setup: true
+            token-validity-in-seconds-for-passkey: 15552000
