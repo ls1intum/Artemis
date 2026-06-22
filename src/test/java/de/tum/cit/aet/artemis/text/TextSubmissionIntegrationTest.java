@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -354,6 +355,29 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 .toList();
         assertThat(results).isNotNull();
         assertThat(results).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_teamExercise_includesTeamMembersWithLogin() throws Exception {
+        // Regression guard: the client ownership check (AccountService.isOwnerOfParticipation) matches the logged-in
+        // login against participation.team.students[*].login, so the text-editor response for a team participation must
+        // carry the team members with their login. Dropping them broke the team text editor for the owning student.
+        releasedTextExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(releasedTextExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("teamc2");
+        team.setExercise(releasedTextExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        teamRepository.save(releasedTextExercise, team);
+        StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(releasedTextExercise, team.getId());
+
+        TextParticipationDTO response = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, TextParticipationDTO.class);
+
+        assertThat(response.team()).as("team is exposed on the participation for a team text exercise").isNotNull();
+        assertThat(response.team().students()).as("team members carry their login so the client can verify ownership").extracting(UserNameDTO::login)
+                .contains(TEST_PREFIX + "student1");
     }
 
     @Test
