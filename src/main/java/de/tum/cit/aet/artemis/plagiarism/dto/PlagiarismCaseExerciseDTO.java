@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -12,8 +14,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseExerciseDTO(Long id, String title, String shortName, ExerciseType type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId,
-        String examTitle, Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+public record PlagiarismCaseExerciseDTO(Long id, String title, @Nullable String shortName, ExerciseType type, @Nullable ZonedDateTime dueDate, @Nullable Long courseId,
+        @Nullable String courseTitle, @Nullable Long examId, @Nullable String examTitle, @Nullable Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
 
     /**
      * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function.
@@ -29,8 +31,8 @@ public record PlagiarismCaseExerciseDTO(Long id, String title, String shortName,
      * @param examTitle                                                      the exam title
      * @param continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod the response period configured for continuous plagiarism control cases
      */
-    public PlagiarismCaseExerciseDTO(Long id, String title, String shortName, Class<? extends Exercise> type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId,
-            String examTitle, Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+    public PlagiarismCaseExerciseDTO(Long id, String title, @Nullable String shortName, Class<? extends Exercise> type, @Nullable ZonedDateTime dueDate, @Nullable Long courseId,
+            @Nullable String courseTitle, @Nullable Long examId, @Nullable String examTitle, @Nullable Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
         this(id, title, shortName, ExerciseType.getExerciseTypeFromClass(type), dueDate, courseId, courseTitle, examId, examTitle,
                 continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod);
     }
@@ -41,7 +43,7 @@ public record PlagiarismCaseExerciseDTO(Long id, String title, String shortName,
      * @param exercise the exercise entity
      * @return the DTO representation
      */
-    public static PlagiarismCaseExerciseDTO fromExercise(Exercise exercise) {
+    public static @Nullable PlagiarismCaseExerciseDTO fromExercise(@Nullable Exercise exercise) {
         if (exercise == null) {
             return null;
         }

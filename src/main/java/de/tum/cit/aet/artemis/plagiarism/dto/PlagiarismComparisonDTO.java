@@ -3,14 +3,16 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissionA, PlagiarismSubmissionDTO submissionB, Set<PlagiarismMatchDTO> matches, double similarity,
-        PlagiarismStatus status) {
+public record PlagiarismComparisonDTO(Long id, @Nullable PlagiarismSubmissionDTO submissionA, @Nullable PlagiarismSubmissionDTO submissionB,
+        @Nullable Set<PlagiarismMatchDTO> matches, double similarity, PlagiarismStatus status) {
 
     /**
      * Maps a plagiarism comparison entity to the DTO used by the split view.
@@ -18,7 +20,7 @@ public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissio
      * @param comparison the plagiarism comparison entity
      * @return the DTO representation
      */
-    public static PlagiarismComparisonDTO fromComparison(PlagiarismComparison comparison) {
+    public static @Nullable PlagiarismComparisonDTO fromComparison(@Nullable PlagiarismComparison comparison) {
         if (comparison == null) {
             return null;
         }
@@ -32,7 +34,8 @@ public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissio
      * @param comparisonWithSubmissionB the comparison whose submission B elements are initialized
      * @return the DTO representation
      */
-    public static PlagiarismComparisonDTO fromComparison(PlagiarismComparison comparisonWithSubmissionA, PlagiarismComparison comparisonWithSubmissionB) {
+    public static @Nullable PlagiarismComparisonDTO fromComparison(@Nullable PlagiarismComparison comparisonWithSubmissionA,
+            @Nullable PlagiarismComparison comparisonWithSubmissionB) {
         if (comparisonWithSubmissionA == null) {
             return null;
         }

@@ -4,13 +4,15 @@ import java.time.Instant;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> comparisons, long duration, List<Integer> similarityDistribution, Instant createdDate) {
+public record PlagiarismResultDetailsDTO(@Nullable Long id, @Nullable List<PlagiarismComparisonDTO> comparisons, long duration, @Nullable List<Integer> similarityDistribution,
+        @Nullable Instant createdDate) {
 
     /**
      * Maps a plagiarism result entity to the DTO returned by plagiarism result endpoints.
@@ -18,7 +20,7 @@ public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> 
      * @param plagiarismResult the plagiarism result entity
      * @return the DTO representation
      */
-    public static PlagiarismResultDetailsDTO fromResult(PlagiarismResult plagiarismResult) {
+    public static @Nullable PlagiarismResultDetailsDTO fromResult(@Nullable PlagiarismResult plagiarismResult) {
         if (plagiarismResult == null) {
             return null;
         }

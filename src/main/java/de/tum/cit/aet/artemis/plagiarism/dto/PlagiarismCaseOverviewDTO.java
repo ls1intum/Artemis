@@ -2,13 +2,16 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, PlagiarismCaseUserDTO student, PlagiarismCasePostSummaryDTO post, PlagiarismVerdict verdict,
-        ZonedDateTime verdictDate, PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl, boolean hasStudentAnswer) {
+public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student, @Nullable PlagiarismCasePostSummaryDTO post,
+        @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount,
+        boolean createdByContinuousPlagiarismControl, boolean hasStudentAnswer) {
 
     /**
      * JPQL constructor for overview projections. It keeps optional nested DTOs absent when the joined entity is absent.
@@ -31,22 +34,23 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
      * @param plagiarismSubmissionCount            the number of submissions attached to the plagiarism case
      * @param createdByContinuousPlagiarismControl whether the case was created by continuous plagiarism control
      */
-    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentFirstName, String studentLastName, Long postId,
-            ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin,
-            String verdictByFirstName, String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
+    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable Long studentId, @Nullable String studentLogin, @Nullable String studentFirstName,
+            @Nullable String studentLastName, @Nullable Long postId, @Nullable ZonedDateTime postCreationDate, boolean hasStudentAnswer, @Nullable PlagiarismVerdict verdict,
+            @Nullable ZonedDateTime verdictDate, @Nullable Long verdictById, @Nullable String verdictByLogin, @Nullable String verdictByFirstName,
+            @Nullable String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
         this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
                 userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, hasStudentAnswer);
     }
 
-    private static PlagiarismCaseUserDTO userOrNull(Long id, String login, String name, String visibleRegistrationNumber) {
+    private static @Nullable PlagiarismCaseUserDTO userOrNull(@Nullable Long id, @Nullable String login, @Nullable String name, @Nullable String visibleRegistrationNumber) {
         if (id == null) {
             return null;
         }
         return new PlagiarismCaseUserDTO(id, login, name, visibleRegistrationNumber);
     }
 
-    private static String fullName(String firstName, String lastName) {
+    private static @Nullable String fullName(@Nullable String firstName, @Nullable String lastName) {
         boolean hasFirstName = firstName != null && !firstName.isEmpty();
         boolean hasLastName = lastName != null && !lastName.isEmpty();
         if (hasFirstName && hasLastName) {
@@ -68,7 +72,7 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
         return Math.toIntExact(value);
     }
 
-    private static PlagiarismCasePostSummaryDTO postOrNull(Long id, ZonedDateTime creationDate) {
+    private static @Nullable PlagiarismCasePostSummaryDTO postOrNull(@Nullable Long id, @Nullable ZonedDateTime creationDate) {
         if (id == null) {
             return null;
         }

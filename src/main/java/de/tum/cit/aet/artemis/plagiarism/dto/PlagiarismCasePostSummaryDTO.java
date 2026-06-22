@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -15,7 +17,7 @@ public record PlagiarismCasePostSummaryDTO(Long id, ZonedDateTime creationDate) 
      * @param post the post entity
      * @return the DTO representation
      */
-    public static PlagiarismCasePostSummaryDTO fromPost(Post post) {
+    public static @Nullable PlagiarismCasePostSummaryDTO fromPost(@Nullable Post post) {
         if (post == null) {
             return null;
         }

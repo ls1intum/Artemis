@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -11,9 +12,10 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercise, PlagiarismCaseUserDTO student, PlagiarismCasePostSummaryDTO post, PlagiarismVerdict verdict,
-        ZonedDateTime verdictDate, PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl, String verdictMessage,
-        int verdictPointDeduction, List<PlagiarismSubmissionForCaseDTO> plagiarismSubmissions) {
+public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student, @Nullable PlagiarismCasePostSummaryDTO post,
+        @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount,
+        boolean createdByContinuousPlagiarismControl, @Nullable String verdictMessage, int verdictPointDeduction,
+        @Nullable List<PlagiarismSubmissionForCaseDTO> plagiarismSubmissions) {
 
     /**
      * JPQL constructor for detail projections. It keeps optional nested DTOs absent when the joined entity is absent.
@@ -37,9 +39,11 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
      * @param verdictMessage                       the verdict message
      * @param verdictPointDeduction                the verdict point deduction
      */
-    public PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentFirstName, String studentLastName, Long postId,
-            ZonedDateTime postCreationDate, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin, String verdictByFirstName,
-            String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl, String verdictMessage, int verdictPointDeduction) {
+    public PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable Long studentId, @Nullable String studentLogin, @Nullable String studentFirstName,
+            @Nullable String studentLastName, @Nullable Long postId, @Nullable ZonedDateTime postCreationDate, @Nullable PlagiarismVerdict verdict,
+            @Nullable ZonedDateTime verdictDate, @Nullable Long verdictById, @Nullable String verdictByLogin, @Nullable String verdictByFirstName,
+            @Nullable String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl, @Nullable String verdictMessage,
+            int verdictPointDeduction) {
         this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
                 userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, verdictMessage, verdictPointDeduction, null);
@@ -51,7 +55,7 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
      * @param plagiarismCase the plagiarism case entity
      * @return the DTO representation
      */
-    public static PlagiarismCaseDetailDTO ofForInstructor(PlagiarismCase plagiarismCase) {
+    public static @Nullable PlagiarismCaseDetailDTO ofForInstructor(@Nullable PlagiarismCase plagiarismCase) {
         return of(plagiarismCase);
     }
 
@@ -61,11 +65,11 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
      * @param plagiarismCase the plagiarism case entity
      * @return the DTO representation
      */
-    public static PlagiarismCaseDetailDTO ofForStudent(PlagiarismCase plagiarismCase) {
+    public static @Nullable PlagiarismCaseDetailDTO ofForStudent(@Nullable PlagiarismCase plagiarismCase) {
         return of(plagiarismCase);
     }
 
-    private static PlagiarismCaseDetailDTO of(PlagiarismCase plagiarismCase) {
+    private static @Nullable PlagiarismCaseDetailDTO of(@Nullable PlagiarismCase plagiarismCase) {
         if (plagiarismCase == null) {
             return null;
         }
@@ -82,14 +86,14 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
                 plagiarismCase.isCreatedByContinuousPlagiarismControl(), plagiarismCase.getVerdictMessage(), plagiarismCase.getVerdictPointDeduction(), plagiarismSubmissions);
     }
 
-    private static PlagiarismCaseUserDTO userOrNull(Long id, String login, String name, String visibleRegistrationNumber) {
+    private static @Nullable PlagiarismCaseUserDTO userOrNull(@Nullable Long id, @Nullable String login, @Nullable String name, @Nullable String visibleRegistrationNumber) {
         if (id == null) {
             return null;
         }
         return new PlagiarismCaseUserDTO(id, login, name, visibleRegistrationNumber);
     }
 
-    private static String fullName(String firstName, String lastName) {
+    private static @Nullable String fullName(@Nullable String firstName, @Nullable String lastName) {
         boolean hasFirstName = firstName != null && !firstName.isEmpty();
         boolean hasLastName = lastName != null && !lastName.isEmpty();
         if (hasFirstName && hasLastName) {
@@ -111,7 +115,7 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
         return Math.toIntExact(value);
     }
 
-    private static PlagiarismCasePostSummaryDTO postOrNull(Long id, ZonedDateTime creationDate) {
+    private static @Nullable PlagiarismCasePostSummaryDTO postOrNull(@Nullable Long id, @Nullable ZonedDateTime creationDate) {
         if (id == null) {
             return null;
         }

@@ -3,13 +3,15 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismSubmissionDTO(Long id, long submissionId, String studentLogin, List<PlagiarismSubmissionElementDTO> elements, int size, Double score) {
+public record PlagiarismSubmissionDTO(Long id, long submissionId, @Nullable String studentLogin, @Nullable List<PlagiarismSubmissionElementDTO> elements, int size,
+        @Nullable Double score) {
 
     /**
      * Maps a plagiarism submission entity to the DTO used by the split view.
@@ -17,7 +19,7 @@ public record PlagiarismSubmissionDTO(Long id, long submissionId, String student
      * @param submission the plagiarism submission entity
      * @return the DTO representation
      */
-    public static PlagiarismSubmissionDTO fromSubmission(PlagiarismSubmission submission) {
+    public static @Nullable PlagiarismSubmissionDTO fromSubmission(@Nullable PlagiarismSubmission submission) {
         if (submission == null) {
             return null;
         }

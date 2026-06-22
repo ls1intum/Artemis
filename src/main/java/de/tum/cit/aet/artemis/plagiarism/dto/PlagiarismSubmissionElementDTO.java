@@ -1,13 +1,15 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismSubmissionElementDTO(Long id, int column, int line, String file, int length) {
+public record PlagiarismSubmissionElementDTO(Long id, int column, int line, @Nullable String file, int length) {
 
-    public static PlagiarismSubmissionElementDTO fromElement(PlagiarismSubmissionElement element) {
+    public static @Nullable PlagiarismSubmissionElementDTO fromElement(@Nullable PlagiarismSubmissionElement element) {
         if (element == null) {
             return null;
         }
