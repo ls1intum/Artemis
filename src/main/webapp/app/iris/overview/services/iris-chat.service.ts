@@ -278,6 +278,18 @@ export class IrisChatService implements OnDestroy {
 
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, context);
 
+        // Debug log: makes the context attached to the outgoing message (and forwarded to Pyris)
+        // visible in the browser console. Helps diagnose context-awareness issues on deployed
+        // environments where server/Pyris logs are not accessible. `[Iris context]` is a stable,
+        // greppable prefix; an empty array means no context was detected for this message.
+        // eslint-disable-next-line no-undef
+        console.log('[Iris context] sending message', {
+            sessionId: this.sessionId,
+            mode: this.sessionContext?.mode,
+            entityId: this.sessionContext?.entityId,
+            context: context ?? [],
+        });
+
         const generation = this.stateGeneration;
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
