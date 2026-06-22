@@ -285,6 +285,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(newTextExercise.title()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.difficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+        assertThat(newTextExercise.assessmentType()).as("assessment type defaults to MANUAL on create (the create DTO does not carry it)").isEqualTo(AssessmentType.MANUAL);
         assertThat(newTextExercise.courseId()).as("course was set for normal exercise").isNotNull();
         assertThat(newTextExercise.exerciseGroupId()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(newTextExercise.courseId()).as("courseId was set correctly").isEqualTo(course.getId());
@@ -311,6 +312,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 HttpStatus.CREATED);
 
         assertThat(response.mode()).as("team mode was persisted on the response").isEqualTo(ExerciseMode.TEAM);
+        assertThat(response.teamMode()).as("teamMode is exposed so the client activates the team UI for a team exercise").isTrue();
         assertThat(response.teamAssignmentConfig()).as("team assignment config is present on the response").isNotNull();
         assertThat(response.teamAssignmentConfig().minTeamSize()).as("min team size was persisted").isEqualTo(2);
         assertThat(response.teamAssignmentConfig().maxTeamSize()).as("max team size was persisted").isEqualTo(5);
@@ -370,6 +372,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(newTextExercise.courseId()).as("course was not set for exam exercise").isNull();
         assertThat(newTextExercise.exerciseGroupId()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newTextExercise.exerciseGroupId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
+        assertThat(newTextExercise.exerciseGroup()).as("nested exerciseGroup is exposed so the student/exam editor detects exam mode").isNotNull();
+        assertThat(newTextExercise.exerciseGroup().id()).as("nested exerciseGroup id matches").isEqualTo(exerciseGroup.getId());
+        assertThat(newTextExercise.exerciseGroup().exam()).as("nested exam reference is exposed for the publish-results-date check").isNotNull();
     }
 
     @Test

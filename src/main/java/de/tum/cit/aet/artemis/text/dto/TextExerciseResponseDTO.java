@@ -38,7 +38,7 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
         CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
         Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions) implements Serializable {
+        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -61,9 +61,13 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         Long exerciseGroupId = null;
         Long examId = null;
         ZonedDateTime examPublishResultsDate = null;
+        // The student text editor / exam result summary detect exam mode from the presence of exercise.exerciseGroup
+        // and read exercise.exerciseGroup.exam.publishResultsDate; carry that nested shape for exam exercises.
+        TextExerciseExamGroupDTO exerciseGroup = null;
 
         if (exercise.isExamExercise()) {
             exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
+            exerciseGroup = TextExerciseExamGroupDTO.of(exercise.getExerciseGroup());
             Exam exam = exercise.getExam();
             if (exam != null) {
                 examId = exam.getId();
@@ -117,6 +121,6 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
                 exercise.getGradingInstructions(), exercise.getCategories(), exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId,
                 examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs);
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
     }
 }

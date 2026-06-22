@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
@@ -468,6 +469,9 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
+        // The create DTO does not carry the assessment type; text exercises were always created as MANUAL (the client
+        // model default). Set it explicitly so a new exercise is not persisted with a null assessment type.
+        exercise.setAssessmentType(AssessmentType.MANUAL);
         // Mode and team configuration are only set at creation time (immutable afterwards). Guard against null so the
         // entity keeps its INDIVIDUAL default when the (client) DTO omits the mode.
         if (dto.mode() != null) {
