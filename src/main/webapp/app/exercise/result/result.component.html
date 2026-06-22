@@ -104,24 +104,24 @@
             <span [class]="textColorClass()" class="leading-tight" id="test-late">
                 <fa-icon [icon]="resultIconClass()" size="lg" />
                 <span class="score leading-tight"> {{ resultString() }}, </span>
-                <span class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateFeedback"></span>
+                <span class="text-muted-color leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateFeedback"></span>
             </span>
         }
         @case (ResultTemplateStatus.SUBMITTED) {
-            <span id="test-submitted" class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmitted"></span>
+            <span id="test-submitted" class="text-muted-color leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmitted"></span>
         }
         @case (ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING) {
             <span
                 id="test-submitted-waiting-grading"
-                class="text-body-secondary leading-tight"
+                class="text-muted-color leading-tight"
                 jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading"
             ></span>
         }
         @case (ResultTemplateStatus.LATE_NO_FEEDBACK) {
-            <span id="test-late-no-feedback" class="text-body-secondary leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
+            <span id="test-late-no-feedback" class="text-muted-color leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
         }
         @case (ResultTemplateStatus.MISSING) {
-            <span class="text-danger leading-tight">
+            <span class="text-(--danger) leading-tight">
                 <fa-icon class="me-1" [icon]="faExclamationCircle" size="lg" />
                 @switch (missingResultInfo()) {
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
@@ -152,7 +152,7 @@
             </span>
         }
         @default {
-            <span class="text-body-secondary leading-tight">
+            <span class="text-muted-color leading-tight">
                 <span class="leading-tight" jhiTranslate="{{ showUngradedResults() ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult' }}"></span>
             </span>
         }

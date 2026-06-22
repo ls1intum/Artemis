@@ -205,9 +205,9 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('getResultColorClass', () => {
-        it('should return text-secondary when no participation on submission', () => {
+        it('should return text-muted-color when no participation on submission', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
-            expect(component.getResultColorClass(result)).toBe('text-secondary');
+            expect(component.getResultColorClass(result)).toBe('text-muted-color');
         });
     });
 

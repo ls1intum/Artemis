@@ -24,7 +24,7 @@
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
-        <p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--success)">
+        <p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--danger)">
             <ng-template #content>{{ toPercentage(threadStats().blocked, threadStats().all) | number: '1.0-0' }}%</ng-template>
         </p-progressbar>
     </div>

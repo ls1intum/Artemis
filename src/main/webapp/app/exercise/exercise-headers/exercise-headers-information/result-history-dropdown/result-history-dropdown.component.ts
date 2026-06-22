@@ -159,7 +159,7 @@ export class ResultHistoryDropdownComponent {
     getResultColorClass(result: Result): string {
         const participation = result.submission?.participation;
         if (!participation) {
-            return 'text-secondary';
+            return 'text-muted-color';
         }
         const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getTextColorClass(result, participation, templateStatus);

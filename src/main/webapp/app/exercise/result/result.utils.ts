@@ -280,7 +280,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  */
 export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
     if (!result) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
@@ -288,9 +288,9 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
             return 'text-primary';
         }
         if (isAIResultAndFailed(result)) {
-            return 'text-danger';
+            return 'text-(--danger)';
         }
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -298,30 +298,30 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (isBuildFailedAndResultIsAutomatic(result, participation)) {
-        return 'text-danger';
+        return 'text-(--danger)';
     }
 
     if (resultIsPreliminary(result, participation)) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result?.score === undefined) {
-        return result?.successful ? 'text-success' : 'text-danger';
+        return result?.successful ? 'text-(--success)' : 'text-(--danger)';
     }
 
     if (isOnlyCompilationTested(result, participation, templateStatus)) {
-        return 'text-success';
+        return 'text-(--success)';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
-        return 'text-success';
+        return 'text-(--success)';
     }
 
     if (result.score >= MIN_SCORE_ORANGE) {
         return 'result-orange';
     }
 
-    return 'text-danger';
+    return 'text-(--danger)';
 };
 
 /**
