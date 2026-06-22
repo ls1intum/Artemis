@@ -5,7 +5,7 @@ import { faExclamationCircle, faSpinner, faTimes } from '@fortawesome/free-solid
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -28,7 +28,6 @@ import { TooltipModule } from 'primeng/tooltip';
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        NgClass,
         RouterLink,
         ArtemisDatePipe,
         ArtemisDurationFromSecondsPipe,

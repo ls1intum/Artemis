@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -41,7 +40,6 @@ import { Authority } from 'app/foundation/constants/authority.constants';
     templateUrl: './user-management-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgClass,
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
