@@ -153,7 +153,7 @@
             </div>
         </div>
         @if (irisSettings()?.settings?.enabled && !lecture.isTutorialLecture) {
-            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" [contextProvider]="getContextProvider()" />
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" [contextProvider]="contextProvider()" />
         }
     </div>
 }

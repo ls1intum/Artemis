@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -109,10 +109,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         getVisibleContexts: () => this.collectVisibleContexts(),
     };
 
-    /** Builds the context provider function for the chatbot button */
-    protected getContextProvider(): (() => IrisMessageContextDTO[]) | undefined {
-        return () => this.collectVisibleContexts();
-    }
+    /** Context provider function for the chatbot button */
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => () => this.collectVisibleContexts());
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
