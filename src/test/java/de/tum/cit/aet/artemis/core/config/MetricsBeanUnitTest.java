@@ -22,14 +22,14 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseMetricsService;
-import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -50,16 +50,16 @@ class MetricsBeanUnitTest {
     private WebSocketHandler webSocketHandler;
 
     @Mock
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     @Mock
     private ExerciseMetricsService exerciseMetricsService;
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private StatisticsRepository statisticsRepository;
@@ -68,7 +68,7 @@ class MetricsBeanUnitTest {
     private ProfileService profileService;
 
     @Mock
-    private BuildJobRepository buildJobRepository;
+    private BuildJobTestRepository buildJobRepository;
 
     private MeterRegistry meterRegistry;
 
