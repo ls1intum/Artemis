@@ -84,7 +84,7 @@ public class V0ToV1Migration implements WeaviateMigration {
 
         int migrated = 0;
         int alreadyPresent = 0;
-        int notInDatabase = 0;
+        int notLoaded = 0;
         int skipped = 0;
         int failed = 0;
 
@@ -137,9 +137,11 @@ public class V0ToV1Migration implements WeaviateMigration {
             }
 
             if (!missingExerciseIds.isEmpty()) {
-                // Load the missing exercises from the database (deleted ones are not returned) and batch-insert them.
+                // Load the missing exercises from the database and batch-insert them. The loader returns no DTO for an id
+                // that is no longer in the database or that could not be mapped (it logs and skips those), so the
+                // difference between requested ids and returned DTOs counts both cases.
                 List<ExerciseSearchableEntityDTO> dtos = exerciseLoadService.loadExerciseDtos(missingExerciseIds);
-                notInDatabase += missingExerciseIds.size() - dtos.size();
+                notLoaded += missingExerciseIds.size() - dtos.size();
 
                 List<WeaviateObject<Map<String, Object>>> batch = new ArrayList<>();
                 for (ExerciseSearchableEntityDTO dto : dtos) {
@@ -165,9 +167,10 @@ public class V0ToV1Migration implements WeaviateMigration {
             hasMore = objects.size() == PAGE_SIZE;
         }
 
-        if (skipped > 0 || notInDatabase > 0) {
-            // Surfaced at WARN so a lossy run is visible: skipped = malformed legacy objects, notInDatabase = ids no longer in the database.
-            log.warn("V0→V1: Migration complete — migrated: {}, alreadyPresent: {}, notInDatabase: {}, skipped(malformed): {}, failed: {}", migrated, alreadyPresent, notInDatabase,
+        if (skipped > 0 || notLoaded > 0) {
+            // Surfaced at WARN so a lossy run is visible: skipped = malformed legacy objects (non-numeric exercise_id);
+            // notLoaded = ids no longer in the database or skipped because they could not be mapped (see per-exercise warnings).
+            log.warn("V0→V1: Migration complete — migrated: {}, alreadyPresent: {}, notLoaded: {}, skipped(malformed): {}, failed: {}", migrated, alreadyPresent, notLoaded,
                     skipped, failed);
         }
         else {

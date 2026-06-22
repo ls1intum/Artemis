@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseSearchableEntityLoadService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
@@ -52,16 +51,13 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
     private ExerciseSearchableEntityLoadService exerciseLoadService;
 
     @Autowired
-    private WeaviateConfigurationProperties weaviateProperties;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    private static final String PREFIX = "MigTest_";
+    private static final String COLLECTION_PREFIX = "MigTest_";
 
-    private static final String OLD_COLLECTION = PREFIX + V0ToV1Migration.LEGACY_EXERCISES_COLLECTION;
+    private static final String OLD_COLLECTION = COLLECTION_PREFIX + V0ToV1Migration.LEGACY_EXERCISES_COLLECTION;
 
-    private static final String NEW_COLLECTION = PREFIX + SearchableEntitySchema.COLLECTION_NAME;
+    private static final String NEW_COLLECTION = COLLECTION_PREFIX + SearchableEntitySchema.COLLECTION_NAME;
 
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
@@ -115,7 +111,7 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
     void backfillsMissingExerciseFromDatabaseAndDropsLegacyCollection() throws Exception {
         seedLegacyExerciseId(exercise.getId());
 
-        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, PREFIX);
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             Optional<Map<String, Object>> migrated = fetchTargetByEntityId(exercise.getId());
@@ -134,7 +130,7 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         seedLegacyExerciseId(examExercise.getId());
 
-        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, PREFIX);
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             Optional<Map<String, Object>> migrated = fetchTargetByEntityId(examExercise.getId());
@@ -158,7 +154,7 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
 
         seedLegacyExerciseId(exercise.getId());
 
-        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, PREFIX);
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             Optional<Map<String, Object>> present = fetchTargetByEntityId(exercise.getId());
@@ -174,7 +170,7 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
         long deletedExerciseId = 999_999_999L;
         seedLegacyExerciseId(deletedExerciseId);
 
-        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, PREFIX);
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
 
         await().atMost(TIMEOUT).untilAsserted(() -> assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).isFalse());
         assertThat(fetchTargetByEntityId(deletedExerciseId)).as("deleted exercise is not re-created").isEmpty();
