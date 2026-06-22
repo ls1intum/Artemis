@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearch
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
@@ -79,6 +80,8 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     private final TransactionTemplate transactionTemplate;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -89,7 +92,7 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi, PlatformTransactionManager transactionManager,
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi, PlatformTransactionManager transactionManager,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
@@ -99,6 +102,7 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.autonomousTutorApi = autonomousTutorApi;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
@@ -223,6 +227,7 @@ public class AnswerMessageService extends PostingService {
         existingAnswerMessage.setContent(answerMessage.content());
 
         // determine if the update operation is to mark the answer message as resolving the original post
+        boolean markedAsResolving = false;
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
@@ -230,6 +235,7 @@ public class AnswerMessageService extends PostingService {
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
+            markedAsResolving = Boolean.TRUE.equals(answerMessage.resolvesPost());
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
@@ -244,6 +250,16 @@ public class AnswerMessageService extends PostingService {
         syncAnswerPostWithWeaviate(updatedAnswerMessage, conversation);
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
+
+        // Trigger B: a thread was marked resolved without going through verification -> ingest into Course Memory
+        if (markedAsResolving) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolved(updatedAnswerMessage, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to ingest resolved thread for answer post {} into course memory", updatedAnswerMessage.getId(), e);
+            }
+        }
         return updatedAnswerMessage;
     }
 
@@ -373,6 +389,15 @@ public class AnswerMessageService extends PostingService {
 
         sendMentionNotificationForAnswerMessage(course, verificationResult.conversation(), verificationResult.answerMessage(), verificationResult.mentionedUsers());
         this.preparePostAndBroadcast(verificationResult.answerMessage(), course);
+
+        // Trigger A: a tutor approved (IRIS_AUTO) or edited (IRIS_CORRECTED) an Iris draft -> ingest into Course Memory
+        boolean edited = verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank();
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onAnswerVerified(verificationResult.answerMessage(), edited, user, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to ingest verified answer post {} into course memory", verificationResult.answerMessage().getId(), e);
+        }
         return verificationResult.answerMessage();
     }
 
