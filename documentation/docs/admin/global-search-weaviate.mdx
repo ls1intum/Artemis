@@ -143,7 +143,7 @@ artemis:
 
 **Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed).
 
-**Ollama base-URL quirk:** If you use Ollama as an OpenAI-compatible endpoint, set `open-ai-base-url` to `http://your-ollama-host:11434/v1` — the `/v1` suffix is required. This is an Artemis-specific routing detail; it does not apply to Pyris or other services sharing the same Ollama instance.
+**OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
 
 ---
 
@@ -158,7 +158,7 @@ artemis:
     weaviate:
       vectorizer-module: text2vec-openai
       open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
-      open-ai-base-url: https://gpu.aet.cit.tum.de/v1
+      open-ai-base-url: https://gpu.aet.cit.tum.de
       gpu-api-key: your-tum-gpu-api-key
   ```
 
