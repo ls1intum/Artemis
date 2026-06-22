@@ -8,6 +8,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+/** Value shapes the picker accepts from the forms API: a dayjs instant, a native Date, an ISO string, or empty. */
+type DateInput = dayjs.Dayjs | Date | string | null | undefined;
+
 export enum DateTimePickerType {
     CALENDAR,
     TIMER,
@@ -38,6 +41,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     private readonly dateInputRef = viewChild<NgModel>('dateInput');
     private dateInputOverride?: NgModel;
 
+    /**
+     * The inner `NgModel`. Exposed because exercise/exam update forms read `dateInput.valid` to gate their
+     * own submit state, and tests inject a stub via the setter. Not purely internal — keep public.
+     */
     get dateInput(): NgModel {
         return this.dateInputOverride ?? this.dateInputRef()!;
     }
@@ -65,11 +72,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected dateInputValue = signal<string>('');
 
     /**
-     * True when the bound value is a present, valid date (dayjs or native Date). Source of truth for both the
-     * invalid border and the error message — NOT DOM input events, which never fire for a programmatically set
-     * [value]/writeValue (e.g. the audits filters, or any edit form opened with an existing date). Using the
-     * DOM value made a valid programmatic date read as invalid (red border) and spuriously rendered the
-     * "date is missing" message, which expanded the field.
+     * True when the bound value is a present, valid date. Validity derives from the bound value, not from DOM
+     * input events: a programmatically set `[value]`/`writeValue` (edit forms, the audits filter) never fires an
+     * input event, so a DOM-driven check would mark a valid preset date invalid.
      */
     protected hasValidValue = computed(() => {
         const value = this.value();
@@ -89,48 +94,33 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
 
+    /** Refreshes the mirrored `NgModel` state. Public because exercise/exam update forms call it to re-sync after programmatic changes. */
     updateSignals(): void {
         const dateInput = this.dateInputRef() ?? this.dateInputOverride;
         this.isInputValid.set(!dateInput?.invalid);
         this.dateInputValue.set(dateInput?.value);
     }
 
-    private onChange?: (val?: dayjs.Dayjs) => void;
+    private onChange?: (value?: dayjs.Dayjs) => void;
 
-    /**
-     * Emits the value change from component.
-     */
     valueChanged() {
         this.valueChange.emit();
         this.updateSignals();
     }
 
     /**
-     * Function that writes the value safely.
-     *
-     * The picker (p-datepicker) edits in the browser-LOCAL timezone and binds a native `Date`.
-     * Artemis stores instants as UTC dayjs values. We therefore normalise any incoming value to a
-     * native `Date` that represents the same absolute instant — p-datepicker then renders the
-     * local wall-clock of that instant (identical behaviour to the previous owl-date-time picker).
-     *
-     * @param value as dayjs, native Date, ISO string (e.g. typed by the e2e helper), null or undefined
+     * The picker edits in the browser-LOCAL timezone and binds a native `Date`, while Artemis stores instants as
+     * UTC dayjs values. Normalise any incoming value to a native `Date` for the same absolute instant so the
+     * picker renders its local wall-clock.
      */
-    writeValue(value: any) {
+    writeValue(value: DateInput) {
         this.value.set(this.toLocalDate(value));
         this.updateSignals();
     }
 
-    /**
-     * Registers a callback function is called by the forms API on initialization to update the form model on blur.
-     * @param _fn
-     */
-    registerOnTouched(_fn: any) {}
+    registerOnTouched(_fn: () => void) {}
 
-    /**
-     *
-     * @param fn
-     */
-    registerOnChange(fn: any) {
+    registerOnChange(fn: (value?: dayjs.Dayjs) => void) {
         this.onChange = fn;
     }
 
@@ -145,24 +135,18 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * A `string` can also reach this handler (e.g. the Playwright `enterDate` helper types a UTC ISO
      * string with a `Z` suffix); `dayjs(string)` parses the explicit zone correctly, so we never
      * mis-interpret an absolute instant as local wall-clock.
-     *
-     * @param newValue the value emitted by the picker (Date | dayjs | string | null | undefined)
      */
-    updateField(newValue: dayjs.Dayjs | Date | string | null | undefined) {
+    updateField(newValue: DateInput) {
         this.value.set(this.toLocalDate(newValue));
         this.onChange?.(newValue != undefined ? dayjs(newValue) : undefined);
         this.valueChanged();
     }
 
     /**
-     * Normalises any supported value shape to a native `Date` (the type p-datepicker binds to) that
-     * represents the same absolute instant, or `undefined`/`null` when there is no value.
-     *
-     * `dayjs(value)` keeps the absolute instant for dayjs, Date and ISO-string inputs alike, and
-     * `.toDate()` hands p-datepicker a native Date whose local wall-clock is the instant's local
-     * representation — the exact round-trip the old owl picker performed.
+     * Normalises any supported value shape to a native `Date` for the same absolute instant, or `undefined`/`null`
+     * when there is no value. `dayjs(value)` keeps the instant for dayjs, Date and ISO-string inputs alike.
      */
-    private toLocalDate(value: any): Date | null | undefined {
+    private toLocalDate(value: DateInput): Date | null | undefined {
         if (value == undefined) {
             return value;
         }
@@ -189,11 +173,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return this.convertToDate(this.max?.());
     });
 
-    /**
-     * Function that converts a possibly undefined dayjs value to a date or null.
-     *
-     * @param value as dayjs
-     */
     convertToDate(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
     }

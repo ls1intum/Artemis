@@ -36,10 +36,9 @@
     }
 }
 
-// Dense toolbar buttons. Replicates the former Bootstrap `.btn.btn-sm.py-0` exactly (small font,
-// horizontal-only padding, transparent border/background, no hover variant) so the migrated PrimeNG/Tailwind
-// toolbar keeps pixel-identical density. Kept as a shared class because it is applied to ~15 toolbar buttons
-// and carries a `:disabled` pseudo-state, which a utility string cannot express on each element cleanly.
+// Dense toolbar buttons (small font, horizontal-only padding, transparent border/background, no hover).
+// Kept as a shared class because it is applied to ~15 toolbar buttons and carries a `:disabled` pseudo-state
+// that a per-element utility string cannot express cleanly.
 .md-toolbar-btn {
     display: inline-block;
     padding: 0 0.5rem;

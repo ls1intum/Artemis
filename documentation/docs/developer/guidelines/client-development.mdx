@@ -553,7 +553,7 @@ We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/
 | `text-right` / `text-left` | `text-end` / `text-start` (logical) |
 | `text-muted` | `text-muted-color` |
 | `text-danger` / `text-success` / `text-warning` / `text-info` | `text-(--danger)` / `text-(--success)` / `text-(--warning)` / `text-(--info)` (arbitrary form — see **Colors** below) |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*` | identical Tailwind utilities (the spacing scale matches 1:1) |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*` | same-named Tailwind utilities, but **the numeric scales differ** — Bootstrap's steps are rem-fixed (`mb-3` = 1rem) while Tailwind's are `0.25rem × n` (`mb-3` = 0.75rem). Convert by target rem (Bootstrap `mb-3` → Tailwind `mb-4`), never by copying the index. |
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a *primitive* token names a value (`red-500`); a *semantic* token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
@@ -570,7 +570,7 @@ Why the **arbitrary** form `text-(--danger)` rather than a named `text-danger`? 
 
 Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
 
-Enforced by `localRules/no-raw-tailwind-color-palette` (bans raw palette, hex, **and** primitive `--p-<color>-<n>` tokens used for meaning — in classes and in `[style.*]`/`[color]` bindings) across all templates, `localRules/no-bootstrap-classes` (bans Bootstrap color/component classes) on migrated modules, and a stylelint hex/`--bs-` ban per module.
+Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — it bans raw palette and hex in `class`/`[class]`, plus primitive `--p-<color>-<n>` tokens used for meaning both as utilities (`text-(--p-red-500)`) and as `var(--p-…)` inside `[style.*]`/`[color]` bindings (a bare hex inside a style binding is **not** caught). Bootstrap colour/component classes (e.g. named `text-danger`) are banned by `localRules/no-bootstrap-classes`, which is scoped to migrated modules only (currently `app/admin/**`), so the same class is still legitimate in not-yet-migrated modules. A stylelint hex/`--bs-` ban applies per migrated module.
 
 ```html
 <!-- layout/spacing in Tailwind, the button as a PrimeNG component -->

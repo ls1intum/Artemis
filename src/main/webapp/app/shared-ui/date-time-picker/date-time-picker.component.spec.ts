@@ -107,7 +107,7 @@ describe('FormDateTimePickerComponent', () => {
         expect(onChangeSpy).toHaveBeenCalledWith(normalDate);
     });
 
-    describe('UTC round-trip (the bug that reverted the previous attempt)', () => {
+    describe('UTC instant preservation across timezones', () => {
         /**
          * The picker binds a native local `Date` and edits in the browser-local timezone, while
          * Artemis persists UTC dayjs instants. A correct migration must NOT add or subtract the

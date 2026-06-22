@@ -9,7 +9,7 @@ describe('no-bootstrap-classes', () => {
         ruleTester.run('no-bootstrap-classes', rule, {
             valid: [
                 // Tailwind utilities that happen to share a name with (or resemble) Bootstrap classes,
-                // but are legitimate after migration. This is the regression the rule previously got wrong.
+                // but are legitimate after migration.
                 { code: '<div class="text-right"></div>' },
                 { code: '<div class="text-left"></div>' },
                 { code: '<div class="text-end"></div>' },

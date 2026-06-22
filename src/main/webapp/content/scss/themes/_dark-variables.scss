@@ -115,16 +115,16 @@ $table-striped-color: $body-color;
 $table-color: $body-color;
 
 // Global colors
-$artemis-dark: #353d47; // (not bootstrap)
+$artemis-dark: #353d47;
 $link-color: #3e8acc;
 
 // Border
 $border-color: lighten($body-bg, 10);
 
-// Base for dark spaces — cool-slate (h214 s14 l10); was faint-green rgb(24, 26, 24).
+// Base for dark spaces — cool-slate (h214 s14 l10).
 // This is the de-facto app-wide dark surface token (--module-bg, --card-bg, panels). Keeping it on the
 // same hue as the navbar ($artemis-dark #353d47, h213) and varying only lightness via the lighten()
-// steps below makes every dark surface one cohesive cool-slate family. (not bootstrap)
+// steps below makes every dark surface one cohesive cool-slate family.
 $neutral-dark: #16191d;
 
 $neutral-dark-l-5: lighten($neutral-dark, 5%);

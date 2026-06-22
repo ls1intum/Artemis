@@ -93,16 +93,12 @@ export class ResultComponent {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-    // Maps the Bootstrap-style class carried on the Badge (kept for other call sites consuming Badge.class)
-    // to the equivalent PrimeNG p-tag severity. Defaults to 'secondary' for any unrecognised value.
+    // Maps the Bootstrap-style class on the Badge (from ResultService.evaluateBadge, which emits only
+    // bg-secondary/bg-success/bg-info) to the PrimeNG p-tag severity; anything else falls back to 'secondary'.
     readonly badgeSeverity = computed<Tag['severity']>(() => {
         switch (this.badge()?.class) {
             case 'bg-success':
                 return 'success';
-            case 'bg-warning':
-                return 'warn';
-            case 'bg-danger':
-                return 'danger';
             case 'bg-info':
                 return 'info';
             default:

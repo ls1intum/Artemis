@@ -189,7 +189,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
 
     /**
      * Called by p-autoComplete on each keystroke / focus to populate the build agent address suggestions.
-     * Mirrors the previous NgbTypeahead behavior: case-insensitive substring match, capped at 10 results,
+     * case-insensitive substring match, capped at 10 results,
      * and showing all addresses when the query is empty.
      * @param event the autocomplete complete event carrying the current query
      */

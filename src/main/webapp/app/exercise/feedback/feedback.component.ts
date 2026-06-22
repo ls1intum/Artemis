@@ -419,19 +419,15 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Maps the legacy Bootstrap background class produced by {@link ResultService.evaluateBadge}
-     * (e.g. `bg-success`) to the corresponding PrimeNG tag severity used by `p-tag`.
+     * Maps the Bootstrap-style class from {@link ResultService.evaluateBadge} (which emits only
+     * bg-secondary/bg-success/bg-info) to the PrimeNG `p-tag` severity; anything else falls back to 'secondary'.
      */
-    badgeSeverity(badgeClass: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    badgeSeverity(badgeClass: string): 'success' | 'info' | 'secondary' {
         switch (badgeClass) {
             case 'bg-success':
                 return 'success';
             case 'bg-info':
                 return 'info';
-            case 'bg-warning':
-                return 'warn';
-            case 'bg-danger':
-                return 'danger';
             default:
                 return 'secondary';
         }

@@ -6,8 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgTemplateOutlet } from '@angular/common';
 
 /**
- * Minimal data source contract for the knowledge area tree. Mirrors the small surface of the previous
- * {@link MatTreeNestedDataSource} (a mutable `data` array) so consumers and the
+ * Minimal data source contract for the knowledge area tree: a mutable `data` array, so consumers and the
  * {@link StandardizedCompetencyFilterPageComponent} base class can keep reading/writing `dataSource.data`.
  */
 export interface KnowledgeAreaTreeDataSource {
@@ -21,7 +20,7 @@ export const COMPETENCY_NODE_TYPE = 'competency';
 /** Node type used to render the empty-state placeholder for a knowledge area without children/competencies. */
 export const EMPTY_NODE_TYPE = 'emptyKnowledgeArea';
 
-/** Data attached to a competency tree node, mirroring the previous competencyTemplate context. */
+/** Data attached to a competency tree node. */
 export interface CompetencyNodeData {
     competency: StandardizedCompetencyForTree;
     knowledgeArea: KnowledgeAreaForTree;
@@ -35,7 +34,7 @@ export interface CompetencyNodeData {
  * - `#competencyTemplate` with context `{ competency, knowledgeArea }`
  *
  * The {@link KnowledgeAreaForTree} forest is converted to a PrimeNG {@link TreeNode} array internally; nodes with
- * `isVisible === false` are filtered out (matching the previous `d-none` behavior). Expansion state is kept in a
+ * `isVisible === false` are filtered out. Expansion state is kept in a
  * local set keyed by knowledge area id so it survives the rebuilds triggered by in-place data mutations.
  */
 @Component({
@@ -115,8 +114,8 @@ export class KnowledgeAreaTreeComponent {
     }
 
     /**
-     * Toggles the expansion of a knowledge area. Restores the whole-title click-to-toggle affordance the
-     * previous MatTree row had; the built-in p-tree chevron remains the keyboard-accessible toggle.
+     * Toggles the expansion of a knowledge area. Provides a whole-title click-to-toggle affordance; the
+     * built-in p-tree chevron remains the keyboard-accessible toggle.
      * @param knowledgeArea the knowledge area whose expansion to toggle
      */
     protected toggle(knowledgeArea: KnowledgeAreaForTree): void {

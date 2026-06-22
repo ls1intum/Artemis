@@ -191,8 +191,9 @@ Organized by feature module:
 - Prefer 100% type safety
 - **UI components: Use PrimeNG instead of Bootstrap components**
   - All new UI elements must be implemented using PrimeNG components
-  - We are migrating from Bootstrap to PrimeNG; do not introduce new Bootstrap components
+  - We are migrating from Bootstrap to **Tailwind CSS v4 (utilities) + PrimeNG (components)**; do not introduce new Bootstrap components, classes, or raw colours
   - Existing Bootstrap usage will be migrated incrementally
+  - **Colours use semantic tokens, never primitives or Bootstrap classes**: `text-(--danger)`/`text-(--success)`/`text-(--warning)`/`text-(--info)` (or PrimeNG `severity`, or `text-muted-color`/`bg-surface-*`) — never `--p-<color>-N` primitives, `text-red-500`, or `text-danger`. Full standard, decision rules, and the Bootstrap→Tailwind/PrimeNG quick reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling)
   - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
 
 ### General
