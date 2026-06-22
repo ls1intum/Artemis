@@ -128,6 +128,24 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
     }
 
     @Test
+    void backfillsExamExerciseFromDatabase() throws Exception {
+        // Covers the exam path of the eager fetch (exerciseGroup → exam → course); if it were not eagerly loaded,
+        // fromExercise would fail and the exercise would be skipped, so isPresent() would fail here.
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        seedLegacyExerciseId(examExercise.getId());
+
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, PREFIX);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            Optional<Map<String, Object>> migrated = fetchTargetByEntityId(examExercise.getId());
+            assertThat(migrated).as("exam exercise backfilled from the database").isPresent();
+            assertThat(migrated.get().get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(examExercise.getTitle());
+            assertThat(migrated.get().get(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
+        });
+        assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).isFalse();
+    }
+
+    @Test
     void skipsExerciseAlreadyPresentInTargetWithoutOverwriting() throws Exception {
         // Simulate a newer version the live indexing path already wrote into the target.
         String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, exercise.getId());

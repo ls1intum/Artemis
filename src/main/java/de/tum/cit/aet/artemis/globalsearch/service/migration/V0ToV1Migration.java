@@ -23,9 +23,13 @@ import io.weaviate.client6.v1.api.collections.WeaviateObject;
  * properties and vectors are never reused. For each of those exercises that is not already present in
  * {@code SearchableEntities}, the exercise is loaded fresh from the database (the source of truth) and indexed via
  * {@link ExerciseSearchableEntityDTO#fromExercise}, so the migrated data is current rather than a stale v0 snapshot.
- * Exercises already present are left untouched, so the migration never overwrites a newer version written concurrently by
- * the live indexing path; exercises that no longer exist in the database are skipped, so deleted exercises are not
- * re-created. Each page is written with a single gRPC batch insert that re-vectorizes through the target collection's
+ * Exercises already present are left untouched. This is a best-effort skip: it avoids needlessly re-vectorizing
+ * already-indexed exercises and usually avoids overwriting a newer version the live indexing path wrote. It is not a hard
+ * concurrency guarantee — the batch insert upserts, so a live write that lands in the brief window between the existence
+ * check and the batch insert could still be overwritten (with current database data, since the migration also reads from
+ * the database); this is bounded to the one-time run and self-heals on the exercise's next edit. Exercises that no longer
+ * exist in the database are skipped, so deleted exercises are not re-created. Each page is written with a single gRPC
+ * batch insert that re-vectorizes through the target collection's
  * configured vectorizer. The legacy collection is deleted only after a fully successful run, and re-runs are idempotent
  * (the target UUIDs are deterministic and already-present exercises are skipped).
  * <p>
@@ -86,7 +90,9 @@ public class V0ToV1Migration implements WeaviateMigration {
 
         // Cursor-based pagination over the legacy collection, which is used only to enumerate the v0-searchable exercise
         // ids (its stored properties/vectors are never reused). For each page we skip ids already present in the target
-        // (never clobbering a newer version written concurrently by the live indexing path), load the remaining exercises
+        // (a best-effort skip that avoids re-vectorizing already-indexed exercises and usually avoids overwriting a newer
+        // live-indexed version; the batch insert upserts, so a write in the brief check-to-insert window can still be
+        // overwritten with current database data), load the remaining exercises
         // fresh from the database, and write them with a single gRPC batch insert that re-vectorizes through the target
         // collection's configured vectorizer. The gRPC batch path uses the client's 120s insert timeout rather than the
         // 30s the original per-object REST upserts hit, and on a single node with back-to-back batches only the first
