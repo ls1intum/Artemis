@@ -9,8 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -70,8 +68,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Service
 @Conditional(IrisEnabled.class)
 public class IrisChatPipelineExecutionService {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisChatPipelineExecutionService.class);
 
     private final IrisSessionRepository irisSessionRepository;
 
@@ -222,10 +218,6 @@ public class IrisChatPipelineExecutionService {
                 }).toList();
                 lectureUnitId = safeContext.stream().filter(IrisCombinedViewContextDTO.class::isInstance).map(IrisCombinedViewContextDTO.class::cast)
                         .map(IrisCombinedViewContextDTO::lectureUnitId).findFirst().orElse(null);
-
-                // TODO TEMP DEBUG (remove): trace what reaches Pyris for LECTURE_CHAT. Visible in the app container log (Grafana/Loki).
-                log.info("Iris LECTURE_CHAT context [session={}, lecture={}]: rawContext={}, validUnitIds={}, safeContext={}, lectureUnitId={}", session.getId(),
-                        session.getEntityId(), context, validUnitIds, safeContext, lectureUnitId);
             }
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
