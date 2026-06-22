@@ -515,10 +515,10 @@ describe('CourseLectureDetailsComponent', () => {
             expect(result).toBe(false);
         });
 
-        it('getContextProvider: returns a function that calls collectVisibleContexts', () => {
+        it('contextProvider: returns a function that calls collectVisibleContexts', () => {
             const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([]);
 
-            const provider = courseLecturesDetailsComponent['getContextProvider']();
+            const provider = courseLecturesDetailsComponent.contextProvider();
             expect(provider).toBeDefined();
 
             const contexts = provider!();
