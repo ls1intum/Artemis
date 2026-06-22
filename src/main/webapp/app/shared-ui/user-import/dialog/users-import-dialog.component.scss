@@ -1,9 +1,3 @@
-$success-text-color: #155724;
-$success-bg-color: #d4edda;
-
-$error-text-color: #dc3545;
-$error-bg-color: #f8d7da;
-
 :host {
     display: block;
 }
@@ -37,16 +31,16 @@ $error-bg-color: #f8d7da;
 .import-success {
     td,
     th {
-        color: $success-text-color;
-        background-color: $success-bg-color;
+        color: var(--success);
+        background-color: color-mix(in srgb, var(--success) 12%, transparent);
     }
 }
 
 .import-fail {
     td,
     th {
-        color: $error-text-color;
-        background-color: $error-bg-color;
+        color: var(--danger);
+        background-color: color-mix(in srgb, var(--danger) 12%, transparent);
     }
 }
 
@@ -70,7 +64,7 @@ $error-bg-color: #f8d7da;
 
     th,
     td {
-        border: 1px solid var(--p-content-border-color, #dee2e6);
+        border: 1px solid var(--p-content-border-color);
         padding: 0.4rem 0.75rem;
     }
 }
