@@ -231,7 +231,6 @@ describe('ResultHistoryDropdownComponent', () => {
             vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ severity: 'success', text: 'graded', tooltip: '' });
             expect(component.getBadgeSeverity(createResult(1, 100))).toBe('success');
         });
-
     });
 
     describe('isRowClickable', () => {
