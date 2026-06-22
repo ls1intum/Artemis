@@ -22,6 +22,7 @@ import {
     MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
     MODULE_FEATURE_PASSKEY,
+    MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
     MODULE_FEATURE_PLAGIARISM,
     MODULE_FEATURE_SAML2,
     MODULE_FEATURE_SHARING,
@@ -103,6 +104,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_LDAP,
         MODULE_FEATURE_SAML2,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
         MODULE_FEATURE_THEIA,
     ];
 
@@ -147,6 +149,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
         [MODULE_FEATURE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
+        [MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
         [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
     };
 

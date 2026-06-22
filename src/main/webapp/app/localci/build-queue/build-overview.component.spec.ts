@@ -8,7 +8,6 @@ import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.c
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
@@ -294,7 +293,6 @@ describe('BuildQueueComponent', () => {
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: routeStub },
                 { provide: AccountService, useValue: accountServiceMock },
-                { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),

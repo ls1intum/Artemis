@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -138,7 +137,7 @@ public class AssessmentDashboardService {
                         emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
                         return emptyTutorParticipation;
                     });
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+            exercise.setTutorParticipations(Set.of(tutorParticipation));
 
             var exerciseRating = ratingService.averageRatingByExerciseId(exercise.getId());
             exercise.setAverageRating(exerciseRating.averageRating());

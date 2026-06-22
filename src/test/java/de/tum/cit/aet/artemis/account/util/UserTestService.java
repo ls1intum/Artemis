@@ -387,7 +387,7 @@ public class UserTestService {
 
     // Test
     public void createInternalUserWithoutRoles_asAdmin_isSuccessful() throws Exception {
-        createInternalUserIsSuccessful(Collections.emptySet());
+        createInternalUserIsSuccessful(Set.of());
     }
 
     private void createInternalUserIsSuccessful(final Set<Role> roles) throws Exception {
@@ -530,7 +530,7 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Set.of())).toList();
         userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
@@ -568,7 +568,7 @@ public class UserTestService {
 
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
-        student.setGroups(Collections.emptySet());
+        student.setGroups(Set.of());
         userTestRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
@@ -882,7 +882,7 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Collections.emptySet());
+            user1.setGroups(Set.of());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
@@ -906,7 +906,7 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Collections.emptySet());
+            user1.setGroups(Set.of());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
@@ -1033,7 +1033,7 @@ public class UserTestService {
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
-            assertThat(result).isEqualTo(Collections.emptyList());
+            assertThat(result).isEqualTo(List.of());
         }
     }
 
@@ -1060,7 +1060,7 @@ public class UserTestService {
             user2.setRegistrationNumber(null);
             userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
-            assertThat(result).isEqualTo(Collections.emptyList());
+            assertThat(result).isEqualTo(List.of());
         }
     }
 

@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSou
  * {@code handoff} is non-null on the done message when the pipeline produced an answer. It identifies the most
  * focused Iris chat context the user can navigate to for follow-up questions.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisGlobalSearchAnswerWebsocketDTO(@NotBlank String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources,
         @Nullable PyrisGlobalSearchHandoffDTO handoff) {
 }

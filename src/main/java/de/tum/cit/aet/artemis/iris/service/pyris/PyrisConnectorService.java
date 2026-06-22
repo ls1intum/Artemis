@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,7 +92,7 @@ public class PyrisConnectorService {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return new MemirisMemoryDataDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                return new MemirisMemoryDataDTO(List.of(), List.of(), List.of());
             }
             return response.getBody();
         }
@@ -192,9 +191,10 @@ public class PyrisConnectorService {
     /**
      * Searches for lecture units in Pyris using a query string.
      *
-     * @param query     the search query
-     * @param limit     the maximum number of results to return
-     * @param courseIds optional list of course IDs to restrict the search scope; null means global search across all courses
+     * @param query         the search query
+     * @param limit         the maximum number of results to return
+     * @param courseIds     optional list of course IDs to restrict the search scope; null means global search across all courses
+     * @param accessContext the role-based access context for the requesting user
      * @return list of matching lecture search results
      */
     public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds, PyrisAccessContextDTO accessContext) {
@@ -222,10 +222,11 @@ public class PyrisConnectorService {
      * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
      * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
      *
-     * @param query       the user's question
-     * @param limit       the maximum number of source segments to retrieve
-     * @param jobToken    the Hazelcast job token used for callback authentication and WebSocket routing
-     * @param aiSelection the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     * @param query         the user's question
+     * @param limit         the maximum number of source segments to retrieve
+     * @param jobToken      the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     * @param accessContext the role-based access context for the requesting user
      */
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/pipelines/global-search/run";
