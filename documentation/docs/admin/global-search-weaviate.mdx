@@ -24,7 +24,7 @@ Pick the scenario that best matches your infrastructure:
 
 | Situation | Recommended embedder |
 |---|---|
-| On-premises GPU available | Self-hosted Qwen3-Embedding-8B via OpenAI-compatible API (e.g., TUM GPU server) |
+| On-premises GPU available | Self-hosted Qwen3-Embedding-8B via OpenAI-compatible API (e.g., your on-prem GPU server or a vLLM/Ollama endpoint) |
 | Cloud deployment / external API allowed | OpenAI text-embedding-3 or Azure OpenAI embedding |
 | Offline / air-gapped / no GPU | `embeddinggemma-300m` CPU sidecar (`weaviate-embeddings.yml`) |
 | Keyword-only search is sufficient | `vectorizer-module: none` — no embedder required |
@@ -80,7 +80,7 @@ Both Compose files source their Weaviate configuration from `docker/weaviate/*.e
 
 </Callout>
 
-Edit the relevant env file (`docker/weaviate/default.env` for the keyword-only setup, or `docker/weaviate/embeddings.env` for the sidecar setup) and make the following changes:
+Edit the applicable `.env` file under `docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
 
 ```bash
 # Disable anonymous access:
@@ -93,7 +93,7 @@ AUTHORIZATION_ADMINLIST_ENABLED=true
 AUTHORIZATION_ADMINLIST_USERS=admin@your-domain.com
 ```
 
-For a full walkthrough of the env-file variables and how to configure the matching `api-key` in Artemis, see the [Authentication](/developer/weaviate-setup#authentication) section of the developer Weaviate setup guide.
+For a full walkthrough of the env-file variables and how to configure the matching `api-key` in Artemis, see the [Authentication](../developer/weaviate-setup#authentication) section of the developer Weaviate setup guide.
 
 ---
 
