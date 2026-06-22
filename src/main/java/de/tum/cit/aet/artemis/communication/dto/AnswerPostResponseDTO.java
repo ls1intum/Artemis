@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO.VerifiedByDTO;
 
 /**
  * Cycle-free projection of {@link AnswerPost} for REST and websocket responses.
@@ -37,11 +38,16 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
  * @param hasForwardedMessages whether this answer has forwarded messages attached
  * @param post                 cycle-free parent-post reference (id + conversation) for client routing
  * @param reactions            reactions on the answer
+ * @param verified             whether an Iris-generated answer has been verified by a tutor; the client uses this to gate the approve/edit/reject controls
+ * @param confidenceScore      the Iris confidence score for the answer, {@code null} for human-written answers
+ * @param verifiedBy           the tutor who verified the answer, {@code null} when not yet verified
+ * @param verifiedAt           when the answer was verified, {@code null} when not yet verified
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullable UserRole authorRole, @Nullable ZonedDateTime creationDate,
         @Nullable ZonedDateTime updatedDate, @Nullable String content, boolean resolvesPost, @JsonProperty("isSaved") boolean isSaved, boolean hasForwardedMessages,
-        @Nullable AnswerParentPostRefDTO post, Set<ReactionResponseDTO> reactions) {
+        @Nullable AnswerParentPostRefDTO post, Set<ReactionResponseDTO> reactions, boolean verified, @Nullable Double confidenceScore, @Nullable VerifiedByDTO verifiedBy,
+        @Nullable ZonedDateTime verifiedAt) {
 
     /**
      * Build an {@link AnswerPostResponseDTO} from an {@link AnswerPost} entity.
@@ -54,6 +60,7 @@ public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @N
                 : answerPost.getReactions().stream().map(ReactionResponseDTO::from).collect(Collectors.toUnmodifiableSet());
         return new AnswerPostResponseDTO(answerPost.getId(), UserSummaryDTO.from(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.getCreationDate(),
                 answerPost.getUpdatedDate(), answerPost.getContent(), Boolean.TRUE.equals(answerPost.doesResolvePost()), answerPost.getIsSaved(),
-                answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions);
+                answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions, answerPost.isVerified(), answerPost.getConfidenceScore(),
+                VerifiedByDTO.fromUser(answerPost.getVerifiedBy()), answerPost.getVerifiedAt());
     }
 }
