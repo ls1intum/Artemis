@@ -151,7 +151,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
         assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
 
-        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.of(studentExam, false);
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
         QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
         QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
         assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);
@@ -192,7 +192,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
         assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
 
-        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.of(studentExam, false);
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
         QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
         QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
         assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);

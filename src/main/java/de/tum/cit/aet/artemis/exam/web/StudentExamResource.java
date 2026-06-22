@@ -371,7 +371,7 @@ public class StudentExamResource {
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 currentUser.getLogin());
-        return ResponseEntity.ok(StudentExamForResponseDTO.of(studentExam, studentExam.areResultsPublishedYet() || studentExam.isTestRun()));
+        return ResponseEntity.ok(StudentExamForResponseDTO.forConduction(studentExam, studentExam.areResultsPublishedYet() || studentExam.isTestRun()));
     }
 
     private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
@@ -418,7 +418,7 @@ public class StudentExamResource {
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
-        return ResponseEntity.ok(StudentExamForResponseDTO.of(testRun, testRun.areResultsPublishedYet() || testRun.isTestRun()));
+        return ResponseEntity.ok(StudentExamForResponseDTO.forConduction(testRun, testRun.areResultsPublishedYet() || testRun.isTestRun()));
     }
 
     @NonNull
@@ -485,7 +485,7 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        return ResponseEntity.ok(StudentExamForResponseDTO.of(studentExam, studentExam.areResultsPublishedYet() || studentExam.isTestRun()));
+        return ResponseEntity.ok(StudentExamForResponseDTO.forSummary(studentExam, studentExam.areResultsPublishedYet() || studentExam.isTestRun()));
     }
 
     /**
