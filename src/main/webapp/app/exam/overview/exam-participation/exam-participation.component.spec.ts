@@ -364,7 +364,7 @@ describe('ExamParticipationComponent', () => {
         const exam = new Exam();
         exam.id = 2;
         exam.examType = ExamType.TEST_WITH_SIMULATION;
-        exam.startDate = dayjs().subtract(10, 'minutes');
+        exam.startDate = dayjs().subtract(10, 'minutes').toISOString() as any;
         exam.workingTime = 3600;
         exam.endDate = dayjs().add(2, 'hours');
         const course: Course = { id: 1, exams: [exam] };
@@ -384,6 +384,28 @@ describe('ExamParticipationComponent', () => {
         expect(comp.testExam()).toBe(true);
         expect(comp.loadingExam()).toBe(false);
         expect(comp.noStudentExamMessageKey()).toBe('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
+    });
+
+    it('should request a new student exam for an active test exam with simulation without existing attempts', () => {
+        const exam = new Exam();
+        exam.id = 2;
+        exam.examType = ExamType.TEST_WITH_SIMULATION;
+        exam.startDate = dayjs().subtract(10, 'minutes');
+        exam.workingTime = 3600;
+        exam.endDate = dayjs().add(2, 'hours');
+        const course: Course = { id: 1, exams: [exam] };
+        const studentExam = new StudentExam();
+        studentExam.exam = exam;
+
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(examParticipationService, 'getTestStudentExamsForOverviewPage').mockReturnValue([]);
+        const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+
+        comp.ngOnInit();
+
+        expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam()).toEqual(studentExam);
     });
 
     it('should still load an existing test exam attempt summary when the attempt card is clicked', () => {

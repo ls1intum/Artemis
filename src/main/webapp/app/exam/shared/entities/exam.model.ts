@@ -15,7 +15,7 @@ export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined 
     if (!(exam?.examType === ExamType.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;
     }
-    return exam.startDate.add(exam.workingTime, 'seconds');
+    return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
 }
 
 export function hasTestExamType(exam?: Pick<Exam, 'examType'>): boolean {
