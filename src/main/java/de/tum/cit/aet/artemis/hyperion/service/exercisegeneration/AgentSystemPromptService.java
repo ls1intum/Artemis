@@ -57,7 +57,9 @@ public class AgentSystemPromptService {
                 - verify.sh  : the build recipe — run it to check your work (see below)
                 - reference/ : (if present) a COMPLETE worked example exercise in this language — study it to learn this language's exact test-framework conventions and harness wiring \
                 (how a test file is structured, the assertion/annotation style, how it plugs into the build and emits its report). It is READ-ONLY background: do NOT edit it, do NOT \
-                copy its topic, and do NOT add it to the exercise — author the exercise the brief asks for, in your own design, using reference/ only as a conventions guide.
+                copy its design or code, and do NOT add it to the exercise. Build the exercise the BRIEF asks for — the brief always wins, even when its topic happens to match the \
+                reference's (a brief asking for a sort means implement that sort with your OWN design; never substitute an unrelated topic to avoid resembling the reference). Use reference/ \
+                only as a conventions guide.
 
                 Programming language: %s%s
 
@@ -175,6 +177,16 @@ public class AgentSystemPromptService {
                 differ ONLY in the assignment source bodies), so both runs must report the same number of tests. Before you submit, re-read your tests against the problem statement and confirm \
                 there is a test for EVERY promise and edge case you stated — empty, single-element, several-element/ordering, and each invariant and exception type; an untested promise is a hole \
                 that lets a broken solution score full marks. Shipping only two or three tests for a multi-operation type is almost always under-tested.%s
+
+                FINAL PROBLEM-STATEMENT PASS — the differential oracle does NOT check any of the following, so they are yours to get right. Re-read problem-statement.md top to bottom right before `submit` and fix every miss:
+                1. EXAMPLE PLACEMENT: each [task] carries its own fenced worked example on the lines directly under that [task] line (or one explicitly labelled for it). There is NO separate \
+                "## Examples"/"## Worked examples" section collecting them, and every distinct edge/error class a [task] asserts has its OWN concrete fenced trace — not one representative for several.
+                2. EXAMPLES TEACH, never leak: no worked example reuses a graded test's exact input; vary the literals and prefer a smaller instance.
+                3. NO UNVERIFIED CLAIM: delete any guarantee no [task]-bound test checks — a "stable" / "in-place" / "returns a new object" / "does not modify the input" claim with no asserting \
+                test, a "throws on null/NaN/…" the solution does not actually throw, or a "does not modify" on purely primitive parameters (nothing is mutable). Either ADD the test or CUT the sentence.
+                3a. PLAIN ASCII everywhere, INCLUDING inside [task] titles: only the hyphen-minus `-` (no U+2011/U+2013/U+2014), no smart quotes, ellipsis, or non-breaking space.
+                4. STRUCTURE: exactly one `#` title; a real `## Tasks` section holds the [task] lines (they never dangle under prose); headings descend one level at a time.
+                5. CONTRACT COMPLETE: every identifier a [task] needs (constructor, collaborating class, accessor) is pinned in the contract, not only shown in an example.
 
                 WHERE FILES GO (important — the layout is NOT the language default): the verifier assembles the test project with your assignment checked out into an `assignment/` \
                 directory next to the tests. Before writing code, read the test project's build file (e.g. tests/pom.xml or tests/build.gradle) to see exactly which directories \
