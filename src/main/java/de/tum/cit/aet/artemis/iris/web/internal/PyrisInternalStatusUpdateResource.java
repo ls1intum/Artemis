@@ -23,12 +23,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdate
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -234,6 +236,31 @@ public class PyrisInternalStatusUpdateResource {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/webhooks/ingestion/course-memory/runs/{runId}/status} : Set the status of a Course Memory ingestion job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("webhooks/ingestion/course-memory/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfCourseMemoryIngestionJob(@PathVariable String runId, @RequestBody PyrisCourseMemoryIngestionStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
+        if (!job.jobId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        if (!(job instanceof CourseMemoryIngestionWebhookJob courseMemoryIngestionWebhookJob)) {
+            throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
+        }
+        pyrisStatusUpdateService.handleStatusUpdate(courseMemoryIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
 
