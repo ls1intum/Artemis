@@ -130,7 +130,7 @@ describe('GocastStreamPickerComponent', () => {
         vi.spyOn(gocastService, 'listTumLiveStreams').mockReturnValue(of(mockStreams));
         createComponent(10, true);
 
-        const emittedValues: { streamId: number; streamName: string; slug?: string }[] = [];
+        const emittedValues: ({ streamId: number; streamName: string; slug?: string } | undefined)[] = [];
         component.streamSelected.subscribe((v) => emittedValues.push(v));
 
         // p-select onChange emits the selected option value (the streamId)
@@ -147,13 +147,13 @@ describe('GocastStreamPickerComponent', () => {
         // Server-resolved path (no hasActiveBinding input) → slug comes from the binding
         createComponent(10);
 
-        const emittedValues: { streamId: number; streamName: string; slug?: string }[] = [];
+        const emittedValues: ({ streamId: number; streamName: string; slug?: string } | undefined)[] = [];
         component.streamSelected.subscribe((v) => emittedValues.push(v));
 
         component.onStreamSelected(100);
 
         expect(emittedValues).toHaveLength(1);
-        expect(emittedValues[0].slug).toBe('eidi');
+        expect(emittedValues[0]?.slug).toBe('eidi');
     });
 
     it('should show an error alert when loading streams fails', () => {
