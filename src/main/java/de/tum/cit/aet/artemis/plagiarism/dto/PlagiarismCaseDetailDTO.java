@@ -3,12 +3,10 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -47,43 +45,6 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
         this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
                 userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, verdictMessage, verdictPointDeduction, null);
-    }
-
-    /**
-     * Maps a plagiarism case entity to the instructor detail DTO.
-     *
-     * @param plagiarismCase the plagiarism case entity
-     * @return the DTO representation
-     */
-    public static @Nullable PlagiarismCaseDetailDTO ofForInstructor(@Nullable PlagiarismCase plagiarismCase) {
-        return of(plagiarismCase);
-    }
-
-    /**
-     * Maps a plagiarism case entity to the student detail DTO.
-     *
-     * @param plagiarismCase the plagiarism case entity
-     * @return the DTO representation
-     */
-    public static @Nullable PlagiarismCaseDetailDTO ofForStudent(@Nullable PlagiarismCase plagiarismCase) {
-        return of(plagiarismCase);
-    }
-
-    private static @Nullable PlagiarismCaseDetailDTO of(@Nullable PlagiarismCase plagiarismCase) {
-        if (plagiarismCase == null) {
-            return null;
-        }
-
-        List<PlagiarismSubmissionForCaseDTO> plagiarismSubmissions = null;
-        if (plagiarismCase.getPlagiarismSubmissions() != null && Hibernate.isInitialized(plagiarismCase.getPlagiarismSubmissions())) {
-            plagiarismSubmissions = plagiarismCase.getPlagiarismSubmissions().stream().map(PlagiarismSubmissionForCaseDTO::fromSubmissionForCase).toList();
-        }
-        int plagiarismSubmissionCount = plagiarismSubmissions != null ? plagiarismSubmissions.size() : 0;
-
-        return new PlagiarismCaseDetailDTO(plagiarismCase.getId(), PlagiarismCaseExerciseDTO.fromExercise(plagiarismCase.getExercise()),
-                PlagiarismCaseUserDTO.fromUser(plagiarismCase.getStudent()), PlagiarismCasePostSummaryDTO.fromPost(plagiarismCase.getPost()), plagiarismCase.getVerdict(),
-                plagiarismCase.getVerdictDate(), PlagiarismCaseUserDTO.fromUser(plagiarismCase.getVerdictBy()), plagiarismSubmissionCount,
-                plagiarismCase.isCreatedByContinuousPlagiarismControl(), plagiarismCase.getVerdictMessage(), plagiarismCase.getVerdictPointDeduction(), plagiarismSubmissions);
     }
 
     private static @Nullable PlagiarismCaseUserDTO userOrNull(@Nullable Long id, @Nullable String login, @Nullable String name, @Nullable String visibleRegistrationNumber) {
