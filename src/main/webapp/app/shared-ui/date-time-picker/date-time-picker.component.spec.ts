@@ -241,27 +241,23 @@ describe('FormDateTimePickerComponent', () => {
 
     describe('validation', () => {
         it('should be invalid when the error input is set', () => {
-            (component as any).isInputValid.set(true);
             fixture.componentRef.setInput('error', true);
             expect(component.isValid()).toBe(false);
         });
 
         it('should be invalid when a required field has no value', () => {
-            (component as any).isInputValid.set(true);
-            (component as any).dateInputValue.set('');
             fixture.componentRef.setInput('requiredField', true);
             expect(component.isValid()).toBe(false);
         });
 
         it('should be invalid when the warning input is set', () => {
-            (component as any).isInputValid.set(true);
             fixture.componentRef.setInput('warning', true);
             expect(component.isValid()).toBe(false);
         });
 
-        it('should be valid when input is valid and no error/warning/required violation is present', () => {
-            (component as any).isInputValid.set(true);
-            (component as any).dateInputValue.set('2022-01-02');
+        it('should be valid when a required field has a valid value and no error/warning is present', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.componentRef.setInput('value', dayjs('2022-01-02'));
             expect(component.isValid()).toBe(true);
         });
     });
@@ -270,13 +266,11 @@ describe('FormDateTimePickerComponent', () => {
         const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => undefined);
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
-        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation(() => undefined);
 
         component.clearDate();
 
         expect(resetSpy).toHaveBeenCalledWith(undefined);
         expect(component.value()).toBeUndefined();
         expect(onChangeSpy).toHaveBeenCalledWith(undefined);
-        expect(updateSignalsSpy).toHaveBeenCalled();
     });
 });

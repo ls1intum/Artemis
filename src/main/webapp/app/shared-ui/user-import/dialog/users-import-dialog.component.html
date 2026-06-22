@@ -86,7 +86,7 @@
             <div class="mt-2">
                 <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
                 @if (validationError() || noUsersFoundError()) {
-                    <div class="mt-4 mb-2 text-danger">
+                    <div class="mt-4 mb-2 text-(--danger)">
                         <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
                         <ul class="mt-1">
                             @if (validationError()) {
@@ -187,7 +187,7 @@
                         <div class="ms-2">
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                             <span
-                                ><b class="text-danger">{{ numberOfUsersNotImported }}</b></span
+                                ><b class="text-(--danger)">{{ numberOfUsersNotImported }}</b></span
                             >
                         </div>
                     }
@@ -208,7 +208,7 @@
                         <div class="ms-2">
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
                             <span
-                                ><b class="text-danger">{{ numberOfUsersNotImported }}</b></span
+                                ><b class="text-(--danger)">{{ numberOfUsersNotImported }}</b></span
                             >
                         </div>
                     }

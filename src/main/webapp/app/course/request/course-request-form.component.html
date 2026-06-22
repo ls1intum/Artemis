@@ -11,7 +11,7 @@
             maxlength="255"
         />
         @if (form().get('title')?.invalid && form().get('title')?.touched) {
-            <small class="text-danger" jhiTranslate="entity.validation.required"></small>
+            <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
         }
     </div>
 
@@ -41,11 +41,11 @@
         </div>
         @if (form().get('shortName')?.touched) {
             @if (form().get('shortName')?.hasError('required')) {
-                <small class="text-danger" jhiTranslate="entity.validation.required"></small>
+                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
             } @else if (form().get('shortName')?.hasError('minlength')) {
-                <small class="text-danger" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></small>
+                <small class="text-(--danger)" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></small>
             } @else if (form().get('shortName')?.hasError('regexInvalid') || form().get('shortName')?.hasError('pattern')) {
-                <small class="text-danger" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></small>
+                <small class="text-(--danger)" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></small>
             }
         }
     </div>
@@ -61,7 +61,7 @@
                 [invalid]="(form().get('semester')?.invalid && form().get('semester')?.touched) ?? false"
             />
             @if (form().get('semester')?.invalid && form().get('semester')?.touched) {
-                <small class="text-danger" jhiTranslate="entity.validation.required"></small>
+                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
             }
         </div>
         <div class="flex flex-col gap-2">
@@ -82,7 +82,7 @@
         </div>
     </div>
     @if (dateRangeInvalid()) {
-        <div class="text-danger mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
+        <div class="text-(--danger) mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
     }
 
     <div class="flex items-center gap-2 mb-3">
@@ -102,7 +102,7 @@
             [placeholder]="showReasonPlaceholder() ? ('artemisApp.courseRequest.form.reasonPlaceholder' | artemisTranslate) : ''"
         ></textarea>
         @if (form().get('reason')?.invalid && form().get('reason')?.touched) {
-            <small class="text-danger" jhiTranslate="entity.validation.required"></small>
+            <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
         }
     </div>
 </ng-container>

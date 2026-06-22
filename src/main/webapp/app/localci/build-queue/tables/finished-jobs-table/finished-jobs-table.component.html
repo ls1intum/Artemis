@@ -57,9 +57,9 @@
                     <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)" aria-hidden="true" tabindex="-1"></a>
                     <span
                         [ngClass]="{
-                            'text-success': finishedBuildJob.status === 'SUCCESSFUL',
-                            'text-warning': finishedBuildJob.status === 'CANCELLED',
-                            'text-danger': finishedBuildJob.status === 'FAILED' || finishedBuildJob.status === 'ERROR',
+                            'text-(--success)': finishedBuildJob.status === 'SUCCESSFUL',
+                            'text-(--warning)': finishedBuildJob.status === 'CANCELLED',
+                            'text-(--danger)': finishedBuildJob.status === 'FAILED' || finishedBuildJob.status === 'ERROR',
                         }"
                     >
                         <fa-icon

@@ -1,4 +1,4 @@
-import { Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
+import { Component, computed, forwardRef, input, model, output, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -68,9 +68,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
     valueChange = output<void>();
 
-    protected isInputValid = signal<boolean>(false);
-    protected dateInputValue = signal<string>('');
-
     /**
      * True when the bound value is a present, valid date. Validity derives from the bound value, not from DOM
      * input events: a programmatically set `[value]`/`writeValue` (edit forms, the audits filter) never fires an
@@ -94,18 +91,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
 
-    /** Refreshes the mirrored `NgModel` state. Public because exercise/exam update forms call it to re-sync after programmatic changes. */
-    updateSignals(): void {
-        const dateInput = this.dateInputRef() ?? this.dateInputOverride;
-        this.isInputValid.set(!dateInput?.invalid);
-        this.dateInputValue.set(dateInput?.value);
-    }
-
     private onChange?: (value?: dayjs.Dayjs) => void;
 
     valueChanged() {
         this.valueChange.emit();
-        this.updateSignals();
     }
 
     /**
@@ -115,7 +104,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     writeValue(value: DateInput) {
         this.value.set(this.toLocalDate(value));
-        this.updateSignals();
     }
 
     registerOnTouched(_fn: () => void) {}
@@ -186,7 +174,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         if (this.onChange) {
             this.onChange(undefined);
         }
-        this.updateSignals();
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;

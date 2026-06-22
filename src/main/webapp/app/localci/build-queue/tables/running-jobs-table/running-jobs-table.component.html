@@ -34,7 +34,7 @@
                         </span>
                     </td>
                     <td class="build-jobs-column-strings">
-                        <span [pTooltip]="buildJob.name ?? ''" [ngClass]="{ 'text-danger': (buildJob.jobTimingInfo?.buildDuration ?? 0) > 240 }">
+                        <span [pTooltip]="buildJob.name ?? ''" [ngClass]="{ 'text-(--danger)': (buildJob.jobTimingInfo?.buildDuration ?? 0) > 240 }">
                             @if ((buildJob.jobTimingInfo?.buildDuration ?? 0) > 240) {
                                 <fa-icon [icon]="faExclamationCircle" class="me-1" />
                             }
