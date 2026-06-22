@@ -62,7 +62,7 @@ export class DeleteButtonDirective implements OnInit {
     delete = output<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
-    deleteTextSpan: HTMLElement;
+    deleteTextSpan?: HTMLElement;
 
     /**
      * Styles the host as a PrimeNG button (matching what the `pButton` directive emits) and appends a

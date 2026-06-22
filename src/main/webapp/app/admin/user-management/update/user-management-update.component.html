@@ -240,7 +240,7 @@
                         @for (authority of sortedAuthorities(); track authority) {
                             <label
                                 class="flex cursor-pointer select-none items-center gap-2 rounded-md border px-3 py-2"
-                                [ngClass]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
+                                [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
                                 <p-checkbox [binary]="true" [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (onChange)="toggleAuthority(authority)" />
