@@ -59,7 +59,7 @@
                 </td>
                 <td>
                     <span
-                        [style.color]="request.instructorCourseCount && request.instructorCourseCount > 0 ? 'var(--p-green-500)' : undefined"
+                        [style.color]="request.instructorCourseCount && request.instructorCourseCount > 0 ? 'var(--success)' : undefined"
                         [class.font-semibold]="request.instructorCourseCount && request.instructorCourseCount > 0"
                     >
                         @if (request.instructorCourseCount) {
@@ -170,7 +170,7 @@
                 <td class="break-words">{{ request.reason }}</td>
                 <td class="break-words">
                     @if (request.status === CourseRequestStatus.REJECTED) {
-                        <div class="text-(--p-red-500) font-semibold">
+                        <div class="text-(--danger) font-semibold">
                             {{ 'artemisApp.courseRequest.status.' + request.status | artemisTranslate }}
                         </div>
                         <div>{{ request.decisionReason }}</div>

@@ -87,7 +87,7 @@
                                 "
                             />
                             @if (rateLimitRequestsError(); as error) {
-                                <div class="text-danger text-sm mt-1">
+                                <div class="text-(--danger) text-sm mt-1">
                                     <span [jhiTranslate]="error"></span>
                                 </div>
                             }
@@ -106,7 +106,7 @@
                                 "
                             />
                             @if (rateLimitTimeframeError(); as error) {
-                                <div class="text-danger text-sm mt-1">
+                                <div class="text-(--danger) text-sm mt-1">
                                     <span [jhiTranslate]="error"></span>
                                 </div>
                             }

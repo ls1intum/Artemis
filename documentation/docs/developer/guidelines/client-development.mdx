@@ -552,9 +552,25 @@ We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/
 | `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col` |
 | `text-right` / `text-left` | `text-end` / `text-start` (logical) |
 | `text-muted` | `text-muted-color` |
+| `text-danger` / `text-success` / `text-warning` / `text-info` | `text-(--danger)` / `text-(--success)` / `text-(--warning)` / `text-(--info)` (arbitrary form — see **Colors** below) |
 | `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*` | identical Tailwind utilities (the spacing scale matches 1:1) |
 
-**Colors must be brand-bound.** Use the semantic tokens from `tailwindcss-primeui` (`bg-primary`, `text-surface-*`, `text-muted-color`, `text-primary-contrast`) and the Artemis state tokens (`text-success`/`bg-danger`/…), never a raw Tailwind palette (`text-green-500`) or arbitrary hex (`bg-[#f00]`). This is enforced by the `localRules/no-raw-tailwind-color-palette` ESLint rule (all templates) and a stylelint hex/`--bs-` ban (per migrated module). Dark mode resolves automatically via the PrimeNG `darkModeSelector` (the Tailwind `dark:` variant is aligned to it).
+**Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a *primitive* token names a value (`red-500`); a *semantic* token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
+
+| Need | Use | Never |
+| --- | --- | --- |
+| brand / neutral / surface | `text-primary`, `text-color`, `text-muted-color`, `bg-surface-*`, `border-surface-*` (tailwindcss-primeui — always available) | `text-blue-500`, `bg-[#…]` |
+| state on a **PrimeNG component** | the `severity` prop: `p-message` / `p-tag` / `p-button` `severity="error \| warn \| success \| info"` | a color class on the component |
+| state on **plain markup** (static) | the arbitrary semantic utility `text-(--danger)` / `bg-(--success)` / `border-(--warning)` / `text-(--info)` | `text-danger` (Bootstrap) or `text-(--p-red-500)` (primitive) |
+| state that is **dynamic / conditional** | `[style.color]="cond ? 'var(--danger)' : undefined"` | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"` |
+
+The Artemis state tokens are `--danger` (red), `--success` (green), `--warning` (yellow) and `--info` (**cyan — never blue**). They are theme-aware (regenerated for light **and** dark by the `generate-css-vars` mixin) and are the same tokens `AuraArtemis` feeds into the PrimeNG palette, so plain markup, PrimeNG components and the theme share one source of truth — no `dark:` variant needed.
+
+Why the **arbitrary** form `text-(--danger)` rather than a named `text-danger`? While Bootstrap is still loaded **unlayered**, its `.text-danger { … !important }` beats any layered Tailwind utility unconditionally, so a named `text-danger` would silently render Bootstrap's color. The escaped class `.text-\(--danger\)` shares no selector with Bootstrap, so it wins cleanly. At the Bootstrap-removal exit gate, add `@theme inline { --color-danger: var(--danger); … }` and `sed` `text-(--danger)` → `text-danger` — a pure rename with zero visual change.
+
+Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
+
+Enforced by `localRules/no-raw-tailwind-color-palette` (bans raw palette, hex, **and** primitive `--p-<color>-<n>` tokens used for meaning — in classes and in `[style.*]`/`[color]` bindings) across all templates, `localRules/no-bootstrap-classes` (bans Bootstrap color/component classes) on migrated modules, and a stylelint hex/`--bs-` ban per module.
 
 ```html
 <!-- layout/spacing in Tailwind, the button as a PrimeNG component -->

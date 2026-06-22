@@ -55,7 +55,7 @@
         <!-- Row 2: No-Response -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
             <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseRate" helpKey="artemisApp.irisDashboard.help.noResponseRate">
-                <span class="text-2xl font-bold" [style.color]="o.noResponseRate > 10 ? 'var(--p-red-500)' : undefined">{{ o.noResponseRate | number: '1.1-1' }}%</span>
+                <span class="text-2xl font-bold" [style.color]="o.noResponseRate > 10 ? 'var(--danger)' : undefined">{{ o.noResponseRate | number: '1.1-1' }}%</span>
             </jhi-iris-kpi-card>
             <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseMessages" helpKey="artemisApp.irisDashboard.help.noResponseMessages">
                 <span class="text-2xl font-bold">{{ o.noResponseMessageCount }}</span>

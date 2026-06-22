@@ -31,7 +31,7 @@
                         name="expireDate"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <small class="text-(--p-red-500) text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
+                        <small class="text-(--danger) text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
                     }
                 </div>
                 @if (!form.get('id')?.value) {

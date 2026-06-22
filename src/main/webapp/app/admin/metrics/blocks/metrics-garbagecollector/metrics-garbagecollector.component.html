@@ -10,7 +10,7 @@
                 <p-progressbar
                     [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size'])"
                     [showValue]="false"
-                    color="var(--p-green-500)"
+                    color="var(--success)"
                 >
                     <ng-template #content>
                         {{ toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size']) | number: '1.0-2' }}%
@@ -29,7 +29,7 @@
                 <p-progressbar
                     [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated'])"
                     [showValue]="false"
-                    color="var(--p-green-500)"
+                    color="var(--success)"
                 >
                     <ng-template #content>
                         {{ toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated']) | number: '1.0-2' }}%

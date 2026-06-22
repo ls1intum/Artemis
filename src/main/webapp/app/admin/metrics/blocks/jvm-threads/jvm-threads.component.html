@@ -3,28 +3,28 @@
 <div class="flex flex-col gap-2">
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats().runnable }}</span>
-        <p-progressbar [value]="toPercentage(threadStats().runnable, threadStats().all)" [showValue]="false" color="var(--p-green-500)">
+        <p-progressbar [value]="toPercentage(threadStats().runnable, threadStats().all)" [showValue]="false" color="var(--success)">
             <ng-template #content>{{ toPercentage(threadStats().runnable, threadStats().all) | number: '1.0-0' }}%</ng-template>
         </p-progressbar>
     </div>
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
-        <p-progressbar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" color="var(--p-yellow-500)">
+        <p-progressbar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" color="var(--warning)">
             <ng-template #content>{{ toPercentage(threadStats().timedWaiting, threadStats().all) | number: '1.0-0' }}%</ng-template>
         </p-progressbar>
     </div>
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
-        <p-progressbar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" color="var(--p-yellow-500)">
+        <p-progressbar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" color="var(--warning)">
             <ng-template #content>{{ toPercentage(threadStats().waiting, threadStats().all) | number: '1.0-0' }}%</ng-template>
         </p-progressbar>
     </div>
 
     <div>
         <span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
-        <p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--p-green-500)">
+        <p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--success)">
             <ng-template #content>{{ toPercentage(threadStats().blocked, threadStats().all) | number: '1.0-0' }}%</ng-template>
         </p-progressbar>
     </div>

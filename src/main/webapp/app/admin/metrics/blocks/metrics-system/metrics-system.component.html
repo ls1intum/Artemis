@@ -14,7 +14,7 @@
                 <span>Process CPU usage</span>
                 <span>{{ 100 * systemMetrics()['process.cpu.usage'] | number: '1.0-2' }} %</span>
             </div>
-            <p-progressbar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" color="var(--p-green-500)">
+            <p-progressbar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" color="var(--success)">
                 <ng-template #content>{{ toPercentage(systemMetrics()['process.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
             </p-progressbar>
         </div>
@@ -23,7 +23,7 @@
                 <span>System CPU usage</span>
                 <span>{{ 100 * systemMetrics()['system.cpu.usage'] | number: '1.0-2' }} %</span>
             </div>
-            <p-progressbar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" color="var(--p-green-500)">
+            <p-progressbar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" color="var(--success)">
                 <ng-template #content>{{ toPercentage(systemMetrics()['system.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
             </p-progressbar>
         </div>

@@ -131,9 +131,8 @@
                             <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                         }
                         <dd
-                            [class.text-danger]="logEntry.type === BuildLogType.ERROR"
+                            [style.color]="logEntry.type === BuildLogType.ERROR ? 'var(--danger)' : logEntry.type === BuildLogType.WARNING ? 'var(--warning)' : undefined"
                             [class.font-bold]="logEntry.type === BuildLogType.ERROR"
-                            [class.text-warning]="logEntry.type === BuildLogType.WARNING"
                             [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                         >
                             {{ logEntry.log }}
@@ -166,9 +165,8 @@
                         <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                     }
                     <dd
-                        [class.text-danger]="logEntry.type === BuildLogType.ERROR"
+                        [style.color]="logEntry.type === BuildLogType.ERROR ? 'var(--danger)' : logEntry.type === BuildLogType.WARNING ? 'var(--warning)' : undefined"
                         [class.font-bold]="logEntry.type === BuildLogType.ERROR"
-                        [class.text-warning]="logEntry.type === BuildLogType.WARNING"
                         [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                     >
                         {{ logEntry.log }}

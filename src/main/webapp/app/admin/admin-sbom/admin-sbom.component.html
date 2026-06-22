@@ -126,7 +126,7 @@
             }
         </div>
         <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg">
-            <fa-icon [icon]="faDesktop" class="text-(--p-red-500) me-2" />
+            <fa-icon [icon]="faDesktop" class="text-(--danger) me-2" />
             <h3 class="mb-0 inline">{{ clientComponentCount() }}</h3>
             <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.clientComponents"></p>
             @if (clientMetadata()?.version) {
@@ -135,14 +135,14 @@
         </div>
         <div
             class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg"
-            [style.border-color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : undefined"
+            [style.border-color]="vulnerabilities()?.totalVulnerabilities ? 'var(--danger)' : undefined"
         >
             @if (loadingVulnerabilities()) {
                 <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                 <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.loadingVulnerabilities"></span>
             } @else if (vulnerabilities()) {
-                <fa-icon [icon]="faShieldAlt" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : 'var(--p-green-500)'" class="me-2" />
-                <h3 class="mb-0 inline" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : undefined">
+                <fa-icon [icon]="faShieldAlt" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--danger)' : 'var(--success)'" class="me-2" />
+                <h3 class="mb-0 inline" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--danger)' : undefined">
                     {{ vulnerabilities()?.totalVulnerabilities ?? 0 }}
                 </h3>
                 <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.vulnerabilities"></p>
