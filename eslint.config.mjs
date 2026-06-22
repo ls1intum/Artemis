@@ -390,10 +390,18 @@ export default tseslint.config(
         },
     },
     {
-        // Regression lock: the admin module is fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
-        // forbidden in its templates. Extend the glob to each module as it is migrated. See client-development.mdx
+        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
-        files: ['src/main/webapp/app/admin/**/*.html'],
+        files: [
+            'src/main/webapp/app/admin/**/*.html',
+            'src/main/webapp/app/course/request/**/*.html',
+            'src/main/webapp/app/exercise/result/**/*.html',
+            'src/main/webapp/app/iris/manage/settings/**/*.html',
+            'src/main/webapp/app/shared-ui/date-time-picker/**/*.html',
+            'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
+            'src/main/webapp/app/localci/build-queue/**/*.html',
+        ],
         languageOptions: {
             parser: angularTemplateParser,
         },
