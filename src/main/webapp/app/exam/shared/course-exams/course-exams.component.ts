@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { combineLatest, filter, of } from 'rxjs';
+import { combineLatestWith, filter, of } from 'rxjs';
 import { Exam, ExamType, hasTestExamType } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -103,8 +103,9 @@ export class CourseExamsComponent {
             });
 
         // watch for new student exams
-        combineLatest([this.examParticipationService.shouldUpdateTestExamsObservable, this.examParticipationService.currentlyLoadedStudentExam])
+        this.examParticipationService.shouldUpdateTestExamsObservable
             .pipe(
+                combineLatestWith(this.examParticipationService.currentlyLoadedStudentExam),
                 filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()),
                 takeUntilDestroyed(),
             )
