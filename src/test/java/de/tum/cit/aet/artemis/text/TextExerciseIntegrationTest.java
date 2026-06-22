@@ -1011,6 +1011,29 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getAllTextExercisesForCourse_listItemCarriesScoringAndModeFields() throws Exception {
+        // Regression guard: the course management text-exercise table renders bonus points, the included-in-score
+        // badge, the presentation-score column, and the Teams action (teamMode). The list DTO must keep these scalars;
+        // dropping them left the table blank. Use non-default values so they are serialized (not dropped by NON_EMPTY).
+        textExercise.setBonusPoints(7.0);
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        textExercise.setPresentationScoreEnabled(true);
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExerciseRepository.save(textExercise);
+
+        List<TextExerciseListItemDTO> textExercises = request.getList("/api/text/courses/" + course.getId() + "/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class);
+
+        assertThat(textExercises).hasSize(1);
+        TextExerciseListItemDTO dto = textExercises.getFirst();
+        assertThat(dto.maxPoints()).as("maxPoints is exposed").isEqualTo(textExercise.getMaxPoints());
+        assertThat(dto.bonusPoints()).as("bonusPoints is exposed for the table indicator").isEqualTo(7.0);
+        assertThat(dto.includedInOverallScore()).as("includedInOverallScore is exposed for the table badge").isEqualTo(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        assertThat(dto.presentationScoreEnabled()).as("presentationScoreEnabled is exposed for the table column").isTrue();
+        assertThat(dto.teamMode()).as("teamMode is exposed so the Teams action renders for team exercises").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllTextExercisesForCourse_isNotAtLeastTeachingAssistantInCourse_forbidden() throws Exception {
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);

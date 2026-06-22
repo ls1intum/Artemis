@@ -202,6 +202,16 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         if (this.textExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                             this.textExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
+                        // An existing exam exercise opened for editing is loaded via the response DTO, which carries only
+                        // flat exam ids (no nested exerciseGroup). Restore the exerciseGroup from the route, mirroring the
+                        // import path below, so the save body links the exercise to its exercise group; course and
+                        // exerciseGroup are mutually exclusive on the server.
+                        if (!this.isImport() && !this.textExercise.exerciseGroup) {
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
+                                this.textExercise.exerciseGroup = res.body!;
+                                this.textExercise.course = undefined;
+                            });
+                        }
                     }
                     if (this.isImport()) {
                         const courseId = params['courseId'];

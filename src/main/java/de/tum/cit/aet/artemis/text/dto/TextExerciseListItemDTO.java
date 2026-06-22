@@ -14,7 +14,9 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -24,8 +26,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextExerciseListItemDTO(Long id, String title, String shortName, String type, ExerciseType exerciseType, ZonedDateTime releaseDate, ZonedDateTime dueDate,
-        ZonedDateTime assessmentDueDate, Double maxPoints, Set<String> categories, Set<GradingCriterionDTO> gradingCriteria, Long courseId, CourseRefDTO course, Long examId,
-        String examTitle) implements Serializable {
+        ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean presentationScoreEnabled, Boolean teamMode,
+        Set<String> categories, Set<GradingCriterionDTO> gradingCriteria, Long courseId, CourseRefDTO course, Long examId, String examTitle) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseListItemDTO} from the given {@link TextExercise}.
@@ -70,7 +72,8 @@ public record TextExerciseListItemDTO(Long id, String title, String shortName, S
         CourseRefDTO course = CourseRefDTO.from(exercise.getCourseViaExerciseGroupOrCourseMember());
 
         return new TextExerciseListItemDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
-                exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getCategories(), gradingCriterionDTOs,
-                courseId, course, examId, examTitle);
+                exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),
+                exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode() == ExerciseMode.TEAM, exercise.getCategories(),
+                gradingCriterionDTOs, courseId, course, examId, examTitle);
     }
 }

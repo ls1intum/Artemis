@@ -399,6 +399,31 @@ describe('TextExercise Management Update Component', () => {
                 expect(component.textExercise[errorName as keyof TextExercise]).toBeFalsy();
             }
         });
+
+        it('restores the exerciseGroup from the route when editing an exam exercise loaded without it', async () => {
+            // The exam text-exercise response carries only flat exam ids (no exerciseGroup). When editing, the
+            // exerciseGroup must be restored from the route so the save links the exercise to its group instead of
+            // sending neither course nor exerciseGroup, which the server rejects.
+            const exercise = createExercise(undefined, undefined);
+            const restoredGroup = new ExerciseGroup();
+            restoredGroup.id = 42;
+            const exerciseGroupService = TestBed.inject(ExerciseGroupService);
+            const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: restoredGroup })));
+
+            routeData$.next({ textExercise: exercise });
+            routeUrl$.next([{ path: 'exercise-groups' }] as UrlSegment[]);
+            routeParams$.next({ courseId: 1, examId: 2, exerciseGroupId: 42 } as Params);
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isExamMode()).toBe(true);
+            expect(findSpy).toHaveBeenCalledWith(1, 2, 42);
+            expect(component.textExercise.exerciseGroup).toBe(restoredGroup);
+            expect(component.textExercise.course).toBeUndefined();
+        });
     });
 
     describe('ngOnInit for course exercise', () => {
