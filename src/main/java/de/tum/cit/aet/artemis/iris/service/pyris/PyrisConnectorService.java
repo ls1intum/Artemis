@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -364,6 +365,27 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send faqs to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    /**
+     * Executes the Course Memory ingestion webhook. Pyris responds with {@code 202 Accepted} and runs
+     * the ingestion asynchronously. Ingestion is best-effort: a failure (e.g. {@code 400} when the
+     * requested variant/models are unavailable) is logged and swallowed so it never breaks the calling
+     * communication request.
+     *
+     * @param executionDTO the DTO sent as the request body
+     */
+    public void executeCourseMemoryIngestionWebhook(PyrisWebhookCourseMemoryIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/course-memory/ingest";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send course memory ingestion for message {} to Pyris: {}", executionDTO.messageId(), e.getMessage());
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send course memory ingestion for message {} to Pyris: {}", executionDTO.messageId(), e.getMessage());
         }
     }
 
