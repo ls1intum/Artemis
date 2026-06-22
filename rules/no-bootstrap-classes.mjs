@@ -6,8 +6,8 @@
  *
  * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned — i.e. they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
- * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: Bootstrap and Tailwind share those names
- * 1:1, so they are legitimate Tailwind utilities after migration. Color application is governed separately
+ * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: Bootstrap and Tailwind share the same class
+ * NAMES (the Tailwind value applies after migration), so they are legitimate Tailwind utilities. Color application is governed separately
  * by `no-raw-tailwind-color-palette` (templates) and the stylelint hex/`--bs-` ban (SCSS).
  *
  * Scope: static `class="..."`, `[class.<bootstrap-class>]`, and the bound source of `[class]` / `[ngClass]`.

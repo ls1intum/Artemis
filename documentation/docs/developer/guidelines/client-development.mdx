@@ -570,7 +570,7 @@ Why the **arbitrary** form `text-(--danger)` rather than a named `text-danger`? 
 
 Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
 
-Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — it bans raw palette and hex in `class`/`[class]`, plus primitive `--p-<color>-<n>` tokens used for meaning both as utilities (`text-(--p-red-500)`) and as `var(--p-…)` inside `[style.*]`/`[color]` bindings (a bare hex inside a style binding is **not** caught). Bootstrap colour/component classes (e.g. named `text-danger`) are banned by `localRules/no-bootstrap-classes`, which is scoped to migrated modules only (currently `app/admin/**`), so the same class is still legitimate in not-yet-migrated modules. A stylelint hex/`--bs-` ban applies per migrated module.
+Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — it bans raw palette and hex in `class`/`[class]`, plus primitive `--p-<color>-<n>` tokens used for meaning both as utilities (`text-(--p-red-500)`) and as `var(--p-…)` inside `[style.*]`/`[color]` bindings (a bare hex inside a style binding is **not** caught). Bootstrap colour/component classes (e.g. named `text-danger`) are banned by `localRules/no-bootstrap-classes`, applied to the fully-migrated modules listed in the `files` array of its block in `eslint.config.mjs` (extend that array as each module is finished); the same class stays legitimate in not-yet-migrated modules. A matching stylelint hex/`--bs-` ban covers the SCSS of those same modules (see the scoped override in `.stylelintrc.json`).
 
 ```html
 <!-- layout/spacing in Tailwind, the button as a PrimeNG component -->

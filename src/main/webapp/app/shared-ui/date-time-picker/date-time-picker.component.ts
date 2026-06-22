@@ -113,16 +113,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     * Called when the user picks (or clears, or types) a value in the p-datepicker.
+     * Called when the user picks (or clears) a value in the p-datepicker.
      *
      * p-datepicker emits a native `Date` interpreted as the LOCAL wall-clock the user sees, or
      * null/undefined when cleared. We convert that back to a dayjs that preserves the SAME absolute
      * instant via `dayjs(date)` (no offset is added or subtracted), so the UTC value persisted by
-     * consumers matches exactly what the user picked — no off-by-timezone-offset drift.
-     *
-     * A `string` can also reach this handler (e.g. the Playwright `enterDate` helper types a UTC ISO
-     * string with a `Z` suffix); `dayjs(string)` parses the explicit zone correctly, so we never
-     * mis-interpret an absolute instant as local wall-clock.
+     * consumers matches exactly what the user picked — no off-by-timezone-offset drift. A `string`
+     * passed programmatically is parsed by `dayjs` honouring any explicit zone it carries (e.g. a
+     * trailing `Z`), so an absolute instant is never mis-read as local wall-clock.
      */
     updateField(newValue: DateInput) {
         this.value.set(this.toLocalDate(newValue));

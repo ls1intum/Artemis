@@ -162,7 +162,7 @@ describe('FormDateTimePickerComponent', () => {
             expect((component.value() as Date).getTime()).toBe(normalDate.valueOf());
         });
 
-        it('should parse a typed UTC ISO string (e2e enterDate helper) as the correct absolute instant', () => {
+        it('should parse a UTC ISO string passed to updateField as the correct absolute instant', () => {
             const onChangeSpy = vi.fn();
             component.registerOnChange(onChangeSpy);
             vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
