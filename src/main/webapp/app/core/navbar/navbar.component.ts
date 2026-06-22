@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -40,6 +40,8 @@ import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/compo
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
+import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -133,10 +135,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.currentCourseContextService.course;
+    readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
-    readonly studentViewLink = getSignalBasedOnRoute(this.router, this.getStudentViewLinkFromRoute);
-    readonly managementViewLink = getSignalBasedOnRoute(this.router, this.getManagementViewLinkFromRoute);
+    readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
+    readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
@@ -840,8 +843,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
     }
 
-    private getStudentViewLinkFromRoute(url: string): string[] {
-        const courseId = url.match(/\/(?:courses|course-management)\/(\d+)/)?.[1];
+    private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
         const routeMappings = [
@@ -866,8 +869,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return baseStudentPath;
     }
 
-    private getManagementViewLinkFromRoute(url: string): string[] {
-        const courseId = url.match(/\/(?:courses|course-management)\/(\d+)/)?.[1];
+    private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        const courseId = course?.id?.toString();
+        const isAtLeastEditor = !!course?.isAtLeastEditor;
+        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
+        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
 
         const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
         const routeMappings = [
@@ -875,7 +881,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
             { urlParts: ['lectures'], targetPath: [...baseManagementPath, 'lectures'] },
             { urlParts: ['communication'], targetPath: [...baseManagementPath, 'communication'] },
-            { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-paths-management'] },
+            { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-path-management'] },
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
@@ -886,7 +892,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return route.urlParts.some((urlPart) => url.includes(urlPart));
         });
 
-        return matchedRoute ? matchedRoute.targetPath : baseManagementPath;
+        if (!matchedRoute) {
+            return baseManagementPath;
+        }
+
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
+        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+            return baseManagementPath;
+        }
+
+        return matchedRoute.targetPath;
     }
 
     toggleNavbar() {

@@ -4,6 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getCurrentRouteSignal } from './getCurrentRouteSignal';
 import { getSignalBasedOnRoute } from './getSignalBasedOnRoute';
 
 describe('getSignalBasedOnRouteChange', () => {
@@ -34,6 +35,16 @@ describe('getSignalBasedOnRouteChange', () => {
         routerEvents.next(new NavigationEnd(1, '/next', '/next-after-redirect'));
 
         expect(routeChangeSignal()).toBe('/next-after-redirect');
+    });
+
+    it('should expose the current route URL as a signal', () => {
+        const currentRouteSignal = TestBed.runInInjectionContext(() => getCurrentRouteSignal(router));
+
+        expect(currentRouteSignal()).toBe('/initial');
+
+        routerEvents.next(new NavigationEnd(1, '/next', '/next-after-redirect'));
+
+        expect(currentRouteSignal()).toBe('/next-after-redirect');
     });
 
     it('should map the URL through the change handler', () => {
