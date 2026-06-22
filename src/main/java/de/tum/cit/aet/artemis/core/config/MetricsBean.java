@@ -433,17 +433,9 @@ public class MetricsBean {
         activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
     }
 
-    private void registerMissingBuildResultsMetrics() {
+    private void registerBuildJobResultMetrics() {
         Gauge.builder("artemis.global.buildjobs.missing_results", missingBuildResultsGauge::get).description("Number of build jobs missing results in the last 24 hours")
                 .register(meterRegistry);
-    }
-
-    private void registerBuildJobResultMetrics() {
-        registerMissingBuildResultsMetrics();
-        registerFailedBuildsMetrics();
-    }
-
-    private void registerFailedBuildsMetrics() {
         Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours").register(meterRegistry);
     }
 
