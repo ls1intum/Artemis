@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AnswerMessageDTO(Long id, AuthorDTO author, UserRole authorRole, ZonedDateTime creationDate, ZonedDateTime updatedDate, String content, boolean isSaved,
         List<ReactionDTO> reactions, Boolean resolvesPost, Double confidenceScore, boolean verified, VerifiedByDTO verifiedBy, ZonedDateTime verifiedAt, ParentPostDTO post) {
 
@@ -20,7 +20,7 @@ public record AnswerMessageDTO(Long id, AuthorDTO author, UserRole authorRole, Z
                 answerPost.getPost() != null ? new ParentPostDTO(answerPost.getPost().getId()) : null);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record VerifiedByDTO(Long id, String login, String firstName, String lastName) {
 
         public static VerifiedByDTO fromUser(User user) {
