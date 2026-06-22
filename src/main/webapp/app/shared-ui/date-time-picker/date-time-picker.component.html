@@ -1,17 +1,17 @@
 @if (labelName() && !hideLabelName()) {
-    <label for="date-input-field" class="form-control-label col">
+    <label for="date-input-field" class="block">
         {{ labelName() }}
     </label>
 }
 @if (labelTooltip()) {
-    <fa-stack class="text-secondary icon-full-size" [pTooltip]="labelTooltip()">
+    <fa-stack class="text-muted-color icon-full-size" [pTooltip]="labelTooltip()">
         <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
     </fa-stack>
 }
 @if (shouldDisplayTimeZoneWarning()) {
     <fa-stack pTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
-        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey" />
-        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
+        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-muted-color" />
+        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
 <div class="flex items-center relative">
@@ -20,7 +20,6 @@
         name="datePicker"
         inputId="date-input-field"
         styleClass="w-full"
-        [ngClass]="{ 'border-warning': warning() }"
         [ngModel]="value()"
         [disabled]="disabled()"
         [invalid]="!isValid()"
@@ -37,20 +36,20 @@
         [appendTo]="'body'"
         (ngModelChange)="updateField($event)"
     />
-    <button class="btn relative" type="button" (click)="clearDate()">
+    <button type="button" class="relative cursor-pointer border-0 bg-transparent p-1 text-muted-color" (click)="clearDate()">
         <fa-icon [icon]="faCircleXmark" />
     </button>
 </div>
 @if (requiredField() && !hasValidValue()) {
     @if (labelName()) {
-        <small class="text-danger text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></small>
+        <small class="text-(--p-red-500) text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></small>
     } @else {
-        <small class="text-danger text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValidGeneric"></small>
+        <small class="text-(--p-red-500) text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValidGeneric"></small>
     }
 }
 @if (warning()) {
     <small class="text-sm mt-1 block">
-        <fa-icon class="text-warning" [icon]="faTriangleExclamation" />
+        <fa-icon class="text-(--p-yellow-500)" [icon]="faTriangleExclamation" />
         <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" pTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
     </small>
 }
