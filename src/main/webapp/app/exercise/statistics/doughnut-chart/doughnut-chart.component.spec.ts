@@ -103,4 +103,10 @@ describe('DoughnutChartComponent', () => {
 
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should show only the value in the tooltip body', () => {
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.label({ parsed: 20 })).toBe('20');
+    });
 });

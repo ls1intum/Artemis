@@ -9,6 +9,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -26,7 +28,6 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -172,7 +173,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
@@ -594,5 +594,103 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
+    });
+
+    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const newParticipation = { id: 777 } as StudentParticipation;
+
+        comp.onNewParticipation(newParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(cachedExercise.studentParticipations).toContain(newParticipation);
+    });
+
+    it('should propagate an already-present participation into the cached course (start navigates to the code editor, re-resolving it)', () => {
+        // Starting a programming exercise navigates to the code editor, which re-resolves this component with the
+        // participation already loaded into _studentParticipations. onNewParticipation then takes the "already present"
+        // branch, so the cached-course propagation must still run — otherwise the sidebar card stays at "Not yet started".
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const existingParticipation = { id: 778 } as StudentParticipation;
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [existingParticipation] } as Exercise;
+        // The participation is already resolved on this component instance before onNewParticipation fires.
+        (comp as unknown as { _studentParticipations: { set: (value: StudentParticipation[]) => void } })._studentParticipations.set([existingParticipation]);
+
+        comp.onNewParticipation(existingParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        // onNewParticipation now merges submissions into a fresh participation object (so prior attempts survive and
+        // the signal change is detected), so assert by id rather than reference identity.
+        expect(cachedExercise.studentParticipations?.some((p) => p.id === existingParticipation.id)).toBe(true);
+    });
+
+    it('should preserve prior attempts when onNewParticipation receives a payload carrying only the latest submission', () => {
+        // Regression test for #12955 / #12972 (bug 1): a practice submit emits a participation that only carries the
+        // latest submission. Replacing the stored participation wholesale dropped every prior attempt from the
+        // result-history dropdown until a page refresh. onNewParticipation must merge submissions instead.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const existingParticipation = { id: 555, submissions: [{ id: 1 } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        const incomingParticipation = { id: 555, submissions: [{ id: 3 } as Submission] } as StudentParticipation;
+        comp.onNewParticipation(incomingParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should replace a re-sent submission in place without duplicating it (onNewParticipation merge)', () => {
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const existingParticipation = { id: 555, submissions: [{ id: 1, submitted: false } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        // The incoming payload re-sends submission 1 with an updated field; it must replace, not append.
+        const incomingParticipation = { id: 555, submissions: [{ id: 1, submitted: true } as Submission] } as StudentParticipation;
+        comp.onNewParticipation(incomingParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2]);
+        expect(merged?.submissions?.find((s) => s.id === 1)?.submitted).toBe(true);
+    });
+
+    it('should switch participationMode to practice for a test-run participation', () => {
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        comp.studentParticipations = [];
+
+        comp.onNewParticipation({ id: 999, testRun: true } as StudentParticipation);
+
+        expect(comp.participationMode()).toBe('practice');
+    });
+
+    it('should merge websocket submission deltas instead of replacing the attempt history (subscribeForNewResults)', () => {
+        // Covers the second call site of mergeSubmissions: the participation-change websocket delivers a participation
+        // that may only carry the changed/added submission. Prior attempts must be preserved.
+        comp.exercise = { ...exercise } as Exercise;
+        const existingParticipation = { id: 555, exercise: comp.exercise, submissions: [{ id: 1 } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = { id: 555, exercise: { id: comp.exercise!.id }, submissions: [{ id: 3 } as Submission] } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
     });
 });

@@ -3,6 +3,11 @@
 
     buildscript {
         repositories {
+            // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors)
+            maven {
+                name = "reposiliteRepository"
+                url = "https://reposilite.aet.cit.tum.de/releases"
+            }
             mavenCentral()
         }
         dependencies {

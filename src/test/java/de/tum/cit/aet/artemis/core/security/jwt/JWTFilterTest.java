@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import java.util.Collections;
+import java.util.List;
 
 import jakarta.servlet.http.Cookie;
 
@@ -56,7 +56,7 @@ class JWTFilterTest {
     @Test
     void testJWTFilterCookie() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new Cookie(Constants.JWT_COOKIE_NAME, jwt));
@@ -71,7 +71,7 @@ class JWTFilterTest {
     @Test
     void testJWTFilterCookieAndBearer() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -88,7 +88,7 @@ class JWTFilterTest {
     @Test
     void testJWTFilterBearer() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -129,7 +129,7 @@ class JWTFilterTest {
     @Test
     void testJWTFilterWrongCookieName() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new Cookie("wrong_jwt", jwt));

@@ -627,7 +627,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
                     TEST_PREFIX + "student1");
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-            studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentSlug));
+            studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
@@ -662,7 +662,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "team1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(reloaded, team);
             participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-            studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentSlug));
+            studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 

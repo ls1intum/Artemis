@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -99,8 +98,7 @@ public class BuildLogEntryService {
      * @return the build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
-                .orElseGet(Collections::emptyList);
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).orElseGet(List::of);
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
@@ -291,7 +289,7 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
-        programmingSubmission.setBuildLogEntries(Collections.emptyList());
+        programmingSubmission.setBuildLogEntries(List.of());
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
