@@ -11,20 +11,20 @@
     <div data-testid="save-status">
         @if (!unsavedChanges() && !isSaving()) {
             <div data-testid="status-saved">
-                <fa-icon [icon]="faCheckCircle" class="text-success me-1" [pTooltip]="'artemisApp.legal.savedTooltip' | artemisTranslate" />
-                <span class="text-info" jhiTranslate="artemisApp.legal.saved"></span>
+                <fa-icon [icon]="faCheckCircle" class="text-(--p-green-500) me-1" [pTooltip]="'artemisApp.legal.savedTooltip' | artemisTranslate" />
+                <span class="text-(--p-blue-500)" jhiTranslate="artemisApp.legal.saved"></span>
             </div>
         }
         @if (unsavedChanges() && !isSaving()) {
             <div data-testid="status-unsaved">
-                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [pTooltip]="'artemisApp.legal.unsavedTooltip' | artemisTranslate" />
-                <span class="text-info" jhiTranslate="artemisApp.legal.unsaved"></span>
+                <fa-icon [icon]="faExclamationTriangle" class="text-(--p-yellow-500) me-1" [pTooltip]="'artemisApp.legal.unsavedTooltip' | artemisTranslate" />
+                <span class="text-(--p-blue-500)" jhiTranslate="artemisApp.legal.unsaved"></span>
             </div>
         }
         @if (isSaving()) {
             <div data-testid="status-saving">
                 <fa-icon [icon]="faCircleNotch" class="me-1" [pTooltip]="'artemisApp.legal.savingTooltip' | artemisTranslate" />
-                <span class="text-info" jhiTranslate="artemisApp.legal.saving"></span>
+                <span class="text-(--p-blue-500)" jhiTranslate="artemisApp.legal.saving"></span>
             </div>
         }
     </div>

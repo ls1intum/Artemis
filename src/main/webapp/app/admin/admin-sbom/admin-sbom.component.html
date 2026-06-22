@@ -126,25 +126,25 @@
             }
         </div>
         <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg">
-            <fa-icon [icon]="faDesktop" class="text-danger me-2" />
+            <fa-icon [icon]="faDesktop" class="text-(--p-red-500) me-2" />
             <h3 class="mb-0 inline">{{ clientComponentCount() }}</h3>
             <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.clientComponents"></p>
             @if (clientMetadata()?.version) {
                 <small class="text-muted-color">v{{ clientMetadata()?.version }}</small>
             }
         </div>
-        <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg" [class.border-danger]="vulnerabilities()?.totalVulnerabilities">
+        <div
+            class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg"
+            [style.border-color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : undefined"
+        >
             @if (loadingVulnerabilities()) {
                 <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                 <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.loadingVulnerabilities"></span>
             } @else if (vulnerabilities()) {
-                <fa-icon
-                    [icon]="faShieldAlt"
-                    [class.text-success]="!vulnerabilities()?.totalVulnerabilities"
-                    [class.text-danger]="vulnerabilities()?.totalVulnerabilities"
-                    class="me-2"
-                />
-                <h3 class="mb-0 inline" [class.text-danger]="vulnerabilities()?.totalVulnerabilities">{{ vulnerabilities()?.totalVulnerabilities ?? 0 }}</h3>
+                <fa-icon [icon]="faShieldAlt" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : 'var(--p-green-500)'" class="me-2" />
+                <h3 class="mb-0 inline" [style.color]="vulnerabilities()?.totalVulnerabilities ? 'var(--p-red-500)' : undefined">
+                    {{ vulnerabilities()?.totalVulnerabilities ?? 0 }}
+                </h3>
                 <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.vulnerabilities"></p>
                 @if (vulnerabilities()?.totalVulnerabilities) {
                     <div class="flex justify-center gap-2 flex-wrap">

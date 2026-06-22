@@ -47,18 +47,18 @@
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.clientId" for="field_clientId"></label>
-                            <span class="text-danger">*</span>
+                            <span class="text-(--p-red-500)">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip" />
                         </div>
                         <input type="text" pInputText class="w-full" name="clientId" id="field_clientId" formControlName="clientId" [invalid]="isFieldInvalid('clientId')" />
                         @if (isFieldInvalid('clientId')) {
-                            <small class="text-danger" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></small>
+                            <small class="text-(--p-red-500)" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></small>
                         }
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.authorizationUri" for="field_authorizationUri"></label>
-                            <span class="text-danger">*</span>
+                            <span class="text-(--p-red-500)">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.authorizationUriTooltip" />
                         </div>
                         <input
@@ -71,29 +71,29 @@
                             [invalid]="isFieldInvalid('authorizationUri')"
                         />
                         @if (isFieldInvalid('authorizationUri')) {
-                            <small class="text-danger" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></small>
+                            <small class="text-(--p-red-500)" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></small>
                         }
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.tokenUri" for="field_tokenUri"></label>
-                            <span class="text-danger">*</span>
+                            <span class="text-(--p-red-500)">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.tokenUriTooltip" />
                         </div>
                         <input type="text" pInputText class="w-full" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" [invalid]="isFieldInvalid('tokenUri')" />
                         @if (isFieldInvalid('tokenUri')) {
-                            <small class="text-danger" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></small>
+                            <small class="text-(--p-red-500)" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></small>
                         }
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.jwkSetUri" for="field_jwkSetUri"></label>
-                            <span class="text-danger">*</span>
+                            <span class="text-(--p-red-500)">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.jwkSetUriTooltip" />
                         </div>
                         <input type="text" pInputText class="w-full" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" [invalid]="isFieldInvalid('jwkSetUri')" />
                         @if (isFieldInvalid('jwkSetUri')) {
-                            <small class="text-danger" jhiTranslate="artemisApp.lti.validation.jwkSetUriRequired"></small>
+                            <small class="text-(--p-red-500)" jhiTranslate="artemisApp.lti.validation.jwkSetUriRequired"></small>
                         }
                     </div>
                 </div>
