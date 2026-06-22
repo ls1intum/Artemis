@@ -10,22 +10,15 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.hazelcast.HazelcastDistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 
 /**
  * Distributed per-course accumulator for Atlas content-change events. Exercise version created
@@ -40,8 +33,9 @@ import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
  * critical section so concurrent updates from different nodes linearise against the key owner — we
  * never lose events under contention.
  * <p>
- * Map resolution: {@link DistributedDataProvider} (Hazelcast or Redis) → core {@link HazelcastInstance} →
- * node-local map (single-node/tests only). See {@link #resolveMap()}.
+ * A {@link DistributedDataProvider} is required: it is profile-gated to {@code localci}/{@code buildagent},
+ * which the core/scheduling nodes Atlas runs on always activate. {@link #resolveMap()} fails fast when
+ * none is present rather than silently degrading to node-local state.
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -50,11 +44,7 @@ public class ContentChangeAccumulatorService {
 
     public static final String MAP_NAME = "atlas-content-change-accumulator";
 
-    private static final Logger log = LoggerFactory.getLogger(ContentChangeAccumulatorService.class);
-
     private final Optional<DistributedDataProvider> distributedDataProvider;
-
-    private final Optional<HazelcastInstance> hazelcastInstance;
 
     private volatile DistributedMap<Long, ContentChangeAccumulator> map;
 
@@ -64,10 +54,8 @@ public class ContentChangeAccumulatorService {
 
     private final int dailyCap;
 
-    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance,
-            Clock clock, AtlasOrchestratorProperties properties) {
+    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties) {
         this.distributedDataProvider = distributedDataProvider;
-        this.hazelcastInstance = hazelcastInstance;
         this.clock = clock;
         this.debounceWindowSeconds = properties.debounceWindowSeconds();
         this.dailyCap = properties.maxDailyOrchestrations();
@@ -89,14 +77,9 @@ public class ContentChangeAccumulatorService {
     }
 
     private DistributedMap<Long, ContentChangeAccumulator> resolveMap() {
-        if (distributedDataProvider.isPresent()) {
-            return distributedDataProvider.get().getMap(MAP_NAME);
-        }
-        if (hazelcastInstance.isPresent()) {
-            return new HazelcastDistributedMap<>(hazelcastInstance.get().getMap(MAP_NAME));
-        }
-        log.warn("Neither a DistributedDataProvider nor a HazelcastInstance is available; Atlas content-change accumulator uses a node-local map (single-node only).");
-        return new LocalMap<>();
+        return distributedDataProvider
+                .orElseThrow(() -> new IllegalStateException("Atlas auto-orchestration requires a clustered DistributedDataProvider (localci/buildagent profile active)."))
+                .getMap(MAP_NAME);
     }
 
     /**

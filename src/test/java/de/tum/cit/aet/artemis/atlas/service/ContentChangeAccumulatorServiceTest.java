@@ -12,11 +12,12 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalDataProviderService;
 
 /**
- * Exercises the accumulator's debounce, per-day cap and requeue logic against a node-local map (the
- * fallback the service uses when no {@code DistributedDataProvider} is configured), which is a real
- * {@code DistributedMap} backed by per-key locks — so the lock-guarded read-modify-write semantics
+ * Exercises the accumulator's debounce, per-day cap and requeue logic against a
+ * {@link LocalDataProviderService} (the in-memory {@code DistributedDataProvider}), whose
+ * {@code DistributedMap} is backed by per-key locks — so the lock-guarded read-modify-write semantics
  * are tested without booting a distributed data layer. A {@link MutableClock} lets us simulate the
  * passage of time past the debounce window and across day boundaries without touching
  * {@link System#currentTimeMillis()}.
@@ -35,7 +36,7 @@ class ContentChangeAccumulatorServiceTest {
     void setUp() {
         clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L);
-        service = new ContentChangeAccumulatorService(Optional.empty(), Optional.empty(), clock, properties);
+        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties);
         service.clearForTesting();
     }
 

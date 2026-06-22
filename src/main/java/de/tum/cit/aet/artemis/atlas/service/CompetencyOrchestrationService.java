@@ -24,12 +24,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -45,8 +42,6 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.Batc
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.hazelcast.HazelcastDistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -120,8 +115,6 @@ public class CompetencyOrchestrationService {
 
     private final Optional<DistributedDataProvider> distributedDataProvider;
 
-    private final Optional<HazelcastInstance> hazelcastInstance;
-
     private final ContentChangeAccumulatorService contentChangeAccumulatorService;
 
     private final LLMTokenUsageService llmTokenUsageService;
@@ -132,8 +125,7 @@ public class CompetencyOrchestrationService {
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider,
-            @Qualifier("hazelcastInstance") Optional<HazelcastInstance> hazelcastInstance, AtlasOrchestratorProperties properties,
+            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
             ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
@@ -145,7 +137,6 @@ public class CompetencyOrchestrationService {
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
         this.distributedDataProvider = distributedDataProvider;
-        this.hazelcastInstance = hazelcastInstance;
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
@@ -167,13 +158,9 @@ public class CompetencyOrchestrationService {
     }
 
     private DistributedMap<Long, RunInfo> resolveRunMap() {
-        if (distributedDataProvider.isPresent()) {
-            return distributedDataProvider.get().getMap(RUN_MAP_NAME);
-        }
-        if (hazelcastInstance.isPresent()) {
-            return new HazelcastDistributedMap<>(hazelcastInstance.get().getMap(RUN_MAP_NAME));
-        }
-        return new LocalMap<>();
+        return distributedDataProvider
+                .orElseThrow(() -> new IllegalStateException("Atlas auto-orchestration requires a clustered DistributedDataProvider (localci/buildagent profile active)."))
+                .getMap(RUN_MAP_NAME);
     }
 
     /** Claim the per-course run lock: returns {@code null} if acquired, else the active (non-stale) {@link RunInfo}. Reclaims {@link #RUN_LEASE}-stale entries. */

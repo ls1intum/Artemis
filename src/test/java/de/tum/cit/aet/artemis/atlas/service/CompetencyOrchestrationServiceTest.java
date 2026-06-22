@@ -381,7 +381,7 @@ class CompetencyOrchestrationServiceTest {
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
         return new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorToolsService, templateService, chatClient,
-                toolCallbackFactory, Optional.of(distributedDataProvider), Optional.empty(), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
+                toolCallbackFactory, Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {
