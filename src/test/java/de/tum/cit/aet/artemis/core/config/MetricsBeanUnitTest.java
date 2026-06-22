@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ class MetricsBeanUnitTest {
         when(profileService.isSchedulingActive()).thenReturn(true);
         when(profileService.isLocalCIActive()).thenReturn(true);
         when(profileService.isProfileActive(SPRING_PROFILE_TEST)).thenReturn(true);
-        when(userRepository.findAllActiveAdminLogins()).thenReturn(List.of());
+        when(userRepository.findAllActiveAdminLogins()).thenReturn(Set.<String>of());
 
         metricsBean = new MetricsBean(meterRegistry, scheduler, webSocketStats, userRegistry, webSocketHandler, List.of(), Optional.empty(), exerciseRepository,
                 exerciseMetricsService, Optional.empty(), courseRepository, userRepository, statisticsRepository, profileService, Optional.empty(), buildJobRepository);
