@@ -267,8 +267,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @JsonIgnore
     private boolean isStartedDuringSimulationPhase() {
-        return exam.getExamType() == ExamType.TEST_WITH_SIMULATION && startedDate != null && exam.getStartDate() != null
-                && startedDate.isBefore(exam.getStartDate().plusSeconds(exam.getWorkingTime()));
+        return exam.getExamType() == ExamType.TEST_WITH_SIMULATION && startedDate != null && startedDate.isBefore(exam.getStartDate().plusSeconds(exam.getWorkingTime()));
     }
 
     /**
