@@ -10,10 +10,9 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Exam, ExamType, hasTestExamType, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, firstValueFrom, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -61,7 +60,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -106,7 +104,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
-    private testExamParticipationMessageService = inject(TestExamParticipationMessageService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -166,12 +163,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     readonly isProgrammingExercise = computed(() => !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING);
 
-    readonly isProgrammingExerciseWithCodeEditor = computed(
-        () => this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor === true,
-    );
-
-    readonly isProgrammingExerciseWithOfflineIDE = computed(() => this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde === true);
-
     readonly examStartConfirmed = signal(false);
 
     // autoTimerInterval in seconds
@@ -189,8 +180,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private readonly wallClockVersion = signal(0);
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
-
-    readonly testExamParticipationErrorKey = signal<string | undefined>(undefined);
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
     protected readonly participationGenerationStatus = toSignal(this.generateParticipationStatus, { initialValue: 'success' as GenerateParticipationStatus });
@@ -223,7 +212,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.studentExamId.set(parseInt(studentExamId, 10));
             }
             this.loadingExam.set(true);
-            this.testExamParticipationErrorKey.set(undefined);
             if (this.testRunId()) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                     next: (studentExam) => {
@@ -243,8 +231,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
-                    error: (error: HttpErrorResponse) => {
-                        this.handleNoStudentExam(error);
+                    error: () => {
+                        this.handleNoStudentExam();
                     },
                 });
             } else {
@@ -252,8 +240,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
-                    error: (error: HttpErrorResponse) => {
-                        this.handleNoStudentExam(error);
+                    error: () => {
+                        this.handleNoStudentExam();
                     },
                 });
             }
@@ -605,15 +593,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return individualStudentEndDate.add(this.exam().gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
     }
 
-    readonly studentFailedToSubmitTranslationKey = computed(() => {
-        if (hasTestExamType(this.exam())) {
-            return 'artemisApp.examParticipation.testExamAttemptUsed';
-        }
-        return 'artemisApp.studentExam.submissionNotInTime';
-    });
-
-    readonly testExamParticipationMessageKey = computed(() => this.testExamParticipationMessageService.getMessageKey(this.exam(), this.testExamParticipationErrorKey()));
-
     /**
      * check if exam is over
      */
@@ -728,26 +707,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
-    async handleNoStudentExam(error?: HttpErrorResponse) {
-        this.testExamParticipationErrorKey.set(error?.error?.errorKey ?? 'noStudentExam');
-        let course = this.courseStorageService.getCourse(this.courseId());
+    handleNoStudentExam() {
+        const course = this.courseStorageService.getCourse(this.courseId());
         if (!course) {
-            course = (await firstValueFrom(this.courseService.find(this.courseId()))).body ?? undefined;
+            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
+                this.isAtLeastTutor.set(courseResponse.body?.isAtLeastTutor);
+                this.isAtLeastInstructor.set(courseResponse.body?.isAtLeastInstructor);
+            });
+        } else {
+            this.isAtLeastTutor.set(course.isAtLeastTutor);
+            this.isAtLeastInstructor.set(course.isAtLeastInstructor);
         }
-        this.isAtLeastTutor.set(course?.isAtLeastTutor);
-        this.isAtLeastInstructor.set(course?.isAtLeastInstructor);
-        this.setExamFromCourse(course);
         this.loadingExam.set(false);
-    }
-
-    private setExamFromCourse(course: Course | undefined): void {
-        if (this.examId()) {
-            const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId());
-            if (exam) {
-                this.exam.set(exam);
-                this.testExam.set(this.testExam() || hasTestExamType(this.exam()));
-            }
-        }
     }
 
     /**
@@ -918,13 +889,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 return of(undefined);
             }),
         );
-    }
-
-    protected retryCreateParticipationForActiveExercise(): void {
-        const activeExercise = this.activeExamPage().exercise;
-        if (activeExercise) {
-            this.createParticipationForExercise(activeExercise).subscribe();
-        }
     }
 
     /**

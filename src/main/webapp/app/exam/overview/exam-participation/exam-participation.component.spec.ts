@@ -221,24 +221,6 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('isProgrammingExerciseWithCodeEditor', () => {
-        it('should return true if programming exercise is with code editor', () => {
-            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(false);
-            (comp.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor = true;
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(true);
-        });
-    });
-
-    describe('isProgrammingExerciseWithOfflineIDE', () => {
-        it('should return true if active exercise is with offline ide', () => {
-            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(true);
-            (comp.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde = false;
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(false);
-        });
-    });
-
     it('should load test run if test run id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();

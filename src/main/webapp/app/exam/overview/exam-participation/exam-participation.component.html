@@ -1,7 +1,7 @@
 @if (!!testRunId()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
-@if (exam() && !testExamParticipationErrorKey()) {
+@if (exam()) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
         <jhi-exam-participation-cover [startView]="true" [exam]="exam()" [studentExam]="studentExam()" [testRunStartTime]="testStartTime()" (onExamStarted)="examStarted($event)" />
     }
@@ -96,7 +96,7 @@
                                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                                     <button
                                         class="btn btn-sm btn-primary px-3 ms-2"
-                                        (click)="retryCreateParticipationForActiveExercise()"
+                                        (click)="createParticipationForExercise(this.activeExamPage().exercise!).subscribe()"
                                         jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
                                     ></button>
                                 </div>
@@ -150,7 +150,7 @@
                     <div class="col-12 text-center my-auto">
                         <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
-                            <span [jhiTranslate]="studentFailedToSubmitTranslationKey()"></span>
+                            <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
                         </div>
                     </div>
                 </div>
@@ -179,7 +179,8 @@
             </div>
         }
     }
-} @else if (!loadingExam()) {
+}
+@if (!loadingExam() && !exam()) {
     @if (isAtLeastTutor() && !testRunId()) {
         <div class="alert alert-warning">
             <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
@@ -193,14 +194,9 @@
                 </a>
             }
         </div>
-    } @else if (exam()) {
-        <div class="d-flex justify-content-between">
-            <div class="col-12 text-center my-auto">
-                <h3 class="mt-2">{{ exam().title }}</h3>
-                <div class="mb-2 font-weight-bold text-danger">
-                    <span [jhiTranslate]="testExamParticipationMessageKey()"></span>
-                </div>
-            </div>
+    } @else {
+        <div class="alert alert-danger">
+            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
         </div>
     }
 }
