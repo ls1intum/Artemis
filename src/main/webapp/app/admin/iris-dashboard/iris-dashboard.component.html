@@ -1,10 +1,10 @@
 <div class="iris-dashboard">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center gap-2">
+    <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2">
             <fa-icon [icon]="faRobot" />
             <h3 class="mb-0" jhiTranslate="artemisApp.irisDashboard.title">Iris Dashboard</h3>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="flex items-center gap-2">
             <p-select
                 [ngModel]="selectedTimeSpan()"
                 [options]="timeSpanOptions()"
@@ -27,101 +27,75 @@
     </div>
 
     @if (loading()) {
-        <div class="text-center py-5" jhiTranslate="artemisApp.irisDashboard.loading">Loading...</div>
+        <div class="text-center py-8" jhiTranslate="artemisApp.irisDashboard.loading">Loading...</div>
     }
 
     @if (error()) {
-        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.irisDashboard.error">Failed to load dashboard data. Please try again.</div>
+        <p-message severity="error" styleClass="w-full" [text]="'artemisApp.irisDashboard.error' | artemisTranslate" />
     }
 
     @if (overview()) {
         @let o = overview()!;
         <!-- Row 1: Sessions & Users -->
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.totalSessions" helpKey="artemisApp.irisDashboard.help.totalSessions">
-                    <span class="fs-3 fw-bold">{{ o.totalSessions }}</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.activeSessions" helpKey="artemisApp.irisDashboard.help.activeSessions">
-                    <span class="fs-3 fw-bold">{{ o.activeSessions }}</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.engagementRate" helpKey="artemisApp.irisDashboard.help.engagementRate">
-                    <span class="fs-3 fw-bold">{{ o.engagementRate | number: '1.1-1' }}%</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.uniqueUsers" helpKey="artemisApp.irisDashboard.help.uniqueUsers">
-                    <span class="fs-3 fw-bold">{{ o.uniqueUsers }}</span>
-                </jhi-iris-kpi-card>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.totalSessions" helpKey="artemisApp.irisDashboard.help.totalSessions">
+                <span class="text-2xl font-bold">{{ o.totalSessions }}</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.activeSessions" helpKey="artemisApp.irisDashboard.help.activeSessions">
+                <span class="text-2xl font-bold">{{ o.activeSessions }}</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.engagementRate" helpKey="artemisApp.irisDashboard.help.engagementRate">
+                <span class="text-2xl font-bold">{{ o.engagementRate | number: '1.1-1' }}%</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.uniqueUsers" helpKey="artemisApp.irisDashboard.help.uniqueUsers">
+                <span class="text-2xl font-bold">{{ o.uniqueUsers }}</span>
+            </jhi-iris-kpi-card>
         </div>
 
         <!-- Row 2: No-Response -->
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseRate" helpKey="artemisApp.irisDashboard.help.noResponseRate">
-                    <span class="fs-3 fw-bold" [class.text-danger]="o.noResponseRate > 10">{{ o.noResponseRate | number: '1.1-1' }}%</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseMessages" helpKey="artemisApp.irisDashboard.help.noResponseMessages">
-                    <span class="fs-3 fw-bold">{{ o.noResponseMessageCount }}</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseSessions" helpKey="artemisApp.irisDashboard.help.noResponseSessions">
-                    <span class="fs-3 fw-bold">{{ o.noResponseSessionCount }}</span>
-                </jhi-iris-kpi-card>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseRate" helpKey="artemisApp.irisDashboard.help.noResponseRate">
+                <span class="text-2xl font-bold" [style.color]="o.noResponseRate > 10 ? 'var(--p-red-500)' : undefined">{{ o.noResponseRate | number: '1.1-1' }}%</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseMessages" helpKey="artemisApp.irisDashboard.help.noResponseMessages">
+                <span class="text-2xl font-bold">{{ o.noResponseMessageCount }}</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.noResponseSessions" helpKey="artemisApp.irisDashboard.help.noResponseSessions">
+                <span class="text-2xl font-bold">{{ o.noResponseSessionCount }}</span>
+            </jhi-iris-kpi-card>
         </div>
 
         <!-- Row 3: Ratings -->
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsUpRatio" helpKey="artemisApp.irisDashboard.help.thumbsUpRatio">
-                    <span class="fs-3 fw-bold">{{ o.thumbsUpRatio | number: '1.1-1' }}%</span>
-                    <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsDownRatio" helpKey="artemisApp.irisDashboard.help.thumbsDownRatio">
-                    <span class="fs-3 fw-bold">{{ o.thumbsDownRatio | number: '1.1-1' }}%</span>
-                    <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%</div>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsUp" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsUp">
-                    <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsUp }}</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-3">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsDown" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsDown">
-                    <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsDown }}</span>
-                </jhi-iris-kpi-card>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsUpRatio" helpKey="artemisApp.irisDashboard.help.thumbsUpRatio">
+                <span class="text-2xl font-bold">{{ o.thumbsUpRatio | number: '1.1-1' }}%</span>
+                <div class="text-muted-color text-sm"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.thumbsDownRatio" helpKey="artemisApp.irisDashboard.help.thumbsDownRatio">
+                <span class="text-2xl font-bold">{{ o.thumbsDownRatio | number: '1.1-1' }}%</span>
+                <div class="text-muted-color text-sm">
+                    <span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%
+                </div>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsUp" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsUp">
+                <span class="text-2xl font-bold">{{ o.sessionsWithThumbsUp }}</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.sessionsWithThumbsDown" helpKey="artemisApp.irisDashboard.help.sessionsWithThumbsDown">
+                <span class="text-2xl font-bold">{{ o.sessionsWithThumbsDown }}</span>
+            </jhi-iris-kpi-card>
         </div>
 
         <!-- Row 4: Response Time & Cost -->
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.avgResponseTime" helpKey="artemisApp.irisDashboard.help.avgResponseTime">
-                    <span class="fs-3 fw-bold">{{ o.avgResponseTimeSeconds | number: '1.1-1' }}s</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.p50p95" helpKey="artemisApp.irisDashboard.help.p50p95">
-                    <span class="fs-3 fw-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
-                </jhi-iris-kpi-card>
-            </div>
-            <div class="col-md-4">
-                <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.tokenCost" helpKey="artemisApp.irisDashboard.help.tokenCost">
-                    <span class="fs-3 fw-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
-                </jhi-iris-kpi-card>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.avgResponseTime" helpKey="artemisApp.irisDashboard.help.avgResponseTime">
+                <span class="text-2xl font-bold">{{ o.avgResponseTimeSeconds | number: '1.1-1' }}s</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.p50p95" helpKey="artemisApp.irisDashboard.help.p50p95">
+                <span class="text-2xl font-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
+            </jhi-iris-kpi-card>
+            <jhi-iris-kpi-card titleKey="artemisApp.irisDashboard.tokenCost" helpKey="artemisApp.irisDashboard.help.tokenCost">
+                <span class="text-2xl font-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
+            </jhi-iris-kpi-card>
         </div>
 
         <!-- Breakdown Tables -->

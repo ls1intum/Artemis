@@ -5,7 +5,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 
 @Component({
     selector: 'jhi-iris-kpi-card',
-    standalone: true,
     imports: [CardModule, TranslateDirective, HelpIconComponent],
     templateUrl: './iris-kpi-card.component.html',
     styleUrls: ['./iris-kpi-card.component.scss'],
