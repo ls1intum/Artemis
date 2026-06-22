@@ -82,33 +82,15 @@ class MetricsBeanUnitTest {
         when(profileService.isProfileActive(SPRING_PROFILE_TEST)).thenReturn(true);
         when(userRepository.findAllActiveAdminLogins()).thenReturn(List.of());
 
-        metricsBean = new MetricsBean(
-                meterRegistry,
-                scheduler,
-                webSocketStats,
-                userRegistry,
-                webSocketHandler,
-                List.of(),
-                Optional.empty(),
-                exerciseRepository,
-                exerciseMetricsService,
-                Optional.empty(),
-                courseRepository,
-                userRepository,
-                statisticsRepository,
-                profileService,
-                Optional.empty(),
-                buildJobRepository);
+        metricsBean = new MetricsBean(meterRegistry, scheduler, webSocketStats, userRegistry, webSocketHandler, List.of(), Optional.empty(), exerciseRepository,
+                exerciseMetricsService, Optional.empty(), courseRepository, userRepository, statisticsRepository, profileService, Optional.empty(), buildJobRepository);
         metricsBean.applicationReady();
     }
 
     @Test
     void shouldExposeFailedBuildsFromBuildJobStatistics() {
-        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull())).thenReturn(List.of(
-                new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
-                new BuildJobResultCountDTO(BuildStatus.ERROR, 3),
-                new BuildJobResultCountDTO(BuildStatus.MISSING, 1),
-                new BuildJobResultCountDTO(BuildStatus.SUCCESSFUL, 4)));
+        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull())).thenReturn(List.of(new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
+                new BuildJobResultCountDTO(BuildStatus.ERROR, 3), new BuildJobResultCountDTO(BuildStatus.MISSING, 1), new BuildJobResultCountDTO(BuildStatus.SUCCESSFUL, 4)));
 
         metricsBean.calculateBuildJobResultMetrics();
 

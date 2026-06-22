@@ -255,8 +255,7 @@ public class MetricsBean {
             calculateActiveUserMetrics();
 
             if (profileService.isLocalCIActive()) {
-                registerMissingBuildResultsMetrics();
-                registerFailedBuildsMetrics();
+                registerBuildJobResultMetrics();
             }
         }
 
@@ -439,9 +438,13 @@ public class MetricsBean {
                 .register(meterRegistry);
     }
 
+    private void registerBuildJobResultMetrics() {
+        registerMissingBuildResultsMetrics();
+        registerFailedBuildsMetrics();
+    }
+
     private void registerFailedBuildsMetrics() {
-        Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours")
-                .register(meterRegistry);
+        Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours").register(meterRegistry);
     }
 
     /**
