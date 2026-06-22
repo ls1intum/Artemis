@@ -313,6 +313,7 @@
                     }
                 }
             },
+            "toggleSidebar": "Toggle Sidebar (⇧ + Ctrl + B)",
             "students": "Students",
             "participations": "Participation",
             "tutors": "Tutors",

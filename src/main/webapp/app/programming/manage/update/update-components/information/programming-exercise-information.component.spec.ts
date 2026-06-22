@@ -7,6 +7,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
+import { By } from '@angular/platform-browser';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -141,6 +143,20 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise');
+        });
+
+        it('should derive shortname when the title changes via the title component output (simple mode)', () => {
+            // Regression: typing a title must auto-generate the short name in simple mode. This goes through the real
+            // (onTitleChange) output binding of jhi-exercise-title-channel-name instead of setting the title property
+            // directly, so it covers the reactive wiring (output binding -> updateShortName -> generation effect).
+            fixture.componentRef.setInput('isSimpleMode', true);
+            fixture.detectChanges();
+
+            const titleComponent = fixture.debugElement.query(By.directive(ExerciseTitleChannelNameComponent)).componentInstance as ExerciseTitleChannelNameComponent;
+            titleComponent.updateTitle('My New Exercise');
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch('MyNewExercise');
         });
 
         it('should derive shortname from title when directly derived shortname is already taken', () => {

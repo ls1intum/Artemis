@@ -2,7 +2,7 @@ import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, in
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -110,6 +110,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
+    readonly isAtlasEnabled = signal(false);
 
     readonly isAdmin = signal(false);
 
@@ -123,6 +124,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.isAtlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {

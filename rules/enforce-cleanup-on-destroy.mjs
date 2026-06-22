@@ -9,6 +9,12 @@ const createRule = ESLintUtils.RuleCreator(() => "");
  * - MutationObserver / ResizeObserver / IntersectionObserver created without .disconnect() in ngOnDestroy
  * - addEventListener calls without removeEventListener in ngOnDestroy
  * - interact() calls without .unset() in ngOnDestroy
+ * - Monaco disposable-returning calls (monaco.editor.create / createModel, monaco.languages.register*,
+ *   editor.addAction) without a .dispose() in ngOnDestroy. These retain the editor/model — and its whole
+ *   detached DOM subtree — via Monaco's process-global registries until disposed (see PR #12976, where an
+ *   undisposed editor.addCommand leaked every Monaco editor on navigation). The companion no-restricted-syntax
+ *   rule bans editor.addCommand outright; this rule guards the disposables that are legitimate but must be
+ *   torn down.
  *
  * Only checks Angular component files (.component.ts).
  */
@@ -26,6 +32,8 @@ const rule = createRule({
                 "addEventListener('{{eventName}}', ...) is called but the listener is not removed in ngOnDestroy(). Store the listener reference and call removeEventListener() in ngOnDestroy().",
             missingInteractUnset:
                 "interact() handler is created but never unset. Store the return value and call .unset() in ngOnDestroy() to prevent accumulated event handlers.",
+            missingMonacoDispose:
+                "{{api}} returns a Monaco disposable that is never disposed. Store it and call .dispose() in ngOnDestroy() — otherwise the editor/model (and its detached DOM) is retained via Monaco's process-global registries (see PR #12976).",
         },
         schema: [],
     },
@@ -43,6 +51,8 @@ const rule = createRule({
         const observers = []; // { type, node }
         const addEventListenerCalls = []; // { eventName, node }
         const interactCalls = []; // { node }
+        const monacoDisposables = []; // { api, node, namespaced }
+        let referencesMonaco = false; // file uses the `monaco.*` namespace at least once
 
         return {
             // Collect ngOnDestroy method body text for checking cleanup calls
@@ -65,6 +75,32 @@ const rule = createRule({
                     const eventName = args[0].type === "Literal" ? args[0].value : "<dynamic>";
                     addEventListenerCalls.push({ eventName, node });
                 }
+            },
+
+            // Note whether the file uses the Monaco namespace at all (guards the editor-instance checks below)
+            "MemberExpression[object.name='monaco']"() {
+                referencesMonaco = true;
+            },
+
+            // Detect Monaco namespace factories that return a disposable: monaco.editor.create / createDiffEditor /
+            // createModel, and monaco.languages.register* (completion/hover/etc. providers). These are unambiguously
+            // Monaco because they are read off the `monaco.editor` / `monaco.languages` namespace.
+            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(create|createDiffEditor|createModel)$/]"(node) {
+                const objText = context.sourceCode.getText(node.callee.object);
+                if (objText === "monaco.editor") {
+                    monacoDisposables.push({ api: `monaco.editor.${node.callee.property.name}`, node, namespaced: true });
+                }
+            },
+            "CallExpression[callee.type='MemberExpression'][callee.property.name=/^register[A-Z]/]"(node) {
+                const objText = context.sourceCode.getText(node.callee.object);
+                if (objText === "monaco.languages") {
+                    monacoDisposables.push({ api: `monaco.languages.${node.callee.property.name}`, node, namespaced: true });
+                }
+            },
+            // editor.addAction(...) returns an IDisposable. The receiver is an editor *instance* (a variable), so it
+            // is not namespace-qualified; only flag it when the file otherwise references the `monaco` namespace.
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='addAction']"(node) {
+                monacoDisposables.push({ api: "editor.addAction", node, namespaced: false });
             },
 
             // Detect interact() calls
@@ -125,6 +161,22 @@ const rule = createRule({
                         context.report({
                             node: call.node,
                             messageId: "missingInteractUnset",
+                        });
+                    }
+                }
+
+                // Check Monaco disposables — flag only when there is no .dispose() anywhere in ngOnDestroy (mirrors
+                // the .disconnect()/.unset() heuristics above). Editor-instance calls (addAction) are reported only
+                // when the file references the monaco namespace, to avoid matching unrelated .addAction() methods.
+                if (!ngOnDestroyBody.includes(".dispose()")) {
+                    for (const disposable of monacoDisposables) {
+                        if (!disposable.namespaced && !referencesMonaco) {
+                            continue;
+                        }
+                        context.report({
+                            node: disposable.node,
+                            messageId: "missingMonacoDispose",
+                            data: { api: disposable.api },
                         });
                     }
                 }

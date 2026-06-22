@@ -153,7 +153,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Add a participation for student1.
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
