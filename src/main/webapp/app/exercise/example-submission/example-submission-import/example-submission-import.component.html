@@ -15,11 +15,11 @@
                     [(ngModel)]="searchTerm"
                     placeholder="{{ 'artemisApp.exercise.name' | artemisTranslate }}"
                 />
-                @if (loading) {
+                @if (loading()) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
-            @if (content.resultsOnPage && content.resultsOnPage.length > 0) {
+            @if (content().resultsOnPage && content().resultsOnPage.length > 0) {
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead class="thead-dark">
@@ -58,13 +58,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (submission of content.resultsOnPage; track submission; let i = $index) {
+                            @for (submission of content().resultsOnPage; track submission; let i = $index) {
                                 <tr>
                                     <td>{{ i + 1 }}</td>
                                     <td>{{ submission.participation?.participantName }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
                                     <td>
-                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" />
+                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" [result]="getLatestResult(submission)" />
                                     </td>
                                     <td>
                                         {{ submission.submissionSize }}
@@ -91,7 +91,7 @@
                     [rotate]="true"
                     [ellipses]="true"
                     [boundaryLinks]="true"
-                    [collectionSize]="total"
+                    [collectionSize]="total()"
                     [(page)]="state.page"
                     [pageSize]="state.pageSize"
                     (pageChange)="onPageChange($event)"

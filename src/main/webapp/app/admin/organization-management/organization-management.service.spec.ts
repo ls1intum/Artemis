@@ -171,6 +171,26 @@ describe('Organization Service', () => {
         expect(result.content[1].isRegistered).toBe(false);
     });
 
+    it('should add a course to an Organization', async () => {
+        const resultPromise = firstValueFrom(service.addCourseToOrganization(7, 42));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/organizations/7/courses/42' });
+        req.flush({ status: 200 });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
+    it('should remove a course from an Organization', async () => {
+        const resultPromise = firstValueFrom(service.removeCourseFromOrganization(7, 42));
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/organizations/7/courses/42' });
+        req.flush({ status: 200 });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
     function createTestReturnElement() {
         const elem2 = new Organization();
         elem2.id = 1;

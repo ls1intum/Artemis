@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { QuizTrainingSettingsService } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.service';
@@ -17,7 +17,7 @@ export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);
     alertService = inject(AlertService);
 
-    isVisibleInLeaderboard: boolean | undefined;
+    readonly isVisibleInLeaderboard = signal<boolean | undefined>(undefined);
 
     ngOnInit(): void {
         this.loadSettings();
@@ -31,7 +31,7 @@ export class QuizTrainingSettingsComponent implements OnInit {
         this.quizService.getSettings().subscribe({
             next: (response) => {
                 if (response.body) {
-                    this.isVisibleInLeaderboard = response.body.showInLeaderboard;
+                    this.isVisibleInLeaderboard.set(response.body.showInLeaderboard);
                 }
             },
             error: (error) => {
@@ -42,7 +42,7 @@ export class QuizTrainingSettingsComponent implements OnInit {
 
     private saveSettings(): void {
         const leaderboardSettingsDTO = new LeaderboardSettingsDTO();
-        leaderboardSettingsDTO.showInLeaderboard = this.isVisibleInLeaderboard;
+        leaderboardSettingsDTO.showInLeaderboard = this.isVisibleInLeaderboard();
         this.quizService.updateSettings(leaderboardSettingsDTO).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.quizTrainingSettings.updateSuccess');

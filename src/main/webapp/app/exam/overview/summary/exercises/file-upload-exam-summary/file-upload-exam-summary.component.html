@@ -2,7 +2,6 @@
     @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-file-upload-submission
             [participationId]="exercise().studentParticipations![0].id"
-            [displayHeader]="false"
             [expandProblemStatement]="expandProblemStatement()"
             [displayedInExamSummary]="true"
             [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"

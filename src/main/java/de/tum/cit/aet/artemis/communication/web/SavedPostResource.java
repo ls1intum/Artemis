@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.communication.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,8 +131,8 @@ public class SavedPostResource {
         // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
         // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
         switch (postingType) {
-            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(postId), user.getId());
-            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(postId), user.getId());
+            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Set.of(postId), user.getId());
+            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Set.of(postId), user.getId());
         }
 
         var post = retrievePostingElseThrow(postId, postingType);

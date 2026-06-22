@@ -12,7 +12,7 @@ import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 
-import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -93,7 +93,7 @@ export class CodeButtonComponent implements OnInit {
     sshEnabled = false;
     sshTemplateUrl?: string;
     versionControlUrl: string;
-    readonly isInCourseManagement: boolean;
+    readonly isInCourseManagement = signal<boolean>(undefined!);
     sshSettingsUrl: string;
     vcsTokenSettingsUrl: string;
     user: User;
@@ -155,13 +155,14 @@ export class CodeButtonComponent implements OnInit {
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    readonly faLaptopCode = faLaptopCode;
 
     constructor() {
-        this.isInCourseManagement = this.router.url.includes('course-management');
+        this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
-            if (this.isInCourseManagement) {
+            if (this.isInCourseManagement()) {
                 return;
             }
             const participations = this.participations();
@@ -216,7 +217,7 @@ export class CodeButtonComponent implements OnInit {
 
     public useHttpsToken() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        if (this.isInCourseManagement) {
+        if (this.isInCourseManagement()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
             this.userTokenStillValid.set(stillValid);
@@ -338,7 +339,7 @@ export class CodeButtonComponent implements OnInit {
 
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
-            if (this.isInCourseManagement) {
+            if (this.isInCourseManagement()) {
                 return this.user.vcsAccessToken;
             } else {
                 return this.activeParticipation()?.vcsAccessToken;

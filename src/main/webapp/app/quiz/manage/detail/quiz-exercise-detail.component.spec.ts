@@ -69,7 +69,7 @@ describe('QuizExercise Details Component', () => {
         vi.spyOn(comp, 'load').mockReturnValue();
         comp.ngOnInit();
 
-        expect(comp.isExamMode).toBe(true);
+        expect(comp.isExamMode()).toBe(true);
     });
 
     it('should initialize detail component', async () => {
@@ -79,14 +79,14 @@ describe('QuizExercise Details Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.quizExercise).toBeDefined();
-        expect(comp.quizExercise.isEditable).toBeTruthy();
-        expect(comp.quizExercise.status).toBe(QuizStatus.VISIBLE);
-        expect(comp.quizExercise.startDate).toBeDefined();
+        expect(comp.quizExercise()).toBeDefined();
+        expect(comp.quizExercise().isEditable).toBeTruthy();
+        expect(comp.quizExercise().status).toBe(QuizStatus.VISIBLE);
+        expect(comp.quizExercise().startDate).toBeDefined();
 
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
+        expect(comp.detailOverviewSections()).toBeDefined();
     });
 
     it('should display competency links when exercise has competencies', async () => {
@@ -102,8 +102,8 @@ describe('QuizExercise Details Component', () => {
         comp.ngOnInit();
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
-        const modeSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.mode');
+        expect(comp.detailOverviewSections()).toBeDefined();
+        const modeSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.mode');
         expect(modeSection).toBeDefined();
         const competencyDetail = modeSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
         expect(competencyDetail).toBeDefined();
@@ -119,8 +119,8 @@ describe('QuizExercise Details Component', () => {
         comp.ngOnInit();
         await Promise.resolve();
 
-        expect(comp.detailOverviewSections).toBeDefined();
-        const modeSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.mode');
+        expect(comp.detailOverviewSections()).toBeDefined();
+        const modeSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.mode');
         expect(modeSection).toBeDefined();
         const competencyDetail = modeSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
         expect(competencyDetail).toBeUndefined();

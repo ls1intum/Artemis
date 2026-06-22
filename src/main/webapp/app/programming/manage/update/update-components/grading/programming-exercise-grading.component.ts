@@ -68,7 +68,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    editPolicyUrl: string;
+    readonly editPolicyUrl = signal<string | undefined>(undefined);
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.maxScoreField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
@@ -174,6 +174,6 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
             'grading',
             'submission-policy',
         ];
-        this.editPolicyUrl = linkParts.join('/');
+        this.editPolicyUrl.set(linkParts.join('/'));
     }
 } /* istanbul ignore next */

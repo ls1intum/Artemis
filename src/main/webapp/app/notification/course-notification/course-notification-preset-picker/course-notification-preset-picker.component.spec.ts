@@ -69,12 +69,12 @@ describe('CourseNotificationPresetPickerComponent', () => {
     });
 
     it('should set selectedPresetLangKey based on selectedCourseSettingPreset', () => {
-        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.preset1.title');
+        expect(component['selectedPresetLangKey']()).toBe('artemisApp.courseNotification.preset.preset1.title');
 
         fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[1]);
         fixture.detectChanges();
 
-        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.preset2.title');
+        expect(component['selectedPresetLangKey']()).toBe('artemisApp.courseNotification.preset.preset2.title');
     });
 
     it('should use customUserCourseNotificationSettingPreset key when selected preset is null', () => {
@@ -82,7 +82,7 @@ describe('CourseNotificationPresetPickerComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title');
+        expect(component['selectedPresetLangKey']()).toBe('artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title');
     });
 
     it('should emit onPresetSelected event with the correct preset ID when a preset is selected', () => {

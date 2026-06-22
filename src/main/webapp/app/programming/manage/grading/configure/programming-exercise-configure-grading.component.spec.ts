@@ -4,7 +4,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -60,7 +59,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -194,7 +192,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                NgxDatatableModule,
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 ProgrammingExerciseConfigureGradingComponent,
@@ -231,7 +228,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
@@ -339,8 +335,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should reset all categories when the reset button is clicked', () => {
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
 
         comp.updateEditedField(codeAnalysisCategories1[0], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
@@ -364,12 +358,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
-        expect(comp.changedCategoryIds).toHaveLength(0);
+        expect(comp.changedCategoryIds()).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the categories were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig()).toBe(true);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -388,8 +382,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
         expect(loadStatisticsStub).toHaveBeenCalledOnce();
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
-        expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
-        expect(comp.changedCategoryIds).toHaveLength(0);
+        expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual(codeAnalysisCategories1);
+        expect(comp.changedCategoryIds()).toHaveLength(0);
     });
 
     it('should import a configuration from a different exercise', () => {
@@ -401,8 +395,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
 
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
 
         const button = debugElement.query(By.css('#import-configuration-button'));
@@ -430,21 +422,21 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         comp.importCategories(5);
 
-        expect(comp.staticCodeAnalysisCategoriesForTable).toBe(newConfiguration);
-        expect(comp.staticCodeAnalysisCategoriesForCharts).toBe(newConfiguration);
+        expect(comp.staticCodeAnalysisCategoriesForTable()).toBe(newConfiguration);
+        expect(comp.staticCodeAnalysisCategoriesForCharts()).toBe(newConfiguration);
         expect(comp.backupStaticCodeAnalysisCategories).toBe(newConfiguration);
     });
 
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        const gradedCategories = comp.staticCodeAnalysisCategoriesForTable.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
+        const gradedCategories = comp.staticCodeAnalysisCategoriesForTable().filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
         expect(gradedCategories).not.toHaveLength(0);
 
         comp.updateEditedCategoryField(gradedCategories[0], EditableField.PENALTY)(20);
         comp.updateEditedCategoryField(gradedCategories[0], EditableField.MAX_PENALTY)(100);
 
-        expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
+        expect(comp.changedCategoryIds()).toEqual([gradedCategories[0].id]);
 
         const updatedCategory: StaticCodeAnalysisCategory = { ...gradedCategories[0], penalty: 20, maxPenalty: 100 };
 
@@ -455,49 +447,33 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
 
-        const categoryThatWasUpdated = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === updatedCategory.id)!;
+        const categoryThatWasUpdated = comp.staticCodeAnalysisCategoriesForTable().find((category) => category.id === updatedCategory.id)!;
         expect(categoryThatWasUpdated.penalty).toBe(20);
         expect(categoryThatWasUpdated.maxPenalty).toBe(100);
-        expect(comp.changedCategoryIds).toHaveLength(0);
+        expect(comp.changedCategoryIds()).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig()).toBe(true);
     });
 
     it('should load the grading statistics correctly', () => {
         initGradingComponent({ tab: 'code-analysis' });
-        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-        comp.tableSorts = { testCases: [], codeAnalysis: [] };
         fixture.changeDetectorRef.detectChanges();
         fixture.changeDetectorRef.detectChanges();
 
         expect(loadStatisticsStub).toHaveBeenCalledTimes(3);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
 
-        expect(comp.maxIssuesPerCategory).toBe(5);
-        expect(comp.gradingStatistics).toEqual(gradingStatistics);
+        expect(comp.maxIssuesPerCategory()).toBe(5);
+        expect(comp.gradingStatistics()).toEqual(gradingStatistics);
 
-        expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
+        expect(comp.staticCodeAnalysisCategoriesForCharts()).toEqual(codeAnalysisCategories1);
 
         const issuesMapForFirstCategory = comp.getIssuesMap(codeAnalysisCategories1[0].name);
         expect(issuesMapForFirstCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[0].name]);
         const issuesMapForSecondCategory = comp.getIssuesMap(codeAnalysisCategories1[1].name);
         expect(issuesMapForSecondCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[1].name]);
-    });
-
-    it('should sort code-analysis table', () => {
-        initGradingComponent({ tab: 'code-analysis' });
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'penalty', dir: 'asc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'penalty', dir: 'asc' }]);
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'maxPenalty', dir: 'asc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'maxPenalty', dir: 'asc' }]);
-
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'asc' }] });
-        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'desc' }] });
-        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'detectedIssues', dir: 'desc' }]);
     });
 
     it('should not require confirmation if there are no unsaved changes', () => {
@@ -508,7 +484,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should require confirmation if there are unsaved changes', () => {
         initGradingComponent();
-        comp.changedTestCaseIds = [1, 2, 3];
+        comp.changedTestCaseIds.set([1, 2, 3]);
 
         // Ignore window confirm
         window.confirm = () => {
@@ -521,10 +497,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     describe('test chart interaction', () => {
         it('should filter sca table correctly', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-            comp.tableSorts = { testCases: [], codeAnalysis: [] };
             fixture.changeDetectorRef.detectChanges();
-            const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts;
+            const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts();
             const expectedCategory = {
                 id: 1,
                 name: 'Bad Practice',
@@ -535,20 +509,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
 
-            expect(comp.staticCodeAnalysisCategoriesForTable).toHaveLength(1);
-            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual([expectedCategory]);
-            expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(scaCategoriesDisplayedByChart);
+            expect(comp.staticCodeAnalysisCategoriesForTable()).toHaveLength(1);
+            expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual([expectedCategory]);
+            expect(comp.staticCodeAnalysisCategoriesForCharts()).toEqual(scaCategoriesDisplayedByChart);
         });
 
         it('should update category accordingly if modified while chart filtering', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
-            comp.tableSorts = { testCases: [], codeAnalysis: [] };
             fixture.changeDetectorRef.detectChanges();
             fixture.changeDetectorRef.detectChanges();
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
             fixture.changeDetectorRef.detectChanges();
-            const gradedCategory = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === 1)!;
+            const gradedCategory = comp.staticCodeAnalysisCategoriesForTable().find((category) => category.id === 1)!;
             comp.updateEditedCategoryField(gradedCategory, EditableField.PENALTY)(10);
             comp.updateEditedCategoryField(gradedCategory, EditableField.MAX_PENALTY)(50);
 
@@ -560,9 +532,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 maxPenalty: 50,
             };
 
-            expect(comp.staticCodeAnalysisCategoriesForTable).toHaveLength(1);
-            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual([currentlyDisplayedCategory]);
-            expect(comp.staticCodeAnalysisCategoriesForCharts).toContainEqual(currentlyDisplayedCategory);
+            expect(comp.staticCodeAnalysisCategoriesForTable()).toHaveLength(1);
+            expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual([currentlyDisplayedCategory]);
+            expect(comp.staticCodeAnalysisCategoriesForCharts()).toContainEqual(currentlyDisplayedCategory);
 
             // we reset the table
             comp.filterByChart(-5, ChartFilterType.CATEGORIES);
@@ -570,7 +542,62 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 .filter((category) => category.state !== StaticCodeAnalysisCategoryState.Inactive)
                 .map((category) => (category.id !== 1 ? category : currentlyDisplayedCategory));
 
-            expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(expectedCategories);
+            expect(comp.staticCodeAnalysisCategoriesForTable()).toEqual(expectedCategories);
+        });
+    });
+
+    describe('SCA category sort comparators', () => {
+        const categoryColumnComparator = (field: string) => comp.codeAnalysisColumns().find((column) => column.field === field)!.sortComparator!;
+
+        const makeCategory = (overrides: Partial<StaticCodeAnalysisCategory>): StaticCodeAnalysisCategory =>
+            ({ id: 0, name: 'cat', state: StaticCodeAnalysisCategoryState.Inactive, penalty: 0, maxPenalty: 0, ...overrides }) as StaticCodeAnalysisCategory;
+
+        it('should order categories by semantic state (Inactive < Feedback < Graded)', () => {
+            const comparator = categoryColumnComparator('state');
+            const inactive = makeCategory({ state: StaticCodeAnalysisCategoryState.Inactive });
+            const feedback = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback });
+            const graded = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded });
+
+            const sorted = [graded, inactive, feedback].sort(comparator);
+            expect(sorted.map((category) => category.state)).toEqual([
+                StaticCodeAnalysisCategoryState.Inactive,
+                StaticCodeAnalysisCategoryState.Feedback,
+                StaticCodeAnalysisCategoryState.Graded,
+            ]);
+        });
+
+        it('should order by state first, then by penalty within graded categories (penalty ignored for non-graded)', () => {
+            const comparator = categoryColumnComparator('penalty');
+            const gradedLow = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, penalty: 1 });
+            const gradedHigh = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, penalty: 5 });
+            const feedbackHighPenalty = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback, penalty: 99 });
+
+            const sorted = [gradedHigh, feedbackHighPenalty, gradedLow].sort(comparator);
+            expect(sorted).toEqual([feedbackHighPenalty, gradedLow, gradedHigh]);
+        });
+
+        it('should order by state first, then by maxPenalty within graded categories', () => {
+            const comparator = categoryColumnComparator('maxPenalty');
+            const gradedLow = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, maxPenalty: 3 });
+            const gradedHigh = makeCategory({ state: StaticCodeAnalysisCategoryState.Graded, maxPenalty: 10 });
+            const feedbackHighMax = makeCategory({ state: StaticCodeAnalysisCategoryState.Feedback, maxPenalty: 99 });
+
+            const sorted = [gradedHigh, feedbackHighMax, gradedLow].sort(comparator);
+            expect(sorted).toEqual([feedbackHighMax, gradedLow, gradedHigh]);
+        });
+
+        it('should order by total detected issues, using state as a tie-breaker', () => {
+            comp.gradingStatistics.set(gradingStatistics);
+            const comparator = categoryColumnComparator('detectedIssues');
+            // 'Bad Practice' (Graded) and 'Styling' (Feedback) both sum to 5 issues → the tie is broken by state.
+            const badPractice = codeAnalysisCategories1[0];
+            const styling = codeAnalysisCategories1[1];
+            const noIssues = makeCategory({ name: 'Unknown', state: StaticCodeAnalysisCategoryState.Graded });
+
+            expect(comparator(styling, badPractice)).toBeLessThan(0);
+            expect(comparator(badPractice, styling)).toBeGreaterThan(0);
+            // 0 issues sorts before categories with 5 issues regardless of state.
+            expect(comparator(noIssues, badPractice)).toBeLessThan(0);
         });
     });
 });

@@ -18,26 +18,7 @@
     <div class="mb-2">
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
-        <ngx-datatable id="envVarsTable" class="bootstrap" [headerHeight]="50" [columnMode]="'force'" [rowHeight]="'auto'" [rows]="envVars">
-            <ngx-datatable-column [name]="'Key'" [maxWidth]="200">
-                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                    <jhi-table-editable-field [id]="'key' + rowIndex" [value]="row[0] || ''" [onValueUpdate]="this.onEnvVarsKeyChange(row)" [isRequired]="true" />
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column [name]="'Value'">
-                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                    <jhi-table-editable-field [id]="'value' + rowIndex" [value]="row[1] || ''" [onValueUpdate]="this.onEnvVarsValueChange(row)" [isRequired]="true" />
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column [maxWidth]="150">
-                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                    <button class="btn btn-sm btn-danger" (click)="removeEnvVar(rowIndex)">
-                        <fa-icon [icon]="faTrash" />
-                        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
-                    </button>
-                </ng-template>
-            </ngx-datatable-column>
-        </ngx-datatable>
+        <jhi-table-view id="envVarsTable" [cols]="envVarColumns()" [vals]="envVars()" [rowActions]="envVarActionsRef" [options]="envVarTableOptions" />
         <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
@@ -55,10 +36,10 @@
                 class="w-100 mt-1"
                 #timeoutField="ngModel"
                 type="range"
-                min="{{ timeoutMinValue }}"
-                max="{{ timeoutMaxValue }}"
+                min="{{ timeoutMinValue() }}"
+                max="{{ timeoutMaxValue() }}"
                 step="1"
-                value="{{ timeoutDefaultValue }}"
+                value="{{ timeoutDefaultValue() }}"
                 id="field_timeout"
                 [ngModel]="timeout()"
                 (ngModelChange)="timeoutChange!.emit($event)"
@@ -68,7 +49,7 @@
             <span class="slider-value">{{ timeout() }} s</span>
         </span>
     </div>
-    @if (isLanguageSupported) {
+    @if (isLanguageSupported()) {
         <div class="mb-2">
             <label for="networkMode">
                 <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
@@ -76,8 +57,8 @@
             </label>
             <select id="networkMode" class="form-select mb-2" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event)">
                 <option value="" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.defaultOption"></option>
-                @if (allowedCustomNetworks?.length) {
-                    @for (customNetwork of allowedCustomNetworks; track customNetwork) {
+                @if (allowedCustomNetworks()?.length) {
+                    @for (customNetwork of allowedCustomNetworks(); track customNetwork) {
                         @if (customNetwork === 'none') {
                             <option value="none" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption"></option>
                         } @else {
@@ -98,7 +79,7 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
-        <input type="text" class="form-control" name="cpuCount" id="field_dockerCpuCount" [value]="cpuCount" (input)="onCpuCountChange($event)" />
+        <input type="text" class="form-control" name="cpuCount" id="field_dockerCpuCount" [value]="cpuCount()" (input)="onCpuCountChange($event)" />
     </div>
 
     <div class="mb-2">
@@ -106,7 +87,7 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
-        <input type="text" class="form-control" name="memory" id="field_memory" [value]="memory" (input)="onMemoryChange($event)" />
+        <input type="text" class="form-control" name="memory" id="field_memory" [value]="memory()" (input)="onMemoryChange($event)" />
     </div>
 
     <div class="mb-2">
@@ -114,6 +95,22 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
-        <input type="text" class="form-control" name="memorySwap" id="field_memorySwap" [value]="memorySwap" (input)="onMemorySwapChange($event)" />
+        <input type="text" class="form-control" name="memorySwap" id="field_memorySwap" [value]="memorySwap()" (input)="onMemorySwapChange($event)" />
     </div>
 </div>
+
+<!-- Env var cell templates -->
+<ng-template #envVarKeyTemplate let-cell>
+    <jhi-table-editable-field [id]="'key' + cell.rowIndex" [value]="cell.data[0] || ''" [onValueUpdate]="onEnvVarsKeyChange(cell.data)" [isRequired]="true" />
+</ng-template>
+
+<ng-template #envVarValueTemplate let-cell>
+    <jhi-table-editable-field [id]="'value' + cell.rowIndex" [value]="cell.data[1] || ''" [onValueUpdate]="onEnvVarsValueChange(cell.data)" [isRequired]="true" />
+</ng-template>
+
+<ng-template #envVarActionsRef let-row>
+    <button type="button" class="btn btn-sm btn-danger" (click)="removeEnvVar(row)">
+        <fa-icon [icon]="faTrash" />
+        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
+    </button>
+</ng-template>

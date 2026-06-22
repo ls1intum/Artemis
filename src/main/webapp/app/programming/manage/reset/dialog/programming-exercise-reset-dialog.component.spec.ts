@@ -116,14 +116,14 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.resetProgrammingExercise();
 
             expect(comp.handleResetResponse).not.toHaveBeenCalled();
-            expect(comp.resetInProgress).toBe(false);
+            expect(comp.resetInProgress()).toBe(false);
         });
     });
 
     describe('canSubmit', () => {
         beforeEach(() => {
             comp.confirmText = 'Programming Exercise';
-            comp.resetInProgress = false;
+            comp.resetInProgress.set(false);
             comp.programmingExerciseResetOptions = {
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
@@ -150,7 +150,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should return false when reset is in progress', () => {
-            comp.resetInProgress = true;
+            comp.resetInProgress.set(true);
             expect(comp.canSubmit).toBe(false);
         });
     });

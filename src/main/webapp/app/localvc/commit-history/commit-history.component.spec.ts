@@ -164,10 +164,10 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.participation).toEqual(mockParticipation);
-        expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results![0].id).toBe(1);
-        expect(component.participation.submissions![1].results![0].id).toBe(2);
+        expect(component.participation()).toEqual(mockParticipation);
+        expect(component.participation().submissions).toHaveLength(2);
+        expect(component.participation().submissions![0].results![0].id).toBe(1);
+        expect(component.participation().submissions![1].results![0].id).toBe(2);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -185,8 +185,8 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.participation).toEqual(mockParticipation);
-        expect(component.commits).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
+        expect(component.participation()).toEqual(mockParticipation);
+        expect(component.commits()).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -204,12 +204,12 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.participation).toEqual(mockParticipation);
-        expect(component.commits).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
+        expect(component.participation()).toEqual(mockParticipation);
+        expect(component.commits()).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
 
-        expect(component.commits[0].result).toEqual(mockParticipation.submissions![1].results![0]);
-        expect(component.commits[1].result).toEqual(mockParticipation.submissions![0].results![0]);
-        expect(component.commits[2].result).toBeUndefined();
+        expect(component.commits()[0].result).toEqual(mockParticipation.submissions![1].results![0]);
+        expect(component.commits()[1].result).toEqual(mockParticipation.submissions![0].results![0]);
+        expect(component.commits()[2].result).toBeUndefined();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -229,15 +229,15 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
-        expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results).toEqual([templateSubmissions[0].results![0]]);
+        expect(component.participation()).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
+        expect(component.participation().submissions).toHaveLength(2);
+        expect(component.participation().submissions![0].results).toEqual([templateSubmissions[0].results![0]]);
 
-        expect(component.commits).toEqual([mockTemplateCommit2, mockTemplateCommit1]); // Updated to reflect the correct order
+        expect(component.commits()).toEqual([mockTemplateCommit2, mockTemplateCommit1]); // Updated to reflect the correct order
 
         //results are set in the template participation
-        expect(component.commits[0].result).toEqual(templateSubmissions[1].results![0]);
-        expect(component.commits[1].result).toEqual(templateSubmissions[0].results![0]);
+        expect(component.commits()[0].result).toEqual(templateSubmissions[1].results![0]);
+        expect(component.commits()[1].result).toEqual(templateSubmissions[0].results![0]);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -257,15 +257,15 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.solutionParticipation);
-        expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results).toEqual([solutionSubmissions[0].results![0]]);
+        expect(component.participation()).toEqual(mockExerciseWithTemplateAndSolution.solutionParticipation);
+        expect(component.participation().submissions).toHaveLength(2);
+        expect(component.participation().submissions![0].results).toEqual([solutionSubmissions[0].results![0]]);
 
-        expect(component.commits).toEqual([mockSolutionCommit2, mockSolutionCommit1]); // Updated to reflect the correct order
+        expect(component.commits()).toEqual([mockSolutionCommit2, mockSolutionCommit1]); // Updated to reflect the correct order
 
         // results are set in the solution participation
-        expect(component.commits[0].result).toEqual(solutionSubmissions[1].results![0]);
-        expect(component.commits[1].result).toEqual(solutionSubmissions[0].results![0]);
+        expect(component.commits()[0].result).toEqual(solutionSubmissions[1].results![0]);
+        expect(component.commits()[1].result).toEqual(solutionSubmissions[0].results![0]);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -286,11 +286,11 @@ describe('CommitHistoryComponent', () => {
         expect(component.isTestRepository).toBe(true);
 
         // Expectations
-        expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
+        expect(component.participation()).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
 
-        expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
-        expect(component.commits[0].result).toBeUndefined();
-        expect(component.commits[1].result).toBeUndefined();
+        expect(component.commits()).toEqual(mockTestCommits); // Updated to reflect the correct order
+        expect(component.commits()[0].result).toBeUndefined();
+        expect(component.commits()[1].result).toBeUndefined();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -309,9 +309,9 @@ describe('CommitHistoryComponent', () => {
         component.ngOnInit();
 
         // Expectations
-        expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
-        expect(component.commits[0].result).toBeUndefined();
-        expect(component.commits[1].result).toBeUndefined();
+        expect(component.commits()).toEqual(mockTestCommits); // Updated to reflect the correct order
+        expect(component.commits()[0].result).toBeUndefined();
+        expect(component.commits()[1].result).toBeUndefined();
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();

@@ -1,5 +1,14 @@
 
 buildscript {
+    // Force the patched Handlebars onto the build-script / plugin classpath. The
+    // org.openapi.generator plugin pulls com.github.jknack:handlebars transitively, and
+    // versions < 4.5.2 are vulnerable to CVE-2026-55760 (FileTemplateLoader path traversal).
+    // This is a build-time-only dependency (client code generation), not shipped in the WAR.
+    configurations.classpath {
+        resolutionStrategy {
+            force "com.github.jknack:handlebars:4.5.2"
+        }
+    }
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
@@ -40,7 +49,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.4"
+version = "9.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -83,7 +92,15 @@ modernizer {
     failOnViolations = false
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
-    exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+    exclusions = [
+        "java/util/Optional.get:()Ljava/lang/Object;",
+        // The project deliberately uses Apache Commons FileUtils for file copy/write because java.nio.file.Files.copy /
+        // Files.writeString do not create missing parent directories. This is enforced by ArchitectureTest.testFileWriteUsage,
+        // so exclude the modernizer rules that would otherwise suggest the (forbidden) java.nio.file.Files alternatives.
+        "org/apache/commons/io/FileUtils.copyFile:(Ljava/io/File;Ljava/io/File;)V",
+        "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;)V",
+        "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V",
+    ]
 }
 
 gitProperties {
@@ -113,6 +130,11 @@ configurations {
 }
 
 repositories {
+    // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429 rate-limit errors during dependency resolution)
+    maven {
+        name = "reposiliteRepository"
+        url = "https://reposilite.aet.cit.tum.de/releases"
+    }
     mavenCentral()
     mavenLocal()
     // required for Spring AI milestone releases
@@ -231,7 +253,7 @@ dependencies {
     // Align all Spring AI modules to the same version
     // 2.0.0-M6+ fixes GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-RC2")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —

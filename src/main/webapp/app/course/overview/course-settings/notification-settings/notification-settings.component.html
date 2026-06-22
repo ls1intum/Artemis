@@ -4,20 +4,20 @@
         <span jhiTranslate="artemisApp.courseNotification.setting.headline"></span>
     </h5>
 
-    @if (isLoading) {
+    @if (isLoading()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />
         </div>
     } @else {
         <jhi-course-notification-preset-picker
-            [availableCourseSettingPresets]="selectableSettingPresets"
-            [selectedCourseSettingPreset]="selectedSettingPreset"
+            [availableCourseSettingPresets]="selectableSettingPresets()"
+            [selectedCourseSettingPreset]="selectedSettingPreset()"
             [isSmallButton]="false"
             (onPresetSelected)="presetSelected($event)"
         />
 
         <div class="row g-3 mt-2 align-items-stretch">
-            @for (notificationSpecification of notificationSpecifications; track notificationSpecification.identifier) {
+            @for (notificationSpecification of notificationSpecifications(); track notificationSpecification.identifier) {
                 <div class="col-12 col-md-6 col-xl-4 min-h-100">
                     <jhi-course-notification-setting-specification-card [settingSpecification]="notificationSpecification" (onOptionChanged)="optionChanged($event)" />
                 </div>

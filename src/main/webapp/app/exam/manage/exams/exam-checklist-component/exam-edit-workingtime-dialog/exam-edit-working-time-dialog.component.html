@@ -5,7 +5,7 @@
             durationLabelText="artemisApp.examManagement.editWorkingTime.label"
             [(ngModel)]="workingTimeSeconds"
             [allowNegative]="true"
-            [disabled]="isLoading"
+            [disabled]="isLoading()"
         />
     </div>
     <div class="bg-light rounded-2 p-3 mt-3">
@@ -19,26 +19,26 @@
         <jhi-confirm-entity-name
             confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
             [entityName]="exam()?.title!"
-            [disabled]="isLoading"
+            [disabled]="isLoading()"
             name="confirmEntityName"
             ngModel
         />
     </div>
     <div class="d-flex justify-content-end gap-2 mt-3">
-        <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="isLoading">
+        <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="isLoading()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="confirm"
             type="submit"
             class="btn btn-warning"
-            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeChangeValid ? 'not-allowed' : 'pointer'"
-            [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
+            [style.cursor]="editForm.invalid || isLoading() || !isWorkingTimeChangeValid ? 'not-allowed' : 'pointer'"
+            [disabled]="editForm.invalid || isLoading() || !isWorkingTimeChangeValid"
         >
-            @if (isLoading) {
+            @if (isLoading()) {
                 <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
             }
-            @if (!isLoading) {
+            @if (!isLoading()) {
                 <fa-icon [icon]="faCheck" />
             }
             &nbsp;

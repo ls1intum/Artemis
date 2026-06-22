@@ -399,7 +399,7 @@ describe('BuildAgentDetailsComponent', () => {
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         component.finishedBuildJobs.set(mockFinishedJobs);
         component.buildAgent.set(mockBuildAgent);
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
         fixture.changeDetectorRef.detectChanges();
 
         component.openFilterModal();
@@ -466,12 +466,12 @@ describe('BuildAgentDetailsComponent', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => notFoundError));
 
         // Set the agentName to simulate navigation from finished jobs with an address
-        component.agentName = '[127.0.0.1]:8080';
+        component.agentName.set('[127.0.0.1]:8080');
 
         component.loadAgentData();
 
         // When 404, the component should use the query param (agentName) directly for filtering
-        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe('[127.0.0.1]:8080');
+        expect(component.finishedBuildJobFilter().buildAgentAddress).toBe('[127.0.0.1]:8080');
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
     });
 
@@ -490,7 +490,7 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
 
         // After resolution, agentName should be updated to the actual name
-        expect(component.agentName).toBe('actual-agent-name');
+        expect(component.agentName()).toBe('actual-agent-name');
         // WebSocket should be re-subscribed with the correct channel
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/actual-agent-name');
     });
@@ -644,13 +644,13 @@ describe('BuildAgentDetailsComponent', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.buildAgent.set(mockBuildAgent);
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
         fixture.changeDetectorRef.detectChanges();
 
         component.openFilterModal();
         onClose.next(newFilter);
 
-        expect(component.finishedBuildJobFilter).toEqual(newFilter);
+        expect(component.finishedBuildJobFilter()).toEqual(newFilter);
     });
 
     it('should handle modal dismissal gracefully', () => {
@@ -658,7 +658,7 @@ describe('BuildAgentDetailsComponent', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.buildAgent.set(mockBuildAgent);
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
         fixture.changeDetectorRef.detectChanges();
 
         // Should not throw
@@ -666,7 +666,7 @@ describe('BuildAgentDetailsComponent', () => {
         onClose.next(undefined);
 
         // Filter should remain unchanged
-        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe(mockBuildAgent.buildAgent!.memberAddress);
+        expect(component.finishedBuildJobFilter().buildAgentAddress).toBe(mockBuildAgent.buildAgent!.memberAddress);
     });
 
     it('should update build agent when websocket receives agent update', () => {

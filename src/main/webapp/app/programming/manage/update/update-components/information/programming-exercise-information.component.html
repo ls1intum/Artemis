@@ -16,6 +16,7 @@
             [isImport]="isImport()"
             [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             [courseId]="courseId()"
+            (onTitleChange)="updateShortName($event)"
         />
     </div>
     @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {
@@ -82,15 +83,15 @@
                 [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
             />
             @if (
-                editRepositoryCheckoutPath &&
-                isLocalCIEnabled &&
+                editRepositoryCheckoutPath() &&
+                isLocalCIEnabled() &&
                 !isImport() &&
                 !programmingExerciseCreationConfig().isEdit &&
                 isEditFieldDisplayedRecord().editRepositoriesCheckoutPath
             ) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise()"
-                    [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
+                    [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories()"
                     (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
                     (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
                     (solutionCheckoutPathEvent)="onSolutionRepositoryCheckoutPathChange($event)"
@@ -104,57 +105,13 @@
                         programmingExercise().auxiliaryRepositories!.length > 0 &&
                         isEditFieldDisplayedRecord().addAuxiliaryRepository
                     ) {
-                        <ngx-datatable
+                        <jhi-table-view
                             id="auxiliaryRepositoryTable"
-                            class="bootstrap"
-                            trackByProp="id"
-                            [headerHeight]="50"
-                            [limit]="20"
-                            [columnMode]="'force'"
-                            [rowHeight]="'auto'"
-                            [rows]="programmingExercise().auxiliaryRepositories"
-                        >
-                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryName' | artemisTranslate" prop="repositoryName">
-                                <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-table-editable-field
-                                        [id]="row.id + '-repositoryName'"
-                                        [value]="row.name || ''"
-                                        [onValueUpdate]="programmingExerciseCreationConfig().updateRepositoryName(row)"
-                                        [pattern]="programmingExerciseCreationConfig().invalidRepositoryNamePattern"
-                                        [isRequired]="true"
-                                        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                                    />
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory' | artemisTranslate" prop="checkoutDirectory">
-                                <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-table-editable-field
-                                        [id]="row.id + '-checkoutDirectory'"
-                                        [value]="row.checkoutDirectory || ''"
-                                        [onValueUpdate]="programmingExerciseCreationConfig().updateCheckoutDirectory(row)"
-                                        [pattern]="programmingExerciseCreationConfig().invalidDirectoryNamePattern"
-                                        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
-                                    />
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate" prop="description">
-                                <ng-template ngx-datatable-cell-template let-row="row">
-                                    <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description">
-                                    </textarea>
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column name="" prop="removeButton">
-                                <ng-template ngx-datatable-cell-template let-row="row">
-                                    <jhi-remove-auxiliary-repository-button
-                                        placement="right auto"
-                                        [programmingExercise]="programmingExercise()"
-                                        (onRefresh)="programmingExerciseCreationConfig().refreshAuxiliaryRepositoryChecks()"
-                                        [row]="row"
-                                        class="ml-2"
-                                    />
-                                </ng-template>
-                            </ngx-datatable-column>
-                        </ngx-datatable>
+                            [cols]="auxiliaryRepoColumns()"
+                            [vals]="programmingExercise().auxiliaryRepositories!"
+                            [rowActions]="auxRepoActionsRef"
+                            [options]="auxiliaryRepoTableOptions"
+                        />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
                         <ngb-alert [dismissible]="false" [type]="'danger'">
@@ -166,12 +123,12 @@
                             }
                         </ngb-alert>
                     }
-                    @if (programmingExerciseCreationConfig() && !isLocalCIEnabled) {
+                    @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
-                    @if (isLocalCIEnabled && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
+                    @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button
                             [btnType]="ButtonType.WARNING"
                             [btnSize]="ButtonSize.SMALL"
@@ -236,3 +193,38 @@
         <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
     }
 </section>
+
+<!-- Auxiliary repository cell templates -->
+<ng-template #auxRepoNameTemplate let-cell>
+    <jhi-table-editable-field
+        [id]="cell.data.id + '-repositoryName'"
+        [value]="cell.data.name || ''"
+        [onValueUpdate]="programmingExerciseCreationConfig().updateRepositoryName(cell.data)"
+        [pattern]="programmingExerciseCreationConfig().invalidRepositoryNamePattern"
+        [isRequired]="true"
+        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
+    />
+</ng-template>
+
+<ng-template #auxCheckoutDirTemplate let-cell>
+    <jhi-table-editable-field
+        [id]="cell.data.id + '-checkoutDirectory'"
+        [value]="cell.data.checkoutDirectory || ''"
+        [onValueUpdate]="programmingExerciseCreationConfig().updateCheckoutDirectory(cell.data)"
+        [pattern]="programmingExerciseCreationConfig().invalidDirectoryNamePattern"
+        [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
+    />
+</ng-template>
+
+<ng-template #auxDescriptionTemplate let-cell>
+    <textarea class="form-control table-editable-field__input me-2" [id]="cell.data.id + '-description'" [(ngModel)]="cell.data.description" name="description"></textarea>
+</ng-template>
+
+<ng-template #auxRepoActionsRef let-row>
+    <jhi-remove-auxiliary-repository-button
+        placement="right auto"
+        [programmingExercise]="programmingExercise()"
+        (onRefresh)="programmingExerciseCreationConfig().refreshAuxiliaryRepositoryChecks()"
+        [row]="row"
+    />
+</ng-template>

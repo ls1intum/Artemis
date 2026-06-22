@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -85,7 +84,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
         List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
         return findSessionsWithMessagesByIdIn(ids);
     }

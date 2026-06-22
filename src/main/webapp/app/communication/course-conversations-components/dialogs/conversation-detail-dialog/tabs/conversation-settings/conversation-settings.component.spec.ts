@@ -197,7 +197,7 @@ examples.forEach((activeConversation) => {
                 expect(toggleSpy).toHaveBeenCalledOnce();
                 expect(toggleSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
 
-                expect(component.conversationAsChannel!.isPublic).toBe(false);
+                expect(component.conversationAsChannel()!.isPublic).toBe(false);
                 expect(privacyChangeSpy).toHaveBeenCalledOnce();
             }
         });

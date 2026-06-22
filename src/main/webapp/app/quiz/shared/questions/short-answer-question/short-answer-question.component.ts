@@ -72,22 +72,23 @@ export class ShortAnswerQuestionComponent {
 
     showingSampleSolution = signal(false);
 
-    renderedQuestion: RenderedQuizQuestionMarkDownElement;
+    readonly renderedQuestion = signal<RenderedQuizQuestionMarkDownElement>(undefined!);
     sampleSolutions: ShortAnswerSolution[] = [];
-    textParts: string[][];
+    readonly textParts = signal<string[][]>(undefined!);
 
     /**
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection() {
-        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        const renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion().text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
 
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().explanation);
+        renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
+        renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
+        renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().explanation);
+        this.renderedQuestion.set(renderedQuestion);
     }
 
     /**
@@ -97,7 +98,7 @@ export class ShortAnswerQuestionComponent {
     setSubmittedText() {
         const updated: ShortAnswerSubmittedText[] = [];
         let i = 0;
-        for (const textpart of this.textParts) {
+        for (const textpart of this.textParts()) {
             let j = 0;
             for (const element of textpart) {
                 if (this.shortAnswerQuestionUtil.isInputField(element!)) {
