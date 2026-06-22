@@ -113,6 +113,113 @@ No Helm chart ships with Artemis today. Bring your own Weaviate deployment (any 
 
 ## Choose and connect an embedder
 
+Artemis supports three embedding strategies and one keyword-only mode. The subsections below show the exact Spring properties for each. After choosing a strategy, add (or merge) the relevant block into your `application-prod.yml` (or the profile you deploy).
+
+### Option 1 — OpenAI-compatible external embedder
+
+Use this when you have access to the OpenAI API, an Azure OpenAI deployment, or any OpenAI-compatible self-hosted endpoint (vLLM, Ollama, etc.).
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    http-host: your-weaviate-host
+    http-port: 443
+    grpc-port: 50051
+    scheme: https
+    collection-prefix: Artemis_          # required if sharing with Pyris
+    vectorizer-module: text2vec-openai
+    open-ai-embedding-model: text-embedding-3-small   # or your self-hosted model id
+    open-ai-base-url: https://your-openai-compatible-endpoint   # OpenAI: https://api.openai.com
+    gpu-api-key: your-embedding-api-key
+    api-key: your-weaviate-api-key
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  When `vectorizer-module` is set to `text2vec-openai`, both **`open-ai-base-url`** and **`gpu-api-key`** are mandatory. Artemis validates these at startup and will refuse to start if either is missing or blank.
+
+</Callout>
+
+**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed).
+
+**Ollama base-URL quirk:** If you use Ollama as an OpenAI-compatible endpoint, set `open-ai-base-url` to `http://your-ollama-host:11434/v1` — the `/v1` suffix is required. This is an Artemis-specific routing detail; it does not apply to Pyris or other services sharing the same Ollama instance.
+
+---
+
+<Callout variant={CalloutVariant.info}>
+
+  **TUM-internal deployment — not applicable to external deployments**
+
+  The Technical University of Munich (TUM) runs a GPU cluster at `gpu.aet.cit.tum.de` for research workloads. TUM-internal Artemis production deployments use a self-hosted Qwen3-Embedding-8B model served via a vLLM OpenAI-compatible endpoint on that cluster. Example values for TUM-internal use only:
+
+  ```yaml
+  artemis:
+    weaviate:
+      vectorizer-module: text2vec-openai
+      open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
+      open-ai-base-url: https://gpu.aet.cit.tum.de/v1
+      gpu-api-key: your-tum-gpu-api-key
+  ```
+
+  Do not use these hostnames or model identifiers in any other deployment. External institutions should choose their own OpenAI-compatible endpoint.
+
+</Callout>
+
+---
+
+### Option 2 — Local CPU embeddings (offline / air-gapped)
+
+Use this when you have no external API access, no GPU, and are willing to accept slower embedding throughput in exchange for data privacy and zero API cost.
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    vectorizer-module: text2vec-transformers
+    # provisioned via docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
+```
+
+**Compose file:** `docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
+
+<Callout variant={CalloutVariant.info}>
+
+  `embeddinggemma-300m` runs entirely on CPU. Embedding throughput is lower than GPU-backed options, but it works on any machine without GPU drivers or external API keys.
+
+</Callout>
+
+---
+
+### Option 3 — Keyword-only (no embedder)
+
+Use this when semantic similarity is not a priority, you want the simplest possible setup, or you plan to migrate to an embedder later.
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    vectorizer-module: none   # BM25 keyword-only; no semantic search
+```
+
+**Compose file:** `docker/weaviate.yml`.
+
+No embedder is provisioned. All search uses Weaviate's built-in BM25 index. You can migrate to a semantic embedder later by dropping the existing collections and reindexing — collection schema is created fresh on next startup.
+
+---
+
+### Embedder summary
+
+| Tier | Vectorizer module | Compose file | Hardware requirement | API cost | Data leaves your server? |
+|---|---|---|---|---|---|
+| GPU / self-hosted LLM | `text2vec-openai` (self-hosted endpoint) | `weaviate.yml` | GPU server required | None (self-hosted) | No |
+| Cloud OpenAI | `text2vec-openai` (api.openai.com) | `weaviate.yml` | None | Per-token billing | Yes (to OpenAI) |
+| Local CPU | `text2vec-transformers` | `weaviate-embeddings.yml` | CPU only (no GPU assumed) | None | No |
+| Keyword-only | `none` | `weaviate.yml` | None | None | No |
+
+GPU is **not** assumed. The keyword-only and local-CPU tiers are fully self-contained and suitable for privacy-sensitive or offline deployments.
+
+---
+
 ## Enable and verify Artemis global search
 
 ## Run Weaviate alongside Pyris
