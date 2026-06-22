@@ -147,14 +147,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyBaseQuizQuestionFields(QuizQuestion source, QuizQuestion target) {
-        target.setTitle(source.getTitle());
-        target.setText(source.getText());
-        target.setHint(source.getHint());
-        target.setExplanation(source.getExplanation());
-        target.setPoints(source.getPoints());
-        target.setScoringType(source.getScoringType());
-        target.setRandomizeOrder(source.isRandomizeOrder());
-        target.setInvalid(source.isInvalid());
+        QuizExerciseService.copyBasicFields(source, target);
         // ID and statistic are intentionally not copied — new copies start fresh
     }
 

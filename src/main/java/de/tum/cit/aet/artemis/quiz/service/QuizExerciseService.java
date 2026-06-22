@@ -1069,7 +1069,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
         if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
-            replaceQuizBatchesPreservingCollection(updatedQuiz, batches);
+            updatedQuiz.getQuizBatches().clear();
+            updatedQuiz.getQuizBatches().addAll(batches);
         }
 
         handleDndQuizFileUpdates(updatedQuiz, originalQuiz, files);
@@ -1196,11 +1197,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
-    }
-
-    private static void replaceQuizBatchesPreservingCollection(QuizExercise quizExercise, Set<QuizBatch> quizBatches) {
-        quizExercise.getQuizBatches().clear();
-        quizExercise.getQuizBatches().addAll(quizBatches);
     }
 
     private static void applyDragAndDropEditorDTO(DragAndDropQuestion question, DragAndDropQuestionFromEditorDTO dto) {
@@ -1378,14 +1374,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private static QuizQuestion copyQuizQuestionForUpdate(QuizQuestion source) {
         QuizQuestion copy = source.copyQuestionId();
-        copy.setTitle(source.getTitle());
-        copy.setText(source.getText());
-        copy.setHint(source.getHint());
-        copy.setExplanation(source.getExplanation());
-        copy.setPoints(source.getPoints());
-        copy.setScoringType(source.getScoringType());
-        copy.setRandomizeOrder(source.isRandomizeOrder());
-        copy.setInvalid(source.isInvalid());
+        copyBasicFields(source, copy);
         copy.setQuizQuestionStatistic(source.getQuizQuestionStatistic());
 
         if (source instanceof MultipleChoiceQuestion sourceQuestion && copy instanceof MultipleChoiceQuestion copyQuestion) {
@@ -1397,6 +1386,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             copyQuestion.setDragItems(sourceQuestion.getDragItems().stream().map(QuizExerciseService::copyDragItemForUpdate).collect(Collectors.toCollection(ArrayList::new)));
         }
         return copy;
+    }
+
+    private static void copyBasicFields(QuizQuestion source, QuizQuestion copy) {
+        copy.setTitle(source.getTitle());
+        copy.setText(source.getText());
+        copy.setHint(source.getHint());
+        copy.setExplanation(source.getExplanation());
+        copy.setPoints(source.getPoints());
+        copy.setScoringType(source.getScoringType());
+        copy.setRandomizeOrder(source.isRandomizeOrder());
+        copy.setInvalid(source.isInvalid());
     }
 
     private static DragItem copyDragItemForUpdate(DragItem source) {

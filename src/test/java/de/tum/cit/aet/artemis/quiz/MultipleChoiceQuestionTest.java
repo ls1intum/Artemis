@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -58,6 +61,32 @@ class MultipleChoiceQuestionTest {
     }
 
     @Test
+    void replaceAnswerOptionsRejectsInvalidAnswerOptionFields() {
+        MultipleChoiceQuestion question = questionWithTwoOptions();
+
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(input(1L, " ", false)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option text must not be blank");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, null, null, null, false, false)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option text must not be blank");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", null, null, null, false)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option boolean fields must not be null");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", null, null, false, null)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option boolean fields must not be null");
+    }
+
+    @Test
+    void replaceAnswerOptionsRejectsFieldsThatExceedConfiguredLengths() {
+        MultipleChoiceQuestion question = questionWithTwoOptions();
+
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, tooLong(MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH), null, null, false, false))))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("exceeds its maximum length");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", tooLong(MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH), null, false, false))))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("exceeds its maximum length");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", null, tooLong(MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH), false, false))))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("exceeds its maximum length");
+    }
+
+    @Test
     void addAnswerOptionIgnoresIncomingIds() {
         MultipleChoiceQuestion question = new MultipleChoiceQuestion();
         AnswerOption externallyIdentifiedOption = new AnswerOption(42L, "A", null, null, true, false);
@@ -77,6 +106,26 @@ class MultipleChoiceQuestionTest {
         assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(7L);
         assertThat(question.getNextComponentId()).isEqualTo(8L);
         assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("boolean fields must not be null");
+    }
+
+    @Test
+    void setAnswerOptionsAdvancesHighWatermarkPastPreservedIds() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+
+        question.setAnswerOptions(List.of(new AnswerOption(7L, "A", null, null, true, false)));
+        AnswerOption addedOption = question.addAnswerOption(new AnswerOption().text("B").isCorrect(false));
+
+        assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(7L, 8L);
+        assertThat(addedOption.getId()).isEqualTo(8L);
+        assertThat(question.getNextComponentId()).isEqualTo(9L);
+    }
+
+    @Test
+    void validateAnswerOptionsRejectsDuplicatePreservedIds() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        question.setAnswerOptions(List.of(new AnswerOption(7L, "A", null, null, true, false), new AnswerOption(7L, "B", null, null, false, false)));
+
+        assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalStateException.class).hasMessageContaining("Answer option IDs must be non-null and unique");
     }
 
     @Test
@@ -116,5 +165,9 @@ class MultipleChoiceQuestionTest {
 
     private static AnswerOptionInput input(Long id, String text, boolean correct) {
         return new AnswerOptionInput(id, text, null, null, correct, false);
+    }
+
+    private static String tooLong(int maxLength) {
+        return "a".repeat(maxLength + 1);
     }
 }
