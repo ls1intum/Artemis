@@ -180,6 +180,9 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private final AtomicLong missingBuildResultsGauge = new AtomicLong(0);
 
+    // NOTE: only active on scheduling node
+    private final AtomicLong failedBuildsGauge = new AtomicLong(0);
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
@@ -253,6 +256,7 @@ public class MetricsBean {
 
             if (profileService.isLocalCIActive()) {
                 registerMissingBuildResultsMetrics();
+                registerFailedBuildsMetrics();
             }
         }
 
@@ -348,10 +352,10 @@ public class MetricsBean {
         return localCIDistributedDataAccessService.map(DistributedDataAccessService::getResultQueueSize).orElse(0);
     }
 
-    private long extractMissingBuildResults() {
+    private BuildJobsStatisticsDTO extractBuildJobStatistics() {
         // calculate build statistics in the last 24 hours for all courses by passing null as courseId
         var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null);
-        return BuildJobsStatisticsDTO.of(buildResultStatistics).missingBuilds();
+        return BuildJobsStatisticsDTO.of(buildResultStatistics);
     }
 
     // This is ALWAYS active on all nodes
@@ -435,6 +439,11 @@ public class MetricsBean {
                 .register(meterRegistry);
     }
 
+    private void registerFailedBuildsMetrics() {
+        Gauge.builder("artemis.global.buildjobs.failed", failedBuildsGauge::get).description("Number of failed build jobs in the last 24 hours")
+                .register(meterRegistry);
+    }
+
     /**
      * Refresh metrics that rely on user activity. Only executed if the "scheduling"-profile is present.
      */
@@ -499,17 +508,18 @@ public class MetricsBean {
     }
 
     /**
-     * Calculate the number of missing build results and store it in a Gauge.
+     * Calculate the number of missing and failed build results and store them in Gauges.
      * The calculation is performed every minute and should only be done on the scheduling node.
      * Only executed if the "scheduling" and "localCI" profile is present.
      */
     @Scheduled(fixedRate = 60 * 1000, initialDelay = 30 * 1000) // Every minute with an initial delay of 30 seconds
-    public void calculateMissingBuildResults() {
+    public void calculateBuildJobResultMetrics() {
         if (!scheduledMetricsEnabled || !profileService.isLocalCIActive()) {
             return;
         }
-        long missingBuildResults = extractMissingBuildResults();
-        missingBuildResultsGauge.set(missingBuildResults);
+        var buildJobStatistics = extractBuildJobStatistics();
+        missingBuildResultsGauge.set(buildJobStatistics.missingBuilds());
+        failedBuildsGauge.set(buildJobStatistics.failedBuilds());
     }
 
     /**
