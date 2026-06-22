@@ -140,14 +140,19 @@ public class V0ToV1Migration implements WeaviateMigration {
 
             List<WeaviateObject<Map<String, Object>>> batch = new ArrayList<>();
             for (WeaviateObject<Map<String, Object>> obj : objects) {
-                Object rawId = obj.properties().get("exercise_id");
-                if (rawId == null) {
-                    log.debug("V0→V1: Skipping object {} with missing exercise_id", obj.uuid());
+                Map<String, Object> oldProps = obj.properties();
+                Object rawId = oldProps != null ? oldProps.get("exercise_id") : null;
+                // Defensive: a legacy object with missing or non-numeric properties cannot be migrated. Skip it (rather
+                // than letting a cast throw and abort the whole run) so the remaining objects still migrate. It is treated
+                // like a missing id, not a failure, because such a malformed object could never migrate and would
+                // otherwise make the run retry forever and never drop the legacy collection.
+                if (!(rawId instanceof Number entityIdNumber)) {
+                    log.debug("V0→V1: Skipping object {} with missing or non-numeric exercise_id: {}", obj.uuid(), rawId);
                     skipped++;
                     continue;
                 }
-                long entityId = ((Number) rawId).longValue();
-                Map<String, Object> newProps = transformProperties(obj.properties());
+                long entityId = entityIdNumber.longValue();
+                Map<String, Object> newProps = transformProperties(oldProps);
                 String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, entityId);
                 batch.add(WeaviateObject.of(objectBuilder -> objectBuilder.uuid(uuid).properties(newProps)));
             }
