@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -181,5 +184,26 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         Exercise exercise = new ProgrammingExercise();
         exercise.setTitle("Test?+#*                Exercise123%$§");
         assertThat(exercise.getSanitizedExerciseTitle()).isEqualTo("Test_Exercise123");
+    }
+
+    @Test
+    void validateScoreSettings_notIncludedWithoutMaxPoints_doesNotThrow() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(null);
+        exercise.setBonusPoints(0.0);
+
+        assertThatNoException().isThrownBy(exercise::validateScoreSettings);
+        assertThat(exercise.getMaxPoints()).isZero();
+    }
+
+    @Test
+    void validateScoreSettings_includedWithoutMaxPoints_throws() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(null);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
     }
 }

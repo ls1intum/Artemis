@@ -5,20 +5,24 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise().includedInOverallScore" [allowNotIncluded]="true" />
+                <jhi-included-in-overall-score-picker
+                    [includedInOverallScore]="programmingExercise().includedInOverallScore"
+                    (includedInOverallScoreChange)="onIncludedInOverallScoreChange($event)"
+                    [allowNotIncluded]="true"
+                />
             </div>
         </div>
     }
     <div class="row">
         @if (isEditFieldDisplayedRecord().points) {
             <div class="col">
-                <div class="form-group" [hidden]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED">
+                <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <input
                         [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"
                         class="form-control"
-                        min="1"
+                        [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? 0 : 1"
                         max="9999"
                         name="points"
                         id="field_points"
@@ -26,11 +30,7 @@
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <div
-                            class="alert alert-danger"
-                            [hidden]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
-                            jhiTranslate="artemisApp.exercise.pointsError"
-                        ></div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                     }
                 </div>
             </div>
