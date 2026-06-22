@@ -205,17 +205,29 @@ public class CompetencyOrchestrationService {
     /**
      * Release the per-course run lock, but only if it still holds {@code claim} — a TTL-evicted entry
      * replaced by another claim is left untouched (compare-and-remove).
+     * <p>
+     * Best-effort: this runs in the callers' {@code finally} blocks after {@code orchestrateBatch} /
+     * {@code orchestrateExercise} may already have committed competency mutations. A distributed-map
+     * failure here (e.g. {@code HazelcastInstanceNotActiveException} during member shutdown or
+     * partition migration) must not propagate, or it would clobber the already-computed result and —
+     * for the scheduler — be mistaken for a safe pre-mutation failure that triggers a re-run of an
+     * already-applied batch. A failed release just leaves the entry to expire via {@link #RUN_LEASE}.
      */
     private void releaseRun(long courseId, RunInfo claim) {
-        DistributedMap<Long, RunInfo> currentMap = runMap();
-        currentMap.lock(courseId);
         try {
-            if (claim.equals(currentMap.get(courseId))) {
-                currentMap.remove(courseId);
+            DistributedMap<Long, RunInfo> currentMap = runMap();
+            currentMap.lock(courseId);
+            try {
+                if (claim.equals(currentMap.get(courseId))) {
+                    currentMap.remove(courseId);
+                }
+            }
+            finally {
+                currentMap.unlock(courseId);
             }
         }
-        finally {
-            currentMap.unlock(courseId);
+        catch (Exception ex) {
+            log.warn("Atlas orchestrator failed to release run lock for course {} (run {}); lease will self-expire: {}", courseId, claim.runId(), ex.getMessage(), ex);
         }
     }
 

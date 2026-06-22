@@ -118,8 +118,9 @@ public class ContentChangeScheduler {
             result = orchestrationService.runBatch(courseId, exerciseIds);
         }
         catch (Exception ex) {
-            // An exception escapes runBatch only from batch preparation (exercise resolution), before
-            // any competency is mutated — so the changes are safe to requeue rather than discard.
+            // An exception escapes runBatch only from batch preparation (exercise resolution / run
+            // claim), before any competency is mutated — runBatch's lock release is best-effort and
+            // cannot throw here — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
             accumulator.requeueAfterFailedRun(courseId, exerciseIds);
             broadcastSummary(courseId, runId, exerciseCount, false);
