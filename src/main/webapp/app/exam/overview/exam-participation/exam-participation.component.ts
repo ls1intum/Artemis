@@ -612,13 +612,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return 'artemisApp.studentExam.submissionNotInTime';
     });
 
-    readonly testExamParticipationMessageKey = computed(
-        () => this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translationKey,
-    );
-
-    readonly testExamParticipationTranslateValues = computed<{ date?: string }>(
-        () => this.testExamParticipationMessageService.getMessage(this.exam(), this.testExamParticipationErrorKey()).translateValues,
-    );
+    readonly testExamParticipationMessageKey = computed(() => this.testExamParticipationMessageService.getMessageKey(this.exam(), this.testExamParticipationErrorKey()));
 
     /**
      * check if exam is over
