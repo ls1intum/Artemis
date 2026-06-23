@@ -121,9 +121,7 @@ public record CourseUpdateDTO(
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
         if (course.getAthenaConfig() == null) {
-            var config = new CourseAthenaConfig();
-            config.setCourse(course);
-            course.setAthenaConfig(config);
+            course.setAthenaConfig(new CourseAthenaConfig());
         }
         course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
         course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);

@@ -119,7 +119,6 @@ public record CourseCreateDTO(
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
         var athenaConfig = new CourseAthenaConfig();
-        athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
         athenaConfig.setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setAthenaConfig(athenaConfig);

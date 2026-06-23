@@ -174,7 +174,8 @@ public class Course extends DomainObject {
     private Integer accuracyOfScores = 1; // default value
 
     @JsonIgnore
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 
     /**
@@ -792,9 +793,6 @@ public class Course extends DomainObject {
 
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
         this.athenaConfig = athenaConfig;
-        if (athenaConfig != null) {
-            athenaConfig.setCourse(this);
-        }
     }
 
     @JsonProperty("athenaGradingFeedbackEnabled")

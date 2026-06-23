@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Move FK from course_athena_config.course_id to course.athena_config_id so that
+         Course becomes the owning side of the OneToOne. This eliminates the secondary
+         SELECT Hibernate issues for non-owning lazy OneToOne associations. -->
+
+    <changeSet id="20260623120000-1" author="artemis">
+        <addColumn tableName="course">
+            <column name="athena_config_id" type="bigint">
+                <constraints nullable="true" unique="true" uniqueConstraintName="uc_course_athena_config_id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260623120000-2" author="artemis">
+        <sql>
+            UPDATE course SET athena_config_id = (
+                SELECT id FROM course_athena_config WHERE course_id = course.id
+            )
+            WHERE EXISTS (
+                SELECT 1 FROM course_athena_config WHERE course_id = course.id
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260623120000-3" author="artemis">
+        <addForeignKeyConstraint
+            baseTableName="course" baseColumnNames="athena_config_id"
+            referencedTableName="course_athena_config" referencedColumnNames="id"
+            constraintName="fk_course_athena_config_id"/>
+    </changeSet>
+
+    <changeSet id="20260623120000-4" author="artemis">
+        <dropForeignKeyConstraint baseTableName="course_athena_config" constraintName="fk_course_athena_config_course_id"/>
+    </changeSet>
+
+    <changeSet id="20260623120000-5" author="artemis">
+        <dropUniqueConstraint tableName="course_athena_config" constraintName="uc_course_athena_config_course_id"/>
+    </changeSet>
+
+    <changeSet id="20260623120000-6" author="artemis">
+        <dropColumn tableName="course_athena_config" columnName="course_id"/>
+    </changeSet>
+
+</databaseChangeLog>
