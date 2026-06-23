@@ -43,3 +43,20 @@ artemis:
             require-for-administrator-features: false
             ask-users-to-setup: true
             token-validity-in-seconds-for-passkey: 15552000
+spring:
+    liquibase:
+        enabled: true
+    autoconfigure:
+        exclude:
+          # Keep in sync with application-core.yml — this test file shadows the main one entirely,
+          # so the core-profile exclude list must be repeated here. Without it the buildagent
+          # profile's JPA exclusions (HibernateJpaAutoConfiguration etc.) are not overridden by
+          # the lighter core list, and entityManagerFactory is never created in LocalCI tests.
+          - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
+          - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
+    cloud:
+        loadbalancer:
+            cache:
+                enabled: true
