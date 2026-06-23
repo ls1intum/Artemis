@@ -200,7 +200,7 @@ describe('ExamUpdateComponent', () => {
             const newExamWithoutExercises = new Exam();
             newExamWithoutExercises.id = 2;
             component.exam = newExamWithoutExercises;
-            component.examTimelineValid.set(true);
+            component.examConductionValid.set(true);
 
             const now = dayjs();
             newExamWithoutExercises.visibleDate = now.add(2, 'hours');

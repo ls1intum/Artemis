@@ -50,6 +50,7 @@ export class CourseExamsComponent {
     private router = inject(Router);
 
     private readonly parentParams = toSignal(this.route.parent?.params ?? of<Params>({}), { initialValue: this.route.parent?.snapshot?.params ?? {} });
+    private readonly childParams = toSignal(this.route.firstChild?.params ?? of<Params>({}), { initialValue: this.route.firstChild?.snapshot?.params ?? {} });
     readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
@@ -75,7 +76,7 @@ export class CourseExamsComponent {
     readonly testStudentExamsLoaded = signal(false);
     // Simulation test exams need their attempt list before the participation component decides whether to request another attempt.
     readonly canRenderSelectedExam = computed(() => {
-        const selectedExamId = Number(this.route.firstChild?.snapshot.params['examId']);
+        const selectedExamId = Number(this.childParams()['examId']);
         const selectedExam = this.course()?.exams?.find((exam) => exam.id === selectedExamId);
         return selectedExam?.examType !== ExamType.TEST_WITH_SIMULATION || this.testStudentExamsLoaded();
     });

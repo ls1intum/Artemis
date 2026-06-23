@@ -287,7 +287,7 @@ public class ExamResource {
         Integer originalGracePeriod = originalExam.getGracePeriod();
         ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
-        // The Exam Mode cannot be changed after creation -> Compare request with version in the database
+        // Changing from a test to real exam is not allowed. Switching from a test with or without simulation to the other is
         if (!examUpdateDTO.examType().isTestExamType() == originalExam.getExamType().isTestExamType()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }

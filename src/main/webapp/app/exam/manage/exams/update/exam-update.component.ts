@@ -105,7 +105,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const value = this.confirmEntityNameValue();
         return !value || !this.exam?.title || value !== this.exam.title;
     });
-    readonly examTimelineValid = signal(false);
+    readonly examConductionValid = signal(false);
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
@@ -192,6 +192,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     onExamModeChange() {
         if (hasTestExamType(this.exam)) {
             this.exam.examWithAttendanceCheck = false;
+            this.exam.numberOfCorrectionRoundsInExam = 0;
+        } else if (!this.exam.numberOfCorrectionRoundsInExam) {
+            this.exam.numberOfCorrectionRoundsInExam = 1;
         }
     }
 
@@ -336,7 +339,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionValid = this.examTimelineValid();
+        const examConductionValid = this.examConductionValid();
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;

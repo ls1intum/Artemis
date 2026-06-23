@@ -342,7 +342,7 @@
             },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
-            "testExamAttemptUsed": "Du hast deinen diese Testklausur bereits abgegeben.",
+            "testExamAttemptUsed": "Du hast diese Testklausur bereits abgegeben.",
             "testExamConcluded": "Diese Testklausur ist abgeschlossen.",
             "testExamPracticeOpens": "Die Übungsphase ist noch nicht geöffnet.",
             "testExamAttemptUsedPracticeOpens": "Bitte warte bis zum Ende der Simulationsklausur.",

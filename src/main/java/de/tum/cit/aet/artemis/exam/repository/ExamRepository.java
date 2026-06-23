@@ -541,6 +541,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             JOIN exam.studentExams se
             WHERE exam.course.id = :courseId
               AND se.user.id  = :studentId
+              AND se.testRun = FALSE
               AND exam.examType = de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
               AND exam.visibleDate <= :now
             """)

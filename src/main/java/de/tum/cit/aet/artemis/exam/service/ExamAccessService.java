@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -39,6 +41,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 public class ExamAccessService {
 
     private static final String ENTITY_NAME = "Exam";
+
+    /**
+     * Striped locks to serialize check-and-create operations for student exams
+     * per user and exam, preventing duplicate creation from concurrent requests.
+     */
+    private final ConcurrentHashMap<String, ReentrantLock> studentExamCreationLocks = new ConcurrentHashMap<>();
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -151,15 +159,17 @@ public class ExamAccessService {
     }
 
     private StudentExam getOrCreateNormalExam(Exam exam, User currentUser) {
-        // Check that the student exam exists
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
+        // Lock per user+exam to prevent concurrent creation of duplicate student exams
+        String lockKey = currentUser.getId() + ":" + exam.getId();
+        ReentrantLock lock = studentExamCreationLocks.computeIfAbsent(lockKey, _ -> new ReentrantLock());
+        lock.lock();
 
-        StudentExam studentExam;
-        // If an studentExam can be found, we can immediately proceed
-        if (optionalStudentExam.isPresent()) {
-            studentExam = optionalStudentExam.get();
-        }
-        else {
+        try {
+            // Check that the student exam exists
+            Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
+            if (optionalStudentExam.isPresent()) {
+                return optionalStudentExam.get();
+            }
 
             ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
@@ -184,12 +194,14 @@ public class ExamAccessService {
                 throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
             }
             // Proceed only if the exam has not ended and the user meets the conditions
-            else {
-                studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
-                studentExam.setExercises(null);
-            }
+            StudentExam studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
+            studentExam.setExercises(null);
+            return studentExam;
         }
-        return studentExam;
+        finally {
+            lock.unlock();
+            studentExamCreationLocks.remove(lockKey, lock);
+        }
     }
 
     private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
@@ -200,29 +212,40 @@ public class ExamAccessService {
             throw new AccessForbiddenAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
+        // Lock per user+exam to prevent concurrent creation of duplicate unfinished test exams
+        String lockKey = currentUser.getId() + ":" + exam.getId();
+        ReentrantLock lock = studentExamCreationLocks.computeIfAbsent(lockKey, _ -> new ReentrantLock());
+        lock.lock();
+
         List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
         List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
 
-        if (unfinishedStudentExams.isEmpty()) {
-            ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
+        try {
+            if (unfinishedStudentExams.isEmpty()) {
+                ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
-            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
-            boolean canExamBeStarted = now.isAfter(unlockDate);
-            if (!canExamBeStarted) {
-                throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
+                // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
+                boolean canExamBeStarted = now.isAfter(unlockDate);
+                if (!canExamBeStarted) {
+                    throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
+                }
+                checkCanCreateNewTestExamAttemptElseThrow(exam, !studentExams.isEmpty(), now);
+
+                studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
+                // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+                studentExam.setExercises(null);
             }
-            checkCanCreateNewTestExamAttemptElseThrow(exam, !studentExams.isEmpty(), now);
-
-            studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
-            // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-            studentExam.setExercises(null);
+            else if (unfinishedStudentExams.size() == 1) {
+                studentExam = unfinishedStudentExams.getFirst();
+            }
+            else {
+                throw new IllegalStateException("User " + currentUser.getId() + " has " + unfinishedStudentExams.size() + " unfinished test exams for exam " + exam.getId()
+                        + " in course " + course.getId());
+            }
         }
-        else if (unfinishedStudentExams.size() == 1) {
-            studentExam = unfinishedStudentExams.getFirst();
-        }
-        else {
-            throw new IllegalStateException(
-                    "User " + currentUser.getId() + " has " + unfinishedStudentExams.size() + " unfinished test exams for exam " + exam.getId() + " in course " + course.getId());
+        finally {
+            lock.unlock();
+            studentExamCreationLocks.remove(lockKey, lock);
         }
         // Check that the current user is registered for the test exam. Otherwise, the student can self-register
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
