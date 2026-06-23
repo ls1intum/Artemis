@@ -139,7 +139,7 @@
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
             <p right-body class="mb-3 markdown-preview">
                 @if (modelingExercise()!.problemStatement) {
-                    <span [innerHTML]="modelingExercise()!.problemStatement! | htmlForMarkdown"></span>
+                    <span [jhiMarkdown]="modelingExercise()!.problemStatement!"></span>
                 }
             </p>
             <!--endregion-->

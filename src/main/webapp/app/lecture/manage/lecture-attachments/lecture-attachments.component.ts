@@ -18,7 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FileService } from 'app/foundation/service/file.service';
 
 export interface LectureAttachmentFormData {
@@ -44,7 +44,7 @@ export interface LectureAttachmentFormData {
         FormDateTimePickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class LectureAttachmentsComponent implements OnDestroy {

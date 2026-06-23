@@ -6,18 +6,18 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-privacy',
     template: `
-        <div [innerHTML]="privacyStatement() | htmlForMarkdown"></div>
+        <div [jhiMarkdown]="privacyStatement()"></div>
         @if (isAuthenticated()) {
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
     `,
-    imports: [TranslateDirective, RouterLink, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, RouterLink, MarkdownDirective],
 })
 export class PrivacyComponent implements AfterViewInit, OnInit {
     private readonly route = inject(ActivatedRoute);

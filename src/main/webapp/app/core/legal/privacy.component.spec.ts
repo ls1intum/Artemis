@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
@@ -28,7 +28,7 @@ describe('PrivacyComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RouterModule, PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [RouterModule, PrivacyComponent, MockDirective(TranslateDirective), MockDirective(MarkdownDirective)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 { provide: TranslateService, useClass: MockTranslateService },

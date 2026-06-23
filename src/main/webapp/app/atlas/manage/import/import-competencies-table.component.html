@@ -30,7 +30,7 @@
             <tr>
                 <td class="col-0.5">{{ competency.id }}</td>
                 <td class="col-2">{{ competency.title }}</td>
-                <td class="markdown-preview col-6" [innerHTML]="competency.description | htmlForMarkdown"></td>
+                <td class="markdown-preview col-6" [jhiMarkdown]="competency.description"></td>
                 <td class="col-2">{{ competency.course?.title }}</td>
                 <td class="col-0.5">{{ competency.course?.semester }}</td>
                 <td class="col-1">

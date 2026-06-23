@@ -95,7 +95,7 @@
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <p right-body class="mb-3 markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
-                <span [innerHTML]="problemStatement | htmlForMarkdown"></span>
+                <span [jhiMarkdown]="problemStatement"></span>
             }
         </p>
         <!--endregion-->

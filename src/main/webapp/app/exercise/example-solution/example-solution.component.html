@@ -11,11 +11,11 @@
                 <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
                     <div class="col-12 col-md-12 markdown-preview problem-statement">
                         <h3 jhiTranslate="artemisApp.exercise.problemStatement"></h3>
-                        <p
-                            [innerHTML]="
-                                exercise.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)
-                            "
-                        ></p>
+                        @if (exercise.problemStatement) {
+                            <p [jhiMarkdown]="exercise.problemStatement"></p>
+                        } @else {
+                            <p>{{ 'artemisApp.exercise.emptyProblemStatement' | artemisTranslate }}</p>
+                        }
                     </div>
                 </div>
                 <!-- PROBLEM STATEMENT END -->

@@ -86,7 +86,7 @@
                     <tr>
                         <td class="col-0.5">{{ competency.id }}</td>
                         <td class="col-2">{{ competency.title }}</td>
-                        <td class="markdown-preview col" [innerHTML]="competency.description | htmlForMarkdown"></td>
+                        <td class="markdown-preview col" [jhiMarkdown]="competency.description"></td>
                         <td class="col-2">{{ competency.knowledgeAreaTitle }}</td>
                         <td class="col-1">
                             <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="deselectCompetency(competency)" />

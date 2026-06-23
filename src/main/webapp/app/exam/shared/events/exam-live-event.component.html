@@ -13,7 +13,7 @@
     <div class="content">
         @switch (event().eventType) {
             @case (ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT) {
-                <div [innerHTML]="examWideAnnouncementEvent.text | htmlForMarkdown"></div>
+                <div [jhiMarkdown]="examWideAnnouncementEvent.text"></div>
             }
             @case (ExamLiveEventType.WORKING_TIME_UPDATE) {
                 <div>
@@ -63,7 +63,7 @@
                     ></div>
                     @if (problemStatementUpdateEvent.text) {
                         <div jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage"></div>
-                        <div [innerHTML]="problemStatementUpdateEvent.text | htmlForMarkdown"></div>
+                        <div [jhiMarkdown]="problemStatementUpdateEvent.text"></div>
                     }
                 </div>
             }

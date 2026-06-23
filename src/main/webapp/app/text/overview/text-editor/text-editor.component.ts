@@ -39,7 +39,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -61,7 +61,7 @@ import { TranslateService } from '@ngx-translate/core';
         FaIconComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

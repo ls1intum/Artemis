@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-imprint',
-    template: ` <div [innerHTML]="imprint() | htmlForMarkdown"></div> `,
-    imports: [HtmlForMarkdownPipe],
+    template: ` <div [jhiMarkdown]="imprint()"></div> `,
+    imports: [MarkdownDirective],
 })
 export class ImprintComponent implements AfterViewInit, OnInit {
     private readonly route = inject(ActivatedRoute);

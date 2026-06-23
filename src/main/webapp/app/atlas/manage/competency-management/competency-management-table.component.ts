@@ -18,7 +18,7 @@ import {
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -39,7 +39,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
         DeleteButtonDirective,
