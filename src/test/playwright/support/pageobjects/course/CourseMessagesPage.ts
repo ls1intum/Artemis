@@ -983,4 +983,44 @@ export class CourseMessagesPage {
             await this.page.waitForLoadState('domcontentloaded');
         }
     }
+
+    /**
+     * Returns the scrollable message-list container that hosts the infinite-scroll directive.
+     */
+    getScrollableMessagesContainer() {
+        return this.page.locator('#scrollableDiv');
+    }
+
+    /**
+     * Scrolls the message list to the very top. In a conversation this brings the top sentinel of the
+     * infinite-scroll directive into view, which triggers loading of the next (older) page of messages.
+     */
+    async scrollMessagesToTop() {
+        const container = this.getScrollableMessagesContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of currently rendered posts in the message list.
+     */
+    async getRenderedPostCount(): Promise<number> {
+        return this.page.locator('.post-item').count();
+    }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
+    }
 }
