@@ -16,13 +16,14 @@ describe('MathExerciseUpdateComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: MathExerciseUpdateComponent;
-    let mathExerciseService: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+    let mathExerciseService: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; import: ReturnType<typeof vi.fn> };
     let router: { navigate: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         mathExerciseService = {
             create: vi.fn().mockReturnValue(of({ body: new MathExercise(undefined) })),
             update: vi.fn().mockReturnValue(of({ body: new MathExercise(undefined) })),
+            import: vi.fn().mockReturnValue(of({ body: new MathExercise(undefined) })),
         };
         router = { navigate: vi.fn() };
         const exercise = new MathExercise(undefined);
@@ -42,7 +43,7 @@ describe('MathExerciseUpdateComponent', () => {
                     onTranslationChange: of() as any,
                     onDefaultLangChange: of() as any,
                 }),
-                { provide: ActivatedRoute, useValue: { data: of({ mathExercise: exercise }), snapshot: { params: { courseId: 7 } } } },
+                { provide: ActivatedRoute, useValue: { data: of({ mathExercise: exercise }), snapshot: { params: { courseId: 7 }, url: [] } } },
             ],
         }).overrideComponent(MathExerciseUpdateComponent, { set: { imports: [], template: '' } });
 
@@ -65,5 +66,13 @@ describe('MathExerciseUpdateComponent', () => {
         component.mathExercise.id = 5;
         component.save();
         expect(mathExerciseService.update).toHaveBeenCalled();
+    });
+
+    it('save() routes through import in import mode even when the exercise has an id', () => {
+        component.mathExercise.id = 5;
+        component.isImport.set(true);
+        component.save();
+        expect(mathExerciseService.import).toHaveBeenCalled();
+        expect(mathExerciseService.update).not.toHaveBeenCalled();
     });
 });

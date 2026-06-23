@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
+import { resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MathExerciseService } from '../service/math-exercise.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -59,6 +60,7 @@ export class MathExerciseUpdateComponent implements OnInit {
     }
 
     readonly isSaving = signal(false);
+    readonly isImport = signal(false);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
 
@@ -69,8 +71,14 @@ export class MathExerciseUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving.set(false);
+        this.isImport.set(this.activatedRoute.snapshot.url.some((segment) => segment.path === 'import'));
         this.activatedRoute.data.subscribe(({ mathExercise }) => {
             this.mathExercise = mathExercise;
+            if (this.isImport()) {
+                // Keep the source id (the import endpoint needs it as a query parameter) but clear the
+                // schedule-related fields so the copy starts as a fresh, unscheduled exercise.
+                resetForImport(this.mathExercise);
+            }
             this.exerciseCategories.set(this.mathExercise.categories || []);
         });
     }
@@ -85,7 +93,12 @@ export class MathExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving.set(true);
-        if (this.mathExercise.id !== undefined) {
+        if (this.isImport()) {
+            this.mathExerciseService.import(this.mathExercise).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
+        } else if (this.mathExercise.id !== undefined) {
             this.mathExerciseService.update(this.mathExercise).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),

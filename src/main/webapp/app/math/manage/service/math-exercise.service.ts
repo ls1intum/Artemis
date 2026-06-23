@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 
@@ -39,16 +40,26 @@ export class MathExerciseService implements ExerciseServicable<MathExercise> {
     }
 
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<MathExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+        return this.http.get<MathExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                // The server DTO carries no exercise type; stamp it so shared components (e.g. the detail action bar,
+                // which builds `${type}-exercises` route segments) don't produce `undefined-exercises` links.
+                if (res.body) {
+                    res.body.type = ExerciseType.MATH;
+                }
+                return this.exerciseService.processExerciseEntityResponse(res);
+            }),
+        );
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http
-            .get<MathExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
+        return this.http.get<MathExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => {
+                res.body?.forEach((exercise) => (exercise.type = ExerciseType.MATH));
+                return this.exerciseService.processExerciseEntityArrayResponse(res);
+            }),
+        );
     }
 
     delete(exerciseId: number): Observable<HttpResponse<void>> {
@@ -59,9 +70,14 @@ export class MathExerciseService implements ExerciseServicable<MathExercise> {
         if (adaptedSourceMathExercise.id === undefined) {
             return throwError(() => new Error('Cannot import a math exercise without a source exercise id'));
         }
+        const sourceExerciseId = adaptedSourceMathExercise.id;
         const copy = ExerciseService.convertExerciseFromClient(adaptedSourceMathExercise);
+        // The imported exercise is a brand-new entity: the source is passed via the query parameter, so the body must
+        // not carry the source id (the server rejects an import body that already has one). courseId is required too.
+        copy.id = undefined;
+        Object.assign(copy, { courseId: adaptedSourceMathExercise.course?.id });
         return this.http
-            .post<MathExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceMathExercise.id}`, copy, { observe: 'response' })
+            .post<MathExercise>(`${this.resourceUrl}/import?sourceExerciseId=${sourceExerciseId}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

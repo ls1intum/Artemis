@@ -81,6 +81,7 @@ public class MathExerciseImportService extends ExerciseImportService {
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setDescription(importedExercise.getDescription());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
+        newExercise.setManualDerivation(importedExercise.isManualDerivation());
         return newExercise;
     }
 

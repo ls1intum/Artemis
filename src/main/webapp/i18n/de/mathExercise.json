@@ -5,8 +5,12 @@
                 "title": "Mathematik-Aufgaben",
                 "createLabel": "Neue Mathematik-Aufgabe erstellen",
                 "editLabel": "Mathematik-Aufgabe bearbeiten",
-                "createOrEditLabel": "Mathematik-Aufgabe erstellen oder bearbeiten"
+                "createOrEditLabel": "Mathematik-Aufgabe erstellen oder bearbeiten",
+                "importLabel": "Mathematik-Aufgabe importieren"
             },
+            "created": "Mathematik-Aufgabe mit ID {{ param }} erstellt",
+            "updated": "Mathematik-Aufgabe mit ID {{ param }} aktualisiert",
+            "deleted": "Mathematik-Aufgabe mit ID {{ param }} gelöscht",
             "detail": {
                 "title": "Details der Mathematik-Aufgabe",
                 "submittedMaths": "Abgegebene Mathematik-Aufgaben",

@@ -53,6 +53,18 @@ export const mathExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'math-exercises/:exerciseId/import',
+        loadComponent: () => import('./manage/update/math-exercise-update.component').then((m) => m.MathExerciseUpdateComponent),
+        resolve: {
+            mathExercise: MathExerciseResolver,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.mathExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'math-exercises/:exerciseId/exercise-statistics',
         loadComponent: () => import('app/exercise/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {

@@ -5,7 +5,7 @@ import { MathExerciseService } from 'app/math/manage/service/math-exercise.servi
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
@@ -15,9 +15,21 @@ export class MathExerciseResolver implements Resolve<MathExercise> {
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
+            const courseId = Number(this.findParam(route, 'courseId'));
             return this.mathExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),
-                map((mathExercise: HttpResponse<MathExercise>) => mathExercise.body!),
+                map((res: HttpResponse<MathExercise>) => res.body!),
+                switchMap((mathExercise: MathExercise) => {
+                    if (mathExercise.course || !courseId) {
+                        return of(mathExercise);
+                    }
+                    return this.courseService.find(courseId).pipe(
+                        map((courseRes: HttpResponse<Course>) => {
+                            mathExercise.course = courseRes.body || undefined;
+                            return mathExercise;
+                        }),
+                    );
+                }),
             );
         }
         const courseId = Number(this.findParam(route, 'courseId'));

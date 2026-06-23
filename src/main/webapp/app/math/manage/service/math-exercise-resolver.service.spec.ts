@@ -38,6 +38,25 @@ describe('MathExerciseResolver', () => {
         expect(mathExerciseService.find).toHaveBeenCalledWith(42);
     });
 
+    it('attaches the course from the parent route when the resolved exercise carries no course', async () => {
+        const ex = new MathExercise(undefined);
+        ex.id = 42;
+        mathExerciseService.find.mockReturnValue(of(new HttpResponse({ body: ex })));
+        const course = new Course();
+        course.id = 7;
+        courseService.find.mockReturnValue(of(new HttpResponse({ body: course })));
+        const snapshot = {
+            params: { exerciseId: 42 },
+            parent: { params: { courseId: '7' }, parent: null },
+        } as unknown as ActivatedRouteSnapshot;
+
+        const result = (await firstValueFrom(resolver.resolve(snapshot) as any)) as MathExercise;
+
+        expect(result.id).toBe(42);
+        expect(result.course?.id).toBe(7);
+        expect(courseService.find).toHaveBeenCalledWith(7);
+    });
+
     it('resolves a new exercise bound to a course when courseId is in the route', async () => {
         const course = new Course();
         course.id = 7;

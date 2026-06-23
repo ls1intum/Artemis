@@ -93,11 +93,14 @@ describe('MathExerciseService', () => {
 
     it('should import an exercise', async () => {
         const source = mockExercise();
+        const sourceExerciseId = source.id;
         const imported = new MathExercise(undefined);
         imported.title = 'Imported Math';
 
         const promise = firstValueFrom(service.import(source));
-        const req = httpMock.expectOne({ method: 'POST', url: `${BASE_URL}/import?sourceExerciseId=${source.id}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${BASE_URL}/import?sourceExerciseId=${sourceExerciseId}` });
+        // the imported copy must not carry the source id in the body (the server rejects that)
+        expect(req.request.body.id).toBeUndefined();
         req.flush({ ...imported, id: 99 });
         const response = await promise;
 
